@@ -6,7 +6,6 @@ jvm_library(
   module_name = "intellij.xpath.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8"
 )
 ### auto-generated section `build intellij.xpath.rt` end

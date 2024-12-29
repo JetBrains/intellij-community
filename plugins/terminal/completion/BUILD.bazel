@@ -8,10 +8,10 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:terminal_completion_terminal-completion-spec",
+    "@lib//:terminal-completion-terminal-completion-spec",
     "//platform/util",
   ],
-  exports = ["@lib//:terminal_completion_terminal-completion-spec"]
+  exports = ["@lib//:terminal-completion-terminal-completion-spec"]
 )
 
 jvm_library(
@@ -21,7 +21,7 @@ jvm_library(
   associates = [":completion"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:terminal_completion_terminal-completion-spec",
+    "@lib//:terminal-completion-terminal-completion-spec",
     "//platform/util",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

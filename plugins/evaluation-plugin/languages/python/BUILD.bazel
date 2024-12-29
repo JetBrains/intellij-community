@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
     "//python:python-community-impl",
     "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
     "//plugins/evaluation-plugin/core:evaluationPlugin-core",

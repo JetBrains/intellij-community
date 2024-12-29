@@ -5,7 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True
 )
 
@@ -21,13 +21,17 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//java/testFramework",
     "//platform/editor-ui-ex:editor-ex",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",
     "//plugins/IntelliLang:langInjection",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
   ]
 )
 

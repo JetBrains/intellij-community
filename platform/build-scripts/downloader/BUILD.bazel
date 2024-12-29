@@ -1,19 +1,11 @@
 ### auto-generated section `build intellij.platform.buildScripts.downloader` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-
-create_kotlinc_options(
-  name = "custom",
-  jvm_target = "17",
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
-)
 
 jvm_library(
   name = "buildScripts-downloader",
   module_name = "intellij.platform.buildScripts.downloader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:commons-compress",

@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/statistics",
     "//platform/core-ui",
+    "//platform/util",
     "//platform/ide-core",
     "//platform/ide-core-impl",
     "//platform/editor-ui-api:editor",

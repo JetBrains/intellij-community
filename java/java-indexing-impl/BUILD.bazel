@@ -19,6 +19,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
+    "//platform/util",
     "//java/java-indexing-api:indexing",
     "@lib//:kotlin-stdlib",
     "@lib//:fastutil-min",

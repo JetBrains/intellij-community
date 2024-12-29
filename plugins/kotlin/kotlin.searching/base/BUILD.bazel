@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -28,12 +28,13 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//java/java-analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
     "//java/openapi:java",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
     "//plugins/kotlin/base/facet:kotlin-base-facet",

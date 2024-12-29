@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = ["kotlin.RequiresOptIn"]
 )
 
@@ -27,9 +27,11 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/observable:ide-observable",
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
     "//platform/vcs-impl",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
     "//platform/lang-api:lang",
     "//platform/lvcs-api:lvcs",
     "//platform/platform-api:ide",
@@ -62,6 +64,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//platform/external-process-auth-helper:externalProcessAuthHelper",
     "//platform/external-process-auth-helper/rt:externalProcessAuthHelper-rt",
+    "//platform/util/progress",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
@@ -97,11 +100,13 @@ jvm_library(
   kotlinc_opts = ":custom",
   associates = [":vcs-git"],
   deps = [
+    "//platform/observable:ide-observable",
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
     "//platform/lang-api:lang",
     "@lib//:junit4",
     "//platform/lvcs-api:lvcs",
@@ -151,6 +156,7 @@ jvm_library(
     "//platform/external-process-auth-helper:externalProcessAuthHelper",
     "//platform/external-process-auth-helper:externalProcessAuthHelper_test_lib",
     "//platform/external-process-auth-helper/rt:externalProcessAuthHelper-rt",
+    "//platform/util/progress",
     "//platform/util/jdom",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",

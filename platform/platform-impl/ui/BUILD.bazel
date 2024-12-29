@@ -13,6 +13,8 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/ide-core",
     "@lib//:jna",
+    "//platform/core-api:core",
+    "//platform/util",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
   ]

@@ -5,7 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
@@ -33,9 +33,9 @@ jvm_library(
     "@lib//:guava",
     "@lib//:junit4",
     "@lib//:kotlin-test",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fe10",
-    "@lib//:kotlinc_kotlin-script-runtime",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-script-runtime",
     "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
@@ -44,7 +44,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
-    "@lib//:kotlinc_kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-jps-common",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//java/openapi:java",

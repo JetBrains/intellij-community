@@ -32,6 +32,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/util/concurrency",
     "//java/idea-ui:ui",
+    "//platform/platform-impl:ide-impl",
   ],
   runtime_deps = [":java-compiler-charts_resources"]
 )

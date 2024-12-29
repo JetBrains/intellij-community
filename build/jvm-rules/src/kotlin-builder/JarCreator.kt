@@ -38,7 +38,6 @@ private val MANIFEST_NAME_BYTES = JarFile.MANIFEST_NAME.toByteArray()
  * A class for creating Jar files. Allows normalization of Jar entries by setting their timestamp to
  * the DOS epoch. All Jar entries are sorted alphabetically.
  */
-@Suppress("unused")
 class JarCreator(
   private val targetLabel: String,
   private val injectingRuleKind: String,
@@ -77,7 +76,7 @@ class JarCreator(
       tempList.sort()
       for (file in tempList) {
         val attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
-        var key = file.toString().substring(localPrefixLength).replace(File.separatorChar, '/')
+        val key = file.toString().substring(localPrefixLength).replace(File.separatorChar, '/')
         if (attributes.isDirectory) {
           dirCandidates.add(file)
         }
@@ -100,7 +99,7 @@ class JarCreator(
       Files.newInputStream(existingFile).use { Manifest(it) }
     }
 
-    var m = manifest
+    val m = manifest
     m.mainAttributes[Attributes.Name.MANIFEST_VERSION] = "1.0"
     m.mainAttributes.putIfAbsent(Attributes.Name("Created-By"), "io.bazel.rules.kotlin")
 

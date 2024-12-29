@@ -20,9 +20,9 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "//platform/util-rt",
     "@lib//:jetbrains-annotations",
-    "@lib//:platform_eel_helper_jline_terminal",
-    "@lib//:jline_terminal_jansi",
-    "@lib//:jline_terminal_jna",
+    "@lib//:platform-eel_helper-jline-terminal",
+    "@lib//:jline-terminal-jansi",
+    "@lib//:jline-terminal-jna",
   ],
   runtime_deps = [":eelHelper_resources"]
 )

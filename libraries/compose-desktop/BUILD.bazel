@@ -12,14 +12,13 @@ java_library(
   name = "compose-desktop",
   visibility = ["//visibility:public"],
   exports = [
-    "@lib//:libraries_compose_desktop_jetbrains_jewel_ide_laf_bridge_243",
+    "@lib//:libraries-compose-desktop-jetbrains-jewel-ide-laf-bridge-243",
     "//libraries/skiko",
   ],
   runtime_deps = [
     ":compose-desktop_resources",
-    "@lib//:libraries_compose_desktop_jetbrains_jewel_ide_laf_bridge_243",
+    "@lib//:libraries-compose-desktop-jetbrains-jewel-ide-laf-bridge-243",
     "//libraries/skiko",
-    "@lib//:kotlin-stdlib",
   ]
 )
 ### auto-generated section `build intellij.libraries.compose.desktop` end

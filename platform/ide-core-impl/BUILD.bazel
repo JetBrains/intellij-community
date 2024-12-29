@@ -17,6 +17,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util:util-ui",
+    "//platform/util",
     "//platform/util/jdom",
     "//platform/util/concurrency",
     "//platform/core-impl",

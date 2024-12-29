@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//java/openapi:java",
     "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
     "//platform/util",
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//platform/forms_rt:java-guiForms-rt",
@@ -59,6 +60,10 @@ jvm_library(
   deps = [
     "//java/openapi:java",
     "//platform/ide-core-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/util",
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",

@@ -15,11 +15,16 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/vcs-impl",
+    "//platform/project/shared:project",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/vcs-impl/backend:vcs-impl-backend",
+    "//platform/kernel/shared:kernel",
     "//platform/core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl:vcs-log-impl",
     "//platform/lang-impl",
+    "//platform/vcs-api:vcs",
     "//platform/ide-core-impl",
     "//platform/dvcs-api:vcs-dvcs",
     "@lib//:miglayout-swing",
@@ -30,6 +35,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/analysis-impl",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":vcs-dvcs-impl_resources"]
 )
@@ -43,6 +49,10 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/project/shared:project",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/vcs-impl/backend:vcs-impl-backend",
+    "//platform/kernel/shared:kernel",
     "//platform/core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
@@ -50,6 +60,7 @@ jvm_library(
     "//platform/vcs-log/impl:vcs-log-impl",
     "//platform/vcs-log/impl:vcs-log-impl_test_lib",
     "//platform/lang-impl",
+    "//platform/vcs-api:vcs",
     "//platform/ide-core-impl",
     "//platform/dvcs-api:vcs-dvcs",
     "//platform/testFramework",
@@ -64,6 +75,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/analysis-impl",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":vcs-dvcs-impl_resources"]
 )

@@ -12,9 +12,11 @@ jvm_library(
   module_name = "intellij.space.java.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
-  deps = ["//jps/jps-builders:build"],
+  deps = [
+    "//platform/util",
+    "//jps/jps-builders:build",
+  ],
   runtime_deps = [":java-jps_resources"]
 )
 ### auto-generated section `build intellij.space.java.jps` end

@@ -45,8 +45,8 @@ internal class JpsModuleToBazel {
         .asSequence()
         .map { projectDir.relativize(it).invariantSeparatorsPathString }
         .sorted()
-        .joinToString("\n") {
-          val dir = it.removePrefix("community/").takeIf { it != "community" } ?: ""
+        .joinToString("\n") { path ->
+          val dir = path.removePrefix("community/").takeIf { it != "community" } ?: ""
           val ruleDir = "build/jvm-rules/"
           if (dir.startsWith(ruleDir)) {
             "@rules_jvm//${dir.removePrefix(ruleDir)}:all"
@@ -58,6 +58,7 @@ internal class JpsModuleToBazel {
       val ultimateTargets = ultimateFiles.keys
         .sorted()
         .map { projectDir.relativize(it).invariantSeparatorsPathString }
+        .filter { !it.startsWith("rider/test/cases-supplementary") }
         .joinToString("\n") {
           "//$it:all"
         }
@@ -65,7 +66,7 @@ internal class JpsModuleToBazel {
       Files.writeString(projectDir.resolve("build/bazel-targets.txt"), communityTargets + "\n" + ultimateTargets)
 
       try {
-        generator.generateLibs(projectDir = projectDir, generator = generator, jarRepositories = jarRepositories, m2Repo = m2Repo)
+        generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
       }
       finally {
         urlCache.save()

@@ -20,6 +20,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util:util-ui",
     "//platform/util/jdom",
+    "//platform/util",
     "//platform/util-ex",
     "//platform/util/concurrency",
     "//platform/projectModel-api:projectModel",

@@ -12,7 +12,6 @@ jvm_library(
   module_name = "intellij.maven.server",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:jetbrains-annotations",

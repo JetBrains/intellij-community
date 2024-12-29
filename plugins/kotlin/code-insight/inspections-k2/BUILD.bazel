@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -28,10 +28,10 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fir",
-    "@lib//:kotlinc_analysis-api",
-    "@lib//:kotlinc_analysis-api-k2",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
@@ -45,6 +45,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
     "//plugins/kotlin/code-insight/descriptions:kotlin-code-insight-descriptions",
     "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
     "//platform/editor-ui-api:editor",
     "//java/java-psi-api:psi",
     "@lib//:guava",

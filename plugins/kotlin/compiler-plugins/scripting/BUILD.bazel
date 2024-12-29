@@ -14,9 +14,9 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-jps-common",
-    "@lib//:kotlinc_kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
     "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java",
     "//platform/lang-api:lang",

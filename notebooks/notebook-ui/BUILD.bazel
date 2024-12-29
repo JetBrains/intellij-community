@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
@@ -26,7 +26,9 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-serialization-core",
+    "//platform/core-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/observable:ide-observable",
     "//platform/code-style-api:codeStyle",
     "//platform/core-ui",
     "//platform/projectModel-impl",

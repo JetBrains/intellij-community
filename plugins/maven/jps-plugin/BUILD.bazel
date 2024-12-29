@@ -12,7 +12,6 @@ jvm_library(
   module_name = "intellij.maven.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//jps/model-api:model",
@@ -31,13 +30,14 @@ jvm_library(
   name = "jps_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   associates = [":jps"],
   deps = [
     "//jps/model-api:model",
     "//jps/model-impl",
     "//platform/util",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//jps/jps-builders:build",
     "//jps/model-serialization",
     "@lib//:plexus-utils",
@@ -45,6 +45,7 @@ jvm_library(
     "//platform/util/jdom",
     "//jps/jps-builders:build-tests_test_lib",
     "@lib//:hash4j",
+    "@lib//:junit5",
   ],
   runtime_deps = [":jps_resources"]
 )

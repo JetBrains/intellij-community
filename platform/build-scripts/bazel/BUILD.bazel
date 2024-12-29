@@ -8,14 +8,17 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/util",
     "//jps/model-serialization",
     "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
-    "@lib//:kotlinc_kotlin-jps-plugin-classpath",
+    "@lib//:kotlinc-kotlin-jps-plugin-classpath",
     "@lib//:fastutil-min",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
+    "@lib//:kaml",
+    "@lib//:okhttp",
   ],
   runtime_deps = ["//jps/model-impl"]
 )

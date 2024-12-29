@@ -5,7 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
@@ -20,7 +20,7 @@ jvm_test(
     "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
     "@lib//:kotlin-reflect",
     "//platform/util",
     "//platform/util/storages:io-storages",

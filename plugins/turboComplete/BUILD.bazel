@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
+    "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/statistics",
     "//plugins/completion-ml-ranking:completionMlRanking",

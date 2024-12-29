@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = ["org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi"]
 )
@@ -23,10 +23,11 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fe10",
-    "@lib//:kotlinc_parcelize-compiler-plugin",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-parcelize-compiler-plugin",
     "//java/java-psi-api:psi",
+    "//platform/util",
     "//java/java-psi-impl:psi-impl",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -39,7 +40,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/parcelize/common:kotlin-compiler-plugins-parcelize-common",
     "//plugins/kotlin/idea",
     "//platform/editor-ui-api:editor",
-    "@lib//:kotlinc_kotlin-compiler-ir",
+    "@lib//:kotlinc-kotlin-compiler-ir",
   ],
   runtime_deps = [":kotlin-compiler-plugins-parcelize-k1_resources"]
 )

@@ -1,0 +1,25 @@
+- url: https://cache-redirector.jetbrains.com/repo1.maven.org/maven2
+  libs:
+    # protobuf
+    - id: com.google.protobuf:protobuf-java
+      version: 4.29.2
+    # kotlin compiler
+    - id: org.jetbrains.kotlin:kotlin-build-tools-impl
+      version: 2.1.20-Beta1
+    - id: org.jetbrains.kotlin:kotlin-compiler
+      version: 2.1.20-Beta1
+      runtimeDeps:
+        - "@lib//:jetbrains-annotations"
+        - ":kotlinx-coroutines-core"
+    - id: org.jetbrains.kotlin:kotlin-metadata-jvm
+      version: 2.1.20-Beta1
+    # kotlin compiler plugins
+    - id: org.jetbrains.kotlin:kotlin-serialization-compiler-plugin
+      version: 2.1.20-Beta1
+    - id: org.jetbrains.kotlin:kotlin-compose-compiler-plugin
+      version: 2.1.20-Beta1
+    - id: dev.drewhamilton.poko:poko-compiler-plugin
+      version: 0.18.1
+    # other libs
+    - id: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm
+      version: 1.9.0

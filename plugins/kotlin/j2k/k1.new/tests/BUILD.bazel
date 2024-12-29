@@ -5,7 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True
 )
 
@@ -22,10 +22,12 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fe10",
-    "@lib//:kotlinc_analysis-api",
-    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//java/testFramework",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
     "//plugins/kotlin/base/util:kotlin-base-util",
@@ -38,6 +40,8 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/idea",
     "//plugins/kotlin/core",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//java/java-psi-api:psi",

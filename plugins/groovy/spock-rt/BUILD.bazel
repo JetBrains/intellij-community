@@ -6,12 +6,11 @@ jvm_library(
   module_name = "intellij.groovy.spock.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/junit_rt:junit-rt",
     "@lib//:junit4-provided",
-    "@lib//:groovy_spock_rt_spockframework_spock_core-provided",
+    "@lib//:groovy-spock-rt-spockframework-spock-core-provided",
     "@lib//:opentest4j-provided",
   ]
 )

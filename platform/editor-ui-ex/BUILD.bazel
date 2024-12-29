@@ -25,11 +25,6 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/statistics",
   ],
-  exports = [
-    "//platform/editor-ui-api:editor",
-    "//platform/util",
-    "//platform/core-impl",
-  ],
   runtime_deps = [":editor-ex_resources"]
 )
 ### auto-generated section `build intellij.platform.editor.ex` end

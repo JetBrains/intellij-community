@@ -13,6 +13,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/lang-api:lang",
@@ -26,6 +28,7 @@ jvm_library(
     "//platform/ide-core/plugins:ide-core-plugins",
     "@lib//:stream_ex",
     "//platform/util/concurrency",
+    "//platform/observable:ide-observable",
     "//platform/util-ex",
     "//platform/projectModel-impl",
     "@lib//:fastutil-min",
@@ -74,6 +77,8 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/execution",
+    "//platform/util/concurrency",
     "@lib//:assert_j",
   ]
 )

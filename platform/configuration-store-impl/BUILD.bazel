@@ -18,6 +18,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/projectModel-impl",
+    "//platform/core-impl",
     "//platform/workspace/jps",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinx-coroutines-core",

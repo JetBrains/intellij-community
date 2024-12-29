@@ -19,7 +19,7 @@ package org.jetbrains.bazel.jvm.kotlin
 
 import java.util.*
 
-class ArgMap<T : Enum<T>>(
+internal class ArgMap<T : Enum<T>>(
   private val map: EnumMap<T, MutableList<String>>,
 ) {
   /**
@@ -55,9 +55,21 @@ class ArgMap<T : Enum<T>>(
   fun has(key: T): Boolean = map[key]?.isNotEmpty() ?: false
 
   fun optional(key: T): List<String>? = map[key]
+
+  fun optionalList(key: T): List<String> = map[key] ?: emptyList()
+
+  override fun toString(): String {
+    if (map.isEmpty()) {
+      return "Args is empty"
+    }
+
+    return map.entries.joinToString(separator = "\n", prefix = "Args:\n", postfix = "") { (key, value) ->
+      "  - $key: ${value.joinToString(separator = ", ", prefix = "[", postfix = "]")}"
+    }
+  }
 }
 
-fun <T : Enum<T>> createArgMap(
+internal fun <T : Enum<T>> createArgMap(
   args: List<String>,
   enumClass: Class<T>,
 ): ArgMap<T> {

@@ -18,6 +18,7 @@ jvm_library(
     "//platform/util-ex",
     "//platform/util/jdom",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/util",
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",

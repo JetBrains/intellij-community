@@ -18,6 +18,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "@lib//:kotlin-stdlib",
     "//platform/util",
   ],
   runtime_deps = [":externalSystem-dependencyUpdater_resources"]

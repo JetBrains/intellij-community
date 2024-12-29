@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
     "//platform/statistics",
     "//platform/platform-impl/internal:ide-internal",
     "@lib//:caffeine",

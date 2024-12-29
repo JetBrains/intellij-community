@@ -12,10 +12,9 @@ jvm_library(
   module_name = "intellij.java.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
-    "@lib//:java_rt_ant-1_7_1-provided",
+    "@lib//:java-rt-ant-1-7-1-provided",
     "@lib//:junit4",
   ],
   runtime_deps = [":rt_resources"]

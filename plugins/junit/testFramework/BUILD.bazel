@@ -18,7 +18,6 @@ jvm_library(
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//plugins/junit",
     "//java/java-frontback-psi-api:frontback-psi",
-    "//java/testFramework",
   ]
 )
 ### auto-generated section `build intellij.junit.testFramework` end

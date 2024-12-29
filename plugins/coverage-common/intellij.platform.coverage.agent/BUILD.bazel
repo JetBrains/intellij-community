@@ -11,10 +11,10 @@ jvm_resources(
 java_library(
   name = "coverage-agent",
   visibility = ["//visibility:public"],
-  exports = ["@lib//:platform_coverage_agent_intellij-coverage"],
+  exports = ["@lib//:platform-coverage-agent-intellij-coverage"],
   runtime_deps = [
     ":coverage-agent_resources",
-    "@lib//:platform_coverage_agent_intellij-coverage",
+    "@lib//:platform-coverage-agent-intellij-coverage",
   ]
 )
 ### auto-generated section `build intellij.platform.coverage.agent` end

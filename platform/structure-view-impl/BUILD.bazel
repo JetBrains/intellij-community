@@ -30,8 +30,6 @@ jvm_library(
     "//platform/editor-ui-api:editor",
     "//platform/util",
     "//platform/extensions",
-    "//platform/core-api:core",
-    "//platform/projectModel-api:projectModel",
   ],
   runtime_deps = [":structureView-impl_resources"]
 )

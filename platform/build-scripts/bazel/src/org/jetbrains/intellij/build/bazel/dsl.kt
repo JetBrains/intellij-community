@@ -57,8 +57,6 @@ internal class Target(private val type: String) : Renderable {
     attributes[key] = value
   }
 
-  fun getOptionValue(key: String): Any? = attributes.get(key)
-
   fun optionCount(): Int = attributes.size
 
   fun visibility(targets: Array<String>) {

@@ -13,8 +13,11 @@ jvm_library(
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/toml",
+    "//plugins/toml/core",
+    "//plugins/toml/json",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
     "//plugins/grazie/src/test:grazie-tests_test_lib",
   ]
 )

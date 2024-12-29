@@ -42,6 +42,7 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/util/coroutines",
     "//platform/util/storages:io-storages",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
   ],
   runtime_deps = [":vcs-log-impl_resources"]
 )
@@ -95,6 +96,7 @@ jvm_library(
     "//platform/backend/observation:observation_test_lib",
     "//platform/util/coroutines",
     "//platform/util/storages:io-storages",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
     "@lib//:mockito",
   ],
   runtime_deps = [":vcs-log-impl_resources"]

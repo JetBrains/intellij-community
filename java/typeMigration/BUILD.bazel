@@ -36,6 +36,8 @@ jvm_library(
     "//platform/lang-impl",
     "//java/openapi:java",
     "//platform/structuralsearch:structuralSearch",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/java-impl:impl",
     "//java/testFramework",
     "//java/structuralsearch-java:structuralSearch",

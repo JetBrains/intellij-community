@@ -17,8 +17,10 @@ jvm_library(
     "//platform/markdown-utils",
     "//platform/built-in-server-api:builtInServer",
     "@lib//:guava",
+    "//platform/indexing-impl",
     "//platform/analysis-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/observable:ide-observable",
     "@lib//:netty-codec-http",
     "//platform/ide-core-impl",
     "//platform/built-in-server:builtInServer-impl",
@@ -28,7 +30,7 @@ jvm_library(
     "@lib//:netty-buffer",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:jetbrains_markdown",
+    "@lib//:jetbrains-markdown",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
     "@lib//:jackson",
@@ -46,10 +48,7 @@ jvm_library(
     "//platform/ui.jcef:ui-jcef",
     "@lib//:kotlin-stdlib",
   ],
-  exports = [
-    "//platform/lang-impl",
-    "//platform/ui.jcef:ui-jcef",
-  ],
+  exports = ["//platform/ui.jcef:ui-jcef"],
   runtime_deps = [":markdown_resources"]
 )
 ### auto-generated section `build intellij.markdown` end

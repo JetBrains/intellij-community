@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
@@ -27,11 +27,12 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fe10",
-    "@lib//:kotlinc_kotlin-jps-common",
-    "@lib//:kotlinc_analysis-api",
-    "@lib//:kotlinc_analysis-api-platform-interface",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
@@ -52,7 +53,7 @@ jvm_library(
     "@lib//:caffeine",
     "//platform/util/jdom",
     "//java/java-impl:impl",
-    "@lib//:kotlinc_analysis-api-impl-base",
+    "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:fastutil-min",
   ],
   runtime_deps = [":kotlin-base-project-structure_resources"]
@@ -66,11 +67,13 @@ jvm_library(
   associates = [":kotlin-base-project-structure"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fe10",
-    "@lib//:kotlinc_kotlin-jps-common",
-    "@lib//:kotlinc_analysis-api",
-    "@lib//:kotlinc_analysis-api-platform-interface",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
@@ -94,7 +97,7 @@ jvm_library(
     "//platform/util/jdom",
     "//java/java-impl:impl",
     "@lib//:junit4",
-    "@lib//:kotlinc_analysis-api-impl-base",
+    "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:fastutil-min",
   ],
   runtime_deps = [":kotlin-base-project-structure_resources"]

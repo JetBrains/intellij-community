@@ -38,6 +38,8 @@ jvm_library(
     "//plugins/java-decompiler/engine:java-decompiler-engine",
     "//plugins/java-decompiler/engine:java-decompiler-engine_test_lib",
     "//platform/lang-api:lang",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/java-psi-api:psi",
     "//platform/ide-core-impl",
     "//java/java-psi-impl:psi-impl",

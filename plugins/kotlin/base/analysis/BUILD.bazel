@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
@@ -26,13 +26,14 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_analysis-api",
-    "@lib//:kotlinc_kotlin-scripting-common",
-    "@lib//:kotlinc_kotlin-scripting-jvm",
-    "@lib//:kotlinc_kotlin-scripting-compiler-impl",
-    "@lib//:kotlinc_kotlin-jps-common",
-    "@lib//:kotlinc_analysis-api-platform-interface",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:guava",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",

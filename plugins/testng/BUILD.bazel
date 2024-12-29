@@ -21,6 +21,7 @@ jvm_library(
   deps = [
     "//java/openapi:java",
     "//java/execution/impl:java-execution-impl",
+    "//platform/platform-impl:ide-impl",
     "//java/debugger/impl:java-debugger-impl",
     "//java/debugger/openapi:java-debugger",
     "//platform/ide-core-impl",
@@ -41,7 +42,6 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:jgoodies-forms",
   ],
-  exports = ["//platform/smRunner"],
   runtime_deps = [
     ":testng_resources",
     ":testng_resources_1",
@@ -56,7 +56,11 @@ jvm_library(
   deps = [
     "//java/openapi:java",
     "//java/execution/impl:java-execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//java/debugger/impl:java-debugger-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/debugger/openapi:java-debugger",
     "//platform/ide-core-impl",
     "//platform/testRunner",

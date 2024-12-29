@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/util",
     "//xml/xml-frontback:frontback",
   ],
   runtime_deps = [":frontback-impl_resources"]

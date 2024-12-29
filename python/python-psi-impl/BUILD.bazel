@@ -16,6 +16,7 @@ jvm_library(
     "//platform/core-api:core",
     "//python/python-psi-api:psi",
     "@lib//:guava",
+    "//platform/util",
     "//platform/core-impl",
     "@lib//:kotlin-stdlib",
     "//python/openapi:community",

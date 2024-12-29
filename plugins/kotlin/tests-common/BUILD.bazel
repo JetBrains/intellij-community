@@ -14,10 +14,10 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fe10",
-    "@lib//:kotlinc_kotlin-compiler-cli",
-    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:guava",
     "//platform/ide-core-impl",
     "@lib//:kotlin-test",
@@ -25,6 +25,7 @@ jvm_library(
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//java/openapi:java",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//platform/util/jdom",
     "//platform/core-impl",
@@ -35,7 +36,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-psi-api:psi",
     "//java/testFramework",
-    "@lib//:kotlinc_analysis-api-impl-base",
+    "@lib//:kotlinc-analysis-api-impl-base",
     "//jps/model-api:model",
   ]
 )

@@ -12,7 +12,6 @@ jvm_library(
   module_name = "intellij.devkit.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//jps/model-api:model",
@@ -21,6 +20,9 @@ jvm_library(
     "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
     "@lib//:asm",
     "//platform/util/jdom",
+    "//jps/jps-builders-6:build-javac-rt",
+    "//platform/util",
+    "@lib//:jetbrains-annotations",
   ],
   runtime_deps = [":jps_resources"]
 )
@@ -45,7 +47,10 @@ jvm_library(
     "//jps/jps-builders:build-tests_test_lib",
     "//java/testFramework",
     "//jps/model-serialization:model-serialization-tests_test_lib",
+    "//jps/jps-builders:build",
     "@lib//:asm",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
   ]
 )

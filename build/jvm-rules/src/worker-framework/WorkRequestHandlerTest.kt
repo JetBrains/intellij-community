@@ -17,22 +17,23 @@ package org.jetbrains.bazel.jvm
 
 import com.google.devtools.build.lib.worker.WorkerProtocol.WorkRequest
 import com.google.devtools.build.lib.worker.WorkerProtocol.WorkResponse
+import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import java.io.*
-import java.lang.Thread.UncaughtExceptionHandler
-import java.lang.ref.WeakReference
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Duration.Companion.seconds
+import kotlin.coroutines.coroutineContext
 
 /**
  * Tests for the WorkRequestHandler
  */
-//@Timeout(value = 30, unit = TimeUnit.SECONDS)
 class WorkRequestHandlerTest {
   companion object {
     private fun createTestWorkerIo(): WorkerIo {
@@ -55,16 +56,19 @@ class WorkRequestHandlerTest {
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun normalWorkRequest() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler(
-      executor = { args, err, _ -> 1 },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(input = ByteArrayInputStream(ByteArray(0)), output = out),
+      requestExecutor = { args, err, _ -> 1 },
+      input = ByteArrayInputStream(ByteArray(0)),
+      out = out,
     )
 
     val request = WorkRequest.newBuilder().addAllArguments(listOf("--sources", "A.java")).build()
-    handler.handleRequest(workerIo = testWorkerIo, request = request, requestState = AtomicReference(Thread.currentThread()))
+    runBlocking {
+      handler.handleRequest(workerIo = testWorkerIo, request = request, requestState = AtomicReference(WorkRequestState.STARTED))
+    }
 
     val response = WorkResponse.parseDelimitedFrom(out.toByteArray().inputStream())
     assertThat(response.requestId).isEqualTo(0)
@@ -73,16 +77,19 @@ class WorkRequestHandlerTest {
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun multiplexWorkRequest() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler(
-      executor = { args, err, _ -> 0 },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(ByteArray(0).inputStream(), out)
+      requestExecutor = { args, err, _ -> 0 },
+      input = ByteArray(0).inputStream(),
+      out,
     )
 
     val request = newWorkRequest(listOf("--sources", "A.java"))
-    handler.handleRequest(workerIo = testWorkerIo, request = request, requestState = AtomicReference(Thread.currentThread()))
+    runBlocking {
+      handler.handleRequest(workerIo = testWorkerIo, request = request, requestState = AtomicReference(WorkRequestState.STARTED))
+    }
 
     val response = WorkResponse.parseDelimitedFrom(out.toByteArray().inputStream())
     assertThat(response.requestId).isEqualTo(42)
@@ -91,124 +98,61 @@ class WorkRequestHandlerTest {
   }
 
   @Test
-  fun multiplexWorkRequestStopsThreadsOnShutdown() {
-    val src = PipedOutputStream()
-    val dest = PipedInputStream()
-
-    // work request threads release this when they have started
-    val started = Semaphore(0)
-    // work request threads wait forever on this, so we can see how they react to closed stdin
-    val eternity = Semaphore(0)
-    // released when the work request handler thread has noticed the closed stdin and interrupted the work request threads
-    val workerThreads = ArrayList<WeakReference<Thread>>()
-    val handler = WorkRequestHandler(
-      executor = { args, err, _ ->
-        // each call to this, runs in its own thread
-        synchronized(workerThreads) {
-          workerThreads.add(WeakReference(Thread.currentThread()))
-        }
-        started.release()
-        // this blocks forever
-        eternity.acquire()
-        0
-      },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(input = PipedInputStream(src), output = PipedOutputStream(dest))
-    )
-
-    useHandler(handler = handler, failures = ConcurrentLinkedQueue()) {
-      val args = listOf("--sources", "A.java")
-      val request1 = newWorkRequest(args)
-      request1.writeDelimitedTo(src)
-      val request2 = WorkRequest.newBuilder().addAllArguments(args).setRequestId(43).build()
-      request2.writeDelimitedTo(src)
-
-      // wait
-      started.acquire(2)
-      assertThat(workerThreads).hasSize(2)
-      // now both request threads are started, closing the input to the "worker" should shut it down
-      src.close()
-
-      waitForDie(workerThreads)
-    }
-  }
-
-  private fun waitForDie(workerThreads: Collection<WeakReference<Thread>>) {
-    repeat(10) {
-      if (workerThreads.all {
-          val thread = it.get()
-          thread == null || !thread.isAlive
-        }) {
-        return
-      }
-
-      Thread.sleep(1.seconds.inWholeMilliseconds)
-    }
-
-    throw AssertionError("All worker threads should have stopped: " + workerThreads.joinToString { it.get()?.toString() ?: "null" })
-  }
-
-  @Test
+  @Timeout(value = 30, unit = TimeUnit.SECONDS)
   fun multiplexWorkRequestStopsWorkerOnException() {
     val src = PipedOutputStream()
-    val dest = PipedInputStream()
 
     // work request threads release this when they have started
     val started = Semaphore(0)
-    // one work request threads waits forever on this, so the second one can throw an exception
-    val eternity = Semaphore(0)
-    val workerThreads = ConcurrentLinkedQueue<WeakReference<Thread>>()
+    val workerThreads = AtomicInteger()
     val handler = WorkRequestHandler(
-      executor = { args, err, _ ->
+      requestExecutor = { args, err, _ ->
         // each call to this, runs in its own thread
-        try {
-          synchronized(workerThreads) {
-            workerThreads.add(WeakReference(Thread.currentThread()))
-          }
-          started.release()
-          if (workerThreads.size < 2) {
-            // this blocks forever
-            eternity.acquire()
-          }
-          else {
-            throw Error("Intentional death!")
+        workerThreads.incrementAndGet()
+        started.release()
+        if (workerThreads.get() < 2) {
+          // this blocks forever
+          while (coroutineContext.isActive) {
+            delay(1)
           }
         }
-        catch (e: InterruptedException) {
-          throw AssertionError("Unhandled exception", e)
+        else {
+          throw Error("Intentional death!")
         }
         0
       },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(input = PipedInputStream(src), output = PipedOutputStream(dest)),
+      input = PipedInputStream(src),
+      out = OutputStream.nullOutputStream(),
     )
 
-    useHandler(handler = handler, failures = ConcurrentLinkedQueue()) {
+    useHandler(handler = handler, waitForProcessing = true, errorFilter = { it.message != "Intentional death!" }) {
       val args = listOf("--sources", "A.java")
       newWorkRequest(args).writeDelimitedTo(src)
       newWorkRequest(args, 43).writeDelimitedTo(src)
 
       started.acquire(2)
-      assertThat(workerThreads).hasSize(2)
-      waitForDie(workerThreads)
     }
+    assertThat(workerThreads.get()).isEqualTo(2)
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun testOutput() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler(
-      executor = { args, err, _ ->
+      requestExecutor = { args, err, _ ->
         err.appendLine("Failed!")
         1
       },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(ByteArray(0).inputStream(), out)
+      input = ByteArray(0).inputStream(),
+      out,
     )
 
     val args = listOf("--sources", "A.java")
     val request = WorkRequest.newBuilder().addAllArguments(args).build()
-    handler.handleRequest(testWorkerIo, request, AtomicReference(Thread.currentThread()))
+    runBlocking {
+      handler.handleRequest(testWorkerIo, request, AtomicReference(WorkRequestState.STARTED))
+    }
 
     val response = WorkResponse.parseDelimitedFrom(out.toByteArray().inputStream())
     assertThat(response.requestId).isEqualTo(0)
@@ -217,27 +161,31 @@ class WorkRequestHandlerTest {
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun testException() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler(
-      executor = { args, err, _ ->
+      requestExecutor = { args, err, _ ->
         throw RuntimeException("Exploded!")
       },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(ByteArray(0).inputStream(), out)
+      input = ByteArray(0).inputStream(),
+      out,
     )
 
     val args = listOf("--sources", "A.java")
-    val request = WorkRequest.newBuilder().addAllArguments(args).build()
-    handler.handleRequest(workerIo = testWorkerIo, request = request, requestState = AtomicReference(Thread.currentThread()))
+    val request = WorkRequest.newBuilder().addAllArguments(args).setRequestId(342).build()
+    runBlocking {
+      handler.handleRequest(workerIo = testWorkerIo, request = request, requestState = AtomicReference(WorkRequestState.STARTED))
+    }
 
     val response = WorkResponse.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray()))
-    assertThat(response.requestId).isEqualTo(0)
+    assertThat(response.requestId).isEqualTo(342)
     assertThat(response.exitCode).isEqualTo(1)
     assertThat(response.getOutput()).startsWith("java.lang.RuntimeException: Exploded!")
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun cancelRequestExactlyOneResponseSent() {
     var handlerCalled = false
     var cancelCalled = false
@@ -245,13 +193,13 @@ class WorkRequestHandlerTest {
     val dest = PipedInputStream()
 
     val handler = WorkRequestHandler(
-      executor = { args, err, _ ->
+      requestExecutor = { args, err, _ ->
         handlerCalled = true
         err.appendLine("Such work! Much progress! Wow!")
         1
       },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(input = PipedInputStream(src), output = PipedOutputStream(dest)),
+      input = PipedInputStream(src),
+      out = PipedOutputStream(dest),
       cancelHandler = {
         cancelCalled = true
       },
@@ -276,10 +224,13 @@ class WorkRequestHandlerTest {
 
       // checks that nothing more was sent
       assertThat(dest.available()).isEqualTo(0)
+
+      src.close()
     }
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun cancelRequestSendsResponseWhenDone() {
     val waitForCancel = Semaphore(0)
     val handlerCalled = Semaphore(0)
@@ -290,7 +241,7 @@ class WorkRequestHandlerTest {
 
     // we force the regular handling to not finish until after we have read the cancel response, to avoid flakiness
     val handler = WorkRequestHandler(
-      executor = { args, err, _ ->
+      requestExecutor = { args, err, _ ->
         // this handler waits until the main thread has sent a cancel request
         handlerCalled.release()
         try {
@@ -302,13 +253,13 @@ class WorkRequestHandlerTest {
         }
         0
       },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(input = PipedInputStream(src), output = PipedOutputStream(dest)),
+      input = PipedInputStream(src),
+      out = PipedOutputStream(dest),
       cancelHandler = { i -> cancelCalled.incrementAndGet() }
     )
 
     // this thread just makes sure the WorkRequestHandler does work asynchronously
-    useHandler(handler, failures) {
+    useHandler(handler, failures, waitForProcessing = true) {
       WorkRequest.newBuilder().setRequestId(42).build().writeDelimitedTo(src)
       // make sure the handler is called before sending the cancel request, or we might process the cancellation entirely before that
       handlerCalled.acquire()
@@ -323,12 +274,12 @@ class WorkRequestHandlerTest {
 
       // checks that there weren't other unexpected failures
       assertThat(failures).isEmpty()
-      handler.stopAndAwait()
-      assertThat(failures).isEmpty()
     }
+    assertThat(failures).isEmpty()
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun cancelRequestNoDoubleCancelResponse() {
     val waitForCancel = Semaphore(0)
     val cancelCalled = AtomicInteger(0)
@@ -339,7 +290,7 @@ class WorkRequestHandlerTest {
     // we force the regular handling to not finish until after we have read the cancel response, to avoid flakiness
     val inputStream = PipedInputStream(src)
     val handler = WorkRequestHandler(
-      executor = { args, err, _ ->
+      requestExecutor = { args, err, _ ->
         try {
           waitForCancel.acquire()
         }
@@ -349,14 +300,14 @@ class WorkRequestHandlerTest {
         }
         0
       },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(input = inputStream, output = PipedOutputStream(dest)),
+      input = inputStream,
+      out = PipedOutputStream(dest),
       cancelHandler = {
         cancelCalled.incrementAndGet()
       },
     )
 
-    useHandler(handler, failures) {
+    useHandler(handler, failures, waitForProcessing = true) {
       WorkRequest.newBuilder().setRequestId(42).build().writeDelimitedTo(src)
       WorkRequest.newBuilder().setRequestId(42).setCancel(true).build().writeDelimitedTo(src)
       WorkRequest.newBuilder().setRequestId(42).setCancel(true).build().writeDelimitedTo(src)
@@ -368,45 +319,7 @@ class WorkRequestHandlerTest {
       val response = WorkResponse.parseDelimitedFrom(dest)
       assertThat(cancelCalled.get()).isLessThan(2)
       assertThat(response.requestId).isEqualTo(42)
-      assertThat(response.getOutput()).isEmpty()
-      assertThat(response.wasCancelled).isTrue()
-
-      // Checks that nothing more was sent.
-      assertThat(dest.available()).isEqualTo(0)
-      src.close()
-    }
-  }
-
-  @Test
-  fun cancelRequestSendsNoResponseWhenAlreadySent() {
-    val handlerCalled = Semaphore(0)
-    val src = PipedOutputStream()
-    val dest = PipedInputStream()
-
-    // we force the cancel request to not happen until after we have read the normal response, to avoid flakiness
-    val handler = WorkRequestHandler(
-      executor = { args, err, _ ->
-        handlerCalled.release()
-        err.appendLine("Such work! Much progress! Wow!")
-        2
-      },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(input = PipedInputStream(src), output = PipedOutputStream(dest)),
-    )
-
-    useHandler(handler) {
-      WorkRequest.newBuilder().setRequestId(42).build().writeDelimitedTo(src)
-      val response = WorkResponse.parseDelimitedFrom(dest)
-      WorkRequest.newBuilder().setRequestId(42).setCancel(true).build().writeDelimitedTo(src)
-      handler.stopAndAwait()
-
-      assertThat(response).isNotNull()
-
-      assertThat(handlerCalled.availablePermits()).isEqualTo(1)
-      assertThat(response.requestId).isEqualTo(42)
-      assertThat(response.wasCancelled).isFalse()
-      assertThat(response.exitCode).isEqualTo(2)
-      assertThat(response.getOutput()).startsWith("Such work! Much progress! Wow!")
+      assertThat(response.output).isEmpty()
 
       // checks that nothing more was sent
       assertThat(dest.available()).isEqualTo(0)
@@ -415,17 +328,58 @@ class WorkRequestHandlerTest {
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
+  fun cancelRequestSendsNoResponseWhenAlreadySent() {
+    val handlerCalled = Semaphore(0)
+    val src = PipedOutputStream()
+    val dest = PipedInputStream()
+
+    // we force the cancel request to not happen until after we have read the normal response, to avoid flakiness
+    val handler = WorkRequestHandler(
+      requestExecutor = { args, err, _ ->
+        handlerCalled.release()
+        err.appendLine("Such work! Much progress! Wow!")
+        2
+      },
+      input = PipedInputStream(src),
+      out = PipedOutputStream(dest),
+    )
+
+    var r: WorkResponse? = null
+    useHandler(handler, waitForProcessing = true) {
+      WorkRequest.newBuilder().setRequestId(42).build().writeDelimitedTo(src)
+      r = WorkResponse.parseDelimitedFrom(dest)
+      WorkRequest.newBuilder().setRequestId(42).setCancel(true).build().writeDelimitedTo(src)
+      src.close()
+    }
+
+    val response = r!!
+    assertThat(response).isNotNull()
+    assertThat(handlerCalled.availablePermits()).isEqualTo(1)
+    assertThat(response.requestId).isEqualTo(42)
+    assertThat(response.wasCancelled).isFalse()
+    assertThat(response.exitCode).isEqualTo(2)
+    assertThat(response.getOutput()).startsWith("Such work! Much progress! Wow!")
+
+    // checks that nothing more was sent
+    assertThat(dest.available()).isEqualTo(0)
+  }
+
+  @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun workRequestHandlerWithWorkRequestCallback() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler(
-      executor = { request, err, _ -> request.argumentsCount },
-      errorStream = PrintStream(ByteArrayOutputStream()),
-      messageProcessor = ProtoWorkerMessageProcessor(ByteArrayInputStream(ByteArray(0)), out),
+      requestExecutor = { request, err, _ -> request.argumentsCount },
+      ByteArrayInputStream(ByteArray(0)),
+      out,
     )
 
     val args = listOf("--sources", "B.java")
     val request = WorkRequest.newBuilder().addAllArguments(args).build()
-    handler.handleRequest(workerIo = testWorkerIo, request = request, requestState = AtomicReference(Thread.currentThread()))
+    runBlocking {
+      handler.handleRequest(workerIo = testWorkerIo, request = request, requestState = AtomicReference(WorkRequestState.STARTED))
+    }
 
     val response = WorkResponse.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray()))
     assertThat(response.requestId).isEqualTo(0)
@@ -434,6 +388,7 @@ class WorkRequestHandlerTest {
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun workerIODoesWrapSystemStreams() {
     // Save the original streams
     val originalInputStream = System.`in`
@@ -474,10 +429,11 @@ class WorkRequestHandlerTest {
   }
 
   @Test
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
   fun workerIODoesCaptureStandardOutAndErrorStreams() {
     wrapStandardSystemStreams().use { io ->
       // assert that nothing has been captured in the new instance
-      assertThat(io.readCapturedAsUtf8String()).isEmpty()
+      assertThat(io.readCapturedAsUtf8String()).isNullOrEmpty()
 
       // Assert that the standard out/error stream redirect to our own streams
       print("This is a standard out message!")
@@ -485,14 +441,14 @@ class WorkRequestHandlerTest {
       assertThat(io.readCapturedAsUtf8String()).isEqualTo("This is a standard out message!This is a standard error message!")
 
       // Assert that readCapturedAsUtf8String calls reset on the captured stream after a read
-      assertThat(io.readCapturedAsUtf8String()).isEmpty()
+      assertThat(io.readCapturedAsUtf8String()).isNullOrEmpty()
 
       print("out 1")
       System.err.print("err 1")
       print("out 2")
       System.err.print("err 2")
       assertThat(io.readCapturedAsUtf8String()).isEqualTo("out 1err 1out 2err 2")
-      assertThat(io.readCapturedAsUtf8String()).isEmpty()
+      assertThat(io.readCapturedAsUtf8String()).isNullOrEmpty()
     }
   }
 }
@@ -501,28 +457,47 @@ private fun newWorkRequest(args: List<String>, id: Int = 42): WorkRequest {
   return WorkRequest.newBuilder().addAllArguments(args).setRequestId(id).build()
 }
 
+@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 private inline fun useHandler(
   handler: WorkRequestHandler,
   failures: ConcurrentLinkedQueue<String> = ConcurrentLinkedQueue<String>(),
+  waitForProcessing: Boolean = false,
+  crossinline errorFilter: (Throwable) -> Boolean = { true },
   task: () -> Unit
 ) {
   wrapStandardSystemStreams().use { workerIo ->
-    val readThread = handler.startRead(workerIo, finishTimeout = 1.seconds)
-    readThread.uncaughtExceptionHandler = UncaughtExceptionHandler { thread, e ->
-      failures.add(e.message!!)
+    val processor = GlobalScope.async(Dispatchers.Default) {
+      try {
+        handler.processRequests(workerIo)
+      }
+      catch (_: CancellationException) {
+      }
+      catch (e: Throwable) {
+        if (errorFilter(e)) {
+          failures.add(e.message!!)
+        }
+      }
     }
 
     try {
       task()
 
+      if (waitForProcessing) {
+        runBlocking {
+          processor.await()
+        }
+      }
+
       // checks that there weren't other unexpected failures
-      assertThat(failures).isEmpty()
-      handler.stopAndAwait()
       assertThat(failures).isEmpty()
     }
     finally {
-      handler.stopNow()
-      readThread.interrupt()
+      runBlocking {
+        if (processor.isCompleted) {
+          processor.getCompletionExceptionOrNull()?.let { throw it }
+        }
+        processor.cancel()
+      }
     }
   }
 }

@@ -2,21 +2,11 @@ load("@rules_java//java:defs.bzl", "java_binary")
 
 load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
 
-load("//build:compiler-options.bzl", "create_javac_options", "create_kotlinc_options")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-create_javac_options(name = "j8", release = "8")
-create_kotlinc_options(name= "k8", jvm_target="1.8")
-
-create_javac_options(name = "j11", release = "11")
-create_kotlinc_options(name= "k11", jvm_target= "11")
-
-create_javac_options(name = "j17", release = "17")
-create_kotlinc_options(name = "k17", jvm_target = "17")
-
-define_kt_toolchain(
-  name = "kotlin_toolchain",
-  javac_options = ":j17",
-)
+create_kotlinc_options(name= "k8", jvm_target = 8)
+create_kotlinc_options(name= "k11", jvm_target = 11)
+create_kotlinc_options(name = "k17", jvm_target = 17)
 
 java_binary(
   name = "main_run",
@@ -127,6 +117,9 @@ java_library(
     "//platform/util",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",
+    "//platform/vcs-impl/exec:vcs-impl-exec",
+    "//platform/vcs-impl/lang:vcs-impl-lang",
+    "//platform/vcs-impl/lang/actions:vcs-impl-lang-actions",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//xml/impl",
@@ -232,6 +225,12 @@ java_library(
     "//jvm/jvm-analysis-impl:analysis-impl",
     "//plugins/ByteCodeViewer:java-byteCodeViewer",
     "//plugins/github/github-json:vcs-github-json",
+    "//plugins/search-everywhere-ml/ranking/core:searchEverywhereMl-ranking-core",
+    "//plugins/search-everywhere-ml/ranking/java:searchEverywhereMl-ranking-java",
+    "//plugins/search-everywhere-ml/ranking/vcs:searchEverywhereMl-ranking-vcs",
+    "//plugins/search-everywhere-ml/ranking/yaml:searchEverywhereMl-ranking-yaml",
+    "//plugins/search-everywhere-ml/typos:searchEverywhereMl-typos",
+    "//plugins/grazie",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end

@@ -8,6 +8,9 @@ jvm_test(
   deps = [
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
+    "//java/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/junit/testFramework",
   ]
 )

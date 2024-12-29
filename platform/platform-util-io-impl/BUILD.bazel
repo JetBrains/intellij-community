@@ -13,6 +13,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "@lib//:pty4j",
     "@lib//:winp",
+    "//platform/util",
     "@lib//:proxy-vole",
     "@lib//:jna",
     "@lib//:jackson",

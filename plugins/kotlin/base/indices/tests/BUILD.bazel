@@ -14,7 +14,11 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//java/openapi:java",
+    "//java/testFramework",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
   ]
 )

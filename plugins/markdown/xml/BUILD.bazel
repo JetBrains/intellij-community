@@ -16,6 +16,9 @@ jvm_library(
     "//plugins/markdown/core:markdown",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-ui",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/lang-impl",
     "//platform/monolith",
   ],
   runtime_deps = [":xml_resources"]

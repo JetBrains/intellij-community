@@ -5,7 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True
 )
 
@@ -24,12 +24,17 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/injection/base/tests:kotlin-base-injection-tests_test_lib",
     "//plugins/kotlin/fir/tests:kotlin-fir-tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "@lib//:kotlinc_kotlin-compiler-tests",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
   ]
 )
 

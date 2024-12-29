@@ -14,8 +14,10 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core/plugins:ide-core-plugins",
     "//platform/xdebugger-api:debugger",
     "@lib//:guava",
     "@lib//:gson",
@@ -60,6 +62,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl",
     "//platform/xdebugger-api:debugger",
     "@lib//:guava",
     "@lib//:gson",

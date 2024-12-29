@@ -5,6 +5,7 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     deps = [
         "//zip:build-zip",
+        "//:kotlin-compiler",
     ],
     visibility = ["//visibility:public"],
 )

@@ -5,7 +5,9 @@ load("@rules_jvm//:jvm.bzl", "jvm_test")
 jvm_test(
   name = "indexing-tests_test",
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = ["//platform/indexing-impl"],
   deps = [
+    "//platform/core-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]

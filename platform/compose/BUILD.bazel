@@ -21,6 +21,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/jewel/ide-laf-bridge:ideLafBridge",
+    "//libraries/compose-foundation-desktop",
     "@lib//:kotlinx-coroutines-core",
   ],
   exports = ["//platform/jewel/ide-laf-bridge:ideLafBridge"],

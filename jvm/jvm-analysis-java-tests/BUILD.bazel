@@ -11,7 +11,13 @@ jvm_library(
   name = "analysis-java-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  deps = ["//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework"]
+  deps = [
+    "//java/openapi:java",
+    "//java/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
+  ]
 )
 
 jvm_test(

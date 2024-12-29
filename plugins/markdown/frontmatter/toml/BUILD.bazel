@@ -20,8 +20,10 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//plugins/IntelliLang:langInjection",
+    "//platform/lang-impl",
     "//plugins/markdown/core:markdown",
     "//platform/monolith",
+    "@lib//:kotlin-stdlib",
     ":toml-core_provided",
   ],
   runtime_deps = [":markdown-frontmatter-toml_resources"]

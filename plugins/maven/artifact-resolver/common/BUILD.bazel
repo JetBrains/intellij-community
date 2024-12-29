@@ -6,8 +6,7 @@ jvm_library(
   module_name = "intellij.maven.artifactResolver.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
-  deps = ["@lib//:maven_artifact_resolver_common_org_apache_maven_maven-artifact_3_0_5-provided"]
+  deps = ["@lib//:maven-artifact_resolver-common-org-apache-maven-maven-artifact-3-0-5-provided"]
 )
 ### auto-generated section `build intellij.maven.artifactResolver.common` end

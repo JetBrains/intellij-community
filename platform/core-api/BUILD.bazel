@@ -12,7 +12,6 @@ jvm_library(
   module_name = "intellij.platform.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util",
@@ -27,11 +26,7 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:jetbrains-annotations",
   ],
-  exports = [
-    "//platform/util",
-    "//platform/extensions",
-    "//platform/util/progress",
-  ],
+  exports = ["//platform/extensions"],
   runtime_deps = [":core_resources"]
 )
 ### auto-generated section `build intellij.platform.core` end

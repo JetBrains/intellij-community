@@ -16,6 +16,7 @@ jvm_library(
     "//plugins/env-files-support:dotenv",
     "//java/java-psi-api:psi",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/util",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor",
     "//platform/core-ui",

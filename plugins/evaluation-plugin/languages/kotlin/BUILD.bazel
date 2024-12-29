@@ -19,7 +19,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
     "//plugins/evaluation-plugin/core:evaluationPlugin-core",
-    "@lib//:kotlinc_kotlin-compiler-common-provided",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
   ],
   runtime_deps = [":evaluationPlugin-languages-kotlin_resources"]
 )

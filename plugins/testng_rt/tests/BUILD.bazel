@@ -19,6 +19,8 @@ jvm_library(
     "//plugins/testng",
     "//plugins/testng:testng_test_lib",
     "//java/execution/impl:java-execution-impl",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
     "//aether-dependency-resolver:java-aetherDependencyResolver",
     "//aether-dependency-resolver:java-aetherDependencyResolver_test_lib",
     "//platform/core-ui",

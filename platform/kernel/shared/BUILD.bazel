@@ -22,6 +22,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:fastutil-min",
     "//platform/core-api:core",
+    "//platform/util",
     "//platform/ide-core",
     "//platform/util/coroutines",
   ],

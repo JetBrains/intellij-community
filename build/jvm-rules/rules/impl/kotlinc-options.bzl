@@ -334,12 +334,40 @@ _KOPTS = {
     #     ),
     "jvm_target": struct(
         args = dict(
-            default = "",
-            doc = "The -jvm_target flag. This is only tested at 1.8.",
-            values = ["1.6", "1.8", "9", "10", "11", "12", "13", "15", "16", "17"],
+            default = 0,
+            doc = "",
+        ),
+        type = attr.int,
+        flag_name = "jvm-target",
+    ),
+    "strict_kotlin_deps": struct(
+        args = dict(
+            default = "warn",
+            doc = "",
         ),
         type = attr.string,
-        flag_name = "jvm-target",
+    ),
+    "strict_java_deps": struct(
+        args = dict(
+            default = "warn",
+            doc = "",
+        ),
+        type = attr.string,
+    ),
+    "report_unused_deps": struct(
+        args = dict(
+            default = "warn",
+            doc = "",
+            values = ["off", "warn", "error"],
+        ),
+        type = attr.string,
+    ),
+    "jvm_emit_jdeps": struct(
+        args = dict(
+            default = True,
+            doc = "",
+        ),
+        type = attr.bool,
     ),
     #     "x_jdk_release": struct(
     #         args = dict(

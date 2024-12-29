@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//xml/openapi:xml",
+    "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "@lib//:velocity",
@@ -35,6 +36,8 @@ jvm_library(
   associates = [":copyright"],
   deps = [
     "//xml/openapi:xml",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "@lib//:velocity",
@@ -47,6 +50,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/external-system-api:externalSystem",
+    "@lib//:assert_j",
     "//platform/core-ui",
     "@lib//:junit5",
     "//platform/util/jdom",

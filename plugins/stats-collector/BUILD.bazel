@@ -18,9 +18,10 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/completion-ml-ranking:completionMlRanking",
     "@lib//:http-client",
+    "//platform/platform-impl:ide-impl",
     "@lib//:guava",
     "@lib//:gson",
-    "@lib//:stats_collector_completion-log-events",
+    "@lib//:stats_collector-completion-log-events",
     "//platform/statistics",
     "//platform/core-ui",
   ],
@@ -47,7 +48,9 @@ jvm_library(
     "@lib//:assert_j",
     "//plugins/stats-collector:statsCollector",
     "//plugins/completion-ml-ranking:completionMlRanking",
-    "@lib//:stats_collector_tests_completion-log-events",
+    "@lib//:stats_collector-tests-completion-log-events",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui",
   ]
 )

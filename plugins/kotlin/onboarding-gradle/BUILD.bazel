@@ -14,7 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/statistics",
     "//platform/analysis-api:analysis",
     "//platform/feedback",
@@ -42,11 +42,13 @@ jvm_library(
   associates = [":onboarding-gradle"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/feedback",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

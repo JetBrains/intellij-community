@@ -6,10 +6,9 @@ jvm_library(
   module_name = "intellij.cucumber.jvmFormatter4",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
-    "@lib//:cucumber_jvm_formatter4_cucumber-core_4_0_1-provided",
+    "@lib//:cucumber-jvm_formatter4-cucumber-core-4-0-1-provided",
     "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter",
     "//plugins/cucumber-jvm-formatter3:cucumber-jvmFormatter3",
   ]

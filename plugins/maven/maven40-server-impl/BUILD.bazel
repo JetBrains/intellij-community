@@ -12,14 +12,14 @@ jvm_library(
   module_name = "intellij.maven.server.m40",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/maven-server-api:maven-server",
     "//plugins/maven/maven-server-telemetry:server-telemetry",
     "//platform/util/jdom",
-    "@lib//:maven_server_m40_org_apache_maven_maven-embedder_4_0_0-rc-1-provided",
-    "@lib//:maven_server_m40_google_inject_guice_6_0_0-provided",
+    "@lib//:maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-2-provided",
+    "@lib//:maven-server-m40-google-inject-guice-6-0-0-provided",
+    "@lib//:maven-server-m40-org-eclipse-sisu-eclipse-sisu-inject-0-9-0-_m3-provided",
   ],
   runtime_deps = [":server-m40_resources"]
 )

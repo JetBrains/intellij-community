@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:netty-codec-http",
     "//platform/util-ex",
+    "//platform/util",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core",
     "//platform/analysis-api:analysis",

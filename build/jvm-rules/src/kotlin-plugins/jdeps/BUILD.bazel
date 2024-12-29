@@ -10,12 +10,5 @@ kt_jvm_library(
         "//:protobuf-java",
         "@bazel_tools//src/main/protobuf:deps_java_proto",
     ],
-    runtime_deps = [":resources"],
-    visibility = ["//src/kotlin-builder:__pkg__"],
-)
-
-jvm_resources(
-    name = "resources",
-    files = glob(["META-INF/**/*"]),
     visibility = ["//src/kotlin-builder:__pkg__"],
 )

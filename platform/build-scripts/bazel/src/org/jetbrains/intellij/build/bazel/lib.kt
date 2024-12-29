@@ -10,65 +10,36 @@ import kotlin.io.path.relativeTo
 
 internal const val PROVIDED_SUFFIX = "-provided"
 
-internal class Library(
+internal data class LibOwnerDescriptor(
+  @JvmField val repoLabel: String,
+  @JvmField val buildFile: Path,
+  @JvmField val moduleFile: Path,
+  @JvmField val visibility: String? = "//visibility:public",
+  @JvmField val sectionName: String = "maven libs",
+)
+
+internal data class Library(
   @JvmField val targetName: String,
-  // excluded from equals / hashCode
-  @JvmField val isCommunity: Boolean,
-) {
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
+  @JvmField val owner: LibOwnerDescriptor,
+)
 
-    other as Library
-
-    return targetName == other.targetName
-  }
-
-  override fun hashCode(): Int = 31 + targetName.hashCode()
-}
-
-internal interface LibOwner {
+internal sealed interface LibOwner {
   val lib: Library
 }
 
 @Suppress("unused")
-internal class MavenLibrary(
+internal data class MavenLibrary(
   @JvmField val mavenCoordinates: String,
   @JvmField val jars: List<Path>,
   @JvmField val sourceJars: List<Path>,
   @JvmField val javadocJars: List<Path>,
   override val lib: Library,
-) : LibOwner {
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
+) : LibOwner
 
-    other as MavenLibrary
-
-    return lib == other.lib && mavenCoordinates == other.mavenCoordinates
-  }
-
-  override fun hashCode(): Int = 31 * lib.hashCode() + mavenCoordinates.hashCode()
-}
-
-internal class LocalLibrary(
+internal data class LocalLibrary(
   @JvmField val files: List<Path>,
   override val lib: Library,
-) : LibOwner {
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as LocalLibrary
-
-    if (files != other.files) return false
-    if (lib != other.lib) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int = 31 * lib.hashCode() + files.hashCode()
-}
+) : LibOwner
 
 private fun getUrlAndSha256(jar: Path, jarRepositories: List<JarRepository>, m2Repo: Path, urlCache: UrlCache): CacheEntry {
   val jarPath = jar.relativeTo(m2Repo).invariantSeparatorsPathString
@@ -86,21 +57,6 @@ private fun getUrlAndSha256(jar: Path, jarRepositories: List<JarRepository>, m2R
   return entry
 }
 
-internal fun generateMavenLibs(
-  bazelFileUpdater: BazelFileUpdater,
-  mavenLibraries: List<MavenLibrary>,
-  providedRequested: Set<LibOwner>,
-) {
-  val labelChecker = HashSet<String>()
-  buildFile(bazelFileUpdater, "maven-libs") {
-    load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
-
-    for (lib in mavenLibraries.groupBy { it.lib.targetName }.flatMap { (_, values) -> listOf(values.maxBy { it.lib.targetName }) }) {
-      generateMavenLib(lib = lib, labelChecker = labelChecker, providedRequested = providedRequested)
-    }
-  }
-}
-
 private fun isKotlinLib(jars: List<Path>): Boolean {
   for (file in jars) {
     ZipFile(file.toFile()).use { zipFile ->
@@ -115,10 +71,11 @@ private fun isKotlinLib(jars: List<Path>): Boolean {
   return false
 }
 
-private fun BuildFile.generateMavenLib(
+internal fun BuildFile.generateMavenLib(
   lib: MavenLibrary,
-  labelChecker: MutableSet<String>,
+  labelTracker: MutableSet<String>,
   providedRequested: Set<LibOwner>,
+  libVisibility: String?,
 ) {
   val targetName = lib.lib.targetName
   @Suppress("SpellCheckingInspection")
@@ -131,13 +88,13 @@ private fun BuildFile.generateMavenLib(
   // '--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED' '--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED' ... (remaining 19 arguments skipped)
   // error: cannot determine module name for ../ultimate_lib~~_repo_rules~wire-compiler-3_7_1_http/file/wire-compiler-3.7.1.jar
   // 2. jetbrains-annotations - ijar doesn't add JPMS
-  val isJavaLib = !targetName.startsWith("jetbrains-annotations") && (targetName.startsWith("bigdatatools_") || targetName.startsWith("wire") || !isKotlinLib(lib.jars))
+  val isJavaLib = !targetName.startsWith("jetbrains-annotations") && (targetName.startsWith("bigdatatools-") || targetName.startsWith("wire") || !isKotlinLib(lib.jars))
 
   var exportedCompilerPlugins = emptyList<String>()
   if (lib.jars.size == 1) {
     val jar = lib.jars.single()
     val libName = targetName
-    if (!labelChecker.add(libName)) {
+    if (!labelTracker.add(libName)) {
       return
     }
 
@@ -146,19 +103,21 @@ private fun BuildFile.generateMavenLib(
     if (isJavaLib) {
       target("java_import") {
         option("name", targetName)
-        option("jars", arrayOf("@${escapeBazelLabel(jar.nameWithoutExtension)}_http//file"))
+        option("jars", arrayOf("@${fileToHttpRuleFile(jar)}"))
         if (sourceJar != null) {
-          option("srcjar", "@${escapeBazelLabel(sourceJar.nameWithoutExtension)}_http//file")
+          option("srcjar", "@${fileToHttpRuleFile(sourceJar)}")
         }
-        visibility(arrayOf("//visibility:public"))
+        libVisibility?.let {
+          visibility(arrayOf(it))
+        }
       }
     }
     else {
       target("kt_jvm_import") {
         option("name", targetName)
-        option("jar", "@${escapeBazelLabel(jar.nameWithoutExtension)}_http//file")
+        option("jar", "@${fileToHttpRuleFile(jar)}")
         if (sourceJar != null) {
-          option("srcjar", "@${escapeBazelLabel(sourceJar.nameWithoutExtension)}_http//file")
+          option("srcjar", "@${fileToHttpRuleFile(sourceJar)}")
         }
         if (targetName == "kotlinx-serialization-core") {
           exportedCompilerPlugins = listOf("@lib//:kotlin-serialization-plugin")
@@ -169,40 +128,46 @@ private fun BuildFile.generateMavenLib(
           option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
         }
 
-        visibility(arrayOf("//visibility:public"))
+        libVisibility?.let {
+          visibility(arrayOf(it))
+        }
       }
     }
   }
   else {
+    load("@rules_java//java:defs.bzl", "java_library")
     target("java_library") {
       option("name", targetName)
-      option("exports", lib.jars.map { ":${escapeBazelLabel(it.nameWithoutExtension)}_import" })
-      visibility(arrayOf("//visibility:public"))
+      option("exports", lib.jars.map { ":${fileToHttpRuleRepoName(it)}_import" })
+      libVisibility?.let {
+        visibility(arrayOf(it))
+      }
     }
 
     for (jar in lib.jars) {
-      val bazelLabel = escapeBazelLabel(jar.nameWithoutExtension)
+      val bazelLabel = fileToHttpRuleRepoName(jar)
       val label = "${bazelLabel}_import"
-      if (!labelChecker.add(label)) {
+      if (!labelTracker.add(label)) {
         continue
       }
 
       val sourceJar = lib.sourceJars.singleOrNull { it.name == "${jar.nameWithoutExtension}-sources.jar" }
       if (isJavaLib) {
+        load("@rules_java//java:defs.bzl", "java_import")
         target("java_import") {
           option("name", label)
-          option("jars", arrayOf("@${bazelLabel}_http//file"))
+          option("jars", arrayOf("@$bazelLabel//file"))
           if (sourceJar != null) {
-            option("srcjar", "@${escapeBazelLabel(sourceJar.nameWithoutExtension)}_http//file")
+            option("srcjar", "@${fileToHttpRuleFile(sourceJar)}")
           }
         }
       }
       else {
         target("kt_jvm_import") {
           option("name", label)
-          option("jar", "@${bazelLabel}_http//file")
+          option("jar", "@$bazelLabel//file")
           if (sourceJar != null) {
-            option("srcjar", "@${escapeBazelLabel(sourceJar.nameWithoutExtension)}_http//file")
+            option("srcjar", "@${fileToHttpRuleFile(sourceJar)}")
           }
         }
       }
@@ -215,7 +180,9 @@ private fun BuildFile.generateMavenLib(
         option("name", targetName + PROVIDED_SUFFIX)
         option("exports", arrayOf(":$targetName"))
         option("neverlink", true)
-        visibility(arrayOf("//visibility:public"))
+        libVisibility?.let {
+          visibility(arrayOf(it))
+        }
       }
     }
     else {
@@ -224,61 +191,74 @@ private fun BuildFile.generateMavenLib(
         option("exports", arrayOf(":$targetName"))
         option("neverlink", true)
         option("exported_compiler_plugins", exportedCompilerPlugins)
-        visibility(arrayOf("//visibility:public"))
+        libVisibility?.let {
+          visibility(arrayOf(it))
+        }
       }
     }
   }
 }
 
 @Suppress("DuplicatedCode")
-internal fun generateProjectLibsBazelModule(file: Path, isCommunity: Boolean, jarRepositories: List<JarRepository>, m2Repo: Path, generator: BazelBuildFileGenerator) {
-  val bazelFileUpdater = BazelFileUpdater(file)
-  bazelFileUpdater.removeSections("maven-libraries")
-  val labelTracker = hashSetOf<String>()
-  buildFile(bazelFileUpdater, "maven-libs") {
-    generator.libs.asSequence()
-      .filterIsInstance<MavenLibrary>()
-      .filter { it.lib.isCommunity == isCommunity }
-      .sortedBy { it.lib.targetName }
-      .flatMap { lib ->
-        lib.jars.asSequence().map { jar ->
-          val label = "${escapeBazelLabel(jar.nameWithoutExtension)}_http"
-          if (labelTracker.contains(label)) {
-            return@map
-          }
+internal fun generateBazelModuleSectionsForLibs(
+  list: List<MavenLibrary>,
+  owner: LibOwnerDescriptor,
+  jarRepositories: List<JarRepository>,
+  m2Repo: Path,
+  urlCache: UrlCache,
+  moduleFileToLabelTracker: MutableMap<Path, MutableSet<String>>,
+  fileToUpdater: MutableMap<Path, BazelFileUpdater>,
+) {
+  val bazelFileUpdater = fileToUpdater.computeIfAbsent(owner.moduleFile) {
+    val updater = BazelFileUpdater(it)
+    updater.removeSections("maven-libs")
+    updater.removeSections("maven libs")
+    updater
+  }
 
-          val entry = getUrlAndSha256(jar = jar, jarRepositories = jarRepositories, m2Repo = m2Repo, urlCache = generator.urlCache)
-          labelTracker.add(label)
-          target("http_file") {
-            option("name", label)
-            option("url", entry.url)
-            option("sha256", entry.sha256)
-            option("downloaded_file_path", jar.fileName.name)
-          }
-        } +
-        lib.sourceJars.asSequence().map { jar ->
-          val label = "${escapeBazelLabel(jar.nameWithoutExtension)}_http"
-          if (labelTracker.contains(label)) {
-            return@map
-          }
-          val entry = getUrlAndSha256(jar = jar, jarRepositories = jarRepositories, m2Repo = m2Repo, urlCache = generator.urlCache)
-          labelTracker.add(label)
-          target("http_file") {
-            option("name", label)
-            option("url", entry.url)
-            option("sha256", entry.sha256)
-            option("downloaded_file_path", jar.fileName.name)
-          }
+  val labelTracker = moduleFileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet<String>() }
+  buildFile(bazelFileUpdater, owner.sectionName) {
+    for (lib in list) {
+      for (jar in lib.jars) {
+        val label = fileToHttpRuleRepoName(jar)
+        if (!labelTracker.add(label)) {
+          continue
+        }
+
+        val entry = getUrlAndSha256(jar = jar, jarRepositories = jarRepositories, m2Repo = m2Repo, urlCache = urlCache)
+        target("http_file") {
+          option("name", label)
+          option("url", entry.url)
+          option("sha256", entry.sha256)
+          option("downloaded_file_path", jar.fileName.name)
         }
       }
-      .toList()
+
+      for (jar in lib.sourceJars) {
+        val label = fileToHttpRuleRepoName(jar)
+        if (!labelTracker.add(label)) {
+          continue
+        }
+
+        val entry = getUrlAndSha256(jar = jar, jarRepositories = jarRepositories, m2Repo = m2Repo, urlCache = urlCache)
+        target("http_file") {
+          option("name", label)
+          option("url", entry.url)
+          option("sha256", entry.sha256)
+          option("downloaded_file_path", jar.fileName.name)
+        }
+      }
+    }
   }
-  bazelFileUpdater.save()
 }
 
-internal fun generateLocalLibs(libs: Set<LocalLibrary>, providedRequested: Set<LibOwner>) {
+private fun fileToHttpRuleRepoName(jar: Path): String = bazelLabelBadCharsPattern.replace(jar.nameWithoutExtension, "_") + "_http"
+
+private fun fileToHttpRuleFile(jar: Path): String = fileToHttpRuleRepoName(jar) + "//file"
+
+internal fun generateLocalLibs(libs: Set<LocalLibrary>, providedRequested: Set<LibOwner>, fileToUpdater: MutableMap<Path, BazelFileUpdater>) {
   for ((dir, libs) in libs.asSequence().sortedBy { it.lib.targetName }.groupBy { it.files.first().parent }) {
-    val bazelFileUpdater = BazelFileUpdater(dir.resolve("BUILD.bazel"))
+    val bazelFileUpdater = fileToUpdater.computeIfAbsent(dir.resolve("BUILD.bazel")) { BazelFileUpdater(it) }
     bazelFileUpdater.removeSections("local-libraries")
     buildFile(bazelFileUpdater, "local-libs") {
       load("@rules_java//java:defs.bzl", "java_import")
@@ -291,6 +271,7 @@ internal fun generateLocalLibs(libs: Set<LocalLibrary>, providedRequested: Set<L
         }
 
         if (providedRequested.contains(lib)) {
+          load("@rules_java//java:defs.bzl", "java_library")
           target("java_library") {
             option("name", targetName + PROVIDED_SUFFIX)
             option("exports", arrayOf(":$targetName"))
@@ -300,6 +281,5 @@ internal fun generateLocalLibs(libs: Set<LocalLibrary>, providedRequested: Set<L
         }
       }
     }
-    bazelFileUpdater.save()
   }
 }

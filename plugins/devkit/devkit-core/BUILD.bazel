@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
@@ -26,6 +26,7 @@ jvm_library(
     "//platform/util/jdom",
     "//java/compiler/openapi:java-compiler",
     "//java/execution/openapi:java-execution",
+    "//platform/util/progress",
     "//java/execution/impl:java-execution-impl",
     "//java/java-impl:impl",
     "//java/compiler/impl:java-compiler-impl",
@@ -34,6 +35,7 @@ jvm_library(
     "//java/openapi:java",
     "@lib//:guava",
     "@lib//:xerces",
+    "//platform/observable:ide-observable",
     "//spellchecker",
     "//plugins/properties/properties-psi-api:psi",
     "//platform/lang-impl",
@@ -62,6 +64,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/smart-update",
     "//platform/platform-impl:ide-impl",
+    "//platform/backend/workspace",
     "//platform/ide-core-impl",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
@@ -69,9 +72,12 @@ jvm_library(
     "@lib//:kotlinx-serialization-protobuf",
     "//platform/built-in-server-api:builtInServer",
     "@lib//:caffeine",
+    "//platform/editor-ui-ex:editor-ex",
     "//platform/ijent/buildConstants:community-buildConstants",
     "//platform/markdown-utils",
     "@lib//:snakeyaml",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   runtime_deps = [":core_resources"]
 )

@@ -11,6 +11,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//platform/analysis-api:analysis",
     "@lib//:kotlin-stdlib",
+    "//platform/util",
     "//java/java-analysis-api:analysis",
     "//uast/uast-common-ide:ide",
   ],

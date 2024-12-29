@@ -30,7 +30,7 @@ jvm_library(
     "//platform/util",
     "//jps/jps-builders:build",
     "//java/debugger/memory-agent:java-debugger-memory-agent",
-    "@lib//:java_debugger_impl_sa-jdwp",
+    "@lib//:java-debugger-impl-sa-jdwp",
     "@lib//:jb-jdi",
     "@lib//:stream_ex",
     "//platform/statistics",
@@ -43,14 +43,16 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/build-scripts/downloader:buildScripts-downloader",
     "//platform/feedback",
+    "//platform/util/progress",
     "@lib//:kotlinx-datetime-jvm",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/util/coroutines",
     "//platform/threadDumpParser",
     "//java/debugger/shared:java-debugger-impl-shared",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
-  exports = ["//java/debugger/openapi:java-debugger"],
   runtime_deps = [":java-debugger-impl_resources"]
 )
 ### auto-generated section `build intellij.java.debugger.impl` end

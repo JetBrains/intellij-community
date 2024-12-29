@@ -11,6 +11,7 @@ jvm_test(
     "//plugins/ui-designer/jps-plugin:java-guiForms-jps",
     "@lib//:asm",
     "//platform/forms_rt:java-guiForms-rt",
+    "//jps/jps-builders:build",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//jps/model-serialization:model-serialization-tests_test_lib",

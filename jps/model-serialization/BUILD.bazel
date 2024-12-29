@@ -12,7 +12,6 @@ jvm_library(
   module_name = "intellij.platform.jps.model.serialization",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
@@ -45,7 +44,11 @@ jvm_library(
     "//jps/model-serialization",
     "//jps/model-impl:model-tests_test_lib",
     "//platform/testFramework/extensions:testExtensions",
+    "@lib//:assert_j",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/util/jdom",
+    "//platform/projectModel-impl",
   ],
   runtime_deps = ["//platform/workspace/jps"]
 )

@@ -742,6 +742,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "jzlib", url = "http://www.jcraft.com/jzlib/")
       .newBsd("https://github.com/ymnk/jzlib/raw/master/LICENSE.txt"),
 
+    LibraryLicense("kaml", libraryName = "kaml", url = "https://github.com/charleskorn/kaml")
+      .apache("https://github.com/charleskorn/kaml/blob/main/LICENSE")
+      .suppliedByPersons("Charles Korn"),
+
     LibraryLicense("Kconfig for the Zephyr Project", version = "1.2.0", attachedTo = "intellij.textmate", url = "https://github.com/trond-snekvik/vscode-kconfig")
       .mit("https://github.com/trond-snekvik/vscode-kconfig/blob/master/LICENSE"),
 

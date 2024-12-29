@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/sh/core",
     "//platform/execution-impl",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/lang-impl",
   ],
   runtime_deps = [":markdown_resources"]
 )

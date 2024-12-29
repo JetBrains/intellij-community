@@ -9,7 +9,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "@lib//:tools_api_dump_kotlinx-bcv",
+    "@lib//:tools-api_dump-kotlinx-bcv",
     "@lib//:kotlinx-collections-immutable",
   ]
 )

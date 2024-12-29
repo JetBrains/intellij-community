@@ -12,7 +12,6 @@ jvm_library(
   module_name = "intellij.platform.jps.model.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
@@ -38,6 +37,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = ["//jps/model-impl"],
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",

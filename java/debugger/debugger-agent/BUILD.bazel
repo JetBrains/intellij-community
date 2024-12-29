@@ -4,6 +4,6 @@ load("@rules_java//java:defs.bzl", "java_library")
 java_library(
   name = "java-debugger-agent-holder",
   visibility = ["//visibility:public"],
-  runtime_deps = ["@lib//:java_debugger_agent_holder_debugger-agent"]
+  runtime_deps = ["@lib//:java-debugger-agent-holder-debugger-agent"]
 )
 ### auto-generated section `build intellij.java.debugger.agent.holder` end

@@ -1,5 +1,5 @@
 ### auto-generated section `local-libs` start
-load("@rules_java//java:defs.bzl", "java_import")
+load("@rules_java//java:defs.bzl", "java_import", "java_library")
 
 java_import(
   name = "ant-antlr",

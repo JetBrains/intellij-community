@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/groovy",
+    "//platform/util",
     "//plugins/git4idea:vcs-git",
     "//platform/core-api:core",
     "//platform/ide-core",

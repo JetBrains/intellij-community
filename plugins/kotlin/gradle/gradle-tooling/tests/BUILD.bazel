@@ -17,7 +17,7 @@ jvm_library(
   ],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin_project_model",
+    "@lib//:kotlin-project-model",
     "@lib//:kotlin-test",
     "@lib//:junit4",
     "//plugins/kotlin/base/project-model:kotlin-base-project-model",

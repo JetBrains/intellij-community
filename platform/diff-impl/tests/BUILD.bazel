@@ -23,6 +23,7 @@ jvm_library(
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "@lib//:mockito",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-impl",
     "@lib//:kotlin-test",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",

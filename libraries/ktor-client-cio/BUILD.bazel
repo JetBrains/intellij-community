@@ -12,12 +12,12 @@ java_library(
   name = "ktor-client-cio",
   visibility = ["//visibility:public"],
   exports = [
-    "@lib//:libraries_ktor_client_cio_ktor-client-cio-internal",
+    "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
     "//libraries/ktor-client",
   ],
   runtime_deps = [
     ":ktor-client-cio_resources",
-    "@lib//:libraries_ktor_client_cio_ktor-client-cio-internal",
+    "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
     "//libraries/ktor-client",
   ]
 )

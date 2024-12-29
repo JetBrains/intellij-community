@@ -7,12 +7,6 @@ jvm_resources(
   strip_prefix = "xpath-lang/resources"
 )
 
-jvm_resources(
-  name = "xpath_resources_1",
-  files = glob(["xpath-lang/compatibilityResources/**/*"]),
-  strip_prefix = "xpath-lang/compatibilityResources"
-)
-
 jvm_library(
   name = "xpath",
   module_name = "intellij.xpath",
@@ -22,6 +16,7 @@ jvm_library(
     "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
+    "//platform/indexing-impl",
     "//platform/lang-impl",
     "//xml/impl",
     "//platform/editor-ui-ex:editor-ex",
@@ -36,7 +31,6 @@ jvm_library(
   ],
   runtime_deps = [
     ":xpath_resources",
-    ":xpath_resources_1",
     "//xml/dom-impl",
   ]
 )
@@ -51,6 +45,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-impl",
     "//platform/lang-impl",
     "//xml/impl",
     "//platform/editor-ui-ex:editor-ex",
@@ -68,10 +63,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
-  runtime_deps = [
-    ":xpath_resources",
-    ":xpath_resources_1",
-  ]
+  runtime_deps = [":xpath_resources"]
 )
 
 jvm_test(

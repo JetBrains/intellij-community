@@ -14,12 +14,14 @@ jvm_library(
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/lang-impl",
     "//plugins/IntelliLang:langInjection",
     "//plugins/markdown/core:markdown",
     "//plugins/markdown/frontmatter/toml:markdown-frontmatter-toml",
     "//plugins/markdown/frontmatter/yaml:markdown-frontmatter-yaml",
     "//json",
     "//platform/monolith",
+    "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [":frontmatter_resources"]
 )

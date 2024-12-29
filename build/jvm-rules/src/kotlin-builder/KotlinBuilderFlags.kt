@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
 internal enum class KotlinBuilderFlags {
@@ -6,13 +7,9 @@ internal enum class KotlinBuilderFlags {
   DIRECT_DEPENDENCIES,
   DEPS_ARTIFACTS,
 
-  PROCESSOR_PATH,
-  PROCESSORS,
+  PLUGIN_ID,
+  PLUGIN_CLASSPATH,
 
-  STUBS_PLUGIN_OPTIONS,
-  STUBS_PLUGIN_CLASSPATH,
-
-  COMPILER_PLUGIN_CLASSPATH,
   OUTPUT,
   RULE_KIND,
   KOTLIN_MODULE_NAME,
@@ -31,13 +28,10 @@ internal enum class KotlinBuilderFlags {
   WARN,
 
   KOTLIN_OUTPUT_SRCJAR,
-  KOTLIN_FRIEND_PATHS,
+  FRIEND_PATHS,
   KOTLIN_OUTPUT_JDEPS,
-  KOTLIN_DEBUG_TAGS,
+  TRACE,
   ABI_JAR,
-  GENERATED_JAVA_SRCJAR,
   STRICT_KOTLIN_DEPS,
   REDUCED_CLASSPATH_MODE,
-  INSTRUMENT_COVERAGE,
-  KSP_GENERATED_JAVA_SRCJAR,
 }

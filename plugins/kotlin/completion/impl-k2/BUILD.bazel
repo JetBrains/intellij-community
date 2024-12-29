@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -27,13 +27,14 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fir",
-    "@lib//:kotlinc_analysis-api",
-    "@lib//:kotlinc_analysis-api-impl-base",
-    "@lib//:kotlinc_analysis-api-k2",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "@lib//:kotlinc-analysis-api-k2",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
@@ -55,7 +56,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
     "//java/java-psi-impl:psi-impl",
     "//java/java-impl:impl",
-    "@lib//:kotlinc_analysis-api-platform-interface",
+    "@lib//:kotlinc-analysis-api-platform-interface",
   ],
   runtime_deps = [":kotlin-completion-impl-k2_resources"]
 )

@@ -9,15 +9,17 @@ jvm_library(
   deps = [
     "//jvm/jvm-analysis-impl:analysis-impl",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//platform/testFramework",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/smRunner",
+    "//java/openapi:java",
+    "//java/execution/impl:java-execution-impl",
     "//java/testFramework",
   ],
   exports = [
     "//jvm/jvm-analysis-impl:analysis-impl",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//java/java-impl-refactorings:impl-refactorings",
-    "//java/testFramework",
   ]
 )
 ### auto-generated section `build intellij.jvm.analysis.internal.testFramework` end

@@ -18,6 +18,7 @@ jvm_library(
     "//python/python-parser:parser",
     "//platform/editor-ui-api:editor",
     "//python/python-syntax-core:syntax-core",
+    "//platform/platform-impl:ide-impl",
     "//python/python-ast:ast",
     "//platform/lang-impl",
     "//platform/editor-ui-ex:editor-ex",

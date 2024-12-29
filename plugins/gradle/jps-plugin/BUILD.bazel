@@ -12,7 +12,6 @@ jvm_library(
   module_name = "intellij.gradle.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/util",
@@ -21,7 +20,7 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-serialization",
     "@lib//:gradle",
-    "@lib//:gradle_jps_ant",
+    "@lib//:gradle-jps-ant",
     "@lib//:gson",
     "//plugins/groovy/jps-plugin:jps",
     "@lib//:fastutil-min",
@@ -35,7 +34,6 @@ jvm_library(
   name = "jps_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   associates = [":jps"],
   deps = [
@@ -45,7 +43,7 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-serialization",
     "@lib//:gradle",
-    "@lib//:gradle_jps_ant",
+    "@lib//:gradle-jps-ant",
     "@lib//:gson",
     "//plugins/groovy/jps-plugin:jps",
     "//platform/testFramework",

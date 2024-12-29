@@ -15,9 +15,10 @@ jvm_library(
   deps = [
     "//plugins/kotlin/code-insight/inspections-k2:kotlin-code-insight-inspections-k2",
     "//java/debugger/impl:java-debugger-impl",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
     "@lib//:kotlin-stdlib",
+    "//java/debugger/openapi:java-debugger",
     "//platform/analysis-impl",
     "//java/java-analysis-impl:analysis-impl",
     "//plugins/kotlin/jvm-debugger/base/util:kotlin-jvm-debugger-base-util",

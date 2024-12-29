@@ -34,6 +34,9 @@ jvm_library(
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:guava",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/platform-impl:ide-impl",
+    "//platform/indexing-impl",
     "@lib//:jsoup",
     "//platform/util/jdom",
     "@lib//:jcef",

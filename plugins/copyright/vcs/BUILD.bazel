@@ -17,6 +17,8 @@ jvm_library(
     "//plugins/copyright",
     "//platform/core-api:core",
     "//platform/vcs-api:vcs",
+    "//platform/platform-api:ide",
+    "//platform/util/progress",
     "//platform/vcs-impl",
   ],
   runtime_deps = [":vcs_resources"]

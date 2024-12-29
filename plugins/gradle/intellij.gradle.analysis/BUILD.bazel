@@ -18,6 +18,7 @@ jvm_library(
     "//plugins/gradle/java",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
+    "//platform/util",
     "//platform/projectModel-api:projectModel",
   ],
   runtime_deps = [":analysis_resources"]

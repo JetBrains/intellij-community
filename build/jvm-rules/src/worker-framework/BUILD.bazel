@@ -12,8 +12,9 @@ kt_jvm_library(
     srcs = glob(["*.kt"], exclude = ["*Test.kt"]),
     deps = [
         ":worker_protocol_java_proto",
+        "//:kotlinx-coroutines-core",
         "//:protobuf-java",
-        "//:protobuf-java-util",
+        "@lib//:jetbrains-annotations",
     ],
     visibility = ["//visibility:public"],
 )

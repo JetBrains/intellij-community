@@ -21,6 +21,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//java/openapi:java",
     "//xml/impl",
     "//plugins/properties",
     "//java/testFramework",

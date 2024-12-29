@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//python/python-psi-api:psi",
     "//plugins/sh/core",
+    "//platform/util",
     "//platform/core-api:core",
   ],
   runtime_deps = [":python_resources"]

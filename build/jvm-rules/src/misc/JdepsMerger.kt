@@ -2,7 +2,9 @@
 package org.jetbrains.bazel.jvm
 
 import com.google.devtools.build.lib.view.proto.Deps
-import java.io.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.Attributes
@@ -20,7 +22,7 @@ private fun readJarOwnerFromManifest(jarPath: Path): String? {
   }.mainAttributes.getValue(TARGET_LABEL)
 }
 
-internal fun mergeJdeps(
+internal suspend fun mergeJdeps(
   consoleOutput: Writer,
   label: String,
   inputs: Sequence<Path>,
@@ -45,7 +47,9 @@ internal fun mergeJdeps(
   rootBuilder.addAllDependency(dependencies)
   rootBuilder.success = true
 
-  Files.write(output, rootBuilder.build().toByteArray())
+  withContext(Dispatchers.IO) {
+    Files.write(output, rootBuilder.build().toByteArray())
+  }
 
   if (reportUnusedDeps == "off") {
     return 0

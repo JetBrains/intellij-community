@@ -12,15 +12,16 @@ jvm_library(
   module_name = "intellij.javaFX.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//jps/jps-builders:build",
     "//jps/model-api:model",
+    "//platform/util",
     "//jps/model-serialization",
     "//plugins/javaFX/common",
     "//jps/model-impl",
     "//platform/util/jdom",
+    "@lib//:jetbrains-annotations",
   ],
   runtime_deps = [":jps_resources"]
 )

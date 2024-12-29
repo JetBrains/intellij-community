@@ -19,6 +19,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/kernel/shared:kernel",
     "//platform/xdebugger-impl:debugger-impl",
+    "//platform/platform-impl:ide-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/lang-impl",
     "//platform/platform-impl/rpc:ide-rpc",

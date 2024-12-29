@@ -9,8 +9,10 @@ jvm_library(
   deps = [
     "//uast/uast-common:uast",
     "//platform/testFramework",
+    "//java/openapi:java",
     "@lib//:kotlin-stdlib",
     "//platform/ide-core-impl",
+    "//platform/vcs-api:vcs",
     "//java/testFramework",
     "//platform/vcs-impl",
   ],

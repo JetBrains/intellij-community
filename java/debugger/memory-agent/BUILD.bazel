@@ -8,7 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/util",
-    "@lib//:java_debugger_memory_agent_debugger-memory-agent",
+    "@lib//:java-debugger-memory-agent-debugger-memory-agent",
     "@lib//:commons-io",
     "@lib//:kotlin-stdlib",
   ]

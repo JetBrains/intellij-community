@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/util/zip",
     "//platform/util/jdom",
+    "//platform/util-ex",
     "@rules_jvm//zip:build-zip",
   ]
 )

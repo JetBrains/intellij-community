@@ -114,8 +114,7 @@ common_attr = add_dicts(
         ),
         "_jdeps_merger": attr.label(
             doc = "the jdeps merger executable",
-            default = "//src/misc:worker-native",
-            # default = "//src/misc:worker-jvm",
+            default = "//:worker-impl",
             executable = True,
             allow_files = True,
             cfg = "exec",
@@ -126,6 +125,7 @@ common_attr = add_dicts(
             allow_files = True,
             cfg = "exec",
         ),
+         "_trace": attr.label(default = "//:kt_trace"),
     },
 )
 

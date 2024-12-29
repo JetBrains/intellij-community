@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   allow_kotlin_package = True
 )
 
@@ -17,7 +17,8 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-scripting-common",
+    "//platform/util",
+    "@lib//:kotlinc-kotlin-scripting-common",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
   ]
 )

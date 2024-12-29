@@ -5,23 +5,21 @@ import com.intellij.openapi.application.PathManager
 import java.nio.file.Path
 import kotlin.io.path.*
 
-val projectDir = Path(PathManager.getHomePath())
-
 fun main() {
-  reportBuildFileStructure(projectDir)
+  reportBuildFileStructure(Path.of(PathManager.getHomePath()))
 }
 
 private fun reportBuildFileStructure(projectDir: Path) {
   val output = mutableListOf<String>()
   val root = BuildNode(projectDir)
-  findBuildFiles(projectDir, root, output)
+  findBuildFiles(path = projectDir, parent = root, output = output, projectDir = projectDir)
   output.sort()
   output.forEach { println(it) }
 }
 
 private data class BuildNode(val path: Path, val children: MutableList<BuildNode> = ArrayList())
 
-private fun findBuildFiles(path: Path, parent: BuildNode, output: MutableList<String>) {
+private fun findBuildFiles(path: Path, parent: BuildNode, output: MutableList<String>, projectDir: Path) {
   if (path.name == "out") {
     return
   }
@@ -44,6 +42,6 @@ private fun findBuildFiles(path: Path, parent: BuildNode, output: MutableList<St
     parent
   }
   for (e in path.listDirectoryEntries().filter { it.isDirectory() }) {
-    findBuildFiles(e, currentBuildNode, output)
+    findBuildFiles(path = e, parent = currentBuildNode, output = output, projectDir = projectDir)
   }
 }

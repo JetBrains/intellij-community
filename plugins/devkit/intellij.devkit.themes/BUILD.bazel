@@ -44,6 +44,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:guava",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/ide-core-impl",

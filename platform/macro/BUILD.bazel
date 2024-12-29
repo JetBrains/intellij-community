@@ -16,6 +16,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//jps/model-serialization",
     "//platform/projectModel-impl",
+    "//platform/util",
     "//platform/ide-core",
     "//platform/analysis-api:analysis",
     "//platform/util/jdom",

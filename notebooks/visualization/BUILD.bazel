@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
@@ -30,8 +30,10 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/core-ui",
     "//platform/ide-core-impl",
+    "//platform/observable:ide-observable",
     "//platform/platform-util-io:ide-util-io",
     "//notebooks/notebook-ui:ui",
+    "//platform/editor-ui-ex:editor-ex",
     "//platform/util/coroutines",
     "@lib//:kotlinx-serialization-core",
     "//plugins/markdown/core:markdown",
@@ -53,9 +55,11 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/core-ui",
     "//platform/ide-core-impl",
+    "//platform/observable:ide-observable",
     "//platform/platform-util-io:ide-util-io",
     "//notebooks/notebook-ui:ui",
     "@lib//:assert_j",
+    "//platform/editor-ui-ex:editor-ex",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/util/coroutines",

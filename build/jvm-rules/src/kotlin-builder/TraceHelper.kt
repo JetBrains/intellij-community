@@ -18,48 +18,16 @@ package org.jetbrains.bazel.jvm.kotlin
 
 import java.io.Writer
 
-internal class CompilationTaskContext(
-  private val label: String,
-  debug: List<String>,
-  @JvmField val out: Writer,
+internal class TraceHelper(
+  @JvmField val isTracing: Boolean,
 ) {
   private val start = System.currentTimeMillis()
   private var timings: MutableList<String>?
   private var level = -1
-  @JvmField
-  val isTracing: Boolean
 
   init {
-    timings = if (debug.contains("timings")) mutableListOf() else null
-    isTracing = debug.contains("trace")
-  }
-
-  /**
-   * Print a list of debugging lines.
-   *
-   * @param header a header string
-   * @param lines a list of lines to print out
-   * @param prefix a prefix to add to each line
-   * @param filterEmpty if empty lines should be discarded or not
-   */
-  fun printLines(
-    header: String,
-    lines: Sequence<String>,
-    prefix: String = "|  ",
-    filterEmpty: Boolean = false,
-  ) {
-    check(header.isNotEmpty())
-    out.appendLine(if (header.endsWith(":")) header else "$header:")
-    for (line in lines) {
-      if (line.isNotEmpty() || !filterEmpty) {
-        out.appendLine("$prefix$line")
-      }
-    }
-    out.appendLine()
-  }
-
-  inline fun whenTracing(block: CompilationTaskContext.() -> Unit) {
-    if (isTracing) block() else null
+    @Suppress("ConstantConditionIf")
+    timings = if (false) mutableListOf() else null
   }
 
   /**
@@ -91,19 +59,13 @@ internal class CompilationTaskContext(
     }
   }
 
-  /**
-   * This method should be called at the end of builder invocation.
-   *
-   * @param successful true if the task finished successfully.
-   */
-  fun finalize(successful: Boolean) {
-    if (successful) {
-      timings?.also {
-        printLines(
-          "Task timings for $label (total: ${System.currentTimeMillis() - start} ms)",
-          it.asSequence(),
-        )
-      }
+  fun printTimings(out: Writer, targetLabel: String) {
+    val timings = timings ?: return
+    val header = "Task timings for $targetLabel (total: ${System.currentTimeMillis() - start} ms)"
+    out.appendLine(if (header.endsWith(":")) header else "$header:")
+    for (line in timings) {
+      out.appendLine("${"|  "}$line")
     }
+    out.appendLine()
   }
 }

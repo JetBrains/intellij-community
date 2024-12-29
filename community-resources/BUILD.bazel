@@ -14,7 +14,7 @@ java_library(
   runtime_deps = [
     ":customization_resources",
     "//java/ide-resources",
-    "@lib//:idea_community_customization_tips-idea-ce",
+    "@lib//:idea-community-customization-tips-idea-ce",
     "//platform/platform-impl:ide-impl",
     "//idea/customization/base:idea-customization-base",
     "//platform/experiment",

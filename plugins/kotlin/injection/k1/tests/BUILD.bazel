@@ -5,7 +5,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True
 )
 
@@ -21,6 +21,11 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
     "//plugins/kotlin/injection/base/tests:kotlin-base-injection-tests_test_lib",
   ]
 )

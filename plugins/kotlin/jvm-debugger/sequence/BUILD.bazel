@@ -14,8 +14,9 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/util",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
     "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
     "//plugins/kotlin/core",
     "//platform/core-impl",

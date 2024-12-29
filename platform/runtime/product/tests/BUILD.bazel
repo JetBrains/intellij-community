@@ -9,6 +9,7 @@ jvm_test(
     "//platform/runtime/product",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/runtime/repository",
     "//platform/runtime/repository/tests:runtime-repository-tests_test_lib",
   ]
 )

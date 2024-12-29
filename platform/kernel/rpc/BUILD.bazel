@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//fleet/util/logging/api:fleet-util-logging-api",
     "//fleet/rpc",
+    "//platform/util",
     "//platform/core-api:core",
   ],
   exports = [

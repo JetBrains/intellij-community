@@ -9,7 +9,7 @@ jvm_library(
   deps = [
     "//platform/testFramework",
     "//plugins/maven",
-    "@lib//:maven_test_framework_io_takari_maven_wrapper",
+    "@lib//:maven-test_framework-io-takari-maven-wrapper",
     "//platform/util/jdom",
     "//plugins/repository-search",
     "//java/java-impl:impl",

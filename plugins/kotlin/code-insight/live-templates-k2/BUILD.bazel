@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
 )
@@ -23,8 +23,8 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
@@ -33,6 +33,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor",
     "//java/java-psi-api:psi",
+    "//platform/util",
   ],
   runtime_deps = [":kotlin-code-insight-live-templates-k2_resources"]
 )
@@ -45,8 +46,8 @@ jvm_library(
   associates = [":kotlin-code-insight-live-templates-k2"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
@@ -56,14 +57,17 @@ jvm_library(
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/java-psi-api:psi",
     "//java/testFramework",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//platform/util",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
-    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-compiler-tests",
   ],
   runtime_deps = [":kotlin-code-insight-live-templates-k2_resources"]
 )

@@ -45,8 +45,8 @@ jvm_test(
   deps = [
     "//platform/core-nio-fs",
     "//platform/util",
-    "@lib//:io_mockk",
-    "@lib//:io_mockk_jvm",
+    "@lib//:io-mockk",
+    "@lib//:io-mockk-jvm",
     "@lib//:junit5",
     "@lib//:kotlin-reflect",
     "@lib//:kotlin-stdlib",

@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/jewel/decorated-window:decoratedWindow",
     "//platform/jewel/ui",
+    "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
   ],

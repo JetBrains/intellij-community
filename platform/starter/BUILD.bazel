@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-impl:ide-impl",
+    "//platform/core-impl",
     "//platform/platform-impl/bootstrap:ide-bootstrap",
     "//platform/bootstrap",
     "@lib//:kotlinx-coroutines-core",

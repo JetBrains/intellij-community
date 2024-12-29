@@ -31,7 +31,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:fastutil-min",
     "//platform/util/zip",
-    "@lib//:platform_images_build_pngencoder",
+    "@lib//:platform-images-build-pngencoder",
     "@lib//:hash4j",
     ":xmlDom_provided",
   ],
@@ -66,7 +66,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:fastutil-min",
     "//platform/util/zip",
-    "@lib//:platform_images_build_pngencoder",
+    "@lib//:platform-images-build-pngencoder",
     "@lib//:hash4j",
   ]
 )

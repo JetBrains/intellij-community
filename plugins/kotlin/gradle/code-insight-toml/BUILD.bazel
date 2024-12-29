@@ -13,16 +13,18 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//platform/analysis-api:analysis",
     "//platform/core-impl",
     "//uast/uast-common:uast",
+    "//platform/util",
     "//platform/editor-ui-api:editor",
     "//platform/indexing-api:indexing",
     "//plugins/gradle/java",
     "//plugins/toml",
+    "//plugins/toml/core",
   ],
   runtime_deps = [":kotlin-gradle-code-insight-toml_resources"]
 )

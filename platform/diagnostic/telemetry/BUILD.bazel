@@ -6,7 +6,6 @@ jvm_library(
   module_name = "intellij.platform.diagnostic.telemetry",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib-provided",
@@ -24,7 +23,6 @@ jvm_library(
   name = "telemetry_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   associates = [":telemetry"],
   deps = [

@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:guava",
     "@lib//:fastutil-min",
     "//platform/util/base",
+    "//platform/util",
     "@lib//:jna",
     "//platform/diagnostic",
     "//platform/eel",

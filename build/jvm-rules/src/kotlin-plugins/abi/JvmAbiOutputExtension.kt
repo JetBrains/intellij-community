@@ -1,16 +1,12 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.jvm.abi
 
+import org.jetbrains.bazel.jvm.kotlin.createJar
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.backend.common.output.SimpleOutputBinaryFile
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.output.writeAllTo
-import org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentUtil
 import org.jetbrains.kotlin.codegen.ClassFileFactory
 import org.jetbrains.kotlin.codegen.extensions.ClassFileFactoryFinalizerExtension
 import org.jetbrains.kotlin.codegen.inline.*
@@ -25,10 +21,10 @@ import java.io.File
 import kotlin.metadata.jvm.JvmFieldSignature
 import kotlin.metadata.jvm.JvmMethodSignature
 
-class JvmAbiOutputExtension(
+internal class JvmAbiOutputExtension(
     private val outputPath: File,
+    private val targetLabel: String,
     private val abiClassInfoBuilder: () -> Map<String, AbiClassInfo>,
-    private val messageCollector: MessageCollector,
     private val removeDebugInfo: Boolean,
     private val removeDataClassCopyIfConstructorIsPrivate: Boolean,
     private val preserveDeclarationOrder: Boolean,
@@ -48,15 +44,7 @@ class JvmAbiOutputExtension(
             )
         if (outputPath.extension == "jar") {
             // We don't include the runtime or main class in interface jars and always reset time stamps.
-            CompileEnvironmentUtil.writeToJar(
-                outputPath,
-                false,
-                true,
-                true,
-                null,
-                outputFiles,
-                messageCollector
-            )
+          createJar(outputFiles = outputFiles, outFile = outputPath.toPath(), targetLabel = targetLabel, mainClass = null)
         } else {
             outputFiles.writeAllTo(outputPath)
         }
@@ -95,7 +83,7 @@ class JvmAbiOutputExtension(
                     is AbiClassInfo.Stripped -> {
                         val prune = abiInfo.prune
                         val memberInfo = abiInfo.memberInfo
-                        val innerClassesToKeep = mutableSetOf<String>()
+                        val innerClassesToKeep = HashSet<String>()
 
                         var sourceFile: String? = null
                         var sourceMap: SourceMapCopier? = null
@@ -105,6 +93,8 @@ class JvmAbiOutputExtension(
                         val remapper = ClassRemapper(writer, object : Remapper() {
                             override fun map(internalName: String): String =
                                 internalName.also { innerClassesToKeep.add(it) }
+
+                            override fun mapInnerClassName(name: String, ownerName: String?, innerName: String?): String? = innerName
                         })
                         val parsingOptions = if (removeDebugInfo) ClassReader.SKIP_DEBUG else 0
                         ClassReader(outputFile.asByteArray()).accept(object : ClassVisitor(Opcodes.API_VERSION, remapper) {

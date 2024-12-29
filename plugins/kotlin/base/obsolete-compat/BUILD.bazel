@@ -8,17 +8,18 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//platform/util",
     "//platform/core-impl",
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
-    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
     "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
   ]
 )

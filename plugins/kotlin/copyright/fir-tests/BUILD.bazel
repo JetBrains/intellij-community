@@ -17,12 +17,16 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//plugins/kotlin/copyright/tests:kotlin-copyright-tests",
     "//plugins/kotlin/copyright/tests:kotlin-copyright-tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
+    "//java/testFramework",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//plugins/kotlin/tests-common",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-compiler-tests",
   ]
 )
 

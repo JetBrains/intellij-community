@@ -19,6 +19,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/vcs-api:vcs",
     "//uast/uast-common:uast",
+    "//platform/diff-api:diff",
     "//platform/vcs-impl",
   ],
   runtime_deps = [":vcs_resources"]

@@ -12,6 +12,7 @@ jvm_library(
     "@lib//:guava",
     "@lib//:fastutil-min",
     "@lib//:netty-buffer",
+    "//platform/util",
     "@lib//:netty-codec-http",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:kotlinx-coroutines-core",

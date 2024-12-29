@@ -19,6 +19,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/core-api:core",
     "//platform/sqlite",
+    "//platform/util",
   ],
   runtime_deps = [":ae-database-core_resources"]
 )
@@ -37,6 +38,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/sqlite",
     "//platform/sqlite:sqlite_test_lib",
+    "//platform/util",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",

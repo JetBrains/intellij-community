@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/platform-api:ide",
     "//plugins/ui-designer:java-guiForms-designer",
+    "//platform/platform-impl:ide-impl",
     "//plugins/devkit/devkit-core:core",
     "//platform/core-ui",
     "//platform/util/text-matching",

@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
     "@lib//:opentelemetry",
     "//platform/core-api:core",
     "//platform/core-nio-fs",
@@ -22,6 +23,7 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-impl",
     "//platform/ijent",
+    "//platform/eel-provider",
   ],
   runtime_deps = [":community-impl_resources"]
 )

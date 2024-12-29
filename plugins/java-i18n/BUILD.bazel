@@ -58,6 +58,8 @@ jvm_library(
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//java/java-impl:impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/jsp-base-openapi:jsp-base",
     "//java/jsp-openapi:jsp",
     "//java/testFramework",

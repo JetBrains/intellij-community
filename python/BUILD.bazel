@@ -111,6 +111,43 @@ java_library(
 )
 ### auto-generated section `build intellij.pycharm.community.main` end
 
+### auto-generated section `build intellij.python.commonTests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "python-commonTests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "python-commonTests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["python-common-tests/**/*.kt", "python-common-tests/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:junit4",
+    "//python/python-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//python/python-psi-impl:psi-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:guava",
+    "@lib//:stream_ex",
+    "//platform/analysis-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor",
+  ]
+)
+
+jvm_test(
+  name = "python-commonTests_test",
+  runtime_deps = [":python-commonTests_test_lib"]
+)
+### auto-generated section `build intellij.python.commonTests` end
+
 ### auto-generated section `build intellij.python.community.impl` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
@@ -131,7 +168,9 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "@lib//:guava",
+    "//platform/indexing-impl",
     "//python:python-pydev",
+    "//platform/observable:ide-observable",
     "@lib//:xml_r_p_c",
     "//platform/xdebugger-api:debugger",
     "//RegExpSupport:regexp",
@@ -139,6 +178,7 @@ jvm_library(
     "//platform/testRunner",
     "//platform/smRunner",
     "//spellchecker",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl/internal:ide-internal",
     "//xml/xml-psi-impl:psi-impl",
@@ -152,13 +192,13 @@ jvm_library(
     "@lib//:slf4j-jdk14",
     "@lib//:netty-codec-http",
     "@lib//:jsoup",
-    "@lib//:javax_annotation-api",
+    "@lib//:javax-annotation-api",
     "@lib//ant/lib:ant-antlr-provided",
     "//python/python-psi-impl:psi-impl",
     "//python/python-sdk:sdk",
     "@lib//:stream_ex",
     "//platform/statistics",
-    "@lib//:python_community_impl_ml-completion-prev-exprs-models",
+    "@lib//:python-community-impl-ml-completion-prev-exprs-models",
     "//platform/util",
     "@lib//:netty-buffer",
     "//platform/core-ui",
@@ -169,7 +209,8 @@ jvm_library(
     "@lib//:jcef",
     "@lib//:jna",
     "//plugins/toml",
-    "@lib//:python_community_impl_tuweni-toml",
+    "//plugins/toml/core",
+    "@lib//:python-community-impl-tuweni-toml",
     "@lib//:jsr305",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -186,7 +227,7 @@ jvm_library(
     "//python/python-psi-api:psi",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
-    "@lib//:python_community_impl_completion-ranking-python-with-full-line",
+    "@lib//:python-community-impl-completion-ranking-python-with-full-line",
     "//platform/backend/observation",
     "//plugins/terminal",
     "//platform/ml-impl",
@@ -210,7 +251,6 @@ jvm_library(
     "//RegExpSupport:regexp",
     "//platform/testRunner",
     "//python/python-psi-impl:psi-impl",
-    "//python/python-sdk:sdk",
   ],
   runtime_deps = [
     ":python-community-impl_resources",
@@ -255,6 +295,99 @@ java_library(
 )
 ### auto-generated section `build intellij.python.community.plugin.modules` end
 
+### auto-generated section `build intellij.python.community.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "python-community-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "python-community-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = ["//python:python-community-impl"],
+  deps = [
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//python/python-psi-api:psi",
+    "//platform/xdebugger-api:debugger",
+    "@lib//:guava",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//python:python-pydev",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//platform/util/progress",
+    "//platform/observable:ide-observable",
+    "@lib//:assert_j",
+    "@lib//:mockito",
+    "//java/testFramework",
+    "@lib//:easymock",
+    "@lib//:objenesis",
+    "//platform/lang-impl:lang-tests_test_lib",
+    "//platform/platform-impl/internal:ide-internal",
+    "@lib//:xml_r_p_c",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:hamcrest",
+    "//platform/platform-tests:tests_test_lib",
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test_lib",
+    "//python/python-copyright:copyright",
+    "//python/testFramework:community-testFramework",
+    "//platform/xdebugger-testFramework:debugger-testFramework",
+    "//python/python-psi-impl:psi-impl",
+    "//python:python-commonTests_test_lib",
+    "//plugins/restructuredtext",
+    "//python/python-restructuredtext:restructuredtext-python",
+    "@lib//:stream_ex",
+    "//platform/core-ui",
+    "//plugins/stats-collector:statsCollector",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
+    "//python/python-grazie:grazie",
+    "//platform/util/jdom",
+    "//platform/ml-api:ml",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-test",
+    "//python/python-core-impl:community-core-impl",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "@lib//:gson",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//commandInterface",
+    "//python/pluginCore:community-plugin",
+    "@lib//:junit5",
+    "@lib//:junit5Jupiter",
+    "@lib//:junit5Params",
+    "//platform/platform-impl/remote:ide-remote",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:kotlin-reflect",
+  ],
+  runtime_deps = [
+    "//python/pluginCore/impl:python-community-plugin-impl",
+    "//python:pycharm-community",
+    "//plugins/IntelliLang:xml-langInjection",
+    "//python/IntelliLang-python:langInjection",
+    "//python/python-markdown:markdown",
+    "//notebooks/visualization",
+    "//python/python-features-trainer:featuresTrainer",
+    "//jupyter:notebooks-jupyter-core",
+  ]
+)
+
+jvm_test(
+  name = "python-community-tests_test",
+  runtime_deps = [":python-community-tests_test_lib"]
+)
+### auto-generated section `build intellij.python.community.tests` end
+
 ### auto-generated section `build intellij.python.helpers` start
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_resources")
@@ -287,6 +420,24 @@ java_library(
   ]
 )
 ### auto-generated section `build intellij.python.helpers` end
+
+### auto-generated section `build intellij.python.helpers.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "python-helpers-tests_test",
+  srcs = glob(["helpers/tests/**/*.kt", "helpers/tests/**/*.java"], allow_empty = True, exclude = [
+    "helpers/tests/.gradle/**/*",
+    "helpers/tests/.tox/**/*",
+    "helpers/tests/build/**/*",
+  ]),
+  deps = [
+    "//python:python-helpers",
+    "@lib//ant/lib:ant-antlr",
+  ]
+)
+### auto-generated section `build intellij.python.helpers.tests` end
 
 ### auto-generated section `build intellij.python.pydev` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")

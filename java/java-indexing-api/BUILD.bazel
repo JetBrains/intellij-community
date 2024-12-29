@@ -16,6 +16,7 @@ jvm_library(
     "//platform/core-api:core",
     "//java/java-psi-api:psi",
     "//platform/indexing-api:indexing",
+    "//platform/util",
     "//platform/util/concurrency",
   ],
   runtime_deps = [":indexing_resources"]

@@ -22,7 +22,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/editor-ui-api:editor",
     "//platform/platform-impl:ide-impl",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
     "//plugins/kotlin/formatter",

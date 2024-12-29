@@ -14,8 +14,9 @@ jvm_library(
   deps = [
     "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:junit3",
+    "//java/testFramework",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
@@ -25,6 +26,8 @@ jvm_library(
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
   ]

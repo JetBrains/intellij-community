@@ -7,8 +7,8 @@ jvm_test(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/util/test-generator-api:kotlin-util-test-generator-api_test_lib",
     "//plugins/kotlin/util/test-generator-fir:kotlin-util-test-generator-fir_test_lib",
     "//plugins/kotlin/util/test-generator-fe10:kotlin-util-test-generator-fe10_test_lib",

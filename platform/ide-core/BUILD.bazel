@@ -28,10 +28,10 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic",
+    "//platform/util",
     "//platform/settings",
     "//platform/util/coroutines",
   ],
-  exports = ["//platform/core-api:core"],
   runtime_deps = [":ide-core_resources"]
 )
 ### auto-generated section `build intellij.platform.ide.core` end

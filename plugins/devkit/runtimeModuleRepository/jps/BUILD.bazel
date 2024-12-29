@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "11",
+  jvm_target = 11,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
@@ -19,10 +19,10 @@ jvm_library(
   module_name = "intellij.devkit.runtimeModuleRepository.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = ":custom",
   deps = [
     "//jps/model-api:model",
+    "//platform/util",
     "//jps/jps-builders:build",
     "//platform/runtime/repository",
     "@lib//:kotlin-stdlib",
@@ -36,11 +36,11 @@ jvm_library(
   name = "devkit-runtimeModuleRepository-jps_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = ":custom",
   associates = [":devkit-runtimeModuleRepository-jps"],
   deps = [
     "//jps/model-api:model",
+    "//platform/util",
     "//jps/jps-builders:build",
     "//platform/runtime/repository",
     "@lib//:kotlin-stdlib",

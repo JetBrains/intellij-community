@@ -17,7 +17,7 @@ jvm_library(
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
     "//plugins/kotlin/jsr223",
     "//platform/util",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/core-impl",
   ],
   runtime_deps = [":scripting-plugin_resources"]

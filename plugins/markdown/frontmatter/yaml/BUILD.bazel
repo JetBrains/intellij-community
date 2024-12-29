@@ -16,6 +16,7 @@ jvm_library(
     "//platform/core-api:core",
     "//plugins/IntelliLang:langInjection",
     "//plugins/markdown/core:markdown",
+    "//platform/lang-impl",
     "//plugins/yaml",
     "//plugins/yaml/editing",
     "//platform/monolith",

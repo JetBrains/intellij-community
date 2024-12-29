@@ -11,7 +11,7 @@ jvm_library(
     "//platform/editor-ui-api:editor",
     "//platform/util:util-ui",
     "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains_markdown",
+    "@lib//:jetbrains-markdown",
     "//platform/lang-impl",
   ]
 )
@@ -26,7 +26,7 @@ jvm_library(
     "//platform/editor-ui-api:editor",
     "//platform/util:util-ui",
     "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains_markdown",
+    "@lib//:jetbrains-markdown",
     "@lib//:junit4",
     "@lib//:kotlin-test",
     "//platform/lang-impl",

@@ -13,9 +13,10 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
-    "@lib//:org_codehaus_groovy_groovy",
+    "@lib//:org-codehaus-groovy-groovy",
     "//java/openapi:java",
     "//java/java-indexing-api:indexing",
+    "//platform/platform-impl:ide-impl",
     "//java/java-psi-impl:psi-impl",
     "//java/java-impl:impl",
     "//platform/ide-core-impl",
@@ -33,7 +34,7 @@ jvm_library(
     "@lib//:asm",
     "//platform/util/jdom",
   ],
-  exports = ["@lib//:org_codehaus_groovy_groovy"],
+  exports = ["@lib//:org-codehaus-groovy-groovy"],
   runtime_deps = [":psi_resources"]
 )
 ### auto-generated section `build intellij.groovy.psi` end

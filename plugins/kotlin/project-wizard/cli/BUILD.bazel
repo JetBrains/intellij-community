@@ -16,7 +16,7 @@ jvm_library(
   ],
   runtime_deps = [
     "//platform/core-api:core",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
   ]
 )
 ### auto-generated section `build kotlin.project-wizard.cli` end

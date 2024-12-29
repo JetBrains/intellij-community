@@ -8,8 +8,8 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//xml/impl",
-    "@lib//:xml_xmlbeans__xml_beans",
-    "@lib//:xml_xmlbeans_apache_logging_log4j_to_slf4j",
+    "@lib//:xml-xmlbeans-_xml_beans",
+    "@lib//:xml-xmlbeans-apache-logging-log4j-to-slf4j",
     "//platform/core-impl",
     "//platform/analysis-impl",
     "//platform/editor-ui-api:editor",
@@ -28,8 +28,8 @@ jvm_library(
   associates = [":xmlbeans"],
   deps = [
     "//xml/impl",
-    "@lib//:xml_xmlbeans__xml_beans",
-    "@lib//:xml_xmlbeans_apache_logging_log4j_to_slf4j",
+    "@lib//:xml-xmlbeans-_xml_beans",
+    "@lib//:xml-xmlbeans-apache-logging-log4j-to-slf4j",
     "//platform/core-impl",
     "//platform/analysis-impl",
     "@lib//:assert_j",
@@ -39,6 +39,8 @@ jvm_library(
     "//platform/ide-core",
     "//platform/core-ui",
     "//platform/util:util-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/lang-impl",
   ]
 )

@@ -23,15 +23,16 @@ jvm_library(
     "//platform/util-ex",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:execution_process_mediator_client_grpc-inprocess",
+    "@lib//:execution-process-mediator-client-grpc-inprocess",
     "//libraries/grpc",
     "//libraries/grpc-netty-shaded",
   ],
   runtime_deps = [":execution-process-mediator-client_resources"]
 )
 
-jvm_test(
-  name = "execution-process-mediator-client_test",
+jvm_library(
+  name = "execution-process-mediator-client_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":execution-process-mediator-client"],
   deps = [
@@ -51,10 +52,15 @@ jvm_test(
     "@lib//:jetbrains-annotations",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "@lib//:execution_process_mediator_client_grpc-inprocess",
+    "@lib//:execution-process-mediator-client-grpc-inprocess",
     "//libraries/grpc",
     "//libraries/grpc-netty-shaded",
   ],
   runtime_deps = [":execution-process-mediator-client_resources"]
+)
+
+jvm_test(
+  name = "execution-process-mediator-client_test",
+  runtime_deps = [":execution-process-mediator-client_test_lib"]
 )
 ### auto-generated section `build intellij.execution.process.mediator.client` end

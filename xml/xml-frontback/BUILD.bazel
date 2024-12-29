@@ -6,6 +6,10 @@ jvm_library(
   module_name = "intellij.xml.frontback",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  deps = ["//platform/core-api:core"]
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/editor-ui-api:editor",
+  ]
 )
 ### auto-generated section `build intellij.xml.frontback` end

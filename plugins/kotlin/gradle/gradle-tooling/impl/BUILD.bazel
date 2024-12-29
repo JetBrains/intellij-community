@@ -17,7 +17,6 @@ jvm_library(
   module_name = "kotlin.gradle.gradle-tooling.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -39,7 +38,6 @@ jvm_library(
   name = "kotlin-gradle-gradle-tooling-impl_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   associates = [":kotlin-gradle-gradle-tooling-impl"],
   deps = [

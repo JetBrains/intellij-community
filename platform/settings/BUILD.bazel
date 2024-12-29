@@ -11,6 +11,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/extensions",
     "//platform/core-api:core",
+    "//platform/util",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
   ]

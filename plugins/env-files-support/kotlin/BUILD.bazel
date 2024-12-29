@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/env-files-support:dotenv",
+    "//platform/util",
     "//plugins/env-files-support/java:dotenv-java",
     "//platform/editor-ui-api:editor",
     "//platform/analysis-api:analysis",
@@ -21,7 +22,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//java/java-psi-api:psi",
-    "@lib//:kotlinc_kotlin-compiler-common-provided",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
   ],
   runtime_deps = [":dotenv-kotlin_resources"]
 )

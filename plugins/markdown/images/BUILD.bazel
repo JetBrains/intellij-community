@@ -16,8 +16,11 @@ jvm_library(
     "//plugins/markdown/core:markdown",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
     "//images",
     "//platform/monolith",
+    "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [":images_resources"]
 )

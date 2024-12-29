@@ -6,10 +6,11 @@ jvm_library(
   module_name = "intellij.platform.ide.core.plugins",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  tags = ["kt_abi_plugin_incompatible"],
   deps = [
     "//platform/settings",
     "//platform/ide-core",
+    "//platform/core-api:core",
+    "//platform/util",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-serialization-core",
   ]

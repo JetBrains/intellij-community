@@ -12,13 +12,13 @@ java_library(
   name = "skiko",
   visibility = ["//visibility:public"],
   exports = [
-    "@lib//:libraries_skiko_jetbrains_skiko_awt_runtime_all",
-    "@lib//:libraries_skiko_jetbrains_skiko_awt_compose",
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
   ],
   runtime_deps = [
     ":skiko_resources",
-    "@lib//:libraries_skiko_jetbrains_skiko_awt_runtime_all",
-    "@lib//:libraries_skiko_jetbrains_skiko_awt_compose",
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
+    "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
   ]
 )
 ### auto-generated section `build intellij.libraries.skiko` end

@@ -13,13 +13,17 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:junit4",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlin-test",
     "//uast/uast-common:uast",
     "//uast/testFramework",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "@lib//:kotlinc_kotlin-compiler-tests",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/uast/uast-kotlin-idea-base:kotlin-uast-uast-kotlin-idea-base",
   ]
 )

@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = ["com.intellij.util.xmlb.SettingsInternalApi"]
 )
 
@@ -35,11 +35,12 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:mvstore",
-    "@lib//:platform_settings_local_kotlinx-serialization-cbor",
+    "@lib//:platform-settings-local-kotlinx-serialization-cbor",
     "@lib//:jackson",
-    "@lib//:platform_settings_local_jackson-dataformat-cbor",
+    "@lib//:platform-settings-local-jackson-dataformat-cbor",
     "//platform/util/jdom",
     "//platform/util/xmlDom",
+    "//platform/util",
     "//platform/object-serializer:objectSerializer",
     "@lib//:kotlinx-serialization-json",
     "@lib//:aalto-xml",
@@ -71,16 +72,17 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:mvstore",
-    "@lib//:platform_settings_local_kotlinx-serialization-cbor",
+    "@lib//:platform-settings-local-kotlinx-serialization-cbor",
     "@lib//:jackson",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/core-impl",
-    "@lib//:platform_settings_local_jackson-dataformat-cbor",
+    "@lib//:platform-settings-local-jackson-dataformat-cbor",
     "@lib//:jackson-databind",
     "@lib//:jackson-dataformat-yaml",
     "//platform/util/jdom",
     "//platform/util/xmlDom",
+    "//platform/util",
     "//platform/object-serializer:objectSerializer",
     "//platform/object-serializer:objectSerializer_test_lib",
     "@lib//:kotlinx-serialization-json",

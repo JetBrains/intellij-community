@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//platform/runtime/repository",
+    "//platform/util-ex",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]

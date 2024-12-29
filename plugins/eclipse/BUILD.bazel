@@ -15,6 +15,8 @@ jvm_library(
   deps = [
     "//platform/util/jdom",
     "//java/openapi:java",
+    "//platform/platform-impl:ide-impl",
+    "//platform/diff-api:diff",
     "//java/compiler/openapi:java-compiler",
     "//platform/ide-core-impl",
     "//java/idea-ui:ui",
@@ -39,8 +41,13 @@ jvm_library(
   deps = [
     "//platform/util/jdom",
     "//java/openapi:java",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
     "//java/testFramework",
+    "//platform/diff-api:diff",
     "//java/compiler/openapi:java-compiler",
     "//platform/ide-core-impl",
     "//java/idea-ui:ui",

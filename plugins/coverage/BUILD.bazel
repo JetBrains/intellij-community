@@ -13,7 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@lib//:java_coverage__ja_co_co",
+    "@lib//:java-coverage-_ja_co_co",
     "//plugins/coverage-common:coverage",
     "//java/execution/openapi:java-execution",
     "//java/openapi:java",
@@ -31,8 +31,9 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:jetbrains-annotations",
-    "@lib//:java_coverage_coverage-report",
+    "@lib//:java-coverage-coverage-report",
     "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
     "@lib//:fastutil-min",
   ],
   exports = [
@@ -49,7 +50,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":java-coverage"],
   deps = [
-    "@lib//:java_coverage__ja_co_co",
+    "@lib//:java-coverage-_ja_co_co",
     "//plugins/coverage-common:coverage",
     "//plugins/coverage-common:coverage_test_lib",
     "//java/execution/openapi:java-execution",
@@ -72,8 +73,10 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:jetbrains-annotations",
-    "@lib//:java_coverage_coverage-report",
+    "@lib//:java-coverage-coverage-report",
     "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:fastutil-min",
   ],
   runtime_deps = [":java-coverage_resources"]

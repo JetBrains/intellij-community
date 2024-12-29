@@ -12,10 +12,10 @@ jvm_library(
   module_name = "intellij.java.compiler.charts.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//jps/jps-builders:build",
+    "//platform/util",
     "@lib//:gson",
     "//jps/model-api:model",
   ],

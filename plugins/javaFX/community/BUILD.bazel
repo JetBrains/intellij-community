@@ -23,6 +23,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//java/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//xml/impl",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
@@ -34,7 +36,6 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/javaFX:javaFX-properties",
     "//java/java-impl-refactorings:impl-refactorings",
-    "@lib//:javafx-controls",
   ],
   runtime_deps = [":community_resources"]
 )

@@ -12,6 +12,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/diagnostic/telemetry",
+    "//platform/util",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:commons-lang3",

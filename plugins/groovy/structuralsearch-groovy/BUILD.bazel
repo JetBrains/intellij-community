@@ -34,6 +34,8 @@ jvm_library(
     "//platform/lang-api:lang",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/openapi:java",
     "//platform/lang-impl",
     "//platform/structuralsearch:structuralSearch-tests_test_lib",

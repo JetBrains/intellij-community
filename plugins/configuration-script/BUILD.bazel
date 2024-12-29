@@ -43,6 +43,7 @@ jvm_library(
     "//platform/util",
     "//platform/util-ex",
     "//platform/analysis-impl",
+    "@lib//:assert_j",
     "//json",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
@@ -93,6 +94,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
+    "//platform/lang-impl",
   ]
 )
 

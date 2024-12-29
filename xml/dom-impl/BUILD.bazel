@@ -20,6 +20,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
+    "//platform/indexing-impl",
     "//xml/openapi:xml",
     "@lib//:fastutil-min",
     "//platform/core-ui",

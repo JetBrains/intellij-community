@@ -12,12 +12,11 @@ jvm_library(
   module_name = "intellij.platform.jps.build.javac.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util-rt",
     "@lib//:jetbrains-annotations-java5",
-    "@lib//:javax_annotation-api",
+    "@lib//:javax-annotation-api",
     "@lib//:jps-javac-extension",
     "@lib//:protobuf",
     "@lib//:netty-jps-provided",

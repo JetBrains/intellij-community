@@ -16,7 +16,13 @@ jvm_library(
     "//plugins/junit_rt:junit-rt",
     "//plugins/properties/properties-psi-impl:psi-impl",
     "//plugins/junit/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//java/testFramework",
     "//platform/platform-util-io:ide-util-io",
+    "//java/execution/impl:java-execution-impl",
   ]
 )
 

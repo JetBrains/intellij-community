@@ -30,6 +30,8 @@ jvm_library(
   deps = [
     "//platform/structuralsearch:structuralSearch",
     "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/openapi:java",
     "//java/java-impl:impl",
     "//platform/duplicates-analysis",

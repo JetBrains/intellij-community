@@ -7,7 +7,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@lib//:libraries_cglib_cglib",
+    "@lib//:libraries-cglib-cglib",
     "//platform/util/base",
     "//platform/util-rt",
     "//platform/util",
@@ -16,6 +16,6 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/util-class-loader:util-classLoader",
   ],
-  exports = ["@lib//:libraries_cglib_cglib"]
+  exports = ["@lib//:libraries-cglib-cglib"]
 )
 ### auto-generated section `build intellij.libraries.cglib` end

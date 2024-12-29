@@ -10,8 +10,12 @@ jvm_library(
     "//plugins/tasks/tasks-core:core",
     "//plugins/tasks/tasks-compatibility:compatibility",
     "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
+    "//platform/tasks-platform-impl:tasks-impl",
+    "//plugins/tasks/tasks-api:tasks",
     "@lib//:xml_r_p_c",
+    "@lib//:gson",
     "//platform/core-ui",
     "//platform/util/jdom",
   ]

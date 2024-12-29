@@ -19,6 +19,8 @@ jvm_library(
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/ant",
     "//plugins/ant:ant_test_lib",
     "//plugins/xpath",

@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.python.community` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "community",
@@ -13,6 +13,7 @@ jvm_library(
     "@lib//:jsoup",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
+    "//platform/util",
     "//platform/extensions",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
@@ -22,5 +23,30 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/platform-util-io:ide-util-io",
   ]
+)
+
+jvm_library(
+  name = "community_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":community"],
+  deps = [
+    "//python/python-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:jsoup",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:junit5",
+  ]
+)
+
+jvm_test(
+  name = "community_test",
+  runtime_deps = [":community_test_lib"]
 )
 ### auto-generated section `build intellij.python.community` end

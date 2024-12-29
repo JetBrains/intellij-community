@@ -1,14 +1,6 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 load("@rules_jvm//:jvm.bzl", "kt_kotlinc_options")
 
-def create_javac_options(name, release):
-  kt_javac_options(
-    name = name,
-    release = release,
-    x_ep_disable_all_checks = True,
-    visibility = ["//visibility:public"],
-  )
-
 def create_kotlinc_options(name, jvm_target, opt_in = [], allow_kotlin_package = False, context_receivers = False):
   kt_kotlinc_options(
     name = name,

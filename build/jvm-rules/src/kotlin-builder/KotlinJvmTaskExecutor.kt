@@ -1,152 +1,250 @@
-/*
- * Copyright 2020 The Bazel Authors. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
 import com.google.devtools.build.lib.view.proto.Deps
 import com.google.devtools.build.lib.view.proto.Deps.Dependencies
-import com.google.devtools.build.runfiles.Runfiles
-import org.jetbrains.kotlin.buildtools.api.*
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.ensureActive
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
+import org.jetbrains.kotlin.cli.common.ExitCode
+import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.cli.common.messages.*
-import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
-import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
-import org.jetbrains.kotlin.compilerRunner.toArgumentStrings
-import org.jetbrains.kotlin.config.Services
-import java.io.*
+import org.jetbrains.kotlin.cli.common.setupCommonArguments
+import org.jetbrains.kotlin.cli.jvm.compiler.configurePlugins
+import org.jetbrains.kotlin.cli.jvm.compiler.k2jvm
+import org.jetbrains.kotlin.cli.jvm.compiler.loadPlugins
+import org.jetbrains.kotlin.cli.jvm.setupJvmSpecificArguments
+import org.jetbrains.kotlin.config.messageCollector
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.Writer
+import java.lang.reflect.Field
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import kotlin.jvm.java
+import kotlin.coroutines.coroutineContext
 
-private val runFiles by lazy {
-  Runfiles.preload().unmapped()
-}
-
-private fun resolveVerifiedFromProperty(key: String): String {
-  val path = (System.getProperty(key) ?: throw FileNotFoundException("no reference for $key in ${System.getProperties()}"))
-  return path.splitToSequence(',').map { runFiles.rlocation(it) }.joinToString(",")
-}
-
-internal fun doCompileKotlin(
-  task: JvmCompilationTask,
-  context: CompilationTaskContext,
-  sources: List<File>,
+internal suspend fun compileKotlinForJvm(
+  args: ArgMap<KotlinBuilderFlags>,
+  context: TraceHelper,
+  sources: List<Path>,
+  out: Writer,
+  workingDir: Path,
+  info: CompilationTaskInfo,
 ): Int {
-  val args = K2JVMCompilerArguments()
-  args.noStdlib = true
-  args.classpath = createClasspath(task)
+  val kotlinArgs = K2JVMCompilerArguments()
+  kotlinArgs.noStdlib = true
 
-  args.apiVersion = task.args.optionalSingle(KotlinBuilderFlags.API_VERSION)
-  args.languageVersion = task.args.optionalSingle(KotlinBuilderFlags.LANGUAGE_VERSION)
-  args.jvmTarget = task.args.mandatorySingle(KotlinBuilderFlags.JVM_TARGET)
-  args.moduleName = task.info.moduleName
-  args.disableStandardScript = true
+  kotlinArgs.classpath = createClasspath(args, workingDir)
+
+  kotlinArgs.apiVersion = args.optionalSingle(KotlinBuilderFlags.API_VERSION)
+  kotlinArgs.languageVersion = args.optionalSingle(KotlinBuilderFlags.LANGUAGE_VERSION)
+  // jdkRelease leads to some strange compilation failures like "cannot access class 'Map.Entry'"
+  kotlinArgs.jvmTarget = args.mandatorySingle(KotlinBuilderFlags.JVM_TARGET).let { if (it == "8") "1.8" else it }
+  kotlinArgs.moduleName = info.moduleName
+  kotlinArgs.disableStandardScript = true
   // kotlin bug - not compatible with a new X compiler-plugin syntax
   //compilationArgs.disableDefaultScriptingPlugin = true
-  task.args.optional(KotlinBuilderFlags.KOTLIN_FRIEND_PATHS)?.let { value ->
-    args.friendPaths = value.map { task.workingDir.resolve(it).toString() }.toTypedArray()
-  }
-  args.destination = task.outJar.toString()
-
-  task.args.optional(KotlinBuilderFlags.OPT_IN)?.let {
-    args.optIn = it.toTypedArray()
-  }
-  if (task.args.boolFlag(KotlinBuilderFlags.ALLOW_KOTLIN_PACKAGE)) {
-    args.allowKotlinPackage = true
+  args.optional(KotlinBuilderFlags.FRIEND_PATHS)?.let { value ->
+    kotlinArgs.friendPaths = value.map { workingDir.resolve(it).toString() }.toTypedArray()
   }
 
-  task.args.optionalSingle(KotlinBuilderFlags.LAMBDAS)?.let {
-    args.lambdas = it
+  kotlinArgs.destination = workingDir.resolve(args.mandatorySingle(KotlinBuilderFlags.OUTPUT)).toString()
+
+  args.optional(KotlinBuilderFlags.OPT_IN)?.let {
+    kotlinArgs.optIn = it.toTypedArray()
   }
-  task.args.optionalSingle(KotlinBuilderFlags.JVM_DEFAULT)?.let {
-    args.jvmDefault = it
+  val allowKotlinPackage = args.boolFlag(KotlinBuilderFlags.ALLOW_KOTLIN_PACKAGE)
+  if (allowKotlinPackage) {
+    kotlinArgs.allowKotlinPackage = true
   }
-  if (task.args.boolFlag(KotlinBuilderFlags.INLINE_CLASSES)) {
-    args.inlineClasses = true
+
+  args.optionalSingle(KotlinBuilderFlags.LAMBDAS)?.let {
+    kotlinArgs.lambdas = it
   }
-  if (task.args.boolFlag(KotlinBuilderFlags.CONTEXT_RECEIVERS)) {
-    args.contextReceivers = true
+  args.optionalSingle(KotlinBuilderFlags.JVM_DEFAULT)?.let {
+    kotlinArgs.jvmDefault = it
   }
-  task.args.optionalSingle(KotlinBuilderFlags.WARN)?.let {
+  if (args.boolFlag(KotlinBuilderFlags.INLINE_CLASSES)) {
+    kotlinArgs.inlineClasses = true
+  }
+  if (args.boolFlag(KotlinBuilderFlags.CONTEXT_RECEIVERS)) {
+    kotlinArgs.contextReceivers = true
+  }
+  args.optionalSingle(KotlinBuilderFlags.WARN)?.let {
     when (it) {
-      "off" -> args.suppressWarnings = true
-      "error" -> args.allWarningsAsErrors = true
+      "off" -> kotlinArgs.suppressWarnings = true
+      "error" -> kotlinArgs.allWarningsAsErrors = true
       else -> throw IllegalArgumentException("unsupported kotlinc warning option: $it")
     }
   }
 
-  configurePlugins(args = args, task = task)
+  val pluginConfigurations = configurePlugins(args = args, workingDir = workingDir, label = info.label)
 
-  if (context.isTracing) {
-    val label = task.info.label
-    context.out.appendLine("\u001B[1m=============== K2JVM Compiler Arguments ($label) ===============\u001B[0m")
-    context.out.appendLine(args.toArgumentStrings().joinToString("\n"))
-    context.out.appendLine("\u001B[1m=============== END of K2JVM Compiler Arguments ($label) ===============\u001B[0m")
-  }
-
-  val compiler = K2JVMCompiler()
-  require(args.freeArgs.isEmpty())
-  args.freeArgs = sources.map { it.absolutePath }
-  val logCollector = WriterBackedMessageCollector(verbose = context.isTracing)
-  val result = compiler.exec(
-    messageCollector = logCollector,
-    services = Services.EMPTY,
-    arguments = args,
-  )
-  if (result.code != 0 || context.isTracing) {
-    for (entry in logCollector.entries) {
-      context.out.appendLine(MessageRenderer.PLAIN_RELATIVE_PATHS.render(entry.severity, entry.message, entry.location))
+  fun printOptions() {
+    wrapOutput(out, info.label, classifier = "K2JVM Compiler Arguments") {
+      out.appendLine("pluginConfigurations:\n  ${pluginConfigurations.joinToString("\n  ") { it.toString() }}")
+      out.appendLine(toArgumentStrings(kotlinArgs).joinToString("\n"))
     }
   }
-  return result.code
-}
 
-//internal fun packOutput(
-//  task: JvmCompilationTask,
-//  context: CompilationTaskContext,
-//) {
-//  val outputs = task.outputs
-//  if (outputs.jar != null) {
-//    context.execute("create jar") {
-//      val packageIndexBuilder = PackageIndexBuilder()
-//      ZipArchiveOutputStream(
-//        channel = FileChannel.open(task.outputs.jar, W_OVERWRITE),
-//        zipIndexWriter = ZipIndexWriter(indexWriter = packageIndexBuilder.indexWriter),
-//      ).use { out ->
-//        JarCreator(
-//          packageIndexBuilder = packageIndexBuilder,
-//          targetLabel = task.info.label,
-//          injectingRuleKind = "kt_${task.info.ruleKind.name.lowercase()}",
-//          out = out,
-//        ).use {
-//          it.addDirectory(task.directories.classes)
-//        }
-//      }
-//    }
-//  }
-//}
-
-internal fun createClasspath(task: JvmCompilationTask): String {
-  if (!task.args.optionalSingle(KotlinBuilderFlags.REDUCED_CLASSPATH_MODE).toBoolean()) {
-    return task.inputs.classpath.joinToString(File.pathSeparator) { it.toString() }
+  if (context.isTracing) {
+    printOptions()
   }
 
+  require(kotlinArgs.freeArgs.isEmpty())
+  kotlinArgs.freeArgs = sources.map { it.toString() }
+  val messageCollector = WriterBackedMessageCollector(verbose = context.isTracing)
+
+  val config = org.jetbrains.kotlin.cli.jvm.compiler.configTemplate.copy()
+  config.put(CLIConfigurationKeys.ORIGINAL_MESSAGE_COLLECTOR_KEY, messageCollector)
+  val collector = GroupingMessageCollector(messageCollector, kotlinArgs.allWarningsAsErrors, kotlinArgs.reportAllWarnings).also {
+    config.messageCollector = it
+  }
+  config.setupCommonArguments(kotlinArgs) { version -> MetadataVersion(*version) }
+  config.setupJvmSpecificArguments(kotlinArgs)
+  if (allowKotlinPackage) {
+    config.put(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE, true)
+  }
+
+  coroutineContext.ensureActive()
+
+  val rootDisposable = Disposer.newDisposable("Disposable for Bazel Kotlin Compiler")
+  var code = try {
+    loadPlugins(configuration = config, pluginConfigurations = pluginConfigurations)
+    k2jvm(args = kotlinArgs, config = config, rootDisposable = rootDisposable).code
+  }
+  finally {
+    Disposer.dispose(rootDisposable)
+    collector.flush()
+  }
+
+  if (collector.hasErrors()) {
+    code = ExitCode.COMPILATION_ERROR.code
+  }
+  if (code != 0 || context.isTracing) {
+    if (!context.isTracing) {
+      printOptions()
+    }
+
+    val renderer = object : PlainTextMessageRenderer(/* colorEnabled = */ true) {
+      override fun getPath(location: CompilerMessageSourceLocation): String {
+        return workingDir.relativize(Path.of(location.path)).toString()
+      }
+
+      override fun getName(): String = "RelativePath"
+    }
+    wrapOutput(out, info.label, classifier = "K2JVM Compiler Messages") {
+      for (entry in messageCollector.entries) {
+        out.appendLine(renderer.render(entry.severity, entry.message, entry.location))
+      }
+    }
+  }
+  return code
+}
+
+private inline fun wrapOutput(out: Writer, label: String, classifier: String, task: () -> Unit) {
+  out.appendLine("\u001B[1m=============== $classifier ($label) ===============\u001B[0m")
+  task()
+  out.appendLine("\u001B[1m=============== END of $classifier ($label) ===============\u001B[0m")
+}
+
+private fun getAllFields(): Sequence<Field> {
+  return sequence {
+    var aClass: Class<*>? = K2JVMCompilerArguments::class.java
+    while (aClass != null) {
+      yieldAll(aClass.declaredFields.asSequence())
+      aClass = aClass.superclass.takeIf { it != Any::class.java }
+    }
+  }
+}
+
+// we do not have kotlin reflection
+private fun <T : CommonToolArguments> toArgumentStrings(
+  thisArgs: T,
+  shortArgumentKeys: Boolean = false,
+  compactArgumentValues: Boolean = true,
+): List<String> {
+  val result = ArrayList<String>()
+  val defaultArguments = K2JVMCompilerArguments()
+  for (field in getAllFields()) {
+    val argAnnotation = field.getAnnotation(Argument::class.java) ?: continue
+    field.setAccessible(true)
+    val rawPropertyValue = field.get(thisArgs)
+    val rawDefaultValue = field.get(defaultArguments)
+
+    /* Default value can be omitted */
+    if (rawPropertyValue == rawDefaultValue) {
+      continue
+    }
+
+    val argumentStringValues = when {
+      field.type == java.lang.Boolean.TYPE -> {
+        listOf(rawPropertyValue?.toString() ?: false.toString())
+      }
+      field.type.isArray -> {
+        getArgumentStringValue(
+          argAnnotation = argAnnotation,
+          values = rawPropertyValue as Array<*>?,
+          compactArgValues = compactArgumentValues,
+        )
+      }
+      field.type == java.util.List::class.java -> {
+        getArgumentStringValue(
+          argAnnotation = argAnnotation,
+          values = (rawPropertyValue as List<*>?)?.toTypedArray(),
+          compactArgValues = compactArgumentValues,
+        )
+      }
+      else -> listOf(rawPropertyValue.toString())
+    }
+
+    val argumentName = if (shortArgumentKeys && argAnnotation.shortName.isNotEmpty()) argAnnotation.shortName else argAnnotation.value
+
+    for (argumentStringValue in argumentStringValues) {
+      when {
+        /* We can just enable the flag by passing the argument name like -myFlag: Value not required */
+        rawPropertyValue is Boolean && rawPropertyValue -> {
+          result.add(argumentName)
+        }
+
+        /* Advanced (e.g. -X arguments) or boolean properties need to be passed using the '=' */
+        argAnnotation.isAdvanced || field.type == java.lang.Boolean.TYPE -> {
+          result.add("$argumentName=$argumentStringValue")
+        }
+
+        else -> {
+          result.add(argumentName)
+          result.add(argumentStringValue)
+        }
+      }
+    }
+  }
+
+  result.addAll(thisArgs.freeArgs)
+  result.addAll(thisArgs.internalArguments.map { it.stringRepresentation })
+  return result
+}
+
+private fun getArgumentStringValue(argAnnotation: Argument, values: Array<*>?, compactArgValues: Boolean): List<String> {
+  if (values.isNullOrEmpty()) {
+    return emptyList()
+  }
+
+  val delimiter = argAnnotation.resolvedDelimiter
+  return if (delimiter.isNullOrEmpty() || !compactArgValues) values.map { it.toString() } else listOf(values.joinToString(delimiter))
+}
+
+private fun createClasspath(args: ArgMap<KotlinBuilderFlags>, baseDir: Path): String {
+  if (!args.boolFlag(KotlinBuilderFlags.REDUCED_CLASSPATH_MODE)) {
+    return args.mandatory(KotlinBuilderFlags.CLASSPATH).joinToString(File.pathSeparator) { baseDir.resolve(it).normalize().toString() }
+  }
+
+  val directDependencies = args.mandatory(KotlinBuilderFlags.DIRECT_DEPENDENCIES)
+
+  val depsArtifacts = args.optional(KotlinBuilderFlags.DEPS_ARTIFACTS) ?: return directDependencies.joinToString(File.pathSeparator)
   val transitiveDepsForCompile = LinkedHashSet<String>()
-  for (jdepsPath in task.inputs.depsArtifacts) {
+  for (jdepsPath in depsArtifacts) {
     BufferedInputStream(Files.newInputStream(Path.of(jdepsPath))).use {
       val deps = Dependencies.parseFrom(it)
       for (dep in deps.dependencyList) {
@@ -157,58 +255,7 @@ internal fun createClasspath(task: JvmCompilationTask): String {
     }
   }
 
-  return (task.inputs.directDependencies.asSequence() + transitiveDepsForCompile)
-    .joinToString(File.pathSeparator)
-}
-
-private fun configurePlugins(
-  task: JvmCompilationTask,
-  args: K2JVMCompilerArguments,
-) {
-  val pluginConfigurations = mutableListOf<String>()
-
-  // put user plugins first
-  for (path in task.inputs.compilerPluginClasspath) {
-    pluginConfigurations.add(path.toString())
-  }
-
-  val outputs = task.outputs
-  outputs.jdeps?.let {
-    var s = "${resolveVerifiedFromProperty("kotlin.bazel.jdeps.plugin")}=output=${outputs.jdeps},target_label=${task.info.label}"
-    task.args.optionalSingle(KotlinBuilderFlags.STRICT_KOTLIN_DEPS)?.let {
-      s += ",strict_kotlin_deps=$it"
-    }
-    pluginConfigurations.add(s)
-  }
-  outputs.abiJar?.let {
-    pluginConfigurations.add("${resolveVerifiedFromProperty("kotlin.bazel.abi.plugin")}=outputDir=${outputs.abiJar},removePrivateClasses=true")
-  }
-
-  if (pluginConfigurations.isNotEmpty()) {
-    args.pluginConfigurations = pluginConfigurations.toTypedArray()
-  }
-}
-
-private val kotlinProjectId = ProjectId.ProjectUUID(UUID.randomUUID())
-
-@Suppress("unused")
-@OptIn(ExperimentalBuildToolsApi::class)
-private fun incrementalCompilation(context: CompilationTaskContext, sources: List<File>, args: List<String>) {
-  val service = CompilationService.loadImplementation(context::class.java.classLoader)
-  val strategyConfig = service.makeCompilerExecutionStrategyConfiguration()
-  val compilationConfig = service
-    .makeJvmCompilationConfiguration()
-    .useLogger(WorkerKotlinLogger(out = context.out, isDebugEnabled = context.isTracing))
-  val result = service.compileJvm(
-    projectId = kotlinProjectId,
-    strategyConfig = strategyConfig,
-    compilationConfig = compilationConfig,
-    sources = sources,
-    arguments = args,
-  )
-  if (result != CompilationResult.COMPILATION_SUCCESS) {
-    throw CompilationStatusException("compile phase failed", result.ordinal)
-  }
+  return (directDependencies.asSequence() + transitiveDepsForCompile).joinToString(File.pathSeparator)
 }
 
 private data class LogMessage(
@@ -222,7 +269,8 @@ private class WriterBackedMessageCollector(
 ) : MessageCollector {
   private var hasErrors = false
 
-  @JvmField val entries = mutableListOf<LogMessage>()
+  @JvmField
+  val entries = mutableListOf<LogMessage>()
 
   override fun clear() {
   }
@@ -237,37 +285,10 @@ private class WriterBackedMessageCollector(
     }
 
     hasErrors = hasErrors or severity.isError
-    entries.add(LogMessage(severity = severity, message = message, location = location))
+    synchronized(this) {
+      entries.add(LogMessage(severity = severity, message = message, location = location))
+    }
   }
 
   override fun hasErrors(): Boolean = hasErrors
-}
-
-private class WorkerKotlinLogger(private val out: Writer, override val isDebugEnabled: Boolean) : KotlinLogger {
-  override fun error(msg: String, throwable: Throwable?) {
-    out.appendLine(msg)
-    throwable?.let {
-      PrintWriter(out).use {
-        throwable.printStackTrace(it)
-      }
-    }
-  }
-
-  override fun warn(msg: String) {
-    out.append("WARN: ").appendLine(msg)
-  }
-
-  override fun info(msg: String) {
-    out.append("INFO: ").appendLine(msg)
-  }
-
-  override fun debug(msg: String) {
-    if (isDebugEnabled) {
-      out.append("DEBUG: ").appendLine(msg)
-    }
-  }
-
-  override fun lifecycle(msg: String) {
-    out.appendLine(msg)
-  }
 }

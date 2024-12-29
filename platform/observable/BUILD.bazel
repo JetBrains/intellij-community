@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.platform.ide.observable` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-observable",
+  module_name = "intellij.platform.ide.observable",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util-ex",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.observable` end

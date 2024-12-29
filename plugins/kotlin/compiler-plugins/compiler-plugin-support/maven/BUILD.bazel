@@ -19,7 +19,7 @@ jvm_library(
     "//plugins/kotlin/maven",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
     "//plugins/maven",
-    "@lib//:kotlinc_kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-jps-common",
   ],
   runtime_deps = [":kotlin-compiler-plugins-compiler-plugin-support-maven_resources"]
 )

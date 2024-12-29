@@ -12,7 +12,6 @@ jvm_library(
   module_name = "intellij.platform.core.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/core-api:core",
@@ -27,6 +26,7 @@ jvm_library(
     "@lib//:guava",
     "//platform/util/diff",
     "//platform/diagnostic",
+    "//platform/util",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

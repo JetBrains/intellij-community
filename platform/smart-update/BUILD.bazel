@@ -18,6 +18,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/vcs-impl",
     "//platform/lang-impl",
+    "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/core-ui",

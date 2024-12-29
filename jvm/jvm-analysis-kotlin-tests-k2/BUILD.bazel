@@ -11,7 +11,13 @@ jvm_library(
   name = "analysis-kotlin-tests-k2_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  deps = ["//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared_test_lib"],
+  deps = [
+    "//java/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared_test_lib",
+  ],
   runtime_deps = ["//plugins/kotlin/plugin/k2:kotlin-plugin-k2"]
 )
 

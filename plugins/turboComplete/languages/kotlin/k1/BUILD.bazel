@@ -20,7 +20,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/ml-impl",
-    "@lib//:turbo_complete_languages_kotlin_k1_completion-performance-kotlin",
+    "@lib//:turbo_complete-languages-kotlin-k1-completion-performance-kotlin",
     "//plugins/turboComplete",
     "//platform/platform-impl/internal:ide-internal",
     "//platform/platform-impl:ide-impl",

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package io.bazel.kotlin.plugin.jdeps
 
 import org.jetbrains.kotlin.codegen.extensions.ClassFileFactoryFinalizerExtension
@@ -12,7 +13,7 @@ class JdepsGenComponentRegistrar : CompilerPluginRegistrar() {
 
   override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
     val classUsageRecorder = ClassUsageRecorder()
-    val genExtension = JdepsGenExtension2(classUsageRecorder, configuration)
+    val genExtension = JdepsGenExtension(classUsageRecorder, configuration)
     FirExtensionRegistrarAdapter.registerExtension(JdepsFirExtensions(classUsageRecorder))
     ClassFileFactoryFinalizerExtension.registerExtension(genExtension)
   }

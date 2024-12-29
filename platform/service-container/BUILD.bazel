@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/util",
     "//platform/core-impl",
     "//platform/util-ex",
     "//platform/projectModel-impl",
@@ -35,6 +36,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/util",
     "//platform/core-impl",
     "//platform/util-ex",
     "//platform/projectModel-impl",

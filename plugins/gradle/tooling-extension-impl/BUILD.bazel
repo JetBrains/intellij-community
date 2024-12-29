@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "1.8",
+  jvm_target = 8,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
@@ -19,7 +19,6 @@ jvm_library(
   module_name = "intellij.gradle.toolingExtension.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -57,16 +56,18 @@ jvm_library(
   name = "toolingExtension-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   associates = ["//plugins/gradle/tooling-extension-impl:toolingExtension-impl"],
   deps = [
     "//plugins/gradle:gradle-common",
     "//java/testFramework",
     "@lib//:assert_j",
-    "@lib//:gradle_tooling_extension_tests_io_github_classgraph_classgraph_4_8_87",
-    "@lib//:gradle_tooling_extension_tests_org_jeasy_easy-random-core_4_2_0",
+    "@lib//:gradle-tooling_extension-tests-io-github-classgraph-classgraph-4-8-87",
+    "@lib//:gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
     "@lib//:ion",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/openapi:java",
     "@lib//:fastutil-min",
     "//platform/boot",
     "//plugins/gradle",

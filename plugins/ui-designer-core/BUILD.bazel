@@ -25,7 +25,6 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/platform-impl/designer:ide-designer",
   ],
-  exports = ["//platform/lang-impl"],
   runtime_deps = [":uiDesigner_resources"]
 )
 ### auto-generated section `build intellij.uiDesigner` end

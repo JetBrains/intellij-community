@@ -12,6 +12,7 @@ java_library(
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/ui-inspector:ide-ui-inspector",
     "//platform/inline-completion/shared:inline-completion",
+    "//platform/bookmarks",
   ]
 )
 ### auto-generated section `build intellij.platform.main` end

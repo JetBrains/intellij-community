@@ -11,10 +11,13 @@ jvm_library(
     "//platform/vcs-log/graph-api:vcs-log-graph",
     "//platform/core-api:core",
     "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/util",
     "//platform/editor-ui-api:editor",
     "//platform/vcs-api:vcs",
     "@lib//:kotlin-stdlib",
+    "//platform/ide-core",
     "//platform/core-ui",
+    "//platform/diff-api:diff",
   ],
   exports = ["//platform/vcs-log/graph-api:vcs-log-graph"]
 )

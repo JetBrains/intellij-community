@@ -18,6 +18,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlin-stdlib",
+    "//python/python-sdk:sdk",
     "//platform/lang-api:lang",
   ],
   runtime_deps = [":terminal_resources"]

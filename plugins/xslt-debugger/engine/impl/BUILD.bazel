@@ -6,15 +6,14 @@ jvm_library(
   module_name = "intellij.xslt.debugger.impl.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/xpath/xslt-rt:rt",
     "//plugins/xslt-debugger/engine:xslt-debugger-rt",
     "//plugins/xslt-debugger/engine/impl/lib:saxon9he",
     "//plugins/xslt-debugger/engine/impl/lib:saxon",
-    "@lib//:xslt_debugger_impl_rt__xalan-2_7_3",
-    "@lib//:xslt_debugger_impl_rt__serializer-2_7_3",
+    "@lib//:xslt-debugger-impl-rt-_xalan-2-7-3",
+    "@lib//:xslt-debugger-impl-rt-_serializer-2-7-3",
   ]
 )
 
@@ -22,7 +21,6 @@ jvm_library(
   name = "xslt-debugger-impl-rt_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   associates = [":xslt-debugger-impl-rt"],
   deps = [
@@ -30,11 +28,11 @@ jvm_library(
     "//plugins/xslt-debugger/engine:xslt-debugger-rt",
     "//plugins/xslt-debugger/engine/impl/lib:saxon9he",
     "//plugins/xslt-debugger/engine/impl/lib:saxon",
-    "@lib//:xslt_debugger_impl_rt__xalan-2_7_3",
+    "@lib//:xslt-debugger-impl-rt-_xalan-2-7-3",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
-    "@lib//:xslt_debugger_impl_rt__serializer-2_7_3",
+    "@lib//:xslt-debugger-impl-rt-_serializer-2-7-3",
   ]
 )
 

@@ -16,9 +16,9 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/lang-impl",
     "//platform/statistics",
-    "@lib//:search_everywhere_ml_ai_grazie_emb",
+    "@lib//:search_everywhere_ml-ai-grazie-emb",
   ],
-  exports = ["@lib//:search_everywhere_ml_ai_grazie_emb"],
+  exports = ["@lib//:search_everywhere_ml-ai-grazie-emb"],
   runtime_deps = [":searchEverywhereMl_resources"]
 )
 
@@ -34,7 +34,7 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:search_everywhere_ml_ai_grazie_emb",
+    "@lib//:search_everywhere_ml-ai-grazie-emb",
   ],
   runtime_deps = [":searchEverywhereMl_resources"]
 )

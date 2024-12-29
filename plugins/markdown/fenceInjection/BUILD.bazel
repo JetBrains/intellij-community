@@ -19,8 +19,11 @@ jvm_library(
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/markdown/core:markdown",
+    "//platform/core-api:core",
+    "//platform/lang-impl",
     "//plugins/IntelliLang:langInjection",
     "//platform/monolith",
+    "@lib//:kotlin-stdlib",
     ":xml-langInjection_provided",
   ],
   runtime_deps = [":fenceInjection_resources"]

@@ -21,6 +21,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/code-style-api:codeStyle",
     "@lib//:fastutil-min",
+    "//platform/util",
     "//platform/core-impl",
     "@lib//:guava",
     "//platform/projectModel-impl",

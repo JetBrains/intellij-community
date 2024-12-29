@@ -40,5 +40,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kaml" level="project" />
+    <orderEntry type="library" name="okhttp" level="project" />
   </component>
 </module>

@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/github/github-core:vcs-github",
     "//json",
     "//platform/core-api:core",
+    "//platform/util",
     "//platform/analysis-api:analysis",
   ],
   runtime_deps = [":vcs-github-json_resources"]

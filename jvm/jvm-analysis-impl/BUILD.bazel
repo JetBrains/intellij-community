@@ -17,6 +17,7 @@ jvm_library(
     "//java/openapi:java",
     "@lib//:stream_ex",
     "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
     "//java/java-impl:impl",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",

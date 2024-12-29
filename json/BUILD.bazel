@@ -23,6 +23,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "@lib//:gson",
     "//RegExpSupport:regexp",
+    "//platform/indexing-impl",
     "//platform/statistics",
     "@lib//:fastutil-min",
     "//platform/core-ui",

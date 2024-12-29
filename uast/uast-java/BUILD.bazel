@@ -6,7 +6,6 @@ jvm_library(
   module_name = "intellij.java.uast",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//java/java-psi-api:psi",

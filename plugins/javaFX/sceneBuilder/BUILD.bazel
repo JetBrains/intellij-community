@@ -12,7 +12,7 @@ jvm_library(
     "//java/openapi:java",
     "//plugins/javaFX",
     "//platform/util/nanoxml",
-    "@lib//:java_f_x_scene_builder__scene_builder_kit11-provided",
+    "@lib//:java_f_x-scene_builder-_scene_builder_kit11-provided",
     "//platform/indexing-impl",
   ]
 )

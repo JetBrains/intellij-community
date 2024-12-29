@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -26,8 +26,8 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
@@ -46,6 +46,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
   ],
   runtime_deps = [":kotlin-refactorings-move-k2_resources"]
 )
@@ -58,9 +59,9 @@ jvm_library(
   associates = [":kotlin-refactorings-move-k2"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_analysis-api",
-    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:gson",
     "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
     "//platform/lang-impl",
@@ -68,8 +69,11 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/core-api:core",
+    "//java/openapi:java",
     "//java/java-impl:impl",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//java/testFramework",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
     "//plugins/kotlin/fir",
@@ -86,9 +90,13 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
   ],
   runtime_deps = [":kotlin-refactorings-move-k2_resources"]
 )

@@ -6,7 +6,6 @@ jvm_library(
   module_name = "intellij.java.guiForms.compiler",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util/jdom",
@@ -23,7 +22,6 @@ jvm_library(
   name = "java-guiForms-compiler_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   associates = [":java-guiForms-compiler"],
   deps = [

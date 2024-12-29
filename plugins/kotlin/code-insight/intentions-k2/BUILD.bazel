@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
@@ -29,12 +29,13 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
     "//platform/core-api:core",
-    "@lib//:kotlinc_analysis-api",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlin-reflect",
     "//platform/analysis-api:analysis",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//platform/platform-impl:ide-impl",
     "//platform/editor-ui-api:editor",
     "//platform/lang-api:lang",
     "//platform/core-impl",
@@ -44,7 +45,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
     "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
-    "@lib//:kotlinc_analysis-api-k2",
+    "@lib//:kotlinc-analysis-api-k2",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/code-insight/descriptions:kotlin-code-insight-descriptions",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
@@ -61,6 +62,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/override-implement-k2:kotlin-code-insight-override-implement-k2",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
   ],
   runtime_deps = [":kotlin-code-insight-intentions-k2_resources"]
 )

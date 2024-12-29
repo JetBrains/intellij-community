@@ -19,6 +19,7 @@ jvm_library(
     "//platform/lang-impl",
     "//java/compiler/openapi:java-compiler",
     "@lib//:opentelemetry",
+    "//platform/platform-impl:ide-impl",
     "@lib//:opentelemetry-semconv",
     "//java/idea-ui:ui",
     "//platform/diagnostic/telemetry",

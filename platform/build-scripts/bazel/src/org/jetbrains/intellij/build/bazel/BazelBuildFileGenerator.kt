@@ -17,12 +17,6 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 
-private val sharedSerializers = setOf(
-  "intellij.platform.feedback",
-  "intellij.platform.ide.core.plugins",
-  "intellij.platform.ide.rpc",
-)
-
 internal class ModuleList(
   @JvmField val community: List<ModuleDescriptor>,
   @JvmField val ultimate: List<ModuleDescriptor>,
@@ -101,44 +95,78 @@ internal class BazelBuildFileGenerator(
 
   private val generated = IdentityHashMap<ModuleDescriptor, Boolean>()
 
+  private val communityLibOwner = LibOwnerDescriptor("@lib", projectDir.resolve("community/lib/BUILD.bazel"), projectDir.resolve("community/lib/MODULE.bazel"))
+  private val ultimateLibOwner = LibOwnerDescriptor("@ultimate_lib", projectDir.resolve("lib/BUILD.bazel"), projectDir.resolve("lib/MODULE.bazel"))
+
+  fun getLibOwner(isCommunity: Boolean): LibOwnerDescriptor = if (isCommunity) communityLibOwner else ultimateLibOwner
+
   fun generateLibs(
-    projectDir: Path,
-    generator: BazelBuildFileGenerator,
     jarRepositories: List<JarRepository>,
     m2Repo: Path,
   ) {
-    generateProjectLibraryBazelBuild(file = projectDir.resolve("community/lib/BUILD.bazel"), isCommunity = true)
-    generateProjectLibraryBazelBuild(file = projectDir.resolve("lib/BUILD.bazel"), isCommunity = false)
+    val fileToLabelTracker = LinkedHashMap<Path, MutableSet<String>>()
+    val fileToUpdater = LinkedHashMap<Path, BazelFileUpdater>()
+    for ((owner, list) in libs.groupByTo(
+      destination = TreeMap(
+        compareBy(
+          { it.sectionName },
+          { it.buildFile.relativize(projectDir).invariantSeparatorsPathString },
+        )
+      ),
+      keySelector = { it.lib.owner },
+    )) {
+      val bazelFileUpdater = fileToUpdater.computeIfAbsent(owner.buildFile) {
+        val updater = BazelFileUpdater(it)
+        updater.removeSections("maven-libs")
+        updater.removeSections("maven libs")
+        updater
+      }
 
-    generateProjectLibsBazelModule(
-      file = projectDir.resolve("community/lib/MODULE.bazel"),
-      isCommunity = true,
-      jarRepositories = jarRepositories,
-      m2Repo = m2Repo,
-      generator = generator,
-    )
-    generateProjectLibsBazelModule(
-      file = projectDir.resolve("lib/MODULE.bazel"),
-      isCommunity = false,
-      jarRepositories = jarRepositories,
-      m2Repo = m2Repo,
-      generator = generator,
-    )
+      val sortedList = list.sortedBy { it.lib.targetName }
 
-    generateLocalLibs(libs = generator.localLibs, providedRequested = generator.providedRequested)
-  }
+      val groupedByTargetName = sortedList.groupBy { it.lib.targetName }
 
-  private fun generateProjectLibraryBazelBuild(file: Path, isCommunity: Boolean) {
-    val bazelFileUpdater = BazelFileUpdater(file)
-    val mavenLibraries = libs.filter { it.lib.isCommunity == isCommunity }.sortedBy { it.lib.targetName }
-    if (mavenLibraries.isNotEmpty()) {
-      generateMavenLibs(bazelFileUpdater = bazelFileUpdater, mavenLibraries = mavenLibraries, providedRequested = providedRequested)
+      val labelTracker = fileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet<String>() }
+      buildFile(out = bazelFileUpdater, sectionName = owner.sectionName) {
+        load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
+
+        for (entry in groupedByTargetName) {
+          val libs = entry.value
+          if (libs.size > 1) {
+            throw IllegalStateException("More than one versions: $entry")
+          }
+          generateMavenLib(lib = libs.single(), labelTracker = labelTracker, providedRequested = providedRequested, libVisibility = owner.visibility)
+        }
+      }
+
+      generateBazelModuleSectionsForLibs(
+        list = sortedList,
+        owner = owner,
+        jarRepositories = jarRepositories,
+        m2Repo = m2Repo,
+        urlCache = urlCache,
+        moduleFileToLabelTracker = fileToLabelTracker,
+        fileToUpdater = fileToUpdater,
+      )
     }
-    bazelFileUpdater.save()
+
+    generateLocalLibs(libs = localLibs, providedRequested = providedRequested, fileToUpdater = fileToUpdater)
+
+    for (updater in fileToUpdater.values) {
+      updater.save()
+    }
   }
 
   fun addMavenLibrary(lib: MavenLibrary, isProvided: Boolean): MavenLibrary {
-    // we process community modules first, so, `addOrGet` (library equality ignores `isCommunity` flag)
+    if (lib.lib.owner == ultimateLibOwner) {
+      libs.firstOrNull { it.lib.owner == communityLibOwner && it.lib.targetName == lib.lib.targetName }?.let {
+        if (isProvided) {
+          providedRequested.add(it)
+        }
+        return it
+      }
+    }
+
     val internedLib = libs.addOrGet(lib)
     if (isProvided) {
       providedRequested.add(internedLib)
@@ -190,6 +218,7 @@ internal class BazelBuildFileGenerator(
         val fileUpdater = fileToUpdater.computeIfAbsent(module.bazelBuildFileDir) {
           val fileUpdater = BazelFileUpdater(module.bazelBuildFileDir.resolve("BUILD.bazel"))
           fileUpdater.removeSections("build")
+          fileUpdater.removeSections("maven libs of ")
           fileUpdater
         }
         buildFile(out = fileUpdater, sectionName = "build ${module.module.name}") {
@@ -248,7 +277,7 @@ internal class BazelBuildFileGenerator(
     val module = moduleDescriptor.module
     val jvmTarget = getLanguageLevel(module)
     val kotlincOptionsLabel = computeKotlincOptions(buildFile = this, module = moduleDescriptor, jvmTarget = jvmTarget) ?: "@community//:k$jvmTarget".takeIf { jvmTarget != "17" }
-    val javacOptionsLabel = computeJavacOptions(module, jvmTarget) ?: "@community//:j$jvmTarget".takeIf { jvmTarget != "17" }
+    val javacOptionsLabel = computeJavacOptions(module, jvmTarget)
 
     val resourceDependencies = mutableListOf<String>()
     val sources = moduleDescriptor.sources
@@ -272,10 +301,6 @@ internal class BazelBuildFileGenerator(
         }
         if (kotlincOptionsLabel != null) {
           option("kotlinc_opts", kotlincOptionsLabel)
-        }
-
-        if (sharedSerializers.contains(module.name)) {
-          option("tags", arrayOf("kt_abi_plugin_incompatible"))
         }
 
         var deps = moduleList.deps.get(moduleDescriptor)
@@ -391,6 +416,10 @@ internal class BazelBuildFileGenerator(
       resourceDependencies.add("@community//plugins/env-files-support:${module.targetName}_resources")
       return
     }
+    if (!module.isCommunity && module.module.name == "intellij.rider.plugins.renderdoc") {
+      resourceDependencies.add("//rider/plugins/renderdoc:renderdoc_resources")
+      return
+    }
 
     load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
@@ -498,7 +527,8 @@ private fun extraResourceTarget(
         return@mapNotNull null
       }
 
-      val metaInfRelative = resolveRelativeToBazelBuildFileDirectory(childDir = metaInf, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, module = module).invariantSeparatorsPathString
+      val metaInfRelative = resolveRelativeToBazelBuildFileDirectory(childDir = metaInf, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, module = module)
+        .invariantSeparatorsPathString
 
       val existingResourceRoot = module.sourceRoots.firstOrNull { it.rootType == JavaResourceRootType.RESOURCE }
       if (existingResourceRoot != null) {
@@ -606,7 +636,7 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
 
   buildFile.target("create_kotlinc_options") {
     option("name", kotlincOptionsName)
-    option("jvm_target", if (jvmTarget == "8") "1.8" else jvmTarget)
+    option("jvm_target", jvmTarget.toInt())
     for ((name, value) in options.entries.sortedBy { it.key }) {
       option(name, value)
     }
@@ -634,7 +664,7 @@ private fun renderDeps(
   }
 
   if (resourceDependencies.isNotEmpty() || (deps != null && deps.runtimeDeps.isNotEmpty())) {
-    val runtimeDeps = resourceDependencies.map { if (it.startsWith('@')) it else ":$it" } + (deps?.runtimeDeps ?: emptyList())
+    val runtimeDeps = resourceDependencies.map { if (it.startsWith('@') || it.startsWith("//")) it else ":$it" } + (deps?.runtimeDeps ?: emptyList())
     if (runtimeDeps.isNotEmpty()) {
       target.option("runtime_deps", runtimeDeps)
     }

@@ -14,6 +14,7 @@ jvm_library(
     "@lib//:rd-framework",
     "@lib//:rd-text",
     "@lib//:rd-swing",
+    "//platform/util/progress",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/core-impl",

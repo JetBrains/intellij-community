@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "11",
+  jvm_target = 11,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
@@ -13,14 +13,12 @@ jvm_library(
   module_name = "intellij.platform.runtime.product",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/runtime/repository",
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
-  ],
-  exports = ["//platform/runtime/repository"]
+  ]
 )
 ### auto-generated section `build intellij.platform.runtime.product` end

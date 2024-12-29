@@ -17,7 +17,6 @@ jvm_library(
   module_name = "intellij.platform.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util/jdom",
@@ -69,11 +68,14 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//platform/util",
+    "//platform/core-impl",
     "@lib//:kotlin-stdlib",
     "@lib//:assert_j",
     "@lib//:junit4",
     "@lib//:jna",
     "//platform/core-api:core",
+    "//platform/indexing-impl",
+    "//platform/lang-api:lang",
     "//platform/projectModel-impl",
     "@lib//:jet_check",
     "@lib//:commons-compress",
@@ -96,7 +98,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/util/coroutines",
-    "@lib//:jetbrains_kotlinx_lincheck_jvm",
+    "@lib//:jetbrains-kotlinx-lincheck-jvm",
     "@lib//:mockito",
   ]
 )

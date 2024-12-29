@@ -6,19 +6,16 @@ jvm_library(
   module_name = "intellij.tools.jps.build.standalone",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
-    "@lib//:org_codehaus_groovy_groovy",
+    "@lib//:org-codehaus-groovy-groovy",
     "//jps/jps-builders:build",
     "//jps/model-api:model",
+    "//platform/util",
     "@lib//:cli-parser",
     "//jps/model-serialization",
+    "//jps/jps-builders-6:build-javac-rt",
     "@lib//:protobuf",
-  ],
-  exports = [
-    "//jps/jps-builders:build",
-    "//jps/model-serialization",
   ]
 )
 ### auto-generated section `build intellij.tools.jps.build.standalone` end

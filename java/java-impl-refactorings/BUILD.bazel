@@ -11,6 +11,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//platform/core-impl",
     "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
     "//platform/statistics",
     "//java/openapi:java",
     "//java/java-psi-impl:psi-impl",

@@ -23,7 +23,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//plugins/completion-ml-ranking:completionMlRanking",
     "//platform/platform-impl/internal:ide-internal",
-    "@lib//:kotlin_ml-completion_completion-ranking-kotlin",
+    "@lib//:kotlin-ml-completion-completion-ranking-kotlin",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
   ],
   runtime_deps = [":ml-completion_resources"]

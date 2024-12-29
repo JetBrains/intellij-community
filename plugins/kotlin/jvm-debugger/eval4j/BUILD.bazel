@@ -7,9 +7,10 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//java/debugger/openapi:java-debugger",
     "@lib//:kotlin-stdlib",
     "@lib//:asm",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/util",
     "//java/debugger/impl:java-debugger-impl",
   ],
@@ -22,10 +23,11 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":kotlin-jvm-debugger-eval4j"],
   deps = [
+    "//java/debugger/openapi:java-debugger",
     "@lib//:kotlin-stdlib",
     "@lib//:asm",
     "@lib//:junit4",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/util",
     "//java/debugger/impl:java-debugger-impl",
   ]

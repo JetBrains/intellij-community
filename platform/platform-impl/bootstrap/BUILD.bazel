@@ -7,6 +7,8 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/statistics",
     "//platform/service-container:serviceContainer",
@@ -30,7 +32,7 @@ jvm_library(
     "@lib//:jna",
     "@lib//:hash4j",
     "@lib//:jbr-api",
-    "@lib//:googlecode_plist_dd",
+    "@lib//:googlecode-plist-dd",
     "@lib//:netty-codec-http",
   ]
 )

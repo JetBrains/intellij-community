@@ -18,7 +18,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:guava",
     "@lib//:protobuf",
-    "@lib//:javax_annotation-api",
+    "@lib//:javax-annotation-api",
     "//libraries/grpc",
   ],
   runtime_deps = [":execution-process-mediator-common_resources"]
@@ -35,9 +35,9 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:guava",
     "@lib//:protobuf",
-    "@lib//:javax_annotation-api",
+    "@lib//:javax-annotation-api",
     "@lib//:junit5",
-    "@lib//:execution_process_mediator_common_com_willowtreeapps_assertk_assertk-jvm",
+    "@lib//:execution-process-mediator-common-com-willowtreeapps-assertk-assertk-jvm",
     "//libraries/grpc",
   ],
   runtime_deps = [":execution-process-mediator-common_resources"]

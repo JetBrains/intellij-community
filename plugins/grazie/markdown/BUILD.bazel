@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/grazie/src:core",
     "//plugins/markdown/core:markdown",
     "//platform/core-api:core",
+    "//platform/util",
     "//platform/util-ex",
   ],
   runtime_deps = [":markdown_resources"]

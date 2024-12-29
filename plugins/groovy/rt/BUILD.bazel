@@ -6,15 +6,14 @@ jvm_library(
   module_name = "intellij.groovy.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
-    "@lib//:org_codehaus_groovy_groovy",
+    "@lib//:org-codehaus-groovy-groovy",
     "@lib//:jetbrains-annotations-java5",
     "//plugins/groovy/rt-constants:constants-rt",
   ],
   exports = [
-    "@lib//:org_codehaus_groovy_groovy",
+    "@lib//:org-codehaus-groovy-groovy",
     "//plugins/groovy/rt-constants:constants-rt",
   ]
 )

@@ -8,6 +8,8 @@ java_library(
     "//platform/main/intellij.platform.main:main",
     "//platform/navbar/frontend",
     "//platform/xdebugger-impl/frontend:debugger-impl-frontend",
+    "//platform/vcs-impl/frontend:vcs-impl-frontend",
+    "//platform/bookmarks/frontend",
   ]
 )
 ### auto-generated section `build intellij.platform.frontend.main` end

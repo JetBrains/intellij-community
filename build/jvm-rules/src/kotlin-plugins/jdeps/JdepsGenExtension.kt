@@ -1,14 +1,18 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package io.bazel.kotlin.plugin.jdeps
 
 import com.google.devtools.build.lib.view.proto.Deps
 import org.jetbrains.bazel.jvm.kotlin.JarOwner
+import org.jetbrains.bazel.jvm.kotlin.JarOwner.Companion.INJECTING_RULE_KIND
+import org.jetbrains.bazel.jvm.kotlin.JarOwner.Companion.TARGET_LABEL
 import org.jetbrains.kotlin.codegen.ClassFileFactory
 import org.jetbrains.kotlin.codegen.extensions.ClassFileFactoryFinalizerExtension
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.jar.JarFile
 
-internal class JdepsGenExtension2(
+internal class JdepsGenExtension(
   private val classUsageRecorder: ClassUsageRecorder,
   private val configuration: CompilerConfiguration,
 ) : ClassFileFactoryFinalizerExtension {
@@ -26,7 +30,7 @@ private fun onAnalysisCompleted(
   implicitClassesCanonicalPaths: Set<String>,
   configuration: CompilerConfiguration,
 ) {
-  val directDeps = configuration.getList(JdepsGenConfigurationKeys.DIRECT_DEPENDENCIES)
+  val directDeps: List<String> = configuration.getList(JdepsGenConfigurationKeys.DIRECT_DEPENDENCIES)
   val targetLabel = configuration.getNotNull(JdepsGenConfigurationKeys.TARGET_LABEL)
   val explicitDeps = createDepsMap(explicitClassesCanonicalPaths)
 
@@ -62,7 +66,7 @@ private fun createDepsMap(classes: Set<String>): Map<String, List<String>> {
 }
 
 private fun doWriteJdeps(
-  directDeps: MutableList<String>,
+  directDeps: List<String>,
   targetLabel: String,
   explicitDeps: Map<String, List<String>>,
   implicitClassesCanonicalPaths: Set<String>,
@@ -108,7 +112,7 @@ private fun doWriteJdeps(
 private fun doStrictDeps(
   compilerConfiguration: CompilerConfiguration,
   targetLabel: String,
-  directDeps: MutableList<String>,
+  directDeps: List<String>,
   explicitDeps: Map<String, List<String>>,
 ) {
   when (compilerConfiguration.get(JdepsGenConfigurationKeys.STRICT_KOTLIN_DEPS, "none")) {
@@ -118,6 +122,16 @@ private fun doStrictDeps(
         "Strict Deps Violations - please fix"
       }
     }
+  }
+}
+
+private fun readJarOwnerFromManifest(jarPath: Path): JarOwner {
+  JarFile(jarPath.toFile()).use { jarFile ->
+    val manifest = jarFile.manifest ?: return JarOwner(jarPath)
+    val attributes = manifest.mainAttributes
+    val label = attributes[TARGET_LABEL] as String? ?: return JarOwner(jarPath)
+    val injectingRuleKind = attributes[INJECTING_RULE_KIND] as String?
+    return JarOwner(jar = jarPath, label = label, aspect = injectingRuleKind)
   }
 }
 
@@ -132,7 +146,7 @@ private fun checkStrictDeps(
   val missingStrictDeps = result.keys
     .asSequence()
     .filter { !directDeps.contains(it) }
-    .map { JarOwner.readJarOwnerFromManifest(Path.of(it)) }
+    .map { readJarOwnerFromManifest(Path.of(it)) }
     .toList()
 
   if (missingStrictDeps.isEmpty()) {

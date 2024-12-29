@@ -6,20 +6,19 @@ jvm_library(
   module_name = "intellij.gradle.toolingExtension",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j8",
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/external-system-rt:externalSystem-rt",
     "//platform/util-rt",
     "@lib//:gradle",
-    "@lib//:org_codehaus_groovy_groovy-provided",
-    "@lib//:org_codehaus_groovy_groovy-ant-provided",
+    "@lib//:org-codehaus-groovy-groovy-provided",
+    "@lib//:org-codehaus-groovy-groovy-ant-provided",
   ],
   exports = [
     "@lib//:gradle",
-    "@lib//:org_codehaus_groovy_groovy-provided",
-    "@lib//:org_codehaus_groovy_groovy-ant-provided",
+    "@lib//:org-codehaus-groovy-groovy-provided",
+    "@lib//:org-codehaus-groovy-groovy-ant-provided",
   ]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension` end

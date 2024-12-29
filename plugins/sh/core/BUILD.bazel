@@ -14,11 +14,13 @@ jvm_library(
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "@lib//:pty4j",
     "@lib//:gson",
     "//spellchecker",
+    "//platform/indexing-impl",
     "//platform/statistics",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
@@ -30,3 +32,33 @@ jvm_library(
   runtime_deps = [":core_resources"]
 )
 ### auto-generated section `build intellij.sh.core` end
+
+### auto-generated section `build intellij.sh.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/sh",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+  ]
+)
+
+jvm_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `build intellij.sh.tests` end

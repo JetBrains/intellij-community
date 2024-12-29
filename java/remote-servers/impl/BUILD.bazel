@@ -9,9 +9,11 @@ jvm_library(
   deps = [
     "//java/remote-servers/api:java-remoteServers",
     "//java/compiler/impl:java-compiler-impl",
+    "//platform/platform-impl:ide-impl",
     "//java/debugger/impl:java-debugger-impl",
     "//java/execution/openapi:java-execution",
     "//platform/lang-impl",
+    "//java/debugger/openapi:java-debugger",
     "//platform/remote-servers/impl:remoteServers-impl",
     "//java/java-impl:impl",
     "//java/openapi:java",

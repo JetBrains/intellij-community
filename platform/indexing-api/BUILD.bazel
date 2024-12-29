@@ -17,6 +17,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
+    "//platform/util",
     "//platform/util/concurrency",
     "@lib//:kotlin-stdlib",
   ],

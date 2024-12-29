@@ -6,18 +6,18 @@ jvm_library(
   module_name = "kotlin.uast.uast-kotlin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  javac_opts = "@community//:j11",
   kotlinc_opts = "@community//:k11",
   deps = [
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
     "@lib//:asm",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/util",
     "//uast/uast-common:uast",
     "//java/java-psi-impl:psi-impl",
     "//uast/uast-java:java-uast",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-uast-kotlin-base",
   ]
 )

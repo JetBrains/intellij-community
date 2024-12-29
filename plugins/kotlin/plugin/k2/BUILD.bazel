@@ -15,7 +15,7 @@ java_library(
     ":kotlin-plugin-k2_resources",
     "//plugins/kotlin/plugin/common:kotlin-plugin-common",
     "//plugins/kotlin/plugin",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
     "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-api-platform",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",

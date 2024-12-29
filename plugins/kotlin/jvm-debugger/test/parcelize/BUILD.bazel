@@ -14,13 +14,17 @@ jvm_library(
   deps = [
     "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
-    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/jvm-debugger/test/k2:kotlin-jvm-debugger-test-k2_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/jvm-debugger/test:kotlin-jvm-debugger-test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "@lib//:kotlinc_kotlin-compiler-common",
+    "//java/openapi:java",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-common",
     "//android/streaming",
   ]
 )

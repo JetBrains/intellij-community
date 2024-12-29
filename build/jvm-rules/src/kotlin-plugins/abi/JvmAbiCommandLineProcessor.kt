@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.jvm.abi
 
@@ -24,6 +21,13 @@ class JvmAbiCommandLineProcessor : CommandLineProcessor {
                 "Output path for generated files. This can be either a directory or a jar file.",
                 true
             )
+
+      val TARGET_LABEL_OPTION: CliOption = CliOption(
+        optionName = "targetLabel",
+        valueDescription = "<string>",
+        description = "Bazel target label",
+        required = true
+      )
 
         val REMOVE_DEBUG_INFO_OPTION: CliOption =
             CliOption(
@@ -81,6 +85,7 @@ class JvmAbiCommandLineProcessor : CommandLineProcessor {
     override val pluginOptions: Collection<CliOption>
         get() = listOf(
             OUTPUT_PATH_OPTION,
+            TARGET_LABEL_OPTION,
             REMOVE_DEBUG_INFO_OPTION,
             REMOVE_DATA_CLASS_COPY_IF_CONSTRUCTOR_IS_PRIVATE_OPTION,
             PRESERVE_DECLARATION_ORDER_OPTION,
@@ -91,6 +96,7 @@ class JvmAbiCommandLineProcessor : CommandLineProcessor {
     override fun processOption(option: AbstractCliOption, value: String, configuration: CompilerConfiguration) {
         when (option) {
             OUTPUT_PATH_OPTION -> configuration.put(JvmAbiConfigurationKeys.OUTPUT_PATH, value)
+            TARGET_LABEL_OPTION -> configuration.put(JvmAbiConfigurationKeys.TARGET_LABEL, value)
             REMOVE_DEBUG_INFO_OPTION -> configuration.put(JvmAbiConfigurationKeys.REMOVE_DEBUG_INFO, value == "true")
             REMOVE_DATA_CLASS_COPY_IF_CONSTRUCTOR_IS_PRIVATE_OPTION -> configuration.put(
                 JvmAbiConfigurationKeys.REMOVE_DATA_CLASS_COPY_IF_CONSTRUCTOR_IS_PRIVATE,

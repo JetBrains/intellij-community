@@ -14,6 +14,9 @@ jvm_library(
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/markdown/core:markdown",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/core-impl",
     "//spellchecker",
     "//platform/monolith",
   ],

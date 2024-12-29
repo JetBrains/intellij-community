@@ -1,37 +1,7 @@
 load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
 load("//:jvm.bzl", "jvm_import", "kt_kotlinc_options")
-
-java_import(
-    name = "protobuf-java",
-    jars = ["@protobuf-java-file//file"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "protobuf-java-util",
-    jars = ["@protobuf-java-util-file//file"],
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "kotlin-compiler",
-    jar = "@kotlin-compiler_http//file",
-    source_jar = "@kotlin-compiler-sources_http//file",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        "@lib//:jetbrains-annotations",
-        "@lib//:kotlinx-coroutines-core",
-        "@lib//:platform_util_trove_trove",
-    ],
-)
-
-jvm_import(
-    name = "kotlin-metadata-jvm",
-    jar = "@kotlin-metadata-jvm_http//file",
-    source_jar = "@kotlin-metadata-jvm-sources_http//file",
-    visibility = ["//visibility:public"],
-)
+load(":rules/trace.bzl", "trace")
 
 label_flag(
     name = "default-kotlinc-opts",
@@ -39,7 +9,83 @@ label_flag(
     visibility = ["//visibility:public"],
 )
 
+label_flag(
+    name = "worker-impl",
+    # build_setting_default = "//src/misc:worker-jvm",
+    build_setting_default = "//src/misc:worker-native",
+    visibility = ["//visibility:public"],
+)
+
 kt_kotlinc_options(
     name = "default-kotlinc-opts-value",
     visibility = ["//visibility:public"],
 )
+
+# --@rules_jvm//:kt_trace
+trace(
+    name = "kt_trace",
+    build_setting_default = False,
+)
+
+### auto-generated section `libraries` start
+jvm_import(
+    name = "protobuf-java",
+    jar = "@protobuf-java//file",
+    source_jar = "@protobuf-java-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-build-tools-impl",
+    jar = "@kotlin-build-tools-impl//file",
+    source_jar = "@kotlin-build-tools-impl-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-compiler",
+    jar = "@kotlin-compiler//file",
+    source_jar = "@kotlin-compiler-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        "@lib//:jetbrains-annotations",
+        ":kotlinx-coroutines-core",
+    ],
+)
+
+jvm_import(
+    name = "kotlin-metadata",
+    jar = "@kotlin-metadata-jvm//file",
+    source_jar = "@kotlin-metadata-jvm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-serialization-compiler-plugin",
+    jar = "@kotlin-serialization-compiler-plugin//file",
+    source_jar = "@kotlin-serialization-compiler-plugin-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-compose-compiler-plugin",
+    jar = "@kotlin-compose-compiler-plugin//file",
+    source_jar = "@kotlin-compose-compiler-plugin-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "poko-compiler-plugin",
+    jar = "@poko-compiler-plugin//file",
+    source_jar = "@poko-compiler-plugin-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-coroutines-core",
+    jar = "@kotlinx-coroutines-core-jvm//file",
+    source_jar = "@kotlinx-coroutines-core-jvm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+### auto-generated section `libraries` end

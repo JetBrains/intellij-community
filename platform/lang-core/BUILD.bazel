@@ -19,6 +19,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//platform/util-class-loader:util-classLoader",
+    "//platform/util",
     "//platform/util/concurrency",
     "//platform/code-style-api:codeStyle",
     "//platform/util:util-ui",

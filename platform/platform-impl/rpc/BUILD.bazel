@@ -6,7 +6,6 @@ jvm_library(
   module_name = "intellij.platform.ide.rpc",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  tags = ["kt_abi_plugin_incompatible"],
   deps = [
     "//platform/util",
     "//platform/core-api:core",

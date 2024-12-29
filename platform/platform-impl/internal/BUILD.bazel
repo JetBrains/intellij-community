@@ -15,6 +15,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/analysis-impl",
+    "//platform/util/progress",
     "//platform/lang-api:lang",
     "//platform/backend/workspace",
     "//platform/workspace/jps",

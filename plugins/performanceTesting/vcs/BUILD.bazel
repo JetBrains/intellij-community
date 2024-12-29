@@ -8,7 +8,11 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/diff-api:diff",
     "//platform/vcs-impl",
+    "//platform/ide-core",
+    "//platform/vcs-api:vcs",
+    "//platform/core-api:core",
   ],
   runtime_deps = ["//platform/monolith"]
 )

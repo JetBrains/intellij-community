@@ -14,8 +14,8 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_noarg-compiler-plugin",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-noarg-compiler-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/jps:kotlin-base-jps",
     "//plugins/kotlin/maven",

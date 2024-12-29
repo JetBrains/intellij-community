@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
 )
@@ -23,8 +23,8 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
@@ -50,9 +50,9 @@ jvm_library(
   associates = [":kotlin-code-insight-postfix-templates-k2"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-compiler-tests",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-analysis-api",
     "@lib//:junit4",
     "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
     "//plugins/kotlin/base/util:kotlin-base-util",
@@ -69,6 +69,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/live-templates-k2:kotlin-code-insight-live-templates-k2_test_lib",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
     "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/java-psi-api:psi",
     "//java/testFramework",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",

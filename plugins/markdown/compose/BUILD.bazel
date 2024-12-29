@@ -14,8 +14,13 @@ jvm_library(
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/jewel/foundation",
     "//plugins/markdown/core:markdown",
     "//platform/compose",
+    "//libraries/compose-foundation-desktop",
+    "//platform/core-api:core",
+    "//platform/util:util-ui",
+    "//platform/platform-api:ide",
     "//platform/jewel/markdown/ide-laf-bridge-styling:jewel-markdown-ideLafBridgeStyling",
   ],
   runtime_deps = [":compose-preview_resources"],

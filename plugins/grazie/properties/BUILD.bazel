@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/grazie/src:core",
     "//plugins/properties",
     "//plugins/properties/properties-psi-api:psi",
+    "//platform/util",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/util-ex",

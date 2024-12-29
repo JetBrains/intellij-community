@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
@@ -23,9 +23,9 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_analysis-api",
-    "@lib//:kotlinc_analysis-api-impl-base",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:asm",
     "@lib//:jb-jdi",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
@@ -44,9 +44,11 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/script-debugger/debugger-ui:scriptDebugger-ui",
     "//platform/platform-impl:ide-impl",
+    "//java/debugger/openapi:java-debugger",
     "//platform/lang-impl",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//java/openapi:java",
+    "//platform/util/progress",
     "//java/execution/openapi:java-execution",
     "//java/debugger/impl:java-debugger-impl",
     "//java/java-psi-impl:psi-impl",

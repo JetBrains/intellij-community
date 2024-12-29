@@ -8,7 +8,9 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/util",
     "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
   ]
 )
 ### auto-generated section `build intellij.platform.lvcs` end

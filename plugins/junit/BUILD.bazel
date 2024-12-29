@@ -18,9 +18,11 @@ jvm_library(
     "//java/execution/impl:java-execution-impl",
     "//java/java-runtime:rt",
     "//platform/testRunner",
+    "//platform/vcs-api:vcs",
     "@lib//:junit4",
     "//plugins/junit_rt:junit-rt",
     "//java/compiler/openapi:java-compiler",
+    "//platform/platform-impl:ide-impl",
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
     "//platform/smRunner",
@@ -36,10 +38,7 @@ jvm_library(
     "//plugins/properties/properties-psi-impl:psi-impl",
     "//platform/core-ui",
   ],
-  exports = [
-    "//platform/smRunner",
-    "//jvm/jvm-analysis-api:analysis",
-  ],
+  exports = ["//jvm/jvm-analysis-api:analysis"],
   runtime_deps = [":junit_resources"]
 )
 ### auto-generated section `build intellij.junit` end

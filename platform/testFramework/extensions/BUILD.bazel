@@ -14,7 +14,11 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
     "//platform/util",
+    "//platform/util-ex",
+    "//platform/execution",
+    "//platform/projectModel-impl",
     "//platform/testFramework",
     "//platform/util/jdom",
     "@lib//:memoryfilesystem",
@@ -23,10 +27,6 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "@lib//:junit5",
-  ],
-  exports = [
-    "@lib//:memoryfilesystem",
-    "@lib//:assert_j",
   ],
   runtime_deps = [":testExtensions_resources"]
 )

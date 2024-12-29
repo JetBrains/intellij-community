@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
@@ -23,6 +23,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/util/concurrency",
+    "//platform/core-impl",
     "//platform/platform-api:ide",
     "//platform/statistics",
     "//platform/platform-impl:ide-impl",
@@ -30,7 +31,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",
     "@lib//:miglayout-swing",
-    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin-provided",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
     "//platform/ui.jcef:ui-jcef",
@@ -47,6 +48,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/util/concurrency",
+    "//platform/core-impl",
     "//platform/platform-api:ide",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
@@ -56,7 +58,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",
     "@lib//:miglayout-swing",
-    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin-provided",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
     "//platform/ui.jcef:ui-jcef",

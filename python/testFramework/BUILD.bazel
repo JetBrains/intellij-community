@@ -8,6 +8,9 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/testFramework",
+    "//python/python-sdk:sdk",
+    "//platform/execution",
+    "//platform/lang-impl",
     "//python:python-community-impl",
   ]
 )

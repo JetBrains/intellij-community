@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/markdown/core:markdown",
+    "//platform/lang-impl",
     "//python/python-psi-impl:psi-impl",
     "//python/python-psi-api:psi",
   ],
@@ -29,10 +30,11 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/markdown/core:markdown",
+    "//platform/lang-impl",
     "//plugins/markdown/plugin",
     "//python/python-psi-impl:psi-impl",
     "//python/python-psi-api:psi",
-    "//python/testSrc:community-tests_test_lib",
+    "//python:python-community-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],

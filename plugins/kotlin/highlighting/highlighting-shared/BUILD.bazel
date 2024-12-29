@@ -1,12 +1,5 @@
 ### auto-generated section `build kotlin.highlighting.shared` start
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
-create_kotlinc_options(
-  name = "custom",
-  jvm_target = "17",
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
-)
 
 jvm_resources(
   name = "kotlin-highlighting-shared_resources",
@@ -19,12 +12,11 @@ jvm_library(
   module_name = "kotlin.highlighting.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common",
-    "@lib//:kotlinc_kotlin-scripting-common",
-    "@lib//:kotlinc_kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
@@ -38,11 +30,11 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
-    "@lib//:jetbrains_markdown",
+    "@lib//:jetbrains-markdown",
     "//java/java-impl:impl",
     "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
-    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc-analysis-api",
   ],
   exports = ["//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal"],
   runtime_deps = [":kotlin-highlighting-shared_resources"]

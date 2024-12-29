@@ -4,7 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = "17",
+  jvm_target = 17,
   context_receivers = True,
   opt_in = [
     "androidx.compose.ui.ExperimentalComposeUiApi",
@@ -30,8 +30,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:platform_jewel_samples_standalone_com_darkrockstudios_mpfilepicker",
-    "@lib//:platform_jewel_samples_standalone_com_darkrockstudios_mpfilepicker_jvm",
+    "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker",
+    "@lib//:platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker-jvm",
     "//platform/jewel/markdown/extension/autolink:jewel-markdown-extension-autolink",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
@@ -42,14 +42,14 @@ jvm_library(
     "//platform/jewel/markdown/core:jewel-markdown-core",
     "//platform/jewel/markdown/extension/gfm-alerts:jewel-markdown-extension-gfmAlerts",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "//libraries/compose-foundation-desktop",
   ],
   runtime_deps = [
     ":jewel-samples-standalone_resources",
     "@lib//:jna",
-    "@lib//:platform_jewel_samples_standalone_org_lwjgl_lwjgl",
-    "@lib//:platform_jewel_samples_standalone_org_lwjgl_lwjgl_tinyfd",
-    "@lib//:platform_jewel_samples_standalone_org_nibor_autolink_autolink",
-    "//libraries/skiko",
+    "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl",
+    "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
+    "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
   ],
   plugins = ["@lib//:compose-plugin"]
 )
