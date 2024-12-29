@@ -1304,11 +1304,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  @Deprecated
-  public boolean isCollapsed(@NotNull ProductionMarker marker) {
-    return marker.isCollapsed();
-  }
-
   private int insertLeaves(int curToken, int lastIdx, @NotNull CompositeElement curNode) {
     lastIdx = Math.min(lastIdx, myLexemeCount);
     while (curToken < lastIdx) {

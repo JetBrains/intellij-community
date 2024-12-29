@@ -737,7 +737,6 @@ c:com.intellij.lang.impl.PsiBuilderImpl
 - getTreeBuilt():com.intellij.lang.ASTNode
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - hasErrorsAfter(com.intellij.lang.PsiBuilder$Marker):Z
-- isCollapsed(com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker):Z
 - isWhitespaceOrComment(com.intellij.psi.tree.IElementType):Z
 - lookAhead(I):com.intellij.psi.tree.IElementType
 - mark():com.intellij.lang.PsiBuilder$Marker
