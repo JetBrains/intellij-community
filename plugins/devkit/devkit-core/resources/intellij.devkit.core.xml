@@ -99,6 +99,8 @@
     <directClassInheritorsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteInterfaceDirectImplementationSearcher"/>
     <classInheritorsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteInterfaceImplementationSearcher"/>
 
+    <highlightErrorFilter implementation="org.jetbrains.idea.devkit.highlighting.TestFragmentsErrorFilter"/>
+
     <localInspection language="XML" shortName="PluginXmlValidity" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"

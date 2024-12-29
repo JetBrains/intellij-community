@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElement
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.html.impl.providers.HtmlAttributeValueProvider;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -94,23 +95,25 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
     }
 
     if (requiredAttributes != null) {
-      for (final String attrName : requiredAttributes) {
+      for (String attrName : requiredAttributes) {
         if (!hasAttribute(tag, attrName) &&
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
-          LocalQuickFix insertRequiredAttributeIntention =
-            isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
-          final String localizedMessage =
-            XmlAnalysisBundle.message("xml.inspections.element.doesnt.have.required.attribute", name, attrName);
-          reportOneTagProblem(
-            tag,
-            attrName,
-            localizedMessage,
-            insertRequiredAttributeIntention,
-            holder,
-            getIntentionAction(attrName),
-            isOnTheFly
-          );
+          if (InjectedLanguageManager.getInstance(tag.getProject()).getInjectionHost(tag) == null) {
+            // disabled in injected fragments
+
+            LocalQuickFix insertRequiredAttributeIntention =
+              isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
+            reportOneTagProblem(
+              tag,
+              attrName,
+              XmlAnalysisBundle.message("xml.inspections.element.doesnt.have.required.attribute", name, attrName),
+              insertRequiredAttributeIntention,
+              holder,
+              getIntentionAction(attrName),
+              isOnTheFly
+            );
+          }
         }
       }
     }

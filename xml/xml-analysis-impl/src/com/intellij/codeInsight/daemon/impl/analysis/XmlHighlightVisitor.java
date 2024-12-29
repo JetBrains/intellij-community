@@ -253,6 +253,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         }
 
         HighlightInfoType type = getTagProblemInfoType(tag);
+        if (InjectedLanguageManager.getInstance(tag.getProject()).getInjectionHost(tag) != null) {
+          // disabled in injected fragments
+          return;
+        }
+
         addElementsForTagWithManyQuickFixes(tag, XmlAnalysisBundle.message("xml.inspections.element.is.not.allowed.here", name), type);
         return;
       }

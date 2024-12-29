@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
@@ -19,17 +20,24 @@ import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Maxim Mossienko
- */
-public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
+public final class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
+  private final boolean enableInInjectedCode;
+
+  public CheckTagEmptyBodyInspection() {
+    this(false);
+  }
+
+  public CheckTagEmptyBodyInspection(boolean enableInInjectedCode) {
+    this.enableInInjectedCode = enableInInjectedCode;
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!enableInInjectedCode && InjectedLanguageManager.getInstance(holder.getProject()).isInjectedFragment(holder.getFile())) {
+      // not inside injected code
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     return new XmlElementVisitor() {
       @Override public void visitXmlTag(final @NotNull XmlTag tag) {
         if (tag instanceof HtmlTag) {
@@ -41,7 +49,8 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
         }
         final ASTNode node = child.getTreeNext();
 
-        if (node != null && node.getElementType() == XmlTokenType.XML_END_TAG_START) {
+        if (node != null
+            && node.getElementType() == XmlTokenType.XML_END_TAG_START) {
           holder.registerProblem(
             tag,
             XmlAnalysisBundle.message("xml.inspections.tag.empty.body"),
