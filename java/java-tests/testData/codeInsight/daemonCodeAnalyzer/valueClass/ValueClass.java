@@ -22,4 +22,17 @@ value class Thirteen extends Twelve {
     }
   }
 }
+value class USDCurrency implements Comparable<USDCurrency> {
+  private int cs; // implicitly final
+  private USDCurrency(int cs) { this.cs = cs; }
+
+  public USDCurrency(int dollars, int cents) {
+    this(dollars * 100 + (dollars < 0 ? -cents : cents));
+  }
+
+  @Override
+  public int compareTo(USDCurrency o) {
+    return 0;
+  }
+}
 

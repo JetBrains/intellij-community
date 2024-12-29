@@ -565,16 +565,15 @@ public final class HighlightClassUtil {
   }
 
   static HighlightInfo.Builder checkExtendsClassAndImplementsInterface(@NotNull PsiReferenceList referenceList,
-                                                               @NotNull JavaResolveResult resolveResult,
-                                                               @NotNull PsiJavaCodeReferenceElement ref) {
+                                                                       @NotNull PsiClass extendFrom,
+                                                                       @NotNull PsiJavaCodeReferenceElement ref) {
     PsiClass aClass = (PsiClass)referenceList.getParent();
     boolean isImplements = referenceList.equals(aClass.getImplementsList());
     boolean isInterface = aClass.isInterface();
     if (isInterface && isImplements) return null;
     boolean mustBeInterface = isImplements || isInterface;
     HighlightInfo.Builder errorResult = null;
-    PsiClass extendFrom = (PsiClass)resolveResult.getElement();
-    if (extendFrom != null && extendFrom.isInterface() != mustBeInterface) {
+    if (extendFrom.isInterface() != mustBeInterface) {
       String message = JavaErrorBundle.message(mustBeInterface ? "interface.expected" : "no.interface.expected");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(message);
       PsiClassType type =
@@ -1110,6 +1109,18 @@ public final class HighlightClassUtil {
     return null;
   }
 
+  static HighlightInfo.Builder checkValueClassExtends(@NotNull PsiClass superClass,
+                                                      @NotNull PsiClass psiClass,
+                                                      @NotNull PsiElement elementToHighlight) {
+    if (!(!psiClass.isValueClass() ||
+          superClass.isValueClass() ||
+          CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()))) {
+      String message = JavaErrorBundle.message("value.class.can.only.inherit");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
+    }
+    return null;
+  }
+
   static HighlightInfo.Builder checkExtendsProhibitedClass(@NotNull PsiClass superClass,
                                                            @NotNull PsiClass psiClass,
                                                            @NotNull PsiElement elementToHighlight) {
@@ -1117,12 +1128,6 @@ public final class HighlightClassUtil {
     if (CommonClassNames.JAVA_LANG_ENUM.equals(qualifiedName) && !psiClass.isEnum() ||
         CommonClassNames.JAVA_LANG_RECORD.equals(qualifiedName) && !psiClass.isRecord()) {
       String message = JavaErrorBundle.message("classes.extends.prohibited.super", qualifiedName);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
-    }
-    else if (!(!psiClass.isValueClass() ||
-               superClass.isValueClass() ||
-               CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()))) {
-      String message = JavaErrorBundle.message("value.class.can.only.inherit");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
     }
     return null;

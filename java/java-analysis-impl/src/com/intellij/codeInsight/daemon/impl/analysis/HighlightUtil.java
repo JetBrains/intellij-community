@@ -3755,9 +3755,11 @@ public final class HighlightUtil {
         if (refGrandParent instanceof PsiTypeParameter typeParameter) {
           builder = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, typeParameter, resolveResult, ref);
         }
-        else if (referenceList.equals(parentClass.getImplementsList()) ||
-                 referenceList.equals(parentClass.getExtendsList())) {
-          builder = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, resolveResult, ref);
+        else if (referenceList.equals(parentClass.getImplementsList()) || referenceList.equals(parentClass.getExtendsList())) {
+          builder = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, aClass, ref);
+          if (builder == null && referenceList.equals(parentClass.getExtendsList())) {
+            builder = HighlightClassUtil.checkValueClassExtends(aClass, parentClass, ref);
+          }
           if (builder == null) {
             builder = HighlightClassUtil.checkCannotInheritFromFinal(aClass, ref);
           }
