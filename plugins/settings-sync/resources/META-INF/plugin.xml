@@ -30,12 +30,6 @@
                              provider="com.intellij.settingsSync.config.SettingsSyncConfigurableProvider"
                              groupId="root"
                              groupWeight="5"/>
-    <applicationConfigurable id="backup.n.sync"
-                             key="title.backup.n.sync"
-                             bundle="messages.SettingsSyncBundle"
-                             provider="com.intellij.settingsSync.config.BackupNSyncConfigurableProvider"
-                             groupId="root"
-                             groupWeight="5"/>
     <applicationService serviceInterface="com.intellij.settingsSync.plugins.PluginManagerProxy"
                         serviceImplementation="com.intellij.settingsSync.plugins.CorePluginManagerProxy"/>
     <notificationGroup displayType="STICKY_BALLOON" id="settingsSync.errors"
