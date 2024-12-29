@@ -1388,7 +1388,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return ASTFactory.composite(type);
   }
 
-  private static @NotNull LazyParseableElement createLazy(@NotNull ILazyParseableElementType type, @Nullable CharSequence text, @Nullable ASTFactory astFactory) {
+  private static @NotNull LazyParseableElement createLazy(@NotNull ILazyParseableElementType type,
+                                                          @Nullable CharSequence text,
+                                                          @Nullable ASTFactory astFactory) {
     if (astFactory != null) {
       LazyParseableElement element = astFactory.createLazy(type, text);
       if (element != null) return element;
@@ -1401,8 +1403,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private static final class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
-    private final TripleFunction<? super ASTNode, ? super LighterASTNode, ? super FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>
-      myCustom;
+    private final TripleFunction<
+        ? super ASTNode,
+        ? super LighterASTNode,
+        ? super FlyweightCapableTreeStructure<LighterASTNode>,
+        ThreeState
+      > myCustom;
+
     private final @NotNull List<? extends CustomLanguageASTComparator> myCustomLanguageASTComparators;
     private final MyTreeStructure myTreeStructure;
 
