@@ -38,18 +38,18 @@ internal class PluginFreezeWatcher {
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
 
     if (pluginDescriptor.isImplementationDetail || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(frozenPlugin)) {
-      return null
+      return FreezeReason(frozenPlugin, event, durationMs, reportToUser = false)
     }
 
     if (pluginDescriptor.isBundled && !application.isInternal && !application.isEAP) {
-      return null
+      return FreezeReason(frozenPlugin, event, durationMs, reportToUser = false)
     }
 
     val freezeStorageService = PluginsFreezesService.getInstance()
     if (freezeStorageService.shouldBeIgnored(frozenPlugin)) return null
     freezeStorageService.setLatestFreezeDate(frozenPlugin)
 
-    reason = FreezeReason(frozenPlugin, event, durationMs)
+    reason = FreezeReason(frozenPlugin, event, durationMs, reportToUser = true)
 
     return reason
   }
@@ -74,5 +74,6 @@ internal class PluginFreezeWatcher {
 internal data class FreezeReason(
   val pluginId: PluginId,
   val event: IdeaLoggingEvent,
-  val durationMs: Long
+  val durationMs: Long,
+  val reportToUser: Boolean,
 )

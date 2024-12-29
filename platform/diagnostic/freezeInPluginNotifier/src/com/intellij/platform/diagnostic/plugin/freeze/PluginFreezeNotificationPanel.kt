@@ -34,7 +34,7 @@ internal class PluginFreezeNotifier: FreezeNotifier {
     for (dump in currentDumps) {
       val reason = freezeWatcher.dumpedThreads(event, dump, durationMs)
       if (reason != null) {
-        LifecycleUsageTriggerCollector.pluginFreezeDetected(reason.pluginId, durationMs)
+        LifecycleUsageTriggerCollector.pluginFreezeDetected(reason.pluginId, durationMs, reason.reportToUser)
 
         reportFreeze()
         break
