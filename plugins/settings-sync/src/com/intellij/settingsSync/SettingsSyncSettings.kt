@@ -60,6 +60,12 @@ class SettingsSyncSettings : SettingsSyncState, SerializablePersistentStateCompo
   override val disabledSubcategories: Map<SettingsCategory, List<String>>
     get() = state.disabledSubcategories
 
+  fun updateCategories(disabledCategories: List<SettingsCategory>, disabledSubcategories: Map<SettingsCategory, List<String>>) {
+    updateState {
+      it.withDisabledCategories(disabledCategories).withDisabledSubcategories(disabledSubcategories)
+    }
+  }
+
   fun applyFromState(state: SettingsSyncState) {
     updateState {
       State(state.disabledCategories, state.disabledSubcategories, state.migrationFromOldStorageChecked, state.syncEnabled)
@@ -78,7 +84,7 @@ class SettingsSyncSettings : SettingsSyncState, SerializablePersistentStateCompo
       return State(disabledCategories, disabledSubcategories, checked, syncEnabled)
     }
 
-    private fun withDisabledCategories(newCategories: List<SettingsCategory>): State {
+    internal fun withDisabledCategories(newCategories: List<SettingsCategory>): State {
       return State(newCategories, disabledSubcategories, migrationFromOldStorageChecked, syncEnabled)
     }
 
@@ -95,7 +101,7 @@ class SettingsSyncSettings : SettingsSyncState, SerializablePersistentStateCompo
     }
 
 
-    private fun withDisabledSubcategories(newSubcategoriesMap: Map<SettingsCategory, List<String>>): State {
+    internal fun withDisabledSubcategories(newSubcategoriesMap: Map<SettingsCategory, List<String>>): State {
       return State(disabledCategories, newSubcategoriesMap, migrationFromOldStorageChecked, syncEnabled)
     }
 

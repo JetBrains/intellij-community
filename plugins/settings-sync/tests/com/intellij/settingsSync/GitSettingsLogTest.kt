@@ -472,14 +472,14 @@ internal class GitSettingsLogTest {
   fun `use empty email if JBA doesn't provide one`() {
     val jbaName = "JBA Name 2"
 
-    userData = SettingsSyncUserData(jbaName, null)
+    userData = SettingsSyncUserData(jbaName, "dummy", jbaName, null)
     checkUsernameEmail(jbaName, "")
   }
 
   @Test
   @TestFor(issues = ["EA-844607"])
   fun `use empty name if JBA doesn't provide one`() {
-    userData = SettingsSyncUserData(null, null)
+    userData = SettingsSyncUserData("empty", "dummy", null, null)
     checkUsernameEmail("", "")
   }
 

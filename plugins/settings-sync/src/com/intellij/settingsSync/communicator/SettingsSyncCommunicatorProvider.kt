@@ -19,7 +19,7 @@ interface SettingsSyncCommunicatorProvider {
   /**
    * Creates a communicator (using the login data from authService)
    */
-  fun createCommunicator(): SettingsSyncRemoteCommunicator?
+  fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator?
 
   companion object {
     @JvmField
@@ -28,10 +28,9 @@ interface SettingsSyncCommunicatorProvider {
 }
 
 data class SettingsSyncUserData(
-  val name: String?,
-  val email: String?,
-) {
-  companion object {
-    val EMPTY = SettingsSyncUserData(null, null)
-  }
-}
+  val id: String,
+  val providerCode: String,
+  val name: String? = null,
+  val email: String? = null,
+  val printableName: String? = null
+)

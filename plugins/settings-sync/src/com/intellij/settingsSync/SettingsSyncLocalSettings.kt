@@ -9,6 +9,8 @@ interface SettingsSyncLocalState {
   val applicationId: UUID
   var knownAndAppliedServerId: String?
   var isCrossIdeSyncEnabled: Boolean
+  var userId: String?
+  var providerCode: String?
 }
 
 @State(name = "SettingsSyncLocalSettings", storages = [Storage("settingsSyncLocal.xml", roamingType = RoamingType.DISABLED)])
@@ -23,12 +25,16 @@ class SettingsSyncLocalSettings : SimplePersistentStateComponent<SettingsSyncLoc
     var applicationId: String? by string(UUID.randomUUID().toString())
     var knownAndAppliedServerId: String? by string(null)
     var crossIdeSyncEnabled by property(false)
+    var userId by string(null)
+    var providerCode by string(null)
 
     @TestOnly
     internal fun reset() {
       applicationId = UUID.randomUUID().toString()
       knownAndAppliedServerId = null
       crossIdeSyncEnabled = false
+      userId = null
+      providerCode = null
     }
   }
 
@@ -36,6 +42,8 @@ class SettingsSyncLocalSettings : SimplePersistentStateComponent<SettingsSyncLoc
     applicationId = newState.applicationId
     knownAndAppliedServerId = newState.knownAndAppliedServerId
     isCrossIdeSyncEnabled = newState.isCrossIdeSyncEnabled
+    userId = newState.userId
+    providerCode = newState.providerCode
   }
 
   override var applicationId: UUID
@@ -54,6 +62,18 @@ class SettingsSyncLocalSettings : SimplePersistentStateComponent<SettingsSyncLoc
     get() = state.crossIdeSyncEnabled
     set(value) {
       state.crossIdeSyncEnabled = value
+    }
+
+  override var userId: String?
+    get() = state.userId
+    set(value) {
+      state.userId = value
+    }
+
+  override var providerCode: String?
+    get() = state.providerCode
+    set(value) {
+      state.providerCode = value
     }
 }
 
@@ -83,4 +103,17 @@ class SettingsSyncLocalStateHolder(
     set(value) {
       state.crossIdeSyncEnabled = value
     }
+
+  override var userId: String?
+    get() = state.userId
+    set(value) {
+      state.userId = value
+    }
+
+  override var providerCode: String?
+    get() = state.providerCode
+    set(value) {
+      state.providerCode = value
+    }
+
 }

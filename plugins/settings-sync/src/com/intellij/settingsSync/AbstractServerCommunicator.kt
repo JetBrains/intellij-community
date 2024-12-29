@@ -16,6 +16,63 @@ abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator {
   }
 
 
+  /**
+   * called when a request is successful, as an opposite to handleRemoteError
+   */
+  protected open fun requestSuccessful() {}
+
+  /**
+   * Handles errors that occur during remote operations by mapping the given `Throwable` to a meaningful error message.
+   *
+   * @param e The exception or error that occurred during a remote operation.
+   * @return A string describing the error in a human-readable format, suitable for logging or display.
+   */
+  protected abstract fun handleRemoteError(e: Throwable): String
+
+  /**
+   * Reads the content of a file from the given file path.
+   *
+   * @param filePath The path of the file to be read.
+   * @return A pair containing:
+   *         - An InputStream of the file content if the operation is successful, otherwise null.
+   *         - A server version identifier associated with the file, or null if unavailable.
+   * @throws IOException If an I/O error occurs during file reading.
+   */
+  @Throws(IOException::class)
+  protected abstract fun readFileInternal(filePath: String): Pair<InputStream?, String?>
+
+  /**
+   * Writes the content to a specified file, potentially associated with a particular version ID.
+   *
+   * @param filePath The path to the file where the content will be written.
+   * @param versionId An optional version identifier for the file. If provided, the version ID must match
+   *                  the version on server; otherwise, an InvalidVersionIdException may occur.
+   * @param content The content to be written to the file, provided as an InputStream.
+   * @return The version ID of the file after the content is written, or null if the operation does not result
+   *         in an identifiable version.
+   * @throws IOException If an I/O error occurs during the writing process.
+   * @throws InvalidVersionIdException If the provided(expected) version ID doesn't match the actual remote one.
+   */
+  @Throws(IOException::class, InvalidVersionIdException::class)
+  protected abstract fun writeFileInternal(filePath: String, versionId: String?, content: InputStream): String?
+
+  /**
+   * Fetches the latest version identifier for the file at the specified file path.
+   *
+   * This version is compared against SettingsSyncLocalSettings.getKnownAndAppliedServerId
+   * to check whether settings version on server is different from the local one.
+   *
+   * @param filePath The path to the file whose latest version is to be retrieved.
+   * @return The latest version identifier of the file, or null if no version information is available.
+   * @throws IOException If an I/O error occurs while attempting to retrieve the version information.
+   */
+  @Throws(IOException::class)
+  protected abstract fun getLatestVersion(filePath: String) : String?
+
+  @Throws(IOException::class)
+  protected abstract fun deleteFileInternal(filePath: String)
+
+
   @VisibleForTesting
   @Throws(IOException::class, SecurityException::class)
   protected fun currentSnapshotFilePath(): Pair<String, Boolean>? {
@@ -63,7 +120,7 @@ abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator {
     if (force) {
       // get the latest server version: pushing with it will overwrite the file in any case
       versionToPush = getLatestVersion(snapshotFilePath)
-      writeFileInternal(snapshotFilePath, null, inputStream)
+      writeFileInternal(snapshotFilePath, versionToPush, inputStream)
     }
     else {
       if (knownServerVersion != null) {
@@ -171,22 +228,6 @@ abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator {
       }
     }
   }
-
-  protected abstract fun requestSuccessful()
-
-  protected abstract fun handleRemoteError(e: Throwable): String
-
-  @Throws(IOException::class)
-  protected abstract fun readFileInternal(snapshotFilePath: String): Pair<InputStream?, String?>
-
-  @Throws(IOException::class, InvalidVersionIdException::class)
-  protected abstract fun writeFileInternal(filePath: String, versionId: String?, content: InputStream): String?
-
-  @Throws(IOException::class)
-  protected abstract fun getLatestVersion(filePath: String) : String?
-
-  @Throws(IOException::class)
-  protected abstract fun deleteFileInternal(filePath: String)
 
   override fun createFile(filePath: String, content: String) {
     writeFileInternal(filePath, null, content.byteInputStream())

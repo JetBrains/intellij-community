@@ -18,12 +18,12 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.UpdateResult.*
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
 //import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
@@ -73,7 +73,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         },
         disposable!!)
 
-    override fun invoke() = RemoteCommunicatorHolder.getAuthService().isLoggedIn()
+    override fun invoke() = RemoteCommunicatorHolder.getCurrentUserData() != null
   }
 
   inner class EnabledPredicate : ComponentPredicate() {
@@ -141,7 +141,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       SettingsSyncLocalSettings.getInstance(),
     )
     val authService = RemoteCommunicatorHolder.getAuthService()
-    val authAvailable = authService.isLoginAvailable()
+    val authAvailable = true
     configPanel = panel {
       val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
       if (settingsRepositoryIsEnabled()) {
@@ -168,11 +168,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         }
         row {
           button(message("config.button.login")) {
-            authService.login()
+            runBlockingCancellable {
+              authService?.login()
+            }
           }.visibleIf(LoggedInPredicate().not())
             .enabled(!settingsRepositoryIsEnabled())
           enableButton = button(message("config.button.enable")) {
-            syncEnabler.checkServerState()
+            syncEnabler.checkServerStateAsync()
           }.visibleIf(LoggedInPredicate().and(EnabledPredicate().not()))
             .enabledIf(SyncEnablerRunning().not())
             .enabled(!settingsRepositoryIsEnabled())
@@ -231,8 +233,9 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     SettingsSyncEvents.getInstance().addListener(
       object : SettingsSyncEventListener {
         override fun loginStateChanged() {
-          if (RemoteCommunicatorHolder.getAuthService().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
-            syncEnabler.checkServerState()
+          if (RemoteCommunicatorHolder.getCurrentUserData() != null
+              && !SettingsSyncSettings.getInstance().syncEnabled) {
+            syncEnabler.checkServerStateAsync()
           }
           reset()
         }
@@ -429,7 +432,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   private fun getUserName(): String {
-    return RemoteCommunicatorHolder.getAuthService().getUserData().name ?: "?"
+    return RemoteCommunicatorHolder.getCurrentUserData()?.name ?: "?"
   }
 
   override fun syncStatusChanged() {

@@ -19,6 +19,11 @@ const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 interface SettingsSyncRemoteCommunicator {
 
   /**
+   * userId used within the communicator
+   */
+  val userId: String
+
+  /**
    * checks the current state of the user's data in the cloud.
    */
   @RequiresBackgroundThread

@@ -7,11 +7,11 @@ import com.intellij.settingsSync.SettingsSyncBundle.message
 import org.jetbrains.annotations.Nls
 import java.util.*
 
-internal class SyncCategoryHolder(
-  val descriptor: Category,
-  private val state: SettingsSyncState
-) {
-  var isSynchronized: Boolean = state.isCategoryEnabled(descriptor.category)
+internal class SyncCategoryHolder(val descriptor: Category) {
+
+  private var state: SettingsSyncState? = null
+
+  var isSynchronized: Boolean = state?.isCategoryEnabled(descriptor.category) ?: false
 
   val name: @Nls String
     get() = descriptor.name
@@ -24,10 +24,10 @@ internal class SyncCategoryHolder(
 
   fun reset() {
     with(descriptor) {
-      isSynchronized = state.isCategoryEnabled(category)
+      isSynchronized = state?.isCategoryEnabled(category) ?: false
       if (secondaryGroup != null) {
         secondaryGroup.getDescriptors().forEach {
-          it.isSelected = isSynchronized && state.isSubcategoryEnabled(category, it.id)
+          it.isSelected = isSynchronized && state?.isSubcategoryEnabled(category, it.id) ?: false
         }
       }
     }
@@ -38,38 +38,68 @@ internal class SyncCategoryHolder(
       if (secondaryGroup != null) {
         secondaryGroup.getDescriptors().forEach {
           // !isSynchronized not store disabled states individually
-          state.setSubcategoryEnabled(category, it.id, !isSynchronized || it.isSelected)
+          state?.setSubcategoryEnabled(category, it.id, !isSynchronized || it.isSelected)
         }
       }
-      state.setCategoryEnabled(category, isSynchronized)
+      state?.setCategoryEnabled(category, isSynchronized)
     }
   }
 
   fun isModified(): Boolean {
     with(descriptor) {
-      if (isSynchronized != state.isCategoryEnabled(category)) return true
+      if (isSynchronized != state?.isCategoryEnabled(category)) return true
       if (secondaryGroup != null && isSynchronized) {
         secondaryGroup.getDescriptors().forEach {
-          if (it.isSelected != state.isSubcategoryEnabled(category, it.id)) return true
+          if (it.isSelected != state?.isSubcategoryEnabled(category, it.id)) return true
         }
       }
       return false
     }
   }
 
+  override fun toString(): String {
+    return "SyncCategoryHolder(name='$name', isSynchronized=$isSynchronized, isModified=${isModified()})"
+  }
+
+
   companion object {
-    fun createAllForState(state: SettingsSyncState): List<SyncCategoryHolder> {
-      val retval = arrayListOf<SyncCategoryHolder>()
+    val allHolders: List<SyncCategoryHolder> = arrayListOf<SyncCategoryHolder>().apply {
       for (descriptor in Category.DESCRIPTORS) {
-        retval.add(SyncCategoryHolder(descriptor, state))
+        add(SyncCategoryHolder(descriptor))
       }
-      return retval
     }
+
+    fun updateState(state: SettingsSyncState) {
+      allHolders.forEach {
+        it.state = state
+      }
+    }
+
+    val disabledCategories: List<SettingsCategory>
+      get() = arrayListOf<SettingsCategory>().apply {
+        for (holder in allHolders) {
+          if (!holder.isSynchronized) {
+            add(holder.descriptor.category)
+          }
+        }
+      }
+
+    val disabledSubcategories: Map<SettingsCategory, List<String>>
+      get() = hashMapOf<SettingsCategory, MutableList<String>>().apply {
+        for (holder in allHolders) {
+          val descriptors = holder.secondaryGroup?.getDescriptors() ?: continue
+          for (descriptor in descriptors) {
+            if (!descriptor.isSelected) {
+              computeIfAbsent(holder.descriptor.category) { arrayListOf() }.add(descriptor.id)
+            }
+          }
+        }
+      }
   }
 
   internal class Category(
     val category: SettingsCategory,
-    val secondaryGroup: SyncSubcategoryGroup? = null
+    val secondaryGroup: SyncSubcategoryGroup? = null,
   ) {
 
     val name: @Nls String

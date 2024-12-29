@@ -12,12 +12,13 @@ class JbaCommunicatorProvider : SettingsSyncCommunicatorProvider, Disposable {
 
   override val providerCode: String
     get() = "jba"
+
   override val authService: SettingsSyncAuthService
     get() {
       return authServiceLazy.value
     }
 
-  override fun createCommunicator(): SettingsSyncRemoteCommunicator? = lazy<CloudConfigServerCommunicator> {
+  override fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator = lazy<CloudConfigServerCommunicator> {
     CloudConfigServerCommunicator(null, authServiceLazy.value)
   }.value
 

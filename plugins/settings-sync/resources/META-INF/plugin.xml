@@ -12,6 +12,7 @@
   <content>
     <module name="intellij.settingsSync.git"/>
     <module name="intellij.settingsSync.jba"/>
+    <module name="intellij.settingsSync.fileSystem"/>
   </content>
 
   <depends>com.intellij.modules.platform</depends>
@@ -27,6 +28,12 @@
                              key="title.settings.sync"
                              bundle="messages.SettingsSyncBundle"
                              provider="com.intellij.settingsSync.config.SettingsSyncConfigurableProvider"
+                             groupId="root"
+                             groupWeight="5"/>
+    <applicationConfigurable id="backup.n.sync"
+                             key="title.backup.n.sync"
+                             bundle="messages.SettingsSyncBundle"
+                             provider="com.intellij.settingsSync.config.BackupNSyncConfigurableProvider"
                              groupId="root"
                              groupWeight="5"/>
     <applicationService serviceInterface="com.intellij.settingsSync.plugins.PluginManagerProxy"

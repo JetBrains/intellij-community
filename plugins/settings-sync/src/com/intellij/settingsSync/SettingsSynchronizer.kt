@@ -70,17 +70,17 @@ private class SettingsSynchronizerApplicationInitializedListener : ApplicationAc
       }
     }
   }
-}
 
-private suspend fun initializeSyncing(initMode: SettingsSyncBridge.InitMode, settingsSyncEventListener: SettingsSyncEventListener) {
-  LOG.info("Initializing settings sync. Mode: $initMode")
-  val settingsSyncMain = serviceAsync<SettingsSyncMain>()
-  blockingContext {
-    settingsSyncMain.controls.bridge.initialize(initMode)
-    val settingsSyncEvents = SettingsSyncEvents.getInstance()
-    settingsSyncEvents.addListener(settingsSyncEventListener)
-    settingsSyncEvents.fireSettingsChanged(SyncSettingsEvent.SyncRequest)
-    LocalHostNameProvider.initialize()
+  private suspend fun initializeSyncing(initMode: SettingsSyncBridge.InitMode, settingsSyncEventListener: SettingsSyncEventListener) {
+    LOG.info("Initializing settings sync. Mode: $initMode")
+    val settingsSyncMain = serviceAsync<SettingsSyncMain>()
+    blockingContext {
+      settingsSyncMain.controls.bridge.initialize(initMode)
+      val settingsSyncEvents = SettingsSyncEvents.getInstance()
+      settingsSyncEvents.addListener(settingsSyncEventListener)
+      settingsSyncEvents.fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+      LocalHostNameProvider.initialize()
+    }
   }
 }
 

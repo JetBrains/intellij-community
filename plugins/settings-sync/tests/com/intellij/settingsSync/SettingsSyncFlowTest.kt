@@ -73,7 +73,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     // emulate first session with initialization
     val fileName = "options/laf.xml"
     val file = configDir.resolve(fileName).write("LaF Initial")
-    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { SettingsSyncUserData.EMPTY },
+    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { SettingsSyncUserData("empty", "dummy") },
                              initialSnapshotProvider = { MockSettingsSyncIdeMediator.getAllFilesFromSettingsAsSnapshot(configDir) })
     log.initialize()
     log.logExistingSettings()

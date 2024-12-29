@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.jba.auth
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.settingsSync.SettingsSyncEvents
@@ -7,7 +8,11 @@ import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.jba.SettingsSyncPromotion
 import com.intellij.ui.JBAccountInfoService
-import java.util.function.Consumer
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.job
+import java.util.concurrent.CancellationException
 
 internal class JBAAuthService : SettingsSyncAuthService {
 
@@ -18,15 +23,11 @@ internal class JBAAuthService : SettingsSyncAuthService {
   @Volatile
   private var invalidatedIdToken: String? = null
 
-  override fun isLoggedIn(): Boolean {
-    return isTokenValid(getAccountInfoService()?.idToken)
-  }
-
   private fun isTokenValid(token: String?): Boolean {
     return token != null && token != invalidatedIdToken
   }
 
-  override fun getUserData() = fromJBAData(
+  override fun getUserData(userId: String) = fromJBAData(
       if (ApplicationManagerEx.isInIntegrationTest()) {
         DummyJBAccountInfoService.userData
       } else {
@@ -34,11 +35,22 @@ internal class JBAAuthService : SettingsSyncAuthService {
       }
     )
 
-  private fun fromJBAData(jbaData: JBAccountInfoService.JBAData?) : SettingsSyncUserData {
+  override fun getAvailableUserAccounts(): List<SettingsSyncUserData> {
+    val userData = getUserData("dummy")
+    if (userData != null) {
+      return listOf(userData)
+    } else {
+      return emptyList()
+    }
+  }
+
+  private fun fromJBAData(jbaData: JBAccountInfoService.JBAData?) : SettingsSyncUserData? {
     if (jbaData == null) {
-      return SettingsSyncUserData.EMPTY
+      return null
     } else {
       return SettingsSyncUserData(
+        jbaData.id,
+        providerCode,
         jbaData.loginName,
         jbaData.email,
       )
@@ -53,9 +65,13 @@ internal class JBAAuthService : SettingsSyncAuthService {
     }
   override val providerCode: String
     get() = "jba"
+  override val providerName: String
+    get() = "JetBrains"
 
-  override fun login() {
-    if (!isLoggedIn()) {
+  override val icon = AllIcons.Ultimate.IdeaUltimatePromo
+
+  override suspend fun login(): Deferred<SettingsSyncUserData?> {
+    return coroutineScope {
       val accountInfoService = getAccountInfoService()
       val loginMetadata = hashMapOf(
         "from.settings.sync" to "true"
@@ -63,24 +79,42 @@ internal class JBAAuthService : SettingsSyncAuthService {
       if (SettingsSyncPromotion.promotionShownThisSession) {
         loginMetadata["from.settings.sync.promotion"] = "true"
       }
+      val retval = CompletableDeferred<SettingsSyncUserData?>(parent = coroutineContext.job)
       if (accountInfoService != null) {
         try {
-          val loginSession: JBAccountInfoService.LoginSession? = accountInfoService.startLoginSession(
+          val loginSession: JBAccountInfoService.LoginSession = accountInfoService.startLoginSession(
             JBAccountInfoService.LoginMode.AUTO, null, loginMetadata)
 
-          loginSession!!.onCompleted().thenAccept(Consumer<JBAccountInfoService.LoginResult> {
-              SettingsSyncEvents.getInstance().fireLoginStateChanged()
-            })
+          loginSession.onCompleted().exceptionally{ exc ->
+            if (exc is CancellationException) {
+              LOG.warn("Login cancelled")
+            } else {
+              LOG.warn("Login failed", exc)
+            }
+            null
+          }.thenApply{loginResult ->
+            if (loginResult is JBAccountInfoService.LoginResult.LoginSuccessful) {
+              retval.complete(fromJBAData(loginResult.jbaUser))
+            } else if (loginResult is JBAccountInfoService.LoginResult.LoginFailed) {
+              LOG.warn("Login failed: ${loginResult.errorMessage}")
+              retval.complete(null)
+            } else {
+              LOG.warn("Unknown login result: $loginResult")
+              retval.complete(null)
+            }
+          }
         }
         catch (e: Throwable) {
           LOG.error(e)
-          SettingsSyncEvents.getInstance().fireLoginStateChanged()
+          retval.complete(null)
         }
+      } else {
+        LOG.error("JBA auth service is not available!")
+        retval.complete(null)
       }
+      retval
     }
   }
-
-  override fun isLoginAvailable(): Boolean = getAccountInfoService() != null
 
   fun invalidateJBA(idToken: String) {
     if (invalidatedIdToken == idToken) return
