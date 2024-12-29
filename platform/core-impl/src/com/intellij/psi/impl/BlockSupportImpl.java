@@ -354,7 +354,7 @@ public class BlockSupportImpl extends BlockSupport {
 
     try {
       newRoot.putUserData(TREE_TO_BE_REPARSED, Pair.create(oldRoot, lastCommittedText));
-      if (isReplaceWholeNode(fileImpl, newRoot)) {
+      if (isReplaceWholeNode(fileImpl, newRoot)) {  // maybe reparsed exception can be thrown here
         DiffLog treeChangeEvent = replaceElementWithEvents(oldRoot, newRoot);
         fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
 
