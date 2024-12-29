@@ -24,8 +24,7 @@ public class PlainTextSplitter extends BaseSplitter {
     return INSTANCE;
   }
 
-  private static final
-  Pattern SPLIT_PATTERN = Pattern.compile("(\\s|\b)");
+  private static final Pattern SPLIT_PATTERN = Pattern.compile("(\\s|\b|\\(|\\))");
 
   private static final Pattern MAIL =
     Pattern.compile("([\\p{L}0-9\\.\\-\\_\\+]+@([\\p{L}0-9\\-\\_]+(\\.)?)+(com|net|[a-z]{2})?)");
