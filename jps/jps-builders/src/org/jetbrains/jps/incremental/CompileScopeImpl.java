@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
@@ -21,10 +22,10 @@ public final class CompileScopeImpl extends CompileScope {
   private final Map<BuildTarget<?>, Set<File>> myFiles;
   private final Map<BuildTarget<?>, Set<File>> myIndirectlyAffectedFiles = Collections.synchronizedMap(new HashMap<>());
 
-  public CompileScopeImpl(@NotNull Collection<? extends BuildTargetType<?>> types,
-                          @NotNull Collection<? extends BuildTargetType<?>> typesToForceBuild,
-                          @NotNull Collection<BuildTarget<?>> targets,
-                          @NotNull Map<BuildTarget<?>, Set<File>> files) {
+  public CompileScopeImpl(@NotNull @Unmodifiable Collection<? extends BuildTargetType<?>> types,
+                          @NotNull @Unmodifiable Collection<? extends BuildTargetType<?>> typesToForceBuild,
+                          @NotNull @Unmodifiable Collection<BuildTarget<?>> targets,
+                          @NotNull @Unmodifiable Map<BuildTarget<?>, Set<File>> files) {
     myTypes = types;
     myTypesToForceBuild = new HashSet<>();
     boolean forceBuildAllModuleBasedTargets = false;

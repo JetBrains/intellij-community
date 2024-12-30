@@ -53,11 +53,11 @@ public final class BuildRunner {
   }
 
   public void setFilePaths(@Nullable List<String> filePaths) {
-    myFilePaths = filePaths != null? filePaths : Collections.emptyList();
+    myFilePaths = filePaths == null ? Collections.emptyList() : filePaths;
   }
 
   public void setBuilderParams(@Nullable Map<String, String> builderParams) {
-    myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
+    myBuilderParams = builderParams == null ? Collections.emptyMap() : builderParams;
   }
 
   public @NotNull JpsProject loadModelAndGetJpsProject() throws IOException {
