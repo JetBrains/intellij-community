@@ -20,13 +20,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -47,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static com.intellij.byteCodeViewer.BytecodeLineMappingKt.mapLines;
@@ -171,8 +168,7 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
     final PsiClass containingClass = BytecodeViewerManager.getContainingClass(selectedPsiElement);
     if (containingClass == null) {
       LOG.trace("Tried to update displayed bytecode but the selectedPsiElement (" + selectedPsiElement + ") has no containing class");
-      showWarning(BytecodeViewerBundle.message("bytecode.not.found.title"),
-                  BytecodeViewerBundle.message("bytecode.class.in.selection.message"));
+      bytecodeEditor.getSelectionModel().removeSelection();
       return;
     }
     if (!Objects.equals(containingClass.getQualifiedName(), currentlyDisplayedClassFQN)) {
@@ -275,12 +271,6 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
       });
     };
 
-    final BiConsumer<@NotNull String, @NotNull String> onWarningShown = (String title, String message) -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        showWarning(title, message);
-      });
-    };
-
     // If a new task was scheduled to update bytecode, we want to cancel the previous one.
     if (existingLoadBytecodeTask != null) {
       if (existingLoadBytecodeTask.isRunning()) {
@@ -289,12 +279,8 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
       }
       existingLoadBytecodeTask = null;
     }
-    existingLoadBytecodeTask = new LoadBytecodeTask(project, onNewBytecodeLoaded, onClassUpdated, onWarningShown);
+    existingLoadBytecodeTask = new LoadBytecodeTask(project, onNewBytecodeLoaded, onClassUpdated);
     existingLoadBytecodeTask.queue();
-  }
-
-  private void showWarning(@NlsSafe @NotNull String title, @NlsSafe @NotNull String message) {
-    ToolWindowManager.getInstance(project).notifyByBalloon(TOOL_WINDOW_ID, MessageType.WARNING, title + "\n" + message);
   }
 
   @RequiresEdt
@@ -328,19 +314,16 @@ final class LoadBytecodeTask extends Task.Backgroundable {
 
   private final @NotNull Consumer<@NotNull Bytecode> onBytecodeUpdated;
   private final @NotNull Consumer<@NotNull PsiClass> onClassNameUpdated;
-  private final @NotNull BiConsumer<@NotNull String, @NotNull String> onWarningShown;
 
   private @Nullable ProgressIndicator myProgressIndicator;
   private @Nullable Bytecode myBytecode;
 
   LoadBytecodeTask(@NotNull Project project,
                    @RequiresEdt @NotNull Consumer<@NotNull Bytecode> onBytecodeUpdated,
-                   @RequiresBackgroundThread @NotNull Consumer<@NotNull PsiClass> onClassUpdated,
-                   @NotNull BiConsumer<@NotNull String, @NotNull String> onWarningShown) {
+                   @RequiresBackgroundThread @NotNull Consumer<@NotNull PsiClass> onClassUpdated) {
     super(project, BytecodeViewerBundle.message("loading.bytecode"), true);
     this.onBytecodeUpdated = onBytecodeUpdated;
     this.onClassNameUpdated = onClassUpdated;
-    this.onWarningShown = onWarningShown;
   }
 
   public void cancel() {
@@ -385,8 +368,6 @@ final class LoadBytecodeTask extends Task.Backgroundable {
       final PsiClass containingClass = BytecodeViewerManager.getContainingClass(selectedPsiElement);
       if (containingClass == null) {
         LOG.trace("Tried to update displayed bytecode but the selectedPsiElement (" + selectedPsiElement + ") has no containing class");
-        onWarningShown.accept(BytecodeViewerBundle.message("bytecode.not.found.title"),
-                              BytecodeViewerBundle.message("bytecode.class.in.selection.message"));
         return null;
       }
 
