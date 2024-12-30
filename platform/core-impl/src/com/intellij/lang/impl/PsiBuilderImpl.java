@@ -345,7 +345,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     @Override
     int getLexemeIndex(boolean done) {
-      return done ? myDoneLexeme : myLexemeIndex;
+      return done ? getEndIndex() : getStartIndex();
     }
 
     public void addChild(@NotNull ProductionMarker node) {
@@ -681,7 +681,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     int getLexemeIndex(boolean done) {
       assert !done;
-      return myLexemeIndex;
+      return getStartIndex();
     }
 
     @Override
