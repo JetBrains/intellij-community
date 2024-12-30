@@ -205,15 +205,14 @@ class LinuxDistributionBuilder(
   }
 
   private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
-    val snapName = customizer.snapName
-    val snapArtifactName = this.getSnapArtifactName(arch)
-    if (snapName == null || snapArtifactName == null) {
-      Span.current().addEvent("Linux .snap package build skipped because of missing snapName in ${customizer::class.java.simpleName}")
-      return
-    }
     if (!context.options.buildUnixSnaps) {
       Span.current().addEvent("Linux .snap package build is disabled")
       return
+    }
+    val snapName = customizer.snapName
+    val snapArtifactName = this.getSnapArtifactName(arch)
+    check(snapName != null && snapArtifactName != null) {
+      "Linux .snap package build requires 'snapName' in ${customizer::class.java.simpleName}"
     }
 
     val architecture = getSnapArchName(arch)
@@ -223,13 +222,12 @@ class LinuxDistributionBuilder(
       .setAttribute("snapName", snapName)
       .setAttribute("arch", arch.name)
       .use { span ->
-        if (SystemInfoRt.isWindows) {
-          span.addEvent(".snap cannot be built on Windows, skipped")
-          return@use
+        check(!SystemInfoRt.isWindows) {
+          ".snap package cannot be built on Windows"
         }
-        check(Docker.isAvailable) { "Docker is required to build snaps" }
-        check(iconPngPath != null) { context.messages.error("'iconPngPath' not set") }
-        check(!customizer.snapDescription.isNullOrBlank()) { context.messages.error("'snapDescription' not set") }
+        check(Docker.isAvailable) { "Docker is required to build .snap package" }
+        check(iconPngPath != null) { "'iconPngPath' not set" }
+        check(!customizer.snapDescription.isNullOrBlank()) { "'snapDescription' not set" }
 
         span.addEvent("prepare files")
         val appInfo = context.applicationInfo
