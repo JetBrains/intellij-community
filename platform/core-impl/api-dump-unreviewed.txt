@@ -2141,17 +2141,6 @@ a:com.intellij.psi.impl.AbstractPsiCachedValue
 com.intellij.psi.impl.AnyPsiChangeListener
 - afterPsiChanged(Z):V
 - beforePsiChanged(Z):V
-c:com.intellij.psi.impl.BlockSupportImpl
-- com.intellij.psi.text.BlockSupport
-- <init>():V
-- s:diffTrees(com.intellij.lang.ASTNode,com.intellij.util.diff.DiffTreeChangeBuilder,com.intellij.util.diff.ShallowNodeComparator,com.intellij.util.diff.FlyweightCapableTreeStructure,com.intellij.openapi.progress.ProgressIndicator,java.lang.CharSequence):V
-- s:findReparseableRoots(com.intellij.psi.impl.source.PsiFileImpl,com.intellij.lang.FileASTNode,com.intellij.openapi.util.TextRange,java.lang.CharSequence):com.intellij.openapi.util.Couple
-- s:getFileCopy(com.intellij.psi.impl.source.PsiFileImpl,com.intellij.psi.FileViewProvider):com.intellij.psi.impl.source.PsiFileImpl
-- s:mergeTrees(com.intellij.psi.impl.source.PsiFileImpl,com.intellij.lang.ASTNode,com.intellij.lang.ASTNode,com.intellij.openapi.progress.ProgressIndicator,java.lang.CharSequence):com.intellij.psi.impl.DiffLog
-- reparseRange(com.intellij.psi.PsiFile,I,I,java.lang.CharSequence):V
-- reparseRange(com.intellij.psi.PsiFile,com.intellij.lang.FileASTNode,com.intellij.openapi.util.TextRange,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator,java.lang.CharSequence):com.intellij.psi.impl.DiffLog
-- ps:tryReparseLeaf(com.intellij.psi.tree.IReparseableLeafElementType,com.intellij.lang.ASTNode,java.lang.CharSequence):com.intellij.lang.ASTNode
-- ps:tryReparseNode(com.intellij.psi.tree.IReparseableElementTypeBase,com.intellij.lang.ASTNode,java.lang.CharSequence,com.intellij.psi.PsiManager,com.intellij.lang.Language,com.intellij.util.CharTable):com.intellij.lang.ASTNode
 f:com.intellij.psi.impl.CheckUtil
 - s:checkDelete(com.intellij.openapi.vfs.VirtualFile):V
 - s:checkWritable(com.intellij.psi.PsiElement):V

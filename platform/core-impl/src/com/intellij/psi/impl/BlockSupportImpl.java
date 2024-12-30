@@ -34,13 +34,15 @@ import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public class BlockSupportImpl extends BlockSupport {
+@ApiStatus.Internal
+public final class BlockSupportImpl extends BlockSupport {
   private static final Logger LOG = Logger.getInstance(BlockSupportImpl.class);
 
   @Override
@@ -199,8 +201,12 @@ public class BlockSupportImpl extends BlockSupport {
     return null;
   }
 
-  protected static @Nullable ASTNode tryReparseNode(@NotNull IReparseableElementTypeBase reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr,
-                                                    @NotNull PsiManager manager, @NotNull Language baseLanguage, @NotNull CharTable charTable) {
+  private static @Nullable ASTNode tryReparseNode(@NotNull IReparseableElementTypeBase reparseable,
+                                                  @NotNull ASTNode node,
+                                                  @NotNull CharSequence newTextStr,
+                                                  @NotNull PsiManager manager,
+                                                  @NotNull Language baseLanguage,
+                                                  @NotNull CharTable charTable) {
     if (!reparseable.isReparseable(node, newTextStr, baseLanguage, manager.getProject())) {
       return null;
     }
@@ -226,7 +232,9 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   @SuppressWarnings("unchecked")
-  protected static @Nullable ASTNode tryReparseLeaf(@NotNull IReparseableLeafElementType reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr) {
+  private static @Nullable ASTNode tryReparseLeaf(@NotNull IReparseableLeafElementType reparseable,
+                                                  @NotNull ASTNode node,
+                                                  @NotNull CharSequence newTextStr) {
     return reparseable.reparseLeaf(node, newTextStr);
   }
 
