@@ -68,7 +68,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isRecord()) {
-      builder.addErrorMessage("inspection.message.annotation.only.supported.on.class.or.enum.type", StringUtil.getShortName(getSupportedAnnotationClasses()[0]));
+      builder.addErrorMessage("inspection.message.annotation.only.supported.on.class.or.enum.type",
+                              StringUtil.getShortName(getSupportedAnnotationClasses()[0]));
       result = false;
     }
     return result;
@@ -327,7 +328,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
       for (PsiField psiField : params) {
         final AccessorsInfo paramAccessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
-        fieldNames.add(paramAccessorsInfo.removePrefix(psiField.getName()));
+        fieldNames.add(paramAccessorsInfo.removePrefixWithDefault(psiField.getName()));
       }
 
       if (!fieldNames.isEmpty()) {

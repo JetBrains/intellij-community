@@ -142,6 +142,8 @@ public final class WitherProcessor extends AbstractClassProcessor {
       createWither &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
       // Skip fields having Wither annotation already
       createWither &= !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField).withFluent(false);
+      createWither &= accessorsInfo.acceptsFieldName(psiField.getName());
     }
     return createWither;
   }

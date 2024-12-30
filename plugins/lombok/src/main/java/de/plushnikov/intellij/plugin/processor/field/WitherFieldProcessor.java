@@ -186,9 +186,10 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
     LombokLightMethodBuilder methodBuilder = null;
     final PsiClass psiFieldContainingClass = psiField.getContainingClass();
     if (psiFieldContainingClass != null) {
+      final String witherName = LombokUtils.getWitherName(psiField, accessorsInfo);
       final PsiType returnType = PsiClassUtil.getTypeWithGenerics(psiFieldContainingClass);
 
-      methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), LombokUtils.getWitherName(psiField, accessorsInfo))
+      methodBuilder = new LombokLightMethodBuilder(psiField.getManager(), witherName)
         .withMethodReturnType(returnType)
         .withContainingClass(psiFieldContainingClass)
         .withNavigationElement(psiField)

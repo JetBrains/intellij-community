@@ -108,7 +108,6 @@ public final class GetterProcessor extends AbstractClassProcessor {
 
     Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(psiClass));
 
-
     final GetterFieldProcessor fieldProcessor = getGetterFieldProcessor();
     final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
     for (PsiField psiField : psiClass.getFields()) {
@@ -132,8 +131,10 @@ public final class GetterProcessor extends AbstractClassProcessor {
       createGetter &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClasses());
       //Skip fields that start with $
       createGetter &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-      //Skip fields if a method with same name and arguments count already exists
+
       final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
+      createGetter &= accessorsInfo.acceptsFieldName(psiField.getName());
+      //Skip fields if a method with same name and arguments count already exists
       final Collection<String> methodNames =
         LombokUtils.toAllGetterNames(accessorsInfo, psiField.getName(), PsiTypes.booleanType().equals(psiField.getType()));
       for (String methodName : methodNames) {

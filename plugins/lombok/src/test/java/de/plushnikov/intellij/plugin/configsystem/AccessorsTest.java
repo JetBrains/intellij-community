@@ -35,7 +35,7 @@ public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
     doTest();
   }
 
-  ////////////
+  /// /////////
 
   public void testFluent$GetterSetterFieldTest() {
     doTest();
@@ -57,7 +57,7 @@ public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
     doTest();
   }
 
-  ////////////
+  /// /////////
 
   public void testPrefix$GetterSetterClassTest() {
     doTest();
@@ -67,16 +67,23 @@ public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
     doTest();
   }
 
-  ////////////
+  /// /////////
+  public void testEmptyprefix$AccessorsWithEmptyPrefix() {
+    doTest();
+  }
+
+  /// /////////
   public void testMakefinal$AccessorsMakeFinalLombokConfig() {
     doTest();
   }
-  ////////////
+
+  /// /////////
 
   public void testSuperbuilder$SuperBuilderWithPrefixes() {
     doTest();
   }
-  ////////////
+
+  /// /////////
   public void testCapitalization$BuilderWithJavaBeansSpecCapitalization() {
     doTest();
   }

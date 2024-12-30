@@ -90,13 +90,13 @@ public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, 
     final LombokConfigProperty[] configProperties = LombokConfigUtil.getLombokConfigProperties(configFile);
     for (LombokConfigProperty configProperty : configProperties) {
       final String key = StringUtil.toLowerCase(configProperty.getKey());
-      final String value = configProperty.getValue();
+      final String value = StringUtil.notNullize(configProperty.getValue());
       final String sign = configProperty.getSign();
       if (null == sign) {
         result.put(key, value);
       }
       else {
-        final String previousValue = StringUtil.defaultIfEmpty(result.get(key), "");
+        final String previousValue = result.getOrDefault(key, "");
         final String combinedValue = previousValue + sign + value + ";";
         result.put(key, combinedValue);
       }
@@ -143,7 +143,7 @@ public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, 
 
   @Override
   public int getVersion() {
-    return 14;
+    return 15;
   }
 
   static @Nullable ConfigValue readPropertyWithAlternativeResolver(@NotNull ConfigKey key,

@@ -19,6 +19,6 @@ simpleFile ::= item_*
 
 private item_ ::= (property|cleaner|COMMENT|CRLF)
 
-property ::= (KEY operation VALUE) {methods=[getKey getValue getSign]}
+property ::= (KEY operation VALUE?) {methods=[getKey getValue getSign]}
 operation ::= SIGN? SEPARATOR {methods=[getSign]}
 cleaner ::= (CLEAR KEY) {methods=[getKey]}

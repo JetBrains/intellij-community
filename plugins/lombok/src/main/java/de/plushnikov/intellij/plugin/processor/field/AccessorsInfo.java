@@ -98,7 +98,8 @@ public class AccessorsInfo {
 
       doNotUseIsPrefix = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
 
-      final String capitalizationStrategyValue = configDiscovery.getStringLombokConfigProperty(ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION, psiClass);
+      final String capitalizationStrategyValue =
+        configDiscovery.getStringLombokConfigProperty(ConfigKey.ACCESSORS_JAVA_BEANS_SPEC_CAPITALIZATION, psiClass);
       capitalizationStrategy = CapitalizationStrategy.convertValue(capitalizationStrategyValue);
     }
     else {
@@ -233,42 +234,40 @@ public class AccessorsInfo {
     return prefixes;
   }
 
-  public boolean isPrefixUnDefinedOrNotStartsWith(String fieldName) {
-    if (prefixes.length == 0) {
-      return false;
-    }
-
-    for (String prefix : prefixes) {
-      if (canPrefixApply(fieldName, prefix)) {
-        return false;
-      }
-    }
-    return true;
+  public boolean acceptsFieldName(String fieldName) {
+    return null != removePrefix(fieldName);
   }
 
+  @Nullable
   public String removePrefix(String fieldName) {
+    if (prefixes.length == 0) {
+      return fieldName;
+    }
+
     for (String prefix : prefixes) {
-      if (canPrefixApply(fieldName, prefix)) {
-        return prefix.isEmpty() ? fieldName : decapitalizeLikeLombok(fieldName.substring(prefix.length()));
+      if (prefix.isEmpty()) {
+        return fieldName;
       }
+
+      final int lengthOfPrefix = prefix.length();
+      if (fieldName.length() <= lengthOfPrefix || !fieldName.startsWith(prefix)) {
+        continue;
+      }
+
+      char charAfterPrefix = fieldName.charAt(lengthOfPrefix);
+      if (Character.isLetter(prefix.charAt(lengthOfPrefix - 1)) && Character.isLowerCase(charAfterPrefix)) {
+        continue;
+      }
+
+      return Character.toLowerCase(charAfterPrefix) + fieldName.substring(lengthOfPrefix + 1);
     }
-    return fieldName;
+
+    return null;
   }
 
-  private static boolean canPrefixApply(String fieldName, String prefix) {
-    final int prefixLength = prefix.length();
-    // we can use digits and upper case letters after a prefix, but not lower case letters
-    return prefixLength == 0 ||
-           fieldName.startsWith(prefix) && fieldName.length() > prefixLength &&
-           (!Character.isLetter(prefix.charAt(prefix.length() - 1)) || !Character.isLowerCase(fieldName.charAt(prefixLength)));
-  }
-
-  private static String decapitalizeLikeLombok(String name) {
-    if (name == null || name.isEmpty()) {
-      return name;
-    }
-    char[] chars = name.toCharArray();
-    chars[0] = Character.toLowerCase(chars[0]);
-    return new String(chars);
+  @NotNull
+  public String removePrefixWithDefault(String fieldName) {
+    final String newName = removePrefix(fieldName);
+    return null != newName ? newName : fieldName;
   }
 }

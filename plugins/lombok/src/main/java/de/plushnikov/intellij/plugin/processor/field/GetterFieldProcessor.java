@@ -98,7 +98,8 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
 
   private static boolean validateAccessorPrefix(@NotNull PsiField psiField, @NotNull ProblemSink builder) {
     boolean result = true;
-    if (AccessorsInfo.buildFor(psiField).isPrefixUnDefinedOrNotStartsWith(psiField.getName())) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    if (!accessorsInfo.acceptsFieldName(psiField.getName())) {
       builder.addWarningMessage("inspection.message.not.generating.getter.for.this.field");
       result = false;
     }

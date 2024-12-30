@@ -151,14 +151,16 @@ public class ConfigDiscovery {
 
     Collections.reverse(properties);
 
-    Set<String> result = new HashSet<>();
+    Collection<String> result = new ArrayList<>();
 
     for (String configProperty : properties) {
       if (StringUtil.isNotEmpty(configProperty)) {
         final String[] values = configProperty.split(";");
         for (String value : values) {
           if (value.startsWith("+")) {
-            result.add(value.substring(1));
+            final String substring = value.substring(1);
+            result.remove(substring);
+            result.add(substring);
           }
           else if (value.startsWith("-")) {
             result.remove(value.substring(1));
