@@ -53,13 +53,6 @@ import java.util.List;
 public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   public DiffLog() { }
 
-  private abstract static class LogEntry {
-    LogEntry() {
-      ProgressIndicatorProvider.checkCanceled();
-    }
-    abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event);
-  }
-
   private final List<LogEntry> myEntries = new ArrayList<>();
 
   public @NotNull TreeChangeEventImpl performActualPsiChange(@NotNull PsiFile file) {
@@ -276,5 +269,13 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         }
       }
     });
+  }
+
+  private abstract static class LogEntry {
+    LogEntry() {
+      ProgressIndicatorProvider.checkCanceled();
+    }
+
+    abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event);
   }
 }
