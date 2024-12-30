@@ -5,10 +5,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.ThreeState;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A class for computing difference between two trees and reporting the detected changes via {@link DiffTreeChangeBuilder}
+ */
 public final class DiffTree<OldNode, NewNode> {
   private static final int CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD = 20;
 
@@ -35,6 +39,15 @@ public final class DiffTree<OldNode, NewNode> {
     myNewTreeStart = newTree.getStartOffset(newTree.getRoot());
   }
 
+  /**
+   * Computes the differences between two trees and reports the changes using {@link DiffTreeChangeBuilder} consumer.
+   *
+   * @param oldTree the tree representing the old state
+   * @param newTree the tree representing the new state
+   * @param comparator the comparator used to determine equality between nodes
+   * @param consumer the consumer to report changes detected during the diff operation
+   * @param oldText the textual content of the old tree state, used for comparison purposes
+   */
   public static <OldNode, NewNode> void diff(@NotNull FlyweightCapableTreeStructure<OldNode> oldTree,
                                              @NotNull FlyweightCapableTreeStructure<NewNode> newTree,
                                              @NotNull ShallowNodeComparator<? super OldNode, ? super NewNode> comparator,
@@ -45,10 +58,17 @@ public final class DiffTree<OldNode, NewNode> {
   }
 
   private enum CompareResult {
-    EQUAL, // 100% equal
-    DRILL_DOWN_NEEDED, // element types are equal, but elements are composite
-    TYPE_ONLY, // only element types are equal
-    NOT_EQUAL, // 100% different
+    /** 100% equal */
+    EQUAL,
+
+    /** element types are equal, but elements are composite */
+    DRILL_DOWN_NEEDED,
+
+    /** only element types are equal */
+    TYPE_ONLY,
+
+    /** 100% different */
+    NOT_EQUAL,
   }
 
   private static @NotNull <OldNode, NewNode> DiffTreeChangeBuilder<OldNode, NewNode> emptyConsumer() {
@@ -56,7 +76,7 @@ public final class DiffTree<OldNode, NewNode> {
     return (DiffTreeChangeBuilder<OldNode, NewNode>)EMPTY_CONSUMER;
   }
 
-  private static final DiffTreeChangeBuilder<?,?> EMPTY_CONSUMER = new DiffTreeChangeBuilder<Object,Object>() {
+  private static final DiffTreeChangeBuilder<?, ?> EMPTY_CONSUMER = new DiffTreeChangeBuilder<Object, Object>() {
     @Override
     public void nodeReplaced(@NotNull Object oldChild, @NotNull Object newChild) { }
 
@@ -67,7 +87,10 @@ public final class DiffTree<OldNode, NewNode> {
     public void nodeInserted(@NotNull Object oldParent, @NotNull Object newNode, int pos) { }
   };
 
-  private @NotNull CompareResult build(@NotNull OldNode oldNode, @NotNull NewNode newNode, int level, @NotNull DiffTreeChangeBuilder<? super OldNode, ? super NewNode> consumer) {
+  private @NotNull CompareResult build(@NotNull OldNode oldNode,
+                                       @NotNull NewNode newNode,
+                                       int level,
+                                       @NotNull DiffTreeChangeBuilder<? super OldNode, ? super NewNode> consumer) {
     if (level == myNewChildrenLists.size()) {
       myNewChildrenLists.add(new Ref<>());
       myOldChildrenLists.add(new Ref<>());
@@ -75,11 +98,11 @@ public final class DiffTree<OldNode, NewNode> {
 
     Ref<OldNode[]> oldChildrenR = myOldChildrenLists.get(level);
     int oldChildrenSize = myOldTree.getChildren(oldNode, oldChildrenR);
-    OldNode[] oldChildren = oldChildrenR.get();
+    OldNode[] oldChildren = oldChildrenR.get(); // null if there are no children
 
     Ref<NewNode[]> newChildrenR = myNewChildrenLists.get(level);
     int newChildrenSize = myNewTree.getChildren(newNode, newChildrenR);
-    NewNode[] newChildren = newChildrenR.get();
+    NewNode[] newChildren = newChildrenR.get(); // null if there are no children
 
     CompareResult result;
     if (Math.abs(oldChildrenSize - newChildrenSize) > CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD) {
@@ -113,8 +136,8 @@ public final class DiffTree<OldNode, NewNode> {
         int newIndex = prefixLength;
         while (oldIndex < oldChildrenSize - suffixLength || newIndex < newChildrenSize - suffixLength) {
           ThreeElementMatchResult vicinityMatch = matchNext3Children(oldChildren, newChildren, oldIndex, newIndex,
-                                                                          oldChildrenSize - suffixLength,
-                                                                          newChildrenSize - suffixLength);
+                                                                     oldChildrenSize - suffixLength,
+                                                                     newChildrenSize - suffixLength);
           if (vicinityMatch.hasStartMatch()) {
             if (vicinityMatch == ThreeElementMatchResult.DRILL_DOWN_START_MATCH) {
               build(oldChildren[oldIndex], newChildren[newIndex], level + 1, consumer);
@@ -158,7 +181,12 @@ public final class DiffTree<OldNode, NewNode> {
     return result;
   }
 
-  private ThreeElementMatchResult matchNext3Children(OldNode[] oldChildren, NewNode[] newChildren, int oldIndex, int newIndex, int oldLimit, int newLimit) {
+  private ThreeElementMatchResult matchNext3Children(OldNode[] oldChildren,
+                                                     NewNode[] newChildren,
+                                                     int oldIndex,
+                                                     int newIndex,
+                                                     int oldLimit,
+                                                     int newLimit) {
     if (oldIndex >= oldLimit) return ThreeElementMatchResult.SKIP_NEW_1;
     if (newIndex >= newLimit) return ThreeElementMatchResult.SKIP_OLD_1;
 
@@ -194,29 +222,41 @@ public final class DiffTree<OldNode, NewNode> {
     return ThreeElementMatchResult.NO_MATCH;
   }
 
-  // Represents the result of matching among 3 next node children in before and after tree
+  /** Represents the result of matching among 3 next node children in before and after tree */
   private enum ThreeElementMatchResult {
-    // first children match completely
+    /** first children match completely */
     FULL_START_MATCH,
-    // first children match well, PSI instance should be preserved
+
+    /** first children match well, PSI instance should be preserved */
     DRILL_DOWN_START_MATCH,
-    // PSI instance should be replaced for first children
+
+    /** PSI instance should be replaced for first children */
     REPLACE_START,
-    // first 1 or 2 "new" children don't match, report them as inserted and try matching after them
+
+    /** first 1 or 2 "new" children don't match, report them as inserted and try matching after them */
     SKIP_NEW_1, SKIP_NEW_2,
-    // first 1 or 2 "old" children don't match, report them as deleted and try matching after them
+
+    /** first 1 or 2 "old" children don't match, report them as deleted and try matching after them */
     SKIP_OLD_1, SKIP_OLD_2,
-    // nothing in the 3-children scope matches both the "old" and the "old" first child
+
+    /** nothing in the 3-children scope matches both the "old" and the "old" first child */
     NO_MATCH;
 
     int skipNewCount() { return this == SKIP_NEW_1 ? 1 : this == SKIP_NEW_2 ? 2 : 0; }
+
     int skipOldCount() { return this == SKIP_OLD_1 ? 1 : this == SKIP_OLD_2 ? 2 : 0; }
+
     boolean hasStartMatch() { return this == FULL_START_MATCH || this == DRILL_DOWN_START_MATCH || this == REPLACE_START; }
   }
 
-  private int matchLastChildren(int level, DiffTreeChangeBuilder<? super OldNode, ? super NewNode> consumer,
-                                int oldChildrenLimit, OldNode[] oldChildren, int oldIndex,
-                                int newChildrenLimit, NewNode[] newChildren, int newIndex) {
+  private int matchLastChildren(int level,
+                                @NotNull DiffTreeChangeBuilder<? super OldNode, ? super NewNode> consumer,
+                                int oldChildrenLimit,
+                                OldNode[] oldChildren,
+                                int oldIndex,
+                                int newChildrenLimit,
+                                NewNode[] newChildren,
+                                int newIndex) {
     int len = 0;
     while (oldIndex < oldChildrenLimit - len && newIndex < newChildrenLimit - len) {
       OldNode oldLastChild = oldChildren[oldChildrenLimit - len - 1];
@@ -235,8 +275,10 @@ public final class DiffTree<OldNode, NewNode> {
     return len;
   }
 
-  // tries to match as many nodes as possible from the beginning (if step=1) of from the end (if step =-1)
-  // returns number of nodes matched
+  /**
+   * tries to match as many nodes as possible from the beginning (if step=1) of from the end (if step =-1)
+   * returns number of nodes matched
+   */
   private int match(OldNode[] oldChildren,
                     int oldIndex,
                     NewNode[] newChildren,
@@ -245,7 +287,7 @@ public final class DiffTree<OldNode, NewNode> {
                     int step, // 1 if we go from the start to the end; -1 if we go from the end to the start
                     int maxLength) {
     int delta = 0;
-    while (delta != maxLength*step) {
+    while (delta != maxLength * step) {
       OldNode oldChild = oldChildren[oldIndex + delta];
       NewNode newChild = newChildren[newIndex + delta];
 
@@ -260,10 +302,11 @@ public final class DiffTree<OldNode, NewNode> {
       }
       delta += step;
     }
-    return delta*step;
+    return delta * step;
   }
 
-  private boolean textMatch(OldNode oldChild, NewNode newChild) {
+  private boolean textMatch(@NotNull OldNode oldChild,
+                            @NotNull NewNode newChild) {
     int oldStart = myOldTree.getStartOffset(oldChild) - myOldTreeStart;
     int oldEnd = myOldTree.getEndOffset(oldChild) - myOldTreeStart;
     int newStart = myNewTree.getStartOffset(newChild) - myNewTreeStart;
@@ -272,7 +315,8 @@ public final class DiffTree<OldNode, NewNode> {
     return CharArrayUtil.regionMatches(myOldText, oldStart, oldEnd, myNewText, newStart, newEnd);
   }
 
-  private @NotNull CompareResult looksEqual(OldNode oldChild1, NewNode newChild1) {
+  private @NotNull CompareResult looksEqual(@Nullable OldNode oldChild1,
+                                            @Nullable NewNode newChild1) {
     if (oldChild1 == null || newChild1 == null || !myComparator.typesEqual(oldChild1, newChild1)) return CompareResult.NOT_EQUAL;
     ThreeState ret = myComparator.deepEqual(oldChild1, newChild1);
     if (ret == ThreeState.YES) return CompareResult.EQUAL;
