@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
@@ -15,7 +16,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -28,6 +31,22 @@ import kotlin.coroutines.resume
 object JdkDownloadUtil {
 
   private val LOG = logger<JdkDownloadUtil>()
+
+  suspend fun pickJdkItemAndPath(project: Project, filter: (JdkItem) -> Boolean): Pair<JdkItem, Path>? {
+    val wsl = project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
+    val eel = project.getEelApi().takeIf { Registry.`is`("java.home.finder.use.eel") }
+    val jdkPredicate = when {
+      eel != null -> JdkPredicate.forEel(eel)
+      wsl != null -> JdkPredicate.forWSL()
+      else -> JdkPredicate.default()
+    }
+    val jdkListDownloader = JdkListDownloader.getInstance()
+    val jdkItems = jdkListDownloader.downloadModelForJdkInstaller(null, jdkPredicate)
+    val jdkItem = jdkItems.firstOrNull(filter) ?: return null
+    val jdkInstaller = JdkInstaller.getInstance()
+    val jdkHome = jdkInstaller.defaultInstallDir(jdkItem, eel, wsl)
+    return jdkItem to jdkHome
+  }
 
   suspend fun createDownloadTask(project: Project, jdkItem: JdkItem, jdkHome: Path): SdkDownloadTask? {
     val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(jdkHome.toString())
