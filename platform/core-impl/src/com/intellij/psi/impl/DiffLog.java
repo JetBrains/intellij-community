@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -203,7 +204,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     }
   }
 
-  private static PsiElement getPsi(ASTNode node, PsiFile file) {
+  private static @Nullable PsiElement getPsi(@NotNull ASTNode node, @NotNull PsiFile file) {
     node.putUserData(TreeUtil.CONTAINING_FILE_KEY_AFTER_REPARSE, ((PsiFileImpl)file).getTreeElement());
     PsiElement psiChild = file.isPhysical() ? node.getPsi() : null;
     node.putUserData(TreeUtil.CONTAINING_FILE_KEY_AFTER_REPARSE, null);
