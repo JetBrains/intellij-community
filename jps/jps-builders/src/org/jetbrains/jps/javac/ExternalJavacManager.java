@@ -51,7 +51,7 @@ import java.util.function.Supplier;
 public class ExternalJavacManager extends ProcessAdapter {
   private static final Logger LOG = Logger.getInstance(ExternalJavacManager.class);
 
-  public static final GlobalContextKey<ExternalJavacManager> KEY = GlobalContextKey.create("_external_javac_server_");
+  public static final GlobalContextKey<ExternalJavacManager> KEY = ExternalJavacManagerKey.KEY;
   public static final int DEFAULT_SERVER_PORT = 7878;
   public static final String STDOUT_LINE_PREFIX = "JAVAC_PROCESS[STDOUT]";
   public static final String STDERR_LINE_PREFIX = "JAVAC_PROCESS[STDERR]";

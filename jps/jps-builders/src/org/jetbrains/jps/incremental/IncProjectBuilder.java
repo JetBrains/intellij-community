@@ -42,6 +42,7 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.javac.ExternalJavacManager;
+import org.jetbrains.jps.javac.ExternalJavacManagerKey;
 import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
@@ -279,7 +280,7 @@ public final class IncProjectBuilder {
           msg = new CompilerMessage("", cause != null ? cause : e);
         }
         else {
-          final String causeMessage = cause != null ? cause.getMessage() : "";
+          final String causeMessage = cause == null ? null : cause.getMessage();
           msg = new CompilerMessage("", BuildMessage.Kind.ERROR, Strings.isEmptyOrSpaces(causeMessage) || errMessage.trim().endsWith(causeMessage)
                                                                  ? errMessage
                                                                  : errMessage + ": " + causeMessage);
@@ -441,10 +442,10 @@ public final class IncProjectBuilder {
       context.getProjectDescriptor().dataManager.flush(false);
     }
 
-    ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
+    ExternalJavacManager server = ExternalJavacManagerKey.KEY.get(context);
     if (server != null) {
       server.stop();
-      ExternalJavacManager.KEY.set(context, null);
+      ExternalJavacManagerKey.KEY.set(context, null);
     }
   }
 

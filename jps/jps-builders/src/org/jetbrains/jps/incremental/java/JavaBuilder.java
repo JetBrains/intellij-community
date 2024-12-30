@@ -56,9 +56,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticListener;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -799,7 +797,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static synchronized @NotNull ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws IOException {
-    ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
+    ExternalJavacManager server = ExternalJavacManagerKey.KEY.get(context);
     if (server != null) {
       return server;
     }
@@ -821,7 +819,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     };
     server.start(listenPort);
-    ExternalJavacManager.KEY.set(context, server);
+    ExternalJavacManagerKey.KEY.set(context, server);
     return server;
   }
 
@@ -1272,7 +1270,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     JavaBuilderUtil.cleanupChunkResources(context);
-    ExternalJavacManager extJavacManager = ExternalJavacManager.KEY.get(context);
+    ExternalJavacManager extJavacManager = ExternalJavacManagerKey.KEY.get(context);
     if (extJavacManager != null) {
       extJavacManager.shutdownIdleProcesses();
     }
