@@ -78,6 +78,7 @@ public final class BlockSupportImpl extends BlockSupport {
     }
 
   }
+
   // return diff log, old node to replace, new node (in dummy file)
   // MUST call .close() on the returned result
   static @NotNull ReparseResult reparse(@NotNull PsiFile file,
@@ -395,7 +396,7 @@ public final class BlockSupportImpl extends BlockSupport {
     DiffTree.diff(createInterruptibleASTStructure(oldRoot, indicator), newTreeStructure, comparator, builder, lastCommittedText);
   }
 
-  private static ASTStructure createInterruptibleASTStructure(@NotNull ASTNode oldRoot, @NotNull ProgressIndicator indicator) {
+  private static @NotNull ASTStructure createInterruptibleASTStructure(@NotNull ASTNode oldRoot, @NotNull ProgressIndicator indicator) {
     return new ASTStructure(oldRoot) {
       @Override
       public int getChildren(@NotNull ASTNode astNode, @NotNull Ref<ASTNode[]> into) {
