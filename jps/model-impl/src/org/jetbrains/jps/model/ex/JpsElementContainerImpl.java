@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
+public final class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
   private final Object myDataLock = new Object();
   private final Map<JpsElementChildRole<?>, JpsElement> myElements = CollectionFactory.createSmallMemoryFootprintMap(1);
   private final @NotNull JpsCompositeElementBase<?> myParent;
@@ -98,12 +98,12 @@ public class JpsElementContainerImpl extends JpsElementContainerEx implements Jp
   }
 
   @Override
-  protected final Object getDataLock() {
+  protected Object getDataLock() {
     return myDataLock;
   }
 
   @Override
-  protected final Map<JpsElementChildRole<?>, JpsElement> getElementsMap() {
+  protected Map<JpsElementChildRole<?>, JpsElement> getElementsMap() {
     return myElements;
   }
 }

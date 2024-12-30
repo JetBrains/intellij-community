@@ -16,20 +16,22 @@ import java.util.Map;
 public final class JpsSerializationManagerImpl extends JpsSerializationManager {
   @Override
   public @NotNull JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPathString, boolean loadUnloadedModules) throws IOException {
-    Path optionsPath = optionsPathString != null ? Paths.get(optionsPathString).normalize() : null;
+    Path optionsPath = optionsPathString == null ? null : Path.of(optionsPathString).normalize();
     Path externalConfigurationDirectory = JpsProjectConfigurationLoading.getExternalConfigurationDirectoryFromSystemProperty();
-    return loadModel(Paths.get(projectPath), externalConfigurationDirectory, optionsPath, loadUnloadedModules);
+    return loadModel(Path.of(projectPath), externalConfigurationDirectory, optionsPath, loadUnloadedModules);
   }
 
   @Override
-  public @NotNull JpsModel loadModel(@NotNull Path projectPath, @Nullable Path externalConfigurationDirectory, @Nullable Path optionsPath,
+  public @NotNull JpsModel loadModel(@NotNull Path projectPath,
+                                     @Nullable Path externalConfigurationDirectory,
+                                     @Nullable Path optionsPath,
                                      boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
       String projectCachePath = System.getProperty("jps.workspace.storage.project.cache.path");
-      Path workspaceStorageCachePath = projectCachePath != null ? Paths.get(projectCachePath) : null;
+      Path workspaceStorageCachePath = projectCachePath == null ? null : Path.of(projectCachePath);
       String globalCachePath = System.getProperty("jps.workspace.storage.global.cache.path");
-      Path globalWorkspaceStoragePath = globalCachePath != null ? Paths.get(globalCachePath) : null;
+      Path globalWorkspaceStoragePath = globalCachePath == null ? null : Path.of(globalCachePath);
       return serializationViaWorkspaceModel.loadModel(projectPath, workspaceStorageCachePath, externalConfigurationDirectory, optionsPath,
                                                       globalWorkspaceStoragePath, loadUnloadedModules);
     }

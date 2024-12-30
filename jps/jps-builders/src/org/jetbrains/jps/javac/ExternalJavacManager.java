@@ -90,7 +90,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       .channel(NioServerSocketChannel.class)
       .childOption(ChannelOption.TCP_NODELAY, true)
       .childOption(ChannelOption.SO_KEEPALIVE, true)
-      .childHandler(new ChannelInitializer() {
+      .childHandler(new ChannelInitializer<>() {
         @Override
         protected void initChannel(Channel channel) {
           channel.pipeline().addLast(myChannelRegistrar,
@@ -285,10 +285,10 @@ public class ExternalJavacManager extends ProcessAdapter {
 
   private boolean shutdownProcess(ExternalJavacProcessHandler process) {
     UUID processId = process.getProcessId();
-    debug(()-> "shutdownProcess: shutting down " + processId);
+    debug(() -> "shutdownProcess: shutting down " + processId);
     final Channel conn = myConnections.get(processId);
     if (conn != null && process.lock()) {
-      debug(()-> "shutdownProcess: sending shutdown request to " + processId);
+      debug(() -> "shutdownProcess: sending shutdown request to " + processId);
       conn.writeAndFlush(JavacProtoUtil.toMessage(processId, JavacProtoUtil.createShutdownRequest()));
       return true;
     }

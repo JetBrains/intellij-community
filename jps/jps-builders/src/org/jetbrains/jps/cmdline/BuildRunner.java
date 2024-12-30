@@ -143,7 +143,8 @@ public final class BuildRunner {
                        @NotNull CanceledStatus cs,
                        @NotNull MessageHandler msgHandler,
                        @NotNull BuildType buildType,
-                       @NotNull List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
+                       @NotNull List<TargetTypeBuildScope> scopes,
+                       boolean includeDependenciesToScope) throws Exception {
     for (int attempt = 0; attempt < 2 && !cs.isCanceled(); attempt++) {
       final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
       final CompileScope compileScope = createCompilationScope(pd, scopes, myFilePaths, forceClean, includeDependenciesToScope);
@@ -257,8 +258,10 @@ public final class BuildRunner {
     return new CompileScopeImpl(targetTypes, targetTypesToForceBuild, targets, files);
   }
 
-  private static void includeDependenciesToScope(Set<? extends BuildTargetType<?>> targetTypes, Set<BuildTarget<?>> targets,
-                                                 Set<? super BuildTargetType<?>> targetTypesToForceBuild, ProjectDescriptor descriptor) {
+  private static void includeDependenciesToScope(Set<? extends BuildTargetType<?>> targetTypes,
+                                                 Set<BuildTarget<?>> targets,
+                                                 Set<? super BuildTargetType<?>> targetTypesToForceBuild,
+                                                 ProjectDescriptor descriptor) {
     //todo get rid of CompileContext parameter for BuildTargetIndex.getDependencies() and use it here
     TargetOutputIndex dummyIndex = new TargetOutputIndex() {
       @Override

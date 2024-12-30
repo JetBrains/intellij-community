@@ -259,7 +259,7 @@ public final class JpsJavaModelSerializerExtension extends JpsModelSerializerExt
 
     @Override
     public JavaSourceRootProperties loadProperties(@NotNull Element sourceRootTag) {
-      String packagePrefix = StringUtil.notNullize(sourceRootTag.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE));
+      String packagePrefix = sourceRootTag.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, "");
       boolean isGenerated = Boolean.parseBoolean(sourceRootTag.getAttributeValue(IS_GENERATED_ATTRIBUTE));
       return getService().createSourceRootProperties(packagePrefix, isGenerated);
     }

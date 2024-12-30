@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.components.*;
@@ -20,7 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @State(name = "EclipseModuleManager")
-public class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element>, StateStorageChooserEx {
+public final class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element>, StateStorageChooserEx {
   static final @NonNls String VALUE_ATTR = "value";
   static final @NonNls String VARELEMENT = "varelement";
   static final @NonNls String VAR_ATTRIBUTE = "var";
