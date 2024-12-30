@@ -68,27 +68,26 @@ public final class BlockSupportImpl extends BlockSupport {
     return reparse(file, oldFileNode, changedPsiRange, newFileText, indicator, lastCommittedText).log;
   }
 
-  static class ReparseResult {
-    final DiffLog log;
-    final ASTNode oldRoot;
-    final ASTNode newRoot;
+  static final class ReparseResult {
+    final @NotNull DiffLog log;
+    final @NotNull ASTNode oldRoot;
+    final @NotNull ASTNode newRoot;
 
-    ReparseResult(DiffLog log, ASTNode oldRoot, ASTNode newRoot) {
+    ReparseResult(@NotNull DiffLog log, @NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {
       this.log = log;
       this.oldRoot = oldRoot;
       this.newRoot = newRoot;
     }
-
   }
 
   // return diff log, old node to replace, new node (in dummy file)
   // MUST call .close() on the returned result
   static @NotNull ReparseResult reparse(@NotNull PsiFile file,
-                               @NotNull FileASTNode oldFileNode,
-                               @NotNull TextRange changedPsiRange,
-                               @NotNull CharSequence newFileText,
-                               @NotNull ProgressIndicator indicator,
-                               @NotNull CharSequence lastCommittedText) {
+                                        @NotNull FileASTNode oldFileNode,
+                                        @NotNull TextRange changedPsiRange,
+                                        @NotNull CharSequence newFileText,
+                                        @NotNull ProgressIndicator indicator,
+                                        @NotNull CharSequence lastCommittedText) {
     PsiFileImpl fileImpl = (PsiFileImpl)file;
 
     Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, oldFileNode, changedPsiRange, newFileText);
@@ -108,9 +107,9 @@ public final class BlockSupportImpl extends BlockSupport {
    *         or {@code null} if can't parse incrementally.
    */
   public static @Nullable Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
-                                                     @NotNull FileASTNode oldFileNode,
-                                                     @NotNull TextRange changedPsiRange,
-                                                     @NotNull CharSequence newFileText) {
+                                                               @NotNull FileASTNode oldFileNode,
+                                                               @NotNull TextRange changedPsiRange,
+                                                               @NotNull CharSequence newFileText) {
     CharTable charTable = oldFileNode.getCharTable();
     int lengthShift = newFileText.length() - oldFileNode.getTextLength();
 
@@ -262,10 +261,10 @@ public final class BlockSupportImpl extends BlockSupport {
 
   // returns diff log, new file element
   static @NotNull ReparseResult makeFullParse(@NotNull PsiFileImpl fileImpl,
-                                     @NotNull FileASTNode oldFileNode,
-                                     @NotNull CharSequence newFileText,
-                                     @NotNull ProgressIndicator indicator,
-                                     @NotNull CharSequence lastCommittedText) {
+                                              @NotNull FileASTNode oldFileNode,
+                                              @NotNull CharSequence newFileText,
+                                              @NotNull ProgressIndicator indicator,
+                                              @NotNull CharSequence lastCommittedText) {
     if (fileImpl instanceof PsiCodeFragment) {
       FileElement parent = fileImpl.getTreeElement();
       PsiElement context = fileImpl.getContext();
@@ -327,7 +326,7 @@ public final class BlockSupportImpl extends BlockSupport {
     return newFile;
   }
 
-  private static @NonNls String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
+  private static @NonNls String details(@NotNull FileViewProvider providerCopy, @NotNull FileViewProvider viewProvider) {
     return "; languages: " + viewProvider.getLanguages() +
            "; base: " + viewProvider.getBaseLanguage() +
            "; copy: " + providerCopy +
