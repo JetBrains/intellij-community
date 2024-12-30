@@ -97,6 +97,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
+  @SuppressWarnings("ClassEscapesDefinedScope")
   public PsiBuilderImpl(@Nullable Project project,
                         @Nullable PsiFile containingFile,
                         @NotNull ParserDefinition parserDefinition,
@@ -213,6 +214,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     myComments = tokens;
   }
 
+  @SuppressWarnings("ClassEscapesDefinedScope")
   @Override
   public @Nullable StartMarker getLatestDoneMarker() {
     int index = myProduction.size() - 1;
@@ -446,7 +448,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       int startOffset = getStartOffset() - myBuilder.myOffset;
       int endOffset = isDone ? getEndOffset() - myBuilder.myOffset : myBuilder.getCurrentOffset();
       CharSequence text = originalText.subSequence(startOffset, endOffset);
-      return isDone ? text.toString() : text + "\u2026";
+      return isDone ? text.toString() : text + "…";
     }
 
     boolean isDone() {
@@ -866,6 +868,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return myText.subSequence(myLexStarts[myCurrentLexeme], myLexStarts[myCurrentLexeme + 1]).toString();
   }
 
+  /** @deprecated use {@link #isWhitespaceOrComment} instead */
   @Deprecated
   public boolean whitespaceOrComment(IElementType token) {
     return isWhitespaceOrComment(token);
