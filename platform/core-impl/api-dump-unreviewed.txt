@@ -3878,21 +3878,16 @@ com.intellij.psi.templateLanguages.TreePatcher
 - a:insert(com.intellij.psi.impl.source.tree.CompositeElement,com.intellij.psi.impl.source.tree.TreeElement,com.intellij.psi.templateLanguages.OuterLanguageElement):V
 - split(com.intellij.psi.impl.source.tree.LeafElement,I,com.intellij.util.CharTable):com.intellij.psi.impl.source.tree.LeafElement
 a:com.intellij.psi.text.BlockSupport
-- sf:DO_NOT_REPARSE_INCREMENTALLY:com.intellij.openapi.util.Key
-- sf:INCREMENTAL_REPARSE_DEPTH_LIMIT:I
-- sf:TREE_DEPTH_LIMIT_EXCEEDED:com.intellij.openapi.util.Key
 - sf:TREE_TO_BE_REPARSED:com.intellij.openapi.util.Key
 - <init>():V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.text.BlockSupport
 - s:isTooDeep(com.intellij.openapi.util.UserDataHolder):Z
 - a:reparseRange(com.intellij.psi.PsiFile,I,I,java.lang.CharSequence):V
 - a:reparseRange(com.intellij.psi.PsiFile,com.intellij.lang.FileASTNode,com.intellij.openapi.util.TextRange,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator,java.lang.CharSequence):com.intellij.psi.impl.DiffLog
-c:com.intellij.psi.text.BlockSupport$ReparsedSuccessfullyException
+f:com.intellij.psi.text.BlockSupport$ReparsedSuccessfullyException
 - java.lang.RuntimeException
 - com.intellij.openapi.diagnostic.ControlFlowException
-- <init>(com.intellij.psi.impl.DiffLog):V
 - fillInStackTrace():java.lang.Throwable
-- getDiffLog():com.intellij.psi.impl.DiffLog
 com.intellij.psi.tree.ChildRoleBase
 - sf:NONE:I
 c:com.intellij.psi.tree.DefaultRoleFinder
