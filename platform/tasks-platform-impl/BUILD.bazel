@@ -29,6 +29,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/util/text-matching",
     "//platform/statistics",
+    "//platform/bookmarks",
   ],
   exports = ["//platform/statistics"],
   runtime_deps = [":tasks-impl_resources"]

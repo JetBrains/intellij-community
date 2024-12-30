@@ -112,6 +112,7 @@ jvm_library(
     "//java/unscramble",
     "@lib//:asm",
     "//plugins/gradle",
+    "//platform/todo",
   ],
   runtime_deps = [
     "//community-resources:customization",

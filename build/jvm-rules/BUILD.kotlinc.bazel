@@ -1,0 +1,5 @@
+filegroup(
+    name = "kotlinc_dist",
+    srcs = ["build.txt"],
+    visibility = ["//visibility:public"],
+)

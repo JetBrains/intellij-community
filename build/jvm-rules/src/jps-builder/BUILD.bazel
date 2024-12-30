@@ -1,0 +1,78 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_import")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "worker-lib",
+    srcs = glob(["*.kt"]),
+    deps = [
+        ":jps-standalone",
+        "//src/compiler-util",
+        "//src/worker-framework",
+        "//zip:build-zip",
+        "@rules_java//java/runfiles",
+        "//:kotlin-jps-plugin",
+    ],
+    runtime_deps = [
+        # jps needs these libs
+        "@lib//:asm",
+        "@lib//:fastutil-min",
+        "@lib//:aalto-xml",
+        "@lib//:mvstore",
+        "@lib//:hash4j",
+        "@lib//:caffeine",
+        "@lib//:platform-jps-build-qdox-java-parser",
+        "@lib//:jps-javac-extension",
+        # JPS plugin to compile Kotlin requires it
+        "@lib//:kotlin-reflect",
+        "//:kotlin-build-tools-api",
+        "//:kotlin-metadata",
+        "//:kotlin-util-klib",
+        "//:kotlin-util-klib-metadata",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "jps-standalone",
+    jars = ["jps-build-standalone-2.jar"],
+)
+
+java_binary(
+    name = "worker-jvm",
+    runtime_deps = [":worker-lib"],
+    main_class = "org.jetbrains.bazel.jvm.jps.JpsBuildWorker",
+    jvm_flags = [
+        "-Xms1000m",
+        "-Xmx6000m",
+        "-Djava.awt.headless=true",
+        "-Dapple.awt.UIElement=true",
+        "-Dkotlin.environment.keepalive=true",
+        "-Djps.use.experimental.storage=true",
+        # Kotlin Compiler sets it
+        "-Didea.io.use.nio2=true",
+        "-Dzip.handler.uses.crc.instead.of.timestamp=true",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+java_binary(
+    name = "test-worker",
+    runtime_deps = [":worker-lib"],
+    data = [
+        "@kotlinc//:kotlinc_dist",
+        "@kotlin-serialization-compiler-plugin//file",
+    ],
+    main_class = "org.jetbrains.bazel.jvm.jps.TestJpsBuildWorker",
+    jvm_flags = [
+        "-Xms1000m",
+        "-Xmx6000m",
+        "-Djps.service.manager.impl=org.jetbrains.bazel.jvm.jps.BazelJpsServiceManager",
+        "-Djava.awt.headless=true",
+        "-Dapple.awt.UIElement=true",
+        "-Dkotlin.environment.keepalive=true",
+        "-Djps.use.experimental.storage=true",
+        "-Djps.kotlin.home=$(rlocationpath @kotlinc//:kotlinc_dist)",
+        "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
+    ],
+)

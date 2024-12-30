@@ -27,6 +27,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/statistics",
     "@lib//:fastutil-min",
+    "//platform/todo",
   ],
   runtime_deps = [":vcs-impl-lang_resources"]
 )

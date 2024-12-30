@@ -58,7 +58,6 @@ internal class JpsModuleToBazel {
       val ultimateTargets = ultimateFiles.keys
         .sorted()
         .map { projectDir.relativize(it).invariantSeparatorsPathString }
-        .filter { !it.startsWith("rider/test/cases-supplementary") }
         .joinToString("\n") {
           "//$it:all"
         }

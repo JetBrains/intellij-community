@@ -36,6 +36,27 @@ jvm_import(
 )
 
 jvm_import(
+    name = "kotlin-build-tools-api",
+    jar = "@kotlin-build-tools-api//file",
+    source_jar = "@kotlin-build-tools-api-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-util-klib",
+    jar = "@kotlin-util-klib//file",
+    source_jar = "@kotlin-util-klib-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-util-klib-metadata",
+    jar = "@kotlin-util-klib-metadata//file",
+    source_jar = "@kotlin-util-klib-metadata-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "kotlin-build-tools-impl",
     jar = "@kotlin-build-tools-impl//file",
     source_jar = "@kotlin-build-tools-impl-sources//file",
@@ -49,7 +70,7 @@ jvm_import(
     visibility = ["//visibility:public"],
     runtime_deps = [
         "@lib//:jetbrains-annotations",
-        ":kotlinx-coroutines-core",
+        ":kotlinx-coroutines-core"
     ],
 )
 
@@ -57,6 +78,13 @@ jvm_import(
     name = "kotlin-metadata",
     jar = "@kotlin-metadata-jvm//file",
     source_jar = "@kotlin-metadata-jvm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-jps-plugin",
+    jar = "@kotlin-jps-plugin//file",
+    source_jar = "@kotlin-jps-plugin-sources//file",
     visibility = ["//visibility:public"],
 )
 

@@ -8,7 +8,7 @@ import dev.drewhamilton.poko.PokoCompilerPluginRegistrar
 import io.bazel.kotlin.plugin.jdeps.JdepsGenCommandLineProcessor
 import io.bazel.kotlin.plugin.jdeps.JdepsGenComponentRegistrar
 import org.jetbrains.bazel.jvm.kotlin.ArgMap
-import org.jetbrains.bazel.jvm.kotlin.KotlinBuilderFlags
+import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
 import org.jetbrains.kotlin.compiler.plugin.CliOptionValue
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
@@ -28,7 +28,7 @@ private fun cliOptionValue(name: String, value: String) = CliOptionValue(pluginI
 
 @OptIn(ExperimentalCompilerApi::class)
 internal fun configurePlugins(
-  args: ArgMap<KotlinBuilderFlags>,
+  args: ArgMap<JvmBuilderFlags>,
   workingDir: Path,
   label: String,
 ): List<CompilerPluginDescriptor> {
@@ -39,7 +39,7 @@ internal fun configurePlugins(
   }
 
   // put user plugins first
-  val plugins = args.optionalList(KotlinBuilderFlags.PLUGIN_ID).zip(args.optionalList(KotlinBuilderFlags.PLUGIN_CLASSPATH))
+  val plugins = args.optionalList(JvmBuilderFlags.PLUGIN_ID).zip(args.optionalList(JvmBuilderFlags.PLUGIN_CLASSPATH))
   for ((id, paths) in plugins) {
     val classpath = if (paths.isBlank()) {
       emptyList()
@@ -85,12 +85,12 @@ internal fun configurePlugins(
     }
   }
 
-  args.optionalSingle(KotlinBuilderFlags.KOTLIN_OUTPUT_JDEPS)?.let { workingDir.resolve(it) }?.let { jdeps ->
+  args.optionalSingle(JvmBuilderFlags.KOTLIN_OUTPUT_JDEPS)?.let { workingDir.resolve(it) }?.let { jdeps ->
     val options = mutableListOf(
       cliOptionValue("output", jdeps.toString()),
       cliOptionValue("target_label", label),
     )
-    args.optionalSingle(KotlinBuilderFlags.STRICT_KOTLIN_DEPS)?.let {
+    args.optionalSingle(JvmBuilderFlags.STRICT_KOTLIN_DEPS)?.let {
       options.add(cliOptionValue("strict_kotlin_deps", it))
     }
     addPlugin(RegisteredPluginInfo(
@@ -101,7 +101,7 @@ internal fun configurePlugins(
     ))
   }
 
-  args.optionalSingle(KotlinBuilderFlags.ABI_JAR)?.let { workingDir.resolve(it) }?.let { abiJar ->
+  args.optionalSingle(JvmBuilderFlags.ABI_JAR)?.let { workingDir.resolve(it) }?.let { abiJar ->
     addPlugin(RegisteredPluginInfo(
       componentRegistrar = null,
       compilerPluginRegistrar = JvmAbiComponentRegistrar(),

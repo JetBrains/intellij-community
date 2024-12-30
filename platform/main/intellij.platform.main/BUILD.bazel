@@ -13,6 +13,7 @@ java_library(
     "//platform/platform-impl/ui-inspector:ide-ui-inspector",
     "//platform/inline-completion/shared:inline-completion",
     "//platform/bookmarks",
+    "//platform/todo",
   ]
 )
 ### auto-generated section `build intellij.platform.main` end

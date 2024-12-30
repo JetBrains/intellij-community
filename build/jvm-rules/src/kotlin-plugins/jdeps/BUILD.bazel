@@ -1,5 +1,4 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
-load("//:jvm.bzl", "jvm_resources")
 
 kt_jvm_library(
     name = "jdeps",

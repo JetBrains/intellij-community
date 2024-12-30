@@ -125,6 +125,13 @@ common_attr = add_dicts(
             allow_files = True,
             cfg = "exec",
         ),
+        "_jps_builder": attr.label(
+            default = "//src/jps-builder:worker-jvm",
+            executable = True,
+            allow_files = True,
+            cfg = "exec",
+        ),
+        "_reduced_classpath": attr.bool(default = False),
          "_trace": attr.label(default = "//:kt_trace"),
     },
 )

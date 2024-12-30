@@ -20,5 +20,5 @@ data class CompilationTaskInfo(
 )
 
 internal data class JvmCompilationTask(
-  @JvmField val args: ArgMap<KotlinBuilderFlags>,
+  @JvmField val args: ArgMap<JvmBuilderFlags>,
 )

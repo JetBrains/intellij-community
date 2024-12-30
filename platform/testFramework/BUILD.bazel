@@ -49,6 +49,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/util/coroutines",
     "@lib//:assert_j",
+    "//platform/todo",
   ],
   exports = [
     "//platform/execution-impl",
@@ -125,6 +126,7 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/todo",
   ],
   runtime_deps = [":testFramework_resources"]
 )

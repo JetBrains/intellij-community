@@ -20,7 +20,14 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//platform/project/shared:project",
     "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/favoritesTreeView:ide-favoritesTreeView",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/util/jdom",
+    "//platform/editor-ui-ex:editor-ex",
   ],
+  exports = ["//platform/favoritesTreeView:ide-favoritesTreeView"],
   runtime_deps = [":bookmarks_resources"]
 )
 ### auto-generated section `build intellij.platform.bookmarks` end

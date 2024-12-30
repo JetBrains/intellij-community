@@ -43,6 +43,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/storages:io-storages",
     "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/bookmarks",
   ],
   runtime_deps = [":vcs-log-impl_resources"]
 )
@@ -98,6 +99,7 @@ jvm_library(
     "//platform/util/storages:io-storages",
     "//platform/vcs-impl/shared:vcs-impl-shared",
     "@lib//:mockito",
+    "//platform/bookmarks",
   ],
   runtime_deps = [":vcs-log-impl_resources"]
 )

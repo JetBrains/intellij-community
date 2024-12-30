@@ -46,6 +46,7 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/core-ui",
     "//platform/util/jdom",
+    "//platform/bookmarks",
   ],
   runtime_deps = ["//spellchecker"]
 )

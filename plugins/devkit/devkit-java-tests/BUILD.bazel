@@ -22,6 +22,7 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//java/idea-ui:ui",
     "//java/openapi:java",
+    "@lib//:assert_j",
     "//xml/dom-impl",
     "//jvm/jvm-analysis-api:analysis",
     "//plugins/devkit/devkit-tests:testFramework",

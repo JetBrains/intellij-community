@@ -11,10 +11,19 @@ bazel_dep(name = "protobuf", version = "29.2")
 bazel_dep(name = "contrib_rules_jvm", version = "0.27.0")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 local_path_override(
     module_name = "lib",
     path = "../../lib",
+)
+
+http_archive(
+    name = "kotlinc",
+    url = "https://github.com/JetBrains/kotlin/releases/download/v2.1.20-Beta1/kotlin-compiler-2.1.20-Beta1.zip",
+    sha256 = "a4e655eb8370c6dde9deaf1271836dc6d1d0a667fb00efb2e99021d91e2cf8a4",
+    build_file = "//:BUILD.kotlinc.bazel",
+    strip_prefix = "kotlinc",
 )
 
 # GraalVM
@@ -64,6 +73,45 @@ http_file(
 )
 
 http_file(
+    name = "kotlin-build-tools-api",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-api/2.1.20-Beta1/kotlin-build-tools-api-2.1.20-Beta1.jar",
+    sha256 = "09ddebb845f30310395d91c084f65d2133484080dfac1977502776b77345f3d7",
+    downloaded_file_path = "kotlin-build-tools-api-2.1.20-Beta1.jar",
+)
+http_file(
+    name = "kotlin-build-tools-api-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-api/2.1.20-Beta1/kotlin-build-tools-api-2.1.20-Beta1-sources.jar",
+    sha256 = "236ff9971b05fdbef35fafd390f39546c6b61467d4991474111a4823d359324b",
+    downloaded_file_path = "kotlin-build-tools-api-2.1.20-Beta1-sources.jar",
+)
+
+http_file(
+    name = "kotlin-util-klib",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib/2.1.20-Beta1/kotlin-util-klib-2.1.20-Beta1.jar",
+    sha256 = "f48b6323092cb30f860cb5c880d6107982d82941166073871a36349dfd3f7909",
+    downloaded_file_path = "kotlin-util-klib-2.1.20-Beta1.jar",
+)
+http_file(
+    name = "kotlin-util-klib-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib/2.1.20-Beta1/kotlin-util-klib-2.1.20-Beta1-sources.jar",
+    sha256 = "4aa4da6df01507c0fe9b48ff4f3d2a5eb5edf5f894850169c90efc89330a9d8b",
+    downloaded_file_path = "kotlin-util-klib-2.1.20-Beta1-sources.jar",
+)
+
+http_file(
+    name = "kotlin-util-klib-metadata",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib-metadata/2.1.20-Beta1/kotlin-util-klib-metadata-2.1.20-Beta1.jar",
+    sha256 = "1b59ec74876c8d13242d04aeefc22e10444ed082f38ad52fc95bc64a6896c7fd",
+    downloaded_file_path = "kotlin-util-klib-metadata-2.1.20-Beta1.jar",
+)
+http_file(
+    name = "kotlin-util-klib-metadata-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib-metadata/2.1.20-Beta1/kotlin-util-klib-metadata-2.1.20-Beta1-sources.jar",
+    sha256 = "7d4d0fcd74aa62a12add77e9738a29562086dd23fd095e40f8e5308e8335b5bf",
+    downloaded_file_path = "kotlin-util-klib-metadata-2.1.20-Beta1-sources.jar",
+)
+
+http_file(
     name = "kotlin-build-tools-impl",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/2.1.20-Beta1/kotlin-build-tools-impl-2.1.20-Beta1.jar",
     sha256 = "7e1e4d96ca0d29fc5890b9eadca97f64917e1d67f8385b91cc28cee9215b70b3",
@@ -100,6 +148,19 @@ http_file(
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta1/kotlin-metadata-jvm-2.1.20-Beta1-sources.jar",
     sha256 = "3f5468b5c409702c7cac30067208b7218ab9e3f7209e686966c6c2de2134dd18",
     downloaded_file_path = "kotlin-metadata-jvm-2.1.20-Beta1-sources.jar",
+)
+
+http_file(
+    name = "kotlin-jps-plugin",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-jps-plugin/2.1.20-Beta1/kotlin-jps-plugin-2.1.20-Beta1.jar",
+    sha256 = "0f60c6f49e74ee938605890553df1ba1ce219ebd8a8ff8d93dab82a202293ae8",
+    downloaded_file_path = "kotlin-jps-plugin-2.1.20-Beta1.jar",
+)
+http_file(
+    name = "kotlin-jps-plugin-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-jps-plugin/2.1.20-Beta1/kotlin-jps-plugin-2.1.20-Beta1-sources.jar",
+    sha256 = "5a337df793923ff69a55e52d386e17205570686bab85a4967fb58bbb6aee340a",
+    downloaded_file_path = "kotlin-jps-plugin-2.1.20-Beta1-sources.jar",
 )
 
 http_file(

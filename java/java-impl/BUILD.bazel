@@ -71,6 +71,8 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-impl",
     "//platform/eel-provider",
+    "//platform/bookmarks",
+    "//platform/todo",
   ],
   exports = [
     "//platform/lang-impl",

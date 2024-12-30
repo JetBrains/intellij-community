@@ -128,6 +128,7 @@ jvm_library(
     "//platform/eel-provider",
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
+    "//platform/bookmarks",
   ],
   runtime_deps = [
     "//xml/dom-impl",

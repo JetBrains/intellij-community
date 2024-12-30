@@ -5,11 +5,7 @@ import com.google.devtools.build.lib.worker.WorkerProtocol
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.processRequests
 import java.io.Writer
-import java.nio.file.Files
 import java.nio.file.Path
-import java.util.regex.Pattern
-
-private val FLAG_FILE_RE = Pattern.compile("""^--flagfile=((.*)-(\d+).params)$""").toRegex()
 
 object KotlinBuildWorker : WorkRequestExecutor {
   @JvmStatic
@@ -23,7 +19,7 @@ object KotlinBuildWorker : WorkRequestExecutor {
       .filter { it.path.endsWith(".kt") || it.path.endsWith(".java") }
       .map { baseDir.resolve(it.path) }
       .toList()
-    return buildKotlin(workingDir = baseDir, args = request.argumentsList, out = writer, sources = sources)
+    return buildKotlin(workingDir = baseDir, args = parseArgs(request.argumentsList), out = writer, sources = sources)
   }
 }
 
@@ -32,32 +28,21 @@ object KotlinBuildWorker : WorkRequestExecutor {
 private suspend fun buildKotlin(
   workingDir: Path,
   out: Writer,
-  args: List<String>,
+  args: ArgMap<JvmBuilderFlags>,
   sources: List<Path>,
 ): Int {
-  check(args.isNotEmpty()) {
-    "expected at least a single arg got: ${args.joinToString(" ")}"
-  }
-
-  val argMap = createArgMap(
-    FLAG_FILE_RE.matchEntire(args[0])?.groups?.get(1)?.let {
-      Files.readAllLines(Path.of(it.value))
-    } ?: args,
-    enumClass = KotlinBuilderFlags::class.java,
-  )
-
-  val compileContext = TraceHelper(isTracing = argMap.boolFlag(KotlinBuilderFlags.TRACE))
+  val compileContext = TraceHelper(isTracing = args.boolFlag(JvmBuilderFlags.TRACE))
 
   if (compileContext.isTracing) {
-    out.appendLine("Worker Task Args: $argMap")
+    out.appendLine("Worker Task Args: $args")
   }
 
-  val info = createBuildInfo(argMap)
+  val info = createBuildInfo(args)
   when (info.platform) {
     Platform.JVM -> {
       compileContext.execute("compile classes") {
         val code = compileContext.execute("kotlinc") {
-          compileKotlinForJvm(args = argMap, context = compileContext, sources = sources, out = out, workingDir = workingDir, info = info)
+          compileKotlinForJvm(args = args, context = compileContext, sources = sources, out = out, workingDir = workingDir, info = info)
         }
         if (code != 0) {
           return code
@@ -71,21 +56,21 @@ private suspend fun buildKotlin(
   return 0
 }
 
-private fun createBuildInfo(argMap: ArgMap<KotlinBuilderFlags>): CompilationTaskInfo {
-  val ruleKind = argMap.mandatorySingle(KotlinBuilderFlags.RULE_KIND).split('_')
+private fun createBuildInfo(argMap: ArgMap<JvmBuilderFlags>): CompilationTaskInfo {
+  val ruleKind = argMap.mandatorySingle(JvmBuilderFlags.RULE_KIND).split('_')
   check(ruleKind.size == 3 && ruleKind[0] == "kt") {
     "invalid rule kind $ruleKind"
   }
 
   return CompilationTaskInfo(
-    label = argMap.mandatorySingle(KotlinBuilderFlags.TARGET_LABEL),
+    label = argMap.mandatorySingle(JvmBuilderFlags.TARGET_LABEL),
     ruleKind = checkNotNull(RuleKind.valueOf(ruleKind[2].uppercase())) {
       "unrecognized rule kind ${ruleKind[2]}"
     },
     platform = checkNotNull(Platform.valueOf(ruleKind[1].uppercase())) {
       "unrecognized platform ${ruleKind[1]}"
     },
-    moduleName = argMap.mandatorySingle(KotlinBuilderFlags.KOTLIN_MODULE_NAME).also {
+    moduleName = argMap.mandatorySingle(JvmBuilderFlags.KOTLIN_MODULE_NAME).also {
       check(it.isNotBlank()) { "--kotlin_module_name should not be blank" }
     },
   )

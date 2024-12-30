@@ -35,7 +35,10 @@ jvm_library(
     "@lib//:jna",
     "@lib//:hamcrest",
   ],
-  runtime_deps = ["//python:pycharm-community-main"]
+  runtime_deps = [
+    "//python:pycharm-community",
+    "//python/pluginCore:community-plugin",
+  ]
 )
 
 jvm_test(

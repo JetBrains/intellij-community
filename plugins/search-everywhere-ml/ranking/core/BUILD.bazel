@@ -74,6 +74,7 @@ jvm_library(
     "//plugins/search-everywhere-ml/ranking/ext:searchEverywhereMl-ranking-ext",
     "//plugins/search-everywhere-ml:searchEverywhereMl",
     "//plugins/search-everywhere-ml:searchEverywhereMl_test_lib",
+    "//platform/bookmarks",
   ],
   runtime_deps = [":searchEverywhereMl-ranking-core_resources"]
 )

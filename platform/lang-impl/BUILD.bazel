@@ -108,7 +108,6 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-impl",
     "//platform/eel-provider",
-    "//platform/favoritesTreeView:ide-favoritesTreeView",
     "//platform/foldings",
   ],
   exports = [
@@ -118,7 +117,6 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/util",
-    "//platform/favoritesTreeView:ide-favoritesTreeView",
     "//platform/foldings",
   ],
   runtime_deps = [":lang-impl_resources"]
