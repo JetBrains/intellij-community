@@ -104,7 +104,7 @@ public final class ParsingTestUtil {
       TextRange changedRange =
         ChangedPsiRangeUtil.getChangedPsiRange(subTreeFile, Objects.requireNonNull(subTreeFile.getTreeElement()), newFileText);
       TestCase.assertNotNull("No changes found", changedRange);
-      Couple<ASTNode> reparseableRoots = BlockSupportImpl.findReparseableRoots(subTreeFile, subTree.getNode(), changedRange, newFileText);
+      Couple<ASTNode> reparseableRoots = BlockSupportImpl.findReparseableNodeAndReparseIt(subTreeFile, subTree.getNode(), changedRange, newFileText);
       result.append("Subtree: ").append(subTree.getLanguage()).append(NL_SEPARATOR_NL);
       serializeReparseableRoots(reparseableRoots, result, newFileText);
       result.append(NL_SEPARATOR_NL);
