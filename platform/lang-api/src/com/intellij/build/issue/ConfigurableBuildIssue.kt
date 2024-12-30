@@ -49,13 +49,6 @@ abstract class ConfigurableBuildIssue : BuildIssue {
     return hyperlinkReference
   }
 
-  fun addQuickFixes(vararg quickFixes: Pair<BuildIssueQuickFix, String>) {
-    quickFixes.forEach { (quickFix, quickFixText) ->
-      val hyperlinkReference = addQuickFix(quickFix)
-      addQuickFixPrompt("<a href=\"${hyperlinkReference}\">$quickFixText</a>")
-    }
-  }
-
   private class QuickFix(
     hyperlinkReference: String,
     private val delegate: BuildIssueQuickFix

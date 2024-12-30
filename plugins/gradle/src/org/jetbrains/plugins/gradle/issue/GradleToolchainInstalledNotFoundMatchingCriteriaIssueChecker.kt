@@ -5,8 +5,6 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
 import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleDownloadToolchainQuickFix
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleOpenDaemonJvmSettingsQuickFix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.util.function.Consumer
@@ -45,9 +43,7 @@ private class GradleToolchainInstalledNotFoundMatchingCriteriaBuildIssue(
     init {
         setTitle(GradleBundle.message("gradle.build.issue.daemon.toolchain.not.found.title"))
         addDescription(cause.message ?: title)
-        addQuickFixes(
-            GradleDownloadToolchainQuickFix(externalProjectPath) to GradleBundle.message("gradle.build.quick.fix.install.missing.toolchain"),
-            GradleOpenDaemonJvmSettingsQuickFix to GradleBundle.message("gradle.build.quick.fix.modify.gradle.jvm.criteria")
-        )
+        addDownloadToolchainQuickFix(externalProjectPath)
+        addOpenDaemonJvmSettingsQuickFix()
     }
 }

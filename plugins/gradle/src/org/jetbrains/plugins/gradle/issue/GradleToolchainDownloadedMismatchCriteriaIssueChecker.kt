@@ -5,8 +5,6 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.issue.BuildIssue
 import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleOpenDaemonJvmSettingsQuickFix
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleRecreateToolchainDownloadUrlsQuickFix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.util.function.Consumer
@@ -44,9 +42,7 @@ private class GradleToolchainDownloadedMismatchCriteriaBuildIssue(
     init {
         setTitle(GradleBundle.message("gradle.build.issue.daemon.toolchain.downloaded.mismatch.criteria.title"))
         addDescription(cause.message ?: title)
-        addQuickFixes(
-            GradleRecreateToolchainDownloadUrlsQuickFix(externalProjectPath) to GradleBundle.message("gradle.build.quick.fix.recreate.download.urls"),
-            GradleOpenDaemonJvmSettingsQuickFix to GradleBundle.message("gradle.build.quick.fix.modify.gradle.jvm.criteria")
-        )
+        addRecreateToolchainDownloadUrlsQuickFix(externalProjectPath)
+        addOpenDaemonJvmSettingsQuickFix()
     }
 }

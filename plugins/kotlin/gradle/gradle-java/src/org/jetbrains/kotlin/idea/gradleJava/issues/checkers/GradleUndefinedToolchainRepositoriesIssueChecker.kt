@@ -46,8 +46,10 @@ private class GradleUndefinedToolchainRepositoriesBuildIssue(
     init {
         setTitle(GradleBundle.message("gradle.build.issue.daemon.toolchain.repositories.undefined.title"))
         addDescription(cause.message ?: title)
-        addQuickFixes(
-            GradleAddDownloadToolchainRepositoryQuickFix to GradleBundle.message("gradle.build.quick.fix.add.toolchain.repository")
-        )
+        run {
+            val quickFix = GradleAddDownloadToolchainRepositoryQuickFix
+            val hyperlinkReference = addQuickFix(quickFix)
+            addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.add.toolchain.repository", hyperlinkReference))
+        }
     }
 }

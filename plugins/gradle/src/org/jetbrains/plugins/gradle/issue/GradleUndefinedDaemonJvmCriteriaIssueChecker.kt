@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.issue.BuildIssue
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleAddDaemonToolchainCriteriaQuickFix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
@@ -27,8 +26,6 @@ private class GradleUndefinedDaemonJvmCriteriaBuildIssue(
     init {
         setTitle(GradleBundle.message("gradle.build.issue.daemon.toolchain.undefined.criteria.title"))
         addDescription(cause.message ?: title)
-        addQuickFixes(
-            GradleAddDaemonToolchainCriteriaQuickFix(externalProjectPath) to GradleBundle.message("gradle.build.quick.fix.add.toolchain.criteria")
-        )
+        addDaemonToolchainCriteriaQuickFix(externalProjectPath)
     }
 }
