@@ -94,5 +94,6 @@
     <orderEntry type="module" module-name="intellij.java.unscramble" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.todo" scope="TEST" />
   </component>
 </module>

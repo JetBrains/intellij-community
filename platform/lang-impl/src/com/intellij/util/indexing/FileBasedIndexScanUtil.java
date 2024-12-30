@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -330,7 +329,7 @@ public final class FileBasedIndexScanUtil {
   }
 
   public static boolean isManuallyManaged(@NotNull ID<?, ?> id) {
-    return id == TodoIndex.NAME;
+    return id == TodoIndexId.INSTANCE.getName();
   }
 
   private static final class InThisThreadProcessor {

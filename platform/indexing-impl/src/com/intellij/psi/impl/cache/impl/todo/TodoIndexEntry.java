@@ -9,8 +9,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 public final class TodoIndexEntry {
-  final String pattern;
-  final boolean caseSensitive;
+  @Internal
+  public final String pattern;
+  @Internal
+  public final boolean caseSensitive;
 
   @Internal
   public TodoIndexEntry(@NotNull String pattern, final boolean caseSensitive) {

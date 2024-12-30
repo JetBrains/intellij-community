@@ -69,6 +69,8 @@
 
   <xi:include href="intellij.platform.bookmarks.xml"/>
 
+  <xi:include href="intellij.platform.todo.xml"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>

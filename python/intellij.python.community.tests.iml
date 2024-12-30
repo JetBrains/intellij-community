@@ -67,5 +67,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.remote" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.todo" scope="TEST" />
   </component>
 </module>

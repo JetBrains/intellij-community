@@ -6,13 +6,13 @@ import com.intellij.application.options.CodeStyleSchemesConfigurable
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel
 import com.intellij.application.options.codeStyle.CodeStyleSettingsPanelFactory
 import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel
-import com.intellij.ide.todo.configurable.TodoConfigurable
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class ConfigurableFactory : Disposable {
   companion object {
     @JvmStatic
@@ -34,9 +34,5 @@ open class ConfigurableFactory : Disposable {
       }
     }, owner)
     return codeStyleConfigurableWrapper
-  }
-
-  open fun getTodoConfigurable(project: Project): TodoConfigurable {
-    return TodoConfigurable()
   }
 }

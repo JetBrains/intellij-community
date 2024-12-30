@@ -577,10 +577,6 @@
                          provider="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable$Provider" id="fileTemplates"
                          key="title.file.templates" bundle="messages.IdeBundle"/>
 
-    <!-- T.O.D.O -->
-    <applicationConfigurable groupId="editor" instance="com.intellij.ide.todo.configurable.TodoConfigurable" id="preferences.toDoOptions"
-                             key="title.todo"
-                             bundle="messages.IdeBundle"/>
 
     <!-- External Tools -->
     <applicationConfigurable groupId="tools" instance="com.intellij.tools.ToolConfigurable" id="preferences.externalTools"
@@ -624,7 +620,6 @@
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor"/>
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.TodoHighlightVisitor"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector"/>
-    <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
 
     <registryKey defaultValue="false" description="Enables navigation for TODO comments" key="todo.navigation"/>
 
@@ -665,7 +660,7 @@
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
     <internalFileTemplate name="HTML File" id="html"/>
-    <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
+
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndexImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndexImpl"/>
 
@@ -1028,7 +1023,6 @@
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.codeStyle.OtherFileTypesCodeStyleOptionsProvider"/>
 
-    <projectService serviceImplementation="com.intellij.ide.todo.TodoView" client="all"/>
     <projectService serviceInterface="com.intellij.ide.structureView.StructureViewFactory"
                     serviceImplementation="com.intellij.ide.structureView.impl.StructureViewFactoryImpl"/>
     <projectService serviceInterface="com.intellij.codeInspection.InspectionManager"
@@ -1061,11 +1055,6 @@
 
     <toolWindow id="Structure" anchor="left" icon="AllIcons.Toolwindows.ToolWindowStructure" secondary="true"
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
-
-    <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
-                factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
-    <toolWindowExtractorMode id="TODO" mode="per_client"/>
-    <projectService serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupport"/>
 
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
@@ -1163,7 +1152,6 @@
     <applicationService serviceImplementation="com.intellij.ConfigurableFactory"/>
 
     <applicationService serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.ide.todo.TodoConfigurationCollector"/>
 
     <indexPatternSearch implementation="com.intellij.psi.impl.search.IndexPatternSearcher"/>
     <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>

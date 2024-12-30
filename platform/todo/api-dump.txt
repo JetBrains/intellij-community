@@ -1,0 +1,179 @@
+c:com.intellij.ide.todo.AllTodosTreeStructure
+- com.intellij.ide.todo.ToDoSettings
+- com.intellij.ide.util.treeView.AbstractTreeStructureBase
+- <init>(com.intellij.openapi.project.Project):V
+- accept(com.intellij.psi.PsiFile):Z
+com.intellij.ide.todo.HighlightedRegionProvider
+- a:getHighlightedRegions():java.lang.Iterable
+f:com.intellij.ide.todo.MultiLineTodoRenderer
+- javax.swing.JPanel
+- javax.swing.tree.TreeCellRenderer
+- <init>():V
+- getTreeCellRendererComponent(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):java.awt.Component
+f:com.intellij.ide.todo.SmartTodoItemPointer
+- <init>(com.intellij.psi.search.TodoItem,com.intellij.openapi.editor.Document):V
+- equals(java.lang.Object):Z
+- getAdditionalRangeMarkers():java.util.List
+- getDocument():com.intellij.openapi.editor.Document
+- getRangeMarker():com.intellij.openapi.editor.RangeMarker
+- getTodoItem():com.intellij.psi.search.TodoItem
+- hashCode():I
+com.intellij.ide.todo.ToDoSettings
+- a:getIsPackagesShown():Z
+- a:isModulesShown():Z
+f:com.intellij.ide.todo.ToDoSummary
+- <init>():V
+a:com.intellij.ide.todo.TodoPanel
+- com.intellij.openapi.ui.SimpleToolWindowPanel
+- com.intellij.ide.OccurenceNavigator
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.actionSystem.DataProvider
+- psf:LOG:com.intellij.openapi.diagnostic.Logger
+- sf:TODO_PANEL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- pf:myProject:com.intellij.openapi.project.Project
+- pf:myTodoView:com.intellij.ide.todo.TodoView
+- <init>(com.intellij.ide.todo.TodoView,com.intellij.ide.todo.TodoPanelSettings,Z,com.intellij.ui.content.Content):V
+- p:createAutoScrollToSourceAction():com.intellij.openapi.actionSystem.AnAction
+- p:createCenterComponent():javax.swing.JComponent
+- p:createGroupByActionGroup():com.intellij.openapi.actionSystem.DefaultActionGroup
+- pa:createTreeBuilder(javax.swing.JTree,com.intellij.openapi.project.Project):com.intellij.ide.todo.TodoTreeBuilder
+- dispose():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getNextOccurenceActionName():java.lang.String
+- getPreviousOccurenceActionName():java.lang.String
+- p:getSelectedFile():com.intellij.psi.PsiFile
+- pf:getTree():com.intellij.ui.treeStructure.Tree
+- pf:getTreeBuilder():com.intellij.ide.todo.TodoTreeBuilder
+- pf:getUsagePreviewPanel():com.intellij.usages.impl.UsagePreviewPanel
+- goNextOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- goPreviousOccurence():com.intellij.ide.OccurenceNavigator$OccurenceInfo
+- hasNextOccurence():Z
+- hasPreviousOccurence():Z
+- p:rebuildWithAlarm(com.intellij.util.Alarm):V
+- selectItem(com.intellij.psi.search.TodoItem):V
+- p:setDisplayName(java.lang.String):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+a:com.intellij.ide.todo.TodoTreeBuilder
+- com.intellij.openapi.Disposable
+- sf:NODE_DESCRIPTOR_COMPARATOR:java.util.Comparator
+- pf:myDirtyFileSet:java.util.Set
+- pf:myFile2Highlighter:java.util.Map
+- pf:myProject:com.intellij.openapi.project.Project
+- <init>(javax.swing.JTree,com.intellij.openapi.project.Project):V
+- pf:clearCache():V
+- p:collectFiles(java.util.function.Consumer):V
+- f:dispose():V
+- getAllFiles():java.util.Iterator
+- getFiles(com.intellij.openapi.module.Module):java.util.Iterator
+- getFiles(com.intellij.psi.PsiDirectory):java.util.Iterator
+- getFiles(com.intellij.psi.PsiDirectory,Z):java.util.Iterator
+- getFilesUnderDirectory(com.intellij.psi.PsiDirectory):java.util.Iterator
+- getFirstPointerForElement(java.lang.Object):com.intellij.ide.todo.nodes.TodoItemNode
+- getHighlighter(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):com.intellij.openapi.editor.highlighter.EditorHighlighter
+- getLastPointerForElement(java.lang.Object):com.intellij.ide.todo.nodes.TodoItemNode
+- pf:getModel():com.intellij.ui.tree.StructureTreeModel
+- getNextPointer(com.intellij.ide.todo.nodes.TodoItemNode):com.intellij.ide.todo.nodes.TodoItemNode
+- getPreviousPointer(com.intellij.ide.todo.nodes.TodoItemNode):com.intellij.ide.todo.nodes.TodoItemNode
+- pf:getProject():com.intellij.openapi.project.Project
+- p:getSearchHelper():com.intellij.psi.search.PsiTodoSearchHelper
+- pf:getTree():javax.swing.JTree
+- pf:hasDirtyFiles():Z
+- f:init():V
+- p:isAutoExpandNode(com.intellij.ide.util.treeView.NodeDescriptor):Z
+- isDirectoryEmpty(com.intellij.psi.PsiDirectory):Z
+- isDisposed():Z
+- pf:isUpdatable():Z
+- pf:markFileAsDirty(com.intellij.openapi.vfs.VirtualFile):V
+- p:onUpdateFinished():V
+- p:onUpdateStarted():V
+- pf:rebuildCache():java.util.concurrent.CompletableFuture
+- select(java.lang.Object):V
+- pf:setModel(com.intellij.ui.tree.StructureTreeModel):V
+- pf:setUpdatable(Z):V
+- f:updateTree():org.jetbrains.concurrency.Promise
+com.intellij.ide.todo.TodoTreeBuilderFactory
+- a:createTreeBuilder(javax.swing.JTree,com.intellij.openapi.project.Project):com.intellij.ide.todo.TodoTreeBuilder
+c:com.intellij.ide.todo.TodoView
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>(com.intellij.openapi.project.Project):V
+- dispose():V
+- getCurrentFilePanel():com.intellij.ide.todo.TodoPanel
+- initToolWindow(com.intellij.openapi.wm.ToolWindow):V
+- f:refresh():java.util.concurrent.CompletableFuture
+- f:refresh(java.util.List):V
+a:com.intellij.ide.todo.nodes.BaseToDoNode
+- com.intellij.ide.util.treeView.AbstractTreeNode
+- p:<init>(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.ide.todo.TodoTreeBuilder):V
+- contains(java.lang.Object):Z
+- a:getFileCount(java.lang.Object):I
+- a:getTodoItemCount(java.lang.Object):I
+f:com.intellij.ide.todo.nodes.ModuleToDoNode
+- com.intellij.ide.todo.nodes.BaseToDoNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module,com.intellij.ide.todo.TodoTreeBuilder):V
+- contains(java.lang.Object):Z
+- getChildren():java.util.Collection
+- getFileCount(com.intellij.openapi.module.Module):I
+- getTestPresentation():java.lang.String
+- getTodoItemCount(com.intellij.openapi.module.Module):I
+- getWeight():I
+- update(com.intellij.ide.projectView.PresentationData):V
+c:com.intellij.ide.todo.nodes.SummaryNode
+- com.intellij.ide.todo.nodes.BaseToDoNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.todo.ToDoSummary,com.intellij.ide.todo.TodoTreeBuilder):V
+- p:createModuleTodoNodeForFile(java.util.ArrayList,com.intellij.openapi.roots.ProjectFileIndex,com.intellij.openapi.vfs.VirtualFile):V
+- getChildren():java.util.Collection
+- getFileCount(com.intellij.ide.todo.ToDoSummary):I
+- getTestPresentation():java.lang.String
+- getTodoItemCount(com.intellij.ide.todo.ToDoSummary):I
+- getWeight():I
+- update(com.intellij.ide.projectView.PresentationData):V
+c:com.intellij.ide.todo.nodes.ToDoRootNode
+- com.intellij.ide.todo.nodes.BaseToDoNode
+- <init>(com.intellij.openapi.project.Project,java.lang.Object,com.intellij.ide.todo.TodoTreeBuilder,com.intellij.ide.todo.ToDoSummary):V
+- p:createSummaryNode(com.intellij.ide.todo.ToDoSummary):com.intellij.ide.todo.nodes.SummaryNode
+- getChildren():java.util.Collection
+- getFileCount(java.lang.Object):I
+- getSummaryNode():java.lang.Object
+- getTestPresentation():java.lang.String
+- getTodoItemCount(java.lang.Object):I
+- update(com.intellij.ide.projectView.PresentationData):V
+f:com.intellij.ide.todo.nodes.TodoDirNode
+- com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory,com.intellij.ide.todo.TodoTreeBuilder):V
+- getChildrenImpl():java.util.Collection
+- getFileCount(com.intellij.psi.PsiDirectory):I
+- getTodoItemCount(com.intellij.psi.PsiDirectory):I
+- getWeight():I
+f:com.intellij.ide.todo.nodes.TodoFileNode
+- com.intellij.ide.projectView.impl.nodes.PsiFileNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.ide.todo.TodoTreeBuilder,Z):V
+- s:findAllTodos(com.intellij.psi.PsiFile,com.intellij.psi.search.PsiTodoSearchHelper):java.util.List
+- getChildrenImpl():java.util.List
+- getWeight():I
+- isAlwaysShowPlus():Z
+f:com.intellij.ide.todo.nodes.TodoItemNode
+- com.intellij.ide.todo.nodes.BaseToDoNode
+- com.intellij.ide.todo.HighlightedRegionProvider
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.todo.SmartTodoItemPointer,com.intellij.ide.todo.TodoTreeBuilder):V
+- canRepresent(java.lang.Object):Z
+- contains(java.lang.Object):Z
+- getAdditionalLines():java.util.List
+- getChildren():java.util.Collection
+- getFileCount(com.intellij.ide.todo.SmartTodoItemPointer):I
+- getHighlightedRegions():java.util.List
+- getTestPresentation():java.lang.String
+- getTodoItemCount(com.intellij.ide.todo.SmartTodoItemPointer):I
+- getWeight():I
+- update(com.intellij.ide.projectView.PresentationData):V
+c:com.intellij.ide.todo.nodes.TodoTreeHelper
+- <init>(com.intellij.openapi.project.Project):V
+- p:addDirsToChildren(java.util.List,java.util.ArrayList,com.intellij.ide.todo.TodoTreeBuilder):V
+- addPackagesToChildren(java.util.ArrayList,com.intellij.openapi.module.Module,com.intellij.ide.todo.TodoTreeBuilder):V
+- p:collectContentRoots(com.intellij.openapi.module.Module):java.util.List
+- contains(com.intellij.ide.projectView.ProjectViewNode,java.lang.Object):Z
+- getDirectoryChildren(com.intellij.psi.PsiDirectory,com.intellij.ide.todo.TodoTreeBuilder,Z):java.util.Collection
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.todo.nodes.TodoTreeHelper
+- getProject():com.intellij.openapi.project.Project
+- getSelectedElement(java.lang.Object):com.intellij.psi.PsiElement
+- skipDirectory(com.intellij.psi.PsiDirectory):Z

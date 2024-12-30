@@ -13,10 +13,6 @@ com/intellij/facet/frameworks/beans/ArtifactItem
 com/intellij/ide/actions/searcheverywhere/SearchEverywhereSpellingCorrector
 com/intellij/ide/plugins/ContainerDescriptor
 com/intellij/ide/plugins/IdeaPluginDescriptorImpl
-com/intellij/ide/todo/FileTree
-com/intellij/ide/todo/TodoNodeVisitor
-com/intellij/ide/todo/TodoTreeBuilderCoroutineHelper
-com/intellij/ide/todo/TodoView$State
 com/intellij/ide/util/gotoByName/SelectionPolicy
 com/intellij/internal/statistic/utils/PluginInfo
 com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
