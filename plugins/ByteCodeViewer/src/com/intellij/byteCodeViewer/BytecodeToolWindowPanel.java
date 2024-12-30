@@ -90,7 +90,6 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
     WriteAction.run(() -> setBytecodeText(null, DEFAULT_TEXT));
     setUpListeners();
 
-    LOG.trace("Scheduled loading bytecode because the initial tool window setup occurred");
     queueLoadBytecodeTask(() -> updateBytecodeSelection(initialSourceEditor));
   }
 
@@ -128,7 +127,6 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
         final Editor sourceEditor = textEditor.getEditor();
 
         queueLoadBytecodeTask(() -> updateBytecodeSelection(sourceEditor));
-        LOG.trace("Scheduled loading bytecode because listener fired: FileEditorManagerListener.selectionChanged()");
       }
     });
 
@@ -138,8 +136,6 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent event) {
         if (!toolWindow.isVisible()) return;
-
-        LOG.trace("Will update bytecode selection because listener fired: CaretListener.caretPositionChanged()");
         updateBytecodeSelection(event.getEditor());
       }
     }, this);
@@ -154,29 +150,19 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
 
     final VirtualFile virtualFile = sourceEditor.getVirtualFile();
     if (virtualFile == null) return;
-    if (virtualFile.getFileType() != JavaFileType.INSTANCE) {
-      // Only update ranges when viewing the source code.
-      LOG.trace("updateBytecodeSelection: file displayed in editor is not Java source, but " + virtualFile.getFileType().getName());
-      return;
-    }
+    if (virtualFile.getFileType() != JavaFileType.INSTANCE) return;
 
     final PsiElement selectedPsiElement = getPsiElement(project, sourceEditor);
     if (selectedPsiElement == null) {
-      LOG.trace("Tried to update displayed bytecode but the selectedPsiElement is null");
       return;
     }
     final PsiClass containingClass = BytecodeViewerManager.getContainingClass(selectedPsiElement);
     if (containingClass == null) {
-      LOG.trace("Tried to update displayed bytecode but the selectedPsiElement (" + selectedPsiElement + ") has no containing class");
       bytecodeEditor.getSelectionModel().removeSelection();
       return;
     }
     if (!Objects.equals(containingClass.getQualifiedName(), currentlyDisplayedClassFQN)) {
       // This is required to correctly handle different classes being present in a single Java file
-      LOG.trace("Scheduled loading bytecode because the cursor is now located inside class " +
-                containingClass.getQualifiedName() +
-                ", which is different from previously displayed class " +
-                currentlyDisplayedClassFQN);
       queueLoadBytecodeTask(null);
       return;
     }
@@ -223,8 +209,6 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
     bytecodeEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
     bytecodeEditor.getSelectionModel().setSelection(startOffset, endOffset);
-
-    LOG.trace("updated bytecode selection to lines: (" + linesRange.getFirst() + 1 + ", " + endSelectionLineIndex + 1 + ")");
   }
 
   private void queueUpdateBytecodeStatusTask() {
@@ -274,7 +258,6 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
     // If a new task was scheduled to update bytecode, we want to cancel the previous one.
     if (existingLoadBytecodeTask != null) {
       if (existingLoadBytecodeTask.isRunning()) {
-        LOG.trace("queueLoadBytecodeTask(): canceling existing LoadBytecodeTask " + existingLoadBytecodeTask.hashCode());
         existingLoadBytecodeTask.cancel();
       }
       existingLoadBytecodeTask = null;
@@ -327,7 +310,6 @@ final class LoadBytecodeTask extends Task.Backgroundable {
   }
 
   public void cancel() {
-    LOG.trace("canceled");
     if (myProgressIndicator != null) {
       myProgressIndicator.cancel();
     }
@@ -344,32 +326,18 @@ final class LoadBytecodeTask extends Task.Backgroundable {
     myProgressIndicator = indicator;
     myBytecode = ReadAction.computeCancellable(() -> {
       final Editor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-      if (selectedEditor == null) {
-        LOG.warn("Tried to show Java bytecode but selectedEditor is null");
-        return null;
-      }
+      if (selectedEditor == null) return null;
 
       final PsiFile psiFileInEditor = PsiUtilBase.getPsiFileInEditor(selectedEditor, myProject);
-      if (psiFileInEditor == null) {
-        LOG.warn("Tried to update displayed bytecode but psiFileInEditor is null");
-        return null;
-      }
-      if (!isValidFileType(psiFileInEditor.getFileType())) {
-        LOG.warn("Tried to update displayed bytecode for invalid file type " + psiFileInEditor.getFileType().getName());
-        return null;
-      }
+      if (psiFileInEditor == null) return null;
+
+      if (!isValidFileType(psiFileInEditor.getFileType())) return null;
 
       final PsiElement selectedPsiElement = getPsiElement(myProject, selectedEditor);
-      if (selectedPsiElement == null) {
-        LOG.warn("Tried to update displayed bytecode but the selectedPsiElement is null");
-        return null;
-      }
+      if (selectedPsiElement == null) return null;
 
       final PsiClass containingClass = BytecodeViewerManager.getContainingClass(selectedPsiElement);
-      if (containingClass == null) {
-        LOG.trace("Tried to update displayed bytecode but the selectedPsiElement (" + selectedPsiElement + ") has no containing class");
-        return null;
-      }
+      if (containingClass == null) return null;
 
       onClassNameUpdated.accept(containingClass);
 
@@ -377,7 +345,6 @@ final class LoadBytecodeTask extends Task.Backgroundable {
 
       final Pair<String, String> bytecodeVariants = getByteCodeVariants(selectedPsiElement);
       if (bytecodeVariants == null) {
-        LOG.warn("Tried to update displayed bytecode but bytecode is null. selectedPsiElement: " + selectedPsiElement);
         return null;
       }
 
@@ -388,7 +355,6 @@ final class LoadBytecodeTask extends Task.Backgroundable {
   @RequiresEdt
   @Override
   public void onSuccess() {
-    LOG.trace("onSuccess(): bytecode != null? " + (myBytecode != null));
     if (myBytecode != null) {
       onBytecodeUpdated.accept(myBytecode);
     }
@@ -403,8 +369,6 @@ final class LoadBytecodeTask extends Task.Backgroundable {
 }
 
 final class UpdateBytecodeStatusTask extends Task.Backgroundable {
-  private static final Logger LOG = Logger.getInstance(UpdateBytecodeStatusTask.class);
-
   private final @NotNull VirtualFile myVirtualFile;
   private final @NotNull Consumer<Boolean> onUpToDateCheckDone;
 
@@ -430,12 +394,7 @@ final class UpdateBytecodeStatusTask extends Task.Backgroundable {
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     if (myProject == null) return;
-    LOG.trace("run() started!");
-    if (!myVirtualFile.isValid()) {
-      LOG.trace("run() canceled because file" + myVirtualFile + " is invalid");
-      return;
-    }
-
+    if (!myVirtualFile.isValid()) return;
     myProgressIndicator = indicator;
 
     CancellationUtil.sleepCancellable(1000); // Poor man's event debouncing
@@ -443,13 +402,9 @@ final class UpdateBytecodeStatusTask extends Task.Backgroundable {
     final boolean isInContent = ReadAction.computeCancellable(() -> {
       return ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(myVirtualFile);
     });
-    if (!isInContent) {
-      LOG.trace("run() returns early because file " + myVirtualFile + " is not in the project's content");
-      return;
-    }
+    if (!isInContent) return;
 
     final boolean isUpToDate = !isMarkedForCompilation(myProject, myVirtualFile);
-    LOG.trace("up-to-date check for file " + myVirtualFile + " finished, is up to date: " + isUpToDate);
     onUpToDateCheckDone.accept(isUpToDate);
   }
 }

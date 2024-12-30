@@ -4,7 +4,6 @@ package com.intellij.byteCodeViewer;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -35,8 +34,6 @@ import java.util.Queue;
 public final class BytecodeViewerManager {
   private static final ExtensionPointName<ClassSearcher> CLASS_SEARCHER_EP = ExtensionPointName.create("ByteCodeViewer.classSearcher");
 
-  private static final Logger LOG = Logger.getInstance(BytecodeViewerManager.class);
-
   public static BytecodeViewerManager getInstance(Project project) {
     return project.getService(BytecodeViewerManager.class);
   }
@@ -59,17 +56,11 @@ public final class BytecodeViewerManager {
           String classFileName = StringUtil.getShortName(jvmClassName) + ".class";
           if (index.isInLibraryClasses(file)) {
             VirtualFile classFile = file.getParent().findChild(classFileName);
-            if (classFile != null) {
-              LOG.trace("loadClassFileBytes(" + aClass + "): found class file " + classFile.getPath());
-              return classFile.contentsToByteArray(false);
-            }
+            if (classFile != null) return classFile.contentsToByteArray(false);
           }
           else {
             File classFile = new File(file.getParent().getPath(), classFileName);
-            if (classFile.isFile()) {
-              LOG.trace("loadClassFileBytes(" + aClass + "): found class file " + classFile.getPath());
-              return FileUtil.loadFileBytes(classFile);
-            }
+            if (classFile.isFile()) return FileUtil.loadFileBytes(classFile);
           }
         }
         else {
@@ -83,15 +74,7 @@ public final class BytecodeViewerManager {
               if (classRoot != null) {
                 String relativePath = jvmClassName.replace('.', '/') + ".class";
                 File classFile = new File(classRoot.getPath(), relativePath);
-                if (classFile.exists()) {
-                  LOG.trace("loadClassFileBytes(" +
-                            aClass +
-                            "): found class file " +
-                            classFile.getPath() +
-                            " compiled from source file " +
-                            file.getPath());
-                  return FileUtil.loadFileBytes(classFile);
-                }
+                if (classFile.exists()) return FileUtil.loadFileBytes(classFile);
               }
             }
           }
