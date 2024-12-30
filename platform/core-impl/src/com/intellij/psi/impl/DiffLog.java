@@ -24,6 +24,31 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A utility class for making and managing changes to an Abstract Syntax Tree (AST).
+ * This class works like a tool for building and applying updates to the tree structure,
+ * using a delayed execution approach to handle the changes efficiently.
+ * <p>
+ * The class works with AST structures represented by {@link ASTNode}. It supports
+ * actions like replacing, deleting, and inserting nodes. Changes are logged and
+ * applied in batches to keep things consistent and reduce processing time.
+ *
+ * <h2>How It Works</h2>
+ * Changes are stored as "log entries", which are special objects created from the
+ * {@link LogEntry} class. Each type of change (like replacing or deleting a node)
+ * has its own subclass of {@code LogEntry} with specific logic for that change. These log
+ * entries are saved in a list and only applied later when needed.
+ *
+ * <h2>Main Features</h2>
+ * - Keeps track of all changes made to the AST.
+ * - Delays and batches changes for efficient execution.
+ * - Handles common AST tasks like replacing, inserting, or deleting nodes.
+ * - Ensures the AST stays correct and consistent after updates.
+ *
+ * <h2>Thread Safety</h2>
+ * This class is not thread-safe. It should only be used in a single-threaded environment,
+ * like under locks or in the IntelliJ platform's PSI handling thread.
+ */
 @ApiStatus.Internal
 public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   public DiffLog() { }
