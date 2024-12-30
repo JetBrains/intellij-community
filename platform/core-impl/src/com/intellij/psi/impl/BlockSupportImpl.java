@@ -34,10 +34,7 @@ import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Function;
 
@@ -106,6 +103,7 @@ public final class BlockSupportImpl extends BlockSupport {
    * @return Pair (target reparseable node, new replacement node)
    *         or {@code null} if can't parse incrementally.
    */
+  @VisibleForTesting
   public static @Nullable Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
                                                                @NotNull FileASTNode oldFileNode,
                                                                @NotNull TextRange changedPsiRange,
