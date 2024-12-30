@@ -34,4 +34,8 @@ public class SneakyThrowsHighlightTest extends AbstractLombokHighlightsTest {
   public void testSneakyThrowsTryInsideLambda() {
     doTest();
   }
+
+  public void testSneakyThrowsTryWithResources() {
+    doTest();
+  }
 }
