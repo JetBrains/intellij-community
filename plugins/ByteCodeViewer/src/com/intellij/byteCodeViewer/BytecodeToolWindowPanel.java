@@ -81,7 +81,7 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
     this.toolWindow = toolWindow;
 
     bytecodeDocument = EditorFactory.getInstance().createDocument("");
-    // TODO(bartekpacia): JavaClassFileType doesn't seem right, because its 'isBinary()' method returns true.
+    // TODO: JavaClassFileType doesn't seem right, because its 'isBinary()' method returns true.
     //  The text we display in the editor is actually a human-readable representation of the bytecode (as returned by ASM ClassReader).
     bytecodeEditor = EditorFactory.getInstance().createEditor(bytecodeDocument, project, JavaClassFileType.INSTANCE, true);
     classNameLabel = new JLabel();
@@ -234,7 +234,14 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
   private void queueUpdateBytecodeStatusTask() {
     if (currentlyFocusedSourceFile == null) return;
 
-    Consumer<@NotNull Boolean> onUpToDateCheckDone = (Boolean isUpToDate) -> {
+    // If a new task was scheduled, we want to cancel the previous one.
+    if (existingUpdateBytecodeStatusTask != null) {
+      if (existingUpdateBytecodeStatusTask.isRunning()) {
+        existingUpdateBytecodeStatusTask.cancel();
+      }
+      existingUpdateBytecodeStatusTask = null;
+    }
+    existingUpdateBytecodeStatusTask = new UpdateBytecodeStatusTask(project, currentlyFocusedSourceFile, (Boolean isUpToDate) -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!isUpToDate) {
           setErrorText(BytecodeViewerBundle.message("class.file.may.be.out.of.date"));
@@ -243,16 +250,7 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
           setErrorText(null);
         }
       });
-    };
-
-    // If a new task was scheduled, we want to cancel the previous one.
-    if (existingUpdateBytecodeStatusTask != null) {
-      if (existingUpdateBytecodeStatusTask.isRunning()) {
-        existingUpdateBytecodeStatusTask.cancel();
-      }
-      existingUpdateBytecodeStatusTask = null;
-    }
-    existingUpdateBytecodeStatusTask = new UpdateBytecodeStatusTask(project, currentlyFocusedSourceFile, onUpToDateCheckDone);
+    });
     existingUpdateBytecodeStatusTask.queue();
   }
 
@@ -295,7 +293,7 @@ final class BytecodeToolWindowPanel extends JPanel implements Disposable {
     existingLoadBytecodeTask.queue();
   }
 
-  private void showWarning(@NotNull String title, @NotNull String message) {
+  private void showWarning(@NlsSafe @NotNull String title, @NlsSafe @NotNull String message) {
     ToolWindowManager.getInstance(project).notifyByBalloon(TOOL_WINDOW_ID, MessageType.WARNING, title + "\n" + message);
   }
 
@@ -418,6 +416,7 @@ final class LoadBytecodeTask extends Task.Backgroundable {
   @RequiresEdt
   @Override
   public void onCancel() {
+    if (myProgressIndicator == null) return;
     LOG.warn("task was canceled, task title: " + getTitle() + "task text: " + myProgressIndicator.getText());
   }
 }

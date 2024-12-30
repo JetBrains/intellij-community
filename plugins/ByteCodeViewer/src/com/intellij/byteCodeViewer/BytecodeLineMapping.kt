@@ -19,7 +19,6 @@ import java.util.*
  * Also, we do want to display labels.
  * They're useful.
  *
- * // TODO(bartekpacia): Create issue on https://gitlab.ow2.org/asm/asm
  */
 internal fun removeDebugInfo(bytecodeWithDebugInfo: String): String = bytecodeWithDebugInfo.lines()
   .filter { line -> !isDebugLine(line.trim()) }
