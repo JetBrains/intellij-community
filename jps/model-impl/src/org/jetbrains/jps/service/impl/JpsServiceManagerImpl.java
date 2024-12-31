@@ -2,7 +2,6 @@
 package org.jetbrains.jps.service.impl;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.plugin.JpsPluginManager;
@@ -12,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public final class JpsServiceManagerImpl extends JpsServiceManager {
   private final ConcurrentMap<Class<?>, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
@@ -53,7 +53,7 @@ public final class JpsServiceManagerImpl extends JpsServiceManager {
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
     // confine costly service initialization to single thread for defined startup profile
     synchronized (myExtensions) {
-      List<?> cached = cleanupExtensionCache()? null : myExtensions.get(extensionClass);
+      List<?> cached = cleanupExtensionCache() ? null : myExtensions.get(extensionClass);
       if (cached == null) {
         myExtensions.put(extensionClass, cached = new ArrayList<>(loadExtensions(extensionClass)));
       }
@@ -108,7 +108,7 @@ public final class JpsServiceManagerImpl extends JpsServiceManager {
     @Override
     public @NotNull <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
       ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
-      return ContainerUtil.newArrayList(loader);
+      return loader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
     }
 
     @Override
