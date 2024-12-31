@@ -288,7 +288,7 @@ f:org.jetbrains.jps.model.java.JavaResourceRootType
 - sf:TEST_RESOURCE:org.jetbrains.jps.model.java.JavaResourceRootType
 - createDefaultProperties():org.jetbrains.jps.model.java.JavaResourceRootProperties
 - isForTests():Z
-c:org.jetbrains.jps.model.java.JavaSourceRootProperties
+f:org.jetbrains.jps.model.java.JavaSourceRootProperties
 - org.jetbrains.jps.model.ex.JpsElementBase
 - createCopy():org.jetbrains.jps.model.java.JavaSourceRootProperties
 - getPackagePrefix():java.lang.String
