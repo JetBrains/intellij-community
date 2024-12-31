@@ -3,6 +3,7 @@ package org.jetbrains.jps.service;
 
 import org.jetbrains.annotations.ApiStatus;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ServiceLoader;
 
 public abstract class JpsServiceManager {
@@ -22,7 +23,20 @@ public abstract class JpsServiceManager {
     private static final JpsServiceManager INSTANCE;
 
     static {
-      INSTANCE = ServiceLoader.load(JpsServiceManager.class, JpsServiceManager.class.getClassLoader()).iterator().next();
+      String implClass = System.getProperties().getProperty("jps.service.manager.impl");
+      if (implClass == null || implClass.isEmpty()) {
+        INSTANCE = ServiceLoader.load(JpsServiceManager.class, JpsServiceManager.class.getClassLoader()).iterator().next();
+      }
+      else {
+        try {
+          Class<?> aClass = JpsServiceManager.class.getClassLoader().loadClass(implClass);
+          INSTANCE = (JpsServiceManager)aClass.getDeclaredConstructor().newInstance();
+        }
+        catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException |
+               InvocationTargetException e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
   }
 }
