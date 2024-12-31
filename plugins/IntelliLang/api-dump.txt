@@ -326,12 +326,6 @@ f:org.intellij.plugins.intelliLang.inject.config.ui.ValueRegExpAnnotator
 - sf:KEY:com.intellij.openapi.util.Key
 - <init>():V
 - annotate(com.intellij.psi.PsiElement,com.intellij.lang.annotation.AnnotationHolder):V
-f:org.intellij.plugins.intelliLang.references.FileReferenceInjector
-- com.intellij.psi.injection.ReferenceInjector
-- <init>():V
-- getDisplayName():java.lang.String
-- getId():java.lang.String
-- getReferences(com.intellij.psi.PsiElement,com.intellij.util.ProcessingContext,com.intellij.openapi.util.TextRange):com.intellij.psi.PsiReference[]
 f:org.intellij.plugins.intelliLang.references.InjectedReferencesContributor
 - com.intellij.psi.PsiReferenceContributor
 - <init>():V

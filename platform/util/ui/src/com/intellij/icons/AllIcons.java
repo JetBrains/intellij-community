@@ -34,7 +34,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon BuildAutoReloadChanges = load("expui/actions/buildAutoReloadChanges.svg", "actions/buildAutoReloadChanges.svg", 1799776131, 2);
     /** 16x16 */ public static final @NotNull Icon BuildLoadChanges = load("expui/actions/buildLoadChanges.svg", "actions/buildLoadChanges.svg", -2056072706, 2);
     /** 16x16 */ public static final @NotNull Icon Cancel = load("expui/general/close.svg", "actions/cancel.svg", -263776084, 2);
-    /** 16x16 */ public static final @NotNull Icon ChangeView = load("actions/changeView.svg", -598441630, 2);
+    /** 16x16 */ public static final @NotNull Icon ChangeView = load("expui/actions/changeView.svg", "actions/changeView.svg", -598441630, 2);
     /** 12x12 */ public static final @NotNull Icon Checked = load("expui/actions/checked.svg", "actions/checked.svg", -988548294, 0);
     /** 12x12 */ public static final @NotNull Icon Checked_selected = load("actions/checked_selected.svg", -434989657, 0);
     /** 16x16 */ public static final @NotNull Icon CheckMulticaret = load("actions/CheckMulticaret.svg", 164939994, 2);
@@ -434,6 +434,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Archive = load("expui/fileTypes/archive.svg", "fileTypes/archive.svg", 2114774615, 0);
     /** 16x16 */ public static final @NotNull Icon AS = load("expui/fileTypes/actionScript.svg", "fileTypes/as.svg", -1805543846, 0);
     /** 16x16 */ public static final @NotNull Icon Aspectj = load("expui/fileTypes/aspectJ.svg", "fileTypes/aspectj.svg", 469536666, 0);
+    /** 16x16 */ public static final @NotNull Icon BinaryData = load("expui/fileTypes/binaryData.svg", "fileTypes/binaryData.svg", -208960886, 2);
     /** 16x16 */ public static final @NotNull Icon Config = load("expui/fileTypes/config.svg", "fileTypes/config.svg", 416412449, 0);
     /** 16x16 */ public static final @NotNull Icon Contexts = load("expui/fileTypes/contexts.svg", "fileTypes/contexts.svg", 589986144, 0);
     /** 16x16 */ public static final @NotNull Icon ContextsModifier = load("expui/fileTypes/contextsModifier.svg", "fileTypes/contextsModifier.svg", 11227132, 0);
@@ -740,7 +741,7 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon WarningEvents = load("ide/notification/warningEvents.svg", 115050516, 2);
     }
 
-    /** 16x16 */ public static final @NotNull Icon OutgoingChangesOn = load("ide/outgoingChangesOn.svg", 1711755766, 2);
+    /** 16x16 */ public static final @NotNull Icon OutgoingChangesOn = load("expui/vcs/unshelve.svg", "ide/outgoingChangesOn.svg", 1711755766, 2);
     /** 16x16 */ public static final @NotNull Icon Pipette = load("expui/image/colorPicker.svg", "ide/pipette.svg", 721447979, 2);
     /** 16x16 */ public static final @NotNull Icon Pipette_rollover = load("expui/image/colorPickerRollover.svg", "ide/pipette_rollover.svg", 2117061737, 2);
     /** 16x16 */ public static final @NotNull Icon PowerSaveMode = load("expui/general/inspections/inspectionsPowerSaveMode.svg", "ide/powerSaveMode.svg", 2079928345, 2);
@@ -1401,7 +1402,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Branch = load("expui/general/vcs.svg", "vcs/branch.svg", -1419137718, 2);
     /** 16x16 */ public static final @NotNull Icon BranchNode = load("expui/general/vcs.svg", "vcs/branchNode.svg", -1691291258, 0);
     /** 16x16 */ public static final @NotNull Icon Changelist = load("expui/vcs/changelist.svg", "vcs/changelist.svg", -676612903, 2);
-    /** 16x16 */ public static final @NotNull Icon Clone = load("expui/vcs/clone.svg", "vcs/clone.svg", 1374345994, 2);
+    /** 16x16 */ public static final @NotNull Icon Clone = load("expui/vcs/update.svg", "vcs/clone.svg", 1374345994, 2);
     /** 16x16 */ public static final @NotNull Icon CommitNode = load("expui/vcs/commit.svg", "vcs/commitNode.svg", 334394479, 0);
     /** 16x16 */ public static final @NotNull Icon Equal = load("vcs/equal.svg", -1196383288, 2);
     /** 16x16 */ public static final @NotNull Icon Fetch = load("expui/vcs/fetch.svg", "vcs/fetch.svg", -1252692037, 2);

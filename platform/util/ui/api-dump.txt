@@ -401,6 +401,7 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:Any_type:javax.swing.Icon
 - sf:Archive:javax.swing.Icon
 - sf:Aspectj:javax.swing.Icon
+- sf:BinaryData:javax.swing.Icon
 - sf:Config:javax.swing.Icon
 - sf:Contexts:javax.swing.Icon
 - sf:ContextsModifier:javax.swing.Icon

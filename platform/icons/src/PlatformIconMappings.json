@@ -6,6 +6,7 @@
       "buildLoadChanges.svg": "actions/buildLoadChanges.svg",
       "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "checked.svg": ["actions/checked.svg", "actions/setDefault.svg"],
+      "changeView.svg": "actions/changeView.svg",
       "deploy.svg": "nodes/deploy.svg",
       "diagramDiff.svg": "actions/diagramDiff.svg",
       "diffWithClipboard.svg": "actions/diffWithClipboard.svg",
@@ -240,6 +241,7 @@
         "nodes/ppJar.svg"
       ],
       "aspectJ.svg": "fileTypes/aspectj.svg",
+      "binaryData.svg": "fileTypes/binaryData.svg",
       "changedFile.svg": "scope/changedFiles.svg",
       "changedFiles.svg": "scope/changedFilesAll.svg",
       "config.svg": "fileTypes/config.svg",
@@ -409,6 +411,7 @@
       "moveDown.svg": "actions/moveDown.svg",
       "moveUp.svg": "actions/moveUp.svg",
       "open.svg": "actions/menu-open.svg",
+      "openInToolWindow.svg": "general/openInToolWindow.svg",
       "openNewTab.svg": "actions/openNewTab.svg",
       "overriddenMethod.svg": "general/overridenMethod.svg",
       "overridingMethod.svg": "general/overridingMethod.svg",
@@ -946,7 +949,6 @@
       "arrowLeft.svg": "vcs/arrow_left.svg",
       "arrowRight.svg": "vcs/arrow_right.svg",
       "changes.svg": "actions/listChanges.svg",
-      "clone.svg": "vcs/clone.svg",
       "commit.svg": [
         "actions/commit.svg",
         "vcs/commitNode.svg"
@@ -960,10 +962,11 @@
       "remove.svg": "actions/remove.svg",
       "revert.svg": "actions/rollback.svg",
       "shelve.svg": ["vcs/shelveSilent.svg", "ide/incomingChangesOn.svg"],
-      "update.svg": "actions/checkOut.svg",
+      "update.svg": ["actions/checkOut.svg", "vcs/clone.svg"],
       "unshelve.svg": [
         "vcs/Unshelve.svg",
-        "vcs/unshelveSilent.svg"
+        "vcs/unshelveSilent.svg",
+        "ide/outgoingChangesOn.svg"
       ]
     },
     "webReferences": {
