@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
-public class JpsJavaSdkType extends JpsSdkType<JpsDummyElement> implements JpsElementTypeWithDefaultProperties<JpsDummyElement> {
+public final class JpsJavaSdkType extends JpsSdkType<JpsDummyElement> implements JpsElementTypeWithDefaultProperties<JpsDummyElement> {
   public static final JpsJavaSdkType INSTANCE = new JpsJavaSdkType();
 
   @Override

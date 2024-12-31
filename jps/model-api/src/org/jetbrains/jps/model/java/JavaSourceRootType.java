@@ -9,19 +9,26 @@ public final class JavaSourceRootType extends JpsElementTypeBase<JavaSourceRootP
   public static final JavaSourceRootType SOURCE = new JavaSourceRootType(false);
   public static final JavaSourceRootType TEST_SOURCE = new JavaSourceRootType(true);
 
-  private final boolean myForTests;
+  private final boolean forTests;
 
   private JavaSourceRootType(boolean isForTests) {
-    myForTests = isForTests;
+    forTests = isForTests;
   }
 
   @Override
   public boolean isForTests() {
-    return myForTests;
+    return forTests;
   }
 
   @Override
   public @NotNull JavaSourceRootProperties createDefaultProperties() {
     return JpsJavaExtensionService.getInstance().createSourceRootProperties("");
+  }
+
+  @Override
+  public String toString() {
+    return "JavaSourceRootType(" +
+           "forTests=" + forTests +
+           ')';
   }
 }
