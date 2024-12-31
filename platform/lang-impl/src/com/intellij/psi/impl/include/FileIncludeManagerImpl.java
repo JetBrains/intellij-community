@@ -31,7 +31,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,6 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-@ApiStatus.Internal
 public final class FileIncludeManagerImpl extends FileIncludeManager implements Disposable {
   private final Project myProject;
   private final PsiManager myPsiManager;
@@ -69,7 +67,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
   };
 
   public void processIncludes(PsiFile file, Processor<? super FileIncludeInfo> processor) {
-    List<FileIncludeInfo> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), myProject);
+    var infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), myProject).toList();
     for (FileIncludeInfo info : infoList) {
       if (!processor.process(info)) {
         return;
@@ -120,7 +118,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
   private static @NotNull Collection<String> getPossibleIncludeNames(@NotNull PsiFile context, @NotNull String originalName) {
     Collection<String> names = new HashSet<>();
     names.add(originalName);
-    for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensionList()) {
+    for (FileIncludeProvider provider : FileIncludeIndex.FILE_INCLUDE_PROVIDER_EP_NAME.getExtensionList()) {
       String newName = provider.getIncludeName(context, originalName);
       if (!Strings.areSameInstance(newName, originalName)) {
         names.add(newName);
@@ -136,7 +134,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
     myPsiManager = PsiManager.getInstance(project);
     myPsiFileFactory = PsiFileFactory.getInstance(myProject);
 
-    FileIncludeProvider.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
+    FileIncludeIndex.FILE_INCLUDE_PROVIDER_EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull FileIncludeProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         FileIncludeProvider old = myProviderMap.put(provider.getId(), provider);

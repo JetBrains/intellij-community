@@ -5233,6 +5233,16 @@ a:com.intellij.psi.impl.include.FileIncludeManager
 - s:getManager(com.intellij.openapi.project.Project):com.intellij.psi.impl.include.FileIncludeManager
 - a:processIncludingFiles(com.intellij.psi.PsiFile,com.intellij.util.Processor):V
 - a:resolveFileInclude(com.intellij.psi.impl.include.FileIncludeInfo,com.intellij.psi.PsiFile):com.intellij.psi.PsiFileSystemItem
+a:com.intellij.psi.impl.include.FileIncludeProvider
+- <init>():V
+- a:acceptFile(com.intellij.openapi.vfs.VirtualFile):Z
+- acceptFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+- a:getId():java.lang.String
+- a:getIncludeInfos(com.intellij.util.indexing.FileContent):com.intellij.psi.impl.include.FileIncludeInfo[]
+- getIncludeName(com.intellij.psi.PsiFile,java.lang.String):java.lang.String
+- getVersion():I
+- a:registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
+- resolveIncludedFile(com.intellij.psi.impl.include.FileIncludeInfo,com.intellij.psi.PsiFile):com.intellij.psi.PsiFileSystemItem
 c:com.intellij.psi.meta.PsiMetaDataTarget
 - com.intellij.psi.DelegatePsiTarget
 - com.intellij.pom.PomRenameableTarget

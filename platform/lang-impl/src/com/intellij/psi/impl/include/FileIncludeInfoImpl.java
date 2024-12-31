@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author Dmitry Avdeev
- */
 final class FileIncludeInfoImpl extends FileIncludeInfo {
 
   public final String providerId;

@@ -6,22 +6,18 @@ import com.intellij.application.options.CodeStyleSchemesConfigurable
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel
 import com.intellij.application.options.codeStyle.CodeStyleSettingsPanelFactory
 import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-open class ConfigurableFactory : Disposable {
+open class ConfigurableFactory {
   companion object {
     @JvmStatic
     fun getInstance(): ConfigurableFactory {
       return ApplicationManager.getApplication().getService(ConfigurableFactory::class.java)
     }
-  }
-
-  override fun dispose() {
   }
 
   open fun createCodeStyleConfigurable(provider: CodeStyleSettingsProvider,

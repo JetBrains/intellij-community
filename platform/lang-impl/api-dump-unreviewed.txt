@@ -1,5 +1,3 @@
-f:com.intellij.CacheSwitcher
-- sf:INSTANCE:com.intellij.CacheSwitcher
 f:com.intellij.analysis.AnalysisActionUtils
 - <init>():V
 - s:getInspectionScope(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project,java.lang.Boolean):com.intellij.analysis.AnalysisScope
@@ -6068,13 +6066,7 @@ f:com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection
 - getOptionsPane():com.intellij.codeInspection.options.OptPane
 - isEnabledByDefault():Z
 - runForWholeFile():Z
-f:com.intellij.codeInspection.longLine.LongLineInspection
-- com.intellij.codeInspection.LocalInspectionTool
-- <init>():V
-- buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z,com.intellij.codeInspection.LocalInspectionToolSession):com.intellij.psi.PsiElementVisitor
-- getOptionsPane():com.intellij.codeInspection.options.OptPane
 com.intellij.codeInspection.longLine.LongLineInspectionPolicy
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:ignoreLongLineFor(com.intellij.psi.PsiElement):Z
 a:com.intellij.codeInspection.naming.AbstractNamingConventionInspection
 - com.intellij.codeInspection.LocalInspectionTool
@@ -15068,30 +15060,6 @@ f:com.intellij.psi.impl.file.SourceRootIconProvider$DirectoryProvider
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - getIcon(com.intellij.psi.PsiElement,I):javax.swing.Icon
-f:com.intellij.psi.impl.include.FileIncludeIndex
-- com.intellij.util.indexing.FileBasedIndexExtension
-- sf:INDEX_ID:com.intellij.util.indexing.ID
-- <init>():V
-- dependsOnFileContent():Z
-- s:getIncludes(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.util.List
-- s:getIncludingFileCandidates(java.lang.String,com.intellij.psi.search.GlobalSearchScope):com.intellij.util.containers.MultiMap
-- getIndexer():com.intellij.util.indexing.DataIndexer
-- getInputFilter():com.intellij.util.indexing.FileBasedIndex$InputFilter
-- getKeyDescriptor():com.intellij.util.io.KeyDescriptor
-- getName():com.intellij.util.indexing.ID
-- getValueExternalizer():com.intellij.util.io.DataExternalizer
-- getVersion():I
-a:com.intellij.psi.impl.include.FileIncludeProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- a:acceptFile(com.intellij.openapi.vfs.VirtualFile):Z
-- acceptFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
-- a:getId():java.lang.String
-- a:getIncludeInfos(com.intellij.util.indexing.FileContent):com.intellij.psi.impl.include.FileIncludeInfo[]
-- getIncludeName(com.intellij.psi.PsiFile,java.lang.String):java.lang.String
-- getVersion():I
-- a:registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
-- resolveIncludedFile(com.intellij.psi.impl.include.FileIncludeInfo,com.intellij.psi.PsiFile):com.intellij.psi.PsiFileSystemItem
 a:com.intellij.psi.impl.source.LightPsiFileImpl
 - com.intellij.psi.impl.PsiElementBase
 - com.intellij.psi.impl.PsiFileEx
