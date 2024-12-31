@@ -29,7 +29,7 @@ import static com.intellij.psi.impl.source.BasicElementTypes.*;
 @ApiStatus.Experimental
 public class BasicDeclarationParser {
   public enum BaseContext {
-    FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
+    FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE, JSHELL
   }
 
   private static final TokenSet BEFORE_LBRACE_ELEMENTS_SET = TokenSet.create(
@@ -326,7 +326,7 @@ public class BasicDeclarationParser {
       PsiBuilder.Marker pos = builder.mark();
 
       int flags = BasicReferenceParser.EAT_LAST_DOT | BasicReferenceParser.WILDCARD;
-      if (context == BaseContext.CODE_BLOCK) flags |= BasicReferenceParser.VAR_TYPE;
+      if (context == BaseContext.CODE_BLOCK ||  context == BaseContext.JSHELL) flags |= BasicReferenceParser.VAR_TYPE;
       type = myParser.getReferenceParser().parseTypeInfo(builder, flags);
 
       if (type == null) {
@@ -399,7 +399,8 @@ public class BasicDeclarationParser {
     }
 
     if (builder.getTokenType() == JavaTokenType.LPARENTH) {
-      if (context == BaseContext.CLASS || context == BaseContext.ANNOTATION_INTERFACE || context == BaseContext.FILE) {  // method
+      if (context == BaseContext.CLASS || context == BaseContext.ANNOTATION_INTERFACE || context == BaseContext.FILE
+          || context == BaseContext.JSHELL) {  // method
         if (typeParams == null) {
           emptyElement(type.marker, myJavaElementTypeContainer.TYPE_PARAMETER_LIST);
         }
@@ -791,7 +792,8 @@ public class BasicDeclarationParser {
                                                                 int declarationStart,
                                                                 BaseContext context) {
     final IElementType varType;
-    if (context == BaseContext.CLASS || context == BaseContext.ANNOTATION_INTERFACE || context == BaseContext.FILE) {
+    if (context == BaseContext.CLASS || context == BaseContext.ANNOTATION_INTERFACE || context == BaseContext.FILE
+        || context == BaseContext.JSHELL) {
       varType = myJavaElementTypeContainer.FIELD;
     }
     else if (context == BaseContext.CODE_BLOCK) {

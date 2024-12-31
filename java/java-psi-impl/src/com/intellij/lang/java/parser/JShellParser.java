@@ -22,13 +22,12 @@ import java.util.function.Predicate;
 public class JShellParser extends JavaParser {
   public static final JShellParser INSTANCE = new JShellParser();
 
-  private static final TokenSet TOP_LEVEL_DECLARATIONS = TokenSet.create(
-    JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS
-  );
+  private static final TokenSet TOP_LEVEL_DECLARATIONS =
+    TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS);
   private static final Predicate<IElementType> IMPORT_PARSED_CONDITION = tokenType -> JavaElementType.IMPORT_STATEMENT.equals(tokenType);
   private static final Predicate<IElementType> EXPRESSION_PARSED_CONDITION = type -> type != JavaElementType.REFERENCE_EXPRESSION;
-  private static final Predicate<IElementType> STATEMENTS_PARSED_CONDITION = tokenType-> !JavaElementType.DECLARATION_STATEMENT.equals(tokenType) &&
-                                                                                         !JavaElementType.EXPRESSION_STATEMENT.equals(tokenType);
+  private static final Predicate<IElementType> STATEMENTS_PARSED_CONDITION =
+    tokenType -> !JavaElementType.DECLARATION_STATEMENT.equals(tokenType) && !JavaElementType.EXPRESSION_STATEMENT.equals(tokenType);
   private static final Predicate<IElementType> DECLARATION_PARSED_CONDITION = tokenType -> TOP_LEVEL_DECLARATIONS.contains(tokenType);
 
   private final FileParser myJShellFileParser = new FileParser(this) {
@@ -74,7 +73,7 @@ public class JShellParser extends JavaParser {
               }
               else {
                 revert(marker);
-                marker = getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS);
+                marker = getDeclarationParser().parse(builder, DeclarationParser.Context.JSHELL);
                 if (isParsed(marker, builder, DECLARATION_PARSED_CONDITION)) {
                   wrapper.drop(); // don't need wrapper for top-level declaration
                   wrapper = null;
