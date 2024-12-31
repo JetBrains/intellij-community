@@ -275,7 +275,7 @@ f:org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 - sf:SOURCES:java.util.Set
 - sf:TESTS:java.util.Set
 - <init>():V
-c:org.jetbrains.jps.model.java.JavaResourceRootProperties
+f:org.jetbrains.jps.model.java.JavaResourceRootProperties
 - org.jetbrains.jps.model.ex.JpsElementBase
 - <init>(java.lang.String,Z):V
 - createCopy():org.jetbrains.jps.model.java.JavaResourceRootProperties
@@ -415,7 +415,7 @@ a:org.jetbrains.jps.model.java.JpsJavaExtensionService
 - a:getOutputUrl(org.jetbrains.jps.model.module.JpsModule,Z):java.lang.String
 - a:getProjectExtension(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.java.JpsJavaProjectExtension
 - a:getTestModuleProperties(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.module.JpsTestModuleProperties
-c:org.jetbrains.jps.model.java.JpsJavaLibraryType
+f:org.jetbrains.jps.model.java.JpsJavaLibraryType
 - org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties
 - org.jetbrains.jps.model.library.JpsLibraryType
 - sf:INSTANCE:org.jetbrains.jps.model.java.JpsJavaLibraryType
@@ -438,7 +438,7 @@ org.jetbrains.jps.model.java.JpsJavaProjectExtension
 - org.jetbrains.jps.model.JpsElement
 - a:getLanguageLevel():org.jetbrains.jps.model.java.LanguageLevel
 - a:getOutputUrl():java.lang.String
-c:org.jetbrains.jps.model.java.JpsJavaSdkType
+f:org.jetbrains.jps.model.java.JpsJavaSdkType
 - org.jetbrains.jps.model.library.sdk.JpsSdkType
 - org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties
 - sf:INSTANCE:org.jetbrains.jps.model.java.JpsJavaSdkType
@@ -572,7 +572,7 @@ org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties
 - org.jetbrains.jps.model.JpsElement
 - a:getMainClass():java.lang.String
-c:org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationState
+f:org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationState
 - MAIN_CLASS_NAME:java.lang.String
 - <init>():V
 f:org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationType
