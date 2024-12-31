@@ -447,6 +447,9 @@ public final class JShellHandler {
       else if (subKind == CodeSnippet.SubKind.ENUM_SUBKIND) {
         kindLabel = "enum";
       }
+      else if (subKind == CodeSnippet.SubKind.RECORD_SUBKIND) {
+        kindLabel = "record";
+      }
       else if (subKind == CodeSnippet.SubKind.ANNOTATION_TYPE_SUBKIND) {
         kindLabel = "annotation";
       }
