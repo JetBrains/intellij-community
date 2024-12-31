@@ -1,4 +1,4 @@
-package com.intellij.python.junit5Tests.env.framework.showCase
+package com.intellij.python.junit5Tests.env.showCase
 
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
