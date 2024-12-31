@@ -317,6 +317,7 @@
       ],
       "autoscrollFromSource.svg": "general/autoscrollFromSource.svg",
       "autoscrollToSource.svg": "general/autoscrollToSource.svg",
+      "balloon.svg": "general/balloon.svg",
       "user.svg": ["general/user.svg", "vcs/author.svg"],
       "chevronDown.svg": [
         "actions/findAndShowNextMatches.svg",

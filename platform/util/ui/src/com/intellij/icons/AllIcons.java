@@ -490,7 +490,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ArrowUp = load("expui/general/chevronUp.svg", "general/arrowUp.svg", 927591433, 2);
     /** 16x16 */ public static final @NotNull Icon AutoscrollFromSource = load("expui/general/autoscrollFromSource.svg", "general/autoscrollFromSource.svg", -169479441, 2);
     /** 16x16 */ public static final @NotNull Icon AutoscrollToSource = load("expui/general/autoscrollToSource.svg", "general/autoscrollToSource.svg", -114858249, 2);
-    /** 16x16 */ public static final @NotNull Icon Balloon = load("general/balloon.svg", -1411993183, 2);
+    /** 16x16 */ public static final @NotNull Icon Balloon = load("expui/general/balloon.svg", "general/balloon.svg", -1411993183, 2);
     /** 16x16 */ public static final @NotNull Icon BalloonError = load("expui/status/error.svg", "general/balloonError.svg", 1753843976, 2);
     /** 16x16 */ public static final @NotNull Icon BalloonInformation = load("expui/status/info.svg", "general/balloonInformation.svg", -271775484, 2);
     /** 16x16 */ public static final @NotNull Icon BalloonWarning = load("expui/status/warning.svg", "general/balloonWarning.svg", -1328195733, 2);
