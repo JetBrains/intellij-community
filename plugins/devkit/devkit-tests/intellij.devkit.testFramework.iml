@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
-    <orderEntry type="library" exported="" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" />
