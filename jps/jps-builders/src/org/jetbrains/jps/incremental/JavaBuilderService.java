@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -16,14 +16,13 @@ import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @ApiStatus.Internal
 public final class JavaBuilderService extends BuilderService {
   @Override
   public @NotNull List<? extends BuildTargetType<?>> getTargetTypes() {
-    List<BuildTargetType<?>> types = new ArrayList<>();
+    List<BuildTargetType<?>> types = new ArrayList<>(5);
     types.addAll(JavaModuleBuildTargetType.ALL_TYPES);
     types.addAll(ResourcesTargetType.ALL_TYPES);
     types.add(ProjectDependenciesResolver.ProjectDependenciesResolvingTargetType.INSTANCE);
@@ -32,7 +31,7 @@ public final class JavaBuilderService extends BuilderService {
 
   @Override
   public @NotNull List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return Arrays.asList(
+    return List.of(
       new JavaBuilder(SharedThreadPool.getInstance()),
       new NotNullInstrumentingBuilder(),
       new RmiStubsGenerator(),
@@ -43,6 +42,6 @@ public final class JavaBuilderService extends BuilderService {
 
   @Override
   public @NotNull List<? extends TargetBuilder<?, ?>> createBuilders() {
-    return Arrays.asList(new ResourcesBuilder(), new ProjectDependenciesResolver());
+    return List.of(new ResourcesBuilder(), new ProjectDependenciesResolver());
   }
 }
