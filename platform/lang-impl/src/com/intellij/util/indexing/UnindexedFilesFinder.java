@@ -49,6 +49,7 @@ final class UnindexedFilesFinder {
   private static final class UnindexedFileStatusBuilder {
     boolean shouldIndex = false;
     boolean indexesWereProvidedByInfrastructureExtension = false;
+    long timeTotalEvaluation = 0;
     long timeProcessingUpToDateFiles = 0;
     long timeUpdatingContentLessIndexes = 0;
     long timeIndexingWithoutContentViaInfrastructureExtension = 0;
@@ -88,7 +89,8 @@ final class UnindexedFilesFinder {
                                      indexesWereProvidedByInfrastructureExtension,
                                      timeProcessingUpToDateFiles,
                                      timeUpdatingContentLessIndexes,
-                                     timeIndexingWithoutContentViaInfrastructureExtension);
+                                     timeIndexingWithoutContentViaInfrastructureExtension,
+                                     timeTotalEvaluation);
     }
 
     void explain(IndexedFileImpl indexedFile, IndexingReasonExplanationLogger logger) {
@@ -159,7 +161,22 @@ final class UnindexedFilesFinder {
     this.indexingRequest = indexingRequest;
   }
 
-  public @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)") UnindexedFileStatus getFileStatus(@NotNull VirtualFile file) {
+  @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)")
+  public UnindexedFileStatus getFileStatus(@NotNull VirtualFile file) {
+    long statusTime = System.nanoTime();
+    UnindexedFileStatusBuilder status = null;
+    try {
+      status = evaluateFileStatus(file);
+    }
+    finally {
+      if (status != null) {
+        status.timeTotalEvaluation = System.nanoTime() - statusTime;
+      }
+    }
+    return status == null ? null : status.build();
+  }
+
+  private UnindexedFileStatusBuilder evaluateFileStatus(@NotNull VirtualFile file) {
     ProgressManager.checkCanceled(); // give a chance to suspend indexing
     if (!file.isValid() || !(file instanceof VirtualFileWithId)) {
       return null;
@@ -171,7 +188,7 @@ final class UnindexedFilesFinder {
     if (TRUST_INDEXING_FLAG) {
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
         myFilterHandler.addFileId(myProject, FileBasedIndex.getFileId(file));
-        return new UnindexedFileStatusBuilder(applicationMode).build();
+        return new UnindexedFileStatusBuilder(applicationMode);
       }
     }
 
@@ -209,13 +226,13 @@ final class UnindexedFilesFinder {
         }
         if (!wasInvalidated) {
           IndexingStamp.flushCache(inputId);
-          return fileStatusBuilder.build();
+          return fileStatusBuilder;
         }
       }
 
       FileTypeManagerEx ex = FileTypeManagerEx.getInstanceEx();
       if (!(ex instanceof FileTypeManagerImpl)) {
-        return fileStatusBuilder.build();
+        return fileStatusBuilder;
       }
       Ref<Runnable> finalization = new Ref<>();
       ((FileTypeManagerImpl)ex).freezeFileTypeTemporarilyWithProvidedValueIn(file, fileType, () -> {
@@ -295,7 +312,7 @@ final class UnindexedFilesFinder {
       finalization.get().run();
 
       fileStatusBuilder.explain(indexedFile, explanationLogger);
-      return fileStatusBuilder.build();
+      return fileStatusBuilder;
     });
   }
 

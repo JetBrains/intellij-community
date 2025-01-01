@@ -384,13 +384,15 @@ class UnindexedFilesScanner (
     }
   }
 
-  internal class ScanningSession(private val project: Project,
-                                 private val scanningHistory: ProjectScanningHistoryImpl,
-                                 private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>?,
-                                 private val filterHandler: FilesFilterScanningHandler,
-                                 private val indicator: CheckPauseOnlyProgressIndicator,
-                                 private val progressReporter: IndexingProgressReporter,
-                                 private val scanningRequest: ScanningRequestToken) {
+  internal class ScanningSession(
+    private val project: Project,
+    private val scanningHistory: ProjectScanningHistoryImpl,
+    private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>?,
+    private val filterHandler: FilesFilterScanningHandler,
+    private val indicator: CheckPauseOnlyProgressIndicator,
+    private val progressReporter: IndexingProgressReporter,
+    private val scanningRequest: ScanningRequestToken,
+  ) {
 
     fun collectIndexableFilesConcurrently(providers: List<IndexableFilesIterator>) {
       if (providers.isEmpty()) {
@@ -502,10 +504,11 @@ class UnindexedFilesScanner (
           scanningStatistics.startFileChecking()
           try {
             readAction {
-              val finder = UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger,
+              val finder =
+                if (ourTestMode == TestMode.PUSHING) null
+                else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger,
                                                 scanningRequest, filterHandler)
-              val scanningUtil = ScanningUtil(project, indicator, provider, finder,
-                                              scanningStatistics, perProviderSink)
+              val scanningUtil = ScanningUtil(project, provider)
               if (!scanningUtil.mayBeUsed()) {
                 LOG.warn("Iterator based on $provider can't be used.")
                 return@readAction
@@ -513,12 +516,24 @@ class UnindexedFilesScanner (
               while (files.isNotEmpty()) {
                 val file = files.removeFirst()
                 try {
-                  if (file.isValid)
-                    scanningUtil.processFile(file)
+                  if (file.isValid) {
+                    scanningUtil.applyPushers(file)
+                    val status = finder?.getFileStatus(file)
+                    if (status != null) {
+                      if (status.shouldIndex && ourTestMode == null) {
+                        perProviderSink.addFile(file)
+                      }
+                      scanningStatistics.addStatus(file, status, project)
+                    }
+                  }
                 }
                 catch (e: ProcessCanceledException) {
                   files.addFirst(file)
                   throw e
+                }
+                catch (e: Exception) {
+                  LOG.error("Error while scanning ${file.presentableUrl}\n" +
+                            "To reindex this file IDE has to be restarted", e);
                 }
               }
             }
