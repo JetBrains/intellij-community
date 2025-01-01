@@ -952,7 +952,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Include = load("expui/nodes/include.svg", "nodes/include.svg", -1043076621, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionResults = load("nodes/inspectionResults.svg", 1522825837, 0);
     /** 16x16 */ public static final @NotNull Icon Interface = load("expui/nodes/interface.svg", "nodes/interface.svg", -371611298, 1);
-    /** 16x16 */ public static final @NotNull Icon J2eeParameter = load("nodes/j2eeParameter.svg", 403278075, 0);
     /** 16x16 */ public static final @NotNull Icon JarDirectory = load("nodes/jarDirectory.svg", -692661187, 0);
     /** 16x16 */ public static final @NotNull Icon JavaDocFolder = load("nodes/javaDocFolder.svg", 135532303, 0);
     /** 16x16 */ public static final @NotNull Icon JavaModule = load("expui/nodes/moduleJava.svg", "nodes/javaModule.svg", 2003423238, 0);
@@ -1058,6 +1057,12 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Word = load("nodes/word.svg", -820267638, 0);
     /** 16x16 */ public static final @NotNull Icon Workspace = load("expui/nodes/workspace.svg", 933675081, 2);
     /** 16x16 */ public static final @NotNull Icon WriteAccess = load("expui/actions/showWriteAccess.svg", "nodes/write-access.svg", 735088822, 0);
+
+    /** @deprecated to be removed (Use AllIcons.Nodes.ClassInitializer instead) */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval
+    public static final @NotNull Icon J2eeParameter = load("nodes/j2eeParameter.svg", 0, 0);
   }
 
   public static final class ObjectBrowser {

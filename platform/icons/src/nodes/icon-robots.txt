@@ -1,0 +1,1 @@
+deprecated: j2eeParameter.svg; to be removed (Use AllIcons.Nodes.ClassInitializer instead)
