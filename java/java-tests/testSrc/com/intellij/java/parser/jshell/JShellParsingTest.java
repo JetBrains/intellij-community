@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser.jshell;
 
 import com.intellij.ide.highlighter.JShellFileType;
@@ -21,6 +21,8 @@ public class JShellParsingTest extends JavaParsingTestCase {
   public void testMethod0() { doTest(); }
   public void testImport0() { doTest(); }
   public void testVarStatement() { doTest(); }
+  public void testGenericDeclaration1() { doTest(); }
+  public void testGenericDeclaration2() { doTest(); }
 
   private void doTest() {
     doTest(true, true);
