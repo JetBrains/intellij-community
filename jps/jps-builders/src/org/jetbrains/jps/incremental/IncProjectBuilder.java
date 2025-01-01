@@ -1181,16 +1181,15 @@ public final class IncProjectBuilder {
         }
       }
 
-      @NotNull ExecutorService parallelBuildExecutor =
-        AppExecutorUtil.createCustomPriorityQueueBoundedApplicationPoolExecutor(
-          "IncProjectBuilder Executor Pool",
-          SharedThreadPool.getInstance(),
-          MAX_BUILDER_THREADS,
-          (o1, o2) -> {
-            int p1 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o1).priority : 1;
-            int p2 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o2).priority : 1;
-            return Integer.compare(p2, p1);
-          });
+      Executor parallelBuildExecutor = AppExecutorUtil.createCustomPriorityQueueBoundedApplicationPoolExecutor(
+        "IncProjectBuilder Executor Pool",
+        SharedThreadPool.getInstance(),
+        MAX_BUILDER_THREADS,
+        (o1, o2) -> {
+          int p1 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o1).priority : 1;
+          int p2 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o2).priority : 1;
+          return Integer.compare(p2, p1);
+        });
 
       queueTasks(initialTasks, LOG.isDebugEnabled(), parallelBuildExecutor);
       try {
@@ -1209,7 +1208,7 @@ public final class IncProjectBuilder {
       }
     }
 
-    private void queueTasks(List<BuildChunkTask> tasks, boolean isDebugLogEnabled, @NotNull ExecutorService parallelBuildExecutor) {
+    private void queueTasks(List<BuildChunkTask> tasks, boolean isDebugLogEnabled, @NotNull Executor parallelBuildExecutor) {
       BuildChunkTask[] sorted = tasks.toArray(new BuildChunkTask[0]);
       Arrays.sort(sorted, Comparator.comparingLong(BuildChunkTask::getScore).reversed());
 
@@ -1239,7 +1238,7 @@ public final class IncProjectBuilder {
       }
     }
 
-    private void queueTask(@NotNull BuildChunkTask task, boolean isDebugLogEnabled, @NotNull ExecutorService parallelBuildExecutor) {
+    private void queueTask(@NotNull BuildChunkTask task, boolean isDebugLogEnabled, @NotNull Executor parallelBuildExecutor) {
       CompileContext chunkLocalContext = createContextWrapper(myContext);
       parallelBuildExecutor.execute(new RunnableWithPriority(task.getScore()) {
         @Override
