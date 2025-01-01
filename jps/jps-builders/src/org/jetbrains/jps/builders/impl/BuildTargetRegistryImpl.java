@@ -76,7 +76,7 @@ public final class BuildTargetRegistryImpl implements BuildTargetRegistry {
   @Override
   public @NotNull <T extends BuildTarget<?>> List<T> getAllTargets(@NotNull BuildTargetType<T> type) {
     //noinspection unchecked
-    return (List<T>)targets.get(type);
+    return (List<T>)targets.getOrDefault(type, List.of());
   }
 
   @Override
