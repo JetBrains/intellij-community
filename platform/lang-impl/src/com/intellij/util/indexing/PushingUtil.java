@@ -18,14 +18,14 @@ import java.util.List;
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getImmediateValuesEx;
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
 
-final class ScanningUtil {
+final class PushingUtil {
   private final List<FilePropertyPusher<?>> pushers;
   private final List<FilePropertyPusherEx<?>> pusherExs;
   private final Object[] moduleValues;
   private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
   private final boolean mayBeUsed;
 
-  ScanningUtil(Project project, IndexableFilesIterator provider) {
+  PushingUtil(Project project, IndexableFilesIterator provider) {
 
     pushedFilePropertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
 

@@ -508,8 +508,8 @@ class UnindexedFilesScanner (
                 if (ourTestMode == TestMode.PUSHING) null
                 else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger,
                                                 scanningRequest, filterHandler)
-              val scanningUtil = ScanningUtil(project, provider)
-              if (!scanningUtil.mayBeUsed()) {
+              val pushingUtil = PushingUtil(project, provider)
+              if (!pushingUtil.mayBeUsed()) {
                 LOG.warn("Iterator based on $provider can't be used.")
                 return@readAction
               }
@@ -517,7 +517,7 @@ class UnindexedFilesScanner (
                 val file = files.removeFirst()
                 try {
                   if (file.isValid) {
-                    scanningUtil.applyPushers(file)
+                    pushingUtil.applyPushers(file)
                     val status = finder?.getFileStatus(file)
                     if (status != null) {
                       if (status.shouldIndex && ourTestMode == null) {
