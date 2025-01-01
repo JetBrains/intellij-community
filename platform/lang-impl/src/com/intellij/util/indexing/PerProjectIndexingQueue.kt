@@ -32,78 +32,9 @@ import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
 
-private class PerProviderSinkFactory() {
-  private val activeSinksCount: AtomicInteger = AtomicInteger()
-  private val cancelActiveSinks: AtomicBoolean = AtomicBoolean()
-
-  inner class PerProviderSinkImpl(private val doAddFile: (VirtualFile) -> Unit) : PerProjectIndexingQueue.PerProviderSink {
-    private var closed = false
-
-    init {
-      activeSinksCount.incrementAndGet()
-    }
-
-    override fun addFile(file: VirtualFile) {
-      LOG.assertTrue(!closed, "Should not invoke 'addFile' after 'close'")
-      if (cancelActiveSinks.get()) {
-        ProgressManager.getGlobalProgressIndicator()?.cancel()
-        ProgressManager.checkCanceled()
-        LOG.error("Could not cancel file addition")
-      }
-
-      doAddFile(file)
-    }
-
-    override fun close() {
-      if (!closed) {
-        closed = true
-        activeSinksCount.decrementAndGet()
-      }
-    }
-  }
-
-  fun newSink(addFile: (VirtualFile) -> Unit): PerProjectIndexingQueue.PerProviderSink {
-    if (cancelActiveSinks.get()) {
-      ProgressManager.getGlobalProgressIndicator()?.cancel()
-      ProgressManager.checkCanceled()
-      LOG.error("Could not cancel sink creation")
-    }
-
-    return PerProviderSinkImpl(addFile)
-  }
-
-  fun cancelAllProducersAndWait() {
-    cancelActiveSinks.set(true)
-    ProgressIndicatorUtils.awaitWithCheckCanceled {
-      PingProgress.interactWithEdtProgress()
-      LockSupport.parkNanos(50_000_000)
-      activeSinksCount.get() == 0
-    }
-  }
-
-  fun resumeProducers() {
-    cancelActiveSinks.set(false)
-  }
-
-  companion object {
-    private val LOG = logger<PerProviderSinkFactory>()
-  }
-}
-
 @Internal
 @Service(Service.Level.PROJECT)
 class PerProjectIndexingQueue(private val project: Project) {
-  /**
-   *  Not thread safe. These classes are cheap to construct and use - don't share instances.
-   *  <p>
-   *  Always use try-with-resources when creating instances of this interface, otherwise [cancelAllTasksAndWait] may never end waiting
-   */
-  interface PerProviderSink : AutoCloseable {
-    fun addFile(file: VirtualFile)
-    override fun close()
-  }
-
-  private val sinkFactory = PerProviderSinkFactory()
 
   @Internal
   class QueuedFiles {
@@ -233,32 +164,12 @@ class PerProjectIndexingQueue(private val project: Project) {
    * Creates new instance of **thread-unsafe** [PerProviderSink]
    * Will throw [ProcessCanceledException] if the queue is suspended via [cancelAllTasksAndWait]
    */
-  fun getSink(scanningId: Long): PerProviderSink {
-    return sinkFactory.newSink { vFile ->
-      // readLock here is to make sure that queuedFiles does not change during the operation
-      queuedFilesLock.readLock().withLock {
-        // .value for each file, because we want to put files into a new queue after getAndResetQueuedFiles invocation
-        queuedFiles.value.addFile(vFile, scanningId)
-      }
+  fun addFile(vFile: VirtualFile, scanningId: Long) {
+    // readLock here is to make sure that queuedFiles does not change during the operation
+    queuedFilesLock.readLock().withLock {
+      // .value for each file, because we want to put files into a new queue after getAndResetQueuedFiles invocation
+      queuedFiles.value.addFile(vFile, scanningId)
     }
-  }
-
-  /**
-   * Cancels all the created [PerProviderSink] and waits until all the Sinks are finished (invoke [PerProviderSink.commit()]).
-   * New invocations of [PerProjectIndexingQueue.getSink()] will throw [ProcessCanceledException].
-   * Use [resumeQueue] to resume the queue.
-   * Does nothing if the queue is already suspended.
-   */
-  fun cancelAllTasksAndWait() {
-    sinkFactory.cancelAllProducersAndWait()
-  }
-
-  /**
-   * Resumes the queue after [cancelAllTasksAndWait] invocation.
-   * Does nothing if the queue is already resumed.
-   */
-  fun resumeQueue() {
-    sinkFactory.resumeProducers()
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)

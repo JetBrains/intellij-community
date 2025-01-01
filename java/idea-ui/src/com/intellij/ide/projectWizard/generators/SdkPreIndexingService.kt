@@ -84,13 +84,11 @@ internal class SdkPreIndexingService: Disposable {
     allIterators.addAll(createIterators(sdk))
 
     val queue = PerProjectIndexingQueue(project)
-    queue.getSink(0).use { sink ->
-      for (iterator in allIterators) {
-        iterator.iterateFiles(project, ContentIterator { fileOrDir: VirtualFile ->
-          sink.addFile(fileOrDir)
-          true
-        }, VirtualFileFilter.ALL)
-      }
+    for (iterator in allIterators) {
+      iterator.iterateFiles(project, ContentIterator { fileOrDir: VirtualFile ->
+        queue.addFile(fileOrDir, 0)
+        true
+      }, VirtualFileFilter.ALL)
     }
     return queue
   }

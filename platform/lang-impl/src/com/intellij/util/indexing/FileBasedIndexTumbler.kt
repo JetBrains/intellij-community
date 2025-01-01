@@ -62,7 +62,6 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
               scannerExecutor.cancelAllTasksAndWait()
 
               val perProjectIndexingQueue = project.getService(PerProjectIndexingQueue::class.java)
-              perProjectIndexingQueue.cancelAllTasksAndWait()
               perProjectIndexingQueue.clear()
 
               val dumbService = DumbService.getInstance(project)
@@ -105,7 +104,6 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
         }
         for (project in ProjectUtil.getOpenProjects()) {
           UnindexedFilesScannerExecutor.getInstance(project).resumeQueue()
-          project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
           FileBasedIndexInfrastructureExtension.attachAllExtensionsData(project)
         }
         dumbModeSemaphore.up()
