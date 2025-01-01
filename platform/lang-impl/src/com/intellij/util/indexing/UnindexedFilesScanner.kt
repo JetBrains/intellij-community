@@ -429,7 +429,7 @@ class UnindexedFilesScanner (
     ) {
       runBlockingCancellable {
         withContext(SCANNING_DISPATCHER) {
-          providers.forEachConcurrent(SCANNING_PARALLELISM) { provider ->
+          providers.forEachConcurrent(SCANNING_PARALLELISM)  { provider ->
             try {
               scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
             }
@@ -504,9 +504,9 @@ class UnindexedFilesScanner (
             readAction {
               val finder = UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger,
                                                 scanningRequest, filterHandler)
-              val rootIterator = SingleProviderIterator(project, indicator, provider, finder,
-                                                        scanningStatistics, perProviderSink)
-              if (!rootIterator.mayBeUsed()) {
+              val scanningUtil = ScanningUtil(project, indicator, provider, finder,
+                                              scanningStatistics, perProviderSink)
+              if (!scanningUtil.mayBeUsed()) {
                 LOG.warn("Iterator based on $provider can't be used.")
                 return@readAction
               }
@@ -514,7 +514,7 @@ class UnindexedFilesScanner (
                 val file = files.removeFirst()
                 try {
                   if (file.isValid)
-                    rootIterator.processFile(file)
+                    scanningUtil.processFile(file)
                 }
                 catch (e: ProcessCanceledException) {
                   files.addFirst(file)

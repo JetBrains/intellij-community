@@ -23,7 +23,7 @@ import java.util.List;
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getImmediateValuesEx;
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getModuleImmediateValues;
 
-final class SingleProviderIterator implements ContentIterator {
+final class ScanningUtil implements ContentIterator {
   private final Project project;
   private final PerProjectIndexingQueue.PerProviderSink perProviderSink;
   private final CheckPauseOnlyProgressIndicator indicator;
@@ -35,9 +35,9 @@ final class SingleProviderIterator implements ContentIterator {
   private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
   private final boolean mayBeUsed;
 
-  SingleProviderIterator(Project project, @NotNull CheckPauseOnlyProgressIndicator indicator, IndexableFilesIterator provider,
-                         UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics,
-                         PerProjectIndexingQueue.PerProviderSink perProviderSink) {
+  ScanningUtil(Project project, @NotNull CheckPauseOnlyProgressIndicator indicator, IndexableFilesIterator provider,
+               UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics,
+               PerProjectIndexingQueue.PerProviderSink perProviderSink) {
     this.project = project;
     this.indicator = indicator;
     this.unindexedFileFinder = unindexedFileFinder;
