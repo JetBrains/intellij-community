@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -178,7 +178,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
       else {
         argName = myArrayName;
-        // not interested in collecting complete array value; need to know just array type
+        // not interested in collecting complete array value; need to know just an array type
         myArrayName = null;
       }
       if (argName != null) {
@@ -196,7 +196,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
       else {
         argName = myArrayName;
-        // not interested in collecting complete array value; need to know just array type
+        // not interested in collecting complete array value; need to know just an array type
         myArrayName = null;
       }
       if (argName != null) {
@@ -807,12 +807,13 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
         if (LAMBDA_FACTORY_CLASS.equals(bsm.getOwner())) {
           // This invokeDynamic implements a lambda or method reference usage.
-          // Need to register method usage for the corresponding SAM-type.
-          // First three arguments to the bootstrap methods are provided automatically by VM.
-          // Arguments in args array are expected to be as following:
+          // Need to register method usage for the corresponding SAM type.
+          // The first three arguments to the bootstrap methods are provided automatically by VM.
+          // Arguments in an args array are expected to be as following:
           // [0]: Type: Signature and return type of method to be implemented by the function object.
           // [1]: Handle: implementation method handle
-          // [2]: Type: The signature and return type that should be enforced dynamically at invocation time. May be the same as samMethodType, or may be a specialization of it
+          // [2]: Type: The signature and return type that should be enforced dynamically at invocation time.
+          // Maybe the same as samMethodType, or may be a specialization of it
           // [...]: optional additional arguments
 
           if (returnType.getSort() == Type.OBJECT && bsmArgs.length >= 3) {
@@ -874,7 +875,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   }
 
   /**
-   * @return corresponding field access opcode or -1 if the handle does not represent field access handle
+   * @return corresponding field access opcode or -1 if the handle does not represent a field access handle
    */
   private static int getFieldAccessOpcode(Handle handle) {
     switch (handle.getTag()) {
