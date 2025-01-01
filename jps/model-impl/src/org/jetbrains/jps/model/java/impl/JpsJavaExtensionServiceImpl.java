@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -26,7 +26,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -129,7 +128,7 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
     assert jdkInfo != null : homePath;
     String version = JdkVersionDetector.formatVersionString(jdkInfo.version);
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdk = global.addSdk(name, homePath, version, JpsJavaSdkType.INSTANCE);
-    List<Path> roots = JavaSdkUtil.getJdkClassesRoots(Paths.get(homePath), false);
+    List<Path> roots = JavaSdkUtil.getJdkClassesRoots(Path.of(homePath), false);
     for (Path root : roots) {
       sdk.addRoot(root.toFile(), JpsOrderRootType.COMPILED);
     }

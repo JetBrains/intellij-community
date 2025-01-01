@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -266,7 +265,7 @@ public final class BuildRunner {
     TargetOutputIndex dummyIndex = new TargetOutputIndex() {
       @Override
       public Collection<BuildTarget<?>> getTargetsByOutputFile(@NotNull File file) {
-        return Collections.emptyList();
+        return List.of();
       }
     };
 
@@ -289,10 +288,15 @@ public final class BuildRunner {
   }
 
   public static boolean isParallelBuildEnabled() {
-    return SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false);
+    return Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION));
   }
 
   public static boolean isParallelBuildAutomakeEnabled() {
-    return isParallelBuildEnabled() && SystemProperties.getBooleanProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, true);
+    if (!isParallelBuildEnabled()) {
+      return false;
+    }
+
+    String value = System.getProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION);
+    return value == null || Boolean.parseBoolean(value);
   }
 }

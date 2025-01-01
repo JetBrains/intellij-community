@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.text.XmlCharsetDetector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +77,9 @@ public final class JpsEncodingProjectConfigurationImpl extends JpsElementBase<Jp
 
   private static boolean isXmlFile(File file) {
     String fileName = file.getName();
-    return SystemInfo.isFileSystemCaseSensitive ? fileName.endsWith(XML_NAME_SUFFIX) : StringUtil.endsWithIgnoreCase(fileName, XML_NAME_SUFFIX);
+    return SystemInfoRt.isFileSystemCaseSensitive
+           ? fileName.endsWith(XML_NAME_SUFFIX)
+           : Strings.endsWithIgnoreCase(fileName, XML_NAME_SUFFIX);
   }
 
   @Override

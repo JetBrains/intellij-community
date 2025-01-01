@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -34,7 +34,7 @@ public class JpsCompilerConfigurationTest {
     assertTrue(defaultProfile.isEnabled());
     assertFalse(defaultProfile.isObtainProcessorsFromClasspath());
     String srcDir = JpsPathUtil.urlToPath(projectData.getUrl("src"));
-    assertEquals(FileUtil.toSystemDependentName(srcDir), defaultProfile.getProcessorPath());
+    assertEquals(FileUtilRt.toSystemDependentName(srcDir), defaultProfile.getProcessorPath());
     assertEquals("b", defaultProfile.getProcessorOptions().get("a"));
     assertEquals("d", defaultProfile.getProcessorOptions().get("c"));
     assertEquals("gen", defaultProfile.getGeneratedSourcesDirectoryName(false));

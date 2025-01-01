@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,14 +67,15 @@ public final class JavaSdkUtil {
       }
     }
 
-    if (ContainerUtil.exists(rootFiles, path -> path.getFileName().toString().startsWith("ibm"))) {
+    if (rootFiles.stream().map(path -> path.getFileName().toString()).anyMatch(name -> name.startsWith("ibm"))) {
       // ancient IBM JDKs split JRE classes between `rt.jar` and `vm.jar`, and the latter might be anywhere
       try (var paths = Files.walk(isJre ? home : home.resolve("jre"))) {
         paths.filter(path -> path.getFileName().toString().equals("vm.jar"))
           .findFirst()
           .ifPresent(rootFiles::add);
       }
-      catch (IOException ignored) { }
+      catch (IOException ignored) {
+      }
     }
 
     Path classesZip = home.resolve("lib/classes.zip");

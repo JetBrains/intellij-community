@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.artifact.impl.elements;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ public class JpsPackagingElementFactoryImpl extends JpsPackagingElementFactory {
 
   @Override
   public JpsPackagingElement createParentDirectories(String relativeOutputPath, JpsPackagingElement element) {
-    relativeOutputPath = StringUtil.trimStart(relativeOutputPath, "/");
+    relativeOutputPath = Strings.trimStart(relativeOutputPath, "/");
     if (relativeOutputPath.isEmpty()) {
       return element;
     }
@@ -46,7 +46,7 @@ public class JpsPackagingElementFactoryImpl extends JpsPackagingElementFactory {
 
   private @NotNull JpsCompositePackagingElement getOrCreateDirectoryOrArchive(@NotNull JpsCompositePackagingElement root,
                                                                               @NotNull @NonNls String path, final boolean directory) {
-    path = StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/");
+    path = Strings.trimStart(Strings.trimEnd(path, "/"), "/");
     if (path.isEmpty()) {
       return root;
     }

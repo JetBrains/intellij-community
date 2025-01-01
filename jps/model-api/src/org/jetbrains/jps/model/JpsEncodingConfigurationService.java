@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -23,6 +23,5 @@ public abstract class JpsEncodingConfigurationService {
   public abstract @Nullable JpsEncodingProjectConfiguration getEncodingConfiguration(@NotNull JpsProject project);
 
   @ApiStatus.Internal
-  public abstract @NotNull JpsEncodingProjectConfiguration setEncodingConfiguration(@NotNull JpsProject project, @Nullable String projectEncoding,
-                                                                                    @NotNull Map<String, String> urlToEncoding);
+  public abstract @NotNull JpsEncodingProjectConfiguration setEncodingConfiguration(@NotNull JpsProject project, @Nullable String projectEncoding, @NotNull Map<String, String> urlToEncoding);
 }

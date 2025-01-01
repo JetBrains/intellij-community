@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -88,10 +90,7 @@ public final class JpsMavenSettings {
     }
 
     String defaultMavenRepository = defaultMavenFolder + File.separator + REPOSITORY_PATH;
-    if (FileUtil.exists(defaultMavenFolder)) {
-      return defaultMavenRepository;
-    }
-    return null;
+    return Files.exists(Path.of(defaultMavenFolder)) ? defaultMavenRepository : null;
   }
 
   /**
@@ -147,7 +146,7 @@ public final class JpsMavenSettings {
   }
 
   private static boolean isValidMavenHome(@Nullable String path) {
-    return isNotEmpty(path) && FileUtil.exists(path);
+    return Strings.isNotEmpty(path) && Files.exists(Path.of(path));
   }
 
   private static void loadAuthenticationFromSettings(@NotNull File settingsXml,

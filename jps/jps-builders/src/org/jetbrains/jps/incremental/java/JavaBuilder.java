@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,9 +9,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
@@ -155,9 +156,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   private final Executor myTaskRunner;
   private final Collection<JavacFileReferencesRegistrar> myRefRegistrars = new ArrayList<>();
 
-  public JavaBuilder(Executor tasksExecutor) {
+  public JavaBuilder(Executor taskExecutor) {
     super(BuilderCategory.TRANSLATOR);
-    myTaskRunner = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("JavaBuilder Pool", tasksExecutor);
+    myTaskRunner = AppExecutorUtil.createBoundedApplicationPoolExecutor("JavaBuilder Pool", taskExecutor, 1);
     //add here class processors in the sequence they should be executed
   }
 
@@ -167,7 +168,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
   @Override
   public @NotNull String getPresentableName() {
-    return StringUtil.capitalize(getBuilderName());
+    return Strings.capitalize(getBuilderName());
   }
 
   @Override

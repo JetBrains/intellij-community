@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.lang.JavaVersion;
@@ -18,7 +18,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -54,41 +53,44 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
   private static @Nullable JdkVersionInfo detectFromRelease(String homePath) {
     final Path releaseFile;
     try {
-      releaseFile = Paths.get(homePath, "release");
-    } catch (InvalidPathException ignored) {
+      releaseFile = Path.of(homePath, "release");
+    }
+    catch (InvalidPathException ignored) {
       return null;
     }
 
-    if (Files.isRegularFile(releaseFile)) {
-      Properties p = new Properties();
-      try (InputStream stream = Files.newInputStream(releaseFile)) {
-        p.load(stream);
-        String versionString = p.getProperty("JAVA_FULL_VERSION", p.getProperty("JAVA_VERSION"));
-        if (versionString != null) {
-          JavaVersion version = JavaVersion.parse(versionString);
+    if (!Files.isRegularFile(releaseFile)) {
+      return null;
+    }
 
-          Variant variant = detectVariant(p);
-          if (variant == null && version.feature < 9) {
-            // pre-modular release files rarely contain enough information
-            JdkVersionInfo fromJar = detectFromJar(homePath);
-            if (fromJar != null) variant = fromJar.variant;
-          }
+    Properties p = new Properties();
+    try (InputStream stream = Files.newInputStream(releaseFile)) {
+      p.load(stream);
+      String versionString = p.getProperty("JAVA_FULL_VERSION", p.getProperty("JAVA_VERSION"));
+      if (versionString != null) {
+        JavaVersion version = JavaVersion.parse(versionString);
 
-          CpuArch arch = CpuArch.fromString(unquoteProperty(p, "OS_ARCH"));
-
-          return new JdkVersionInfo(version, variant, arch, unquoteProperty(p, "GRAALVM_VERSION"));
+        Variant variant = detectVariant(p);
+        if (variant == null && version.feature < 9) {
+          // pre-modular release files rarely contain enough information
+          JdkVersionInfo fromJar = detectFromJar(homePath);
+          if (fromJar != null) variant = fromJar.variant;
         }
+
+        CpuArch arch = CpuArch.fromString(unquoteProperty(p, "OS_ARCH"));
+
+        return new JdkVersionInfo(version, variant, arch, unquoteProperty(p, "GRAALVM_VERSION"));
       }
-      catch (IOException | IllegalArgumentException e) {
-        LOG.info(releaseFile.toString(), e);
-      }
+    }
+    catch (IOException | IllegalArgumentException e) {
+      LOG.info(releaseFile.toString(), e);
     }
 
     return null;
   }
 
   private static @Nullable JdkVersionInfo detectFromJar(String homePath) {
-    Path rtFile = Paths.get(homePath, "jre/lib/rt.jar");
+    Path rtFile = Path.of(homePath, "jre/lib/rt.jar");
     if (Files.isRegularFile(rtFile)) {
       try (JarFile rtJar = new JarFile(rtFile.toFile(), false)) {
         Manifest manifest = rtJar.getManifest();
@@ -96,7 +98,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
           String versionString = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
           if (versionString != null) {
             JavaVersion version = JavaVersion.parse(versionString);
-            boolean x64 = SystemInfo.isMac || Files.isDirectory(rtFile.resolveSibling("amd64"));
+            boolean x64 = SystemInfoRt.isMac || Files.isDirectory(rtFile.resolveSibling("amd64"));
             String vendorString = manifest.getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VENDOR);
             Variant variant = vendorString != null ? detectVendor(vendorString) : null;
             return new JdkVersionInfo(version, variant, x64 ? CpuArch.X86_64 : CpuArch.UNKNOWN, null);
@@ -112,7 +114,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
   }
 
   private static @Nullable JdkVersionInfo detectFromOutput(String homePath, ExecutorService runner) {
-    Path javaExe = Paths.get(homePath, "bin/" + (SystemInfo.isWindows ? "java.exe" : "java"));
+    Path javaExe = Path.of(homePath, "bin/" + (SystemInfoRt.isWindows ? "java.exe" : "java"));
     if (Files.isExecutable(javaExe)) {
       try {
         Process process = new ProcessBuilder(javaExe.toString(), "-version").redirectErrorStream(true).start();
