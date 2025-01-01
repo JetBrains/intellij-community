@@ -60,7 +60,7 @@ public final class PyBroadExceptionInspection extends PyInspection {
       if (exceptClass == null) {
         registerProblem(node.getFirstChild(), PyPsiBundle.message("INSP.too.broad.exception.clause"));
       }
-      if (exceptClass != null) {
+      if (exceptClass instanceof PyReferenceExpression) {
         final PyType type = myTypeEvalContext.getType(exceptClass);
         if (type instanceof PyClassType) {
           final PyClass cls = ((PyClassType)type).getPyClass();
