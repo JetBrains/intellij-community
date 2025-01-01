@@ -17,6 +17,7 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - a:setIgnoredDisabledPlugins(Z):V
 *c:com.intellij.lang.impl.TokenSequence
 - com.intellij.lexer.TokenList
+- asLexer():com.intellij.lexer.Lexer
 - getTokenCount():I
 - getTokenEnd(I):I
 - getTokenStart(I):I

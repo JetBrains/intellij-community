@@ -36,7 +36,7 @@ com.intellij.lexer.RestartableLexer
 - a:getType(I):com.intellij.psi.tree.IElementType
 - a:initialTokenIndex():I
 *:com.intellij.lexer.TokenList
-- asLexer():com.intellij.lexer.Lexer
+- a:asLexer():com.intellij.lexer.Lexer
 - backWhile(I,com.intellij.psi.tree.TokenSet):I
 - backWithBraceMatching(I,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):I
 - forwardWhile(I,com.intellij.psi.tree.TokenSet):I
@@ -50,17 +50,6 @@ com.intellij.lexer.RestartableLexer
 - hasType(I,com.intellij.psi.tree.IElementType):Z
 - hasType(I,com.intellij.psi.tree.TokenSet):Z
 - hasType(I,com.intellij.psi.tree.IElementType[]):Z
-*c:com.intellij.lexer.TokenList$WrappingLexer
-- com.intellij.lexer.LexerBase
-- advance():V
-- getBufferEnd():I
-- getBufferSequence():java.lang.CharSequence
-- getState():I
-- getTokenEnd():I
-- getTokenStart():I
-- getTokenType():com.intellij.psi.tree.IElementType
-- getTokens():com.intellij.lexer.TokenList
-- start(java.lang.CharSequence,I,I,I):V
 *:com.intellij.model.ModelBranch
 - com.intellij.openapi.util.UserDataHolder
 - s:getFileBranch(com.intellij.openapi.vfs.VirtualFile):com.intellij.model.ModelBranch
