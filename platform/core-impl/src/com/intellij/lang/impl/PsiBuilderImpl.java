@@ -193,7 +193,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     long startTime = System.nanoTime();
     try{
-      return TokenSequence.performLexing(myText, myLexer);
+      return (TokenSequence)TokenSequence.performLexing(myText, myLexer);
     }
     finally {
       myLexingTimeNs = System.nanoTime() - startTime;

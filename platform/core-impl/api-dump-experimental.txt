@@ -23,7 +23,7 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - getTokenStart(I):I
 - getTokenType(I):com.intellij.psi.tree.IElementType
 - getTokenizedText():java.lang.CharSequence
-- s:performLexing(java.lang.CharSequence,com.intellij.lexer.Lexer):com.intellij.lang.impl.TokenSequence
+- s:performLexing(java.lang.CharSequence,com.intellij.lexer.Lexer):com.intellij.lexer.TokenList
 com.intellij.openapi.application.ex.ApplicationEx
 - com.intellij.openapi.application.Application
 - *:runWriteActionWithCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z

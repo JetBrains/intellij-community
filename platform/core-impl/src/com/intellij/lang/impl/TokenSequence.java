@@ -45,7 +45,7 @@ public class TokenSequence implements TokenList {
     }
   }
 
-  public static @NotNull TokenSequence performLexing(@NotNull CharSequence text, @NotNull Lexer lexer) {
+  public static @NotNull TokenList performLexing(@NotNull CharSequence text, @NotNull Lexer lexer) {
     if (lexer instanceof WrappingLexer) {
       TokenList existing = ((WrappingLexer)lexer).getTokens();
       if (existing instanceof TokenSequence && Comparing.equal(text, ((TokenSequence)existing).myText)) {
@@ -161,7 +161,8 @@ public class TokenSequence implements TokenList {
   /**
    * A simple lexer over {@link TokenList}.
    */
-  private static class WrappingLexer extends LexerBase {
+  @ApiStatus.Internal
+  static class WrappingLexer extends LexerBase {
     private final @NotNull TokenList myTokens;
     private int myIndex;
 
