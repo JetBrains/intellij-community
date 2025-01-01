@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.dynatrace.hash4j.hashing.HashStream64;
@@ -8,7 +8,6 @@ import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +61,8 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
 public final class BuildTargetSourcesState implements BuildListener {
   private static final Logger LOG = Logger.getInstance(BuildTargetSourcesState.class);
   public static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
-  private final ExecutorService parallelBuildExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-    "TargetSourcesState Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+  private final ExecutorService parallelBuildExecutor = SharedThreadPool.getInstance().createBoundedExecutor(
+    "TargetSourcesState Executor Pool", MAX_BUILDER_THREADS);
   private final Map<String, BuildTarget<?>> changedBuildTargets = new ConcurrentHashMap<>();
   // Some modules can have same out folder for different BuildTarget's to avoid an extra hash calculation collection will be used
   // There are no pre-calculated hashes for entries from this collection in FileStampStorage

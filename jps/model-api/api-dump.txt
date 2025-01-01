@@ -767,6 +767,7 @@ a:org.jetbrains.jps.service.JpsServiceManager
 - a:getService(java.lang.Class):java.lang.Object
 a:org.jetbrains.jps.service.SharedThreadPool
 - java.util.concurrent.ExecutorService
+- a:createBoundedExecutor(java.lang.String,I):java.util.concurrent.ExecutorService
 - s:getInstance():org.jetbrains.jps.service.SharedThreadPool
 f:org.jetbrains.jps.util.JpsPathUtil
 - sf:FILE_URL_PREFIX:java.lang.String

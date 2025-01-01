@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.service.impl;
 
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.service.SharedThreadPool;
 
@@ -11,6 +12,11 @@ import java.util.concurrent.*;
 
 public final class SharedThreadPoolImpl extends SharedThreadPool {
   private final ExecutorService myService = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory("JPS thread pool", true, Thread.NORM_PRIORITY));
+
+  @Override
+  public @NotNull ExecutorService createBoundedExecutor(@NotNull String name, int maxThreads) {
+    return AppExecutorUtil.createBoundedApplicationPoolExecutor(name, this, maxThreads);
+  }
 
   @Override
   public void execute(@NotNull Runnable command) {

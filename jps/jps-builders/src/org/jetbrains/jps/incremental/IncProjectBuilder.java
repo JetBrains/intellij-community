@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.concurrency.ContextAwareRunnable;
@@ -141,7 +141,7 @@ public final class IncProjectBuilder {
     try {
       final BuildFSState fsState = myProjectDescriptor.fsState;
 
-      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("IncProjectBuilder Check UpToDate Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+      ExecutorService executor = SharedThreadPool.getInstance().createBoundedExecutor("IncProjectBuilder Check UpToDate Pool", MAX_BUILDER_THREADS);
       List<Future<?>> tasks = new ArrayList<>();
 
       var notifier = new Object() {
@@ -620,7 +620,7 @@ public final class IncProjectBuilder {
   private void cleanOutputRoots(CompileContext context, boolean cleanCaches) throws ProjectBuildException {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     ProjectBuildException ex = null;
-    final ExecutorService cleanupExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("IncProjectBuilder Output Cleanup Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+    final ExecutorService cleanupExecutor = SharedThreadPool.getInstance().createBoundedExecutor("IncProjectBuilder Output Cleanup Pool", MAX_BUILDER_THREADS);
     final List<Future<?>> cleanupTasks = new ArrayList<>();
     final long cleanStart = System.nanoTime();
     try {
