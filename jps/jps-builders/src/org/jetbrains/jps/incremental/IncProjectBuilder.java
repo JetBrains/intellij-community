@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.tracing.Tracer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
@@ -1181,9 +1180,8 @@ public final class IncProjectBuilder {
         }
       }
 
-      Executor parallelBuildExecutor = AppExecutorUtil.createCustomPriorityQueueBoundedApplicationPoolExecutor(
+      Executor parallelBuildExecutor = SharedThreadPool.getInstance().createCustomPriorityQueueBoundedExecutor(
         "IncProjectBuilder Executor Pool",
-        SharedThreadPool.getInstance(),
         MAX_BUILDER_THREADS,
         (o1, o2) -> {
           int p1 = o1 instanceof RunnableWithPriority ? ((RunnableWithPriority)o1).priority : 1;

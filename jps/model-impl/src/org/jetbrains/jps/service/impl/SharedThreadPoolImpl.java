@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -16,6 +17,13 @@ public final class SharedThreadPoolImpl extends SharedThreadPool {
   @Override
   public @NotNull ExecutorService createBoundedExecutor(@NotNull String name, int maxThreads) {
     return AppExecutorUtil.createBoundedApplicationPoolExecutor(name, this, maxThreads);
+  }
+
+  @Override
+  public @NotNull Executor createCustomPriorityQueueBoundedExecutor(@NotNull String name,
+                                                                    int maxThreads,
+                                                                    @NotNull Comparator<? super Runnable> comparator) {
+    return AppExecutorUtil.createCustomPriorityQueueBoundedApplicationPoolExecutor(name, this, maxThreads, comparator);
   }
 
   @Override

@@ -5,6 +5,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 public abstract class SharedThreadPool implements ExecutorService {
@@ -13,6 +15,10 @@ public abstract class SharedThreadPool implements ExecutorService {
   }
 
   public abstract @NotNull ExecutorService createBoundedExecutor(@NotNull @NonNls String name, int maxThreads);
+
+  public abstract @NotNull Executor createCustomPriorityQueueBoundedExecutor(@NotNull @NonNls String name,
+                                                                             int maxThreads,
+                                                                             @NotNull Comparator<? super Runnable> comparator);
 
   @ApiStatus.Internal
   protected SharedThreadPool() {
