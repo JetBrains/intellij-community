@@ -86,12 +86,6 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2/jb-jdi-2.jar
     reason: withProjectLibrary
-- name: lib/jetbrains.kotlinx.metadata.jvm.jar
-  projectLibraries:
-  - name: jetbrains.kotlinx.metadata.jvm
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0/kotlinx-metadata-jvm-0.jar
-    reason: withProjectLibrary
 - name: lib/jgoodies-common.jar
   projectLibraries:
   - name: jgoodies-common
@@ -123,6 +117,12 @@
 - name: lib/jshell-protocol.jar
   modules:
   - name: intellij.java.jshell.protocol
+- name: lib/kotlin-metadata.jar
+  projectLibraries:
+  - name: kotlin-metadata
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
+    reason: withProjectLibrary
 - name: lib/maven-resolver-connector-basic.jar
 - name: lib/maven-resolver-transport-file.jar
 - name: lib/maven-resolver-transport-http.jar

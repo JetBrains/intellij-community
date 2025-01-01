@@ -67,11 +67,11 @@
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="caffeine" level="project" />
-    <orderEntry type="library" name="jetbrains.kotlinx.metadata.jvm" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="mvstore" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />
+    <orderEntry type="library" name="kotlin-metadata" level="project" />
   </component>
 </module>

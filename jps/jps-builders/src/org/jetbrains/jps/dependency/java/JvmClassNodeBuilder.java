@@ -3,14 +3,13 @@ package org.jetbrains.jps.dependency.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import kotlinx.metadata.Attributes;
-import kotlinx.metadata.KmDeclarationContainer;
-import kotlinx.metadata.KmFunction;
-import kotlinx.metadata.KmProperty;
-import kotlinx.metadata.jvm.JvmExtensionsKt;
-import kotlinx.metadata.jvm.JvmMethodSignature;
+import kotlin.metadata.Attributes;
+import kotlin.metadata.KmDeclarationContainer;
+import kotlin.metadata.KmFunction;
+import kotlin.metadata.KmProperty;
+import kotlin.metadata.jvm.JvmExtensionsKt;
+import kotlin.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.NodeBuilder;
@@ -283,7 +282,8 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     @Override
     public AnnotationVisitor visitArray(String name) {
       return new AnnotationVisitor(ASM_API_VERSION) {
-        private final List<Object> values = new SmartList<>();
+        private final List<Object> values = new ArrayList<>();
+
         @Override
         public void visit(String name, Object value) {
           if (value != null) {
@@ -604,7 +604,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
   private KmDeclarationContainer findKotlinDeclarationContainer() {
     KotlinMeta meta = (KotlinMeta)Iterators.find(myMetadata, md-> md instanceof KotlinMeta);
-    return meta != null? meta.getDeclarationContainer() : null;
+    return meta == null ? null : meta.getDeclarationContainer();
   }
 
   @Override
@@ -675,7 +675,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
               if (!myAcc.isEmpty()) {
                 final Object elem = myAcc.get(0);
                 if (elem != null) {
-                  template = ArrayUtil.newArray(elem.getClass(), 0);
+                  template = (Object[])Array.newInstance(elem.getClass(), 0);
                 }
               }
               defaultValue.set(template != null? myAcc.toArray(template) : myAcc.toArray());
