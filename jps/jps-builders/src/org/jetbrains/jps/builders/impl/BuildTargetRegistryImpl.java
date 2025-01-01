@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -24,15 +23,15 @@ public final class BuildTargetRegistryImpl implements BuildTargetRegistry {
   public BuildTargetRegistryImpl(JpsModel model) {
     Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> targets = new HashMap<>();
     Map<JpsModule, List<ModuleBasedTarget<?>>> moduleBasedTargets = new HashMap<>();
-    List<List<? extends BuildTarget<?>>> targetsByType = new ArrayList<>();
+    List<BuildTarget<?>> allTargets = new ArrayList<>();
     for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
       List<? extends BuildTarget<?>> targetsPerType = type.computeAllTargets(model);
       targets.put(type, targetsPerType);
-      targetsByType.add(targetsPerType);
+      allTargets.addAll(targetsPerType);
       for (BuildTarget<?> target : targetsPerType) {
         if (target instanceof ModuleBasedTarget) {
-          final ModuleBasedTarget<?> t = (ModuleBasedTarget<?>)target;
-          final JpsModule module = t.getModule();
+          ModuleBasedTarget<?> t = (ModuleBasedTarget<?>)target;
+          JpsModule module = t.getModule();
           List<ModuleBasedTarget<?>> list = moduleBasedTargets.get(module);
           if (list == null) {
             list = new ArrayList<>();
@@ -44,7 +43,7 @@ public final class BuildTargetRegistryImpl implements BuildTargetRegistry {
     }
     this.targets = Map.copyOf(targets);
     this.moduleBasedTargets = Map.copyOf(moduleBasedTargets);
-    allTargets = ContainerUtil.concat(targetsByType);
+    this.allTargets = List.copyOf(allTargets);
   }
 
   @Override
