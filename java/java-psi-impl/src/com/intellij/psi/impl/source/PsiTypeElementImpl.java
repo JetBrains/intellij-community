@@ -241,7 +241,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)parent;
         if (parentRef.getQualifier() == ref) {
           if (result == null) result = new IntArrayList();
-          result.add(-1);
+          result.add(0, -1);
           ref = parentRef;
         } else {
           throw new IllegalStateException("Unexpected parent (going not from qualifier): " + parent.getText());
@@ -261,7 +261,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
           }
           ref = (PsiJavaCodeReferenceElement)nextRef;
           if (result == null) result = new IntArrayList();
-          result.add(index);
+          result.add(0, index);
         } else {
           return result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray();
         }
@@ -305,6 +305,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
           return null;
         }
         ref = (PsiJavaCodeReferenceElement)qualifier;
+        if (offset == root.length) return ref;
         nextIndex = root[offset++];
       }
       PsiReferenceParameterList list = ref.getParameterList();
