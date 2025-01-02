@@ -2,19 +2,32 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.filtering.Matcher
+import com.intellij.codeInsight.hints.filtering.MatcherConstructor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeInsight.hints.isFollowedByNewLine
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
+
+    private val excludeListMatchers: List<Matcher> =
+        listOf(
+            /* Gradle DSL especially annoying hints */
+            "org.gradle.kotlin.dsl.KotlinBuildScript.*(*)",
+            "org.gradle.kotlin.dsl.*(*)",
+        ).mapNotNull { MatcherConstructor.createMatcher(it) }
+
     override fun collectFromElement(
         element: PsiElement,
         sink: InlayTreeSink
@@ -92,9 +105,21 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
             analyze(functionLiteral) {
                 val anonymousFunctionSymbol = functionLiteral.symbol
                 anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
-                    sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintFormat = HintFormat.default) {
-                        text("this: ")
-                        printKtType(receiverSymbol.returnType)
+                    val skipped = functionLiteral.getParentOfType<KtCallExpression>(false, KtBlockExpression::class.java)?.let { callExpression ->
+                        val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@let false
+                        val functionSymbol = functionCall.symbol
+                        val excludeListed = functionSymbol.isExcludeListed(excludeListMatchers)
+                        if (!excludeListed) {
+                            Unit
+                        }
+                        excludeListed
+                    }
+
+                    if (skipped != true) {
+                        sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintFormat = HintFormat.default) {
+                            text("this: ")
+                            printKtType(receiverSymbol.returnType)
+                        }
                     }
                 }
 

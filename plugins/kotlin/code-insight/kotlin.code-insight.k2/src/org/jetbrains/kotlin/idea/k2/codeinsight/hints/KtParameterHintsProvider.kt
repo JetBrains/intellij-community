@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
-    private val blackListMatchers: List<Matcher> =
+    private val excludeListMatchers: List<Matcher> =
         listOf(
             "*listOf", "*setOf", "*arrayOf", "*ListOf", "*SetOf", "*ArrayOf", "*assert*(*)", "*mapOf", "*MapOf",
             "kotlin.require*(*)", "kotlin.check*(*)", "*contains*(value)", "*containsKey(key)", "kotlin.lazyOf(value)",
@@ -71,7 +71,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val functionSymbol: KaFunctionSymbol = functionCall.symbol
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
 
-        val blackListed = functionSymbol.isBlackListed(valueParameters)
+        val excludeListed = functionSymbol.isExcludeListed(excludeListMatchers)
         // TODO: IDEA-347315 has to be fixed
         //sink.whenOptionEnabled(SHOW_BLACKLISTED_PARAMETERS.name) {
         //    if (blackListed) {
@@ -79,22 +79,12 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         //    }
         //}
 
-        if (!blackListed) {
+        if (!excludeListed) {
             // TODO: KTIJ-30439 it should respect parameter names when KT-65846 is fixed
             if ((functionSymbol as? KaNamedFunctionSymbol)?.isBuiltinFunctionInvoke != true) {
                 collectFromParameters(functionCall.argumentMapping, valueParameters, sink)
             }
         }
-    }
-
-    context(KaSession)
-    private fun KaFunctionSymbol.isBlackListed(valueParameters: List<KaValueParameterSymbol>): Boolean {
-        val blackListed = callableId?.let {
-            val callableId = it.asSingleFqName().toString()
-            val parameterNames = valueParameters.map { it.name.asString() }
-            blackListMatchers.any { it.isMatching(callableId, parameterNames) }
-        }
-        return blackListed == true
     }
 
     context(KaSession)
@@ -154,4 +144,11 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         return false
     }
+}
+
+context(KaSession)
+internal fun KaFunctionSymbol.isExcludeListed(excludeListMatchers: List<Matcher>): Boolean {
+    val callableFqName = callableId?.asSingleFqName()?.asString() ?: return false
+    val parameterNames = valueParameters.map { it.name.asString() }
+    return excludeListMatchers.any { it.isMatching(callableFqName, parameterNames) }
 }
