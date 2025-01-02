@@ -8,7 +8,9 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -66,7 +68,8 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
             is KtConstantExpression -> true
             is KtBinaryExpression -> left?.isComparable() == true && right?.isComparable() == true
             else -> {
-                val type = resolveToCall()?.singleFunctionCallOrNull()?.symbol?.returnType
+                val resolvedCall = resolveToCall()
+                val type = resolvedCall?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol?.returnType
                     ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaCallableSymbol)?.returnType
                 (type is KaClassType) && (
                         type.classId in DefaultTypeClassIds.PRIMITIVES ||

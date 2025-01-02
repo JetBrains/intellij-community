@@ -79,3 +79,7 @@ private fun check(x: Int, y: Int) {
     if (x in 7/*<# ≤ #>*/../*<# ≤ #>*/9 && y in 5/*<# ≤ #>*/../*<# ≤ #>*/9) {
     }
 }
+
+fun test(x: Int, list: List<Int>) {
+    10 in 0/*<# ≤ #>*/../*<# ≤ #>*/list.lastIndex
+}
