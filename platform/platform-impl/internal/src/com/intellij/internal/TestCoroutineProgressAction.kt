@@ -316,16 +316,16 @@ internal class TestCoroutineProgressAction : AnAction() {
         override fun getCancelTooltipText(): String? = null
       }
 
-      if (suspendable) {
-        ProgressManager.getInstance().runProcess({ ProgressSuspender.markSuspendable(indicator, "Suspended by test action") }, indicator)
-      }
-
       withContext(Dispatchers.EDT) {
         showProgressIndicator(project, taskInfo, indicator)
       }
 
       try {
-        ProgressManager.getInstance().runProcess({ doStuff(indicator) }, indicator)
+        ProgressManager.getInstance().runProcess(
+          {
+            if (suspendable) ProgressSuspender.markSuspendable(indicator, "Suspended by test action")
+            doStuff(indicator)
+          }, indicator)
       }
       finally {
         indicator.finish(taskInfo)
