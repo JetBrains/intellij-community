@@ -3,11 +3,13 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
@@ -96,6 +98,32 @@ object EelPathUtils {
     // see sun.nio.fs.WindowsUriSupport#toUri(java.lang.String, boolean, boolean)
     val trailing = if (eel.platform is EelPlatform.Windows) "/" else ""
     URI("file", null, trailing + root + eelPath.parts.joinToString("/"), null, null)
+  }
+
+  /**
+   * Transfers contents of a directory or file at [source] to [sink].
+   * This function works efficiently when [source] and [sink] located on different environments.
+   *
+   * @param sink the required location for the file. If it is `null`, then a temporary directory will be created.
+   * @return the path which contains the transferred data. Sometimes this value can coincide with [source] if the [sink]
+   */
+  fun transferContentsIfNonLocal(eel: EelApi, source: Path, sink: Path?): Path {
+    if (eel is LocalEelApi) return source
+    if (source.getEelApiBlocking() !is LocalEelApi) {
+      if (sink != null && source.getEelDescriptor() != sink.getEelDescriptor()) {
+        throw UnsupportedOperationException("Transferring between different Eels is not supported yet")
+      }
+      return source
+    }
+    // todo: intergrate checksums here so that files could be refreshed in case of changes
+    val targetPath = sink ?: runBlockingMaybeCancellable {
+      val eelTempDir = eel.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOrThrowFileSystemException()
+      eel.mapper.toNioPath(eelTempDir)
+    }
+    if (!Files.exists(targetPath)) {
+      walkingTransfer(source, targetPath, false, true)
+    }
+    return targetPath
   }
 
   @RequiresBackgroundThread

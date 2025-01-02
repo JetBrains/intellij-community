@@ -55,7 +55,9 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun getWorkingDirectory(): String {
-    return eel.mapper.getOriginalPath(workingDirectory).toString()
+    val path = eel.mapper.getOriginalPath(workingDirectory)
+               ?: error("Working directory for a process should be computed by the provided Eel API")
+    return path.toString()
   }
 
   override fun getHostWorkingDirectory(): Path {
@@ -63,14 +65,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun copyPathToTargetIfRequired(path: Path): Path {
-    if (eel is LocalEelApi) return path
-    if (path.getEelApiBlocking() !is LocalEelApi) return path
-    // todo: intergrate checksums here so that files could be refreshed in case of changes
-    val newPath = workingDirectory.resolve("build-cache").resolve(path.name)
-    if (!Files.exists(newPath)) {
-      EelPathUtils.walkingTransfer(path, newPath, false, true)
-    }
-    return newPath
+    return EelPathUtils.transferContentsIfNonLocal(eel, path, workingDirectory.resolve("build-cache").resolve(path.name))
   }
 
   override fun copyPathToHostIfRequired(path: Path): String {
@@ -92,7 +87,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun setUnixProcessPriority(priority: Int) {
-    // todo
+    // todo IJPL-173737
   }
 
   fun pathPrefix(): String {
