@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer
 
 import com.intellij.ide.highlighter.JavaClassFileType
@@ -51,30 +51,28 @@ internal fun getPsiElement(project: Project, editor: Editor): PsiElement? {
   return psiElement
 }
 
+internal data class Bytecode(val withDebugInfo: String, val withoutDebugInfo: String)
+
 /**
  * Retrieves the bytecode representation of the class containing the provided PSI element.
  *
  * @return a Pair where the first value is a bytecode with debug info included, and the second value is without any debug info
  */
-internal fun getByteCodeVariants(psiElement: PsiElement): Pair<String, String>? {
-  val containingClass = BytecodeViewerManager.getContainingClass(psiElement)
-  if (containingClass != null) {
-    try {
-      val bytes = BytecodeViewerManager.loadClassFileBytes(containingClass)
-      if (bytes != null) {
-        val withDebugInfoWriter = StringWriter()
-        PrintWriter(withDebugInfoWriter).use { printWriter ->
-          val textifier = Textifier()
-          val classVisitor: ClassVisitor = TraceClassVisitor(null, textifier, printWriter)
-          ClassReader(bytes).accept(classVisitor, ClassReader.SKIP_FRAMES)
-        }
-        val noDebugInfo = removeDebugInfo(withDebugInfoWriter.toString())
-        return Pair<String, String>(withDebugInfoWriter.toString(), noDebugInfo)
-      }
+internal fun getByteCodeVariants(psiElement: PsiElement): Bytecode? {
+  val containingClass = BytecodeViewerManager.getContainingClass(psiElement) ?: return null
+  try {
+    val bytes = BytecodeViewerManager.loadClassFileBytes(containingClass) ?: return null
+    val withDebugInfoWriter = StringWriter()
+    PrintWriter(withDebugInfoWriter).use { printWriter ->
+      val textifier = Textifier()
+      val classVisitor: ClassVisitor = TraceClassVisitor(null, textifier, printWriter)
+      ClassReader(bytes).accept(classVisitor, ClassReader.SKIP_FRAMES)
     }
-    catch (e: IOException) {
-      LOG.error(e)
-    }
+    val noDebugInfo = removeDebugInfo(withDebugInfoWriter.toString())
+    return Bytecode(withDebugInfoWriter.toString(), noDebugInfo)
+  }
+  catch (e: IOException) {
+    LOG.error(e)
   }
   return null
 }
