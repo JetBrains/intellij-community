@@ -45,7 +45,7 @@ abstract class TaskStorage {
             it[TaskInfoEntity.ProjectEntityType] = projectEntity
             it[TaskInfoEntity.TitleType] = title
             it[TaskInfoEntity.TaskCancellationType] = cancellation
-            it[TaskInfoEntity.TaskSuspendableType] = suspendable
+            it[TaskInfoEntity.TaskSuspensionType] = suspendable
             it[TaskInfoEntity.ProgressStateType] = null
             it[TaskInfoEntity.TaskStatusType] = TaskStatus.Running(source = TaskStatus.Source.SYSTEM)
           }

@@ -50,7 +50,7 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
    * - [TaskSuspension.NonSuspendable]: The task cannot be suspended, and no pause button should be displayed in the UI.
    * - [TaskSuspension.Suspendable]: The task can be suspended, and a pause button should be displayed
    */
-  val suspendable: TaskSuspension by TaskSuspendableType
+  val suspension: TaskSuspension by TaskSuspensionType
 
   /**
    * Represents the current progress state of the task.
@@ -90,7 +90,7 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
   ) {
     val TitleType: Required<String> = requiredValue("title", String.serializer())
     val TaskCancellationType: Required<TaskCancellation> = requiredValue("taskCancellation", TaskCancellation.serializer())
-    val TaskSuspendableType: Required<TaskSuspension> = requiredValue("isSuspendable", TaskSuspension.serializer())
+    val TaskSuspensionType: Required<TaskSuspension> = requiredValue("isSuspendable", TaskSuspension.serializer())
     val ProgressStateType: Optional<ProgressState> = optionalValue("progressState", ProgressState.serializer())
     val TaskStatusType: Required<TaskStatus> = requiredValue("taskStatus", TaskStatus.serializer())
     val ProjectEntityType: Optional<ProjectEntity> = optionalRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)

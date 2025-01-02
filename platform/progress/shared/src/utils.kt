@@ -42,9 +42,9 @@ val TaskInfoEntity.statuses: Query<TaskStatus>
  * Returns a query that provides changes in the suspendable status of the task.
  * For more info about suspendable see [TaskSuspension].
  */
-val TaskInfoEntity.suspendableState: Query<TaskSuspension>
+val TaskInfoEntity.suspensionState: Query<TaskSuspension>
   @ApiStatus.Internal
-  get() = asQuery()[TaskInfoEntity.TaskSuspendableType]
+  get() = asQuery()[TaskInfoEntity.TaskSuspensionType]
 
 /**
  * Converts a query result into a finite flow that emits results as long as the specified entity is alive.

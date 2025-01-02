@@ -45,7 +45,7 @@ object TaskManager {
    */
   suspend fun pauseTask(taskInfoEntity: TaskInfoEntity, reason: @ProgressText String? = null, source: TaskStatus.Source): Unit = withKernel {
     tryWithEntities(taskInfoEntity) {
-      if (taskInfoEntity.suspendable is TaskSuspension.NonSuspendable) {
+      if (taskInfoEntity.suspension is TaskSuspension.NonSuspendable) {
         LOG.error("Task ${taskInfoEntity.eid} is not suspendable")
         return@tryWithEntities
       }

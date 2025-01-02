@@ -166,7 +166,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       taskSuspender.isSuspendable.collectLatest { suspension ->
         change {
           shared {
-            taskInfo[TaskInfoEntity.TaskSuspendableType] = suspension
+            taskInfo[TaskInfoEntity.TaskSuspensionType] = suspension
           }
         }
       }

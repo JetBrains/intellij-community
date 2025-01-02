@@ -78,13 +78,13 @@ private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskIn
 }
 
 private suspend fun collectSuspendableChanges(task: TaskInfoEntity, indicator: ProgressIndicator) {
-  task.suspendableState.collectLatest {
+  task.suspensionState.collectLatest {
     markSuspendable(task, indicator)
   }
 }
 
 private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicator: ProgressIndicator) {
-  val suspendableInfo = task.suspendable
+  val suspendableInfo = task.suspension
   if (suspendableInfo !is TaskSuspension.Suspendable) return
 
   val suspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
