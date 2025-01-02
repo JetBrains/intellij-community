@@ -300,12 +300,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, throwErrorIfModal ->
-          // TODO: Katsman maybe run the whole method on EDT
           leaveAllModals(throwErrorIfModal)
         }
 
         session.closeProjectIfOpened.setSuspend(sessionBgtDispatcher) { _, _ ->
-          // TODO: Katsman maybe run the whole method on EDT
           try {
             leaveAllModals(throwErrorIfModal = true)
 
