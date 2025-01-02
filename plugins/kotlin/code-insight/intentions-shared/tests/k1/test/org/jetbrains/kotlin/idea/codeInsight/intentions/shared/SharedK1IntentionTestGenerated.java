@@ -3054,5 +3054,69 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
                 runTest("../testData/intentions/unfolding/returnToIf/simpleIfWithBlocks.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/unfolding/returnToWhen")
+        public static class ReturnToWhen extends AbstractSharedK1IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("applicabilityRange.kt")
+            public void testApplicabilityRange() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/applicabilityRange.kt");
+            }
+
+            @TestMetadata("innerWhenTransformed.kt")
+            public void testInnerWhenTransformed() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/innerWhenTransformed.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/labeledReturn.kt");
+            }
+
+            @TestMetadata("simpleWhen.kt")
+            public void testSimpleWhen() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/simpleWhen.kt");
+            }
+
+            @TestMetadata("simpleWhenWithBlocks.kt")
+            public void testSimpleWhenWithBlocks() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/simpleWhenWithBlocks.kt");
+            }
+
+            @TestMetadata("whenWithBreak.kt")
+            public void testWhenWithBreak() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/whenWithBreak.kt");
+            }
+
+            @TestMetadata("whenWithContinue.kt")
+            public void testWhenWithContinue() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/whenWithContinue.kt");
+            }
+
+            @TestMetadata("whenWithInnerReturn.kt")
+            public void testWhenWithInnerReturn() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/whenWithInnerReturn.kt");
+            }
+
+            @TestMetadata("whenWithNothing.kt")
+            public void testWhenWithNothing() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/whenWithNothing.kt");
+            }
+
+            @TestMetadata("whenWithThrow.kt")
+            public void testWhenWithThrow() throws Exception {
+                runTest("../testData/intentions/unfolding/returnToWhen/whenWithThrow.kt");
+            }
+        }
     }
 }

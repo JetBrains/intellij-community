@@ -10893,66 +10893,8 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen")
-    public static class ReturnToWhen extends AbstractK2IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
+    public abstract static class ReturnToWhen extends AbstractK2IntentionTest {
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("applicabilityRange.kt")
-        public void testApplicabilityRange() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/applicabilityRange.kt");
-        }
-
-        @TestMetadata("innerWhenTransformed.kt")
-        public void testInnerWhenTransformed() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/innerWhenTransformed.kt");
-        }
-
-        @TestMetadata("labeledReturn.kt")
-        public void testLabeledReturn() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/labeledReturn.kt");
-        }
-
-        @TestMetadata("simpleWhen.kt")
-        public void testSimpleWhen() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/simpleWhen.kt");
-        }
-
-        @TestMetadata("simpleWhenWithBlocks.kt")
-        public void testSimpleWhenWithBlocks() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/simpleWhenWithBlocks.kt");
-        }
-
-        @TestMetadata("whenWithBreak.kt")
-        public void testWhenWithBreak() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/whenWithBreak.kt");
-        }
-
-        @TestMetadata("whenWithContinue.kt")
-        public void testWhenWithContinue() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/whenWithContinue.kt");
-        }
-
-        @TestMetadata("whenWithInnerReturn.kt")
-        public void testWhenWithInnerReturn() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/whenWithInnerReturn.kt");
-        }
-
-        @TestMetadata("whenWithNothing.kt")
-        public void testWhenWithNothing() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/whenWithNothing.kt");
-        }
-
-        @TestMetadata("whenWithThrow.kt")
-        public void testWhenWithThrow() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen/whenWithThrow.kt");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

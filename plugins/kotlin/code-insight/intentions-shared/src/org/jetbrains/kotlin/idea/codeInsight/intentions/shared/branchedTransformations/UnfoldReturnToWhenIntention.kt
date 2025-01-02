@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransformations
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.inspections.createReturnOrEmptyText
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
-class UnfoldReturnToWhenIntention : LowPriorityAction,
+internal class UnfoldReturnToWhenIntention : LowPriorityAction,
                                     KotlinApplicableModCommandAction<KtReturnExpression, List<String>>(KtReturnExpression::class) {
     override fun invoke(
         actionContext: ActionContext, element: KtReturnExpression, elementContext: List<String>, updater: ModPsiUpdater
