@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +46,7 @@ public final class PageCacheUtils {
    * So far both new and {@link FilePageCache legacy} file caches co-exist: storages are incrementally migrated
    * to new cache
    */
-  public static final boolean LOCK_FREE_PAGE_CACHE_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", true);
+  public static final boolean LOCK_FREE_PAGE_CACHE_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", false);
 
   /**
    * How much direct memory the new (code name 'lock-free') FilePageCache impl allowed to utilize: as a fraction
