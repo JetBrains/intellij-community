@@ -18,7 +18,7 @@ public final class MavenIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, MavenIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon ChildrenProjects = load("images/expui/build/mavenChildrenProjects.svg", "images/childrenProjects.svg", 2036191801, 2);
-  /** 16x16 */ public static final @NotNull Icon ExecuteMavenGoal = load("images/executeMavenGoal.svg", 1406361689, 2);
+  /** 16x16 */ public static final @NotNull Icon ExecuteMavenGoal = load("images/expui/build/mavenGoal.svg", "images/executeMavenGoal.svg", 1406361689, 2);
   /** 16x16 */ public static final @NotNull Icon MavenIgnored = load("images/expui/fileTypes/mavenIgnored.svg", "images/mavenIgnored.svg", -1578112873, 2);
   /** 16x16 */ public static final @NotNull Icon MavenLoadChanges = load("images/expui/build/mavenLoadChanges.svg", "images/mavenLoadChanges.svg", 747097944, 2);
   /** 16x16 */ public static final @NotNull Icon MavenModule = load("images/mavenModule.svg", -1526380836, 2);
