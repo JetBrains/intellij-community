@@ -269,9 +269,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        suspend fun waitProjectInitialisedOrDisposed(it: Project) {
-          runLogged("Wait project '${it.name}' is initialised or disposed", 10.seconds) {
-            while (!it.isInitialized || it.isDisposed) {
+        suspend fun waitProjectInitialisedOrDisposed(project: Project) {
+          runLogged("Wait project '${project.name}' is initialised or disposed", 10.seconds) {
+            while (!(project.isInitialized || project.isDisposed)) {
               delay(1.seconds)
             }
           }
