@@ -4,10 +4,7 @@ package org.jetbrains.jps.dependency.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.SmartList;
-import kotlin.metadata.Attributes;
-import kotlin.metadata.KmDeclarationContainer;
-import kotlin.metadata.KmFunction;
-import kotlin.metadata.KmProperty;
+import kotlin.metadata.*;
 import kotlin.metadata.jvm.JvmExtensionsKt;
 import kotlin.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
@@ -582,34 +579,41 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
   private boolean isInlined(String methodName, String methodDescriptor) {
     KmDeclarationContainer container = findKotlinDeclarationContainer();
-    if (container != null) {
-      JvmMethodSignature sig = new JvmMethodSignature(methodName, methodDescriptor);
-      for (KmFunction f : container.getFunctions()) {
-        if (Attributes.isInline(f) && sig.equals(JvmExtensionsKt.getSignature(f))) {
-          return true;
-        }
+    if (container == null) {
+      return false;
+    }
+
+    JvmMethodSignature sig = new JvmMethodSignature(methodName, methodDescriptor);
+    for (KmFunction f : container.getFunctions()) {
+      if (Attributes.isInline(f) && sig.equals(JvmExtensionsKt.getSignature(f))) {
+        return true;
       }
-      for (KmProperty p : container.getProperties()) {
-        if (Attributes.isInline(p.getGetter()) && sig.equals(JvmExtensionsKt.getGetterSignature(p))) {
-          return true;
-        }
-        var setter = p.getSetter();
-        if (setter != null && Attributes.isInline(setter) && sig.equals(JvmExtensionsKt.getSetterSignature(p))) {
-          return true;
-        }
+    }
+
+    for (KmProperty p : container.getProperties()) {
+      if (Attributes.isInline(p.getGetter()) && sig.equals(JvmExtensionsKt.getGetterSignature(p))) {
+        return true;
+      }
+      @Nullable KmPropertyAccessorAttributes setter = p.getSetter();
+      if (setter != null && Attributes.isInline(setter) && sig.equals(JvmExtensionsKt.getSetterSignature(p))) {
+        return true;
       }
     }
     return false;
   }
 
-  private KmDeclarationContainer findKotlinDeclarationContainer() {
-    KotlinMeta meta = (KotlinMeta)Iterators.find(myMetadata, md-> md instanceof KotlinMeta);
-    return meta == null ? null : meta.getDeclarationContainer();
+  private @Nullable KmDeclarationContainer findKotlinDeclarationContainer() {
+    for (JvmMetadata<?, ?> o : myMetadata) {
+      if (o instanceof KotlinMeta) {
+        return ((KotlinMeta)o).getDeclarationContainer();
+      }
+    }
+    return null;
   }
 
   @Override
   public MethodVisitor visitMethod(final int access, final String n, final String desc, final String signature, final String[] exceptions) {
-    final Ref<Object> defaultValue = Ref.create();
+    final Ref<Object> defaultValue = new Ref<>();
     final Set<ElementAnnotation> annotations = new HashSet<>();
     final Set<ParamAnnotation> paramAnnotations = new HashSet<>();
     processSignature(signature);
