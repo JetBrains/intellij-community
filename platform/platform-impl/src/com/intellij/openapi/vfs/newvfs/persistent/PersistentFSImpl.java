@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -666,6 +666,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     //speculation failed: re-read, and update cache:
     NewVirtualFileSystem fileSystem = getFileSystem(file);
+    //1) do IO outside lock 2) some FileSystems (e.g. ArchiveFileSystem) .getLength() impl can call other VirtualFile.getLength(),
+    // which creates a possibility for deadlock, if lock segments happen to be the same. The downside is that we call
+    // getLength() even if the length is already set by racing thread -- but that should be a rare case, so ignore it
+    long actualLength = fileSystem.getLength(file);
+
     long[] lengthRef = new long[1];
     vfsPeer.updateRecordFields(fileId, record -> {
       int flags = record.getFlags();
@@ -676,7 +681,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return false;
       }
 
-      long actualLength = fileSystem.getLength(file);
       record.setLength(actualLength);
       record.removeFlags(Flags.MUST_RELOAD_LENGTH);
 
