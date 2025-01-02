@@ -88,7 +88,8 @@ public final class DfaCallArguments {
         state.flushVariables(v -> v.getQualifier() == qualifier &&
                                   v.getPsiVariable() instanceof PsiMember member &&
                                   member != method &&
-                                  member.hasModifierProperty(PsiModifier.PRIVATE));
+                                  member.hasModifierProperty(PsiModifier.PRIVATE) &&
+                                  !member.hasModifierProperty(PsiModifier.FINAL));
       }
       return;
     }

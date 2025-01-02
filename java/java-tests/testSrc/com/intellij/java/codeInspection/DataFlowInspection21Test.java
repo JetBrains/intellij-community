@@ -146,6 +146,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testClassFileGetter() {
     doTest();
   }
+  public void testPrivateMethodDoNotFlushFinalFields() { doTest(); }
   public void testGetterVsDirectAccess() { doTest(); }
   public void testGetterVsDirectAccessRecordOverriddenGetter() { doTest(); }
   public void testGetterVsDirectAccessNonFinal() { doTest(); }
