@@ -2667,13 +2667,6 @@ kt_jvm_import(
 )
 
 kt_jvm_import(
-  name = "jetbrains-kotlinx-metadata-jvm",
-  jar = "@kotlinx-metadata-jvm-0_8_0_http//file",
-  srcjar = "@kotlinx-metadata-jvm-0_8_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
   name = "jetbrains-markdown",
   jar = "@markdown-jvm-0_7_2_http//file",
   srcjar = "@markdown-jvm-0_7_2-sources_http//file",
@@ -3340,6 +3333,13 @@ kt_jvm_import(
   name = "kotlin-gradle-plugin-idea-proto",
   jar = "@kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162_http//file",
   srcjar = "@kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "kotlin-metadata",
+  jar = "@kotlin-metadata-jvm-2_1_20-Beta1_http//file",
+  srcjar = "@kotlin-metadata-jvm-2_1_20-Beta1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8861,8 +8861,8 @@ java_import(
 
 java_import(
   name = "platform-jps-build-qdox-java-parser",
-  jars = ["@qdox-2_0_1_http//file"],
-  srcjar = "@qdox-2_0_1-sources_http//file",
+  jars = ["@qdox-2_2_0_http//file"],
+  srcjar = "@qdox-2_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

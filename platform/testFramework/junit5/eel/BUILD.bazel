@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
-jvm_resources(
-  name = "testFramework-junit5-eel_resources",
-  files = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "testFramework-junit5-eel",
@@ -13,23 +7,22 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/testFramework/junit5",
-    "//platform/eel",
-    "//platform/eel-provider",
-    "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/util-ex",
-    "//platform/eel-impl",
-    "@lib//:kotlinx-coroutines-core",
     "@lib//:junit5",
+    "@lib//:junit5Jupiter",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/core-api:core",
     "//platform/core-nio-fs",
+    "//platform/eel",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
     "//platform/ide-core",
     "//platform/ide-core-impl",
-    "@lib//:junit5Jupiter",
-  ],
-  runtime_deps = [":testFramework-junit5-eel_resources"]
+    "//platform/testFramework/junit5",
+    "//platform/util",
+    "//platform/util-ex",
+  ]
 )
 
 jvm_library(
@@ -38,25 +31,24 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":testFramework-junit5-eel"],
   deps = [
-    "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/eel",
-    "//platform/eel-provider",
-    "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "//platform/core-api:core",
-    "//platform/util",
-    "//platform/util-ex",
-    "//platform/eel-impl",
-    "@lib//:kotlinx-coroutines-core",
     "@lib//:junit5",
+    "@lib//:junit5Jupiter",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
     "@lib//:junit5Params",
+    "//platform/core-api:core",
     "//platform/core-nio-fs",
+    "//platform/eel",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
     "//platform/ide-core",
     "//platform/ide-core-impl",
-    "@lib//:junit5Jupiter",
-  ],
-  runtime_deps = [":testFramework-junit5-eel_resources"]
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util",
+    "//platform/util-ex",
+  ]
 )
 
 jvm_test(

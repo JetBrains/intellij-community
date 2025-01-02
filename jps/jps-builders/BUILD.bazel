@@ -37,12 +37,12 @@ jvm_library(
     "//platform/runtime/repository",
     "//platform/util/zip",
     "@lib//:caffeine",
-    "@lib//:jetbrains-kotlinx-metadata-jvm",
     "@lib//:kotlin-stdlib-provided",
     "@lib//:hash4j",
     "@lib//:jetbrains-annotations",
     "@lib//:mvstore",
     "@lib//:netty-jps-provided",
+    "@lib//:kotlin-metadata",
   ],
   runtime_deps = [
     ":build_resources",

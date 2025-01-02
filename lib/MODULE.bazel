@@ -3654,20 +3654,6 @@ http_file(
 )
 
 http_file(
-  name = "kotlinx-metadata-jvm-0_8_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.8.0/kotlinx-metadata-jvm-0.8.0.jar",
-  sha256 = "6030de49e7fc2ca8009e1221213035694b97494044aa99bcfb0c8e0e73984d4d",
-  downloaded_file_path = "kotlinx-metadata-jvm-0.8.0.jar"
-)
-
-http_file(
-  name = "kotlinx-metadata-jvm-0_8_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.8.0/kotlinx-metadata-jvm-0.8.0-sources.jar",
-  sha256 = "336ca3148e52b95541e42a7a22e14b859811449d2c16e7c4da9dea18bb04b379",
-  downloaded_file_path = "kotlinx-metadata-jvm-0.8.0-sources.jar"
-)
-
-http_file(
   name = "markdown-jvm-0_7_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown-jvm/0.7.2/markdown-jvm-0.7.2.jar",
   sha256 = "02e0f9bf95e4b9f81e34593691a5c0ff14604db39fb8446fe9a4efa66553f3ac",
@@ -4589,6 +4575,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-8162/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar",
   sha256 = "17cfd9ffb163ab974875820368673a42edf8cd6c8f3a0d9750ccb0cb21f6d21d",
   downloaded_file_path = "kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar"
+)
+
+http_file(
+  name = "kotlin-metadata-jvm-2_1_20-Beta1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta1/kotlin-metadata-jvm-2.1.20-Beta1.jar",
+  sha256 = "243ac56352ce7e1ca7f294a53b1a1b3040ca12b95725449f0c04bbee6d43d84c",
+  downloaded_file_path = "kotlin-metadata-jvm-2.1.20-Beta1.jar"
+)
+
+http_file(
+  name = "kotlin-metadata-jvm-2_1_20-Beta1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta1/kotlin-metadata-jvm-2.1.20-Beta1-sources.jar",
+  sha256 = "3f5468b5c409702c7cac30067208b7218ab9e3f7209e686966c6c2de2134dd18",
+  downloaded_file_path = "kotlin-metadata-jvm-2.1.20-Beta1-sources.jar"
 )
 
 http_file(
@@ -11172,17 +11172,17 @@ http_file(
 )
 
 http_file(
-  name = "qdox-2_0_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1.jar",
-  sha256 = "c28db4602da9f3817a59de9be137c1f6083a9cb95fa1781f54eda75763a95c67",
-  downloaded_file_path = "qdox-2.0.1.jar"
+  name = "qdox-2_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0.jar",
+  sha256 = "c260c3230b2340af97d54bf01f7f67ebc57c901922736c881bb11cb981302be2",
+  downloaded_file_path = "qdox-2.2.0.jar"
 )
 
 http_file(
-  name = "qdox-2_0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1-sources.jar",
-  sha256 = "da6d95621104bd3573371fc791d999d5a9fe633d600c44e8e15320c8700d475b",
-  downloaded_file_path = "qdox-2.0.1-sources.jar"
+  name = "qdox-2_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0-sources.jar",
+  sha256 = "614806dd73810c80a4751daf28bffc5eb641d6026ee58c71f4a28354e06a7dc8",
+  downloaded_file_path = "qdox-2.2.0-sources.jar"
 )
 
 http_file(
