@@ -1048,7 +1048,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileChooser.impl.FileChooserUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.editor.markup.InspectionsFUS"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.build.BuildToolsCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.competitors.EditorsCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.environment.EditorsCollector"/>
 
     <fileTypeUsageSchemaDescriptor schema="DotBazelFile"
                                    implementationClass="com.intellij.internal.statistic.collectors.fus.build.DotBazelFileTypeUsageSchemaDescriptor"/>
