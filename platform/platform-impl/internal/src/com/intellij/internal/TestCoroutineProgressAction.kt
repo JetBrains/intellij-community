@@ -347,7 +347,10 @@ internal class TestCoroutineProgressAction : AnAction() {
       try {
         ProgressManager.getInstance().runProcess(
           {
-            if (suspendable) ProgressSuspender.markSuspendable(indicator, "Suspended by test action")
+            if (suspendable) {
+              TimeoutUtil.sleep(1000) // Imitate suspender appearing mid-execution
+              ProgressSuspender.markSuspendable(indicator, "Suspended by test action")
+            }
             doStuff(indicator)
           }, indicator)
       }

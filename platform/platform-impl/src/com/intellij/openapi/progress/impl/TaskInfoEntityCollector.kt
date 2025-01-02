@@ -4,13 +4,11 @@ package com.intellij.openapi.progress.impl
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
@@ -77,18 +75,22 @@ private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskIn
   }
 }
 
-private suspend fun collectSuspendableChanges(task: TaskInfoEntity, indicator: ProgressIndicator) {
+private suspend fun collectSuspendableChanges(task: TaskInfoEntity, indicator: ProgressIndicatorBase) {
   task.suspensionState.collectLatest {
     markSuspendable(task, indicator)
   }
 }
 
-private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicator: ProgressIndicator) {
+private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicator: ProgressIndicatorBase) {
   val suspendableInfo = task.suspension
   if (suspendableInfo !is TaskSuspension.Suspendable) return
 
+  // HACK: tempIndicator is required to avoid runProcess stopping the original indicator when the execution is finished
+  val tempIndicator = ProgressIndicatorBase()
   val suspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
-    { ProgressSuspender.markSuspendable(indicator, suspendableInfo.suspendText) }, indicator)
+    { ProgressSuspender.markSuspendable(tempIndicator, suspendableInfo.suspendText) }, tempIndicator)
+  // Instead of markSuspendable, which has to be called under runProcess, we can use attachToProgress on the already created suspender
+  suspender.attachToProgress(indicator)
 
   val suspenderStateChange = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   ProgressSuspenderTracker.getInstance().startTracking(suspender, object : ProgressSuspenderTracker.SuspenderListener {
@@ -125,10 +127,11 @@ private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicat
   }
   finally {
     ProgressSuspenderTracker.getInstance().stopTracking(suspender)
+    suspender.close()
   }
 }
 
-private fun taskCancellingIndicator(cs: CoroutineScope, taskInfo: TaskInfoEntity): ProgressIndicatorEx {
+private fun taskCancellingIndicator(cs: CoroutineScope, taskInfo: TaskInfoEntity): ProgressIndicatorBase {
   val title = taskInfo.title
   val entityId = taskInfo.eid
   val indicator = ProgressIndicatorBase()
