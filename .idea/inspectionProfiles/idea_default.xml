@@ -4,6 +4,7 @@
     <inspection_tool class="03c8b094-627d-3aaa-8d8b-4a66542826cd" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Production" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="1875d427-35dc-3dd6-b83b-18a2a5f23be5" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="2b82dee6-0e1c-36ce-846f-749c578bd315" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="19b1f229-5172-3fef-9e68-ab45f499fec9" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="807b1a20-1c6f-3175-b372-e193a137c304" enabled="true" level="TYPO" enabled_by_default="true" editorAttributes="TYPO" />
@@ -2568,6 +2569,12 @@
         <constraint name="expr" within="" contains="" />
         <constraint name="findAll" regexp="findAll" within="" contains="" _kotlinMatchCallSemantics="enabled" />
       </replaceConfiguration>
+      <searchConfiguration name="Use nio.Path instead of io.File" description="As part of the migration to com.intellij.platform.eel.EelApi, it is necessary to use nio.Path instead of io.File. This is required to route file operations via com.intellij.platform.core.nio.fs.MultiRoutingFileSystem. Moreover, the NIO API is more modern and offers better error handling and improved portability, making it the recommended choice for file system interactions." text="java.io.File" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use nio.Path instead of io.File" text="java.io.File" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="use NotificationGroup.toolWindowGroup().createNotification().notify() instead" text="$Instance$.notifyByBalloon($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA">
         <constraint name="Instance" nameOfExprType="com.intellij.openapi.wm.ToolWindowManager" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
