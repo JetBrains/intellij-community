@@ -28,6 +28,7 @@ import com.intellij.platform.util.progress.*
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
+import java.lang.ref.WeakReference
 import javax.swing.JComponent
 
 internal class TestCoroutineProgressAction : AnAction() {
@@ -62,11 +63,11 @@ internal class TestCoroutineProgressAction : AnAction() {
           button("Cancellable BG Progress") {
             cs.cancellableBGProgress(project)
           }
-          button("2 Suspendable BG Progresses") {
-            cs.suspendableBGProgress(project)
-          }
           button("Non-Cancellable BG Progress") {
             cs.nonCancellableBGProgress(project)
+          }
+          button("Old Cancellable BG Progress") {
+            cs.oldBGProgress(ProgressIndicatorBase(), project, "Old Cancellable BG Progress", cancellable = true)
           }
         }
         row {
@@ -123,11 +124,31 @@ internal class TestCoroutineProgressAction : AnAction() {
           }
         }
         row {
-          button("Old Cancellable BG Progress") {
-            cs.oldBGProgress(project, "Old Cancellable BG Progress", cancellable = true)
+          val suspenders = mutableListOf<WeakReference<TaskSuspender>>()
+          button("2 Suspendable BG Progresses") {
+            val suspender = TaskSuspender.suspendable("Task suspended")
+            suspenders.add(WeakReference(suspender))
+            cs.suspendableBGProgress(suspender, project)
           }
+          button("Pause/Resume") {
+            suspenders.forEach {
+              val suspender = it.get() ?: return@forEach
+              if (suspender.isPaused()) suspender.resume() else suspender.pause("Suspended by test action") }
+          }
+        }
+        row {
+          val indicators = mutableListOf<WeakReference<ProgressIndicatorEx>>()
           button("Old Suspendable BG Progress") {
-            cs.oldBGProgress(project, "Old Suspendable BG Progress", suspendable = true)
+            val indicator = ProgressIndicatorBase()
+            indicators.add(WeakReference(indicator))
+            cs.oldBGProgress(indicator, project, "Old Suspendable BG Progress", suspendable = true)
+          }
+          button("Pause/Resume") {
+            indicators.forEach {
+              val indicator = it.get() ?: return@forEach
+              val suspender = ProgressSuspender.getSuspender(indicator) ?: return@forEach
+              if (suspender.isSuspended) suspender.resumeProcess() else suspender.suspendProcess("Suspended by test action")
+            }
           }
         }
       }
@@ -145,8 +166,7 @@ internal class TestCoroutineProgressAction : AnAction() {
     }
   }
 
-  private fun CoroutineScope.suspendableBGProgress(project: Project) {
-    val suspender = TaskSuspender.suspendable("Task suspended")
+  private fun CoroutineScope.suspendableBGProgress(suspender: TaskSuspender, project: Project) {
     // Check that both tasks are paused simultaneously as they use the same suspender
     launch {
       withBackgroundProgress(project, "Suspendable task title 1", suspender) {
@@ -305,10 +325,14 @@ internal class TestCoroutineProgressAction : AnAction() {
   }
 
   @Suppress("UsagesOfObsoleteApi")
-  private fun CoroutineScope.oldBGProgress(project: Project, title: String, cancellable: Boolean = false, suspendable: Boolean = false) {
+  private fun CoroutineScope.oldBGProgress(
+    indicator: ProgressIndicatorBase,
+    project: Project,
+    title: String,
+    cancellable: Boolean = false,
+    suspendable: Boolean = false,
+  ) {
     launch {
-      val indicator = ProgressIndicatorBase()
-
       val taskInfo = object : TaskInfo {
         override fun getTitle(): String = title
         override fun isCancellable(): Boolean = cancellable
