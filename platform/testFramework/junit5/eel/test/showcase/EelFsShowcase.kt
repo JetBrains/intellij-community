@@ -30,7 +30,7 @@ class EelFsShowcase {
   @Test
   fun `local path can be mapped back to eel paths`() {
     val fsdata = fsAndEelUnix.get()
-    val localPath = fsdata.root.resolve("a").resolve("b").resolve("c")
+    val localPath = fsdata.storageRoot.resolve("a").resolve("b").resolve("c")
     val mapper = fsdata.eelApi.mapper
     val eelPath = mapper.getOriginalPath(localPath)!!
     Assertions.assertEquals("/a/b/c", eelPath.toString())
@@ -39,7 +39,7 @@ class EelFsShowcase {
   @Test
   fun `windows api produces windows paths`() {
     val fsdata = fsAndEelWindows.get()
-    val root = fsdata.fileSystem.rootDirectories.first()
+    val root = fsdata.storageRoot
     val mapper = fsdata.eelApi.mapper
     val eelPath = mapper.getOriginalPath(root)!!
     Assertions.assertTrue(OSAgnosticPathUtil.isAbsoluteDosPath(eelPath.toString()))
@@ -49,7 +49,7 @@ class EelFsShowcase {
   fun `path mappings are invertible`() {
     val fsdata = fsAndEelUnix.get()
     val mapper = fsdata.eelApi.mapper
-    val nio = fsdata.fileSystem.getPath("/a/b/c/d/e")
+    val nio = fsdata.storageRoot.resolve("a").resolve("b").resolve("c").resolve("d").resolve("e")
     val eel = EelPath.parse("/a/b/c/d/e", null)
     val eelNio = mapper.getOriginalPath(nio)!!
     val nioEel = mapper.toNioPath(eel)
@@ -64,8 +64,7 @@ class EelFsShowcase {
   @ParameterizedTest
   @EnumSource(EelPath.OS::class)
   fun `uri validity`(os: EelPath.OS) {
-    val fs = os.osDependentFixture().get().fileSystem
-    val root = fs.rootDirectories.first()
+    val root = os.osDependentFixture().get().storageRoot
     val path = root.resolve("a/b/c/d/e")
     val uri = EelPathUtils.getUriLocalToEel(path)
     Assertions.assertEquals("file", uri.scheme)

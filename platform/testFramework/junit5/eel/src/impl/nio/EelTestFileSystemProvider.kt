@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.testFramework.junit5.eel.impl.ownUri
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.testFramework.junit5.eel.impl.nio
 
-import com.intellij.platform.testFramework.junit5.eel.impl.fakeRoot.EelTestLocalPath
 import java.net.URI
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
@@ -18,34 +17,23 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
-import java.util.concurrent.ConcurrentHashMap
 
-internal class EelTestFileSystemProvider : FileSystemProvider() {
-  val fileSystems: MutableMap<String, EelTestFileSystem> = ConcurrentHashMap()
+class EelTestFileSystemProvider(val defaultProvider: FileSystemProvider) : FileSystemProvider() {
 
   override fun getScheme(): String? {
-    return "eel-test"
+    return defaultProvider.scheme
   }
 
   override fun newFileSystem(uri: URI, env: Map<String?, *>): FileSystem {
-    val rootDirectory = env["directory"] as Path
-    val fakeLocalRoot = env["fakeLocalRoot"] as String
-    val id = uri.host
-    val fs = EelTestFileSystem(this, id, rootDirectory, fakeLocalRoot)
-    fileSystems[id] = fs
-    return fs
+    throw UnsupportedOperationException("newFileSystem is not supported")
   }
 
   override fun getFileSystem(uri: URI): FileSystem? {
-    require(uri.scheme == scheme)
-    return fileSystems[uri.host]
+    throw UnsupportedOperationException("getFileSystem is not supported")
   }
 
   override fun getPath(uri: URI): Path {
-    require(uri.scheme == scheme)
-    val id = uri.host
-    val fs = fileSystems[id]!!
-    return fs.getPath(uri.path)
+    throw UnsupportedOperationException("getFileSystem is not supported")
   }
 
   override fun newByteChannel(path: Path, options: Set<OpenOption?>?, vararg attrs: FileAttribute<*>?): SeekableByteChannel? {
@@ -140,7 +128,6 @@ internal class EelTestFileSystemProvider : FileSystemProvider() {
 
   private fun Path.unfoldPath(): Path {
     return when (this) {
-      is EelTestLocalPath -> this.delegate.unfoldPath()
       is EelTestPath -> this.delegate
       else -> throw InvalidPathException(this.toString(), "Incorrect input path: ${this.javaClass}")
     }
@@ -148,11 +135,6 @@ internal class EelTestFileSystemProvider : FileSystemProvider() {
 
   private fun Path.wrapper(): (Path) -> Path {
     when (this) {
-      is EelTestLocalPath -> {
-        val fs = this.fileSystem
-        val delegateWrapper = this.delegate.wrapper()
-        return { it -> EelTestLocalPath(fs, delegateWrapper(it) as EelTestPath) }
-      }
       is EelTestPath -> {
         val fs = this.fileSystem
         return { it -> EelTestPath(fs, it) }

@@ -5,8 +5,8 @@ import com.intellij.platform.eel.EelPathMapper
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPath.OS
-import com.intellij.platform.testFramework.junit5.eel.impl.ownUri.EelTestFileSystem
-import com.intellij.platform.testFramework.junit5.eel.impl.ownUri.EelTestPath
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelTestFileSystem
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelTestPath
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
@@ -33,7 +33,7 @@ internal class EelTestPathMapper(val os: OS, val fileSystem: EelTestFileSystem, 
   }
 
   override fun toNioPath(path: EelPath): Path {
-    return Path.of(localPrefix).resolve(path.toString())
+    return path.parts.fold(Path.of(localPrefix), Path::resolve)
   }
 
   override fun pathPrefix(): String {

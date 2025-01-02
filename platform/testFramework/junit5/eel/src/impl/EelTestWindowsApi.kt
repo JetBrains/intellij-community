@@ -12,7 +12,7 @@ import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.testFramework.junit5.eel.impl.ownUri.EelTestFileSystem
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelTestFileSystem
 import com.intellij.util.system.CpuArch
 
 internal class EelTestWindowsApi(fileSystem: EelTestFileSystem, localPrefix: String) : EelWindowsApi {

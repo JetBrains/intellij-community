@@ -6,13 +6,12 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.testFramework.junit5.eel.impl.currentOs
 import com.intellij.platform.testFramework.junit5.eel.impl.eelInitializer
-import com.intellij.platform.testFramework.junit5.eel.impl.eelProjectInitializer
+import com.intellij.platform.testFramework.junit5.eel.impl.eelTempDirectoryFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.FileSystem
 import java.nio.file.Path
-
 
 /**
  * Represents an isolated file system, which is accessible to the IDE but not to the OS.
@@ -21,11 +20,6 @@ import java.nio.file.Path
 @TestOnly
 interface IsolatedFileSystem {
   /**
-   * NIO FileSystem which operates with the path having `eel-test` in their URI scheme
-   */
-  val fileSystem: FileSystem
-
-  /**
    * EelAPI representing the isolated file system.
    */
   val eelApi: EelApi
@@ -33,9 +27,8 @@ interface IsolatedFileSystem {
   /**
    * A _local_ path pointing to the root of the isolated file system.
    */
-  val root: Path
+  val storageRoot: Path
 }
-
 
 /**
  * Creates an instance of Eel which is bound at an isolated directory on the local file system.
@@ -52,5 +45,6 @@ fun eelFixture(os: EelPath.OS = currentOs): TestFixture<IsolatedFileSystem> {
  */
 @TestOnly
 fun TestFixture<IsolatedFileSystem>.projectFixture(): TestFixture<Project> {
-  return testFixture("eel-project-test-fixture", eelProjectInitializer(this))
+  val tempDirProject = testFixture("eel-temp-dir-for-project", eelTempDirectoryFixture(this))
+  return projectFixture(tempDirProject, openAfterCreation = true)
 }
