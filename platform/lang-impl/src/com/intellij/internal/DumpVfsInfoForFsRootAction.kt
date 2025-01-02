@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
@@ -145,9 +146,19 @@ internal class DumpVfsInfoForFsRootAction : DumbAwareAction() {
       return panel {
         row("Root:") {
           rootField = textField()
-            .applyToComponent { text = "file:///" }
+            .applyToComponent {
+              text = when {
+                SystemInfo.isWindows -> "file://C:/"
+                else -> "file:///"
+              }
+            }
             .resizableColumn()
             .align(AlignX.FILL)
+            .apply {
+              if (SystemInfo.isWindows) {
+                comment("Each disk is handled independently. Use file://C:/ or file://wsl.localhost/Ubuntu/")
+              }
+            }
             .component
         }
         row("Depth:") {
