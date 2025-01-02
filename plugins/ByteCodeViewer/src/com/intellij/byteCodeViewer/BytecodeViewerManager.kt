@@ -3,10 +3,8 @@ package com.intellij.byteCodeViewer
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.util.JavaAnonymousClassesHelper
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
@@ -18,14 +16,8 @@ import com.intellij.psi.util.PsiUtil
 import java.io.File
 import java.util.*
 
-@Service(Service.Level.PROJECT)
 object BytecodeViewerManager {
   private val CLASS_SEARCHER_EP = create<ClassSearcher>("ByteCodeViewer.classSearcher")
-
-  @JvmStatic
-  fun getInstance(project: Project): BytecodeViewerManager? {
-    return project.getService<BytecodeViewerManager?>(BytecodeViewerManager::class.java)
-  }
 
   @JvmStatic
   fun loadClassFileBytes(aClass: PsiClass): ByteArray? {
