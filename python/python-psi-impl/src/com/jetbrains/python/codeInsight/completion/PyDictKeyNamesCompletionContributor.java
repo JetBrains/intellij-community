@@ -76,7 +76,7 @@ public final class PyDictKeyNamesCompletionContributor extends CompletionContrib
                                                            final @NotNull DictKeyCompletionResultSet dictCompletion) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(operand.getProject(), operand.getContainingFile());
     final PyType type = typeEvalContext.getType(operand);
-    if (type instanceof PyTypedDictType dictType && !dictType.isInferred()) {
+    if (type instanceof PyTypedDictType dictType) {
       for (String key : dictType.getFields().keySet()) {
         dictCompletion.addKey(key);
       }

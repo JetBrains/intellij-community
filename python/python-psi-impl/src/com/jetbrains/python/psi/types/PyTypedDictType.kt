@@ -13,16 +13,17 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-class PyTypedDictType @JvmOverloads constructor(private val name: String,
-                                                val fields: LinkedHashMap<String, FieldTypeAndTotality>,
-                                                private val inferred: Boolean,
-                                                private val dictClass: PyClass,
-                                                private val definitionLevel: DefinitionLevel,
-                                                private val ancestors: List<PyTypedDictType>,
-                                                private val declaration: PyQualifiedNameOwner? = null) : PyClassTypeImpl(dictClass,
-                                                                                                                         definitionLevel != DefinitionLevel.INSTANCE), PyCollectionType {
+class PyTypedDictType @JvmOverloads constructor(
+  private val name: String,
+  val fields: LinkedHashMap<String, FieldTypeAndTotality>,
+  private val dictClass: PyClass,
+  private val definitionLevel: DefinitionLevel,
+  private val ancestors: List<PyTypedDictType>,
+  private val declaration: PyQualifiedNameOwner? = null,
+) : PyClassTypeImpl(dictClass,
+                    definitionLevel != DefinitionLevel.INSTANCE), PyCollectionType {
   override fun getElementTypes(): List<PyType?> {
-    return listOf(if (!inferred || fields.isNotEmpty()) PyBuiltinCache.getInstance(dictClass).strType else null, getValuesType())
+    return listOf(PyBuiltinCache.getInstance(dictClass).strType, getValuesType())
   }
 
   override fun getIteratedItemType(): PyType? {
@@ -51,7 +52,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
 
   override fun toInstance(): PyClassType {
     return if (definitionLevel == DefinitionLevel.NEW_TYPE)
-      PyTypedDictType(name, fields, inferred, dictClass,
+      PyTypedDictType(name, fields, dictClass,
                       DefinitionLevel.INSTANCE, ancestors,
                       declaration)
     else
@@ -60,7 +61,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
 
   override fun toClass(): PyClassLikeType {
     return if (definitionLevel == DefinitionLevel.INSTANCE)
-      PyTypedDictType(name, fields, inferred, dictClass,
+      PyTypedDictType(name, fields, dictClass,
                       DefinitionLevel.NEW_TYPE, ancestors,
                       declaration)
     else
@@ -71,9 +72,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     return name
   }
 
-  override fun isBuiltin(): Boolean {
-    return inferred // if TD is inferred then it's a dict with str-only keys
-  }
+  override fun isBuiltin(): Boolean = false
 
   override fun isCallable(): Boolean {
     return definitionLevel != DefinitionLevel.INSTANCE
@@ -109,14 +108,13 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     val otherTypedDict = other as? PyTypedDictType ?: return false
     return name == otherTypedDict.name
            && fields == otherTypedDict.fields
-           && inferred == otherTypedDict.inferred
            && definitionLevel == otherTypedDict.definitionLevel
            && ancestors == otherTypedDict.ancestors
            && declaration == otherTypedDict.declaration
   }
 
   override fun hashCode(): Int {
-    return Objects.hash(super.hashCode(), name, fields, inferred, definitionLevel, ancestors, declaration)
+    return Objects.hash(super.hashCode(), name, fields, definitionLevel, ancestors, declaration)
   }
 
   enum class DefinitionLevel {
@@ -124,12 +122,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     INSTANCE
   }
 
-  /**
-   * Checks whether this is an actual TypedDict type or [PyDictLiteralExpression] with all str keys
-   */
-  fun isInferred(): Boolean {
-    return inferred
-  }
+  @Deprecated("Always false", ReplaceWith("false"))
+  fun isInferred(): Boolean = false
 
   override fun getDeclarationElement(): PyQualifiedNameOwner = declaration ?: super<PyClassTypeImpl>.getDeclarationElement()
 
@@ -147,15 +141,16 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
 
     const val TYPED_DICT_TOTAL_PARAMETER: String = "total"
 
-    fun createFromKeysToValueTypes(anchor: PsiElement,
-                                   keysToValueTypes: Map<String, Pair<PyExpression?, PyType?>>,
-                                   inferred: Boolean): PyTypedDictType? {
+    fun createFromKeysToValueTypes(
+      anchor: PsiElement,
+      keysToValueTypes: Map<String, Pair<PyExpression?, PyType?>>,
+    ): PyTypedDictType? {
       val dict = PyBuiltinCache.getInstance(anchor).dictType?.pyClass
       return if (dict != null) {
         val fields = TDFields(keysToValueTypes.entries.associate {
           it.key to FieldTypeAndTotality(it.value.first, it.value.second)
         })
-        PyTypedDictType("TypedDict", fields, inferred, dict, DefinitionLevel.INSTANCE, emptyList())
+        PyTypedDictType("TypedDict", fields, dict, DefinitionLevel.INSTANCE, emptyList())
       }
       else null
     }

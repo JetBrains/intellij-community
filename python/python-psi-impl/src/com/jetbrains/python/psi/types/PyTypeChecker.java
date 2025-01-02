@@ -1211,7 +1211,7 @@ public final class PyTypeChecker {
               )
             )
           );
-          return PyTypedDictType.Companion.createFromKeysToValueTypes(typedDictType.myClass, substitutedTDFields, false);
+          return PyTypedDictType.Companion.createFromKeysToValueTypes(typedDictType.myClass, substitutedTDFields);
         }
         else if (type instanceof PyNarrowedType pyNarrowedType) {
           return pyNarrowedType.substitute(substitute(pyNarrowedType.getNarrowedType(), substitutions, context, substituting));

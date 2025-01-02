@@ -77,7 +77,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       if (callExpression == null || callExpression.callee == null) return null
       val receiver = callExpression.getReceiver(null) ?: return null
       val type = context.getType(receiver)
-      if (type !is PyTypedDictType || type.isInferred()) return null
+      if (type !is PyTypedDictType) return null
 
       if (isGetMethodToOverride(callExpression, context)) {
         val parameters = mutableListOf<PyCallableParameter>()
@@ -150,7 +150,6 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       if (isTypingTypedDictInheritor(cls, context)) {
         return PyTypedDictType(cls.name ?: return null,
                                TDFields(collectFields(cls, context)),
-                               false,
                                PyBuiltinCache.getInstance(cls).dictType?.pyClass ?: return null,
                                if (isInstance) PyTypedDictType.DefinitionLevel.INSTANCE else PyTypedDictType.DefinitionLevel.NEW_TYPE,
                                cls.getAncestorTypes(context).filterIsInstance<PyTypedDictType>(),
@@ -325,7 +324,6 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
 
       return PyTypedDictType(stub.name,
                              typedDictFields,
-                             false,
                              dictClass,
                              if (isInstance) PyTypedDictType.DefinitionLevel.INSTANCE else PyTypedDictType.DefinitionLevel.NEW_TYPE,
                              emptyList(),

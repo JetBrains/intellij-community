@@ -160,7 +160,6 @@ public final class PyTypeUtil {
   }
 
   public static boolean isDict(@Nullable PyType type) {
-    return type instanceof PyCollectionType && "dict".equals(type.getName()) ||
-           type instanceof PyTypedDictType && ((PyTypedDictType)type).isInferred();
+    return type instanceof PyCollectionType && "dict".equals(type.getName());
   }
 }

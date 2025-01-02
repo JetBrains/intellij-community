@@ -290,14 +290,8 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyTypedDictType typedDictType) {
-      if (typedDictType.isInferred()) {
-        return build(new PyCollectionTypeImpl(typedDictType.getPyClass(), false,
-                                              typedDictType.getElementTypes()), allowUnions);
-      }
-      else {
-        result = NamedType.nameOrAny(type);
-      }
+    if (type instanceof PyTypedDictType) {
+      result = NamedType.nameOrAny(type);
     }
     else if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
       final PyInstantiableType instanceType = ((PyInstantiableType<?>)type).toInstance();

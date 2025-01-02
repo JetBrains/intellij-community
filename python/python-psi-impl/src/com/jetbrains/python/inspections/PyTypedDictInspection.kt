@@ -32,7 +32,7 @@ class PyTypedDictInspection : PyInspection() {
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
       val operandType = myTypeEvalContext.getType(node.operand)
-      if (operandType !is PyTypedDictType || operandType.isInferred()) return
+      if (operandType !is PyTypedDictType) return
 
       val indexExpression = node.indexExpression
       val indexExpressionValueOptions = getIndexExpressionValueOptions(indexExpression)
@@ -185,7 +185,7 @@ class PyTypedDictInspection : PyInspection() {
         for (expr in PyUtil.flattenedParensAndTuples(target)) {
           if (expr !is PySubscriptionExpression) continue
           val type = myTypeEvalContext.getType(expr.operand)
-          if (type is PyTypedDictType && !type.isInferred()) {
+          if (type is PyTypedDictType) {
             val index = PyEvaluator.evaluate(expr.indexExpression, String::class.java)
             if (index == null || index !in type.fields) continue
             if (type.fields[index]!!.qualifiers.isRequired == true) {
@@ -201,7 +201,7 @@ class PyTypedDictInspection : PyInspection() {
       if (callee !is PyReferenceExpression || callee.qualifier == null) return
 
       val nodeType = myTypeEvalContext.getType(callee.qualifier!!)
-      if (nodeType !is PyTypedDictType || nodeType.isInferred()) return
+      if (nodeType !is PyTypedDictType) return
       var arguments = node.arguments
 
       if (PyNames.UPDATE == callee.name) {
