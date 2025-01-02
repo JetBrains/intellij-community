@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
+import com.intellij.platform.project.asEntityOrNull
 import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.ChangeScope
 import fleet.kernel.tryWithEntities
@@ -38,10 +39,10 @@ abstract class TaskStorage {
     var taskInfoEntity: TaskInfoEntity? = null
     try {
       return withKernel {
-        val projectEntity = project.asEntity()
+        val projectEntity = if (!project.isDefault) project.asEntity() else null
         taskInfoEntity = createTaskInfoEntity {
           TaskInfoEntity.new {
-            it[TaskInfoEntity.ProjectEntityType] = if (!project.isDefault) projectEntity else null
+            it[TaskInfoEntity.ProjectEntityType] = projectEntity
             it[TaskInfoEntity.TitleType] = title
             it[TaskInfoEntity.TaskCancellationType] = cancellation
             it[TaskInfoEntity.TaskSuspendableType] = suspendable
