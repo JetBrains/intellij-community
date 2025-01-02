@@ -3,6 +3,7 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.path.directorySeparators
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -74,7 +75,7 @@ class IjentNioFileSystem internal constructor(
       more.fold(EelPath.parse(first, os)) { path, newPart -> path.resolve(newPart) }.toNioPath()
     }
     catch (_: EelPathException) {
-      RelativeIjentNioPath(first.split('/', '\\') + more, this)
+      RelativeIjentNioPath(first.split(*os.directorySeparators) + more, this)
     }
   }
 

@@ -8,6 +8,7 @@ import com.intellij.platform.eel.fs.EelFileInfo.Type.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.*
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.impl.fs.EelFsResultImpl
+import com.intellij.platform.eel.path.directorySeparators
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.eel.provider.utils.throwFileSystemException
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
@@ -572,11 +573,14 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun readSymbolicLink(link: Path): Path {
     val fs = ensureAbsoluteIjentNioPath(link).nioFs
     val absolutePath = link.eelPath
+    val os = fs.ijentFs.pathOs
     return fsBlocking {
       when (val ijentFs = fs.ijentFs) {
         is IjentFileSystemPosixApi -> when (val type = ijentFs.stat(absolutePath, EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE).getOrThrowFileSystemException().type) {
           is Symlink.Resolved.Absolute -> AbsoluteIjentNioPath(type.result, link.nioFs, null)
-          is Symlink.Resolved.Relative -> RelativeIjentNioPath(type.result, link.nioFs)
+          is Symlink.Resolved.Relative -> {
+            RelativeIjentNioPath(type.result.split(*os.directorySeparators), link.nioFs)
+          }
           is Directory, is Regular, is Other -> throw NotLinkException(link.toString())
           is Symlink.Unresolved -> error("Impossible, the link should be resolved")
         }

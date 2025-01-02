@@ -25,6 +25,10 @@ internal class ArrayListEelAbsolutePath private constructor(
     root.fileName == other.root.fileName &&
     (0..<other.nameCount).all { getName(it) == other.getName(it) }
 
+  override fun endsWith(suffix: List<String>): Boolean {
+    return nameCount >= suffix.size && this.parts.takeLast(suffix.size) == suffix
+  }
+
   override fun normalize(): EelPath {
     val result = mutableListOf<String>()
     for (part in parts) {
@@ -44,7 +48,8 @@ internal class ArrayListEelAbsolutePath private constructor(
   }
 
   override fun resolve(other: String): EelPath {
-    val otherParts = other.split('/', '\\')
+    val delimiters = this.os.directorySeparators
+    val otherParts = other.split(*delimiters).filter(String::isNotEmpty)
     for (name in otherParts) {
       if (name.isNotEmpty()) {
         val error = checkFileName(name)
@@ -106,6 +111,12 @@ internal class ArrayListEelAbsolutePath private constructor(
 
     return nameCount - other.nameCount
   }
+
+  override val os: EelPath.OS
+    get() = when (this._root) {
+      Root.Unix -> EelPath.OS.UNIX
+      is Root.Windows -> EelPath.OS.WINDOWS
+    }
 
   override fun equals(other: Any?): Boolean =
     other is EelPath &&

@@ -19,7 +19,7 @@ sealed interface EelPath {
     @Throws(EelPathException::class)
     @JvmStatic
     fun parse(raw: String, os: OS?): EelPath {
-      return ArrayListEelAbsolutePath.parseOrNull(raw, os) ?: throw EelPathException(raw, "Invalid absolute path")
+      return ArrayListEelAbsolutePath.parseOrNull(raw, os) ?: throw EelPathException(raw, "Not a valid absolute path")
     }
 
     @Throws(EelPathException::class)
@@ -42,10 +42,11 @@ sealed interface EelPath {
 
 
   /**
-   * Returns parts of a path composed as a list.
+   * Returns a path that corresponds to the root.
    *
    * ```kotlin
    * EelPath.parse("C:\\a\\b\\c").root == EelPath.parse("C:\\")
+   * EelPath.parse("/a/b/c").root == EelPath.parse("/")
    * ```
    */
   val root: EelPath
@@ -56,6 +57,7 @@ sealed interface EelPath {
    *
    * ```kotlin
    * EelPath.parse("/abc/def/ghi", OS.UNIX).parts == listOf("abc", "def", "ghi")
+   * EelPath.parse("C:\\abc\\def\\ghi", OS.WINDOWS).parts == listOf("abc", "def", "ghi")
    * ```
    */
   val parts: List<String>
@@ -119,6 +121,19 @@ sealed interface EelPath {
   /** See [java.nio.file.Path.startsWith] */
   fun startsWith(other: EelPath): Boolean
 
+  /** See [java.nio.file.Path.endsWith] */
+  fun endsWith(suffix: List<String>): Boolean
+
+  /**
+   * Returns [EelPath.OS] that corresponds to this path.
+   *
+   *  ```kotlin
+   *  EelPath.parse("/abc/").os == EelPath.OS.UNIX
+   *  EelPath.parse("C:\\abc\").os == EelPath.OS.WINDOWS
+   *  ```
+   */
+  val os: OS
+
   /**
    * ```kotlin
    * EelPath.parse("/abc", OS.UNIX).getChild("..") == EelPath.parse("abc/..", false)
@@ -154,10 +169,14 @@ val EelPlatform.pathOs: OS
     is EelPlatform.Windows -> OS.WINDOWS
   }
 
+private val UNIX_DIRECTORY_SEPARATORS = charArrayOf('/')
+private val WINDOWS_DIRECTORY_SEPARATORS = charArrayOf('/', '\\')
 
-interface EelPathError {
-  val raw: String
-  val reason: String
+val OS.directorySeparators: CharArray
+  get() = when (this) {
+    OS.UNIX -> UNIX_DIRECTORY_SEPARATORS
+    OS.WINDOWS -> WINDOWS_DIRECTORY_SEPARATORS
 }
 
-class EelPathException(override val raw: String, override val reason: String) : RuntimeException("`$raw`: $reason"), EelPathError
+
+class EelPathException(val raw: String, val reason: String) : RuntimeException("`$raw`: $reason")

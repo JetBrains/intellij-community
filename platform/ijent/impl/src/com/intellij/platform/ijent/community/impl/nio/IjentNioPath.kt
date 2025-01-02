@@ -88,7 +88,7 @@ internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSys
     createRelativePath(eelPath.getName(index))
 
   override fun subpath(beginIndex: Int, endIndex: Int): IjentNioPath {
-    TODO("Not yet implemented")
+    return RelativeIjentNioPath(eelPath.parts.subList(beginIndex, endIndex), nioFs)
   }
 
   override fun startsWith(other: Path): Boolean {
@@ -107,7 +107,7 @@ internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSys
     }
     when (other) {
       is AbsoluteIjentNioPath -> return eelPath == other.eelPath
-      is RelativeIjentNioPath -> return eelPath.parts.run { subList(size - other.segments.size, size) } == other.segments
+      is RelativeIjentNioPath -> return eelPath.endsWith(other.segments)
     }
   }
 
@@ -121,7 +121,7 @@ internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSys
       is AbsoluteIjentNioPath -> other
       is RelativeIjentNioPath -> {
         val curatedSegments = other.segments.filter { it != "." && it != "" }
-        curatedSegments.fold(eelPath) { acc, part -> acc.resolve(part) }.toNioPath(curatedSegments.isNotEmpty())
+        other.segments.fold(eelPath) { acc, part -> acc.resolve(part) }.toNioPath(curatedSegments.isNotEmpty())
       }
     }
   }
@@ -153,7 +153,12 @@ internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSys
   }
 
   override fun toUri(): URI {
-    return nioFs.uri.resolve(eelPath.toString())
+    val prefix = when (eelPath.os) {
+      EelPath.OS.WINDOWS -> "/" + eelPath.root.toString().replace('\\', '/')
+      EelPath.OS.UNIX -> null
+    }
+    val allParts = listOfNotNull(prefix) + eelPath.parts
+    return allParts.fold(nioFs.uri, URI::resolve)
   }
 
   override fun toAbsolutePath(): IjentNioPath {
