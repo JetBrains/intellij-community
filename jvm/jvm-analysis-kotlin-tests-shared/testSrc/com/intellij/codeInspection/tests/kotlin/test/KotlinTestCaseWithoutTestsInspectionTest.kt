@@ -69,6 +69,19 @@ abstract class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsIn
     """.trimIndent())
   }
 
+  fun `test case with test in Java parent class in JUnit 3`() {
+    myFixture.addClass("""
+      package foo;      
+      
+      public abstract class SomeParentClass extends junit.framework.TestCase {
+        public void testInParent() { }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class SomeTestClass : foo.SomeParentClass() { }
+    """.trimIndent())
+  }
+
   fun `test case with test in sealed parent class in JUnit 4`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       sealed class SomeParentClass(val name: String) {
