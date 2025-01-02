@@ -16,18 +16,18 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
-abstract class StubTreeSerializerBase<SerializationState> {
+public abstract class StubTreeSerializerBase<SerializationState> {
   static final ThreadLocal<ObjectStubSerializer<?, ? extends Stub>> ourRootStubSerializer = new ThreadLocal<>();
   private static final boolean useStubStringInterner = Boolean.parseBoolean(System.getProperty("idea.use.stub.string.interner", "false"));
 
   private final @Nullable UnaryOperator<String> stubStringInterner;
 
-  StubTreeSerializerBase() {
+  public StubTreeSerializerBase() {
     stubStringInterner = useStubStringInterner ? StubStringInterner.getInstance() : UnaryOperator.identity();
   }
 
   @NotNull
-  Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
+  public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
     StubInputStream inputStream = new StubInputStream(stream, storage);
 
@@ -67,7 +67,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
     return baseStub;
   }
 
-  void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
+  public void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(true);
     @NotNull SerializationState serializationState = createSerializationState();
