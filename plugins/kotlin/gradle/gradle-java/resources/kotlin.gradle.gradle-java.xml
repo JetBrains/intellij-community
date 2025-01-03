@@ -115,6 +115,10 @@
             description="Import Kotlin Gradle test tasks and process test output"
             defaultValue="true"
             restartRequired="false"/>
+    <registryKey
+            key="gradle.daemon.jvm.criteria.suggest.migration"
+            description="Enable to recommend migrate project from existing Gradle JDK configuration to Gradle Daemon JVM criteria"
+            defaultValue="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -169,5 +173,7 @@
             icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
       <add-to-group group-id="ExternalSystem.ProjectRefreshActionGroup" anchor="first"/>
     </action>
+    <action id="Gradle.MigrateToDaemonJvmCriteria"
+            class="org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonJvmCriteriaMigrationAction"/>
   </actions>
 </idea-plugin>
