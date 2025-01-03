@@ -5,17 +5,11 @@ package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.EelPosixApi
-import com.intellij.platform.eel.EelWindowsApi
-import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext

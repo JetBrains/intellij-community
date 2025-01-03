@@ -1,12 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.EelUserInfo
-import com.intellij.platform.eel.EelUserPosixInfo
-import com.intellij.platform.eel.EelUserWindowsInfo
-import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.CheckReturnValue
@@ -29,6 +24,8 @@ val EelFileSystemApi.pathSeparator: String
 fun EelFileSystemApi.getPath(string: String): EelPath {
   return EelPath.parse(string, descriptor)
 }
+
+interface LocalEelFileSystemApi : EelFileSystemApi
 
 // TODO Integrate case-(in)sensitiveness into the interface.
 
@@ -572,6 +569,8 @@ sealed interface EelOpenedFile {
   interface ReaderWriter : Reader, Writer
 }
 
+interface LocalEelFileSystemPosixApi : EelFileSystemPosixApi, LocalEelFileSystemApi
+
 interface EelFileSystemPosixApi : EelFileSystemApi {
   override val user: EelUserPosixInfo
 
@@ -695,6 +694,8 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     interface Other : CreateSymbolicLinkError, EelFsError.Other
   }
 }
+
+interface LocalEelFileSystemWindowsApi : EelFileSystemWindowsApi, LocalEelFileSystemApi
 
 interface EelFileSystemWindowsApi : EelFileSystemApi {
   override val user: EelUserWindowsInfo

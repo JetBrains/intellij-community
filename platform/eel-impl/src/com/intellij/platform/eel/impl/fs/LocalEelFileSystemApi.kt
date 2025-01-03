@@ -336,7 +336,7 @@ private fun doClose(
 abstract class PosixNioBasedEelFileSystemApi(
   fs: FileSystem,
   override val user: EelUserPosixInfo,
-) : NioBasedEelFileSystemApi(fs), EelFileSystemPosixApi {
+) : NioBasedEelFileSystemApi(fs), LocalEelFileSystemPosixApi {
   override val pathOs: EelPath.OS = EelPath.OS.UNIX
 
   override suspend fun createDirectory(
@@ -406,7 +406,7 @@ abstract class PosixNioBasedEelFileSystemApi(
 abstract class WindowsNioBasedEelFileSystemApi(
   fs: FileSystem,
   override val user: EelUserWindowsInfo,
-) : NioBasedEelFileSystemApi(fs), EelFileSystemWindowsApi {
+) : NioBasedEelFileSystemApi(fs), LocalEelFileSystemWindowsApi {
   override val pathOs: EelPath.OS = EelPath.OS.WINDOWS
 
   override suspend fun getRootDirectories(): Collection<EelPath> =

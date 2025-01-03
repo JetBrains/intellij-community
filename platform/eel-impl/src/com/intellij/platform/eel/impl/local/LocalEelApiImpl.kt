@@ -8,19 +8,15 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryError
-import com.intellij.platform.eel.fs.EelFileSystemPosixApi
-import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
+import com.intellij.platform.eel.fs.LocalEelFileSystemPosixApi
+import com.intellij.platform.eel.fs.LocalEelFileSystemWindowsApi
 import com.intellij.platform.eel.impl.fs.*
 import com.intellij.platform.eel.impl.fs.EelFsResultImpl.Ok
 import com.intellij.platform.eel.impl.fs.EelFsResultImpl.Other
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsPosixApi
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsWindowsApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.LocalPosixEelApi
-import com.intellij.platform.eel.provider.LocalWindowsEelApi
-import com.intellij.platform.eel.provider.asEelPathOrNull
-import com.intellij.platform.eel.provider.asNioPathOrNull
+import com.intellij.platform.eel.provider.*
 import com.intellij.util.text.nullize
 import com.sun.security.auth.module.UnixSystem
 import org.jetbrains.annotations.VisibleForTesting
@@ -41,7 +37,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl(getLocalUserHome())
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 
-  override val fs: EelFileSystemWindowsApi = object : WindowsNioBasedEelFileSystemApi(nioFs, userInfo) {
+  override val fs: LocalEelFileSystemWindowsApi = object : WindowsNioBasedEelFileSystemApi(nioFs, userInfo) {
     override val descriptor: EelDescriptor = LocalEelDescriptor
 
     override suspend fun createTemporaryDirectory(
@@ -91,7 +87,7 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
     EelUserPosixInfoImpl(uid = unix.uid.toInt(), gid = unix.gid.toInt(), home = getLocalUserHome())
   }
 
-  override val fs: EelFileSystemPosixApi = object : PosixNioBasedEelFileSystemApi(nioFs, userInfo) {
+  override val fs: LocalEelFileSystemPosixApi = object : PosixNioBasedEelFileSystemApi(nioFs, userInfo) {
     override val pathOs: EelPath.OS = EelPath.OS.UNIX
     override val descriptor: EelDescriptor get() = LocalEelDescriptor
 
