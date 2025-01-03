@@ -1,9 +1,15 @@
 // IGNORE_K1
 
-fun foo() {
-    Triple(42, "", 0.0).let { <caret> }
+data class Foo(
+    val foo: Int = 42,
+    val bar: String = "",
+    val baz: Double = 0.0,
+)
+
+fun bar() {
+    Foo().let { <caret> }
 }
 
 // INVOCATION_COUNT: 0
-// EXIST: { itemText: "triple", tailText: " -> ", allLookupStrings: "triple", typeText: "Triple<Int, String, Double>" }
-// EXIST: { itemText: "(first, second, third)", tailText: " -> ", allLookupStrings: "first, second, third", typeText: "(Int, String, Double)" }
+// EXIST: { itemText: "foo", tailText: " -> ", allLookupStrings: "foo", typeText: "Foo" }
+// EXIST: { itemText: "(foo, bar, baz)", tailText: " -> ", allLookupStrings: "bar, baz, foo", typeText: "(Int, String, Double)" }

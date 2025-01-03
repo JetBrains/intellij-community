@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -35,6 +35,8 @@ import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.psiUtil.isFirstStatement
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.yieldIfNotNull
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<C : KotlinRawPositionContext>(
     parameters: KotlinFirCompletionParameters,
@@ -49,7 +51,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
     ) : FirTrailingFunctionParameterNameCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(
         parameters,
         sink,
-        priority
+        priority,
     ) {
 
         context(KaSession)
@@ -126,8 +128,11 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
             .mapNotNull { FunctionLookupElementFactory.createTrailingFunctionDescriptor(it) }
             .filterNot { it.functionType.hasReceiver }
             .flatMap { createLookupElements(it, existingParameterNames) }
-            .map { it.applyWeighs(weighingContext) }
-            .forEach(sink::addElement)
+            .map { elementBuilder ->
+                elementBuilder
+                    .apply { isTrailingLambdaParameter = true }
+                    .applyWeighs(weighingContext)
+            }.forEach(sink::addElement)
     }
 }
 
@@ -179,7 +184,7 @@ private fun createLookupElements(
     val parameterTypes = trailingFunctionDescriptor.functionType
         .parameterTypes
 
-    return when (val parameterType = parameterTypes.singleOrNull()) {
+    return when (val parameterType = parameterTypes.singleOrNull()?.lowerBoundIfFlexible()) {
         null -> sequence {
             val suggestedNames = parameterTypes.mapIndexedNotNull { index, parameterType ->
                 if (index < fromIndex) return@mapIndexedNotNull null
@@ -189,32 +194,38 @@ private fun createLookupElements(
             yieldIfNotNull(createCompoundLookupElement(suggestedNames))
         }
 
-        else -> sequence {
+        is KaClassType -> @OptIn(KaExperimentalApi::class) sequence {
             if (fromIndex != 0) return@sequence
 
-            val standardSuggestions = (parameterType as? KaClassType)
-                ?.classId
-                ?.let { getStandardSuggestions(it) }
-                ?.takeUnless { it.isEmpty() }
-                ?.let { suggestions ->
-                    parameterType.typeArguments
-                        .mapNotNull { it.type }
-                        .zip(suggestions)
-                }
+            val classSymbol = parameterType.expandedSymbol as? KaNamedClassSymbol
+                ?: return@sequence
 
-            if (standardSuggestions != null) {
-                yieldIfNotNull(createCompoundLookupElement(standardSuggestions, isDeconstruction = true))
+            val substitutor = classSymbol.typeParameters
+                .zip(parameterType.typeArguments.mapNotNull { it.type })
+                .toMap()
+                .let { createSubstitutor(it) }
+
+            val suggestedNames = destructurize(classSymbol).mapIndexed { index, (_, returnType, name) ->
+                val type = substitutor.substitute(returnType)
+                type to
+                        (name?.asString() ?: suggestNames(type, index).first())
             }
+
+            yieldIfNotNull(createCompoundLookupElement(suggestedNames, isDestructuring = true))
+
+            val lookupObject = classSymbol.psi
+                ?: return@sequence
 
             val parameterTypeText = parameterType.text
-            val lookupElements = suggestNames(parameterType).map {
-                LookupElementBuilder.create(it)
+            suggestNames(parameterType).map { lookupString ->
+                LookupElementBuilder.create(lookupObject, lookupString)
                     .withTypeText(parameterTypeText)
                     .withTailTextInsertHandler()
-            }
-            yieldAll(lookupElements)
+            }.forEach { yield(it) }
         }
-    }.map { it.apply { isTrailingLambdaParameter = true } }
+
+        else -> emptySequence()
+    }
 }
 
 private const val TailText: @NlsSafe String = " -> "
@@ -232,7 +243,7 @@ private fun LookupElementBuilder.withTailTextInsertHandler(
 context(KaSession)
 private fun createCompoundLookupElement(
     suggestedNames: Collection<Pair<KaType, String>>,
-    isDeconstruction: Boolean = false,
+    isDestructuring: Boolean = false,
 ): LookupElementBuilder? {
     if (suggestedNames.isEmpty()) return null
 
@@ -241,8 +252,8 @@ private fun createCompoundLookupElement(
 
     val lookupStrings = suggestedNames.map { it.second }
     val presentableText = lookupStrings.joinToString(
-        prefix = if (isDeconstruction) prefix else "",
-        postfix = if (isDeconstruction) postfix else "",
+        prefix = if (isDestructuring) prefix else "",
+        postfix = if (isDestructuring) postfix else "",
     )
 
     val typeText = suggestedNames.joinToString(
@@ -267,20 +278,89 @@ private val KaType.text: String
         position = Variance.INVARIANT,
     )
 
-private fun baseClassId(name: String) = ClassId(
-    packageFqName = StandardClassIds.BASE_KOTLIN_PACKAGE,
-    topLevelName = Name.identifier(name),
-)
+private val ComponentFunctionNameRegex: Pattern = Pattern.compile("^component(\\d+)$")
 
-private val PairClassId = baseClassId("Pair")
-private val TripleClassId = baseClassId("Triple")
+context(KaSession)
+private fun destructurize(classSymbol: KaNamedClassSymbol): List<Destructurized> {
+    val targetScope = classSymbol.memberScope
 
-private fun getStandardSuggestions(classId: ClassId) = when (classId) {
-    PairClassId -> listOf("first", "second")
-    TripleClassId -> listOf("first", "second", "third")
+    val mapEntryClassSymbol = findClass(StandardClassIds.MapEntry)
+    if (mapEntryClassSymbol != null
+        && (classSymbol == mapEntryClassSymbol || classSymbol.isSubClassOf(mapEntryClassSymbol))
+    ) {
+        val names = listOf(
+            "key",
+            "value",
+        ).map { Name.identifier(it) }
 
-    StandardClassIds.MapEntry,
-    StandardClassIds.MutableMapEntry -> listOf("key", "value")
+        val symbols = names.mapNotNull {
+            targetScope.callables(it).firstOrNull()
+        }
 
-    else -> listOf()
+        return if (symbols.size == names.size) {
+            symbols.map { Destructurized.ByName(it) }
+        } else {
+            emptyList()
+        }
+    }
+
+    val components = targetScope
+        .callables { ComponentFunctionNameRegex.matcher(it).matches() }
+        .toList()
+
+    val indices = components.asSequence()
+        .filterIsInstance<KaNamedFunctionSymbol>()
+        .filter { it.isOperator }
+        .filter { it.visibility == KaSymbolVisibility.PUBLIC }
+        .map { it.name }
+        .mapNotNull { name ->
+            val matcher = ComponentFunctionNameRegex.matcher(name)
+            if (matcher.find()) matcher.group(1) else null
+        }.mapNotNull { it.toIntOrNull() }
+        .toSortedSet()
+
+    val count = components.size
+    if (count == 0
+        || indices.size != count
+        || indices.first() != 1
+        || indices.last() != count
+    ) return emptyList()
+
+    return if (classSymbol.isData) {
+        targetScope.constructors
+            .first { it.isPrimary }
+            .valueParameters
+            .map { Destructurized.ByName(it) }
+    } else {
+        components.map { Destructurized.ByType(it as KaNamedFunctionSymbol) }
+    }
 }
+
+private sealed interface Destructurized {
+
+    val callableSymbol: KaCallableSymbol
+
+    operator fun component1(): KaCallableSymbol = callableSymbol
+
+    val returnType: KaType get() = callableSymbol.returnType
+
+    operator fun component2(): KaType = returnType
+
+    val name: Name? get() = callableSymbol.name
+
+    operator fun component3(): Name? = name
+
+    data class ByName(
+        override val callableSymbol: KaCallableSymbol,
+    ) : Destructurized
+
+    data class ByType(
+        override val callableSymbol: KaFunctionSymbol,
+    ) : Destructurized {
+
+        override val name: Name? get() = null
+    }
+}
+
+private fun Pattern.matcher(name: Name): Matcher =
+    matcher(name.asString())

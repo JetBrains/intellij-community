@@ -38,6 +38,26 @@ public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK
             runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName1.kt");
         }
 
+        @TestMetadata("ParameterName10.kt")
+        public void testParameterName10() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName10.kt");
+        }
+
+        @TestMetadata("ParameterName11.kt")
+        public void testParameterName11() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName11.kt");
+        }
+
+        @TestMetadata("ParameterName12.kt")
+        public void testParameterName12() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName12.kt");
+        }
+
+        @TestMetadata("ParameterName13.kt")
+        public void testParameterName13() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName13.kt");
+        }
+
         @TestMetadata("ParameterName2.kt")
         public void testParameterName2() throws Exception {
             runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName2.kt");
@@ -66,6 +86,16 @@ public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK
         @TestMetadata("ParameterName7.kt")
         public void testParameterName7() throws Exception {
             runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName7.kt");
+        }
+
+        @TestMetadata("ParameterName8.kt")
+        public void testParameterName8() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName8.kt");
+        }
+
+        @TestMetadata("ParameterName9.kt")
+        public void testParameterName9() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName9.kt");
         }
 
         @TestMetadata("RemainingParameterName1.kt")
