@@ -236,6 +236,13 @@ fun <T : CommandChain> T.inspectCodeEx(
   addCommand("${CMD_PREFIX}InspectCodeEx" + resultCommand)
 }
 
+fun <T : CommandChain> T.configureNamedScope(
+  scopeName: String,
+  pattern: String,
+): T = apply {
+  addCommand("${CMD_PREFIX}configureNamedScope -scopeName $scopeName -pattern $pattern")
+}
+
 fun <T : CommandChain> T.checkOnRedCode(): T = apply {
   addCommand("${CMD_PREFIX}codeAnalysis ${CodeAnalysisType.CHECK_ON_RED_CODE}")
 }
