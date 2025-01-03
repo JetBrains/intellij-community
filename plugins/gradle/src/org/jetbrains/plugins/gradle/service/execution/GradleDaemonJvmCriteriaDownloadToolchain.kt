@@ -9,11 +9,11 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import com.intellij.openapi.ui.Messages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.gradle.internal.jvm.inspection.JvmVendor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.toJvmVendor
 import java.nio.file.Path
 import kotlin.io.path.Path
 
@@ -53,7 +53,7 @@ object GradleDaemonJvmCriteriaDownloadToolchain {
 
   private fun matchesVendor(jdkItem: JdkItem, vendor: String?): Boolean {
     if (vendor == null) return true
-    val adjustedVendor = JvmVendor.fromString(vendor).displayName
+    val adjustedVendor = vendor.toJvmVendor().displayName
     val jdkItemVendorName = jdkItem.product.vendor
     val jdkItemProductName = jdkItem.product.product?.split(" ")?.firstOrNull()
     return adjustedVendor.startsWith(jdkItemVendorName, ignoreCase = true) ||

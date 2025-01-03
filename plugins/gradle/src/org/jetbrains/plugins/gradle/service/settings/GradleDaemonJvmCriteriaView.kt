@@ -19,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.toJvmVendor
 import javax.swing.JPanel
 
 @ApiStatus.Internal
@@ -41,7 +42,7 @@ class GradleDaemonJvmCriteriaView(
 
   private var initialVendor: VendorItem? = when (val vendor = criteria.vendor) {
     null -> VendorItem.Any
-    else -> when (val knownVendor = JvmVendor.fromString(vendor).knownVendor) {
+    else -> when (val knownVendor = vendor.toJvmVendor().knownVendor) {
       in vendorDropdownList -> VendorItem.Default(knownVendor)
       else -> VendorItem.Custom(vendor)
     }
