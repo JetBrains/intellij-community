@@ -381,6 +381,11 @@ data class BuildOptions(
   var useLocalLauncher: Boolean = false
 
   /**
+   * When `true`, cross-platform distribution will be packed using zip64 in AlwaysWithCompatibility mode
+   */
+  var useZip64ForCrossPlatformDistribution: Boolean = getBooleanProperty("intellij.build.cross.platform.dist.zip64", false)
+
+  /**
    * Pass `true` to this system property to produce .snap packages.
    * A build configuration should have "docker.version >= 17" in requirements.
    */

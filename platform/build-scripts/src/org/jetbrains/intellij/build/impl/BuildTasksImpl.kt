@@ -901,7 +901,14 @@ private fun crossPlatformZip(
 
   writeNewFile(targetFile) { outFileChannel ->
     NoDuplicateZipArchiveOutputStream(outFileChannel, context.options.compressZipFiles).use { out ->
-      out.setUseZip64(Zip64Mode.Never)
+      out.setUseZip64(
+        if (context.options.useZip64ForCrossPlatformDistribution) {
+          Zip64Mode.AlwaysWithCompatibility
+        }
+        else {
+          Zip64Mode.Never
+        }
+      )
 
       // for the `bin/` directory layout, see `PathManager.getBinDirectories(Path)`
 
