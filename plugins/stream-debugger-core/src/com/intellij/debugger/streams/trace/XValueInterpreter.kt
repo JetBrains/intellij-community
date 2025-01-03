@@ -6,8 +6,11 @@ import com.intellij.xdebugger.frame.XValue
 import org.jetbrains.annotations.Nls
 
 interface XValueInterpreter {
-  data class Result(val arrayReference: ArrayReference, val hasInnerExceptions: Boolean, val evaluationContext: EvaluationContextWrapper)
+  sealed class Result {
+    data class Array(val arrayReference: ArrayReference, val hasInnerExceptions: Boolean, val evaluationContext: EvaluationContextWrapper) : Result()
+    data class Error(@Nls val message: String) : Result()
+    object Unknown : Result()
+  }
 
-  fun tryExtractResult(session: XDebugSession, result: XValue): Result?
-  fun tryExtractError(result: XValue): @Nls String?
+  fun extract(session: XDebugSession, result: XValue): Result
 }

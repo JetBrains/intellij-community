@@ -9,14 +9,28 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XValue
 
 class JavaValueInterpreter : XValueInterpreter {
-  override fun tryExtractResult(session: XDebugSession, result: XValue): XValueInterpreter.Result? {
+  override fun extract(session: XDebugSession, result: XValue): XValueInterpreter.Result {
     if (result is JavaValue) {
       val reference = result.descriptor.getValue()
       if (reference is com.sun.jdi.ArrayReference) {
-        return XValueInterpreter.Result(JvmArrayReference(reference), hasInnerExceptions(reference), JavaEvaluationContext(result.evaluationContext))
+        return XValueInterpreter.Result.Array(JvmArrayReference(reference), hasInnerExceptions(reference), JavaEvaluationContext(result.evaluationContext))
+      } else if (reference is com.sun.jdi.ObjectReference) {
+        val type = reference.referenceType()
+        var classType = type as? com.sun.jdi.ClassType
+        if (classType != null) {
+          while (classType != null && CommonClassNames.JAVA_LANG_THROWABLE != classType.name()) {
+            classType = classType.superclass()
+          }
+          if (classType != null) {
+            val exceptionMessage: String? = DebuggerUtils.tryExtractExceptionMessage(reference)
+            val description = ("Evaluation failed: " + type.name()) + " exception thrown"
+            val descriptionWithReason = if (exceptionMessage == null) description else "$description: $exceptionMessage"
+            return XValueInterpreter.Result.Error(descriptionWithReason)
+          }
+        }
       }
     }
-    return null
+    return XValueInterpreter.Result.Unknown
   }
 
   private fun hasInnerExceptions(resultArray: com.sun.jdi.ArrayReference): Boolean {
@@ -29,27 +43,5 @@ class JavaValueInterpreter : XValueInterpreter {
     }
 
     return false
-  }
-
-  override fun tryExtractError(result: XValue): String? {
-    if (result is JavaValue) {
-      val reference = result.descriptor.getValue()
-      if (reference is com.sun.jdi.ObjectReference) {
-        val type = reference.referenceType()
-        var classType = type as? com.sun.jdi.ClassType
-        if (classType != null) {
-          while (classType != null && CommonClassNames.JAVA_LANG_THROWABLE != classType.name()) {
-            classType = classType.superclass()
-          }
-          if (classType != null) {
-            val exceptionMessage: String? = DebuggerUtils.tryExtractExceptionMessage(reference)
-            val description = ("Evaluation failed: " + type.name()) + " exception thrown"
-            val descriptionWithReason = if (exceptionMessage == null) description else "$description: $exceptionMessage"
-            return descriptionWithReason
-          }
-        }
-      }
-    }
-    return null
   }
 }
