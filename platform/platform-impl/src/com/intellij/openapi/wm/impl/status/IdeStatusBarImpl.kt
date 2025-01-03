@@ -472,11 +472,14 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
     val indicatorFinished = CompletableDeferred<Unit>()
     indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-      override fun stop() {
-        super.stop()
+      override fun finish(task: TaskInfo) {
+        super.finish(task)
         indicatorFinished.complete(Unit)
       }
     })
+
+    // already finished, progress might not send another finished message
+    if (indicator.isFinished(info)) return
 
     coroutineScope.launch {
       val project = project ?: return@launch
