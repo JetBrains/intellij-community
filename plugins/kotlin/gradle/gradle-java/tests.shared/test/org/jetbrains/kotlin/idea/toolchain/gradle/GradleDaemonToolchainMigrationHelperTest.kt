@@ -1,22 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.toolchain.gradle
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.withRegisteredSdks
+import com.intellij.util.lang.JavaVersion
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.java.JdkVersionDetector
-import org.jetbrains.kotlin.idea.gradle.extensions.nameSupportedByFoojayPlugin
+import org.jetbrains.jps.model.java.JdkVersionDetector.Variant
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getTopLevelBuildScriptSettingsPsiFile
-import org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonToolchainMigrationService
+import org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonJvmCriteriaMigrationHelper
 import org.jetbrains.plugins.gradle.importing.GradleProjectSdkResolverTestCase
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.jetbrains.plugins.gradle.util.toJvmVendor
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 
-class GradleDaemonToolchainMigrationServiceTest: GradleProjectSdkResolverTestCase() {
+class GradleDaemonToolchainMigrationHelperTest: GradleProjectSdkResolverTestCase() {
 
     @Test
     @TargetVersions("8.8+")
@@ -31,11 +33,11 @@ class GradleDaemonToolchainMigrationServiceTest: GradleProjectSdkResolverTestCas
                 loadProject()
                 check(GradleDaemonJvmPropertiesFile.getProperties(Path(projectPath)) == null)
 
-                invokeAndWaitIfNeeded {
-                    GradleDaemonToolchainMigrationService(project).startMigration(projectPath)
-                }
+                GradleDaemonJvmCriteriaMigrationHelper.migrateToDaemonJvmCriteria(project, projectPath)
+                    .get(1, TimeUnit.MINUTES)
+
                 assertFoojayPluginIsApplied()
-                assertDaemonJvmProperties(jdkInfo.version.feature, jdkInfo.variant.nameSupportedByFoojayPlugin)
+                assertDaemonJvmProperties(jdkInfo.version, jdkInfo.variant)
             }
         }
     }
@@ -46,10 +48,9 @@ class GradleDaemonToolchainMigrationServiceTest: GradleProjectSdkResolverTestCas
         }
     }
 
-    private fun assertDaemonJvmProperties(expectedVersion: Int, expectedVendor: String?) {
-        GradleDaemonJvmPropertiesFile.getProperties(Path(projectPath))!!.run {
-            assertEquals(expectedVersion.toString(), version?.value)
-            assertEquals(expectedVendor, vendor?.value)
-        }
+    private fun assertDaemonJvmProperties(expectedVersion: JavaVersion, expectedVendor: Variant) {
+        val properties = GradleDaemonJvmPropertiesFile.getProperties(Path(projectPath))!!
+        assertEquals(expectedVersion.feature.toString(), properties.version?.value)
+        assertEquals(expectedVendor.toJvmVendor().rawVendor, properties.vendor?.value?.toJvmVendor()?.rawVendor)
     }
 }
