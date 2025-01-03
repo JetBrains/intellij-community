@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
  * some binary roots. We compute package names per binary root, so it makes sense to cache it on this level as well.
  */
 @Service(Service.Level.PROJECT)
-internal class IdeKotlinModulePackageNamesProvider(private val project: Project) : Disposable {
+class IdeKotlinModulePackageNamesProvider(private val project: Project) : Disposable {
     private val cache = NullableConcurrentCache<KaModule, Set<String>?>()
 
     private val binaryRootsCache = NullableConcurrentCache<String, Set<String>>()
