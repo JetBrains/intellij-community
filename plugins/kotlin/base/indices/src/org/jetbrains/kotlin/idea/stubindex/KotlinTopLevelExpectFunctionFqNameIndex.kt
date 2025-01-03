@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 /**
  * Stores top level functions with `expect` modifier by full qualified name
  */
-class KotlinTopLevelExpectFunctionFqNameIndex internal constructor() : StringStubIndexExtension<KtNamedFunction>() {
+class KotlinTopLevelExpectFunctionFqNameIndex : StringStubIndexExtension<KtNamedFunction>() {
     companion object Helper : KotlinStringStubIndexHelper<KtNamedFunction>(KtNamedFunction::class.java) {
         override val indexKey: StubIndexKey<String, KtNamedFunction> =
             StubIndexKey.createIndexKey(KotlinTopLevelExpectFunctionFqNameIndex::class.simpleName!!)

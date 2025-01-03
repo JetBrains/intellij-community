@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtScript
 
 @ApiStatus.Internal
-class KotlinScriptFqnIndex internal constructor() : StringStubIndexExtension<KtScript>() {
+class KotlinScriptFqnIndex : StringStubIndexExtension<KtScript>() {
     companion object Helper : KotlinStringStubIndexHelper<KtScript>(KtScript::class.java) {
         override val indexKey: StubIndexKey<String, KtScript> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex")

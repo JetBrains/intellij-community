@@ -7,7 +7,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
-class KotlinPropertyShortNameIndex internal constructor() : StringStubIndexExtension<KtNamedDeclaration>() {
+class KotlinPropertyShortNameIndex : StringStubIndexExtension<KtNamedDeclaration>() {
     companion object Helper : KotlinStringStubIndexHelper<KtNamedDeclaration>(KtNamedDeclaration::class.java) {
         override val indexKey: StubIndexKey<String, KtNamedDeclaration> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex")

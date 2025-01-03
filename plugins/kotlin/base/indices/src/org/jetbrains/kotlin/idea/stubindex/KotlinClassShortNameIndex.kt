@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
-class KotlinClassShortNameIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
+class KotlinClassShortNameIndex : StringStubIndexExtension<KtClassOrObject>() {
     companion object Helper : KotlinStringStubIndexHelper<KtClassOrObject>(KtClassOrObject::class.java) {
         @JvmField
         @ApiStatus.ScheduledForRemoval

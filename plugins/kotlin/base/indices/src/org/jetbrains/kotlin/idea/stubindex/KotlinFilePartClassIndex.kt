@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtFile
  * "kotlin.text.StringsKt___StringsJvmKt" -> KtFile("_StringsJvm") (sources)
  * "kotlin.LazyKt__LazyKt" -> KtFile("Lazy.kt") (sources)
  */
-class KotlinFilePartClassIndex internal constructor() : StringStubIndexExtension<KtFile>() {
+class KotlinFilePartClassIndex : StringStubIndexExtension<KtFile>() {
     companion object Helper : KotlinStringStubIndexHelper<KtFile>(KtFile::class.java) {
         override val indexKey: StubIndexKey<String, KtFile> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFilePartClassIndex")

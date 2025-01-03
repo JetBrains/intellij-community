@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProv
 import org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 
-internal class IdeKotlinPackagePartProviderFactory : KotlinPackagePartProviderFactory {
+class IdeKotlinPackagePartProviderFactory : KotlinPackagePartProviderFactory {
     override fun createPackagePartProvider(scope: GlobalSearchScope): PackagePartProvider {
         return IDEPackagePartProvider(scope)
     }

@@ -7,7 +7,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
-class KotlinAnnotationsIndex internal constructor() : StringStubIndexExtension<KtAnnotationEntry>() {
+class KotlinAnnotationsIndex : StringStubIndexExtension<KtAnnotationEntry>() {
     companion object Helper : KotlinStringStubIndexHelper<KtAnnotationEntry>(KtAnnotationEntry::class.java) {
         @JvmField
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.HIDDEN)

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 /**
  * Stores package top level function (both extension and non-extension) full qualified names.
  */
-class KotlinTopLevelFunctionFqnNameIndex internal constructor() : StringStubIndexExtension<KtNamedFunction>() {
+class KotlinTopLevelFunctionFqnNameIndex: StringStubIndexExtension<KtNamedFunction>() {
     companion object Helper : KotlinStringStubIndexHelper<KtNamedFunction>(KtNamedFunction::class.java) {
         override val indexKey: StubIndexKey<String, KtNamedFunction> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex")

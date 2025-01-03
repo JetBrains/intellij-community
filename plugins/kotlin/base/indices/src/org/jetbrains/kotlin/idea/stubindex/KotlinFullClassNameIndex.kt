@@ -7,7 +7,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
-class KotlinFullClassNameIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
+class KotlinFullClassNameIndex : StringStubIndexExtension<KtClassOrObject>() {
     companion object Helper : KotlinStringStubIndexHelper<KtClassOrObject>(KtClassOrObject::class.java) {
         @JvmField
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)

@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
-class KotlinJvmNameAnnotationIndex internal constructor() : StringStubIndexExtension<KtAnnotationEntry>() {
+class KotlinJvmNameAnnotationIndex : StringStubIndexExtension<KtAnnotationEntry>() {
     companion object Helper : KotlinStringStubIndexHelper<KtAnnotationEntry>(KtAnnotationEntry::class.java) {
         override val indexKey: StubIndexKey<String, KtAnnotationEntry> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex")
