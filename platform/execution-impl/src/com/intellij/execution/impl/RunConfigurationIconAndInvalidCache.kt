@@ -6,6 +6,7 @@ import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -15,7 +16,10 @@ import javax.swing.Icon
 import kotlin.math.max
 
 internal class RunConfigurationIconAndInvalidCache : RunConfigurationIconCache {
-  private data class ConfigurationInfo(val icon: Icon, val isInvalid: Boolean, val finishTime: Long, val calculationTime: Long)
+  private data class ConfigurationInfo(
+    val icon: Icon, val isInvalid: Boolean, val finishTime: Long, val calculationTime: Long,
+    val lafId: String? = LafManager.getInstance().currentUIThemeLookAndFeel?.id
+  )
 
   private val resultMap = ConcurrentCollectionFactory.createConcurrentMap<String, ConfigurationInfo>()
 
@@ -43,7 +47,8 @@ internal class RunConfigurationIconAndInvalidCache : RunConfigurationIconCache {
   fun checkValidity(id: String, project: Project) {
     val configurationInfo = resultMap[id]
     val expired = configurationInfo == null ||
-                  (System.currentTimeMillis() - configurationInfo.finishTime) > (max(configurationInfo.calculationTime, 150L) * 10)
+                  (System.currentTimeMillis() - configurationInfo.finishTime) > (max(configurationInfo.calculationTime, 150L) * 10) ||
+                  LafManager.getInstance().currentUIThemeLookAndFeel?.id != configurationInfo.lafId
 
     if (expired) {
       recalculateIcon(id, project)
