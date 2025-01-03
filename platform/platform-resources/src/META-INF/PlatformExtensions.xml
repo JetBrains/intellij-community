@@ -1120,7 +1120,6 @@
     <fileEditorProvider id="jcomponent-editor" implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
     <fileEditorProvider id="settingsWindow" implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
-    <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.BidiContentNotificationProvider"/>
