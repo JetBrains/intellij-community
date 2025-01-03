@@ -920,6 +920,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ConfigFolder = load("expui/build/taskGroup.svg", "nodes/configFolder.svg", -1322890185, 0);
     /** 16x16 */ public static final @NotNull Icon Console = load("expui/fileTypes/shell.svg", "nodes/console.svg", 1497553448, 0);
     /** 16x16 */ public static final @NotNull Icon Constant = load("expui/nodes/constant.svg", "nodes/constant.svg", -1342227936, 0);
+    /** 16x16 */ public static final @NotNull Icon Constructor = load("expui/nodes/constructor.svg", "nodes/constructor.svg", 1815954927, 0);
     /** 16x16 */ public static final @NotNull Icon Controller = load("expui/nodes/controller.svg", "nodes/controller.svg", 1122138685, 0);
     /** 16x16 */ public static final @NotNull Icon CopyOfFolder = load("expui/nodes/copyOfFolder.svg", "nodes/copyOfFolder.svg", 992788029, 0);
     /** 16x16 */ public static final @NotNull Icon CustomRegion = load("nodes/customRegion.svg", 254535518, 0);
@@ -1361,7 +1362,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Repositories = load("expui/toolwindows/repositories.svg", 974555029, 2);
     /** 13x13 */ public static final @NotNull Icon SettingSync = load("expui/toolwindows/settingSync.svg", "toolwindows/settingSync.svg", -1037362170, 2);
     /** 16x16 */ public static final @NotNull Icon Task = load("expui/toolwindows/task.svg", -1024942290, 2);
-    /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("toolwindows/toolWindowAnalyzeDataflow.svg", -1971803045, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowAnalyzeDataflow = load("expui/toolwindows/dataflow.svg", "toolwindows/toolWindowAnalyzeDataflow.svg", -1971803045, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowAnt = load("expui/toolwindows/ant.svg", "toolwindows/toolWindowAnt.svg", -835486132, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBookmarks = load("expui/toolwindows/bookmarks.svg", "toolwindows/toolWindowBookmarks.svg", 1090576904, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowBuild = load("expui/toolwindows/build.svg", "toolwindows/toolWindowBuild.svg", -477872521, 2);
@@ -1388,6 +1389,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowProject = load("expui/toolwindows/project.svg", "toolwindows/toolWindowProject.svg", 373456992, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowRun = load("expui/toolwindows/run.svg", "toolwindows/toolWindowRun.svg", 562367487, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowRunWithCoverage = load("expui/toolwindows/toolWindowRunWithCoverage.svg", "toolwindows/toolWindowRunWithCoverage.svg", -2005199929, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowServer = load("expui/toolwindows/webServer.svg", "toolwindows/toolWindowServer.svg", 79377911, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowServices = load("expui/toolwindows/services.svg", "toolwindows/toolWindowServices.svg", 116892796, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowStructure = load("expui/toolwindows/structure.svg", "toolwindows/toolWindowStructure.svg", -1465620418, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowTodo = load("expui/toolwindows/todo.svg", "toolwindows/toolWindowTodo.svg", -2027082181, 2);

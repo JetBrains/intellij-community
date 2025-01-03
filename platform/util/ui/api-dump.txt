@@ -855,6 +855,7 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:ConfigFolder:javax.swing.Icon
 - sf:Console:javax.swing.Icon
 - sf:Constant:javax.swing.Icon
+- sf:Constructor:javax.swing.Icon
 - sf:Controller:javax.swing.Icon
 - sf:CopyOfFolder:javax.swing.Icon
 - sf:CustomRegion:javax.swing.Icon
@@ -1276,6 +1277,7 @@ f:com.intellij.icons.AllIcons$Toolwindows
 - sf:ToolWindowProject:javax.swing.Icon
 - sf:ToolWindowRun:javax.swing.Icon
 - sf:ToolWindowRunWithCoverage:javax.swing.Icon
+- sf:ToolWindowServer:javax.swing.Icon
 - sf:ToolWindowServices:javax.swing.Icon
 - sf:ToolWindowStructure:javax.swing.Icon
 - sf:ToolWindowTodo:javax.swing.Icon

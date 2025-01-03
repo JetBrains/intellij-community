@@ -650,6 +650,7 @@
       "classAnonymous.svg": "nodes/anonymousClass.svg",
       "classInitializer.svg": "nodes/classInitializer.svg",
       "constant.svg": "nodes/constant.svg",
+      "constructor.svg": "nodes/constructor.svg",
       "controller.svg": "nodes/controller.svg",
       "copyOfFolder.svg": ["nodes/copyOfFolder.svg", "vcs/folders.svg"],
       "dataColumn.svg": "nodes/dataColumn.svg",
@@ -923,6 +924,7 @@
       "build.svg": "toolwindows/toolWindowBuild.svg",
       "commit.svg": "toolwindows/toolWindowCommit.svg",
       "coverage.svg": "toolwindows/toolWindowCoverage.svg",
+      "dataflow.svg": "toolwindows/toolWindowAnalyzeDataflow.svg",
       "debug.svg": "toolwindows/toolWindowDebugger.svg",
       "documentation.svg": "toolwindows/documentation.svg",
       "find.svg": "toolwindows/toolWindowFind.svg",
@@ -951,7 +953,8 @@
       "web.svg": [
         "toolwindows/webToolWindow.svg",
         "general/web.svg"
-      ]
+      ],
+      "webServer.svg": "toolwindows/toolWindowServer.svg"
     },
     "vcs": {
       "arrowLeft.svg": "vcs/arrow_left.svg",
