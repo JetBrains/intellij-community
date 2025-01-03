@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -462,7 +463,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   private static void appendParam(List<? super String> cmdLine, String parameter) {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       if (parameter.contains("\"")) {
         parameter = parameter.replace("\"", "\\\"");
       }

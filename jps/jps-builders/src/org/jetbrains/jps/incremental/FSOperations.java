@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,6 +8,7 @@ import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
@@ -320,7 +321,7 @@ public final class FSOperations {
           if (markDirty) {
             // if it is a full project rebuild, all storages are already completely cleared;
             // so passing null because there is no need to access the storage to clear non-existing data
-            StampsStorage<?> marker = context.isProjectRebuild()? null : stampStorage;
+            StampsStorage<?> marker = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) ? null : stampStorage;
             context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);
           }
           if (currentFiles != null) {
@@ -400,7 +401,7 @@ public final class FSOperations {
     }
   }
 
-  public static void pruneEmptyDirs(CompileContext context, final @Nullable Set<File> dirsToDelete) {
+  public static void pruneEmptyDirs(@NotNull CompileContext context, @Unmodifiable @Nullable Set<File> dirsToDelete) {
     if (dirsToDelete == null || dirsToDelete.isEmpty()) {
       return;
     }

@@ -2128,7 +2128,7 @@ org.jetbrains.jps.incremental.CompileContext
 - a:getProjectDescriptor():org.jetbrains.jps.cmdline.ProjectDescriptor
 - a:getScope():org.jetbrains.jps.incremental.CompileScope
 - isCanceled():Z
-- a:isProjectRebuild():Z
+- isProjectRebuild():Z
 - a:markNonIncremental(org.jetbrains.jps.incremental.ModuleBuildTarget):V
 - a:removeBuildListener(org.jetbrains.jps.incremental.BuildListener):V
 - a:setCompilationStartStamp(java.util.Collection,J):V
@@ -2561,6 +2561,7 @@ f:org.jetbrains.jps.incremental.messages.FileGeneratedEvent
 - add(java.lang.String,java.lang.String):V
 - getPaths():java.util.Collection
 - getSourceTarget():org.jetbrains.jps.builders.BuildTarget
+- isEmpty():Z
 f:org.jetbrains.jps.incremental.messages.ProgressMessage
 - org.jetbrains.jps.incremental.messages.BuildMessage
 - <init>(java.lang.String):V

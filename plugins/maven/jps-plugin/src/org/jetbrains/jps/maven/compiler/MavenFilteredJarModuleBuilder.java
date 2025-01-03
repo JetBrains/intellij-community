@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,13 +32,12 @@ import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
 
-public class MavenFilteredJarModuleBuilder extends ModuleLevelBuilder {
-
+public final class MavenFilteredJarModuleBuilder extends ModuleLevelBuilder {
   private static final Key<MavenProjectConfiguration> CACHE_JAR_CONFIG =
     Key.create("MavenFilteredJarModuleBuilder.MavenProjectConfiguration.cache");
   private final ConcurrentMap<String, BuildListener> listenerMap = new ConcurrentHashMap<>();
 
-  protected MavenFilteredJarModuleBuilder() {
+  MavenFilteredJarModuleBuilder() {
     super(BuilderCategory.CLASS_INSTRUMENTER);
   }
 
@@ -50,24 +50,24 @@ public class MavenFilteredJarModuleBuilder extends ModuleLevelBuilder {
     BuildListener listener = new BuildListener() {
       @Override
       public void filesGenerated(@NotNull FileGeneratedEvent event) {
-        event.getPaths().forEach(pair -> {
+        for (Pair<String, String> pair : event.getPaths()) {
           var configs = filter(jarsConfig, c -> c.originalOutput.equals(pair.first));
           configs.forEach(config -> {
             copyCreatedFileIfNeeded(pair, config, context);
           });
-        });
+        }
       }
 
       @Override
       public void filesDeleted(@NotNull FileDeletedEvent event) {
         List<MavenFilteredJarConfiguration> jarsConfig = getJarsConfig(context, chunk);
         if (jarsConfig.isEmpty()) return;
-        event.getFilePaths().forEach(deletedFilePath -> {
+        for (String deletedFilePath : event.getFilePaths()) {
           var configs = filter(jarsConfig, c -> FileUtil.isAncestor(c.originalOutput, deletedFilePath, true));
-          configs.forEach(config -> {
+          for (MavenFilteredJarConfiguration config : configs) {
             deleteFile(config, deletedFilePath);
-          });
-        });
+          }
+        }
       }
     };
     listenerMap.put(nameFor(chunk), listener);
@@ -79,11 +79,15 @@ public class MavenFilteredJarModuleBuilder extends ModuleLevelBuilder {
   }
 
   private static void deleteFile(MavenFilteredJarConfiguration config, String path) {
-    String relative = FileUtil.getRelativePath(new File(config.originalOutput), new File(path));
+    String relative = FileUtilRt.getRelativePath(new File(config.originalOutput), new File(path));
     if (relative == null) {
       return;
     }
-    FileUtil.delete(new File(new File(config.jarOutput), relative));
+    try {
+      FileUtilRt.deleteRecursively(new File(new File(config.jarOutput), relative).toPath());
+    }
+    catch (IOException ignored) {
+    }
   }
 
   private static void copyCreatedFileIfNeeded(Pair<String, String> pair, MavenFilteredJarConfiguration config, CompileContext context) {

@@ -239,7 +239,7 @@ public final class IncProjectBuilder {
       context = createContext(scope);
       sourcesState = new BuildTargetSourcesState(context);
       // clear source state report if force clean or rebuild
-      if (forceCleanCaches || context.isProjectRebuild()) {
+      if (forceCleanCaches || JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
         sourcesState.clearSourcesState();
       }
 
@@ -469,7 +469,7 @@ public final class IncProjectBuilder {
     context.setDone(0.0f);
 
     LOG.info("Building project; isRebuild:" +
-             context.isProjectRebuild() +
+             JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) +
              "; isMake:" +
              context.isMake() +
              " parallel compilation:" +
@@ -528,7 +528,7 @@ public final class IncProjectBuilder {
 
       // clean roots for targets for which rebuild is forced
       Tracer.Span cleanOutputSourcesSpan = Tracer.start("Clean output sources");
-      cleanOutputRoots(context, context.isProjectRebuild() || forceCleanCaches);
+      cleanOutputRoots(context, JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) || forceCleanCaches);
       cleanOutputSourcesSpan.complete();
 
       Tracer.Span beforeTasksSpan = Tracer.start("'before' tasks");
@@ -553,7 +553,7 @@ public final class IncProjectBuilder {
     finally {
       if (buildProgress != null) {
         buildProgress.updateExpectedAverageTime();
-        if (context.isProjectRebuild() && !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
+        if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) && !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
           projectDescriptor.getTargetsState().setLastSuccessfulRebuildDuration(buildProgress.getAbsoluteBuildTime());
         }
       }
@@ -671,7 +671,7 @@ public final class IncProjectBuilder {
       }
       else {
         throw e;
-      };
+      }
     }
     catch (ProjectBuildException e) {
       projectBuildException = e;

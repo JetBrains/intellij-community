@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,10 +9,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.*;
@@ -601,7 +598,11 @@ public final class JavaBuilderUtil {
     return scope.isBuildIncrementally(JavaModuleBuildTargetType.PRODUCTION) || scope.isBuildIncrementally(JavaModuleBuildTargetType.TEST);
   }
 
-  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<? extends File> affected, ModulesBasedFileFilter moduleBasedFilter) {
+  private static @NotNull @Unmodifiable List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(
+    CompileContext context,
+    Collection<? extends File> affected,
+    ModulesBasedFileFilter moduleBasedFilter
+  ) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
@@ -610,7 +611,7 @@ public final class JavaBuilderUtil {
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
         final JavaSourceRootDescriptor moduleAndRoot = rootIndex.findJavaRootDescriptor(context, file);
-        result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
+        result.add(new Pair<>(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
       }
     }
     return result;

@@ -121,8 +121,7 @@ public final class BuildProgress {
     for (Map.Entry<BuildTarget<?>, Double> entry : currentProgress.entrySet()) {
       expectedTimeForFinishedWork += expectedBuildTimeForTarget.getLong(entry.getKey().getTargetType()) * entry.getValue();
     }
-    float done = ((float)expectedTimeForFinishedWork) / expectedTotalTime;
-    context.setDone(done);
+    context.setDone((float)(expectedTimeForFinishedWork / expectedTotalTime));
   }
 
   public synchronized void updateProgress(BuildTarget<?> target, double done, CompileContext context) {

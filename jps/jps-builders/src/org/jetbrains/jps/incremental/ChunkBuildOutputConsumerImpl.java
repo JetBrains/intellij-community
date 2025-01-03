@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.util.containers.FileHashStrategy;
@@ -19,7 +19,7 @@ import java.util.*;
 
 final class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer {
   private final CompileContext myContext;
-  private final Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new HashMap<>();
+  private final Map<BuildTarget<?>, BuildOutputConsumerImpl> targetToConsumer = new HashMap<>();
   private final Map<String, CompiledClass> myClasses = new HashMap<>();
   private final Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new HashMap<>();
   private final Object2ObjectMap<File, String> myOutputToBuilderNameMap =
@@ -40,7 +40,7 @@ final class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputCon
     if (classes != null) {
       return Collections.unmodifiableCollection(classes);
     }
-    return Collections.emptyList();
+    return List.of();
   }
 
   @Override
@@ -78,36 +78,37 @@ final class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputCon
     if (currentBuilder != null) {
       final String previousBuilder = myOutputToBuilderNameMap.put(outputFile, currentBuilder);
       if (previousBuilder != null && !previousBuilder.equals(currentBuilder)) {
-        final String source = sourcePaths.isEmpty()? null : sourcePaths.iterator().next();
+        final String source = sourcePaths.isEmpty() ? null : sourcePaths.iterator().next();
         myContext.processMessage(new CompilerMessage(
-          currentBuilder, BuildMessage.Kind.ERROR, JpsBuildBundle.message("build.message.conflicting.outputs.error", outputFile.getAbsolutePath(), previousBuilder), source
+          currentBuilder, BuildMessage.Kind.ERROR,
+          JpsBuildBundle.message("build.message.conflicting.outputs.error", outputFile.getAbsolutePath(), previousBuilder), source
         ));
       }
     }
-    BuildOutputConsumerImpl consumer = myTarget2Consumer.get(target);
+    BuildOutputConsumerImpl consumer = targetToConsumer.get(target);
     if (consumer == null) {
       consumer = new BuildOutputConsumerImpl(target, myContext);
-      myTarget2Consumer.put(target, consumer);
+      targetToConsumer.put(target, consumer);
     }
     consumer.registerOutputFile(outputFile, sourcePaths);
   }
 
   public void fireFileGeneratedEvents() {
-    for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
+    for (BuildOutputConsumerImpl consumer : targetToConsumer.values()) {
       consumer.fireFileGeneratedEvent();
     }
   }
 
   public int getNumberOfProcessedSources() {
     int total = 0;
-    for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
+    for (BuildOutputConsumerImpl consumer : targetToConsumer.values()) {
       total += consumer.getNumberOfProcessedSources();
     }
     return total;
   }
 
   public void clear() {
-    myTarget2Consumer.clear();
+    targetToConsumer.clear();
     myClasses.clear();
     myTargetToClassesMap.clear();
     myOutputToBuilderNameMap.clear();

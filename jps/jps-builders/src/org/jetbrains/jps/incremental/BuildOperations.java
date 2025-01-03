@@ -223,20 +223,20 @@ public final class BuildOperations {
   }
 
   public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<? super String> deletedPaths, @Nullable Set<? super File> parentDirs) {
-    File file = new File(path);
+    Path file = Path.of(path);
     boolean deleted = deleteRecursively(file, deletedPaths);
     if (deleted && parentDirs != null) {
-      File parent = file.getParentFile();
+      Path parent = file.getParent();
       if (parent != null) {
-        parentDirs.add(parent);
+        parentDirs.add(parent.toFile());
       }
     }
     return deleted;
   }
 
-  private static boolean deleteRecursively(final File file, final Collection<? super String> deletedPaths) {
+  private static boolean deleteRecursively(@NotNull Path file, @NotNull Collection<? super String> deletedPaths) {
     try {
-      Files.walkFileTree(file.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+      Files.walkFileTree(file, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
         @Override
         public FileVisitResult visitFile(Path f, BasicFileAttributes attrs) throws IOException {
           try {
@@ -263,7 +263,6 @@ public final class BuildOperations {
           }
           return FileVisitResult.CONTINUE;
         }
-
       });
       return true;
     }
