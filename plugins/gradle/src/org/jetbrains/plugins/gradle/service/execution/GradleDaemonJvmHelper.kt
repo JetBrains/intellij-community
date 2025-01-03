@@ -5,6 +5,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
+import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.project.Project
@@ -21,6 +22,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 
 private val MIN_VERSION_SUPPORTING_DAEMON_TOOLCHAIN_VERSION_CRITERIA: GradleVersion = GradleVersion.version("8.8")
 private val MIN_VERSION_SUPPORTING_DAEMON_TOOLCHAIN_VENDOR_CRITERIA: GradleVersion = GradleVersion.version("8.10")
@@ -78,13 +80,11 @@ object GradleDaemonJvmHelper {
   }
 
   @JvmStatic
-  @JvmOverloads
   fun updateProjectDaemonJvmCriteria(
     project: Project,
     externalProjectPath: String,
     daemonJvmCriteria: GradleDaemonJvmCriteria?,
-    executionMode: ProgressExecutionMode = ProgressExecutionMode.START_IN_FOREGROUND_ASYNC,
-  ) {
+  ): CompletableFuture<Boolean> {
     val taskSettings = ExternalSystemTaskExecutionSettings().apply {
       this.externalProjectPath = externalProjectPath
       externalSystemIdString = GradleConstants.SYSTEM_ID.id
@@ -107,12 +107,27 @@ object GradleDaemonJvmHelper {
       putUserData(UPDATE_DAEMON_JVM_TASK, true)
     }
 
+    val taskResult = CompletableFuture<Boolean>()
+
+    val taskCallback = object : TaskCallback {
+      override fun onSuccess() {
+        taskResult.complete(true)
+      }
+
+      override fun onFailure() {
+        taskResult.complete(false)
+      }
+    }
+
     val executionSpec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, taskSettings)
-      .withProgressExecutionMode(executionMode)
+      .withProgressExecutionMode(ProgressExecutionMode.START_IN_FOREGROUND_ASYNC)
       .withActivateToolWindowBeforeRun(true)
       .withUserData(taskUserData)
+      .withCallback(taskCallback)
       .build()
 
     ExternalSystemUtil.runTask(executionSpec)
+
+    return taskResult
   }
 }
