@@ -29,9 +29,9 @@ internal fun isValidFileType(fileType: FileType?): Boolean {
   return fileType === JavaClassFileType.INSTANCE || fileType === JavaFileType.INSTANCE
 }
 
-internal fun isMarkedForCompilation(project: Project, virtualFile: VirtualFile?): Boolean {
+internal fun isMarkedForCompilation(project: Project, virtualFile: VirtualFile): Boolean {
   val compilerManager = CompilerManager.getInstance(project)
-  val compileScope = compilerManager.createFilesCompileScope(arrayOf<VirtualFile?>(virtualFile))
+  val compileScope = compilerManager.createFilesCompileScope(arrayOf(virtualFile))
   return !compilerManager.isUpToDate(compileScope)
 }
 

@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -30,13 +29,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.ui.JBColor
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.util.progress.sleepCancellable
-import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import java.util.function.Consumer
@@ -57,15 +53,11 @@ internal class BytecodeToolWindowPanel(
 
   private val classNameLabel: JLabel = JLabel()
 
-  private val errorLabel: JLabel = JLabel()
-
   private var currentlyDisplayedClassFQN: String? = null
 
   private var currentlyFocusedSourceFile: VirtualFile?
 
   private var existingLoadBytecodeTask: LoadBytecodeTask? = null
-
-  private var existingUpdateBytecodeStatusTask: UpdateBytecodeStatusTask? = null
 
   init {
     currentlyFocusedSourceFile = initialSourceEditor.virtualFile
@@ -82,10 +74,9 @@ internal class BytecodeToolWindowPanel(
   private fun setUpContent() {
     bytecodeEditor.setBorder(null)
     add(bytecodeEditor.getComponent())
-    val optionPanel = JPanel(FlowLayout(FlowLayout.LEFT, 12, 8))
-    optionPanel.add(classNameLabel)
-    errorLabel.setForeground(JBColor.YELLOW)
-    optionPanel.add(errorLabel)
+    val optionPanel = JPanel(FlowLayout(FlowLayout.LEFT, 12, 8)).apply {
+      add(classNameLabel)
+    }
     add(optionPanel, BorderLayout.NORTH)
   }
 
@@ -146,7 +137,6 @@ internal class BytecodeToolWindowPanel(
     }
 
     currentlyDisplayedClassFQN = containingClass.getQualifiedName()
-    queueUpdateBytecodeStatusTask()
 
     val sourceStartOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionStart()
     val sourceEndOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionEnd()
@@ -190,24 +180,6 @@ internal class BytecodeToolWindowPanel(
     bytecodeEditor.getSelectionModel().setSelection(startOffset, endOffset)
   }
 
-  private fun queueUpdateBytecodeStatusTask() {
-    if (currentlyFocusedSourceFile == null) return
-
-    // If a new task was scheduled, we want to cancel the previous one.
-    if (existingUpdateBytecodeStatusTask != null) {
-      if (existingUpdateBytecodeStatusTask?.isRunning == true) {
-        existingUpdateBytecodeStatusTask?.cancel()
-      }
-      existingUpdateBytecodeStatusTask = null
-    }
-    existingUpdateBytecodeStatusTask = UpdateBytecodeStatusTask(project, currentlyFocusedSourceFile!!) { isUpToDate ->
-      ApplicationManager.getApplication().invokeLater {
-        if (isUpToDate == true) setErrorText(null) else setErrorText(message("class.file.may.be.out.of.date"))
-      }
-    }
-    existingUpdateBytecodeStatusTask?.queue()
-  }
-
   /** Update the contents of the whole editor in the tool window, including reading bytecode again from the currently opened file. */
   @RequiresEdt
   private fun queueLoadBytecodeTask(@RequiresWriteLock @RequiresEdt onAfterBytecodeLoaded: Runnable?) {
@@ -243,12 +215,6 @@ internal class BytecodeToolWindowPanel(
   private fun setBytecodeText(bytecodeWithDebugInfo: String?, bytecodeWithoutDebugInfo: String) {
     bytecodeEditor.getDocument().putUserData<String?>(BYTECODE_WITH_DEBUG_INFO, bytecodeWithDebugInfo)
     bytecodeEditor.getDocument().setText(StringUtil.convertLineSeparators(bytecodeWithoutDebugInfo))
-  }
-
-  @RequiresEdt
-  private fun setErrorText(errorText: @Nls String?) {
-    errorLabel.setText(errorText)
-    errorLabel.isVisible = errorText != null
   }
 
   @RequiresEdt
@@ -310,38 +276,6 @@ internal class BytecodeToolWindowPanel(
     override fun onCancel() {
       val progressIndicator = myProgressIndicator ?: return
       LOG.warn("task was canceled, task title: " + title + "task text: " + progressIndicator.getText())
-    }
-  }
-
-  private class UpdateBytecodeStatusTask(
-    project: Project,
-    private val myVirtualFile: VirtualFile,
-    private val onUpToDateCheckDone: Consumer<Boolean?>
-  ) : Task.Backgroundable(project, message(
-    "checking.if.bytecode.is.up.to.date"), true) {
-    private var myProgressIndicator: ProgressIndicator? = null
-
-    fun cancel() {
-      myProgressIndicator?.cancel()
-    }
-
-    val isRunning: Boolean get() = myProgressIndicator != null && myProgressIndicator!!.isRunning()
-
-    @RequiresBackgroundThread
-    override fun run(indicator: ProgressIndicator) {
-      if (myProject == null) return
-      if (!myVirtualFile.isValid()) return
-      myProgressIndicator = indicator
-
-      sleepCancellable(1000) // Poor man's event debouncing
-
-      val isInContent = ReadAction.computeCancellable<Boolean, RuntimeException> {
-        ProjectRootManager.getInstance(myProject!!).getFileIndex().isInContent(myVirtualFile)
-      }
-      if (!isInContent) return
-
-      val isUpToDate = !isMarkedForCompilation(myProject!!, myVirtualFile)
-      onUpToDateCheckDone.accept(isUpToDate)
     }
   }
 
