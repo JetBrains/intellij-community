@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -37,11 +37,11 @@ public final class CompileContextImpl extends UserDataHolderBase implements Comp
   private volatile float myDone = -1.0f;
   private final EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
 
-  CompileContextImpl(@NotNull CompileScope scope,
-                     @NotNull ProjectDescriptor pd,
-                     @NotNull MessageHandler delegateMessageHandler,
-                     @NotNull Map<String, String> builderParams,
-                     @NotNull CanceledStatus cancelStatus) {
+  public CompileContextImpl(@NotNull CompileScope scope,
+                            @NotNull ProjectDescriptor pd,
+                            @NotNull MessageHandler delegateMessageHandler,
+                            @NotNull Map<String, String> builderParams,
+                            @NotNull CanceledStatus cancelStatus) {
     myProjectDescriptor = pd;
     myBuilderParams = Collections.unmodifiableMap(builderParams);
     myCancelStatus = cancelStatus;
