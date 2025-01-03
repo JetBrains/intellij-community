@@ -144,6 +144,9 @@ public class JavaHomeFinderBasic {
 
       return scanAll(dirsToCheck, false);
     }
+    catch (CancellationException e) {
+      throw e;
+    }
     catch (Exception e) {
       log.warn("Failed to scan PATH for JDKs. " + e.getMessage(), e);
       return Collections.emptySet();
