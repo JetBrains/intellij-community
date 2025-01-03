@@ -42,7 +42,26 @@ import java.util.Iterator;
 public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element> & CommonJavaRunConfigurationParameters>
   extends SMTRunnerConsoleProperties implements SMTRunnerTestTreeViewProvider {
 
+  /**
+   * A {@link BooleanProperty} that determines whether to use wall time for time-related operations
+   * in the Java-style test console. The default value is {@code false}.
+   * <p>
+   * This setting affects how time is reported and displayed, potentially switching
+   * between "wall-clock time" and another time measurement mode depending on its value.
+   * <p>
+   * It is public because it can be used not only by inheritances but also some java-style test consoles (for example, Gradle)
+   */
   public static final BooleanProperty USE_WALL_TIME = new BooleanProperty("useWallTime", false);
+  /**
+   * A {@link BooleanProperty} that determines whether the live time display is enabled
+   * in the test framework console. This property allows enabling or disabling the
+   * inclusion of live timing information, typically used to monitor ongoing test execution.
+   * <p>
+   * The default value for this property is {@code true}, meaning live time display is
+   * enabled by default.
+   * <p>
+   * It is public because it can be used not only by inheritances but also some java-style test consoles (for example, Gradle)
+   */
   public static final BooleanProperty SHOW_LIVE_TIME = new BooleanProperty("liveTime", true);
 
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
