@@ -30,17 +30,14 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.build.BuildDependenciesJps;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -247,7 +244,7 @@ public class RemoteConnectionBuilder {
     }
     if (!properties.isEmpty()) {
       try {
-        Path path = EelPathUtils.createTemporaryFile(project, "capture", ".props");
+        Path path = EelPathUtils.createTemporaryFile(project, "capture", ".props", true);
         try (OutputStream out = Files.newOutputStream(path)) {
           properties.store(out, null);
           return "=" + EelPathUtils.getUriLocalToEel(path).toASCIIString();

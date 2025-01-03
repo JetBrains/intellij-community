@@ -45,14 +45,14 @@ object EelPathUtils {
   }
 
   @JvmStatic
-  fun createTemporaryFile(project: Project?, prefix: String = "", suffix: String = ""): Path {
+  fun createTemporaryFile(project: Project?, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = true): Path {
     if (project == null || isProjectLocal(project)) {
       return Files.createTempFile(prefix, suffix)
     }
     val projectFilePath = project.projectFilePath ?: return Files.createTempFile(prefix, suffix)
     return runBlockingMaybeCancellable {
       val eel = Path.of(projectFilePath).getEelApi()
-      val file = eel.fs.createTemporaryFile(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().suffix(suffix).prefix(prefix).build()).getOrThrowFileSystemException()
+      val file = eel.fs.createTemporaryFile(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException()
       eel.mapper.toNioPath(file)
     }
   }
