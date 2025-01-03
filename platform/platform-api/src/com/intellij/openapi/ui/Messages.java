@@ -278,6 +278,25 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @see #showDialog(Project, String, String, String[], int, Icon, DialogWrapper.DoNotAskOption)
+   * @see #showDialog(Component, String, String, String[], int, Icon)
+   */
+  public static int showDialog(@DialogMessage String message,
+                               @NotNull @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               int focusedOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                               @Nullable String invocationPlace) {
+    return MessagesService.getInstance()
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null, invocationPlace);
+  }
+
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    * @see #showDialog(Project, String, String, String[], int, Icon)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */

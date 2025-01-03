@@ -63,9 +63,10 @@ internal class AlertMessagesManager {
                         focusedOptionIndex: Int,
                         icon: Icon?,
                         doNotAskOption: DoNotAskOption?,
-                        helpId: String?): Int {
+                        helpId: String?,
+                        invocationPlace: String?): Int {
     val dialog = AlertDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, getIcon(icon),
-                             doNotAskOption, helpId)
+                             doNotAskOption, helpId, invocationPlace)
     AppIcon.getInstance().requestAttention(project, true)
     dialog.show()
     return dialog.exitCode
@@ -100,7 +101,8 @@ class AlertDialog(project: Project?,
                   val myFocusedOptionIndex: Int,
                   icon: Icon,
                   doNotAskOption: com.intellij.openapi.ui.DoNotAskOption?,
-                  val myHelpId: String?) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
+                  val myHelpId: String?,
+                  invocationPlace: String? = null) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
 
@@ -117,6 +119,7 @@ class AlertDialog(project: Project?,
   init {
     title = myTitle
     setDoNotAskOption(doNotAskOption)
+    setInvocationPlace(invocationPlace)
 
     if (myIsTitleComponent && !SystemInfoRt.isMac) {
       myCloseButton = object : InplaceButton(IconButton(null, AllIcons.Windows.CloseActive, null, null), {

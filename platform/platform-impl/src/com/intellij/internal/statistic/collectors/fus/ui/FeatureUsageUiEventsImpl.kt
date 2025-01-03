@@ -5,14 +5,18 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents
 import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogWrapper
 
 internal object DialogsCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("ui.dialogs", 61)
+  private val GROUP = EventLogGroup("ui.dialogs", 62)
 
   val EXIT_CODE: PrimitiveEventField<Int> = object: PrimitiveEventField<Int>() {
     override val name: String = "code"
@@ -34,16 +38,26 @@ internal object DialogsCounterUsagesCollector : CounterUsagesCollector() {
   }
 
   val DIALOG_CLASS: ClassEventField = EventFields.Class("dialog_class")
+  val INVOCATION_PLACE: StringEventField = StringValidatedByCustomRule("dialog_invocation_place", ListValidationRule::class.java)
 
-  val SHOW: VarargEventId = GROUP.registerVarargEvent("show", DIALOG_CLASS, EventFields.PluginInfo)
-  val CLOSE: VarargEventId = GROUP.registerVarargEvent("close", DIALOG_CLASS, EXIT_CODE, EventFields.PluginInfo)
-  val HELP: VarargEventId = GROUP.registerVarargEvent("help.clicked", DIALOG_CLASS, EventFields.PluginInfo)
+  val SHOW: VarargEventId = GROUP.registerVarargEvent("show", DIALOG_CLASS, INVOCATION_PLACE, EventFields.PluginInfo)
+  val CLOSE: VarargEventId = GROUP.registerVarargEvent("close", DIALOG_CLASS, INVOCATION_PLACE, EXIT_CODE, EventFields.PluginInfo)
+  val HELP: VarargEventId = GROUP.registerVarargEvent("help.clicked", DIALOG_CLASS, INVOCATION_PLACE, EventFields.PluginInfo)
 
   override fun getGroup(): EventLogGroup = GROUP
 }
 
+internal class ListValidationRule : CustomValidationRule() {
+  override fun getRuleId(): String = "dialog_invocation_place"
+  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    val invocationPlaces = DialogInvocationPlacesCollector.getInstance().getInvocationPlaces()
+    if (invocationPlaces.contains(data)) return ValidationResultType.ACCEPTED
+    return ValidationResultType.REJECTED
+  }
+}
+
 internal object SettingsCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("ui.settings", 62)
+  private val GROUP = EventLogGroup("ui.settings", 63)
 
   private val CONFIGURABLE_CLASS = EventFields.Class("configurable")
   val SELECT: EventId3<Class<*>?, Boolean, Long> = GROUP.registerEvent("select",
@@ -94,24 +108,27 @@ internal class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
     event.log(wrapper?.project, (wrapper?.configurable ?: configurable)::class.java)
   }
 
-  override fun logShowDialog(clazz: Class<*>) {
+  override fun logShowDialog(clazz: Class<*>, invocationPlace: String?) {
     if (FeatureUsageLogger.getInstance().isEnabled()) {
-      DialogsCounterUsagesCollector.SHOW.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(clazz))
+      DialogsCounterUsagesCollector.SHOW.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(clazz),
+                                             DialogsCounterUsagesCollector.INVOCATION_PLACE.with(invocationPlace))
     }
   }
 
-  override fun logCloseDialog(clazz: Class<*>, exitCode: Int) {
+  override fun logCloseDialog(clazz: Class<*>, exitCode: Int, invocationPlace: String?) {
     if (FeatureUsageLogger.getInstance().isEnabled()) {
       DialogsCounterUsagesCollector.CLOSE.log(
         DialogsCounterUsagesCollector.DIALOG_CLASS.with(clazz),
+        DialogsCounterUsagesCollector.INVOCATION_PLACE.with(invocationPlace),
         DialogsCounterUsagesCollector.EXIT_CODE.with(exitCode)
       )
     }
   }
 
-  override fun logClickOnHelpDialog(clazz: Class<*>) {
+  override fun logClickOnHelpDialog(clazz: Class<*>, invocationPlace: String?) {
     if (FeatureUsageLogger.getInstance().isEnabled()) {
-      DialogsCounterUsagesCollector.HELP.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(clazz))
+      DialogsCounterUsagesCollector.HELP.log(DialogsCounterUsagesCollector.DIALOG_CLASS.with(clazz),
+                                             DialogsCounterUsagesCollector.INVOCATION_PLACE.with(invocationPlace))
     }
   }
 }

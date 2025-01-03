@@ -86,6 +86,7 @@ import com.intellij.util.runSuppressing
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -1375,17 +1376,21 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
     val openInExistingFrame = withContext(Dispatchers.EDT) {
       // readAction is not enough
       writeIntentReadAction {
+        @NonNls
+        val actionPlace = "Open project action"
         if (options.isNewProject)
           MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.new.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(ProjectNewWindowDoNotAskOption())
+            .invocationPlace(actionPlace)
             .guessWindowAndAsk()
         else
           MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.open.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(ProjectNewWindowDoNotAskOption())
+            .invocationPlace(actionPlace)
             .guessWindowAndAsk()
       }
     }

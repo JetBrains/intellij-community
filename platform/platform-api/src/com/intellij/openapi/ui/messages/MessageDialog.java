@@ -59,9 +59,24 @@ public class MessageDialog extends DialogWrapper {
                        @Nullable Icon icon,
                        @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        boolean canBeParent,
-                       @Nullable String helpId) {
+                       @Nullable String helpId,
+                       @Nullable String invocationPlace) {
     super(project, parentComponent, canBeParent, IdeModalityType.IDE);
-    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId);
+    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId, invocationPlace);
+  }
+
+  public MessageDialog(@Nullable Project project,
+                       @Nullable Component parentComponent,
+                       @NlsContexts.DialogMessage @Nullable String message,
+                       @NlsContexts.DialogTitle String title,
+                       String @NotNull [] options,
+                       int defaultOptionIndex,
+                       int focusedOptionIndex,
+                       @Nullable Icon icon,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
+                       boolean canBeParent,
+                       @Nullable String helpId) {
+  this(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, canBeParent, helpId, null);
   }
 
   public MessageDialog(@NlsContexts.DialogMessage @Nullable String message,
@@ -92,6 +107,18 @@ public class MessageDialog extends DialogWrapper {
                        @Nullable Icon icon,
                        @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        @Nullable String helpId) {
+    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId, null);
+  }
+
+  protected void _init(@NlsContexts.DialogTitle String title,
+                       @NlsContexts.DialogMessage @Nullable String message,
+                       String @NotNull [] options,
+                       int defaultOptionIndex,
+                       int focusedOptionIndex,
+                       @Nullable Icon icon,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
+                       @Nullable String helpId,
+                       @Nullable String invocationPlace) {
     setTitle(title);
     myMessage = message;
     myOptions = options;
@@ -100,6 +127,7 @@ public class MessageDialog extends DialogWrapper {
     myIcon = icon;
     myHelpId = helpId;
     setDoNotAskOption(doNotAskOption);
+    setInvocationPlace(invocationPlace);
     init();
   }
 

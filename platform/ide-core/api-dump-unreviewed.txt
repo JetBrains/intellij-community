@@ -1851,6 +1851,7 @@ a:com.intellij.openapi.ui.MessageDialogBuilder
 - pf:getDoNotAskOption():com.intellij.openapi.ui.DoNotAskOption
 - pf:getHelpId():java.lang.String
 - pf:getIcon():javax.swing.Icon
+- pf:getInvocationPlace():java.lang.String
 - pf:getMessage():java.lang.String
 - pf:getNoText():java.lang.String
 - pf:getParentComponent():java.awt.Component
@@ -1865,6 +1866,7 @@ a:com.intellij.openapi.ui.MessageDialogBuilder
 - pf:setDoNotAskOption(com.intellij.openapi.ui.DoNotAskOption):V
 - pf:setHelpId(java.lang.String):V
 - pf:setIcon(javax.swing.Icon):V
+- pf:setInvocationPlace(java.lang.String):V
 - pf:setNoText(java.lang.String):V
 - pf:setParentComponent(java.awt.Component):V
 - pf:setProject(com.intellij.openapi.project.Project):V
