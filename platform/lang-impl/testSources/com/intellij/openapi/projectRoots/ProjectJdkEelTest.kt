@@ -11,10 +11,9 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
-import com.intellij.platform.testFramework.junit5.eel.fixture.projectFixture
+import com.intellij.platform.testFramework.junit5.eel.fixture.tempDirFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 
@@ -24,7 +23,9 @@ class ProjectJdkEelTest {
   val eel = eelFixture(EelPath.OS.UNIX)
 
   val localProject = projectFixture(openAfterCreation = true)
-  val eelProject = eel.projectFixture()
+
+  val tempDirFixture = eel.tempDirFixture()
+  val eelProject = projectFixture(tempDirFixture, openAfterCreation = true)
   val testSdk = testSdkFixture()
 
   @Test

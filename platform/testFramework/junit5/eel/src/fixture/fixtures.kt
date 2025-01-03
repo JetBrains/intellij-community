@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.fixture
 
-import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
@@ -10,7 +9,6 @@ import com.intellij.platform.testFramework.junit5.eel.impl.currentOs
 import com.intellij.platform.testFramework.junit5.eel.impl.eelInitializer
 import com.intellij.platform.testFramework.junit5.eel.impl.eelTempDirectoryFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
-import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -42,16 +40,14 @@ interface IsolatedFileSystem {
  */
 @TestOnly
 fun eelFixture(os: EelPath.OS = currentOs): TestFixture<IsolatedFileSystem> {
+  //checkMultiRoutingFileSystem()
   return testFixture("eel-test-fixture", eelInitializer(os))
 }
 
 /**
- * Creates a project in an isolated location.
- * The local file system would not be able to recognize the paths of the project.
+ * Creates a temporary directory on an environment corresponding to the receiver Eel.
  */
 @TestOnly
-fun TestFixture<IsolatedFileSystem>.projectFixture(): TestFixture<Project> {
-  checkMultiRoutingFileSystem()
-  val tempDirProject = testFixture("eel-temp-dir-for-project", eelTempDirectoryFixture(this))
-  return projectFixture(tempDirProject, openAfterCreation = true)
+fun TestFixture<IsolatedFileSystem>.tempDirFixture(): TestFixture<Path> {
+  return testFixture("eel-temp-dir-for-project", eelTempDirectoryFixture(this))
 }
