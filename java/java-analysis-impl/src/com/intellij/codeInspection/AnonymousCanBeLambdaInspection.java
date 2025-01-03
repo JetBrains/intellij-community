@@ -99,22 +99,27 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-      String fqn;
-      if (ref != null &&
-          ref.resolve() instanceof PsiClass annotationClass &&
-          ((fqn = annotationClass.getQualifiedName()) == null ||
-          !runtimeAnnotationsToIgnore.contains(fqn))) {
-        final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation(annotationClass, Retention.class.getName());
-        // Default retention is CLASS: keep it
-        if (retentionAnno == null) return true;
-        if (retentionAnno.findAttributeValue("value") instanceof PsiReferenceExpression retentionValue &&
-            retentionValue.resolve() instanceof PsiField retentionField &&
-            (RetentionPolicy.RUNTIME.name().equals(retentionField.getName()) ||
-             RetentionPolicy.CLASS.name().equals(retentionField.getName()))) {
-          final PsiClass containingClass = retentionField.getContainingClass();
-          if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
-            return true;
-          }
+      if (ref == null || !(ref.resolve() instanceof PsiClass annotationClass)) continue;
+      String fqn = annotationClass.getQualifiedName();
+      if (fqn != null && runtimeAnnotationsToIgnore.contains(fqn)) continue;
+      if (fqn != null && listOwner instanceof PsiMethod method &&
+          ContainerUtil.all(method.findSuperMethods(), sm -> {
+            PsiAnnotation superAnno = sm.getModifierList().findAnnotation(fqn);
+            return superAnno != null && AnnotationUtil.equal(superAnno, annotation);
+          })) {
+        // The same annotation exists in super method: assume that it's safe to omit it in sub-method
+        continue;
+      }
+      PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation(annotationClass, Retention.class.getName());
+      // Default retention is CLASS: keep it
+      if (retentionAnno == null) return true;
+      if (retentionAnno.findAttributeValue("value") instanceof PsiReferenceExpression retentionValue &&
+          retentionValue.resolve() instanceof PsiField retentionField &&
+          (RetentionPolicy.RUNTIME.name().equals(retentionField.getName()) ||
+           RetentionPolicy.CLASS.name().equals(retentionField.getName()))) {
+        PsiClass containingClass = retentionField.getContainingClass();
+        if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
+          return true;
         }
       }
     }
