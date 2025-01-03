@@ -131,7 +131,7 @@ public abstract class GitImplBase implements Git {
     if (handler.isPreValidateExecutable()) {
       GitExecutable executable = handler.getExecutable();
       try {
-        version = GitExecutableManager.getInstance().identifyVersion(executable);
+        version = GitExecutableManager.getInstance().identifyVersion(handler.project(), executable);
 
         if (GitVersion.isUnsupportedWslVersion(version.getType())) {
           throw new UnsupportedWSLVersionException();

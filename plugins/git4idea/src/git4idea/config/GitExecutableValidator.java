@@ -38,7 +38,7 @@ public class GitExecutableValidator extends ExecutableValidator {
   public boolean isExecutableValid(@NotNull String pathToGit) {
     try {
       GitExecutable.Local executable = new GitExecutable.Local(pathToGit);
-      GitVersion version = GitExecutableManager.getInstance().identifyVersion(executable);
+      GitVersion version = GitExecutableManager.getInstance().identifyVersion(myProject, executable);
       return !GitVersion.NULL.equals(version);
     }
     catch (GitVersionIdentificationException e) {

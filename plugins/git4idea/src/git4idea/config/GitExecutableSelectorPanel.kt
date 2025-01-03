@@ -99,9 +99,9 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
 
       override fun run(indicator: ProgressIndicator) {
         val executableManager = GitExecutableManager.getInstance()
-        val executable = executableManager.getExecutable(pathToGit)
+        val executable = executableManager.getExecutable(project, pathToGit)
         executableManager.dropVersionCache(executable)
-        gitVersion = executableManager.identifyVersion(executable)
+        gitVersion = executableManager.identifyVersion(project, executable)
       }
 
       override fun onThrowable(error: Throwable) {
@@ -164,7 +164,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
 
   private inner class GitExecutableHandler : VcsExecutablePathSelector.ExecutableHandler {
     override fun patchExecutable(executable: String): String? {
-      return GitExecutableDetector.patchExecutablePath(executable)
+      return GitExecutableDetector.patchExecutablePath(executable, project)
     }
 
     override fun testExecutable(executable: String) {

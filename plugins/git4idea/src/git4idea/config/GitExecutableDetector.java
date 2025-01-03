@@ -4,12 +4,20 @@ package git4idea.config;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.EelPlatform;
+import com.intellij.platform.eel.fs.EelFileSystemApiKt;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -23,9 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -77,22 +83,54 @@ public class GitExecutableDetector {
     return SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
   }
 
-  public @Nullable String getExecutable(@Nullable WSLDistribution projectWslDistribution, boolean detectIfNeeded) {
+  private static @Nullable WSLDistribution findWslDistributionIfAny(@Nullable Project project, @Nullable Path gitDirectory) {
+    if (gitDirectory != null) {
+      return WslPath.getDistributionByWindowsUncPath(gitDirectory.toString());
+    }
+    if (project != null && project.getBasePath() != null) {
+      return WslPath.getDistributionByWindowsUncPath(project.getBasePath());
+    }
+    return null;
+  }
+
+  public static @NotNull GitExecutable getGitExecutable(@Nullable Project project, @NotNull String pathToGit) {
+    if (GitEelExecutableDetectionHelper.canUseEel()) {
+      var eel = GitEelExecutableDetectionHelper.tryGetNonLocalEel(project, Path.of(pathToGit));
+
+      if (eel != null) {
+        return new GitExecutable.Eel(pathToGit, eel);
+      }
+    }
+
+    WslPath wslPath = WslPath.parseWindowsUncPath(pathToGit);
+    if (wslPath != null) {
+      return new GitExecutable.Wsl(wslPath.getLinuxPath(), wslPath.getDistribution());
+    }
+
+    return new GitExecutable.Local(pathToGit);
+  }
+
+  public @Nullable String getExecutable(@Nullable Project project, @Nullable Path gitDirectory, boolean detectIfNeeded) {
     if (detectIfNeeded) {
-      return detect(projectWslDistribution);
+      return detect(project, gitDirectory);
     }
     else {
-      return getCachedExecutable(projectWslDistribution);
+      return getCachedExecutable(project, gitDirectory);
     }
   }
 
-  private @Nullable String getCachedExecutable(@Nullable WSLDistribution projectWslDistribution) {
-    List<Detector> detectors = collectDetectors(projectWslDistribution);
+  private @Nullable String getCachedExecutable(@Nullable Project project, @Nullable Path gitDirectory) {
+    List<Detector> detectors = collectDetectors(project, gitDirectory);
     return getExecutable(detectors);
   }
 
-  public @NotNull String detect(@Nullable WSLDistribution distribution) {
-    List<Detector> detectors = collectDetectors(distribution);
+  @VisibleForTesting
+  @NotNull String detect() {
+    return detect(null, null);
+  }
+
+  private @NotNull String detect(@Nullable Project project, @Nullable Path gitDirectory) {
+    List<Detector> detectors = collectDetectors(project, gitDirectory);
 
     String detectedPath = getExecutable(detectors);
     if (detectedPath != null) return detectedPath;
@@ -136,6 +174,7 @@ public class GitExecutableDetector {
       myEnvExecutable.set(null);
       mySystemExecutable.set(null);
       myWslExecutables.clear();
+      GitEelExecutableDetectionHelper.getInstance().dropCache();
       myWslDistributionsProcessed = false;
     }
     fireExecutableChanged();
@@ -158,10 +197,25 @@ public class GitExecutableDetector {
     return getDefaultExecutable();
   }
 
-  private @NotNull List<Detector> collectDetectors(@Nullable WSLDistribution projectWslDistribution) {
+  private static boolean supportWslExecutable() {
+    return WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser");
+  }
+
+  private @NotNull List<Detector> collectDetectors(@Nullable Project project, @Nullable Path gitDirectory) {
     List<Detector> detectors = new ArrayList<>();
-    if (projectWslDistribution != null &&
-        GitExecutableManager.supportWslExecutable()) {
+
+    if (GitEelExecutableDetectionHelper.canUseEel()) {
+      var eel = GitEelExecutableDetectionHelper.tryGetNonLocalEel(project, gitDirectory);
+      if (eel != null) {
+        final var path = project != null ? project.getBasePath() : gitDirectory != null ? gitDirectory.toString() : null;
+        assert path != null;
+        detectors.add(new EelBasedDetector(eel, path));
+        return detectors;
+      }
+    }
+
+    var projectWslDistribution = findWslDistributionIfAny(project, gitDirectory);
+    if (projectWslDistribution != null && supportWslExecutable()) {
       detectors.add(new WslDetector(projectWslDistribution));
     }
 
@@ -173,15 +227,12 @@ public class GitExecutableDetector {
       detectors.add(new UnixSystemPathDetector());
     }
 
-    if (projectWslDistribution == null &&
-        GitExecutableManager.supportWslExecutable() &&
-        Registry.is("git.detect.wsl.executables")) {
+    if (projectWslDistribution == null && supportWslExecutable() && Registry.is("git.detect.wsl.executables")) {
       detectors.add(new GlobalWslDetector());
     }
 
     return detectors;
   }
-
 
   private interface Detector {
     /**
@@ -190,6 +241,26 @@ public class GitExecutableDetector {
     @Nullable DetectionResult getPath();
 
     void runDetection();
+  }
+
+  private static class EelBasedDetector implements Detector {
+    private final EelApi myEelApi;
+    private final String myRootDir;
+
+    EelBasedDetector(@NotNull final EelApi eelApi, @NotNull final String path) {
+      myEelApi = eelApi;
+      myRootDir = path;
+    }
+
+    @Override
+    public @Nullable DetectionResult getPath() {
+      return new DetectionResult(GitEelExecutableDetectionHelper.getInstance().getExecutablePathIfReady(myEelApi, myRootDir));
+    }
+
+    @Override
+    public void runDetection() {
+      GitEelExecutableDetectionHelper.getInstance().getExecutablePathPromise(myEelApi, myRootDir); // start computing
+    }
   }
 
   private class EnvDetector implements Detector {
@@ -448,37 +519,78 @@ public class GitExecutableDetector {
     return PathEnvironmentVariableUtil.getPathVariableValue();
   }
 
-  public static @Nullable String patchExecutablePath(@NotNull String path) {
-    if (SystemInfo.isWindows) {
-      File file = new File(path.trim());
-      if (file.getName().equals("git-cmd.exe") || file.getName().equals("git-bash.exe")) {
-        File patchedFile = new File(file.getParent(), "bin/git.exe");
-        if (patchedFile.exists()) return patchedFile.getPath();
+  static @Nullable String patchExecutablePath(@NotNull String path, @NotNull Project project) {
+    Boolean isWindows = null;
+    Path file = null;
+
+    if (GitEelExecutableDetectionHelper.canUseEel()) {
+      final var eel = GitEelExecutableDetectionHelper.tryGetNonLocalEel(project, null);
+      if (eel != null) {
+        isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
+        file = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), path.trim()));
       }
     }
+
+    if (isWindows == null) {
+      isWindows = SystemInfo.isWindows;
+    }
+
+    if (file == null) {
+      file = Path.of(path.trim());
+    }
+
+    if (isWindows) {
+      if (file.getFileName().toString().equals("git-cmd.exe") || file.getFileName().toString().equals("git-bash.exe")) {
+        final var patchedFile = file.getParent().resolve("bin/git.exe");
+        if (Files.exists(patchedFile)) return patchedFile.toString();
+      }
+    }
+
     return null;
   }
 
+  public static @Nullable String getBashExecutablePath(@NotNull String gitExecutable, @Nullable Project project) {
+    Boolean isWindows = null;
+    Path gitFile = null;
+
+    if (GitEelExecutableDetectionHelper.canUseEel()) {
+      final var eel = GitEelExecutableDetectionHelper.tryGetNonLocalEel(project, null);
+      if (eel != null) {
+        isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
+        gitFile = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), gitExecutable.trim()));
+      }
+    }
+
+    if (isWindows == null) {
+      isWindows = SystemInfo.isWindows;
+    }
+
+    if (gitFile == null) {
+      gitFile = Path.of(gitExecutable.trim());
+    }
+
+    if (!isWindows) return null;
+
+    final var gitDirFile = gitFile.getParent();
+    if (gitDirFile != null && WIN_BIN_DIRS.contains(gitDirFile.getFileName().toString())) {
+      final var bashFile = gitDirFile.getParent().resolve("bin/bash.exe");
+      if (Files.exists(bashFile)) return bashFile.toString();
+    }
+
+    return null;
+  }
+
+  /**
+   * @deprecated use {@link #getBashExecutablePath(String, Project)} instead
+   */
+  @Deprecated
   public static @Nullable String getBashExecutablePath(@NotNull String gitExecutable) {
-    if (!SystemInfo.isWindows) return null;
-
-    File gitFile = new File(gitExecutable.trim());
-    File gitDirFile = gitFile.getParentFile();
-    if (gitDirFile != null && WIN_BIN_DIRS.contains(gitDirFile.getName())) {
-      File bashFile = new File(gitDirFile.getParentFile(), "bin/bash.exe");
-      if (bashFile.exists()) return bashFile.getPath();
-    }
-    return null;
+    return getBashExecutablePath(gitExecutable, null);
   }
 
-  public static @NotNull List<Path> getDependencyPaths(@NotNull Path executablePath) {
-    try {
-      if (SystemInfo.isMac && ArrayUtil.contains(executablePath.toString(), APPLEGIT_PATHS)) {
-        return ContainerUtil.map(APPLEGIT_DEPENDENCY_PATHS, path -> Paths.get(path));
-      }
-    }
-    catch (InvalidPathException e) {
-      LOG.warn(e);
+  static @NotNull List<String> getDependencyPaths(@NotNull Path executablePath, @NotNull Boolean isMac) {
+    if (isMac && ArrayUtil.contains(executablePath.toString(), APPLEGIT_PATHS)) {
+      return Arrays.stream(APPLEGIT_DEPENDENCY_PATHS).toList();
     }
     return Collections.emptyList();
   }

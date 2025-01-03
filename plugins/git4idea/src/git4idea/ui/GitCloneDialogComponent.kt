@@ -90,7 +90,7 @@ class GitCloneDialogComponent(project: Project,
 
     try {
       val executable = executableManager.getExecutable(null)
-      val gitVersion = executableManager.identifyVersion(executable)
+      val gitVersion = executableManager.identifyVersion(project, executable)
 
       invokeAndWaitIfNeeded(modalityState) {
         if (!gitVersion.isSupported) {

@@ -92,6 +92,9 @@ jvm_library(
     "//platform/kernel/backend",
     "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
+    "//platform/eel-provider",
+    "//platform/eel",
+    "//platform/eel-impl",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
@@ -199,6 +202,9 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
     "//platform/testFramework/extensions:testExtensions",
+    "//platform/eel-provider",
+    "//platform/eel",
+    "//platform/eel-impl",
   ],
   runtime_deps = [
     ":vcs-git_resources",
