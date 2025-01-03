@@ -22,11 +22,11 @@ interface FeatureUsageUiEvents {
 
   fun logResetConfigurable(configurable: Configurable)
 
-  fun logShowDialog(dialogClass: Class<*>)
+  fun logShowDialog(dialogClass: Class<*>, invocationPlace: String? = null)
 
-  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int)
+  fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, invocationPlace: String? = null)
 
-  fun logClickOnHelpDialog(dialogClass: Class<*>)
+  fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String? = null)
 }
 
 @ApiStatus.Internal
@@ -40,12 +40,12 @@ object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
   override fun logResetConfigurable(configurable: Configurable) {
   }
 
-  override fun logShowDialog(dialogClass: Class<*>) {
+  override fun logShowDialog(dialogClass: Class<*>, invocationPlace: String?) {
   }
 
-  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int) {
+  override fun logCloseDialog(dialogClass: Class<*>, exitCode: Int, invocationPlace: String?) {
   }
 
-  override fun logClickOnHelpDialog(dialogClass: Class<*>) {
+  override fun logClickOnHelpDialog(dialogClass: Class<*>, invocationPlace: String?) {
   }
 }

@@ -50,8 +50,8 @@ import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -197,6 +197,7 @@ public abstract class DialogWrapper {
   private int myValidationDelay = 300;
   private boolean myValidationStarted;
   private boolean myKeepPopupsOpen;
+  @Nls private @NonNls @Nullable String invocationPlace = null;
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -1865,20 +1866,20 @@ public abstract class DialogWrapper {
   private void logCloseDialogEvent(int exitCode) {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
-      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(getClass(), exitCode);
+      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(getClass(), exitCode, invocationPlace);
     }
   }
 
   private void logShowDialogEvent() {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
-      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(getClass());
+      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(getClass(), invocationPlace);
     }
   }
 
   private void logClickOnHelpDialogEvent() {
     if (!canRecordDialogId()) return;
-    FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(getClass());
+    FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(getClass(), invocationPlace);
   }
 
   /**
@@ -1886,6 +1887,11 @@ public abstract class DialogWrapper {
    */
   protected boolean canRecordDialogId() {
     return true;
+  }
+
+  @ApiStatus.Internal
+  public void setInvocationPlace(@Nullable @NonNls String invocationPlace) {
+     this.invocationPlace = invocationPlace;
   }
 
   /**
