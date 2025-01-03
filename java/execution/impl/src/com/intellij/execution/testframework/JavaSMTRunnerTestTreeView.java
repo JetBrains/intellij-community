@@ -10,6 +10,7 @@ import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
   protected TreeCellRenderer getRenderer(TestConsoleProperties properties) {
     return new TestTreeRenderer(properties) {
 
+      @Nls
       @Override
       public @Nullable String getDurationText(@NotNull SMTestProxy testProxy,
                                               @NotNull TestConsoleProperties consoleProperties) {
@@ -100,6 +102,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
       ;
   }
 
+  @Nls
   @Override
   public String getToolTipText(MouseEvent event) {
     String text = super.getToolTipText(event);
@@ -125,10 +128,10 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
       long overallDuration = test.getEndTime() - test.getStartTime();
       Long sumDuration = test.getDuration();
       String durationText = "";
-      durationText += JavaBundle.message("java.test.overall.time") + " " + NlsMessages.formatDurationApproximateNarrow(overallDuration);
+      durationText += JavaBundle.message("java.test.overall.time", NlsMessages.formatDurationApproximateNarrow(overallDuration));
       if (sumDuration != null) {
         durationText += "<br>";
-        durationText += JavaBundle.message("java.test.sum.time") + " " + NlsMessages.formatDurationApproximateNarrow(sumDuration);
+        durationText += JavaBundle.message("java.test.sum.time", NlsMessages.formatDurationApproximateNarrow(sumDuration));
       }
       return "<html>" + durationText + "</html>";
     }

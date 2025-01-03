@@ -38,10 +38,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -476,6 +473,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     return myDuration;
   }
 
+  @Nls
   @Override
   public @Nullable String getDurationString(TestConsoleProperties consoleProperties) {
     return switch (getMagnitudeInfo()) {
@@ -494,10 +492,13 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     return TestConsoleProperties.HIDE_PASSED_TESTS.value(consoleProperties) && getParent() != null && !isDefect();
   }
 
+  @Nls
   private String getDurationString() {
     final Long duration = getDuration();
     return duration != null ? NlsMessages.formatDurationApproximateNarrow(duration.longValue()) : null;
   }
+
+  @Nls
   private String getDurationPaddedString() {
     final Long duration = getDuration();
     return duration != null ? NlsMessages.formatDurationPadded(duration.longValue()) : null;
@@ -512,6 +513,14 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     return !myIsSuite || getDurationStrategy() == TestDurationStrategy.MANUAL;
   }
 
+  /**
+   * Provides the strategy for calculating test duration.
+   * If the root test proxy is null,
+   * the method defaults to returning the automatic duration strategy.
+   * @see TestDurationStrategy
+   *
+   * @return the duration strategy used by this test proxy, never null.
+   */
   public @NotNull TestDurationStrategy getDurationStrategy() {
     final TestDurationStrategy strategy = myDurationStrategyCached;
     if (strategy != null) {

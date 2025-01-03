@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
@@ -9,10 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -61,12 +59,24 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return null;
   }
 
+  /**
+   * Retrieves the customized duration for the test, if available.
+   * Must be consistent with {@link AbstractTestProxy#getDurationString(TestConsoleProperties)}, because it is a value,
+   * which users see in UI
+   * Used to show customized raw values (for example, for reports)
+   * @see TestResultsXmlFormatter
+   *
+   * @param testConsoleProperties the console properties used to configure test behavior and output
+   * @return the duration as a {@link Long} if available, or {@code null} if not specified,
+   * default value is {@link AbstractTestProxy#getDuration()}
+   */
   @ApiStatus.Experimental
   @ApiStatus.Internal
   public @Nullable Long getCustomizedDuration(@NotNull TestConsoleProperties testConsoleProperties) {
     return getDuration();
   }
 
+  @Nls
   public @Nullable String getDurationString(TestConsoleProperties consoleProperties) {
     return null;
   }

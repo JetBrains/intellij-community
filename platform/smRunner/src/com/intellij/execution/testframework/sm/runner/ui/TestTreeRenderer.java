@@ -13,10 +13,7 @@ import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -90,6 +87,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     append(text != null ? text : SPACE_STRING, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
+  @Nls
   @ApiStatus.Experimental
   @ApiStatus.Internal
   public @Nullable String getDurationText(@NotNull SMTestProxy testProxy, @NotNull TestConsoleProperties consoleProperties) {
