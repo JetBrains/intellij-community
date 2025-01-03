@@ -29,19 +29,19 @@ import static com.intellij.psi.LambdaUtil.getTargetMethod;
 public final class LambdaHighlightingUtil {
   private static final Logger LOG = Logger.getInstance(LambdaHighlightingUtil.class);
 
-  public static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
+  static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
     return checkInterfaceFunctional(psiClass, JavaErrorBundle.message("target.type.of.a.lambda.conversion.must.be.an.interface"));
   }
 
   static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiClass psiClass, @NotNull @Nls String interfaceNonFunctionalMessage) {
     if (psiClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
-    List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(psiClass);
-    if (signatures == null) return interfaceNonFunctionalMessage;
-    if (signatures.isEmpty()) return JavaErrorBundle.message("no.target.method.found");
-    if (signatures.size() == 1) {
-      return null;
-    }
-    return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.interface.0", HighlightUtil.formatClass(psiClass));
+    return switch (LambdaUtil.checkInterfaceFunctional(psiClass)) {
+      case VALID -> null;
+      case NOT_INTERFACE -> interfaceNonFunctionalMessage;
+      case NO_ABSTRACT_METHOD -> JavaErrorBundle.message("no.target.method.found");
+      case MULTIPLE_ABSTRACT_METHODS ->
+        JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.interface.0", HighlightUtil.formatClass(psiClass));
+    };
   }
 
   static HighlightInfo.Builder checkParametersCompatible(@NotNull PsiLambdaExpression expression,

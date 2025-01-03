@@ -1308,4 +1308,29 @@ public final class LambdaUtil {
       }
     }
   }
+
+  /**
+   * Kind of error for functional interface
+   */
+  public enum FunctionalInterfaceStatus {
+    VALID,
+    NOT_INTERFACE,
+    NO_ABSTRACT_METHOD,
+    MULTIPLE_ABSTRACT_METHODS
+  }
+
+  /**
+   * @param psiClass class to check whether it represents a functional interface
+   * @return {@link FunctionalInterfaceStatus#VALID} if it's a valid functional interface, or other value
+   * representing the kind of error
+   */
+  public static @NotNull FunctionalInterfaceStatus checkInterfaceFunctional(@NotNull PsiClass psiClass) {
+    List<HierarchicalMethodSignature> signatures = findFunctionCandidates(psiClass);
+    if (signatures == null) return FunctionalInterfaceStatus.NOT_INTERFACE;
+    if (signatures.isEmpty()) return FunctionalInterfaceStatus.NO_ABSTRACT_METHOD;
+    if (signatures.size() == 1) {
+      return FunctionalInterfaceStatus.VALID;
+    }
+    return FunctionalInterfaceStatus.MULTIPLE_ABSTRACT_METHODS;
+  }
 }

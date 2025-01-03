@@ -2,7 +2,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.pom.java.JavaFeature;
@@ -55,7 +54,7 @@ public final class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspe
           AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, 0)) {
         return;
       }
-      if (LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {
+      if (LambdaUtil.checkInterfaceFunctional(aClass) != LambdaUtil.FunctionalInterfaceStatus.VALID) {
         return;
       }
       MethodSignature signature = LambdaUtil.getFunction(aClass);
