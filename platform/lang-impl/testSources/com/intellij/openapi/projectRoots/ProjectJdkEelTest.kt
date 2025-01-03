@@ -20,7 +20,6 @@ import java.nio.file.Files
 
 
 @TestApplication
-@Disabled("Depends on IJPL-160621")
 class ProjectJdkEelTest {
   val eel = eelFixture(EelPath.OS.UNIX)
 
