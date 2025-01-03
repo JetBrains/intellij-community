@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,18 +35,18 @@ import java.util.function.Predicate;
 @SuppressWarnings("SSBasedInspection")
 public final class BuildProgress {
   private static final Logger LOG = Logger.getInstance(BuildProgress.class);
-  private final BuildDataManager myDataManager;
-  private final BuildTargetIndex myTargetIndex;
+  private final BuildDataManager dataManager;
+  private final BuildTargetIndex targetIndex;
   //private final Object2IntOpenHashMap<BuildTargetType<?>> myNumberOfFinishedTargets = new Object2IntOpenHashMap<>();
-  private final Object2LongMap<BuildTargetType<?>> myExpectedBuildTimeForTarget = new Object2LongOpenHashMap<>();
+  private final Object2LongMap<BuildTargetType<?>> expectedBuildTimeForTarget = new Object2LongOpenHashMap<>();
   /** sum of expected build time for all affected targets */
-  private final long myExpectedTotalTime;
+  private final long expectedTotalTime;
   /** maps a currently building target to part of work which was done for this target (value between 0.0 and 1.0) */
-  private final Map<BuildTarget<?>, Double> myCurrentProgress = new HashMap<>();
+  private final Map<BuildTarget<?>, Double> currentProgress = new HashMap<>();
   /** sum of expected build time for all finished targets */
-  private long myExpectedTimeForFinishedTargets;
+  private long expectedTimeForFinishedTargets;
   /** sum of all target build times for the current session*/
-  private long myAbsoluteBuildTime;
+  private long absoluteBuildTime;
 
   @SuppressWarnings("SSBasedInspection")
   private final Object2IntOpenHashMap<BuildTargetType<?>> myTotalTargets = new Object2IntOpenHashMap<>();
@@ -55,14 +55,14 @@ public final class BuildProgress {
   private final FreezeDetector myFreezeDetector;
 
   public BuildProgress(BuildDataManager dataManager, BuildTargetIndex targetIndex, List<BuildTargetChunk> allChunks, Predicate<? super BuildTargetChunk> isAffected) {
-    myDataManager = dataManager;
-    myTargetIndex = targetIndex;
+    this.dataManager = dataManager;
+    this.targetIndex = targetIndex;
     Set<BuildTargetType<?>> targetTypes = new LinkedHashSet<>();
     Object2IntOpenHashMap<BuildTargetType<?>> totalAffectedTargets = new Object2IntOpenHashMap<>();
     for (BuildTargetChunk chunk : allChunks) {
       boolean affected = isAffected.test(chunk);
       for (BuildTarget<?> target : chunk.getTargets()) {
-        if (!myTargetIndex.isDummy(target)) {
+        if (!this.targetIndex.isDummy(target)) {
           if (affected) {
             totalAffectedTargets.addTo(target.getTargetType(), 1);
             targetTypes.add(target.getTargetType());
@@ -74,23 +74,23 @@ public final class BuildProgress {
 
     long expectedTotalTime = 0;
     for (BuildTargetType<?> targetType : targetTypes) {
-      myExpectedBuildTimeForTarget.put(targetType, myDataManager.getTargetsState().getAverageBuildTime(targetType));
+      expectedBuildTimeForTarget.put(targetType, this.dataManager.getTargetsState().getAverageBuildTime(targetType));
     }
     for (BuildTargetType<?> type : targetTypes) {
-      if (myExpectedBuildTimeForTarget.getLong(type) == -1) {
-        myExpectedBuildTimeForTarget.put(type, computeExpectedTimeBasedOnOtherTargets(type, targetTypes, myExpectedBuildTimeForTarget));
+      if (expectedBuildTimeForTarget.getLong(type) == -1) {
+        expectedBuildTimeForTarget.put(type, computeExpectedTimeBasedOnOtherTargets(type, targetTypes, expectedBuildTimeForTarget));
       }
     }
     for (BuildTargetType<?> targetType : targetTypes) {
-      expectedTotalTime += myExpectedBuildTimeForTarget.getLong(targetType) * totalAffectedTargets.getInt(targetType);
+      expectedTotalTime += expectedBuildTimeForTarget.getLong(targetType) * totalAffectedTargets.getInt(targetType);
     }
-    myExpectedTotalTime = Math.max(expectedTotalTime, 1);
+    this.expectedTotalTime = Math.max(expectedTotalTime, 1);
     myFreezeDetector = new FreezeDetector();
     myFreezeDetector.start();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("expected total time is " + myExpectedTotalTime);
+      LOG.debug("expected total time is " + this.expectedTotalTime);
       for (BuildTargetType<?> type : targetTypes) {
-        LOG.debug(" expected build time for " + type.getTypeId() + " is " + myExpectedBuildTimeForTarget.getLong(type));
+        LOG.debug(" expected build time for " + type.getTypeId() + " is " + expectedBuildTimeForTarget.getLong(type));
       }
     }
   }
@@ -113,35 +113,35 @@ public final class BuildProgress {
         expectedTimeSum += realExpectedTime * registry.getExpectedBuildTimeForTarget(type) / defaultExpectedTime;
       }
     }
-    return baseTargetsCount != 0 ? expectedTimeSum/baseTargetsCount : registry.getExpectedBuildTimeForTarget(type);
+    return baseTargetsCount == 0 ? registry.getExpectedBuildTimeForTarget(type) : expectedTimeSum / baseTargetsCount;
   }
 
   private synchronized void notifyAboutTotalProgress(CompileContext context) {
-    long expectedTimeForFinishedWork = myExpectedTimeForFinishedTargets;
-    for (Map.Entry<BuildTarget<?>, Double> entry : myCurrentProgress.entrySet()) {
-      expectedTimeForFinishedWork += myExpectedBuildTimeForTarget.getLong(entry.getKey().getTargetType()) * entry.getValue();
+    double expectedTimeForFinishedWork = expectedTimeForFinishedTargets;
+    for (Map.Entry<BuildTarget<?>, Double> entry : currentProgress.entrySet()) {
+      expectedTimeForFinishedWork += expectedBuildTimeForTarget.getLong(entry.getKey().getTargetType()) * entry.getValue();
     }
-    float done = ((float)expectedTimeForFinishedWork) / myExpectedTotalTime;
+    float done = ((float)expectedTimeForFinishedWork) / expectedTotalTime;
     context.setDone(done);
   }
 
   public synchronized void updateProgress(BuildTarget<?> target, double done, CompileContext context) {
-    myCurrentProgress.put(target, done);
+    currentProgress.put(target, done);
     notifyAboutTotalProgress(context);
   }
 
   public synchronized void onTargetChunkFinished(BuildTargetChunk chunk, CompileContext context) {
     boolean successful = !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled();
-    long nonDummyTargetsCount = chunk.getTargets().stream().filter(it -> !myTargetIndex.isDummy(it)).count();
+    long nonDummyTargetsCount = chunk.getTargets().stream().filter(it -> !targetIndex.isDummy(it)).count();
     for (BuildTarget<?> target : chunk.getTargets()) {
-      myCurrentProgress.remove(target);
-      if (!myTargetIndex.isDummy(target)) {
+      currentProgress.remove(target);
+      if (!targetIndex.isDummy(target)) {
         BuildTargetType<?> targetType = target.getTargetType();
         //myNumberOfFinishedTargets.addTo(targetType, 1);
-        myExpectedTimeForFinishedTargets += myExpectedBuildTimeForTarget.getLong(targetType);
+        expectedTimeForFinishedTargets += expectedBuildTimeForTarget.getLong(targetType);
 
         long elapsedTime = myFreezeDetector.getAdjustedDuration(context.getCompilationStartStamp(target), System.currentTimeMillis());
-        myAbsoluteBuildTime += elapsedTime;
+        absoluteBuildTime += elapsedTime;
         
         if (successful && FSOperations.isMarkedDirty(context, target)) {
           long buildTime = elapsedTime / nonDummyTargetsCount;
@@ -165,7 +165,7 @@ public final class BuildProgress {
       Object2LongMap.Entry<BuildTargetType<?>> entry = iterator.next();
       BuildTargetType<?> type = entry.getKey();
       long totalTime = entry.getLongValue();
-      BuildTargetsState targetsState = myDataManager.getTargetsState();
+      BuildTargetsState targetsState = dataManager.getTargetsState();
       long oldAverageTime = targetsState.getAverageBuildTime(type);
       long newAverageTime;
       if (oldAverageTime == -1) {
@@ -184,6 +184,6 @@ public final class BuildProgress {
   }
 
   public synchronized long getAbsoluteBuildTime() {
-    return myAbsoluteBuildTime;
+    return absoluteBuildTime;
   }
 }

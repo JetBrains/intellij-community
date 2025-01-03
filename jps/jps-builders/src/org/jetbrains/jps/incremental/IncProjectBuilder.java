@@ -17,6 +17,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.BuildParametersKeys;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -864,10 +865,10 @@ public final class IncProjectBuilder {
     }
   }
 
-  private static Set<BuildTarget<?>> getTargetsWithClearedOutput(CompileContext context) {
+  private static @Unmodifiable Set<BuildTarget<?>> getTargetsWithClearedOutput(@NotNull CompileContext context) {
     synchronized (TARGET_WITH_CLEARED_OUTPUT) {
       Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
-      return data != null ? Set.copyOf(data) : Collections.emptySet();
+      return data == null ? Collections.emptySet() : Set.copyOf(data);
     }
   }
 
@@ -885,13 +886,11 @@ public final class IncProjectBuilder {
             return PARTIAL;
           }
         }
-        else {
-          if (count > 0) {
-            return PARTIAL;
-          }
+        else if (count > 0) {
+          return PARTIAL;
         }
       }
-      return count == 0? NONE : ALL;
+      return count == 0 ? NONE : ALL;
     }
   }
 

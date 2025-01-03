@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -159,7 +159,8 @@ public final class BuildOperations {
       final Collection<String> allDeletedOutputPaths = new ArrayList<>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
-        private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<>(); // cache the mapping locally
+        // cache the mapping locally
+        private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<>();
         private final Object2IntMap<T> idsCache = new Object2IntOpenHashMap<>();
 
         @Override
@@ -195,12 +196,7 @@ public final class BuildOperations {
 
           allDeletedOutputPaths.addAll(deletedForThisSource);
           dataManager.getOutputToTargetMapping().removeMappings(deletedForThisSource, targetId, srcToOut);
-          Map<File, List<String>> cleaned = sourcesToCleanedOutputByTargets.get(target);
-          if (cleaned == null) {
-            cleaned = new HashMap<>();
-            sourcesToCleanedOutputByTargets.put(target, cleaned);
-          }
-
+          Map<File, List<String>> cleaned = sourcesToCleanedOutputByTargets.computeIfAbsent(target, k -> new HashMap<>());
           cleaned.put(file, failedToDeleteOutputs);
           return true;
         }
@@ -256,7 +252,7 @@ public final class BuildOperations {
         }
 
         @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
           try {
             Files.delete(dir);
           }
