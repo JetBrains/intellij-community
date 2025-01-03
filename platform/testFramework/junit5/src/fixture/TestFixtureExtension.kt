@@ -40,10 +40,7 @@ internal class TestFixtureExtension : BeforeAllCallback,
       val fixture = field.get(testInstance) as TestFixtureImpl<*>
       pendingFixtures.add(fixture.init(testScope, context.uniqueId))
     }
-    @Suppress("SSBasedInspection")
-    runBlocking {
-      pendingFixtures.awaitAll()
-    }
+    awaitFixtureInitialization(testScope, pendingFixtures)
     context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension", testScope)
   }
 
@@ -60,6 +57,24 @@ internal class TestFixtureExtension : BeforeAllCallback,
     @Suppress("SSBasedInspection")
     runBlocking {
       (testScope as CoroutineScope).coroutineContext.job.cancelAndJoin()
+    }
+  }
+}
+
+private fun awaitFixtureInitialization(cleanupScope: CoroutineScope, pendingFixtures: List<Deferred<*>>) {
+  @Suppress("SSBasedInspection")
+  runBlocking {
+    try {
+      pendingFixtures.awaitAll()
+    }
+    catch (e: Throwable) {
+      try {
+        cleanupScope.coroutineContext.job.cancelAndJoin()
+      }
+      catch (exceptionDuringCleanup: Throwable) {
+        e.addSuppressed(Throwable("Exception during cleanup of test fixture", exceptionDuringCleanup))
+      }
+      throw e
     }
   }
 }
