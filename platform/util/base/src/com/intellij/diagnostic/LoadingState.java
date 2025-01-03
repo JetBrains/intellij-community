@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -134,5 +134,18 @@ public enum LoadingState {
   @ApiStatus.Internal
   public static void compareAndSetCurrentState(@NotNull LoadingState expectedState, @NotNull LoadingState newState) {
     currentState.compareAndSet(expectedState, newState);
+  }
+
+  @ApiStatus.Internal
+  public static void setCurrentStateIfAtLeast(@NotNull LoadingState expectedState, @NotNull LoadingState newState) {
+    while (true) {
+      LoadingState current = currentState.get();
+      if (current.compareTo(expectedState) < 0) {
+        return;
+      }
+      if (currentState.compareAndSet(current, newState)) {
+        return;
+      }
+    }
   }
 }

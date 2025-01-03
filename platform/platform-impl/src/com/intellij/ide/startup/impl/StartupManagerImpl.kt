@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION", "ReplacePutWithAssignment")
 
 package com.intellij.ide.startup.impl
@@ -164,10 +164,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   suspend fun runPostStartupActivities() {
-    // opened on startup
-    LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
-    // opened from the welcome screen
-    LoadingState.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)
+    LoadingState.setCurrentStateIfAtLeast(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
 
     coroutineContext.ensureActive()
 
