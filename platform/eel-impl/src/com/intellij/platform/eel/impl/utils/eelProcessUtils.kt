@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.impl.utils
 
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
@@ -58,6 +59,10 @@ suspend fun EelProcess.awaitProcessResult(): ProcessOutput {
       }
     }
   }
+}
+
+fun EelApiBase.whereBlocking(exe: String): EelPath? {
+  return runBlockingMaybeCancellable { where(exe) }
 }
 
 /**

@@ -12,11 +12,7 @@ import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.EelProvider
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.getEelApi
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.*
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -64,6 +60,10 @@ suspend fun Project?.getEelApi(): EelApi {
 fun Project?.getEelApiBlocking(): EelApi {
   if (this == null) return localEel
   return runBlockingMaybeCancellable { getEelApi() }
+}
+
+fun EelDescriptor.upgradeBlocking(): EelApi {
+  return runBlockingMaybeCancellable { upgrade() }
 }
 
 fun Project?.getEelDescriptor(): EelDescriptor {
