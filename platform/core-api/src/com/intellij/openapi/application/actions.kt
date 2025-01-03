@@ -23,7 +23,6 @@ fun <T> runUndoTransparentWriteAction(runnable: () -> T): T {
 /**
  * Use [readAction].
  */
-@Obsolete
 fun <T> runReadAction(runnable: () -> T): T {
   return ApplicationManager.getApplication().runReadAction(Computable(runnable))
 }
