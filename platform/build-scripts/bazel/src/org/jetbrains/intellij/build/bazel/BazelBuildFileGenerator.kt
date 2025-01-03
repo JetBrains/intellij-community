@@ -71,7 +71,7 @@ internal class BazelBuildFileGenerator(
       resources = resourceDescriptors + extraResourceTarget,
       testSources = computeSources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaSourceRootType.TEST_SOURCE),
       testResources = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.TEST_RESOURCE),
-      targetName = jpsModuleNameToBazelBuildName(module = module, baseBuildDir = bazelBuildDir)
+      targetName = jpsModuleNameToBazelBuildName(module = module, baseBuildDir = bazelBuildDir, projectDir = projectDir)
     )
     moduleToDescriptor.put(module, moduleContent)
 
@@ -568,14 +568,15 @@ private fun isUsed(
          deps.runtimeDeps.any { it.substringAfterLast(':').substringAfterLast('/').contains(referencedModule.targetName) }
 }
 
-private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path): @NlsSafe String {
+private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path, projectDir: Path): @NlsSafe String {
   val result = module.name
     .removePrefix("intellij.platform.")
     .removePrefix("intellij.idea.community.")
     .removePrefix("intellij.")
 
+  val parentDirDirName = if (baseBuildDir.parent == projectDir) "idea"  else baseBuildDir.parent.fileName
   return result
-    .removePrefix("${baseBuildDir.parent.fileName}.")
+    .removePrefix("$parentDirDirName.")
     .replace('.', '-')
 }
 

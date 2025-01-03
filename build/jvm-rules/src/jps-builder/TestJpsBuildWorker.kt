@@ -1,6 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.jps
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import java.io.PrintWriter
 import java.nio.file.Files
@@ -31,13 +33,15 @@ object TestJpsBuildWorker {
           }
           .sortedBy { sourceDir.relativize(it).invariantSeparatorsPathString }
           .toList()
-        buildUsingJps(
-          workingDir = workingDir,
-          args = parseArgs(testParams.trimStart().lines()),
-          out = out,
-          sources = sources,
-          classPathRootDir = Path.of("/private/var/tmp/_bazel_develar/1693e3b60d193556354eca5e9446027e/execroot/_main"),
-        )
+        runBlocking(Dispatchers.Default) {
+          buildUsingJps(
+            workingDir = workingDir,
+            args = parseArgs(testParams.trimStart().lines()),
+            out = out,
+            sources = sources,
+            classPathRootDir = Path.of("/private/var/tmp/_bazel_develar/1693e3b60d193556354eca5e9446027e/execroot/_main"),
+          )
+        }
       }
       finally {
         out.flush()

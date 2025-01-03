@@ -4,6 +4,7 @@ package org.jetbrains.bazel.jvm.jps
 
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.builders.AdditionalRootsProviderService
+import org.jetbrains.jps.builders.PreloadedDataExtension
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
 import org.jetbrains.jps.builders.java.JavaCompilingTool
@@ -34,6 +35,8 @@ internal class BazelJpsServiceManager : JpsServiceManager() {
     // org.jetbrains.kotlin.jps.build.KotlinResourcesRootProvider and KotlinSourceRootProvider are not needed
     extensions.put(AdditionalRootsProviderService::class.java, listOf())
     extensions.put(ExcludedJavaSourceRootProvider::class.java, listOf())
+    // exclude CleanupTempDirectoryExtension
+    extensions.put(PreloadedDataExtension::class.java, listOf())
 
     services.put(SharedThreadPool::class.java, BazelSharedThreadPool)
     services.put(JpsEncodingConfigurationService::class.java, DummyJpsEncodingConfigurationService)

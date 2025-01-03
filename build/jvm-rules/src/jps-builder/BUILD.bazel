@@ -4,9 +4,12 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
     name = "worker-lib",
-    srcs = glob(["*.kt"]),
+    srcs = glob(["**/*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
+        "@lib//:kotlin-stdlib",
         ":jps-standalone",
+        "@lib//:fastutil-min",
         "//src/compiler-util",
         "//src/worker-framework",
         "//zip:build-zip",
@@ -16,7 +19,6 @@ kt_jvm_library(
     runtime_deps = [
         # jps needs these libs
         "@lib//:asm",
-        "@lib//:fastutil-min",
         "@lib//:aalto-xml",
         "@lib//:mvstore",
         "@lib//:hash4j",

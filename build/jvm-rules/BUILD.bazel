@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_import")
+load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
 load("//:jvm.bzl", "jvm_import", "kt_kotlinc_options")
 load(":rules/trace.bzl", "trace")
@@ -25,6 +26,12 @@ kt_kotlinc_options(
 trace(
     name = "kt_trace",
     build_setting_default = False,
+)
+
+_kt_kotlinc_options(
+    name = "rules_jvm_bootstrap_kotlinc_options",
+    include_stdlibs = "none",
+    visibility = ["//src:__subpackages__"],
 )
 
 ### auto-generated section `libraries` start
@@ -70,7 +77,7 @@ jvm_import(
     visibility = ["//visibility:public"],
     runtime_deps = [
         "@lib//:jetbrains-annotations",
-        ":kotlinx-coroutines-core"
+        ":kotlinx-coroutines-core",
     ],
 )
 

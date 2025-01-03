@@ -88,6 +88,10 @@ jvm_library(
     "@lib//:kotlin-test",
     "//platform/util",
     "@lib//:ktor-server-cio",
+    "//platform/testFramework/junit5/eel:testFramework-junit5-eel",
+    "//platform/testFramework/junit5/eel:testFramework-junit5-eel_test_lib",
+    "//platform/eel-provider",
+    "//platform/eel",
   ]
 )
 
