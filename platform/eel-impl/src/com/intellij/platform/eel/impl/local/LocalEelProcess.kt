@@ -6,7 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelApiBase
 import com.intellij.platform.eel.EelProcess
-import com.intellij.platform.eel.ErrorString
+import java.io.IOException
 import com.intellij.platform.eel.KillableProcess
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
@@ -33,9 +33,9 @@ internal class LocalEelProcess private constructor(
   private val scope: CoroutineScope = ApplicationManager.getApplication().service<EelLocalApiService>().scope(LocalEelProcess::class)
 
   override val pid: EelApiBase.Pid = LocalPid(process.pid())
-  override val stdin: EelSendChannel<ErrorString> = process.outputStream.asEelChannel()
-  override val stdout: EelReceiveChannel<ErrorString> = process.inputStream.consumeAsEelChannel()
-  override val stderr: EelReceiveChannel<ErrorString> = process.errorStream.consumeAsEelChannel()
+  override val stdin: EelSendChannel<IOException> = process.outputStream.asEelChannel()
+  override val stdout: EelReceiveChannel<IOException> = process.inputStream.consumeAsEelChannel()
+  override val stderr: EelReceiveChannel<IOException> = process.errorStream.consumeAsEelChannel()
   override val exitCode: Deferred<Int> = scope.async {
     process.awaitExit()
   }

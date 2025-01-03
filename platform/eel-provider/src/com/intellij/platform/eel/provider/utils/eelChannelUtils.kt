@@ -3,7 +3,6 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.ErrorString
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
@@ -32,28 +31,28 @@ import kotlin.coroutines.CoroutineContext
 // copy functions copy data from/to an eel channel
 
 
-fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel<ErrorString> = NioReadToEelAdapter(this)
-fun WritableByteChannel.asEelChannel(): EelSendChannel<ErrorString> = NioWriteToEelAdapter(this)
+fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel<IOException> = NioReadToEelAdapter(this)
+fun WritableByteChannel.asEelChannel(): EelSendChannel<IOException> = NioWriteToEelAdapter(this)
 
 // Flushes data after each writing.
-fun OutputStream.asEelChannel(): EelSendChannel<ErrorString> = NioWriteToEelAdapter(Channels.newChannel(this), this)
-fun InputStream.consumeAsEelChannel(): EelReceiveChannel<ErrorString> = NioReadToEelAdapter(Channels.newChannel(this))
-fun EelReceiveChannel<ErrorString>.consumeAsInputStream(blockingContext: CoroutineContext = Dispatchers.IO): InputStream =
+fun OutputStream.asEelChannel(): EelSendChannel<IOException> = NioWriteToEelAdapter(Channels.newChannel(this), this)
+fun InputStream.consumeAsEelChannel(): EelReceiveChannel<IOException> = NioReadToEelAdapter(Channels.newChannel(this))
+fun EelReceiveChannel<IOException>.consumeAsInputStream(blockingContext: CoroutineContext = Dispatchers.IO): InputStream =
   InputStreamAdapterImpl(this, blockingContext)
 
-fun EelSendChannel<ErrorString>.asOutputStream(blockingContext: CoroutineContext = Dispatchers.IO): OutputStream =
+fun EelSendChannel<IOException>.asOutputStream(blockingContext: CoroutineContext = Dispatchers.IO): OutputStream =
   OutputStreamAdapterImpl(this, blockingContext)
 
 
 /**
  * Bidirectional [kotlinx.coroutines.channels.Channel.RENDEZVOUS] pipe much like [java.nio.channels.Pipe].
  * Closing [sink] makes [source] return [com.intellij.platform.eel.ReadResult.EOF]
- * Closing [source] makes [sink] return and [ErrorString]
+ * Closing [source] makes [sink] return and [IOException]
  * Calling [closePipe] closes both [sink] and [source], you might provide custom error that will be reported on a writing attempt.
  */
 interface EelPipe {
-  val sink: EelSendChannel<ErrorString>
-  val source: EelReceiveChannel<ErrorString>
+  val sink: EelSendChannel<IOException>
+  val source: EelReceiveChannel<IOException>
   fun closePipe(error: Throwable? = null)
 }
 
@@ -64,13 +63,13 @@ fun EelPipe(): EelPipe = EelPipeImpl()
  * Reads all data till the end from a channel.
  * Semantics is the same as [InputStream.readAllBytes]
  */
-suspend fun EelReceiveChannel<ErrorString>.readAllBytes(): EelResult<ByteArray, ErrorString> = withContext(Dispatchers.IO) {
+suspend fun EelReceiveChannel<IOException>.readAllBytes(): EelResult<ByteArray, IOException> = withContext(Dispatchers.IO) {
   // The current implementation is suboptimal and might be rewritten, but the API should be the same
   try {
     ResultOkImpl(consumeAsInputStream().readAllBytes())
   }
   catch (e: IOException) {
-    ResultErrImpl(e.toString())
+    ResultErrImpl(e)
   }
 }
 

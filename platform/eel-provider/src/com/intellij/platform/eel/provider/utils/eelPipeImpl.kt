@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.ErrorString
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
@@ -15,11 +14,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.delay
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicInteger
 
-internal class EelPipeImpl() : EelPipe, EelReceiveChannel<ErrorString>, EelSendChannelCustomSendWholeBuffer<ErrorString> {
+internal class EelPipeImpl() : EelPipe, EelReceiveChannel<IOException>, EelSendChannelCustomSendWholeBuffer<IOException> {
   private companion object {
     val OK_EOF = ResultOkImpl(ReadResult.EOF)
     val OK_NOT_EOF = ResultOkImpl(ReadResult.NOT_EOF)
@@ -35,11 +35,11 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel<ErrorString>, EelSendC
   private val _bytesInQueue = AtomicInteger(0)
   internal val bytesInQueue: Int get() = if (channel.isClosedForSend) 0 else _bytesInQueue.get()
 
-  override val sink: EelSendChannel<ErrorString> = this
-  override val source: EelReceiveChannel<ErrorString> = this
+  override val sink: EelSendChannel<IOException> = this
+  override val source: EelReceiveChannel<IOException> = this
   private val sendLocks = ConcurrentLinkedDeque<CompletableDeferred<Unit>>()
 
-  override suspend fun sendWholeBufferCustom(src: ByteBuffer): EelResult<Unit, ErrorString> {
+  override suspend fun sendWholeBufferCustom(src: ByteBuffer): EelResult<Unit, IOException> {
     _bytesInQueue.addAndGet(src.remaining())
     while (src.hasRemaining()) {
       send(src, true).getOr { return it }
@@ -47,11 +47,11 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel<ErrorString>, EelSendC
     return OK_UNIT
   }
 
-  override suspend fun send(src: ByteBuffer): EelResult<Unit, ErrorString> {
+  override suspend fun send(src: ByteBuffer): EelResult<Unit, IOException> {
     return send(src, false)
   }
 
-  private suspend fun send(src: ByteBuffer, decreaseQueueAfterReceive: Boolean): EelResult<Unit, ErrorString> {
+  private suspend fun send(src: ByteBuffer, decreaseQueueAfterReceive: Boolean): EelResult<Unit, IOException> {
     val sendLock = CompletableDeferred<Unit>()
     // `send` should return when buffer is read
     sendLocks.add(sendLock)
@@ -73,7 +73,7 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel<ErrorString>, EelSendC
     }
   }
 
-  override suspend fun receive(dst: ByteBuffer): EelResult<ReadResult, ErrorString> {
+  override suspend fun receive(dst: ByteBuffer): EelResult<ReadResult, IOException> {
     val (src, sendLock, decreaseQueueAfterReceive) = try {
       channel.receive()
     }
@@ -130,7 +130,7 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel<ErrorString>, EelSendC
   }
 }
 
-private class PipeBrokenException(cause: Throwable) : Exception("Pipe was broken with message: ${cause.message}", cause) {
+private class PipeBrokenException(cause: Throwable) : IOException("Pipe was broken with message: ${cause.message}", cause) {
 
-  fun asErrorResult(): EelResult.Error<ErrorString> = ResultErrImpl(message!!)
+  fun asErrorResult(): EelResult.Error<IOException> = ResultErrImpl(this)
 }

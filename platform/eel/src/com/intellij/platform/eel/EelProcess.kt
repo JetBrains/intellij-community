@@ -1,11 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
+import java.io.IOException
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
 
 /**
  * Represents some process that was launched via [EelExecApi.executeProcess].
@@ -20,9 +19,9 @@ interface EelProcess: KillableProcess {
    *
    * Note that each chunk of data is individually and immediately flushed into the process without any intermediate buffer storage.
    */
-  val stdin: EelSendChannel<ErrorString>
-  val stdout: EelReceiveChannel<ErrorString>
-  val stderr: EelReceiveChannel<ErrorString>
+  val stdin: EelSendChannel<IOException>
+  val stdout: EelReceiveChannel<IOException>
+  val stderr: EelReceiveChannel<IOException>
   val exitCode: Deferred<Int>
 
 

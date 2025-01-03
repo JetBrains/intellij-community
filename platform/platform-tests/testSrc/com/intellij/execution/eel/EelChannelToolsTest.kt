@@ -2,7 +2,6 @@
 package com.intellij.execution.eel
 
 import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.ErrorString
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
@@ -32,6 +31,7 @@ import org.junitpioneer.jupiter.params.IntRangeSource
 import org.opentest4j.AssertionFailedError
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -130,10 +130,10 @@ class EelChannelToolsTest {
     val srcErrorText = "src err"
     val dstErrorText = "dst err"
 
-    val src = spyk<EelReceiveChannel<String>>(ByteArrayInputStream(data).consumeAsEelChannel())
+    val src = spyk<EelReceiveChannel<IOException>>(ByteArrayInputStream(data).consumeAsEelChannel())
     coEvery { src.receive(any()) } answers {
       if (srcErr) {
-        ResultErrImpl(srcErrorText)
+        ResultErrImpl(IOException(srcErrorText))
       }
       else callOriginal()
     }
@@ -141,7 +141,7 @@ class EelChannelToolsTest {
     val dst = spyk(ByteArrayOutputStream().asEelChannel())
     coEvery { dst.send(any()) } answers {
       if (dstErr) {
-        ResultErrImpl(dstErrorText)
+        ResultErrImpl(IOException(dstErrorText))
       }
       else callOriginal()
     }
@@ -155,11 +155,11 @@ class EelChannelToolsTest {
         when (val r = r.error) {
           is CopyResultError.InError -> {
             assertTrue(srcErr, "Unexpected src error")
-            assertEquals(srcErrorText, r.inError, "Wrong src error")
+            assertEquals(srcErrorText, r.inError.message, "Wrong src error")
           }
           is CopyResultError.OutError -> {
             assertTrue(dstErr, "Unexpected dst error")
-            assertEquals(dstErrorText, r.outError, "Wrong dst error")
+            assertEquals(dstErrorText, r.outError.message, "Wrong dst error")
           }
         }
       }
@@ -169,7 +169,7 @@ class EelChannelToolsTest {
   @Test
   fun testStreamNeverReturnsZero(): Unit = timeoutRunBlocking {
     var byteCounter = 2
-    val channel = object : EelReceiveChannel<ErrorString> {
+    val channel = object : EelReceiveChannel<IOException> {
 
       override suspend fun receive(dst: ByteBuffer): EelResult<ReadResult, Nothing> {
         when {
@@ -369,11 +369,11 @@ class EelChannelToolsTest {
     pipe.closePipe(error)
     when (val r = pipe.sink.sendWholeText("D")) {
       is EelResult.Ok -> fail("Writing into broken pipe must be an error")
-      is EelResult.Error -> assertEquals(expectedMessageError, r.error)
+      is EelResult.Error -> assertEquals(expectedMessageError, r.error.message)
     }
     when (val r = pipe.source.receive(allocate(1))) {
       is EelResult.Ok -> fail("Reading from broken pipe must be an error")
-      is EelResult.Error -> assertEquals(expectedMessageError, r.error)
+      is EelResult.Error -> assertEquals(expectedMessageError, r.error.message)
     }
   }
 
