@@ -1209,7 +1209,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     checkType = TypeConversionUtil.erasure(checkType);
     if (patternType == null ||
         ((checkType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
-         (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context) || !TypeConversionUtil.areTypesConvertible(checkType, patternType)))) {
+         (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context) || !TypeConversionUtil.areTypesConvertible(checkType, patternType))) ||
+        (checkType instanceof PsiClassType ct && ct.resolve() == null) ||
+        (patternType instanceof PsiClassType pt && pt.resolve() == null)) {
       addInstruction(new PopInstruction());
       pushUnknown();
       return;
