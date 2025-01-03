@@ -4,6 +4,7 @@ package com.intellij.platform.eel.provider.utils
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -12,6 +13,7 @@ import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.URI
@@ -124,6 +126,16 @@ object EelPathUtils {
       walkingTransfer(source, targetPath, false, true)
     }
     return targetPath
+  }
+
+  fun getHomePath(descriptor: EelDescriptor): Path {
+    // usually eel is already initialized to this moment
+    @Suppress("RAW_RUN_BLOCKING")
+    val api = runBlocking {
+      descriptor.upgrade()
+    }
+    val someEelPath = api.fs.user.home
+    return api.mapper.toNioPath(someEelPath)
   }
 
   @RequiresBackgroundThread
