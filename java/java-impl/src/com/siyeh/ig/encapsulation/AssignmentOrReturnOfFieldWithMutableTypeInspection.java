@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -159,7 +159,7 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
     public void visitRecordHeader(@NotNull PsiRecordHeader recordHeader) {
       super.visitRecordHeader(recordHeader);
       final PsiClass recordClass = recordHeader.getContainingClass();
-      if (recordClass == null) return;
+      if (recordClass == null || ignorePrivateMethods && recordClass.hasModifierProperty(PsiModifier.PRIVATE)) return;
       boolean reportAssignment = !ContainerUtil.or(recordClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
       for (PsiRecordComponent component : recordHeader.getRecordComponents()) {
         final PsiType type = component.getType();

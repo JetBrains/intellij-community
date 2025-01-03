@@ -203,6 +203,8 @@ class Demo {
   public static List<Foo> getListTwo() {
     return LIST_TWO;
   }
+
+  private record Data3(Collection<String> strings) {}
 }
 record Data1(Collection<String> <warning descr="Implicit assignment and return of Collection<String> record component 'strings'">strings</warning>) {}
 record Data2(Collection<String> <warning descr="Implicit assignment of Collection<String> record component 'strings'">strings</warning>) {
