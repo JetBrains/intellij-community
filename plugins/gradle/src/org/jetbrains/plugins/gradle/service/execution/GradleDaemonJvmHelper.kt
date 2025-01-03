@@ -35,13 +35,19 @@ private val UPDATE_DAEMON_JVM_TASK = Key.create<Boolean>("UPDATE_DAEMON_JVM_TASK
 object GradleDaemonJvmHelper {
 
   @JvmStatic
-  fun isDaemonJvmCriteriaSupported(gradleVersion: GradleVersion) = gradleVersion >= MIN_VERSION_SUPPORTING_DAEMON_TOOLCHAIN_VERSION_CRITERIA
+  fun isDaemonJvmCriteriaSupported(gradleVersion: GradleVersion): Boolean {
+    return gradleVersion >= MIN_VERSION_SUPPORTING_DAEMON_TOOLCHAIN_VERSION_CRITERIA
+  }
 
   @JvmStatic
-  fun isDamonJvmVendorCriteriaSupported(gradleVersion: GradleVersion) = gradleVersion >= MIN_VERSION_SUPPORTING_DAEMON_TOOLCHAIN_VENDOR_CRITERIA
+  fun isDamonJvmVendorCriteriaSupported(gradleVersion: GradleVersion): Boolean {
+    return gradleVersion >= MIN_VERSION_SUPPORTING_DAEMON_TOOLCHAIN_VENDOR_CRITERIA
+  }
 
   @JvmStatic
-  fun isDaemonJvmCriteriaRequired(gradleVersion: GradleVersion) = false // TODO replace with gradleVersion >= MIN_VERSION_REQUIRING_DAEMON_TOOLCHAIN_CRITERIA
+  fun isDaemonJvmCriteriaRequired(gradleVersion: GradleVersion): Boolean {
+    return false // TODO replace with gradleVersion >= MIN_VERSION_REQUIRING_DAEMON_TOOLCHAIN_CRITERIA
+  }
 
   @JvmStatic
   fun isProjectUsingDaemonJvmCriteria(projectSettings: GradleProjectSettings): Boolean {
@@ -51,12 +57,13 @@ object GradleDaemonJvmHelper {
   }
 
   @JvmStatic
-  fun isProjectUsingDaemonJvmCriteria(externalProjectPath: Path, gradleVersion: GradleVersion) =
-    Registry.`is`("gradle.daemon.jvm.criteria") && when {
+  fun isProjectUsingDaemonJvmCriteria(externalProjectPath: Path, gradleVersion: GradleVersion): Boolean {
+    return Registry.`is`("gradle.daemon.jvm.criteria") && when {
       isDaemonJvmCriteriaRequired(gradleVersion) -> true
       isDaemonJvmCriteriaSupported(gradleVersion) && GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)?.version != null -> true
       else -> false
     }
+  }
 
   @JvmStatic
   fun isExecutingUpdateDaemonJvmTask(settings: GradleExecutionSettings): Boolean {
