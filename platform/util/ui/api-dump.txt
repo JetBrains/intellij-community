@@ -171,6 +171,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:Resume:javax.swing.Icon
 - sf:Rollback:javax.swing.Icon
 - sf:RunAll:javax.swing.Icon
+- sf:RunAnything:javax.swing.Icon
 - sf:RunToCursor:javax.swing.Icon
 - sf:Run_anything:javax.swing.Icon
 - sf:Scratch:javax.swing.Icon
@@ -677,6 +678,7 @@ f:com.intellij.icons.AllIcons$Ide
 - sf:NavBarSeparator:javax.swing.Icon
 - sf:OutgoingChangesOn:javax.swing.Icon
 - sf:Pipette:javax.swing.Icon
+- sf:PipetteRollover:javax.swing.Icon
 - sf:Pipette_rollover:javax.swing.Icon
 - sf:PowerSaveMode:javax.swing.Icon
 - sf:Rating:javax.swing.Icon
@@ -725,9 +727,6 @@ f:com.intellij.icons.AllIcons$Ide$RoundShadow
 - <init>():V
 f:com.intellij.icons.AllIcons$Ide$RunAnything
 - sf:OpenRecentProject:javax.swing.Icon
-- <init>():V
-f:com.intellij.icons.AllIcons$Ide$Settings
-- sf:NewUI:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Ide$Shadow
 - sf:Bottom:javax.swing.Icon

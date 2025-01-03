@@ -31,7 +31,7 @@ internal fun databaseFeatures(source: PromoEventSource): JComponent = featurePag
   listOf(
     PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.database.code")),
     PromoFeatureListItem(AllIcons.Nodes.DataTables, FeaturePromoBundle.message("feature.database.create.and.manage")),
-    PromoFeatureListItem(AllIcons.Actions.Run_anything, FeaturePromoBundle.message("feature.database.run")),
+    PromoFeatureListItem(AllIcons.Actions.RunAnything, FeaturePromoBundle.message("feature.database.run")),
     PromoFeatureListItem(AllIcons.ToolbarDecorator.Import, FeaturePromoBundle.message("feature.database.export"))
   ),
   source,

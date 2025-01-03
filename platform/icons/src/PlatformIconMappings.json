@@ -51,6 +51,7 @@
       "stopRefresh.svg": "actions/stopRefresh.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
       "report.svg": "actions/report.svg",
+      "realIntentionBulb.svg": "actions/realIntentionBulb.svg",
       "rerunAutomatically.svg": "actions/rerunAutomatically.svg",
       "showReadAccess.svg": ["actions/showReadAccess.svg", "nodes/read-access.svg"],
       "showWriteAccess.svg": ["actions/showWriteAccess.svg", "nodes/write-access.svg"],
@@ -364,7 +365,7 @@
       "cut.svg": "actions/menu-cut.svg",
       "debugDisabled.svg": "general/debugDisabled.svg",
       "delete.svg": "actions/gc.svg",
-      "down.svg": "actions/nextOccurence.svg",
+      "down.svg": ["actions/nextOccurence.svg", "chooser/bottom.svg"],
       "download.svg": "actions/download.svg",
       "drag.svg": "general/drag.svg",
       "dropdown.svg": "general/dropdown.svg",
@@ -394,9 +395,9 @@
       "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
       "informationDialog.svg": "general/informationDialog.svg",
-      "language.svg": "general/language.svg",
+      "language.svg": ["general/language.svg", "toolbar/locale.svg"],
       "layout.svg": "debugger/restoreLayout.svg",
-      "left.svg": "actions/back.svg",
+      "left.svg": ["actions/back.svg", "chooser/left.svg"],
       "listFiles.svg": [
         "actions/annotate.svg",
         "actions/listFiles.svg"
@@ -419,7 +420,8 @@
       "paste.svg": "actions/menu-paste.svg",
       "pin.svg": [
         "actions/pinTab.svg",
-        "general/pin_tab.svg"
+        "general/pin_tab.svg",
+        "toolbar/pin.svg"
       ],
       "previewHorizontally.svg": "actions/previewDetailsVertically.svg",
       "previewOnly.svg": "general/layoutPreviewOnly.svg",
@@ -429,10 +431,11 @@
       "reset.svg": "general/reset.svg",
       "remove.svg": [
         "general/remove.svg",
-        "actions/RemoveMulticaret.svg"
+        "actions/RemoveMulticaret.svg",
+        "toolbar/removeSlot.svg"
       ],
-      "right.svg": "actions/forward.svg",
-      "runAnything.svg": "actions/run_anything.svg",
+      "right.svg": ["actions/forward.svg", "chooser/right.svg"],
+      "runAnything.svg": "actions/runAnything.svg",
       "search.svg": [
         "actions/find.svg",
         "actions/search.svg"
@@ -453,7 +456,7 @@
       "treeSelected.svg": "general/treeSelected.svg",
       "treeHovered.svg": "general/treeHovered.svg",
       "unlocked.svg": "ide/readwrite.svg",
-      "up.svg": "actions/previousOccurence.svg",
+      "up.svg": ["actions/previousOccurence.svg", "chooser/top.svg"],
       "upload.svg": "actions/upload.svg",
       "readerMode.svg": "general/readerMode.svg",
       "redo.svg": "actions/redo.svg",
@@ -534,7 +537,7 @@
         "graph/actualZoom.svg"
       ],
       "colorPicker.svg": "ide/pipette.svg",
-      "colorPickerRollover.svg": "ide/pipette_rollover.svg",
+      "colorPickerRollover.svg": "ide/pipetteRollover.svg",
       "grid.svg": "graph/grid.svg",
       "zoomIn.svg": "graph/zoomIn.svg",
       "zoomOut.svg": "graph/zoomOut.svg",
@@ -624,6 +627,7 @@
       "scala.svg": "language/scala.svg"
     },
     "nodes": {
+      "attribute.svg": "nodes/objectTypeAttribute.svg",
       "abstractException.svg": "nodes/abstractException.svg",
       "accessLocal.svg": ["nodes/c_plocal.svg", "nodes/packageLocal.svg"],
       "accessPrivate.svg": [
@@ -654,6 +658,7 @@
       "desktop.svg": "nodes/desktop.svg",
       "editFolder.svg": "modules/editFolder.svg",
       "enum.svg": "nodes/enum.svg",
+      "entryPoints.svg": "nodes/entryPoints.svg",
       "errorIntroduction.svg": "nodes/errorIntroduction.svg",
       "exception.svg": "nodes/exceptionClass.svg",
       "excludeRoot.svg": "modules/excludeRoot.svg",
@@ -740,6 +745,7 @@
       "textArea.svg": "nodes/textArea.svg",
       "type.svg": "nodes/type.svg",
       "unloadedModule.svg": "modules/unloadedModule.svg",
+      "unknown.svg": "nodes/unknown.svg",
       "upFolder.svg": "nodes/upFolder.svg",
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg",
@@ -902,7 +908,8 @@
         "general/warning.svg",
         "scope/problems.svg"
       ],
-      "warningOutline.svg": "general/showWarning.svg"
+      "warningOutline.svg": "general/showWarning.svg",
+      "success.svg": ["status/success.svg", "debugger/threadStates/idle.svg"]
     },
     "table": {
       "pagination.svg": "table/pagination.svg"

@@ -81,7 +81,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public final class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
-  public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
+  public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.RunAnything;
   static final String RUN_ANYTHING = "RunAnything";
   public static final KeyStroke DOWN_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0);
   public static final KeyStroke UP_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0);

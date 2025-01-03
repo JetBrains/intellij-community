@@ -71,9 +71,9 @@ private const val DURATION_COLOR_UPDATING = 33
 open class GraphicalColorPipette(private val parent: JComponent) : ColorPipette {
   override val icon: Icon = AllIcons.Ide.Pipette
 
-  override val rolloverIcon: Icon = AllIcons.Ide.Pipette_rollover
+  override val rolloverIcon: Icon = AllIcons.Ide.PipetteRollover
 
-  override val pressedIcon: Icon = AllIcons.Ide.Pipette_rollover
+  override val pressedIcon: Icon = AllIcons.Ide.PipetteRollover
 
   override fun pick(callback: ColorPipette.Callback): Unit = PickerDialog(parent, callback).pick()
 }

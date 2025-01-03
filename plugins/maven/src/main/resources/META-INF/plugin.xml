@@ -736,7 +736,7 @@
             use-shortcut-of="CollapseAll"/>
 
     <action id="Maven.ExecuteGoal" class="org.jetbrains.idea.maven.navigator.actions.MavenExecuteGoalAction"
-            icon="AllIcons.Actions.Run_anything">
+            icon="AllIcons.Actions.RunAnything">
     </action>
 
     <action id="Maven.GroupProjects"

@@ -260,7 +260,7 @@
     </group>
 
     <action id="Gradle.ExecuteTask" class="org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction"
-            icon="AllIcons.Actions.Run_anything">
+            icon="AllIcons.Actions.RunAnything">
     </action>
     <action id="Gradle.ToggleOfflineAction" class="org.jetbrains.plugins.gradle.action.ToggleOfflineAction"
             icon="AllIcons.Actions.OfflineMode"/>
