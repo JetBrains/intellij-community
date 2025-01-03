@@ -100,6 +100,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/AtVariableDeclaration.kt");
     }
 
+    @TestMetadata("ClassPropertyWithInitializer.kt")
+    public void testClassPropertyWithInitializer() throws Exception {
+        runTest("testData/editor/quickDoc/ClassPropertyWithInitializer.kt");
+    }
+
     @TestMetadata("ConstDefaultParameter.kt")
     public void testConstDefaultParameter() throws Exception {
         runTest("testData/editor/quickDoc/ConstDefaultParameter.kt");
