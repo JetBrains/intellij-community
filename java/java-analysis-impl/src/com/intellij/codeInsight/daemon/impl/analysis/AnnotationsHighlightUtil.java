@@ -274,7 +274,7 @@ public final class AnnotationsHighlightUtil {
         PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(owner);
         PsiAnnotation.TargetType applicable = AnnotationTargetUtil.findAnnotationTarget(container, targets);
         if (applicable == null) {
-          String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
+          String target = JavaPsiBundle.message("annotation.target." + targets[0]);
           String message = JavaErrorBundle.message("annotation.container.not.applicable", container.getName(), target);
           return createAnnotationError(annotationToCheck, message);
         }
@@ -480,7 +480,7 @@ public final class AnnotationsHighlightUtil {
   private static @NotNull HighlightInfo.Builder createNotApplicableTargetInfo(@NotNull PsiAnnotation annotation,
                                                                               PsiJavaCodeReferenceElement nameRef,
                                                                               PsiAnnotation.TargetType[] targets) {
-    String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
+    String target = JavaPsiBundle.message("annotation.target." + targets[0]);
     String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
     HighlightInfo.Builder info = createAnnotationError(annotation, message);
     if (BaseIntentionAction.canModify(Objects.requireNonNull(annotation.resolveAnnotationType()))) {
