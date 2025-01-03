@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.references
 
 import com.intellij.openapi.util.io.FileUtil
@@ -17,6 +17,8 @@ import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   public override fun setUp() {
@@ -58,7 +60,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   }
 
   protected fun addFile(name: String): String {
-    return createFile("m/$name", FileUtil.loadFile(File(getTestDataPath() + name), Charsets.UTF_8))
+    return createFile("m/$name", Files.readString(Path.of(getTestDataPath() + name), Charsets.UTF_8))
   }
 
 

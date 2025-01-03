@@ -121,12 +121,15 @@ public final class IncProjectBuilder {
   private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = new ConcurrentHashMap<>();
   private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = new ConcurrentHashMap<>();
 
-  public IncProjectBuilder(@NotNull ProjectDescriptor pd, @NotNull BuilderRegistry builderRegistry,
-                           @NotNull Map<String, String> builderParams, @NotNull CanceledStatus cs, final boolean isTestMode) {
-    myProjectDescriptor = pd;
+  public IncProjectBuilder(@NotNull ProjectDescriptor projectDescriptor,
+                           @NotNull BuilderRegistry builderRegistry,
+                           @NotNull Map<String, String> builderParams,
+                           @NotNull CanceledStatus canceledStatus,
+                           boolean isTestMode) {
+    myProjectDescriptor = projectDescriptor;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
-    myCancelStatus = cs;
+    myCancelStatus = canceledStatus;
     myTotalModuleLevelBuilderCount = builderRegistry.getModuleLevelBuilderCount();
     myIsTestMode = isTestMode;
   }
@@ -211,20 +214,22 @@ public final class IncProjectBuilder {
     }
   }
 
-  public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
+  public void build(@NotNull CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
     Tracer.Span rebuildRequiredSpan = Tracer.start("IncProjectBuilder.checkRebuildRequired");
     checkRebuildRequired(scope);
     rebuildRequiredSpan.complete();
 
     BuildDataManager dataManager = myProjectDescriptor.dataManager;
-    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
+    LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
       JavacMain.clearCompilerZipFileCache();
       dataManager.flush(false);
       dataManager.clearCache();
     });
 
-    final CleanupTempDirectoryExtension cleaner = CleanupTempDirectoryExtension.getInstance();
-    final Future<Void> cleanupTask = cleaner != null && cleaner.getCleanupTask() != null? cleaner.getCleanupTask() : startTempDirectoryCleanupTask(myProjectDescriptor);
+    CleanupTempDirectoryExtension cleaner = CleanupTempDirectoryExtension.getInstance();
+    Future<Void> cleanupTask = cleaner != null && cleaner.getCleanupTask() != null
+                               ? cleaner.getCleanupTask()
+                               : CleanupTempDirectoryExtension.startTempDirectoryCleanupTask(myProjectDescriptor);
     if (cleanupTask != null) {
       myAsyncTasks.add(cleanupTask);
     }
@@ -1662,39 +1667,6 @@ public final class IncProjectBuilder {
     if (dirsToDelete != null) {
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
     }
-  }
-
-  static @Nullable Future<Void> startTempDirectoryCleanupTask(final ProjectDescriptor pd) {
-    final String tempPath = System.getProperty("java.io.tmpdir", null);
-    if (Strings.isEmptyOrSpaces(tempPath)) {
-      return null;
-    }
-
-    final File tempDir = new File(tempPath);
-    final File dataRoot = pd.dataManager.getDataPaths().getDataStorageRoot();
-    if (!FileUtil.isAncestor(dataRoot, tempDir, true)) {
-      // cleanup only 'local' temp
-      return null;
-    }
-
-    File[] files = tempDir.listFiles();
-    if (files == null) {
-      tempDir.mkdirs(); // ensure the directory exists
-    }
-
-    else if (files.length > 0) {
-      final RunnableFuture<Void> task = new FutureTask<>(() -> {
-        for (File tempFile : files) {
-          FileUtilRt.delete(tempFile);
-        }
-      }, null);
-      final Thread thread = new Thread(task, "Temp directory cleanup");
-      thread.setPriority(Thread.MIN_PRIORITY);
-      thread.setDaemon(true);
-      thread.start();
-      return task;
-    }
-    return null;
   }
 
   private static void notifyChunkRebuildRequested(CompileContext context, ModuleChunk chunk, ModuleLevelBuilder builder) {
