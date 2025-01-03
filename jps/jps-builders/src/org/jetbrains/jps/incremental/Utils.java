@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Formats;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -89,7 +90,7 @@ public final class Utils {
 
     final Path rootFile = Paths.get(projectPath);
     if (!Files.isDirectory(rootFile) && projectPath.endsWith(".ipr")) {
-      name = StringUtil.trimEnd(rootFile.getFileName().toString(), ".ipr");
+      name = Strings.trimEnd(rootFile.getFileName().toString(), ".ipr");
       locationHash = hashFunction.apply(projectPath);
     }
     else {
@@ -107,7 +108,7 @@ public final class Utils {
       locationHash = hashFunction.apply(directoryBased.toString());
     }
 
-    return new File(systemRoot, StringUtil.toLowerCase(name) + "_" + Integer.toHexString(locationHash));
+    return new File(systemRoot, Strings.toLowerCase(name) + "_" + Integer.toHexString(locationHash));
   }
 
   public static boolean errorsDetected(CompileContext context) {
@@ -115,7 +116,7 @@ public final class Utils {
   }
 
   public static String formatDuration(long duration) {
-    return StringUtil.formatDuration(duration);
+    return Formats.formatDuration(duration);
   }
 
   public static int suggestForkedCompilerHeapSize() {

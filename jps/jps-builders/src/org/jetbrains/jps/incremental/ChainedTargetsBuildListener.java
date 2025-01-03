@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -52,9 +52,9 @@ final class ChainedTargetsBuildListener implements BuildListener {
     final BuildFSState state = myContext.getProjectDescriptor().fsState;
     final BuildRootIndex rootsIndex = myContext.getProjectDescriptor().getBuildRootIndex();
     for (String path : event.getFilePaths()) {
-      final File file = new File(FileUtil.toSystemDependentName(path));
-      for (BuildRootDescriptor desc : rootsIndex.findAllParentDescriptors(file, myContext)) {
-        state.registerDeleted(myContext, desc.getTarget(), file);
+      final File file = new File(FileUtilRt.toSystemDependentName(path));
+      for (BuildRootDescriptor descriptor : rootsIndex.findAllParentDescriptors(file, myContext)) {
+        state.registerDeleted(myContext, descriptor.getTarget(), file);
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -120,7 +120,7 @@ public final class BuilderRegistry {
    * @see Builder#getExpectedBuildTime()
    */
   public long getExpectedBuildTimeForTarget(BuildTargetType<?> targetType) {
-    //it may happen that there is no builders registered for a given type, so it won't be built at all.
+    // it may happen that there are no builders registered for a given type, so it won't be built at all
     return myExpectedBuildTime.getLong(targetType);
   }
 }
