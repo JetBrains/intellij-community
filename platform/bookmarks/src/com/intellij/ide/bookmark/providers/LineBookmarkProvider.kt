@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.providers
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.FileNode
 import com.intellij.ide.bookmark.ui.tree.LineNode
@@ -12,12 +13,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener.Simple
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileManager.getInstance
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -33,7 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import javax.swing.tree.TreePath
 
 @Suppress("ExtensionClassShouldBeFinalAndNonPublic")
-class LineBookmarkProvider(private val project: Project, coroutineScope: CoroutineScope) : BookmarkProvider, Simple, AsyncFileListener {
+class LineBookmarkProvider(private val project: Project, coroutineScope: CoroutineScope) : BookmarkProvider {
   override fun getWeight(): Int = Int.MIN_VALUE
   override fun getProject(): Project = project
 
@@ -116,7 +118,7 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
   }
 
   private fun createBookmark(url: String, line: Int = -1) = createValidBookmark(url, line) ?: createInvalidBookmark(url, line)
-  private fun createValidBookmark(url: String, line: Int = -1) = VFM.findFileByUrl(url)?.let { createBookmark(it, line) }
+  private fun createValidBookmark(url: String, line: Int = -1) = getInstance().findFileByUrl(url)?.let { createBookmark(it, line) }
   private fun createInvalidBookmark(url: String, line: Int = -1) = InvalidBookmark(this, url, line)
 
   private fun createBookmark(element: PsiElement): FileBookmark? {
@@ -141,7 +143,8 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
   private val TreePath.asVirtualFile
     get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
-  override fun afterDocumentChange(document: Document) {
+  private fun afterDocumentChange(document: Document) {
+    if (reloadingDocs.contains(document)) return
     val file = FileDocumentManager.getInstance().getFile(document) ?: return
     if (file is LightVirtualFile) return
     val manager = BookmarksManager.getInstance(project) ?: return
@@ -171,13 +174,14 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     manager.update(bookmarks)
   }
 
-  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+  private fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
     val update = events.any { it is VFileCreateEvent || it is VFileDeleteEvent }
     if (update) validateAlarm.cancelAndRequest()
     return null
   }
 
   private val validateAlarm = SingleAlarm.singleAlarm(task = ::validateAndUpdate, delay = 100, coroutineScope = coroutineScope)
+  private val reloadingDocs = ConcurrentCollectionFactory.createConcurrentSet<Document>()
 
   private fun validateAndUpdate() {
     val manager = BookmarksManager.getInstance(project) ?: return
@@ -193,15 +197,30 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     else -> null
   }
 
-  private val VFM
-    get() = VirtualFileManager.getInstance()
   private fun isNodeVisible(node: AbstractTreeNode<*>) = (node.value as? InvalidBookmark)?.run { line < 0 } ?: true
 
   init {
     if (!project.isDefault) {
       val multicaster = EditorFactory.getInstance().eventMulticaster
-      multicaster.addDocumentListener(this, project)
-      VFM.addAsyncFileListener(this, project)
+      multicaster.addDocumentListener(object : Simple {
+        override fun afterDocumentChange(document: Document) {
+          this@LineBookmarkProvider.afterDocumentChange(document)
+        }
+      }, project)
+      getInstance().addAsyncFileListener(object : AsyncFileListener {
+        override fun prepareChange(events: List<out VFileEvent>): AsyncFileListener.ChangeApplier? {
+          return this@LineBookmarkProvider.prepareChange(events)
+        }
+      }, project)
+
+      project.messageBus.connect().subscribe<FileDocumentManagerListener>(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
+        override fun beforeFileContentReload(file: VirtualFile, document: Document) {
+          reloadingDocs.add(document)
+        }
+        override fun fileContentReloaded(file: VirtualFile, document: Document) {
+          reloadingDocs.remove(document)
+        }
+      })
     }
   }
 

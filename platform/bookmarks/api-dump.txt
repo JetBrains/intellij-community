@@ -67,11 +67,8 @@ f:com.intellij.ide.bookmark.providers.LineBookmarkImpl
 - navigate(Z):V
 f:com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - com.intellij.ide.bookmark.BookmarkProvider
-- com.intellij.openapi.editor.event.BulkAwareDocumentListener$Simple
-- com.intellij.openapi.vfs.AsyncFileListener
 - sf:Companion:com.intellij.ide.bookmark.providers.LineBookmarkProvider$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- afterDocumentChange(com.intellij.openapi.editor.Document):V
 - compare(com.intellij.ide.bookmark.Bookmark,com.intellij.ide.bookmark.Bookmark):I
 - f:createBookmark(com.intellij.openapi.editor.Editor,java.lang.Integer):com.intellij.ide.bookmark.FileBookmark
 - f:createBookmark(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.ide.bookmark.FileBookmark
@@ -82,7 +79,6 @@ f:com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - sf:find(com.intellij.openapi.project.Project):com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - getProject():com.intellij.openapi.project.Project
 - getWeight():I
-- prepareChange(java.util.List):com.intellij.openapi.vfs.AsyncFileListener$ChangeApplier
 - prepareGroup(java.util.List):java.util.List
 f:com.intellij.ide.bookmark.providers.LineBookmarkProvider$Companion
 - f:find(com.intellij.openapi.project.Project):com.intellij.ide.bookmark.providers.LineBookmarkProvider
