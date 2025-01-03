@@ -138,14 +138,23 @@ public enum LoadingState {
 
   @ApiStatus.Internal
   public static void setCurrentStateIfAtLeast(@NotNull LoadingState expectedState, @NotNull LoadingState newState) {
+    assert newState.compareTo(expectedState) > 0;
+
     while (true) {
       LoadingState current = currentState.get();
       if (current.compareTo(expectedState) < 0) {
+        // The expected state is not yet reached.
+        return;
+      }
+      if (current.compareTo(newState) >= 0) {
+        // The current state is already equal or higher than the one we wanted to set.
         return;
       }
       if (currentState.compareAndSet(current, newState)) {
+        // We succeeded in setting the state.
         return;
       }
+      // Otherwise, all the previous checks passed, but somebody else changed the state in the meantime. Loop again.
     }
   }
 }
