@@ -44,9 +44,29 @@ object CustomWindowHeaderUtil {
   internal val hideNativeLinuxTitleSupported: Boolean
     get() = SystemInfoRt.isUnix && !SystemInfoRt.isMac &&
             ExperimentalUI.isNewUI() &&
-            JBR.isWindowMoveSupported() &&
-            (StartupUiUtil.isXToolkit() && !X11UiUtil.isWSL() && !X11UiUtil.isTileWM() && !X11UiUtil.isUndefinedDesktop() ||
-             StartupUiUtil.isWaylandToolkit())
+            hideNativeLinuxTitleNotSupportedReason == null
+
+  internal enum class HideNativeLinuxTitleNotSupportedReason {
+    INCOMPATIBLE_JBR,
+    WAYLAND_OR_XTOOLKIT_REQUIRED,
+    WSL_NOT_SUPPORTED,
+    TILING_WM_NOT_SUPPORTED,
+    UNDEFINED_DESKTOP_NOT_SUPPORTED,
+  }
+
+  /**
+   * Returns `null` if supported
+   */
+  internal val hideNativeLinuxTitleNotSupportedReason: HideNativeLinuxTitleNotSupportedReason?
+    get() = when {
+      !JBR.isWindowMoveSupported() -> HideNativeLinuxTitleNotSupportedReason.INCOMPATIBLE_JBR
+      StartupUiUtil.isWaylandToolkit() -> null
+      !StartupUiUtil.isXToolkit() -> HideNativeLinuxTitleNotSupportedReason.WAYLAND_OR_XTOOLKIT_REQUIRED
+      X11UiUtil.isWSL() -> HideNativeLinuxTitleNotSupportedReason.WSL_NOT_SUPPORTED
+      X11UiUtil.isTileWM() -> HideNativeLinuxTitleNotSupportedReason.TILING_WM_NOT_SUPPORTED
+      X11UiUtil.isUndefinedDesktop() -> HideNativeLinuxTitleNotSupportedReason.UNDEFINED_DESKTOP_NOT_SUPPORTED
+      else -> null
+    }
 
   internal val hideNativeLinuxTitleAvailable: Boolean
     get() = SystemInfoRt.isUnix && !SystemInfoRt.isMac &&

@@ -19,6 +19,7 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ThemeAutodetectSelector
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.HideNativeLinuxTitleNotSupportedReason
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -450,10 +451,18 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               }
               if (SystemInfo.isUnix && !SystemInfo.isMac && !CustomWindowHeaderUtil.hideNativeLinuxTitleSupported) {
                 checkBox.enabled(false)
-                checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
+                val comment = when (CustomWindowHeaderUtil.hideNativeLinuxTitleNotSupportedReason) {
+                  HideNativeLinuxTitleNotSupportedReason.INCOMPATIBLE_JBR -> message("hide.native.linux.title.not.supported.incompatible.jbr")
+                  HideNativeLinuxTitleNotSupportedReason.WAYLAND_OR_XTOOLKIT_REQUIRED -> message("hide.native.linux.title.not.supported.wayland.or.xtoolkit.required")
+                  HideNativeLinuxTitleNotSupportedReason.WSL_NOT_SUPPORTED -> message("hide.native.linux.title.not.supported.wsl")
+                  HideNativeLinuxTitleNotSupportedReason.TILING_WM_NOT_SUPPORTED -> message("hide.native.linux.title.not.supported.tiling.wm")
+                  HideNativeLinuxTitleNotSupportedReason.UNDEFINED_DESKTOP_NOT_SUPPORTED -> message("hide.native.linux.title.not.supported.undefined.desktop")
+                  null -> null
+                }
+                checkBox.comment(comment, 30)
               }
               else {
-                comment(message("ide.restart.required.comment"))
+                checkBox.comment(message("ide.restart.required.comment"))
               }
             }
           }
