@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell;
 
 import com.intellij.execution.ExecutionBundle;
@@ -161,7 +161,7 @@ public final class JShellHandler {
                                                         () -> ModuleRootManager.getInstance(module).orderEntries() :
                                                         () -> ProjectRootManager.getInstance(project).orderEntries();
     ApplicationManager.getApplication().runReadAction(() -> {
-      cp.addAll(orderEnumerator.compute().librariesOnly().recursively().withoutSdk().getPathsList().getPathList());
+      cp.addAll(orderEnumerator.compute().recursively().withoutSdk().getPathsList().getPathList());
     });
     if (!cp.isEmpty()) {
       jshellHandler.myEvalClasspathRef.set(cp);
