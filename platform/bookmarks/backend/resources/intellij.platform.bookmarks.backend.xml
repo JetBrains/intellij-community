@@ -2,7 +2,6 @@
   <dependencies>
     <plugin id="com.intellij.platform.experimental.backend"/>
     <module name="intellij.platform.kernel.backend"/>
-    <module name="intellij.platform.bookmarks"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.bookmarks.backend.BookmarksServiceProvider"/>
