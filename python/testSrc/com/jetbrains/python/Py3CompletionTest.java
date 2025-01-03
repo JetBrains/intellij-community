@@ -764,7 +764,26 @@ public class Py3CompletionTest extends PyTestCase {
       def TypedDict(typename, fields=None, /, *, total=True, **kwargs):
           ...
       """, ignored -> {
-      doMultiFileTest();
+      doTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableFunctionsFromTypingSuggestedInsideTypeHints() {
+    runWithAdditionalFileInLibDir("typing.py", """
+      def Final(self, parameters):
+          ...
+      """, ignored -> {
+      doTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableVariablesFromTypingSuggestedInsideTypeHints() {
+    runWithAdditionalFileInLibDir("typing.py", """
+      Tuple = _TupleType(tuple, -1, inst=False, name='Tuple')
+      """, ignored -> {
+      doTest();
     });
   }
 

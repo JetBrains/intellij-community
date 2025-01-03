@@ -2198,20 +2198,6 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   // PY-62208
-  public void testImportableFunctionsFromTypingSuggestedInsideTypeHints() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doMultiFileTest();
-    });
-  }
-
-  // PY-62208
-  public void testImportableVariablesFromTypingSuggestedInsideTypeHints() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doMultiFileTest();
-    });
-  }
-
-  // PY-62208
   public void testImportableFunctionsAndVariablesNotSuggestedInsidePatterns() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
       myFixture.copyDirectoryToProject(getTestName(true), "");
