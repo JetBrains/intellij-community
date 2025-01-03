@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -960,6 +961,10 @@ public final class GitUtil {
     }
     else {
       RefreshVFsSynchronously.updateChanges(changes);
+
+      // the file opened in the editor may accidentally capture an intermediate state for back-and-forth changes during rebase
+      // these may not be refreshed if 'before rebase' and 'after rebase' states match for the file
+      SaveAndSyncHandler.getInstance().refreshOpenFiles();
     }
   }
 
