@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer
 
-import com.intellij.byteCodeViewer.BytecodeViewerBundle.message
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
@@ -43,7 +42,7 @@ import kotlin.math.min
 internal class BytecodeToolWindowPanel(
   private val project: Project,
   private val toolWindow: ToolWindow,
-  initialSourceEditor: Editor
+  initialSourceEditor: Editor,
 ) : JPanel(BorderLayout()), Disposable {
   private val bytecodeDocument: Document = EditorFactory.getInstance().createDocument("")
 
@@ -144,7 +143,7 @@ internal class BytecodeToolWindowPanel(
 
     val sourceStartLine = sourceDocument.getLineNumber(sourceStartOffset)
     var sourceEndLine = sourceDocument.getLineNumber(sourceEndOffset)
-    if (sourceEndLine > sourceStartLine && sourceEndOffset > 0 && sourceDocument.getCharsSequence().get(sourceEndOffset - 1) == '\n') {
+    if (sourceEndLine > sourceStartLine && sourceEndOffset > 0 && sourceDocument.charsSequence[sourceEndOffset - 1] == '\n') {
       sourceEndLine--
     }
 
@@ -190,36 +189,36 @@ internal class BytecodeToolWindowPanel(
       }
       existingLoadBytecodeTask = null
     }
-    existingLoadBytecodeTask = LoadBytecodeTask(project, Consumer { bytecode: Bytecode ->
-      ApplicationManager.getApplication().invokeLater(
-        Runnable {
-          WriteAction.run<RuntimeException?>(ThrowableRunnable {
-            setBytecodeText(bytecode.withDebugInfo, bytecode.withoutDebugInfo)
-            onAfterBytecodeLoaded?.run()
-          })
-        })
-    }, Consumer { newClass: PsiClass ->
-      ApplicationManager.getApplication().invokeLater(Runnable {
+    existingLoadBytecodeTask = LoadBytecodeTask(project, { bytecode ->
+      ApplicationManager.getApplication().invokeLater {
+        WriteAction.run<RuntimeException> {
+          setBytecodeText(bytecode.withDebugInfo, bytecode.withoutDebugInfo)
+          onAfterBytecodeLoaded?.run()
+        }
+      }
+    }) { newClass ->
+      ApplicationManager.getApplication().invokeLater {
         currentlyDisplayedClassFQN = newClass.getQualifiedName()
         val className = newClass.getName()
         if (className != null) {
           setClassName(className)
         }
-      })
-    })
+      }
+    }
     existingLoadBytecodeTask?.queue()
   }
 
   @RequiresEdt
   @RequiresWriteLock
   private fun setBytecodeText(bytecodeWithDebugInfo: String?, bytecodeWithoutDebugInfo: String) {
-    bytecodeEditor.getDocument().putUserData<String?>(BYTECODE_WITH_DEBUG_INFO, bytecodeWithDebugInfo)
-    bytecodeEditor.getDocument().setText(StringUtil.convertLineSeparators(bytecodeWithoutDebugInfo))
+    val document = bytecodeEditor.getDocument()
+    document.putUserData<String?>(BYTECODE_WITH_DEBUG_INFO, bytecodeWithDebugInfo)
+    document.setText(StringUtil.convertLineSeparators(bytecodeWithoutDebugInfo))
   }
 
   @RequiresEdt
   private fun setClassName(className: @NlsSafe String) {
-    classNameLabel.setText(message("bytecode.for.class", className))
+    classNameLabel.setText(BytecodeViewerBundle.message("bytecode.for.class", className))
     classNameLabel.isVisible = true
   }
 
@@ -230,9 +229,10 @@ internal class BytecodeToolWindowPanel(
   private class LoadBytecodeTask(
     project: Project,
     @param:RequiresEdt private val onBytecodeUpdated: Consumer<Bytecode>,
-    @param:RequiresBackgroundThread private val onClassNameUpdated: Consumer<PsiClass>
-  ) : Task.Backgroundable(project, message("loading.bytecode"), true) {
+    @param:RequiresBackgroundThread private val onClassNameUpdated: Consumer<PsiClass>,
+  ) : Task.Backgroundable(project, BytecodeViewerBundle.message("loading.bytecode"), true) {
     private var myProgressIndicator: ProgressIndicator? = null
+
     private var myBytecode: Bytecode? = null
 
     fun cancel() {
@@ -284,8 +284,8 @@ internal class BytecodeToolWindowPanel(
 
     private val LOG = Logger.getInstance(BytecodeToolWindowPanel::class.java)
 
-    private val BYTECODE_WITH_DEBUG_INFO = Key.create<String?>("BYTECODE_WITH_DEBUG_INFO")
+    private val BYTECODE_WITH_DEBUG_INFO = Key.create<String>("BYTECODE_WITH_DEBUG_INFO")
 
-    private val DEFAULT_TEXT = message("open.java.file.to.see.bytecode")
+    private val DEFAULT_TEXT = BytecodeViewerBundle.message("open.java.file.to.see.bytecode")
   }
 }
