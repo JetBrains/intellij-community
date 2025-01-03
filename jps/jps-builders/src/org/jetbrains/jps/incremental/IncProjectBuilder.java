@@ -4,7 +4,6 @@ package org.jetbrains.jps.incremental;
 import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Formats;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,6 +67,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -626,14 +626,22 @@ public final class IncProjectBuilder {
 
   private void cleanOutputRoots(@NotNull CompileContext context, boolean cleanCaches) throws ProjectBuildException {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    ProjectBuildException ex = null;
+    ProjectBuildException projectBuildException = null;
     final ExecutorService cleanupExecutor = SharedThreadPool.getInstance().createBoundedExecutor("IncProjectBuilder Output Cleanup Pool", MAX_BUILDER_THREADS);
     final List<Future<?>> cleanupTasks = new ArrayList<>();
     final long cleanStart = System.nanoTime();
     try {
       final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(projectDescriptor.getProject());
       if (configuration.isClearOutputDirectoryOnRebuild()) {
-        clearOutputs(context, cleanupExecutor, cleanupTasks);
+        clearOutputs(context, runnable -> {
+          if (SYNC_DELETE) {
+            runnable.run();
+            return CompletableFuture.completedFuture(null);
+          }
+          else {
+            return cleanupExecutor.submit(runnable);
+          }
+        }, cleanupTasks);
       }
       else {
         for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
@@ -655,8 +663,17 @@ public final class IncProjectBuilder {
         }
       }
     }
+    catch (CompletionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof ProjectBuildException) {
+        projectBuildException = (ProjectBuildException)cause;
+      }
+      else {
+        throw e;
+      };
+    }
     catch (ProjectBuildException e) {
-      ex = e;
+      projectBuildException = e;
     }
     finally {
       for (Future<?> task : cleanupTasks) {
@@ -673,8 +690,8 @@ public final class IncProjectBuilder {
           projectDescriptor.dataManager.clean(asyncTasks::add);
         }
         catch (IOException e) {
-          if (ex == null) {
-            ex = new ProjectBuildException(JpsBuildBundle.message("build.message.error.cleaning.compiler.storages"), e);
+          if (projectBuildException == null) {
+            projectBuildException = new ProjectBuildException(JpsBuildBundle.message("build.message.error.cleaning.compiler.storages"), e);
           }
           else {
             LOG.info("Error cleaning compiler storages", e);
@@ -682,8 +699,8 @@ public final class IncProjectBuilder {
         }
         finally {
           projectDescriptor.fsState.clearAll();
-          if (ex != null) {
-            throw ex;
+          if (projectBuildException != null) {
+            throw projectBuildException;
           }
         }
       }
@@ -795,9 +812,9 @@ public final class IncProjectBuilder {
             Collection<String> boundForms = sourceToFormMap.getOutputs(deletedSource);
             if (boundForms != null) {
               for (String formPath : boundForms) {
-                final File formFile = new File(formPath);
-                if (formFile.exists()) {
-                  FSOperations.markDirty(context, CompilationRound.CURRENT, formFile);
+                Path formFile = Path.of(formPath);
+                if (Files.exists(formFile)) {
+                  FSOperations.markDirty(context, CompilationRound.CURRENT, formFile.toFile());
                 }
               }
               sourceToFormMap.remove(deletedSource);
@@ -879,7 +896,7 @@ public final class IncProjectBuilder {
   }
 
   private void clearOutputs(@NotNull CompileContext context,
-                            @NotNull ExecutorService cleanupExecutor,
+                            @NotNull Function<Runnable, Future<?>> cleanupExecutor,
                             @NotNull List<Future<?>> cleanupTasks) throws ProjectBuildException {
     MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
     Set<File> allSourceRoots = FileCollectionFactory.createCanonicalFileSet();
@@ -893,12 +910,7 @@ public final class IncProjectBuilder {
         }
       }
       else if (context.getScope().isBuildForced(target)) {
-        if (SYNC_DELETE) {
-          clearOutputFilesUninterruptibly(context, target);
-        }
-        else {
-          cleanupTasks.add(cleanupExecutor.submit(() -> clearOutputFilesUninterruptibly(context, target)));
-        }
+        cleanupTasks.add(cleanupExecutor.apply(() -> clearOutputFilesUninterruptibly(context, target)));
       }
     }
 
@@ -920,7 +932,7 @@ public final class IncProjectBuilder {
 
     // check that output and source roots are not overlapping
     final CompileScope compileScope = context.getScope();
-    final List<File> filesToDelete = new ArrayList<>();
+    final List<Path> filesToDelete = new ArrayList<>();
     final Predicate<BuildTarget<?>> forcedBuild = compileScope::isBuildForced;
     for (Map.Entry<File, Collection<BuildTarget<?>>> entry : rootsToDelete.entrySet()) {
       context.checkCanceled();
@@ -963,13 +975,14 @@ public final class IncProjectBuilder {
         if (children != null) {
           for (File child : children) {
             if (!child.delete()) {
-              filesToDelete.add(child);
+              filesToDelete.add(child.toPath());
             }
           }
         }
-        else { // the output root must be file
+        else {
+          // the output root must be a file
           if (!outputRoot.delete()) {
-            filesToDelete.add(outputRoot);
+            filesToDelete.add(outputRoot.toPath());
           }
         }
         registerTargetsWithClearedOutput(context, rootTargets);
@@ -979,12 +992,7 @@ public final class IncProjectBuilder {
         // clean only those files we are aware of
         for (BuildTarget<?> target : rootTargets) {
           if (compileScope.isBuildForced(target)) {
-            if (SYNC_DELETE) {
-              clearOutputFilesUninterruptibly(context, target);
-            }
-            else {
-              cleanupTasks.add(cleanupExecutor.submit(() -> clearOutputFilesUninterruptibly(context, target)));
-            }
+            cleanupTasks.add(cleanupExecutor.apply(() -> clearOutputFilesUninterruptibly(context, target)));
           }
         }
       }
@@ -992,15 +1000,24 @@ public final class IncProjectBuilder {
 
     if (!filesToDelete.isEmpty()) {
       context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.cleaning.output.directories")));
-      if (SYNC_DELETE) {
-        for (File file : filesToDelete) {
-          context.checkCanceled();
-          FileUtilRt.delete(file);
+      asyncTasks.add(cleanupExecutor.apply(() -> {
+        for (Path file : filesToDelete) {
+          try {
+            context.checkCanceled();
+          }
+          catch (ProjectBuildException e) {
+            throw new CompletionException(e);
+          }
+          try {
+            FileUtilRt.deleteRecursively(file);
+          }
+          catch (IOException ignored) {
+          }
+          catch (Exception e) {
+            LOG.info(e);
+          }
         }
-      }
-      else {
-        asyncTasks.add(FileUtil.asyncDelete(filesToDelete));
-      }
+      }));
     }
   }
 
