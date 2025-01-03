@@ -15,6 +15,7 @@ class InMemoryHandler(val outputPath: Path) : Handler() {
   companion object {
     const val FAILED_BUILD_LOG_FILE_NAME_PREFIX: String = "failed-build_";
     const val MAX_REPORT_NUMBER: Int = 3;
+    const val IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME: String = "compiler.inMemoryLogger"
   }
   var buildFailed: Boolean = false
 

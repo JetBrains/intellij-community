@@ -150,6 +150,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
+import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -1619,7 +1620,7 @@ public final class BuildManager implements Disposable {
     cmdLine.addPathParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + '=', FileUtil.toSystemIndependentName(PathManager.getPluginsPath()));
 
     cmdLine.addPathParameter("-D" + GlobalOptions.LOG_DIR_OPTION + '=', FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
-    if (AdvancedSettings.getBoolean("compiler.inMemoryLogger")) {
+    if (AdvancedSettings.getBoolean(IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME)) {
       cmdLine.addParameter("-D" + GlobalOptions.USE_IN_MEMORY_FAILED_BUILD_LOGGER + "=true");
     }
 
