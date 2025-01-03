@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
@@ -3925,23 +3926,20 @@ public final class HighlightUtil {
                                                         @NotNull JavaFeature feature,
                                                         HighlightInfo.Builder info) {
     if (info == null) return;
-    List<IntentionAction> registrar = new ArrayList<>();
-    registerIncreaseLanguageLevelFixes(element, feature, registrar);
-    for (IntentionAction action : registrar) {
-      info.registerFix(action, null, null, null, null);
+    for (CommonIntentionAction action : getIncreaseLanguageLevelFixes(element, feature)) {
+      info.registerFix(action.asIntention(), null, null, null, null);
     }
   }
 
-  public static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
-                                                        @NotNull JavaFeature feature,
-                                                        @NotNull List<? super IntentionAction> registrar) {
-    if (PsiUtil.isAvailable(feature, element)) return;
-    if (feature.isLimited()) return; //no reason for applying it because it can be outdated
+  public static @NotNull List<CommonIntentionAction> getIncreaseLanguageLevelFixes(
+    @NotNull PsiElement element, @NotNull JavaFeature feature) {
+    if (PsiUtil.isAvailable(feature, element)) return List.of();
+    if (feature.isLimited()) return List.of(); //no reason for applying it because it can be outdated
     LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
-    if (applicableLevel == LanguageLevel.JDK_X) return; // do not suggest to use experimental level
-    registrar.add(getFixFactory().createIncreaseLanguageLevelFix(applicableLevel));
-    registrar.add(getFixFactory().createUpgradeSdkFor(applicableLevel));
-    registrar.add(getFixFactory().createShowModulePropertiesFix(element));
+    if (applicableLevel == LanguageLevel.JDK_X) return List.of(); // do not suggest to use experimental level
+    return List.of(getFixFactory().createIncreaseLanguageLevelFix(applicableLevel),
+                   getFixFactory().createUpgradeSdkFor(applicableLevel),
+                   getFixFactory().createShowModulePropertiesFix(element));
   }
 
   private static @NotNull @NlsContexts.DetailedDescription String getUnsupportedFeatureMessage(@NotNull JavaFeature feature,
