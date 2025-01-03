@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 
 @TestApplication
-@Disabled("Depends on IJPL-160621")
 class EelProjectShowcase {
   val eel = eelFixture(EelPath.OS.UNIX)
   val project = eel.projectFixture()

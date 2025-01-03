@@ -13,8 +13,8 @@ import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
-import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelTestFileSystem
-import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelTestFileSystemProvider
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystemProvider
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.extensionPointFixture
@@ -41,15 +41,14 @@ internal val currentOs: EelPath.OS
     EelPath.OS.UNIX
   }
 
-internal fun eelApiByOs(fileSystem: EelTestFileSystem, os: EelPath.OS): EelApi {
+internal fun eelApiByOs(fileSystem: EelUnitTestFileSystem, os: EelPath.OS): EelApi {
   return when (os) {
     EelPath.OS.UNIX -> EelTestPosixApi(fileSystem, fileSystem.fakeLocalRoot)
     EelPath.OS.WINDOWS -> EelTestWindowsApi(fileSystem, fileSystem.fakeLocalRoot)
   }
 }
 
-internal class TestEelProvider(val fileSystem: EelTestFileSystem, val eelApi: EelApi) : EelProvider {
-  private val descriptor = EelTestDescriptor(Ksuid.generate().toString(), eelApi)
+internal class TestEelProvider(val fileSystem: EelUnitTestFileSystem, val descriptor: EelDescriptor, val eelApi: EelApi) : EelProvider {
 
   override suspend fun getEelApi(path: Path): EelApi? {
     if (path.root.toString() != fileSystem.fakeLocalRoot) {
@@ -71,11 +70,10 @@ internal class TestEelProvider(val fileSystem: EelTestFileSystem, val eelApi: Ee
 
 }
 
-internal data class IsolatedFileSystemImpl(override val storageRoot: Path, override val eelApi: EelApi) : IsolatedFileSystem
+internal data class IsolatedFileSystemImpl(override val storageRoot: Path, override val eelDescriptor: EelDescriptor, override val eelApi: EelApi) : IsolatedFileSystem
 
 internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFileSystem> = TestFixtureInitializer { initialized ->
-  Assumptions.assumeTrue(FileSystems.getDefault().javaClass.name == MultiRoutingFileSystem::class.java.name,
-                         "Please enable `-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider`")
+  checkMultiRoutingFileSystem()
   val meaningfulDirName = "eel-fixture-${os.name.lowercase()}"
   val directory = Files.createTempDirectory(meaningfulDirName)
   val id = directory.toString().substringAfter(meaningfulDirName)
@@ -90,16 +88,17 @@ internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFile
   val defaultProvider = FileSystems.getDefault().provider()
 
   val dirUri = URI("file", id.toString(), null, null)
-  val fakeLocalFileSystem = EelTestFileSystem(EelTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
+  val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
   val paramMap = mapOf("KEY_ROOT" to fakeRoot,
                        "KEY_PREFIX" to true,
                        "KEY_CASE_SENSITIVE" to (os == EelPath.OS.WINDOWS),
                        "KEY_FUNCTION" to (BiFunction<FileSystemProvider, FileSystem?, FileSystem?> { _, _ -> fakeLocalFileSystem }))
   FileSystems.newFileSystem(URI("file", id.toString(), null, null), paramMap)
   val eelApi = eelApiByOs(fakeLocalFileSystem, os)
-  extensionPointFixture(EelProvider.EP_NAME, TestEelProvider(fakeLocalFileSystem, eelApi)).init()
+  val descriptor = EelTestDescriptor(Ksuid.generate().toString(), eelApi)
+  extensionPointFixture(EelProvider.EP_NAME, TestEelProvider(fakeLocalFileSystem, descriptor, eelApi)).init()
   val root = Path.of(fakeRoot)
-  initialized(IsolatedFileSystemImpl(root, eelApi)) {
+  initialized(IsolatedFileSystemImpl(root, descriptor, eelApi)) {
     FileSystems.newFileSystem(dirUri, paramMap.with("KEY_FUNCTION", (BiFunction<FileSystemProvider, FileSystem?, FileSystem?> { _, _ -> null })))
     fakeLocalFileSystem.close()
     directory.delete()
@@ -116,3 +115,8 @@ internal fun eelTempDirectoryFixture(fileSystem: TestFixture<IsolatedFileSystem>
   }
 }
 
+
+internal fun checkMultiRoutingFileSystem() {
+  Assumptions.assumeTrue(FileSystems.getDefault().javaClass.name == MultiRoutingFileSystem::class.java.name,
+                         "Please enable `-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider`")
+}

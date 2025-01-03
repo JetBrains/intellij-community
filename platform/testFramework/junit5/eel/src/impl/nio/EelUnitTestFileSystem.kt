@@ -12,8 +12,8 @@ import java.nio.file.WatchService
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 
-internal class EelTestFileSystem(val provider: FileSystemProvider, val os: EelPath.OS, val rootDirectory: Path, val fakeLocalRoot: String) : FileSystem() {
-  val root: EelTestPath = EelTestPath(this, rootDirectory)
+internal class EelUnitTestFileSystem(val provider: FileSystemProvider, val os: EelPath.OS, val rootDirectory: Path, val fakeLocalRoot: String) : FileSystem() {
+  val root: EelUnitTestPath = EelUnitTestPath(this, rootDirectory)
 
   override fun provider(): FileSystemProvider {
     return provider
@@ -58,18 +58,17 @@ internal class EelTestFileSystem(val provider: FileSystemProvider, val os: EelPa
       null
     }
     if (remaining != null) {
-      val remaining = first.substringAfter(fakeLocalRoot)
       if (remaining.isEmpty()) {
-        return EelTestPath(this, rootDirectory)
+        return EelUnitTestPath(this, rootDirectory)
       }
       else {
         val parts = remaining.drop(1).split("/")
         val original = (parts + more).fold(rootDirectory, Path::resolve)
-        return EelTestPath(this, original)
+        return EelUnitTestPath(this, original)
       }
     }
     else {
-      return EelTestPath(this, rootDirectory.fileSystem.getPath(first, *more))
+      return EelUnitTestPath(this, rootDirectory.fileSystem.getPath(first, *more))
     }
   }
 

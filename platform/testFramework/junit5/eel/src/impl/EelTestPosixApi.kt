@@ -11,12 +11,13 @@ import com.intellij.platform.eel.EelTunnelsPosixApi
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.fs.PosixNioBasedEelFileSystemApi
+import com.intellij.platform.eel.impl.local.EelLocalExecApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelTestFileSystem
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.util.system.CpuArch
 import java.nio.file.Files
 
-internal class EelTestPosixApi(fileSystem: EelTestFileSystem, localPrefix: String) : EelPosixApi {
+internal class EelTestPosixApi(fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelPosixApi {
   override val userInfo: EelUserPosixInfo = EelTestPosixUserInfo()
 
   override val platform: EelPlatform.Posix
@@ -35,12 +36,11 @@ internal class EelTestPosixApi(fileSystem: EelTestFileSystem, localPrefix: Strin
     get() = TODO()
   override val tunnels: EelTunnelsPosixApi
     get() = TODO()
-  override val exec: EelExecApi
-    get() = TODO()
+  override val exec: EelExecApi = EelLocalExecApi()
 
 }
 
-private class EelTestFileSystemPosixApi(val mapper: EelPathMapper, fileSystem: EelTestFileSystem) : PosixNioBasedEelFileSystemApi(fileSystem, EelTestPosixUserInfo()) {
+private class EelTestFileSystemPosixApi(val mapper: EelPathMapper, fileSystem: EelUnitTestFileSystem) : PosixNioBasedEelFileSystemApi(fileSystem, EelTestPosixUserInfo()) {
 
   override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
     TODO("Not yet implemented")

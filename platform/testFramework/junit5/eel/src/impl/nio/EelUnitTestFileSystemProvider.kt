@@ -18,7 +18,7 @@ import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 
-class EelTestFileSystemProvider(val defaultProvider: FileSystemProvider) : FileSystemProvider() {
+internal class EelUnitTestFileSystemProvider(val defaultProvider: FileSystemProvider) : FileSystemProvider() {
 
   override fun getScheme(): String? {
     return defaultProvider.scheme
@@ -128,16 +128,16 @@ class EelTestFileSystemProvider(val defaultProvider: FileSystemProvider) : FileS
 
   private fun Path.unfoldPath(): Path {
     return when (this) {
-      is EelTestPath -> this.delegate
+      is EelUnitTestPath -> this.delegate
       else -> throw InvalidPathException(this.toString(), "Incorrect input path: ${this.javaClass}")
     }
   }
 
   private fun Path.wrapper(): (Path) -> Path {
     when (this) {
-      is EelTestPath -> {
+      is EelUnitTestPath -> {
         val fs = this.fileSystem
-        return { it -> EelTestPath(fs, it) }
+        return { it -> EelUnitTestPath(fs, it) }
       }
       else -> throw InvalidPathException(this.toString(), "Incorrect input path: ${this.javaClass}")
     }

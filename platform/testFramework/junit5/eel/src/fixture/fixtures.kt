@@ -3,7 +3,9 @@ package com.intellij.platform.testFramework.junit5.eel.fixture
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.testFramework.junit5.eel.impl.checkMultiRoutingFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.currentOs
 import com.intellij.platform.testFramework.junit5.eel.impl.eelInitializer
 import com.intellij.platform.testFramework.junit5.eel.impl.eelTempDirectoryFixture
@@ -15,7 +17,6 @@ import java.nio.file.Path
 
 /**
  * Represents an isolated file system, which is accessible to the IDE but not to the OS.
- * In reality, all paths to this file system point to a subtree of the host OS file system.
  */
 @TestOnly
 interface IsolatedFileSystem {
@@ -25,13 +26,18 @@ interface IsolatedFileSystem {
   val eelApi: EelApi
 
   /**
+   * The descriptor of the created Eel API
+   */
+  val eelDescriptor: EelDescriptor
+
+  /**
    * A _local_ path pointing to the root of the isolated file system.
    */
   val storageRoot: Path
 }
 
 /**
- * Creates an instance of Eel which is bound at an isolated directory on the local file system.
+ * Creates an instance of Eel which is bound at an isolated location on the local file system.
  * The local file system would not be able to recognize these paths, so you can test whether your feature is eel-agnostic.
  */
 @TestOnly
@@ -40,11 +46,12 @@ fun eelFixture(os: EelPath.OS = currentOs): TestFixture<IsolatedFileSystem> {
 }
 
 /**
- * Creates a project in an isolated directory.
+ * Creates a project in an isolated location.
  * The local file system would not be able to recognize the paths of the project.
  */
 @TestOnly
 fun TestFixture<IsolatedFileSystem>.projectFixture(): TestFixture<Project> {
+  checkMultiRoutingFileSystem()
   val tempDirProject = testFixture("eel-temp-dir-for-project", eelTempDirectoryFixture(this))
   return projectFixture(tempDirProject, openAfterCreation = true)
 }

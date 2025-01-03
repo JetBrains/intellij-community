@@ -13,9 +13,9 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import java.nio.file.Path
 
 @TestApplication
-@Disabled("Depends on IJPL-160621")
 class EelFsShowcase {
 
   val fsAndEelUnix: TestFixture<IsolatedFileSystem> = eelFixture(EelPath.OS.UNIX)
@@ -42,7 +42,7 @@ class EelFsShowcase {
     val root = fsdata.storageRoot
     val mapper = fsdata.eelApi.mapper
     val eelPath = mapper.getOriginalPath(root)!!
-    Assertions.assertTrue(OSAgnosticPathUtil.isAbsoluteDosPath(eelPath.toString()))
+    Assertions.assertTrue(OSAgnosticPathUtil.isUncPath(eelPath.toString()))
   }
 
   @Test
@@ -70,5 +70,16 @@ class EelFsShowcase {
     Assertions.assertEquals("file", uri.scheme)
     Assertions.assertNull(uri.authority)
     Assertions.assertTrue(uri.path.contains("a/b/c/d/e"))
+  }
+
+  @Test
+  fun `windows path is separator agnostic`() {
+    val root = fsAndEelWindows.get().storageRoot
+    val path = root.resolve("a\\b/c\\d/e")
+    val backwardSlashPath = Path.of(path.toString())
+    val forwardSlashPath = Path.of(path.toString().replace('\\', '/'))
+    Assertions.assertEquals(backwardSlashPath, forwardSlashPath)
+    val mapper = fsAndEelWindows.get().eelApi.mapper
+    Assertions.assertEquals(mapper.getOriginalPath(backwardSlashPath)!!, mapper.getOriginalPath(forwardSlashPath)!!)
   }
 }

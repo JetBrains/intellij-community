@@ -11,11 +11,12 @@ import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
+import com.intellij.platform.eel.impl.local.EelLocalExecApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelTestFileSystem
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.util.system.CpuArch
 
-internal class EelTestWindowsApi(fileSystem: EelTestFileSystem, localPrefix: String) : EelWindowsApi {
+internal class EelTestWindowsApi(fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelWindowsApi {
   override val userInfo: EelUserWindowsInfo = EelTestWindowsUserInfo()
 
   override val platform: EelPlatform.Windows
@@ -34,12 +35,11 @@ internal class EelTestWindowsApi(fileSystem: EelTestFileSystem, localPrefix: Str
     get() = TODO()
   override val tunnels: EelTunnelsWindowsApi
     get() = TODO()
-  override val exec: EelExecApi
-    get() = TODO()
+  override val exec: EelExecApi = EelLocalExecApi()
 
 }
 
-private class EelTestFileSystemWindowsApi(fileSystem: EelTestFileSystem) : WindowsNioBasedEelFileSystemApi(fileSystem, EelTestWindowsUserInfo()) {
+private class EelTestFileSystemWindowsApi(fileSystem: EelUnitTestFileSystem) : WindowsNioBasedEelFileSystemApi(fileSystem, EelTestWindowsUserInfo()) {
 
   override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
     TODO("Not yet implemented")

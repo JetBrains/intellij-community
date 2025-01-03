@@ -5,14 +5,14 @@ import com.intellij.platform.eel.EelPathMapper
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPath.OS
-import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelTestFileSystem
-import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelTestPath
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
+import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestPath
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
-internal class EelTestPathMapper(val os: OS, val fileSystem: EelTestFileSystem, val localPrefix: String) : EelPathMapper {
+internal class EelTestPathMapper(val os: OS, val fileSystem: EelUnitTestFileSystem, val localPrefix: String) : EelPathMapper {
   override fun getOriginalPath(path: Path): EelPath? {
-    val relativeRemainder = if (path.toString().startsWith(localPrefix) || path is EelTestPath) {
+    val relativeRemainder = if (path.toString().startsWith(localPrefix) || path is EelUnitTestPath) {
       path.map { it.toString() }
     }
     else {
