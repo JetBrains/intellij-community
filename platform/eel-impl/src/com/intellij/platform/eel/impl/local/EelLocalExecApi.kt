@@ -5,6 +5,7 @@ import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
+import com.intellij.util.EnvironmentUtil
 import com.pty4j.PtyProcessBuilder
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -72,5 +73,5 @@ class EelLocalExecApi : EelExecApi {
     return EelProcessResultImpl.createOkResult(process)
   }
 
-  override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = System.getenv()
+  override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = EnvironmentUtil.getEnvironmentMap()
 }
