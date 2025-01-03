@@ -8,19 +8,22 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.nio.file.Path
 
-class GradleDaemonToolchainMigrateNotificationListener: ExternalSystemTaskNotificationListener {
+class GradleDaemonJvmCriteriaMigrationNotificationListener: ExternalSystemTaskNotificationListener {
 
     override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
         if (!Registry.`is`("gradle.daemon.jvm.criteria.suggest.migration")) return
-        if (GradleConstants.SYSTEM_ID.id != id.projectSystemId.id || id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
-
+        if (id.projectSystemId != GradleConstants.SYSTEM_ID) return
+        if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         val project = id.findProject() ?: return
-        val projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath) ?: return
-
-        if (!GradleDaemonJvmHelper.isDaemonJvmCriteriaSupported(projectSettings.resolveGradleVersion())) return
-        if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return
-
-        GradleDaemonToolchainMigrateNotification.show(project, projectPath)
+        val settings = GradleSettings.getInstance(project)
+        val projectSettings = settings.getLinkedProjectSettings(projectPath) ?: return
+        val gradleVersion = projectSettings.resolveGradleVersion()
+        if (GradleDaemonJvmHelper.isDaemonJvmCriteriaSupported(gradleVersion)) {
+            if (!GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(Path.of(projectPath), gradleVersion)) {
+                GradleDaemonJvmCriteriaMigrationNotification.show(project, projectPath)
+            }
+        }
     }
 }
