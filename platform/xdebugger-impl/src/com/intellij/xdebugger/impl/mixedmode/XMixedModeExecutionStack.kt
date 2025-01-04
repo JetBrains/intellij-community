@@ -27,12 +27,12 @@ class XMixedModeExecutionStack(
   val framesMatcher: MixedModeFramesBuilder,
   val coroutineScope: CoroutineScope,
 ) : XExecutionStack(lowLevelExecutionStack.displayName), XExecutionStackWithNativeThreadId {
+  val computedFramesMap: CompletableDeferred<Map</*low level frame*/XStackFrame, /*high level frame*/XStackFrame?>> = CompletableDeferred()
 
   init {
     assert((highLevelExecutionStack == null || lowLevelExecutionStack.nativeThreadId == highLevelExecutionStack.nativeThreadId))
   }
 
-  val computedFramesMap: CompletableDeferred<Map</*low level frame*/XStackFrame, /*high level frame*/XStackFrame?>> = CompletableDeferred()
   override fun getTopFrame(): XStackFrame? {
     // when we are stopped the top frame is always from a low-level debugger, so no need to look for a corresponding high level frame
     return lowLevelExecutionStack.topFrame
@@ -52,6 +52,9 @@ class XMixedModeExecutionStack(
       }
     }
   }
+
+  override fun getNativeThreadId(): Long = lowLevelExecutionStack.nativeThreadId
+
   suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
       logger.info("Preparation for frame computation completed")
 
@@ -92,8 +95,6 @@ class XMixedModeExecutionStack(
         }
       }
     }
-
-  override fun getNativeThreadId(): Long = lowLevelExecutionStack.nativeThreadId
 
   private class MyAccumulatingContainer : XStackFrameContainer {
     private val mutableFrames = mutableListOf<XStackFrame>()
