@@ -39,7 +39,7 @@ class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>() {
         val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(projectDir.resolveRel(args.filePathInProject))
 
         runWriteAction {
-            val position = XSourcePositionImpl.create(virtualFile, args.line)
+            val position = XSourcePositionImpl.create(virtualFile, args.line - 1) // Convert line from 1-based to 0-based
             XBreakpointUtil.toggleLineBreakpoint(project, position, false, null, false, true, true).onSuccess {
                  invokeLater {
                      position.createNavigatable(project).navigate(true)
