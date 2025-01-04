@@ -60,6 +60,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   private Object myMethodKind;
   private Object myData;
   private String myOriginInfo;
+  private boolean myDeprecated;
 
   public GrLightMethodBuilder(GrTypeDefinition constructedClass) {
     this(constructedClass.getManager(), constructedClass.getName());
@@ -109,7 +110,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
 
   @Override
   public boolean isDeprecated() {
-    return false;
+    return myDeprecated;
+  }
+
+  public GrLightMethodBuilder setDeprecated(boolean deprecated) {
+    this.myDeprecated = deprecated;
+    return this;
   }
 
   @Override

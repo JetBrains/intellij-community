@@ -102,6 +102,8 @@ private fun createMethodWithClosure(
     newMethod.addParameter(parameter.name, finalSubstitutor.substitute(parameter.type))
   }
 
+  newMethod.setDeprecated(methodWithAction.isDeprecated)
+
   val closure = PsiType.getTypeByName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, methodWithAction.project, methodWithAction.resolveScope)
   val closureParameter = GrLightParameter(parameterWithAction.name, closure, parameterWithAction)
   newMethod.putUserData(GRADLE_GENERATED_CLOSURE_OVERLOAD_DELEGATE_KEY, finalSubstitutor.substitute(delegate))
