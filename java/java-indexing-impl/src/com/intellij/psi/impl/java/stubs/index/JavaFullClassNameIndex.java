@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -34,7 +35,9 @@ public final class JavaFullClassNameIndex extends CharSequenceHashStubIndexExten
   }
 
   public Collection<PsiClass> getClasses(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    return StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiClass.class);
+    var prm = ProjectRootManager.getInstance(project);
+    var scopePrime = prm != null ? new JavaSourceFilterScope(scope) : scope;
+    return StubIndex.getElements(getKey(), name, project, scopePrime, PsiClass.class);
   }
 
   @Override
