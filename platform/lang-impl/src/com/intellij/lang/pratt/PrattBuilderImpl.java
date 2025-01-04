@@ -8,15 +8,13 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
 
-@ApiStatus.Internal
-public class PrattBuilderImpl extends PrattBuilder {
+class PrattBuilderImpl extends PrattBuilder {
   private final PsiBuilder myBuilder;
   private final PrattBuilder myParentBuilder;
   private final PrattRegistry myRegistry;
@@ -32,7 +30,7 @@ public class PrattBuilderImpl extends PrattBuilder {
     myRegistry = registry;
   }
 
-  public static PrattBuilder createBuilder(final PsiBuilder builder, final PrattRegistry registry) {
+  static PrattBuilder createBuilder(final PsiBuilder builder, final PrattRegistry registry) {
     return new PrattBuilderImpl(builder, null, registry);
   }
 
