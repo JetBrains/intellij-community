@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.runBlocking
@@ -17,8 +18,9 @@ class OnStartCheckServiceTest {
   private val project = projectFixture()
 
   private val mockContent = object : WhatsNewContent() {
-    override fun getRequest(dataContext: DataContext?) = error("Mock object, do not call")
-    override fun getActionWhiteList() = error("Mock object, do not call")
+    override suspend fun show(project: Project, dataContext: DataContext?, triggeredByUser: Boolean, reactionChecker: FUSReactionChecker) {
+      error("Mock object, do not call")
+    }
     override fun getVersion() = error("Mock object, do not call")
     override suspend fun isAvailable() = error("Mock object, do not call")
   }
