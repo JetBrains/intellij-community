@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,6 @@ import org.jetbrains.jps.builders.BuildTarget;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,7 +47,7 @@ public class CompiledClass extends UserDataHolderBase{
   }
 
   public CompiledClass(@NotNull File outputFile, @NotNull File sourceFile, @Nullable String className, @NotNull BinaryContent content) {
-    this(outputFile, Collections.singleton(sourceFile), className, content);
+    this(outputFile, List.of(sourceFile), className, content);
   }
 
   public void save() throws IOException {
@@ -91,14 +91,17 @@ public class CompiledClass extends UserDataHolderBase{
 
     CompiledClass aClass = (CompiledClass)o;
 
-    if (!FileUtil.filesEqual(myOutputFile, aClass.myOutputFile)) return false;
+    // on MacOS java.io.File.equals() is incorrectly case-sensitive
+    if (!FileUtil.pathsEqual(myOutputFile.getPath(), aClass.myOutputFile.getPath())) {
+      return false;
+    }
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return FileUtil.fileHashCode(myOutputFile);
+    return FileUtilRt.pathHashCode(myOutputFile.getPath());
   }
 
   @Override
