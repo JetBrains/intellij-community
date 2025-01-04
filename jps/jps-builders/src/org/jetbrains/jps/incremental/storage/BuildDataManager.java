@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +31,11 @@ import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,7 +70,7 @@ public final class BuildDataManager {
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
   private final @Nullable OutputToTargetRegistry outputToTargetMapping;
-  private final File myVersionFile;
+  private final Path versionFile;
   private final PathRelativizerService myRelativizer;
   private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
 
@@ -113,7 +117,7 @@ public final class BuildDataManager {
       }
       throw e;
     }
-    myVersionFile = dataStorageRoot.resolve("version.dat").toFile();
+    versionFile = dataStorageRoot.resolve("version.dat");
     myDepGraphPathMapper = new PathSourceMapper(relativizer::toFull, relativizer::toRelative);
     myRelativizer = relativizer;
   }
@@ -560,7 +564,7 @@ public final class BuildDataManager {
     if (cached != null) {
       return cached;
     }
-    try (DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile))) {
+    try (DataInputStream is = new DataInputStream(Files.newInputStream(versionFile))) {
       final boolean diff = is.readInt() != VERSION;
       myVersionDiffers = diff;
       return diff;
@@ -575,15 +579,16 @@ public final class BuildDataManager {
   }
 
   public void saveVersion() {
-    final Boolean differs = myVersionDiffers;
-    if (differs == null || differs) {
-      FileUtil.createIfDoesntExist(myVersionFile);
-      try (DataOutputStream os = new DataOutputStream(new FileOutputStream(myVersionFile))) {
-        os.writeInt(VERSION);
-        myVersionDiffers = Boolean.FALSE;
-      }
-      catch (IOException ignored) {
-      }
+    Boolean differs = myVersionDiffers;
+    if (differs != null && !differs) {
+      return;
+    }
+
+    try {
+      Files.createDirectories(versionFile.getParent());
+      Files.write(versionFile, ByteBuffer.allocate(Integer.BYTES).putInt(VERSION).array());
+    }
+    catch (IOException ignored) {
     }
   }
 
