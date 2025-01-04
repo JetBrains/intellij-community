@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew
 
 import com.intellij.ide.IdeBundle
@@ -146,29 +146,6 @@ internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
                                                "LearnMoreStickyScrollEAP", "NewRiderProject", "BlazorHotReloadEAP")
   }
 
-  private val linkRegEx = "^https://www\\.jetbrains\\.com/[a-zA-Z]+/whatsnew(-eap)?/(\\d+)-(\\d+)-(\\d+)/$".toRegex()
-
-  private fun parseUrl(link: String): ContentVersion? {
-    val parseResult = linkRegEx.matchEntire(link)?.let {
-      val year = it.groups[it.groups.size - 3]?.value ?: return@let null
-      val release = it.groups[it.groups.size - 2]?.value ?: return@let null
-      val eap = it.groups[it.groups.size - 1]?.value?.toInt() ?: return@let null
-      ContentVersion(year, release, eap, null)
-    }
-
-    if (parseResult == null) {
-      LOG.warn("Cannot parse IDE version for What's New content from URL: \"$link\".")
-    }
-
-    return when {
-      parseResult != null -> parseResult
-      ApplicationInfo.getInstance().isEAP -> null
-      else -> ApplicationInfo.getInstance().let {
-        ContentVersion(it.majorVersion, it.minorVersion, eap = null, hash = null)
-      }
-    }
-  }
-
   override fun getRequest(dataContext: DataContext?): HTMLEditorProvider.Request {
     val parameters = HashMap<String, String>()
     parameters["var"] = "embed"
@@ -199,9 +176,7 @@ internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
     return actionWhiteList
   }
 
-  override fun getVersion(): ContentVersion? {
-    return parseUrl(url)
-  }
+  override fun getVersion(): ContentVersion? = null
 
   override suspend fun isAvailable(): Boolean {
     return checkConnectionAvailable()
