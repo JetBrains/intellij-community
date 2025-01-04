@@ -26,8 +26,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-
-import static com.intellij.openapi.util.io.FileUtil.exists;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
@@ -155,7 +154,7 @@ public final class BuildOperations {
     try {
       final Map<T, Map<File, List<String>>> sourcesToCleanedOutputByTargets = new HashMap<>();
 
-      Set<File> dirsToDelete = FileCollectionFactory.createCanonicalFileSet();
+      Set<Path> dirsToDelete = FileCollectionFactory.createCanonicalPathSet();
       final Collection<String> allDeletedOutputPaths = new ArrayList<>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
@@ -188,8 +187,9 @@ public final class BuildOperations {
           boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
           List<String> deletedForThisSource = new ArrayList<>(outputs.size());
           for (String output : outputs) {
-            boolean deletedSuccessfully = deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
-            if (!deletedSuccessfully && exists(output)) {
+            Path outputFile = Path.of(output);
+            boolean deletedSuccessfully = deleteRecursivelyAndCollectDeleted(outputFile, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
+            if (!deletedSuccessfully && Files.exists(outputFile)) {
               failedToDeleteOutputs.add(output);
             }
           }
@@ -222,19 +222,32 @@ public final class BuildOperations {
     }
   }
 
-  public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<? super String> deletedPaths, @Nullable Set<? super File> parentDirs) {
-    Path file = Path.of(path);
+  /**
+   * @deprecated Use {@link #deleteRecursivelyAndCollectDeleted}
+   */
+  @Deprecated
+  @SuppressWarnings("SSBasedInspection")
+  public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<String> deletedPaths, @Nullable Set<File> parentDirs) {
+    Set<Path> nioParentDirs = parentDirs == null ? null : parentDirs.stream().map(file -> file.toPath()).collect(Collectors.toSet());
+    return deleteRecursivelyAndCollectDeleted(Path.of(path), deletedPaths, nioParentDirs);
+  }
+
+  public static boolean deleteRecursivelyAndCollectDeleted(
+    @NotNull Path file,
+    @NotNull Collection<String> deletedPaths,
+    @Nullable Set<Path> parentDirs
+  ) {
     boolean deleted = deleteRecursively(file, deletedPaths);
     if (deleted && parentDirs != null) {
       Path parent = file.getParent();
       if (parent != null) {
-        parentDirs.add(parent.toFile());
+        parentDirs.add(parent);
       }
     }
     return deleted;
   }
 
-  private static boolean deleteRecursively(@NotNull Path file, @NotNull Collection<? super String> deletedPaths) {
+  private static boolean deleteRecursively(@NotNull Path file, @NotNull Collection<String> deletedPaths) {
     try {
       Files.walkFileTree(file, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
         @Override

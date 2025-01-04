@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +94,9 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @param context the compilation context.
    * @return the collection of output roots.
    */
-  public abstract @Unmodifiable @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context);
+  public @Unmodifiable @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
+    return List.of();
+  }
 
   @Override
   public String toString() {

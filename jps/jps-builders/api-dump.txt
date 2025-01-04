@@ -1653,7 +1653,7 @@ a:org.jetbrains.jps.builders.BuildTarget
 - a:computeRootDescriptors(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.indices.IgnoredFileIndex,org.jetbrains.jps.builders.storage.BuildDataPaths):java.util.List
 - a:findRootDescriptor(java.lang.String,org.jetbrains.jps.builders.BuildRootIndex):org.jetbrains.jps.builders.BuildRootDescriptor
 - a:getId():java.lang.String
-- a:getOutputRoots(org.jetbrains.jps.incremental.CompileContext):java.util.Collection
+- getOutputRoots(org.jetbrains.jps.incremental.CompileContext):java.util.Collection
 - a:getPresentableName():java.lang.String
 - f:getTargetType():org.jetbrains.jps.builders.BuildTargetType
 - writeConfiguration(org.jetbrains.jps.cmdline.ProjectDescriptor,java.io.PrintWriter):V
@@ -2069,6 +2069,7 @@ org.jetbrains.jps.incremental.BuildListener
 f:org.jetbrains.jps.incremental.BuildOperations
 - s:cleanOutputsCorrespondingToChangedFiles(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.DirtyFilesHolder):java.util.Map
 - s:deleteRecursively(java.lang.String,java.util.Collection,java.util.Set):Z
+- s:deleteRecursivelyAndCollectDeleted(java.nio.file.Path,java.util.Collection,java.util.Set):Z
 - s:ensureFSStateInitialized(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,Z):V
 - s:markTargetsUpToDate(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.impl.BuildTargetChunk):V
 a:org.jetbrains.jps.incremental.BuildTask
@@ -2401,7 +2402,6 @@ f:org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver$Project
 - computeRootDescriptors(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.indices.IgnoredFileIndex,org.jetbrains.jps.builders.storage.BuildDataPaths):java.util.List
 - findRootDescriptor(java.lang.String,org.jetbrains.jps.builders.BuildRootIndex):org.jetbrains.jps.builders.BuildRootDescriptor
 - getId():java.lang.String
-- getOutputRoots(org.jetbrains.jps.incremental.CompileContext):java.util.Collection
 - getPresentableName():java.lang.String
 f:org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver$ProjectDependenciesResolvingTargetType
 - org.jetbrains.jps.builders.BuildTargetType

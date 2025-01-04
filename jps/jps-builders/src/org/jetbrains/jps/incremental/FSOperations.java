@@ -34,7 +34,7 @@ import java.util.*;
  */
 public final class FSOperations {
   private static final Logger LOG = Logger.getInstance(FSOperations.class);
-  public static final GlobalContextKey<Set<File>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
+  public static final GlobalContextKey<Set<Path>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGETS_COMPLETELY_MARKED_DIRTY = GlobalContextKey.create("_targets_completely_marked_dirty_");
 
   /**
@@ -401,31 +401,39 @@ public final class FSOperations {
     }
   }
 
-  public static void pruneEmptyDirs(@NotNull CompileContext context, @Unmodifiable @Nullable Set<File> dirsToDelete) {
+  public static void pruneEmptyDirs(@NotNull CompileContext context, @Unmodifiable @Nullable Set<Path> dirsToDelete) {
     if (dirsToDelete == null || dirsToDelete.isEmpty()) {
       return;
     }
 
-    Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
+    Set<Path> doNotDelete = ALL_OUTPUTS_KEY.get(context);
     if (doNotDelete == null) {
-      doNotDelete = FileCollectionFactory.createCanonicalFileSet();
+      doNotDelete = FileCollectionFactory.createCanonicalPathSet();
       for (BuildTarget<?> target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets()) {
-        doNotDelete.addAll(target.getOutputRoots(context));
+        for (File root : target.getOutputRoots(context)) {
+          doNotDelete.add(root.toPath());
+        }
       }
       ALL_OUTPUTS_KEY.set(context, doNotDelete);
     }
 
-    Set<File> additionalDirs = null;
-    Set<File> toDelete = dirsToDelete;
+    Set<Path> additionalDirs = null;
+    Set<Path> toDelete = dirsToDelete;
     while (toDelete != null) {
-      for (File file : toDelete) {
+      for (Path file : toDelete) {
         // important: do not force deletion if the directory is not empty!
-        final boolean deleted = !doNotDelete.contains(file) && file.delete();
+        boolean deleted;
+        try {
+          deleted = !doNotDelete.contains(file) && Files.deleteIfExists(file);
+        }
+        catch (IOException e) {
+          deleted = false;
+        }
         if (deleted) {
-          final File parentFile = file.getParentFile();
+          Path parentFile = file.getParent();
           if (parentFile != null) {
             if (additionalDirs == null) {
-              additionalDirs = FileCollectionFactory.createCanonicalFileSet();
+              additionalDirs = FileCollectionFactory.createCanonicalPathSet();
             }
             additionalDirs.add(parentFile);
           }
@@ -443,7 +451,7 @@ public final class FSOperations {
     }
   }
 
-  public static long lastModified(File file) {
+  public static long lastModified(@NotNull File file) {
     return lastModified(file.toPath());
   }
 

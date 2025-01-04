@@ -761,7 +761,7 @@ public final class IncProjectBuilder {
       // cleanup outputs
       final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<>();
 
-      Set<File> dirsToDelete = FileCollectionFactory.createCanonicalFileSet();
+      Set<Path> dirsToDelete = FileCollectionFactory.createCanonicalPathSet();
       for (BuildTarget<?> target : targets) {
         Collection<String> deletedPaths = projectDescriptor.fsState.getAndClearDeletedPaths(target);
         if (deletedPaths.isEmpty()) {
@@ -794,7 +794,7 @@ public final class IncProjectBuilder {
             List<String> deletedOutputPaths = new ArrayList<>();
             OutputToTargetMapping outputToSourceRegistry = dataManager.getOutputToTargetMapping();
             for (String output : outputToSourceRegistry.removeTargetAndGetSafeToDeleteOutputs(outputs, buildTargetId, sourceToOutputStorage)) {
-              final boolean deleted = BuildOperations.deleteRecursively(output, deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);
+              boolean deleted = BuildOperations.deleteRecursivelyAndCollectDeleted(Path.of(output), deletedOutputPaths, shouldPruneEmptyDirs ? dirsToDelete : null);
               if (deleted) {
                 doneSomething = true;
               }
@@ -1658,7 +1658,7 @@ public final class IncProjectBuilder {
                                        SourceToOutputMapping mapping,
                                        BuildTargetType<?> targetType,
                                        int targetId) throws IOException {
-    Set<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?> ? FileCollectionFactory.createCanonicalFileSet() : null;
+    Set<Path> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?> ? FileCollectionFactory.createCanonicalPathSet() : null;
     OutputToTargetMapping outputToTargetRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetMapping();
     for (SourceToOutputMappingCursor cursor = mapping.cursor(); cursor.hasNext(); ) {
       cursor.next();
@@ -1666,7 +1666,7 @@ public final class IncProjectBuilder {
       if (outs.length > 0) {
         List<String> deletedPaths = new ArrayList<>();
         for (String out : outs) {
-          BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
+          BuildOperations.deleteRecursivelyAndCollectDeleted(Path.of(out), deletedPaths, dirsToDelete);
         }
         outputToTargetRegistry.removeMappings(Arrays.asList(outs), targetId, mapping);
         if (!deletedPaths.isEmpty()) {

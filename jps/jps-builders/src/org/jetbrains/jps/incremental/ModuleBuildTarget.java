@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.dynatrace.hash4j.hashing.HashSink;
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -66,16 +65,17 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
   @Override
   public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
-    Collection<File> result = new SmartList<>();
-    final File outputDir = getOutputDir();
+    Collection<File> result = new ArrayList<>();
+    File outputDir = getOutputDir();
     if (outputDir != null) {
       result.add(outputDir);
     }
-    final JpsModule module = getModule();
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
-    final ProcessorConfigProfile profile = configuration.getAnnotationProcessingProfile(module);
+
+    JpsModule module = getModule();
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
+    ProcessorConfigProfile profile = configuration.getAnnotationProcessingProfile(module);
     if (profile.isEnabled()) {
-      final File annotationOut = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(module, isTests(), profile);
+      File annotationOut = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(module, isTests(), profile);
       if (annotationOut != null) {
         result.add(annotationOut);
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.dependencies;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,6 @@ import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -83,11 +82,6 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
     public @NotNull String getPresentableName() {
       return "Project Dependencies Resolving";
     }
-
-    @Override
-    public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
-      return Collections.emptyList();
-    }
   }
 
   public static final class ProjectDependenciesResolvingTargetType extends BuildTargetType<ProjectDependenciesResolvingTarget> {
@@ -99,12 +93,12 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
 
     @Override
     public @NotNull List<ProjectDependenciesResolvingTarget> computeAllTargets(@NotNull JpsModel model) {
-      return Collections.singletonList(new ProjectDependenciesResolvingTarget());
+      return List.of(new ProjectDependenciesResolvingTarget());
     }
 
     @Override
     public @NotNull BuildTargetLoader<ProjectDependenciesResolvingTarget> createLoader(@NotNull JpsModel model) {
-      return new BuildTargetLoader<ProjectDependenciesResolvingTarget>() {
+      return new BuildTargetLoader<>() {
         @Override
         public ProjectDependenciesResolvingTarget createTarget(@NotNull String targetId) {
           return new ProjectDependenciesResolvingTarget();
