@@ -12412,7 +12412,6 @@ a:com.intellij.lang.pratt.AppendTokenParser
 - parseToken(com.intellij.lang.pratt.PrattBuilder):Z
 c:com.intellij.lang.pratt.MutableMarker
 - <init>(java.util.LinkedList,com.intellij.lang.PsiBuilder$Marker,I):V
-- <init>(java.util.LinkedList,com.intellij.lang.PsiBuilder):V
 - drop():V
 - error(java.lang.String):V
 - finish():V
