@@ -546,6 +546,7 @@ platform/plugins/parser/impl
 platform/plugins/testFramework
 platform/polySymbols
 platform/polySymbols/backend
+platform/pratt
 platform/progress/backend
 platform/progress/shared
 platform/project/backend

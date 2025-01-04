@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.pratt;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.pratt;
 
 import com.intellij.lang.ITokenTypeRemapper;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
@@ -81,13 +80,13 @@ class PrattBuilderImpl extends PrattBuilder {
 
   protected void doParse() {
     if (isEof()) {
-      error(myExpectedMessage != null ? myExpectedMessage : LangBundle.message("unexpected.eof"));
+      error(myExpectedMessage != null ? myExpectedMessage : PrattBundle.message("unexpected.eof"));
       return;
     }
 
     TokenParser parser = findParser();
     if (parser == null) {
-      error(myExpectedMessage != null ? myExpectedMessage : LangBundle.message("unexpected.token"));
+      error(myExpectedMessage != null ? myExpectedMessage : PrattBundle.message("unexpected.token"));
       return;
     }
 

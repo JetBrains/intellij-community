@@ -151,6 +151,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/locking.impl",
     "//platform/platform-impl/concurrency",
+    "//platform/pratt",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -313,6 +314,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/locking.impl",
     "//platform/platform-impl/concurrency",
+    "//platform/pratt",
   ],
   runtime_deps = [":ide-impl_resources"]
 )

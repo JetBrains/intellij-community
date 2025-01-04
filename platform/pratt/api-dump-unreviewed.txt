@@ -1,0 +1,93 @@
+a:com.intellij.platform.pratt.AppendTokenParser
+- com.intellij.platform.pratt.TokenParser
+- sf:JUST_APPEND:com.intellij.platform.pratt.AppendTokenParser
+- <init>():V
+- pa:parseAppend(com.intellij.platform.pratt.PrattBuilder):com.intellij.psi.tree.IElementType
+- parseToken(com.intellij.platform.pratt.PrattBuilder):Z
+c:com.intellij.platform.pratt.MutableMarker
+- <init>(java.util.LinkedList,com.intellij.lang.PsiBuilder$Marker,I):V
+- drop():V
+- error(java.lang.String):V
+- finish():V
+- finish(com.intellij.psi.tree.IElementType):V
+- getResultType():com.intellij.psi.tree.IElementType
+- isCommitted():Z
+- isDropped():Z
+- isError():Z
+- isReady():Z
+- precede():com.intellij.platform.pratt.MutableMarker
+- rollback():V
+- setResultType(com.intellij.psi.tree.IElementType):com.intellij.platform.pratt.MutableMarker
+f:com.intellij.platform.pratt.PathPattern
+- accepts(com.intellij.platform.pratt.PrattBuilder):Z
+- left():com.intellij.platform.pratt.PathPattern
+- left(com.intellij.patterns.ElementPattern):com.intellij.platform.pratt.PathPattern
+- left(com.intellij.psi.tree.IElementType):com.intellij.platform.pratt.PathPattern
+- s:path():com.intellij.platform.pratt.PathPattern
+- up():com.intellij.platform.pratt.PathPattern
+a:com.intellij.platform.pratt.PrattBuilder
+- <init>():V
+- a:advance():V
+- assertToken(com.intellij.platform.pratt.PrattTokenType):Z
+- assertToken(com.intellij.psi.tree.IElementType,java.lang.String):Z
+- checkToken(com.intellij.psi.tree.IElementType):Z
+- pa:createChildBuilder():com.intellij.platform.pratt.PrattBuilder
+- createChildBuilder(I):com.intellij.platform.pratt.PrattBuilder
+- createChildBuilder(I,java.lang.String):com.intellij.platform.pratt.PrattBuilder
+- a:error(java.lang.String):V
+- a:expecting(java.lang.String):com.intellij.platform.pratt.PrattBuilder
+- getBackResultIterator():java.util.ListIterator
+- a:getCurrentOffset():I
+- a:getLexer():com.intellij.lexer.Lexer
+- a:getParent():com.intellij.platform.pratt.PrattBuilder
+- a:getPriority():I
+- a:getResultTypes():java.util.List
+- a:getTokenText():java.lang.String
+- a:getTokenType():com.intellij.psi.tree.IElementType
+- isEof():Z
+- isToken(com.intellij.psi.tree.IElementType):Z
+- a:mark():com.intellij.platform.pratt.MutableMarker
+- a:parse():com.intellij.psi.tree.IElementType
+- parseChildren(I,java.lang.String):com.intellij.psi.tree.IElementType
+- a:reduce(com.intellij.psi.tree.IElementType):V
+- a:setTokenTypeRemapper(com.intellij.lang.ITokenTypeRemapper):V
+- a:withLowestPriority(I):com.intellij.platform.pratt.PrattBuilder
+a:com.intellij.platform.pratt.PrattParser
+- com.intellij.lang.PsiParser
+- <init>():V
+- pa:getRegistry():com.intellij.platform.pratt.PrattRegistry
+- p:parse(com.intellij.platform.pratt.PrattBuilder):V
+- f:parse(com.intellij.psi.tree.IElementType,com.intellij.lang.PsiBuilder):com.intellij.lang.ASTNode
+f:com.intellij.platform.pratt.PrattParsingUtil
+- s:parseOption(com.intellij.platform.pratt.PrattBuilder,I):com.intellij.psi.tree.IElementType
+- s:searchFor(com.intellij.platform.pratt.PrattBuilder,Z,com.intellij.platform.pratt.PrattTokenType[]):Z
+- s:searchFor(com.intellij.platform.pratt.PrattBuilder,com.intellij.platform.pratt.PrattTokenType[]):V
+f:com.intellij.platform.pratt.PrattRegistry
+- <init>():V
+- getParsers(com.intellij.psi.tree.IElementType):java.util.Collection
+- registerParser(com.intellij.psi.tree.IElementType,I,com.intellij.platform.pratt.PathPattern,com.intellij.platform.pratt.TokenParser):V
+- registerParser(com.intellij.psi.tree.IElementType,I,com.intellij.platform.pratt.TokenParser):V
+- unregisterParser(com.intellij.psi.tree.IElementType):V
+f:com.intellij.platform.pratt.PrattRegistry$ParserData
+- java.lang.Record
+- <init>(I,com.intellij.platform.pratt.PathPattern,com.intellij.platform.pratt.TokenParser):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- parser():com.intellij.platform.pratt.TokenParser
+- pattern():com.intellij.platform.pratt.PathPattern
+- priority():I
+c:com.intellij.platform.pratt.PrattTokenType
+- com.intellij.psi.tree.IElementType
+- <init>(java.lang.String,com.intellij.lang.Language):V
+- getExpectedText(com.intellij.platform.pratt.PrattBuilder):java.lang.String
+a:com.intellij.platform.pratt.ReducingParser
+- com.intellij.platform.pratt.TokenParser
+- <init>():V
+- a:parseFurther(com.intellij.platform.pratt.PrattBuilder):com.intellij.psi.tree.IElementType
+- f:parseToken(com.intellij.platform.pratt.PrattBuilder):Z
+a:com.intellij.platform.pratt.TokenParser
+- <init>():V
+- s:infix(I,com.intellij.psi.tree.IElementType):com.intellij.platform.pratt.TokenParser
+- s:infix(I,com.intellij.psi.tree.IElementType,java.lang.String):com.intellij.platform.pratt.TokenParser
+- a:parseToken(com.intellij.platform.pratt.PrattBuilder):Z
+- s:postfix(com.intellij.psi.tree.IElementType):com.intellij.platform.pratt.TokenParser

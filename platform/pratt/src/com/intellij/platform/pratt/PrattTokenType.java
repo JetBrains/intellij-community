@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.pratt;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.pratt;
 
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
@@ -18,7 +17,7 @@ public class PrattTokenType extends IElementType {
   }
 
   public @NotNull @NlsContexts.ParsingError String getExpectedText(final PrattBuilder builder) {
-    return LangBundle.message("0.expected", toString());
+    return PrattBundle.message("0.expected", toString());
   }
 
 }
