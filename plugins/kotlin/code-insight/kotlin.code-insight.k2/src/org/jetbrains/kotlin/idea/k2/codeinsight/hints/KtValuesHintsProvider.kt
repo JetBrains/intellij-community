@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeLeftAndRightSigns
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -69,7 +70,9 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
             is KtBinaryExpression -> left?.isComparable() == true && right?.isComparable() == true
             else -> {
                 val resolvedCall = resolveToCall()
-                val type = resolvedCall?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol?.returnType
+                val memberCall = resolvedCall?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+                val signature = memberCall?.partiallyAppliedSymbol?.signature
+                val type = signature?.returnType?.withNullability(KaTypeNullability.NON_NULLABLE)
                     ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaCallableSymbol)?.returnType
                 (type is KaClassType) && (
                         type.classId in DefaultTypeClassIds.PRIMITIVES ||
