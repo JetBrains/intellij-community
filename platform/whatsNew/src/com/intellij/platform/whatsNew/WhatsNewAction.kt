@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew
 
 import com.intellij.ide.DataManager
@@ -9,25 +9,16 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.whatsNew.collectors.WhatsNewCounterUsageCollector
 import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
-import com.intellij.platform.whatsNew.reaction.ReactionsPanel
-import com.intellij.ui.jcef.JBCefApp
-import com.intellij.util.application
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.await
 
 internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAware {
@@ -57,44 +48,13 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     openWhatsNewPage(project, dataContext)
   }
 
-  private suspend fun openWhatsNewPage(project: Project, dataContext: DataContext?, byClient: Boolean = false) {
-    if (JBCefApp.isSupported()) {
-      val content = contentAsync.await()
-      if (content != null && content.isAvailable()) {
-        openContent(project, content, dataContext, byClient)
-      }
-      else {
-        LOG.warn("EapWhatsNew: can't be shown. Content not available")
-      }
+  private suspend fun openWhatsNewPage(project: Project, dataContext: DataContext?, triggeredByUser: Boolean = false) {
+    val content = contentAsync.await()
+    if (content != null && content.isAvailable()) {
+      content.show(project, dataContext, triggeredByUser, reactionChecker)
     }
     else {
-      LOG.warn("EapWhatsNew: can't be shown. JBCefApp isn't supported")
-    }
-  }
-
-  private suspend fun openContent(project: Project, whatsNewContent: WhatsNewContent, dataContext: DataContext?, byClient: Boolean) {
-    check(JBCefApp.isSupported()) { "JCEF is not supported on this system" }
-    val title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().fullProductName)
-    withContext(Dispatchers.EDT) {
-      LOG.info("Opening What's New in editor.")
-      val editor = writeIntentReadAction { openEditor(project, title, whatsNewContent.getRequest(dataContext)) }
-      editor?.let {
-        project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
-        WhatsNewCounterUsageCollector.openedPerformed(project, byClient)
-
-        WhatsNewContentVersionChecker.saveLastShownContent(whatsNewContent)
-
-        val disposable = Disposer.newDisposable(project)
-        val busConnection = application.messageBus.connect(disposable)
-        busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-          override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-            if (it.file == file) {
-              WhatsNewCounterUsageCollector.closedPerformed(project)
-              Disposer.dispose(disposable)
-            }
-          }
-        })
-      }
+      LOG.warn("EapWhatsNew: can't be shown. Content not available")
     }
   }
 
