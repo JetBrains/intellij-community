@@ -21,7 +21,7 @@ class OnStartCheckServiceTest {
     override suspend fun show(project: Project, dataContext: DataContext?, triggeredByUser: Boolean, reactionChecker: FUSReactionChecker) {
       error("Mock object, do not call")
     }
-    override fun getVersion() = error("Mock object, do not call")
+    override fun getVersion() = ContentVersion("2025", "1.1", null, "123")
     override suspend fun isAvailable() = error("Mock object, do not call")
   }
 
