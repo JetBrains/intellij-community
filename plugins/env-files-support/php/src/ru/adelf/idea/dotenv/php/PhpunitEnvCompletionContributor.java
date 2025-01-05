@@ -23,10 +23,10 @@ import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 import java.util.Arrays;
 import java.util.List;
 
-public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
+final class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
     public static final List<String> TAGS = Arrays.asList("server", "env");
 
-    public PhpunitEnvCompletionContributor() {
+    PhpunitEnvCompletionContributor() {
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(XmlToken.class).withParent(XmlAttributeValue.class), new CompletionProvider<CompletionParameters>() {
             @Override
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {

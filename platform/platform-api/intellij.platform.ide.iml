@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.editor" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="library" name="jna" level="project" />
