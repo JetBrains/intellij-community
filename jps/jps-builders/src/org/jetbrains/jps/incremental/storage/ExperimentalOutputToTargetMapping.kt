@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -32,7 +32,7 @@ class ExperimentalOutputToTargetMapping(
 
     val result = ArrayList<String>(size)
     for (outPath in outputPaths) {
-      val key = stringTo128BitHash(relativizer.toRelative(outPath))
+      val key = stringTo128BitHash(relativizer.toRelative(outPath, RelativePathType.OUTPUT))
       mapHandle.map.operate(key, null, decisionMaker)
       if (!decisionMaker.outStillUsed) {
         result.add(outPath)
@@ -46,7 +46,7 @@ class ExperimentalOutputToTargetMapping(
     val relativizer = srcToOut.relativizer
     val decisionMaker = LongListRemoveItemDecisionMaker(srcToOut.targetHashId)
     for (outPath in outputPaths) {
-      val key = stringTo128BitHash(relativizer.toRelative(outPath))
+      val key = stringTo128BitHash(relativizer.toRelative(outPath, RelativePathType.OUTPUT))
       mapHandle.map.operate(key, null, decisionMaker)
     }
   }

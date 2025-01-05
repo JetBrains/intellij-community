@@ -31,11 +31,10 @@ import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.io.DataInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,20 +80,38 @@ public final class BuildDataManager {
   }
 
   @ApiStatus.Internal
-  public BuildDataManager(BuildDataPaths dataPaths, BuildTargetsState targetsState, @NotNull PathRelativizerService relativizer, @Nullable StorageManager storageManager) throws IOException {
-    this(dataPaths, targetsState, relativizer, storageManager, ProjectStamps.PORTABLE_CACHES? null : new ProjectStamps(dataPaths.getDataStorageRoot().toPath(), targetsState));
+  public BuildDataManager(BuildDataPaths dataPaths,
+                          BuildTargetsState targetsState,
+                          @NotNull PathRelativizerService relativizer,
+                          @Nullable StorageManager storageManager) throws IOException {
+    this(dataPaths,
+         targetsState,
+         relativizer,
+         storageManager,
+         storageManager != null || ProjectStamps.PORTABLE_CACHES ? null : new ProjectStamps(dataPaths.getDataStorageRoot().toPath(), targetsState));
   }
 
-  private BuildDataManager(BuildDataPaths dataPaths, BuildTargetsState targetsState, @NotNull PathRelativizerService relativizer, @Nullable StorageManager storageManager, @Nullable ProjectStamps projectStamps) throws IOException {
+  private BuildDataManager(BuildDataPaths dataPaths,
+                           BuildTargetsState targetsState,
+                           @NotNull PathRelativizerService relativizer,
+                           @Nullable StorageManager storageManager,
+                           @Nullable ProjectStamps projectStamps) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     myFileStampService = projectStamps;
     Path dataStorageRoot = dataPaths.getDataStorageRoot().toPath();
     try {
-      newDataManager = storageManager == null? null : new ExperimentalBuildDataManager(storageManager, relativizer);
+      if (storageManager == null) {
+        newDataManager = null;
+        sourceToFormMap = new OneToManyPathsMapping(getSourceToFormsRoot().resolve("data"), relativizer);
+        outputToTargetMapping = new OutputToTargetRegistry(getOutputToSourceRegistryRoot().resolve("data"), relativizer);
+      }
+      else {
+        newDataManager = new ExperimentalBuildDataManager(storageManager, relativizer);
+        sourceToFormMap = null;
+        outputToTargetMapping = null;
+      }
 
-      sourceToFormMap = storageManager == null ? new OneToManyPathsMapping(getSourceToFormsRoot().resolve("data"), relativizer) : null;
-      outputToTargetMapping = storageManager == null ? new OutputToTargetRegistry(getOutputToSourceRegistryRoot().resolve("data"), relativizer) : null;
       Path mappingsRoot = getMappingsRoot(dataStorageRoot);
       if (JavaBuilderUtil.isDepGraphEnabled()) {
         myMappings = null;
@@ -210,7 +227,7 @@ public final class BuildDataManager {
     if (newDataManager != null) {
       return newDataManager.getFileStampStorage(target);
     }
-    return myFileStampService == null? null : myFileStampService.getStampStorage();
+    return myFileStampService == null ? null : myFileStampService.getStampStorage();
   }
 
   /**
@@ -560,16 +577,18 @@ public final class BuildDataManager {
   private Boolean myVersionDiffers = null;
 
   public boolean versionDiffers() {
-    final Boolean cached = myVersionDiffers;
+    Boolean cached = myVersionDiffers;
     if (cached != null) {
       return cached;
     }
-    try (DataInputStream is = new DataInputStream(Files.newInputStream(versionFile))) {
-      final boolean diff = is.readInt() != VERSION;
+
+    try {
+      ByteBuffer data = ByteBuffer.wrap(Files.readAllBytes(versionFile));
+      boolean diff = data.getInt(0) != VERSION;
       myVersionDiffers = diff;
       return diff;
     }
-    catch (FileNotFoundException ignored) {
+    catch (NoSuchFileException ignored) {
       return false; // treat it as a new dir
     }
     catch (IOException ex) {

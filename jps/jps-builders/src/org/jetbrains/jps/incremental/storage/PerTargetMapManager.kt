@@ -1,16 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage
 
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.dataTypes.LongPairKeyDataType
 import org.jetbrains.jps.incremental.storage.dataTypes.StringListDataType
 import java.util.function.Supplier
 
 internal class PerTargetMapManager(
   storageManager: StorageManager,
-  relativizer: PathRelativizerService,
+  relativizer: PathTypeAwareRelativizer,
   target: BuildTarget<*>,
   outputToTargetMapping: Supplier<ExperimentalOutputToTargetMapping>,
 ) {
@@ -50,6 +49,8 @@ internal class PerTargetMapManager(
         valueType = StringListDataType,
       ),
       relativizer = relativizer,
+      keyKind = RelativePathType.SOURCE,
+      valueKind = RelativePathType.OUTPUT,
     )
   }
 }

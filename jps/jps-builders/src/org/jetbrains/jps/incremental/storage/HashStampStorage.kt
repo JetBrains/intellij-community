@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.jps.incremental.storage
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.FSOperations
 import org.jetbrains.jps.incremental.FileHashUtil
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.dataTypes.LongPairKeyDataType
 import org.jetbrains.jps.incremental.storage.dataTypes.stringTo128BitHash
 import java.nio.ByteBuffer
@@ -21,13 +20,13 @@ import java.nio.file.attribute.BasicFileAttributes
 @ApiStatus.Internal
 class HashStampStorage private constructor(
   private val mapHandle: MapHandle<LongArray, HashStamp>,
-  private val relativizer: PathRelativizerService,
+  private val relativizer: PathTypeAwareRelativizer,
 ) : StampsStorage<HashStamp> {
   companion object {
     @VisibleForTesting
     fun createSourceToStampMap(
       storageManager: StorageManager,
-      relativizer: PathRelativizerService,
+      relativizer: PathTypeAwareRelativizer,
       targetId: String,
       targetTypeId: String,
     ): HashStampStorage {
@@ -45,7 +44,7 @@ class HashStampStorage private constructor(
     mapHandle.map.put(createKey(file), HashStamp(hash = FileHashUtil.getFileHash(file), timestamp = currentFileTimestamp))
   }
 
-  private fun createKey(file: Path): LongArray = stringTo128BitHash(relativizer.toRelative(file))
+  private fun createKey(file: Path): LongArray = stringTo128BitHash(relativizer.toRelative(file, RelativePathType.SOURCE))
 
   override fun removeStamp(file: Path, target: BuildTarget<*>?) {
     mapHandle.map.remove(createKey(file))

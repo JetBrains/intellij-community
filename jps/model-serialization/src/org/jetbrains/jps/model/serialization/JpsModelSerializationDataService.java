@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -54,7 +54,7 @@ public final class JpsModelSerializationDataService {
 
   public static @Nullable File getBaseDirectory(@NotNull JpsProject project) {
     JpsProjectSerializationDataExtension extension = getProjectExtension(project);
-    return extension != null ? extension.getBaseDirectory() : null;
+    return extension == null ? null : extension.getBaseDirectory();
   }
 
   @ApiStatus.Internal
