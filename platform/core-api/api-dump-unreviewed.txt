@@ -664,6 +664,7 @@ com.intellij.lang.WhitespaceSkippedCallback
 - a:onSkip(com.intellij.psi.tree.IElementType,I,I):V
 com.intellij.lang.WhitespacesAndCommentsBinder
 - a:getEdgePosition(java.util.List,Z,com.intellij.lang.WhitespacesAndCommentsBinder$TokenTextGetter):I
+- isRecursive():Z
 com.intellij.lang.WhitespacesAndCommentsBinder$RecursiveBinder
 - com.intellij.lang.WhitespacesAndCommentsBinder
 com.intellij.lang.WhitespacesAndCommentsBinder$TokenTextGetter
