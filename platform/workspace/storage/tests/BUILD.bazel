@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:guava",
     "@lib//:kotlin-reflect",
     "@lib//:fastutil-min",
+    "//platform/analysis-api:analysis",
     "@lib//:kotlin-test",
     "@lib//:kryo5",
     "//platform/testFramework/junit5",

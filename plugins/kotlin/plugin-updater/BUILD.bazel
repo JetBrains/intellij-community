@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/project-configuration",
     "//platform/util/jdom",

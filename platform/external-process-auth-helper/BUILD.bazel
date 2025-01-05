@@ -25,10 +25,7 @@ jvm_library(
     "@lib//:netty-codec-http",
     "@lib//:netty-buffer",
   ],
-  exports = [
-    "//platform/built-in-server:builtInServer-impl",
-    "//platform/platform-util-netty:ide-util-netty",
-  ],
+  exports = ["//platform/built-in-server:builtInServer-impl"],
   runtime_deps = [":externalProcessAuthHelper_resources"]
 )
 

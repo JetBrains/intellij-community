@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/vcs-api:vcs",
+    "//platform/external-process-auth-helper:externalProcessAuthHelper",
     "//plugins/git4idea:vcs-git",
     "//platform/vcs-impl",
     "//platform/platform-impl:ide-impl",
@@ -67,6 +68,8 @@ jvm_library(
   associates = [":vcs-github"],
   deps = [
     "//platform/vcs-api:vcs",
+    "//platform/external-process-auth-helper:externalProcessAuthHelper",
+    "//platform/external-process-auth-helper:externalProcessAuthHelper_test_lib",
     "//plugins/git4idea:vcs-git",
     "//plugins/git4idea:vcs-git_test_lib",
     "//platform/vcs-impl",

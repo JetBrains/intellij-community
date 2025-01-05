@@ -15,10 +15,12 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/settings-sync:settingsSync",
+    "//platform/analysis-api:analysis",
     "//platform/core-ui",
     "//platform/ide-core",
     "//plugins/git4idea:vcs-git",
     "//platform/vcs-api:vcs",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/vcs-log/impl:vcs-log-impl",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-impl",

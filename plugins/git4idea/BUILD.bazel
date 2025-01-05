@@ -68,6 +68,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
+    "//platform/platform-util-netty:ide-util-netty",
     "//platform/collaboration-tools:collaborationTools",
     "//platform/ide-core-impl",
     "//platform/util/text-matching",
@@ -81,10 +82,8 @@ jvm_library(
     "//platform/platform-impl/ui:ide-ui",
   ],
   exports = [
-    "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-api:vcs-dvcs",
     "@lib//:cucumber-testing",
-    "//platform/external-process-auth-helper:externalProcessAuthHelper",
   ],
   runtime_deps = [
     ":vcs-git_resources",
@@ -162,6 +161,7 @@ jvm_library(
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
+    "//platform/platform-util-netty:ide-util-netty",
     "//platform/collaboration-tools:collaborationTools",
     "//platform/collaboration-tools:collaborationTools_test_lib",
     "//platform/ide-core-impl",

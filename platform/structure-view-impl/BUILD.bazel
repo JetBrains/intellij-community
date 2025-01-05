@@ -22,6 +22,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/platform-api:ide",
     "//platform/core-impl",
+    "//platform/analysis-api:analysis",
     "//platform/util:util-ui",
     "@lib//:fastutil-min",
     "//platform/core-ui",

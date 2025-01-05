@@ -8,6 +8,7 @@ jvm_test(
   associates = ["//platform/indexing-impl"],
   deps = [
     "//platform/core-impl",
+    "//platform/analysis-api:analysis",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]

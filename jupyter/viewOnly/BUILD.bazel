@@ -18,6 +18,7 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:jcef",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/analysis-api:analysis",
     "//platform/platform-api:ide",
     "//platform/util:util-ui",
     "//platform/platform-impl:ide-impl",

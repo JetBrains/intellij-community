@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:netty-buffer",
     "@lib//:netty-codec-http",
     "@lib//:gson",
+    "//platform/analysis-api:analysis",
   ],
   runtime_deps = [":remoteControl_resources"]
 )
@@ -40,6 +41,7 @@ jvm_library(
     "@lib//:netty-buffer",
     "@lib//:netty-codec-http",
     "@lib//:gson",
+    "//platform/analysis-api:analysis",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/vcs-api:vcs",

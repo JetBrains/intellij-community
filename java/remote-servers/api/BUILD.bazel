@@ -13,7 +13,6 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//java/execution/openapi:java-execution",
     "//java/compiler/openapi:java-compiler",
-  ],
-  exports = ["//platform/remote-servers/api:remoteServers"]
+  ]
 )
 ### auto-generated section `build intellij.java.remoteServers` end

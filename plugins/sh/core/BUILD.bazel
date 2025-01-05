@@ -47,14 +47,15 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
-    "//plugins/sh",
+    "//plugins/sh/core",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/analysis-impl",
     "//platform/lang-impl",
-  ]
+  ],
+  runtime_deps = ["//plugins/sh"]
 )
 
 jvm_test(

@@ -22,6 +22,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "@lib//:mockito",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/core-impl",
     "@lib//:kotlin-test",

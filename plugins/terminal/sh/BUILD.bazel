@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "//platform/platform-impl:ide-impl",
     "//plugins/terminal",
-    "//plugins/sh",
+    "//plugins/sh/core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
   ],

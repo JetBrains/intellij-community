@@ -21,6 +21,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinx-serialization-json",
+    "//platform/analysis-api:analysis",
     "@lib//:kotlinx-serialization-core",
     "//platform/statistics",
     "//platform/core-ui",

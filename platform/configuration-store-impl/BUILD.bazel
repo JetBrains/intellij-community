@@ -22,6 +22,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/analysis-api:analysis",
     "//platform/object-serializer:objectSerializer",
     "//platform/service-container:serviceContainer",
     "//platform/ide-core-impl",
