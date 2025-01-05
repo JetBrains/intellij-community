@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
@@ -10,6 +11,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.nativeThreadId
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.mixedMode.MixedModeFramesBuilder
+import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +56,16 @@ class XMixedModeExecutionStack(
   }
 
   override fun getNativeThreadId(): Long = lowLevelExecutionStack.nativeThreadId
+
+  override fun getExecutionLineIconRenderer(): GutterIconRenderer? {
+    val frame = session.currentStackFrame ?: return super.getExecutionLineIconRenderer() // We don't need to render icon on a null frame
+
+    val isLowLevelFrameActive = (session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess).belongsToMe(frame)
+    return if (isLowLevelFrameActive)
+      lowLevelExecutionStack.executionLineIconRenderer
+    else
+      highLevelExecutionStack?.executionLineIconRenderer
+  }
 
   suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
       logger.info("Preparation for frame computation completed")

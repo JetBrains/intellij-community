@@ -339,17 +339,29 @@ public final class XDebugSessionImpl implements XDebugSession {
     myMixedModeExtension = new XDebugSessionMixedModeExtension(this.myCoroutineScope, (XMixedModeHighLevelDebugProcess)process,
                                           (XMixedModeLowLevelDebugProcess)mixedModeLowLevelProcess);
       // add low level console since it more likely includes more information (since the low level process has started earlier)
-    init(process, contentToReuse, mixedModeLowLevelProcess.createConsole());
+
+    var highAlternativeSourceHandler = process.getAlternativeSourceHandler();
+    var lowAlternativeSourceHandler = mixedModeLowLevelProcess.getAlternativeSourceHandler();
+
+    if (highAlternativeSourceHandler != null && lowAlternativeSourceHandler != null) {
+      throw new UnsupportedOperationException("At most one alternative source handler is supported in mixed mode");
+    }
+
+    init(process, contentToReuse, mixedModeLowLevelProcess.createConsole(),
+         highAlternativeSourceHandler != null ? highAlternativeSourceHandler : lowAlternativeSourceHandler);
   }
 
   void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
-    init(process, contentToReuse, process.createConsole());
+    init(process, contentToReuse, process.createConsole(), process.getAlternativeSourceHandler());
   }
 
-  void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse, @NotNull ExecutionConsole console) {
+  private void init(@NotNull XDebugProcess process,
+                    @Nullable RunContentDescriptor contentToReuse,
+                    @NotNull ExecutionConsole console,
+                    @Nullable XAlternativeSourceHandler alternativeSourceHandler) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
-    myAlternativeSourceHandler = myDebugProcess.getAlternativeSourceHandler();
+    myAlternativeSourceHandler = alternativeSourceHandler;
     myExecutionPointManager.setAlternativeSourceKindFlow(getAlternativeSourceKindState());
 
     if (myDebugProcess.checkCanInitBreakpoints()) {
@@ -1039,7 +1051,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     positionReachedInternal2(suspendContext, attract);
   }
 
-  public void positionReachedInternal2(final @NotNull XSuspendContext suspendContext, boolean attract) {
+  private void positionReachedInternal2(final @NotNull XSuspendContext suspendContext, boolean attract) {
     setBreakpointsDisabledTemporarily(false);
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
