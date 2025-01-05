@@ -1,43 +1,42 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("HardCodedStringLiteral", "UnstableApiUsage", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.bazel.jvm.jps
 
-import com.google.devtools.build.lib.worker.WorkerProtocol
-import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.tracing.Tracer
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
-import org.jetbrains.bazel.jvm.jps.impl.BazelModuleExcludeIndex
+import org.jetbrains.bazel.jvm.jps.impl.*
+import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
+import org.jetbrains.bazel.jvm.jps.state.saveTargetState
 import org.jetbrains.bazel.jvm.kotlin.ArgMap
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.processRequests
+import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.api.GlobalOptions
-import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
-import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
-import org.jetbrains.jps.builders.impl.BuildRootIndexImpl
-import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl
-import org.jetbrains.jps.builders.impl.BuildTargetRegistryImpl
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
-import org.jetbrains.jps.builders.logging.BuildLoggingManager
-import org.jetbrains.jps.cmdline.ProjectDescriptor
-import org.jetbrains.jps.incremental.BuilderRegistry
-import org.jetbrains.jps.incremental.CompileScopeImpl
-import org.jetbrains.jps.incremental.MessageHandler
-import org.jetbrains.jps.incremental.RebuildRequestedException
-import org.jetbrains.jps.incremental.fs.BuildFSState
-import org.jetbrains.jps.incremental.messages.BuildMessage
-import org.jetbrains.jps.incremental.messages.CompilerMessage
+import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.incremental.relativizer.PathRelativizer
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
-import org.jetbrains.jps.incremental.storage.BuildDataManager
-import org.jetbrains.jps.incremental.storage.BuildTargetsState
+import org.jetbrains.jps.incremental.storage.ExperimentalSourceToOutputMapping
+import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
+import org.jetbrains.jps.incremental.storage.RelativePathType
 import org.jetbrains.jps.incremental.storage.StorageManager
-import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl
-import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.kotlin.config.IncrementalCompilation
+import java.io.File
 import java.io.Writer
+import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Map
 import java.util.Set
+import kotlin.coroutines.coroutineContext
+import kotlin.io.path.invariantSeparatorsPathString
 
 // Please note: for performance reasons, we do not set `jps.new.storage.compact.on.close` to true.
 // As a result, the database file on disk may grow to some extent.
@@ -52,6 +51,9 @@ private fun configureKotlincHome() {
 }
 
 internal fun configureGlobalJps() {
+  Logger.setFactory { BazelLogger(IdeaLogRecordFormatter.smartAbbreviate(it)) }
+  System.setProperty("jps.service.manager.impl", BazelJpsServiceManager::class.java.name)
+  System.setProperty("jps.backward.ref.index.builder.fs.case.sensitive", "true")
   System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Runtime.getRuntime().availableProcessors().toString())
   System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
   System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
@@ -68,195 +70,186 @@ object JpsBuildWorker : WorkRequestExecutor {
     processRequests(startupArgs, this)
   }
 
-  override suspend fun execute(request: WorkerProtocol.WorkRequest, writer: Writer, baseDir: Path): Int {
-    val sources = request.inputsList.asSequence()
-      .filter { it.path.endsWith(".kt") || it.path.endsWith(".java") }
-      .map { baseDir.resolve(it.path) }
-      .toList()
-    return buildUsingJps(workingDir = baseDir, args = parseArgs(request.argumentsList), out = writer, sources = sources)
+  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int {
+    val dependencyFileToDigest = HashMap<Path, ByteArray>()
+    val sources = ArrayList<Path>()
+    for (input in request.inputs) {
+      if (input.path.endsWith(".kt") || input.path.endsWith(".java")) {
+        sources.add(baseDir.resolve(input.path).normalize())
+      }
+      else if (input.path.endsWith(".jar")) {
+        dependencyFileToDigest.put(baseDir.resolve(input.path).normalize(), input.digest)
+      }
+    }
+    return buildUsingJps(
+      baseDir = baseDir,
+      args = parseArgs(request.arguments),
+      out = writer,
+      sources = sources,
+      dependencyFileToDigest = dependencyFileToDigest,
+      isDebugEnabled = request.verbosity > 0,
+    )
   }
 }
 
 internal suspend fun buildUsingJps(
-  workingDir: Path,
+  baseDir: Path,
   args: ArgMap<JvmBuilderFlags>,
   out: Writer,
   sources: List<Path>,
-  classPathRootDir: Path = workingDir,
+  dependencyFileToDigest: Map<Path, ByteArray>,
+  isDebugEnabled: Boolean,
 ): Int {
-
   val messageHandler = ConsoleMessageHandler(out)
 
-  val outJar = workingDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUTPUT)).normalize()
+  val abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() }
+  val outJar = baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize()
   val prefix = outJar.fileName.toString().removeSuffix(".jar")
   val bazelOutDir = outJar.parent
-  val dataStorageRoot = bazelOutDir.resolve("$prefix-jps-data")
+  val dataDir = bazelOutDir.resolve("$prefix-jps-data")
 
   // incremental compilation - we do not clear dir
   val classOutDir = bazelOutDir.resolve("$prefix-classes")
 
-  val buildRunner = BuildRunner()
-  val jpsModel = loadJpsModel(sources = sources, args = args, classPathRootDir = classPathRootDir, classOutDir = classOutDir)
+  val (jpsModel, targetDigests) = loadJpsModel(
+    sources = sources,
+    args = args,
+    classPathRootDir = baseDir,
+    classOutDir = classOutDir,
+    dependencyFileToDigest = dependencyFileToDigest,
+  )
+  val moduleTarget = BazelModuleBuildTarget(
+    outDir = classOutDir,
+    module = jpsModel.project.modules.single(),
+    sources = sources,
+  )
 
-  fun createProjectDescriptor(): ProjectDescriptor? {
-    return buildRunner.load(
-      messageHandler = messageHandler,
-      dataStorageRoot = dataStorageRoot,
-      fsState = BuildFSState(/* alwaysScanFS = */ true),
-      jpsModel = jpsModel,
-    )
-  }
+  val relativizer = createPathRelativizer(baseDir = baseDir, classOutDir = classOutDir)
 
-  fun clearStorage() {
-    // todo rename and store
-    FileUtilRt.deleteRecursively(dataStorageRoot)
-    FileUtilRt.deleteRecursively(classOutDir)
-  }
+  val compileScope = CompileScopeImpl(
+    /* types = */ Set.of(JavaModuleBuildTargetType.PRODUCTION),
+    /* typesToForceBuild = */ Set.of(),
+    /* targets = */ Set.of(),
+    /* files = */ java.util.Map.of()
+  )
 
-  try {
-    var projectDescriptor: ProjectDescriptor? = null
+  suspend fun initAndBuild(isRebuild: Boolean): Boolean {
+    val storageInitializer = StorageInitializer(dataDir = dataDir, classOutDir = classOutDir)
+    val storageManager = if (isRebuild) {
+      storageInitializer.clearAndInit(messageHandler)
+    }
+    else {
+      storageInitializer.init(messageHandler, targetDigests)
+    }
+
     try {
-      projectDescriptor = createProjectDescriptor()
-      var checkRebuildRequired = true
-      if (projectDescriptor == null) {
-        clearStorage()
-        checkRebuildRequired = false
+      val projectDescriptor = storageInitializer.createProjectDescriptor(messageHandler, jpsModel, moduleTarget, relativizer)
+      try {
+        if (storageInitializer.isCheckRebuildRequired) {
+          val rebuildRequiredSpan = Tracer.start("JpsProjectBuilder.checkRebuildRequired")
+          val isRebuildRequired = checkRebuildRequired(
+            scope = compileScope,
+            projectDescriptor = projectDescriptor,
+            moduleTarget = moduleTarget,
+            isDebugEnabled = isDebugEnabled,
+            messageHandler = messageHandler,
+          )
+          rebuildRequiredSpan.complete()
 
-        projectDescriptor = requireNotNull(createProjectDescriptor()) {
-          "The storage has been corrupted twice in a row, resulting in an unrecoverable error"
+          if (isRebuildRequired) {
+            return false
+          }
         }
-      }
 
-      doBuild(checkRebuildRequired = checkRebuildRequired, projectDescriptor = projectDescriptor, messageHandler = messageHandler)
+        val coroutineContext = coroutineContext
+        val context = CompileContextImpl(
+          compileScope,
+          projectDescriptor,
+          messageHandler,
+          emptyMap(),
+          object : CanceledStatus {
+            override fun isCanceled(): Boolean = !coroutineContext.isActive
+          },
+        )
+        JpsProjectBuilder(
+          builderRegistry = BuilderRegistry.getInstance(),
+          messageHandler = messageHandler,
+          isCleanBuild = storageInitializer.isCleanBuild,
+        ).build(context)
+        postBuild(
+          messageHandler = messageHandler,
+          moduleTarget = moduleTarget,
+          outJar = outJar,
+          abiJar = abiJar,
+          classOutDir = classOutDir,
+          context = context,
+          targetDigests = targetDigests,
+          storageManager = storageManager,
+        )
+        return true
+      }
+      finally {
+        projectDescriptor.release()
+      }
+    }
+    catch (_: RebuildRequestedException) {
+      return false
     }
     finally {
-      projectDescriptor?.release()
+      storageManager.forceClose()
     }
   }
-  catch (_: RebuildRequestedException) {
-    clearStorage()
 
-    val projectDescriptor = requireNotNull(createProjectDescriptor()) {
-      "Unrecoverable error"
-    }
-
-    try {
-      doBuild(checkRebuildRequired = false, projectDescriptor = projectDescriptor, messageHandler = messageHandler)
-    }
-    finally {
-      projectDescriptor.release()
-    }
+  // if class output dir doesn't exist, make sure that we do not to use existing cache - pass `isRebuild` as true in this case
+  if (!initAndBuild(isRebuild = Files.notExists(classOutDir))) {
+    initAndBuild(isRebuild = true)
   }
 
   return if (messageHandler.hasErrors()) 1 else 0
 }
 
-private suspend fun doBuild(
-  checkRebuildRequired: Boolean,
-  projectDescriptor: ProjectDescriptor,
-  messageHandler: MessageHandler,
+
+private suspend fun postBuild(
+  messageHandler: ConsoleMessageHandler,
+  moduleTarget: ModuleBuildTarget,
+  outJar: Path,
+  abiJar: Path?,
+  classOutDir: Path,
+  context: CompileContextImpl,
+  targetDigests: TargetConfigurationDigestContainer,
+  storageManager: StorageManager,
 ) {
-  val compileScope = CompileScopeImpl(
-    /* types = */ Set.of(JavaModuleBuildTargetType.PRODUCTION),
-    /* typesToForceBuild = */ Set.of(),
-    /* targets = */ Set.of(),
-    /* files = */ Map.of()
-  )
-
-  val builder = JpsProjectBuilder(
-    projectDescriptor = projectDescriptor,
-    builderRegistry = BuilderRegistry.getInstance(),
-    builderParams = emptyMap(),
-    isTestMode = false,
-    messageHandler = messageHandler,
-  )
-  if (checkRebuildRequired) {
-    builder.checkRebuildRequired(compileScope)
-  }
-  builder.build(compileScope)
-}
-
-private class ConsoleMessageHandler(private val out: Writer) : MessageHandler {
-  private var hasErrors = false
-
-  override fun processMessage(message: BuildMessage) {
-    val messageText = when (message) {
-      is CompilerMessage -> {
-        when {
-          message.sourcePath == null -> message.messageText
-          message.line < 0 -> message.sourcePath + ": " + message.messageText
-          else -> message.sourcePath + "(" + message.line + ":" + message.column + "): " + message.messageText
-        }
-      }
-
-      else -> message.messageText
-    }
-
-    if (messageText.isEmpty()) {
-      return
-    }
-
-    if (message.kind == BuildMessage.Kind.ERROR) {
-      out.appendLine("Error: $messageText")
-      hasErrors = true
-    }
-    else if (message.kind !== BuildMessage.Kind.PROGRESS || !messageText.startsWith("Compiled") && !messageText.startsWith("Copying")) {
-      out.appendLine(messageText)
-    }
-  }
-
-  fun hasErrors(): Boolean = hasErrors
-}
-
-private fun createStorageManager(dataStorageRoot: Path): StorageManager {
-  val manager = StorageManager(dataStorageRoot.resolve("jps-portable-cache.db"))
-  manager.open()
-  return manager
-}
-
-private class BuildRunner() {
-  fun load(messageHandler: MessageHandler, dataStorageRoot: Path, fsState: BuildFSState, jpsModel: JpsModel): ProjectDescriptor? {
-    val dataPaths = BuildDataPathsImpl(dataStorageRoot.toFile())
-    val targetRegistry = BuildTargetRegistryImpl(jpsModel)
-    val moduleExcludeIndex = BazelModuleExcludeIndex
-    val ignoredFileIndex = IgnoredFileIndexImpl(jpsModel)
-    val buildRootIndex = BuildRootIndexImpl(targetRegistry, jpsModel, moduleExcludeIndex, dataPaths, ignoredFileIndex)
-    val targetIndex = BuildTargetIndexImpl(targetRegistry, buildRootIndex)
-
-    val relativizer = PathRelativizerService(jpsModel.project, JavaBackwardReferenceIndexWriter.isCompilerReferenceFSCaseSensitive())
-
-    val storageManager = createStorageManager(dataStorageRoot)
-    var dataManager: BuildDataManager? = null
-    try {
-      @Suppress("DEPRECATION")
-      dataManager = BuildDataManager(
-        dataPaths,
-        BuildTargetsState(dataPaths, jpsModel, buildRootIndex),
-        relativizer,
-        storageManager,
+  coroutineScope {
+    val dataManager = context.projectDescriptor.dataManager
+    launch(CoroutineName("save caches")) {
+      // save config state only in the end
+      saveTargetState(
+        targetDigests = targetDigests,
+        manager = context.projectDescriptor.dataManager.targetStateManager as BazelBuildTargetStateManager,
+        storageManager = storageManager,
       )
-      if (dataManager.versionDiffers()) {
-        storageManager.forceClose()
 
-        messageHandler.processMessage(
-          CompilerMessage("", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"),
+      dataManager.flush(/* memoryCachesOnly = */ false)
+    }
+
+    launch(CoroutineName("create output JAR and ABI JAR")) {
+      // pack to jar
+      messageHandler.measureTime("pack and abi") {
+        val sourceToOutputMap = dataManager.getSourceToOutputMap(moduleTarget) as ExperimentalSourceToOutputMapping
+        packageToJar(
+          outJar = outJar,
+          abiJar = abiJar,
+          sourceToOutputMap = sourceToOutputMap,
+          classOutDir = classOutDir,
+          messageHandler = messageHandler,
         )
-        return null
       }
     }
-    catch (e: Exception) {
-      messageHandler.processMessage(
-        CompilerMessage("", BuildMessage.Kind.INTERNAL_BUILDER_ERROR, "Cannot open cache storage: ${e.stackTraceToString()}"),
-      )
 
-      storageManager.forceClose()
-      dataManager?.close()
-
-      return null
+    launch(CoroutineName("report build state")) {
+      dataManager.reportUnhandledRelativizerPaths()
+      reportRebuiltModules(context)
+      reportUnprocessedChanges(context, moduleTarget)
     }
-
-    return ProjectDescriptor(
-      jpsModel, fsState, dataManager, BuildLoggingManager.DEFAULT, moduleExcludeIndex, targetIndex, buildRootIndex, ignoredFileIndex
-    )
   }
 }

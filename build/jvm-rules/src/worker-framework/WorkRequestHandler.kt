@@ -3,7 +3,6 @@
 
 package org.jetbrains.bazel.jvm
 
-import com.google.devtools.build.lib.worker.WorkerProtocol.WorkRequest
 import com.google.protobuf.CodedOutputStream
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -12,7 +11,6 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.WorkRequestState.*
 import java.io.*
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -25,13 +23,13 @@ fun interface WorkRequestExecutor {
   suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int
 }
 
-internal fun createLogger(classifier: String, coroutineScope: CoroutineScope): AsyncLogger? {
+internal fun createLogger(classifier: String, coroutineScope: CoroutineScope): AsyncFileLogger? {
   val dir = Path.of(System.getProperty("user.home"), "$classifier-worker")
   // changing env or flag leads to rebuild, so, we create logger if log dir exists
   if (!Files.isDirectory(dir)) {
     return null
   }
-  return AsyncLogger(file = dir.resolve("log-" + System.currentTimeMillis() + ".txt"), coroutineScope = coroutineScope)
+  return AsyncFileLogger(file = dir.resolve("log-" + System.currentTimeMillis() + ".txt"), coroutineScope = coroutineScope)
 }
 
 fun processRequests(startupArgs: Array<String>, executor: WorkRequestExecutor, debugLogClassifier: String? = null) {
@@ -51,16 +49,8 @@ fun processRequests(startupArgs: Array<String>, executor: WorkRequestExecutor, d
       }
 
       try {
-        val output = System.out
-        val input = System.`in`
-        // create workerIo only after creating messageProcessor, as messageProcessor must use original system input
-        val workerIo = wrapStandardSystemStreams()
-        WorkRequestHandler(
-          requestExecutor = executor,
-          input = input,
-          out = output,
-          logger = logger,
-        ).processRequests(workerIo)
+        WorkRequestHandler(requestExecutor = executor, input = System.`in`, out = System.out, logger = logger)
+          .processRequests()
       }
       finally {
         logger?.shutdown()
@@ -101,7 +91,7 @@ internal class WorkRequestHandler internal constructor(
    * Must be quick and safe - executed in a read thread
    */
   private val cancelHandler: ((Int) -> Unit)? = null,
-  private val logger: AsyncLogger? = null,
+  private val logger: AsyncFileLogger? = null,
 ) {
   private val workingDir = Path.of(".").toAbsolutePath().normalize()
 
@@ -111,11 +101,11 @@ internal class WorkRequestHandler internal constructor(
   private val activeRequests = ConcurrentHashMap<Int, RequestState>()
 
   @OptIn(DelicateCoroutinesApi::class)
-  internal suspend fun processRequests(workerIo: WorkerIo) {
+  internal suspend fun processRequests() {
     val requestChannel = Channel<RequestState>(Channel.UNLIMITED)
     try {
       coroutineScope {
-        startTaskProcessing(requestChannel, workerIo)
+        startTaskProcessing(requestChannel)
 
         readRequests(requestChannel)
       }
@@ -136,22 +126,16 @@ internal class WorkRequestHandler internal constructor(
         }
         activeRequests.clear()
       }
-
-      try {
-        // unwrap the system streams placing the original streams back
-        workerIo.close()
-      }
-      catch (e: Exception) {
-        System.err.println(e.message)
-      }
     }
   }
 
   private suspend fun readRequests(requestChannel: Channel<RequestState>) {
+    val inputListToReuse = ArrayList<Input>()
+    val argListToReuse = ArrayList<String>()
     while (coroutineContext.isActive) {
       val request = try {
         runInterruptible(Dispatchers.IO) {
-          WorkRequest.parseDelimitedFrom(input)
+          readWorkRequestFromStream(input, inputListToReuse, argListToReuse)
         }
       }
       catch (e: InterruptedIOException) {
@@ -179,7 +163,7 @@ internal class WorkRequestHandler internal constructor(
               if (cancelHandler != null) {
                 cancelHandler(request.requestId)
               }
-              logger?.log("request(id=$requestId}) cancelled before handling")
+              logger?.log("request(id=$requestId) cancelled before handling")
               writeAndRemoveRequest(requestId = requestId, wasCancelled = true)
             }
           }
@@ -204,10 +188,7 @@ internal class WorkRequestHandler internal constructor(
     }
   }
 
-  private fun CoroutineScope.startTaskProcessing(
-    requestChannel: Channel<RequestState>,
-    workerIo: WorkerIo
-  ) {
+  private fun CoroutineScope.startTaskProcessing(requestChannel: Channel<RequestState>) {
     repeat(Runtime.getRuntime().availableProcessors().coerceAtLeast(2)) {
       launch {
         for (item in requestChannel) {
@@ -215,7 +196,7 @@ internal class WorkRequestHandler internal constructor(
           val stateRef = item.state
           when {
             stateRef.compareAndSet(NOT_STARTED, STARTED) -> {
-              handleRequest(workerIo = workerIo, request = item.request, requestState = stateRef)
+              handleRequest(request = item.request, requestState = stateRef)
             }
             else -> {
               val state = stateRef.get()
@@ -289,20 +270,15 @@ internal class WorkRequestHandler internal constructor(
    * @throws IOException if there is an error talking to the server. Errors from calling the [][.callback] are reported with exit code 1.
    */
   // visible for tests
-  internal suspend fun handleRequest(workerIo: WorkerIo, request: WorkRequest, requestState: AtomicReference<WorkRequestState>) {
+  internal suspend fun handleRequest(request: WorkRequest, requestState: AtomicReference<WorkRequestState>) {
     val baseDir = if (request.sandboxDir.isNullOrEmpty()) workingDir else workingDir.resolve(request.sandboxDir)
     var exitCode = 1
     val stringWriter = StringWriter()
     var errorToThrow: Throwable? = null
     val requestId = request.requestId
     try {
+      //System.err.println("request: ${request.inputs.asSequence().take(4).joinToString { it.path }}, $baseDir, ${request.sandboxDir}")
       exitCode = requestExecutor.execute(request = request, writer = stringWriter, baseDir = baseDir)
-
-      // read out the captured string for the final WorkResponse output
-      val captured = workerIo.readCapturedAsUtf8String()?.trim()
-      if (!captured.isNullOrEmpty()) {
-        stringWriter.write(captured)
-      }
     }
     catch (e: CancellationException) {
       errorToThrow = e
@@ -332,82 +308,4 @@ internal class WorkRequestHandler internal constructor(
       throw errorToThrow
     }
   }
-}
-
-/**
- * A class that wraps the standard [System.in], [System.out], and [System.err]
- * with our own ByteArrayOutputStream that allows [WorkRequestHandler] to safely capture
- * outputs that can't be directly captured by the PrintStream associated with the work request.
- *
- * This is most useful when integrating JVM tools that write exceptions and logs directly to
- * [System.out] and [System.err], which would corrupt the persistent worker protocol.
- * We also redirect [System.in], just in case a tool should attempt to read it.
- *
- * WorkerIO implements [AutoCloseable] and will swap the original streams back into [System] once close has been called.
- */
-@VisibleForTesting
-internal class WorkerIo(
-  /**
-   * Returns the original input stream most commonly provided by [System.in]
-   */
-  @JvmField val originalInputStream: InputStream?,
-  /**
-   * Returns the original output stream most commonly provided by [System.out]
-   */
-  @JvmField val originalOutputStream: PrintStream?,
-  /**
-   * Returns the original error stream most commonly provided by [System.err]
-   */
-  @JvmField val originalErrorStream: PrintStream?,
-  private val capturedStream: ByteArrayOutputStream,
-  private val restore: AutoCloseable) : AutoCloseable {
-  /**
-   * Returns the captured outputs as a UTF-8 string
-   */
-  fun readCapturedAsUtf8String(): String? {
-    if (capturedStream.size() == 0) {
-      return null
-    }
-
-    val captureOutput = capturedStream.toString(StandardCharsets.UTF_8)
-    capturedStream.reset()
-    return captureOutput
-  }
-
-  override fun close() {
-    restore.close()
-  }
-}
-
-/**
- * Wraps the standard System streams and WorkerIO instance
- */
-@VisibleForTesting
-internal fun wrapStandardSystemStreams(): WorkerIo {
-  // save the original streams
-  val originalInputStream = System.`in`
-  val originalOutputStream = System.out
-  val originalErrorStream = System.err
-
-  // replace the original streams with our own instances
-  val capturedStream = ByteArrayOutputStream()
-  val outputBuffer = PrintStream(capturedStream, true)
-  val byteArrayInputStream = ByteArray(0).inputStream()
-  System.setIn(byteArrayInputStream)
-  System.setOut(outputBuffer)
-  System.setErr(outputBuffer)
-
-  return WorkerIo(
-    originalInputStream = originalInputStream,
-    originalOutputStream = originalOutputStream,
-    originalErrorStream = originalErrorStream,
-    capturedStream = capturedStream,
-    restore = AutoCloseable {
-      System.setIn(originalInputStream)
-      System.setOut(originalOutputStream)
-      System.setErr(originalErrorStream)
-      outputBuffer.close()
-      byteArrayInputStream.close()
-    }
-  )
 }

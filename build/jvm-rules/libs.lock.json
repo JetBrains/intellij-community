@@ -3,9 +3,9 @@
     "7441a6394dca477b3f8b7c86f17bef035f705a8aaa11f53065d380300158177c",
     "68f0f47297335e2c3fb5a904ade91aadef884b3aa8f558a4efac16ba803b8b27"
   ],
-  "dev.drewhamilton.poko:poko-compiler-plugin:0.18.1": [
-    "4def45d16f7b077c8f4fa31f46f940bff14ecb985408fd74ac26c7910576cf00",
-    "e33785f02bafc11751914ff1892c0a302a6408edb0ca6076436a71150b201e55"
+  "dev.drewhamilton.poko:poko-compiler-plugin:0.18.2": [
+    "08edf341dfa4dd0a9e15b83a2a74850baad3a4a3ca2f93aed05ca6a481b1f394",
+    "02f7ac954f3a9574b37a54d7bdc79190325b9ee38a3244256a84d6d760eb6f1f"
   ],
   "org.jetbrains.kotlin:kotlin-build-tools-api:2.1.20-Beta1": [
     "09ddebb845f30310395d91c084f65d2133484080dfac1977502776b77345f3d7",
@@ -43,8 +43,8 @@
     "f48b6323092cb30f860cb5c880d6107982d82941166073871a36349dfd3f7909",
     "4aa4da6df01507c0fe9b48ff4f3d2a5eb5edf5f894850169c90efc89330a9d8b"
   ],
-  "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.9.0": [
-    "ad89c2892235e670f222d819cb3d81188143cb19a05b59df9889ae4269f5c70a",
-    "01e0f26a274d8f2f2ae702b161bc0980cea817bfcaf66ca4944434ea7b601771"
+  "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.1": [
+    "069c5988633230e074ec0d39321ec3cdaa4547c49e90ba936c63d8fc91c8c00d",
+    "3faa298de8000d68744a179f7d413ab1672acf1d77cb8d6be57a78544657edd2"
   ]
 }

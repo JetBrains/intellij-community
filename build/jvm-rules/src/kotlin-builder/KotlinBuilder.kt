@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
-import com.google.devtools.build.lib.worker.WorkerProtocol
+import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.processRequests
 import java.io.Writer
@@ -14,12 +14,12 @@ object KotlinBuildWorker : WorkRequestExecutor {
     processRequests(startupArgs, this, debugLogClassifier = "kotlin")
   }
 
-  override suspend fun execute(request: WorkerProtocol.WorkRequest, writer: Writer, baseDir: Path): Int {
-    val sources = request.inputsList.asSequence()
+  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int {
+    val sources = request.inputs.asSequence()
       .filter { it.path.endsWith(".kt") || it.path.endsWith(".java") }
-      .map { baseDir.resolve(it.path) }
+      .map { baseDir.resolve(it.path).normalize() }
       .toList()
-    return buildKotlin(workingDir = baseDir, args = parseArgs(request.argumentsList), out = writer, sources = sources)
+    return buildKotlin(workingDir = baseDir, args = parseArgs(request.arguments), out = writer, sources = sources)
   }
 }
 

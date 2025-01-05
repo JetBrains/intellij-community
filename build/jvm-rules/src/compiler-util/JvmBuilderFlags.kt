@@ -7,7 +7,7 @@ import java.util.regex.Pattern
 
 private val FLAG_FILE_RE: Regex = Pattern.compile("""^--flagfile=((.*)-(\d+).params)$""").toRegex()
 
-fun parseArgs(args: List<String>): ArgMap<JvmBuilderFlags> {
+fun parseArgs(args: Array<String>): ArgMap<JvmBuilderFlags> {
   check(args.isNotEmpty()) {
     "expected at least a single arg got: ${args.joinToString(" ")}"
   }
@@ -15,7 +15,7 @@ fun parseArgs(args: List<String>): ArgMap<JvmBuilderFlags> {
   return createArgMap(
     args = FLAG_FILE_RE.matchEntire(args[0])?.groups?.get(1)?.let {
       Files.readAllLines(Path.of(it.value))
-    } ?: args,
+    } ?: args.asList(),
     enumClass = JvmBuilderFlags::class.java,
   )
 }
@@ -29,7 +29,9 @@ enum class JvmBuilderFlags {
   PLUGIN_ID,
   PLUGIN_CLASSPATH,
 
-  OUTPUT,
+  OUT,
+  ABI_OUT,
+
   RULE_KIND,
   KOTLIN_MODULE_NAME,
 
@@ -46,10 +48,9 @@ enum class JvmBuilderFlags {
 
   WARN,
 
-  FRIEND_PATHS,
-  KOTLIN_OUTPUT_JDEPS,
+  FRIENDS,
+  JDEPS_OUT,
   TRACE,
-  ABI_JAR,
   STRICT_KOTLIN_DEPS,
   REDUCED_CLASSPATH_MODE,
 
@@ -68,8 +69,8 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
 
   // kotlin bug - not compatible with a new X compiler-plugin syntax
   //compilationArgs.disableDefaultScriptingPlugin = true
-  args.optional(JvmBuilderFlags.FRIEND_PATHS)?.let { value ->
-    kotlinArgs.friendPaths = value.map { workingDir.resolve(it).toString() }.toTypedArray()
+  args.optional(JvmBuilderFlags.FRIENDS)?.let { value ->
+    kotlinArgs.friendPaths = value.map { workingDir.resolve(it).normalize().toString() }.toTypedArray()
   }
 
   args.optional(JvmBuilderFlags.OPT_IN)?.let {

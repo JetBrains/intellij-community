@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm
 
-import com.google.devtools.build.lib.worker.WorkerProtocol
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.io.*
@@ -16,8 +15,8 @@ object JvmWorker : WorkRequestExecutor {
     processRequests(startupArgs, this)
   }
 
-  override suspend fun execute(request: WorkerProtocol.WorkRequest, writer: Writer, baseDir: Path): Int {
-    val args = request.argumentsList
+  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int {
+    val args = request.arguments
     if (args.isEmpty()) {
       writer.appendLine("Command is not specified")
       return 1
@@ -33,8 +32,8 @@ object JvmWorker : WorkRequestExecutor {
     when (taskKind) {
       "jar" -> {
         var stripPrefix = command[3]
-        if (stripPrefix == "" && request.inputsList.isNotEmpty()) {
-          val p = request.inputsList.first().path
+        if (stripPrefix == "" && request.inputs.isNotEmpty()) {
+          val p = request.inputs.first().path
           stripPrefix = command[4]
           val index = p.indexOf(stripPrefix)
           require(index != -1)
@@ -42,7 +41,7 @@ object JvmWorker : WorkRequestExecutor {
         }
         createZip(
           outJar = Path.of(output),
-          inputs = request.inputsList,
+          inputs = request.inputs,
           baseDir = baseDir,
           stripPrefix = stripPrefix,
         )
@@ -51,7 +50,7 @@ object JvmWorker : WorkRequestExecutor {
       }
 
       "jdeps" -> {
-        val inputs = request.inputsList.asSequence()
+        val inputs = request.inputs.asSequence()
           .filter { it.path.endsWith(".jdeps") }
           .map { baseDir.resolve(it.path) }
         //Files.writeString(Path.of("${System.getProperty("user.home")}/f.txt"), inputs.joinToString("\n") { it.toString() })
@@ -73,7 +72,7 @@ object JvmWorker : WorkRequestExecutor {
   }
 }
 
-private suspend fun createZip(outJar: Path, inputs: List<WorkerProtocol.Input>, baseDir: Path, stripPrefix: String) {
+private suspend fun createZip(outJar: Path, inputs: Array<Input>, baseDir: Path, stripPrefix: String) {
   //Files.writeString(Path.of("${System.getProperty("user.home")}/f.txt"), stripPrefix + "\n" + inputs.joinToString("\n") { it.toString() })
 
   val stripPrefixWithSlash = stripPrefix.let { if (it.isEmpty()) "" else "$it/" }

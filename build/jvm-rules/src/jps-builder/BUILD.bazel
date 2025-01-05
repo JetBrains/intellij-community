@@ -4,24 +4,24 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
     name = "worker-lib",
-    srcs = glob(["**/*.kt"]),
+    srcs = glob(["*.kt", "impl/*.kt", "state/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
-        ":jps-standalone",
         "@lib//:fastutil-min",
         "//src/compiler-util",
         "//src/worker-framework",
-        "//zip:build-zip",
         "@rules_java//java/runfiles",
+        ":jps-standalone",
         "//:kotlin-jps-plugin",
+        "//src/jps-builder/packager",
+        "@lib//:hash4j",
+        "@lib//:mvstore",
     ],
     runtime_deps = [
         # jps needs these libs
         "@lib//:asm",
         "@lib//:aalto-xml",
-        "@lib//:mvstore",
-        "@lib//:hash4j",
         "@lib//:caffeine",
         "@lib//:platform-jps-build-qdox-java-parser",
         "@lib//:jps-javac-extension",
@@ -37,23 +37,31 @@ kt_jvm_library(
 
 java_import(
     name = "jps-standalone",
-    jars = ["jps-build-standalone-2.jar"],
+    jars = ["jps-build-standalone.jar"],
+    visibility = ["//src/jps-builder:__subpackages__"],
 )
 
 java_binary(
     name = "worker-jvm",
     runtime_deps = [":worker-lib"],
+    data = [
+        "@kotlinc//:kotlinc_dist",
+        "@kotlin-serialization-compiler-plugin//file",
+    ],
     main_class = "org.jetbrains.bazel.jvm.jps.JpsBuildWorker",
     jvm_flags = [
-        "-Xms1000m",
-        "-Xmx6000m",
+        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED",
+        "--add-opens=java.base/java.nio=ALL-UNNAMED",
+        "-Xms1024m",
+        "-Xmx6144m",
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
         "-Dkotlin.environment.keepalive=true",
         "-Djps.use.experimental.storage=true",
-        # Kotlin Compiler sets it
-        "-Didea.io.use.nio2=true",
-        "-Dzip.handler.uses.crc.instead.of.timestamp=true",
+        "-Djps.kotlin.home=$(rlocationpath @kotlinc//:kotlinc_dist)",
+        "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
     ],
     visibility = ["//visibility:public"],
 )
@@ -67,9 +75,12 @@ java_binary(
     ],
     main_class = "org.jetbrains.bazel.jvm.jps.TestJpsBuildWorker",
     jvm_flags = [
-        "-Xms1000m",
-        "-Xmx6000m",
-        "-Djps.service.manager.impl=org.jetbrains.bazel.jvm.jps.BazelJpsServiceManager",
+        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED",
+        "--add-opens=java.base/java.nio=ALL-UNNAMED",
+        "-Xms1024m",
+        "-Xmx6144m",
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
         "-Dkotlin.environment.keepalive=true",

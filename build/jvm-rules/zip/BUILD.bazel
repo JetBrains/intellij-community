@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 kt_jvm_library(
   name = "build-zip",
   module_name = "intellij.idea.community.build.zip",
+  kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
   visibility = ["//visibility:public"],
   srcs = glob(["src/*.kt"]),
   deps = [

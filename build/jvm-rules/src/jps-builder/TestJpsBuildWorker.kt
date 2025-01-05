@@ -3,10 +3,12 @@ package org.jetbrains.bazel.jvm.jps
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
-import java.io.PrintWriter
+import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.walk
@@ -18,41 +20,52 @@ object TestJpsBuildWorker {
     configureGlobalJps()
 
     val userHomeDir = Path.of(System.getProperty("user.home"))
-    val workingDir = userHomeDir.resolve("bazel-jps-test")
-    Files.createDirectories(workingDir)
+    val out = StringWriter()
     try {
-      val out = PrintWriter(System.out)
-      try {
-        //val sources = Files.newDirectoryStream(userHomeDir.resolve("projects/idea/community/platform/util/xmlDom/src")).use { it.toList() }
-        val sourceDir = userHomeDir.resolve("projects/idea/community/platform/platform-impl/src")
-        val sources = sourceDir
-          .walk()
-          .filter {
-            val p = it.toString()
-            p.endsWith(".kt") || p.endsWith(".java")
-          }
-          .sortedBy { sourceDir.relativize(it).invariantSeparatorsPathString }
-          .toList()
-        runBlocking(Dispatchers.Default) {
-          buildUsingJps(
-            workingDir = workingDir,
-            args = parseArgs(testParams.trimStart().lines()),
-            out = out,
-            sources = sources,
-            classPathRootDir = Path.of("/private/var/tmp/_bazel_develar/1693e3b60d193556354eca5e9446027e/execroot/_main"),
-          )
+      @Suppress("SpellCheckingInspection")
+      val baseDir = Path.of("/private/var/tmp/_bazel_develar/c002af20f6ada3e2667e9e2ceaf2ceca/execroot/_main")
+
+      //val sources = Files.newDirectoryStream(userHomeDir.resolve("projects/idea/community/platform/util/xmlDom/src")).use { it.toList() }
+      val ideaProjectDirName = if (Runtime.getRuntime().availableProcessors() >= 20) "idea-push" else "idea-second"
+      val communityDir = userHomeDir.resolve("projects/$ideaProjectDirName/community")
+      val sources = communityDir.resolve("platform/platform-impl/src")
+        .walk()
+        .filter {
+          val p = it.toString()
+          p.endsWith(".kt") || p.endsWith(".java")
         }
-      }
-      finally {
-        out.flush()
+        .map { "../community+/" + communityDir.relativize(it).invariantSeparatorsPathString }
+        .sorted()
+        .map { baseDir.resolve(it).normalize() }
+        .toList()
+
+      require(sources.isNotEmpty())
+
+      runBlocking(Dispatchers.Default) {
+        val args = parseArgs(testParams.trimStart().lines().toTypedArray())
+        val messageDigest = MessageDigest.getInstance("SHA-256")
+        buildUsingJps(
+          baseDir = baseDir,
+          args = args,
+          out = out,
+          sources = sources,
+          dependencyFileToDigest = args.optionalList(JvmBuilderFlags.CLASSPATH).associate {
+            val file = baseDir.resolve(it).normalize()
+            val digest = messageDigest.digest(Files.readAllBytes(file))
+            messageDigest.reset()
+            file to digest
+          },
+          isDebugEnabled = true,
+        )
       }
     }
     finally {
-      //workingDir.deleteRecursively()
+      System.out.append(out.toString())
     }
   }
 }
 
+@Suppress("SpellCheckingInspection")
 private const val testParams = """
 --target_label
 @community//platform/platform-impl:ide-impl
@@ -69,8 +82,10 @@ java.desktop/sun.awt.image=ALL-UNNAMED
 java.desktop/sun.awt.datatransfer=ALL-UNNAMED
 java.desktop/sun.swing=ALL-UNNAMED
 java.base/sun.nio.fs=ALL-UNNAMED
---output
+--out
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/platform-impl/ide-impl.jar
+--abi-out
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/platform-impl/ide-impl.abi.jar
 --warn
 off
 --jvm-default

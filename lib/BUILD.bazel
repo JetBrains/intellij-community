@@ -7500,62 +7500,6 @@ java_import(
 )
 
 java_library(
-  name = "platform-build_scripts-code_optimizer-proguard",
-  exports = [
-    ":proguard-base-7_5_0_http_import",
-    ":proguard-core-9_1_4_http_import",
-    ":kotlin-metadata-jvm-2_0_0_http_import",
-    ":annotations-24_0_0_http_import",
-    ":log4j-api-2_19_0_http_import",
-    ":log4j-core-2_19_0_http_import",
-    ":json-20231013_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "proguard-base-7_5_0_http_import",
-  jar = "@proguard-base-7_5_0_http//file",
-  srcjar = "@proguard-base-7_5_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "proguard-core-9_1_4_http_import",
-  jar = "@proguard-core-9_1_4_http//file",
-  srcjar = "@proguard-core-9_1_4-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "kotlin-metadata-jvm-2_0_0_http_import",
-  jar = "@kotlin-metadata-jvm-2_0_0_http//file",
-  srcjar = "@kotlin-metadata-jvm-2_0_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "annotations-24_0_0_http_import",
-  jar = "@annotations-24_0_0_http//file",
-  srcjar = "@annotations-24_0_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "log4j-api-2_19_0_http_import",
-  jar = "@log4j-api-2_19_0_http//file",
-  srcjar = "@log4j-api-2_19_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "log4j-core-2_19_0_http_import",
-  jar = "@log4j-core-2_19_0_http//file",
-  srcjar = "@log4j-core-2_19_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "json-20231013_http_import",
-  jar = "@json-20231013_http//file",
-  srcjar = "@json-20231013-sources_http//file"
-)
-
-java_library(
   name = "platform-build_scripts-jetbrains-apple-notary-api-kotlin-client",
   exports = [
     ":apple-notary-api-kotlin-client-1_0_5_http_import",
@@ -9111,6 +9055,41 @@ kt_jvm_import(
   jar = "@poko-compiler-plugin-0_18_0_http//file",
   srcjar = "@poko-compiler-plugin-0_18_0-sources_http//file",
   visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "proguard",
+  exports = [
+    ":proguard-base-7_6_1_http_import",
+    ":proguard-core-9_1_7_http_import",
+    ":log4j-api-2_24_2_http_import",
+    ":log4j-core-2_24_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "proguard-base-7_6_1_http_import",
+  jar = "@proguard-base-7_6_1_http//file",
+  srcjar = "@proguard-base-7_6_1-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "proguard-core-9_1_7_http_import",
+  jar = "@proguard-core-9_1_7_http//file",
+  srcjar = "@proguard-core-9_1_7-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "log4j-api-2_24_2_http_import",
+  jar = "@log4j-api-2_24_2_http//file",
+  srcjar = "@log4j-api-2_24_2-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "log4j-core-2_24_2_http_import",
+  jar = "@log4j-core-2_24_2_http//file",
+  srcjar = "@log4j-core-2_24_2-sources_http//file"
 )
 
 java_import(

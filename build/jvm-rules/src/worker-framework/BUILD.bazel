@@ -10,8 +10,9 @@ java_proto_library(
 kt_jvm_library(
     name = "worker-framework",
     srcs = glob(["*.kt"], exclude = ["*Test.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
-        ":worker_protocol_java_proto",
+        "@lib//:kotlin-stdlib",
         "//:kotlinx-coroutines-core",
         "//:protobuf-java",
         "@lib//:jetbrains-annotations",
@@ -23,7 +24,9 @@ kt_jvm_library(
     name = "worker_test_lib",
     srcs = ["WorkRequestHandlerTest.kt"],
     associates = [":worker-framework"],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
+        "@lib//:kotlin-stdlib",
         ":worker_protocol_java_proto",
         "@junit_jupiter_api//jar",
         "@assertj//jar",

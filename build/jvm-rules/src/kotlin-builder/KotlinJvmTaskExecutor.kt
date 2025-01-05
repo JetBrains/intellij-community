@@ -37,7 +37,7 @@ internal suspend fun compileKotlinForJvm(
   kotlinArgs.classpath = createClasspath(args, workingDir)
 
   kotlinArgs.moduleName = info.moduleName
-  kotlinArgs.destination = workingDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUTPUT)).toString()
+  kotlinArgs.destination = workingDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).toString()
 
   val pluginConfigurations = configurePlugins(args = args, workingDir = workingDir, label = info.label)
 

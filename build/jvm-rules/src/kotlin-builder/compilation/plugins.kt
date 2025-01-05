@@ -85,7 +85,7 @@ internal fun configurePlugins(
     }
   }
 
-  args.optionalSingle(JvmBuilderFlags.KOTLIN_OUTPUT_JDEPS)?.let { workingDir.resolve(it) }?.let { jdeps ->
+  args.optionalSingle(JvmBuilderFlags.JDEPS_OUT)?.let { workingDir.resolve(it) }?.let { jdeps ->
     val options = mutableListOf(
       cliOptionValue("output", jdeps.toString()),
       cliOptionValue("target_label", label),
@@ -101,7 +101,7 @@ internal fun configurePlugins(
     ))
   }
 
-  args.optionalSingle(JvmBuilderFlags.ABI_JAR)?.let { workingDir.resolve(it) }?.let { abiJar ->
+  args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { workingDir.resolve(it) }?.let { abiJar ->
     addPlugin(RegisteredPluginInfo(
       componentRegistrar = null,
       compilerPluginRegistrar = JvmAbiComponentRegistrar(),

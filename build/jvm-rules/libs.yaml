@@ -28,7 +28,7 @@
     - id: org.jetbrains.kotlin:kotlin-compose-compiler-plugin
       version: 2.1.20-Beta1
     - id: dev.drewhamilton.poko:poko-compiler-plugin
-      version: 0.18.1
+      version: 0.18.2
     # other libs
     - id: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm
-      version: 1.9.0
+      version: 1.10.1

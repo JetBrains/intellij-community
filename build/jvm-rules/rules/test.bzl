@@ -119,7 +119,6 @@ def _jvm_test(ctx):
     return [
         providers.java,
         providers.kt,
-        providers.instrumented_files,
         DefaultInfo(
             files = depset(files),
             runfiles = ctx.runfiles(

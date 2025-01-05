@@ -7,7 +7,8 @@ jvm_test(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:platform-build_scripts-code_optimizer-proguard",
-  ]
+    "@lib//:proguard",
+  ],
+  runtime_deps = ["@lib//:kotlin-metadata"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` end

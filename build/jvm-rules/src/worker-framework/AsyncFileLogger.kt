@@ -12,7 +12,7 @@ import java.nio.file.StandardOpenOption
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-internal class AsyncLogger(file: Path, coroutineScope: CoroutineScope) {
+internal class AsyncFileLogger(file: Path, coroutineScope: CoroutineScope) {
   private val logChannel = Channel<String>(Channel.UNLIMITED)
   private val writer = Files.newOutputStream(file, StandardOpenOption.APPEND, StandardOpenOption.CREATE).bufferedWriter()
 

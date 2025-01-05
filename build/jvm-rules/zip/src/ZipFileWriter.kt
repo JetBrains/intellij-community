@@ -22,7 +22,7 @@ import java.util.zip.ZipEntry
 import kotlin.math.min
 
 val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
-private val WRITE = EnumSet.of(StandardOpenOption.WRITE)
+val WRITE: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE)
 private val READ = EnumSet.of(StandardOpenOption.READ)
 
 // 1 MB
@@ -41,6 +41,25 @@ fun ZipArchiveOutputStream.file(nameString: String, file: Path) {
     transferFrom(channel, size.toLong())
   }
   return
+}
+
+@Suppress("DuplicatedCode")
+fun ZipArchiveOutputStream.fileAndGetData(name: ByteArray, file: Path): ByteArray {
+  return FileChannel.open(file, READ).use { channel ->
+    val size = channel.size()
+    assert(size <= Int.MAX_VALUE)
+    writeEntryHeaderWithoutCrc(name = name, size = size.toInt())
+    transferFrom(channel, size.toLong())
+
+    val buffer = ByteBuffer.allocate(size.toInt())
+    while (buffer.hasRemaining()) {
+      val bytesRead = channel.read(buffer, 0)
+      if (bytesRead == -1) {
+        throw EOFException("End of stream reached before filling the buffer")
+      }
+    }
+    buffer.array()
+  }
 }
 
 fun transformZipUsingTempFile(file: Path, indexWriter: IkvIndexBuilder?, task: (ZipFileWriter) -> Unit) {

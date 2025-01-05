@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage")
 
 package org.jetbrains.bazel.jvm.jps.impl
@@ -9,19 +10,18 @@ import com.intellij.tracing.Tracer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.bazel.jvm.jps.JpsProjectBuilder
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.impl.BuildTargetChunk
-import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.incremental.CompileScope
+import org.jetbrains.jps.incremental.GlobalContextKey
+import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.BuildProgress
 import java.util.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 
-private const val FLUSH_INVOCATIONS_TO_SKIP = 10
 private val LOG = Logger.getInstance(JpsProjectBuilder::class.java)
 
 internal class BuildTaskLauncher(
@@ -29,16 +29,12 @@ internal class BuildTaskLauncher(
   private val buildProgress: BuildProgress,
   private val builder: JpsProjectBuilder,
 ) {
-  private val exception = AtomicReference<Throwable?>()
   private val tasks: MutableList<BuildChunkTask>
-  private val flushCommand: Runnable
 
   init {
     val span = Tracer.start("BuildTaskLauncher constructor")
-    val projectDescriptor = context.projectDescriptor
-    val targetIndex = projectDescriptor.buildTargetIndex
-    flushCommand = Utils.asCountedRunnable(FLUSH_INVOCATIONS_TO_SKIP, Runnable { projectDescriptor.dataManager.flush(true) })
 
+    val targetIndex = context.projectDescriptor.buildTargetIndex
     val chunks = targetIndex.getSortedTargetChunks(context)
     tasks = ArrayList<BuildChunkTask>(chunks.size)
     val targetToTask = HashMap<BuildTarget<*>, BuildChunkTask>(chunks.size)
@@ -88,17 +84,11 @@ internal class BuildTaskLauncher(
   }
 
   suspend fun buildInParallel() {
+    val buildSpan = Tracer.start("Parallel build")
     coroutineScope {
       queueTasks(tasks = tasks.filter { it.isReady }, isDebugLogEnabled = LOG.isDebugEnabled, coroutineScope = this)
     }
-
-    val throwable = exception.get()
-    if (throwable is ProjectBuildException) {
-      throw throwable
-    }
-    else if (throwable != null) {
-      throw ProjectBuildException(throwable)
-    }
+    buildSpan.complete()
   }
 
   private fun queueTasks(tasks: List<BuildChunkTask>, isDebugLogEnabled: Boolean, coroutineScope: CoroutineScope) {
@@ -122,25 +112,16 @@ internal class BuildTaskLauncher(
   ) {
     try {
       try {
-        if (exception.get() == null) {
-          val isAffectedSpan = Tracer.start("isAffected")
-          val affected = isBuildChunkAffected(scope = context.scope, chunk = task.chunk)
-          isAffectedSpan.complete()
-          if (affected) {
-            builder.buildTargetsChunk(context = chunkLocalContext, chunk = task.chunk, buildProgress = buildProgress)
-          }
+        val isAffectedSpan = Tracer.start("isAffected")
+        val affected = isBuildChunkAffected(scope = context.scope, chunk = task.chunk)
+        isAffectedSpan.complete()
+        if (affected) {
+          builder.buildTargetChunk(context = chunkLocalContext, chunk = task.chunk, buildProgress = buildProgress)
         }
       }
       finally {
         context.projectDescriptor.dataManager.closeSourceToOutputStorages(task.chunk)
-        flushCommand.run()
       }
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      exception.compareAndSet(null, e)
     }
     finally {
       if (isDebugLogEnabled) {
@@ -158,8 +139,10 @@ internal class BuildTaskLauncher(
 internal class BuildChunkTask(@JvmField val chunk: BuildTargetChunk) {
   private val notBuildDependenciesCount = AtomicInteger(0)
   private val notBuiltDependencies = HashSet<BuildChunkTask>()
+
   @JvmField
   val tasksDependsOnThis = ArrayList<BuildChunkTask>()
+
   @JvmField
   var index = 0
 

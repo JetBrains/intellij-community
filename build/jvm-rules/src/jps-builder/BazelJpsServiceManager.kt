@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.bazel.jvm.jps
@@ -15,7 +16,8 @@ import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.service.JpsServiceManager
 import org.jetbrains.jps.service.SharedThreadPool
-import org.jetbrains.kotlin.jps.build.KotlinBuilderService
+import org.jetbrains.kotlin.jps.build.KotlinBuilder
+import org.jetbrains.kotlin.jps.incremental.KotlinCompilerReferenceIndexBuilder
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -31,7 +33,7 @@ internal class BazelJpsServiceManager : JpsServiceManager() {
 
   init {
     extensions.put(JavaCompilingTool::class.java, listOf(JavacCompilerTool()))
-    extensions.put(BuilderService::class.java, listOf(BazelJavaBuilderService, KotlinBuilderService()))
+    extensions.put(BuilderService::class.java, listOf(BazelJavaBuilderService))
     // org.jetbrains.kotlin.jps.build.KotlinResourcesRootProvider and KotlinSourceRootProvider are not needed
     extensions.put(AdditionalRootsProviderService::class.java, listOf())
     extensions.put(ExcludedJavaSourceRootProvider::class.java, listOf())
@@ -120,7 +122,9 @@ private object BazelJavaBuilderService : BuilderService() {
     return listOf(
       JavaBuilder(SharedThreadPool.getInstance()),
       //NotNullInstrumentingBuilder(),
-      JavaBackwardReferenceIndexBuilder()
+      JavaBackwardReferenceIndexBuilder(),
+      KotlinBuilder(),
+      KotlinCompilerReferenceIndexBuilder(),
     )
   }
 }

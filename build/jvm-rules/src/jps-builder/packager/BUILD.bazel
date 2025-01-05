@@ -1,0 +1,20 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_import")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+# separate to avoid adding dependency on proguard and zip to JPS worker impl
+
+kt_jvm_library(
+    name = "packager",
+    srcs = glob(["*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+        "@lib//:kotlin-stdlib",
+        "//:kotlinx-coroutines-core",
+        "@lib//:asm",
+        "//zip:build-zip",
+        "//src/jps-builder:jps-standalone",
+        "//:kotlin-metadata",
+    ],
+    visibility = ["//visibility:public"],
+)

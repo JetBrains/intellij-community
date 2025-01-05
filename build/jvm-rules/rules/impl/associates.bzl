@@ -45,20 +45,6 @@ def get_associates(ctx):
             module_name = module_names.keys()[0],
         )
 
-def flatten_jars(nested_jars_depset):
-    """Returns a list of strings containing the compile_jars for depset of targets.
-
-    This ends up unwinding the nesting of depsets, since compile_jars contains depsets inside
-    the nested_jars targets, which themselves are depsets.  This function is intended to be called
-    lazily form within Args.add_all(map_each) as it collapses depsets.
-    """
-    compile_jars_depsets = [
-        target[JavaInfo].compile_jars
-        for target in nested_jars_depset.to_list()
-        if target[JavaInfo].compile_jars
-    ]
-    return [file.path for file in depset(transitive = compile_jars_depsets).to_list()]
-
 def _derive_module_name(ctx):
     """Gets the `module_name` attribute if it's set in the ctx, otherwise derive a unique module name using the elements
     found in the label."""

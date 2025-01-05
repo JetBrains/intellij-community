@@ -13,7 +13,6 @@ def _make_providers(ctx, providers):
     return [
         providers.java,
         providers.kt,
-        providers.instrumented_files,
         DefaultInfo(
             files = depset(files),
             runfiles = ctx.runfiles(

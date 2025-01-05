@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage")
 
 package org.jetbrains.bazel.jvm.jps
@@ -7,16 +8,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import org.jetbrains.jps.service.SharedThreadPool
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicBoolean
 
-object BazelSharedThreadPool : SharedThreadPool() {
+internal object BazelSharedThreadPool : SharedThreadPool() {
   private val executor = Dispatchers.Default.asExecutor()
 
   // JPS uses MAX_BUILDER_THREADS as maxThreads - doesn't make sense for standalone, use coroutine dispatcher pool
   override fun createBoundedExecutor(name: String, maxThreads: Int) = this
 
   override fun createCustomPriorityQueueBoundedExecutor(name: String, maxThreads: Int, comparator: Comparator<in Runnable>): Executor {
-    return PriorityQueueExecutor(this, comparator)
+    throw UnsupportedOperationException()
   }
 
   override fun execute(command: Runnable) {
@@ -67,41 +67,5 @@ object BazelSharedThreadPool : SharedThreadPool() {
 
   override fun <T> invokeAny(tasks: Collection<Callable<T>>, timeout: Long, unit: TimeUnit): T? {
     throw UnsupportedOperationException()
-  }
-}
-
-private class PriorityQueueExecutor(
-  private val delegateExecutor: Executor,
-  comparator: Comparator<in Runnable>
-) : Executor {
-  private val taskQueue = PriorityBlockingQueue<Runnable>(11, comparator)
-  private val isProcessing = AtomicBoolean(false)
-
-  override fun execute(command: Runnable) {
-    taskQueue.put(command)
-    processQueue()
-  }
-
-  private fun processQueue() {
-    if (!isProcessing.compareAndSet(false, true)) {
-      return
-    }
-
-    delegateExecutor.execute {
-      try {
-        while (true) {
-          val task = taskQueue.poll() ?: break
-          task.run()
-        }
-      }
-      finally {
-        if (taskQueue.isEmpty()) {
-          isProcessing.set(false)
-        }
-        else {
-          processQueue()
-        }
-      }
-    }
   }
 }

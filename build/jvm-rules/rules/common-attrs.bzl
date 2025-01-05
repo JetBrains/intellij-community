@@ -133,6 +133,7 @@ common_attr = add_dicts(
         ),
         "_reduced_classpath": attr.bool(default = False),
          "_trace": attr.label(default = "//:kt_trace"),
+         "_jps_threshold": attr.label(default = "//:jps_threshold"),
     },
 )
 
