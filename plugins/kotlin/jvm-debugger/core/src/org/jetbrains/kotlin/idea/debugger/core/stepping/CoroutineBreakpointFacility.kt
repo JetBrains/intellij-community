@@ -3,14 +3,17 @@
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.StepIntoMethodBreakpoint
-import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.debugger.ui.breakpoints.SteppingBreakpoint
+import com.intellij.debugger.ui.breakpoints.SyntheticLineBreakpoint
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.Location
+import com.sun.jdi.ThreadReference
 import com.sun.jdi.event.LocatableEvent
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
@@ -49,7 +52,11 @@ object CoroutineBreakpointFacility {
 
     private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, resumedLocation: Location, nextLocationAfterResume: Location?): Boolean {
         val debugProcess = context.debugProcess
-        debugProcess.cancelRunToCursorBreakpoint()
+        debugProcess.cancelSteppingBreakpoints()
+        val clearSteppingBreakpoint = installBreakpointToRemoveSteppingInCurrentThread(context)
+        if (clearSteppingBreakpoint == null) {
+            thisLogger().warn("No clear stepping breakpoint installed for context $context")
+        }
         val project = debugProcess.project
 
         val useCoroutineIdFiltering = Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")
@@ -75,6 +82,13 @@ object CoroutineBreakpointFacility {
                 if (!result) return false
 
                 val suspendContextImpl = action.suspendContext ?: return true
+                clearSteppingBreakpoint?.let {
+                    if (!it.steppingRemoved) {
+                        thisLogger().debug("Clear old stepping from resume breakpoint")
+                        it.removeRequestAndStepping(suspendContextImpl)
+                    }
+                }
+
                 return scheduleStepOverCommandForSuspendSwitch(suspendContextImpl, nextLocationAfterResume)
             }
 
@@ -97,6 +111,68 @@ object CoroutineBreakpointFacility {
         thisLogger().debug { "Resume breakpoint for $method in thread $filterThread" }
 
         return true
+    }
+
+    private fun installBreakpointToRemoveSteppingInCurrentThread(context: SuspendContextImpl): ClearSteppingBreakpoint? {
+        val classLoader = context.frameProxy?.classLoader ?: return null
+        val originalThread = context.thread?.threadReference ?: return null
+
+        val debugProbesImpl =
+            context.debugProcess.findLoadedClass(context, "kotlinx.coroutines.debug.internal.DebugProbesImpl", classLoader) ?: return null
+
+        val methods = debugProbesImpl.methods() ?: return null
+
+        val probeSuspendedMethod = methods.singleOrNull { it.name().contains("probeCoroutineSuspended") }  ?: return null
+
+        val locationForBP = probeSuspendedMethod.locationOfCodeIndex(0)
+
+        val breakpoint = ClearSteppingBreakpoint(context.debugProcess.project, originalThread)
+
+        breakpoint.suspendPolicy = DebuggerSettings.SUSPEND_THREAD
+
+        val requestsManager = context.debugProcess.requestsManager
+        val request = requestsManager.createBreakpointRequest(breakpoint, locationForBP)
+        request.addThreadFilter(originalThread)
+        requestsManager.enableRequest(request)
+        context.debugProcess.setSteppingBreakpoint(breakpoint)
+        return breakpoint
+    }
+}
+
+private class ClearSteppingBreakpoint(project: Project, private val originalThread: ThreadReference) : SyntheticLineBreakpoint(project), SteppingBreakpoint {
+    var steppingRemoved = false
+        private set
+
+    override fun shouldIgnoreThreadFiltering() = true
+
+    override fun track() = false
+
+    override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
+        val suspendContext = action.suspendContext
+        val currentThread = suspendContext?.thread?.threadReference
+        if (originalThread == currentThread) {
+            removeRequestAndStepping(suspendContext)
+        } else {
+            // This should not happen because of the filter on the thread for this request
+            thisLogger().error("Skip remove stepping breakpoint for thread ${originalThread.name()}")
+        }
+        return false
+    }
+
+    fun removeRequestAndStepping(suspendContext: SuspendContextImpl) {
+        if (steppingRemoved) {
+            return
+        }
+        steppingRemoved = true
+        thisLogger().debug { "Remove stepping requests $suspendContext" }
+        DebugProcessEvents.removeStepRequests(suspendContext, originalThread)
+        suspendContext.debugProcess.requestsManager.deleteRequest(this)
+    }
+
+    override fun isRestoreBreakpoints() = false
+
+    override fun setRequestHint(hint: RequestHint) {
+        error("Should not be called")
     }
 }
 

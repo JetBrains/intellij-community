@@ -551,7 +551,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     RequestHint hint = getRequestHint(event);
     Object commandToken = getCommandToken(event);
 
-    deleteStepRequests(suspendContext.getVirtualMachineProxy().eventRequestManager(), event.thread());
+    removeStepRequests(suspendContext, thread);
 
     boolean shouldResume = false;
 
@@ -609,6 +609,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
       return;
     }
+  }
+
+  public static void removeStepRequests(@NotNull SuspendContextImpl suspendContext, @Nullable ThreadReference thread) {
+    suspendContext.getDebugProcess().deleteStepRequests(suspendContext.getVirtualMachineProxy().eventRequestManager(), thread);
   }
 
   // Preload event info in "parallel" commands, to avoid sync jdwp requests after
