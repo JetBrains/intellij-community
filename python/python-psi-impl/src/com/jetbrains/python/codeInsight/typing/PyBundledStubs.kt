@@ -1,11 +1,16 @@
 package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PythonHelpersLocator
 
 object PyBundledStubs {
   private const val BUNDLED_STUBS_PATH = "bundled_stubs"
+
+  fun isInside(file: VirtualFile): Boolean {
+    return root?.let { return VfsUtil.isAncestor(it, file, false) } ?: false
+  }
 
   /**
    * The actual bundled stubs directory.
