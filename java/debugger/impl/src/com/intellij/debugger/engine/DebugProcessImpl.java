@@ -918,22 +918,23 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myPositionManager.appendPositionManager(positionManager);
   }
 
-  private volatile SteppingBreakpoint mySteppingBreakpoint;
+  private final List<SteppingBreakpoint> mySteppingBreakpoints = new ArrayList<>();
 
-  public void setSteppingBreakpoint(@Nullable SteppingBreakpoint breakpoint) {
-    mySteppingBreakpoint = breakpoint;
+  public void setSteppingBreakpoint(@NotNull SteppingBreakpoint breakpoint) {
+    mySteppingBreakpoints.add(breakpoint);
   }
 
-  public void cancelRunToCursorBreakpoint() {
+  public void cancelSteppingBreakpoints() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    final SteppingBreakpoint runToCursorBreakpoint = mySteppingBreakpoint;
-    if (runToCursorBreakpoint != null) {
-      setSteppingBreakpoint(null);
+    boolean isRestoreBreakpoints = false;
+    for (SteppingBreakpoint runToCursorBreakpoint : mySteppingBreakpoints) {
       getRequestsManager().deleteRequest(runToCursorBreakpoint);
-      if (runToCursorBreakpoint.isRestoreBreakpoints()) {
-        DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().enableBreakpoints(this);
-      }
+      isRestoreBreakpoints |= runToCursorBreakpoint.isRestoreBreakpoints();
     }
+    if (isRestoreBreakpoints) {
+      DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().enableBreakpoints(this);
+    }
+    mySteppingBreakpoints.clear();
   }
 
   public static void prepareAndSetSteppingBreakpoint(SuspendContextImpl context,
@@ -2063,7 +2064,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     public void contextAction(@NotNull SuspendContextImpl context) {
       showStatusText(JavaDebuggerBundle.message("status.run.to.cursor"));
-      cancelRunToCursorBreakpoint();
+      cancelSteppingBreakpoints();
       if (myRunToCursorBreakpoint == null) {
         return;
       }

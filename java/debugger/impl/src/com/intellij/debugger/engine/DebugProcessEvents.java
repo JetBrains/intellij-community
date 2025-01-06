@@ -509,7 +509,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (event == null || vm == event.virtualMachine()) {
         try {
           preprocessEvent(suspendContext, null);
-          cancelRunToCursorBreakpoint();
+          cancelSteppingBreakpoints();
         }
         finally {
           DebuggerEventThread eventThread = myEventThreads.get(vm);
