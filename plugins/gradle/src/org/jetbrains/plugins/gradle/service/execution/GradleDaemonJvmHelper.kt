@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
@@ -80,9 +81,18 @@ object GradleDaemonJvmHelper {
     val taskSettings = ExternalSystemTaskExecutionSettings().apply {
       this.externalProjectPath = externalProjectPath
       externalSystemIdString = GradleConstants.SYSTEM_ID.id
-      taskNames = mutableListOf(DaemonJvmPropertiesConfigurator.TASK_NAME).apply {
-        daemonJvmCriteria?.version?.let { add("$UPDATE_DAEMON_JVM_TASK_VERSION_OPTION=$it") }
-        daemonJvmCriteria?.vendor?.let { add("$UPDATE_DAEMON_JVM_TASK_VENDOR_OPTION=$it") }
+      taskNames = buildList {
+        add(DaemonJvmPropertiesConfigurator.TASK_NAME)
+        val version = daemonJvmCriteria?.version
+        if (version != null) {
+          add(UPDATE_DAEMON_JVM_TASK_VERSION_OPTION)
+          add(StringUtil.wrapWithDoubleQuote(version))
+        }
+        val vendor = daemonJvmCriteria?.vendor
+        if (vendor != null) {
+          add(UPDATE_DAEMON_JVM_TASK_VENDOR_OPTION)
+          add(StringUtil.wrapWithDoubleQuote(vendor))
+        }
       }
     }
 
