@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.ContinuationHolder
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.fetchCoroutineStacksInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeSkipCoroutineStackFrameProxy
 
 class CoroutineFrameBuilder {
@@ -21,13 +21,13 @@ class CoroutineFrameBuilder {
 
         fun build(coroutine: CoroutineInfoData, suspendContext: SuspendContextImpl): CoroutineFrameItemLists? =
             when {
-                coroutine.isRunning() -> buildStackFrameForActive(coroutine, suspendContext)
-                coroutine.isSuspended() -> CoroutineFrameItemLists(coroutine.continuationStackFrames, coroutine.creationStackFrames)
+                coroutine.isRunning -> buildStackFrameForActive(coroutine, suspendContext)
+                coroutine.isSuspended -> CoroutineFrameItemLists(coroutine.continuationStackFrames, coroutine.creationStackFrames)
                 else -> null
             }
 
         private fun buildStackFrameForActive(coroutine: CoroutineInfoData, suspendContext: SuspendContextImpl): CoroutineFrameItemLists? {
-            val activeThread = coroutine.activeThread ?: return null
+            val activeThread = coroutine.lastObservedThread ?: return null
 
             val coroutineStackFrameList = mutableListOf<CoroutineStackFrameItem>()
             val threadReferenceProxyImpl = ThreadReferenceProxyImpl(suspendContext.virtualMachineProxy, activeThread)

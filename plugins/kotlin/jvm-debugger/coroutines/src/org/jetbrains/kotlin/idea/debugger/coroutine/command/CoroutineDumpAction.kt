@@ -23,8 +23,7 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CompleteCoroutineInfoData
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.toCompleteCoroutineInfoData
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineDumpPanel
 
@@ -39,7 +38,7 @@ class CoroutineDumpAction : AnAction() {
         executeOnDMT(suspendContext) {
             val states = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
             if (states.isOk()) {
-                val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
+                val coroutines = states.cache
                 withContext(Dispatchers.EDT) {
                     val ui = session.xDebugSession?.ui ?: return@withContext
                     addCoroutineDump(project, coroutines, ui, session.searchScope)
@@ -54,7 +53,7 @@ class CoroutineDumpAction : AnAction() {
     /**
      * Analog of [DebuggerUtilsEx.addThreadDump].
      */
-    fun addCoroutineDump(project: Project, coroutines: List<CompleteCoroutineInfoData>, ui: RunnerLayoutUi, searchScope: GlobalSearchScope) {
+    fun addCoroutineDump(project: Project, coroutines: List<CoroutineInfoData>, ui: RunnerLayoutUi, searchScope: GlobalSearchScope) {
         val consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
         consoleBuilder.filters(ExceptionFilters.getFilters(searchScope))
         val consoleView = consoleBuilder.console

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.fetchCoroutineStacksIn
 class CoroutineStackFramesProvider(private val executionContext: DefaultExecutionContext) {
 
     fun fetchCoroutineStackFrames(lastObservedFrame: ObjectReference?): CoroutineStacksInfoData? {
-        lastObservedFrame ?: return null
+        if (lastObservedFrame == null) return null
         return fetchCoroutineStacksInfoData(executionContext, lastObservedFrame)
     }
 }
