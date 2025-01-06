@@ -807,6 +807,9 @@
     <applicationService serviceImplementation="com.intellij.openapi.keymap.NationalKeyboardSupport"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"/>
 
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.EelNioBridgeService"
+                        serviceImplementation="com.intellij.platform.eel.impl.provider.EelNioBridgeServiceImpl"/>
+
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher"
                         serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>

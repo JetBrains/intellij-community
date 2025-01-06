@@ -60,6 +60,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   fun switchToIjentFs(distro: WSLDistribution) {
     logErrorIfNotWindows()
     strategy ?: error("Not available")
+    strategy.enabledInDistros.add(distro)
     strategy.switchToIjentFs(distro)
   }
 
@@ -107,16 +108,12 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
     }
 
     override fun tryConvert(path: Path): EelPath? {
-      val root = path.root
+      val root = path.root ?: return null
       val relevantPath = path.toString().substring(root.toString().length)
       val distro = service<IjentWslNioFsToggler>().strategy?.enabledInDistros
         ?.find { distro -> path.root != null && distro.getUNCRootPath().toString() == root.toString() }
         ?.let { WslEelDescriptor(it) }
       return distro?.let { EelPath.parse(relevantPath, it) }
-    }
-
-    override fun nioRoots(): Path {
-      TODO("Not yet implemented")
     }
 
     /**

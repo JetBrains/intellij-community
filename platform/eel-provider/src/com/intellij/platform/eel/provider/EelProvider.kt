@@ -58,7 +58,7 @@ fun Path.getEelDescriptor(): EelDescriptor {
   return tryConvert()?.descriptor ?: LocalEelDescriptor
 }
 
-internal fun Path.tryConvert(): EelPath? {
+fun Path.tryConvert(): EelPath? {
   val eels = EelProvider.EP_NAME.extensionList.mapNotNull { it.tryConvert(this) }
 
   if (eels.size > 1) {
@@ -99,8 +99,6 @@ interface EelProvider {
 
   fun tryConvert(path: Path): EelPath?
 
-  fun nioRoots(): Path
-
   /**
    * Runs an initialization process for [EelApi] relevant to [project] during the process of its opening.
    *
@@ -109,17 +107,6 @@ interface EelProvider {
    * so the implementation is expected to exit quickly if it decides that it is not responsible for [project].
    */
   suspend fun tryInitialize(project: Project)
-}
-
-internal fun EelDescriptor.findRoot(): Path {
-  val requiredDescriptor = this
-  val maybeRoot = EelProvider.EP_NAME.extensionList.mapNotNull { ext ->
-    ext.nioRoots().find { ext.tryConvert(it)?.descriptor == requiredDescriptor }
-  }
-  if (maybeRoot.size > 1) {
-    LOG.error("Multiple EEL providers found for $requiredDescriptor: $maybeRoot")
-  }
-  return requireNotNull(maybeRoot.singleOrNull()) { "No Eel provider found for $requiredDescriptor" }
 }
 
 fun EelApi.systemOs(): OS {
