@@ -17,8 +17,8 @@ import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSy
 import com.intellij.util.system.CpuArch
 import java.nio.file.Files
 
-internal class EelTestPosixApi(fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelPosixApi {
-  override val userInfo: EelUserPosixInfo = EelTestPosixUserInfo()
+internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelPosixApi {
+  override val userInfo: EelUserPosixInfo = EelTestPosixUserInfo(descriptor)
 
   override val platform: EelPlatform.Posix
     get() = if (CpuArch.CURRENT == CpuArch.ARM64) {
@@ -28,9 +28,9 @@ internal class EelTestPosixApi(fileSystem: EelUnitTestFileSystem, localPrefix: S
       EelPlatform.X8664Linux
     }
 
-  override val mapper: EelPathMapper = EelTestPathMapper(EelPath.OS.UNIX, fileSystem, localPrefix)
+  override val mapper: EelPathMapper = EelTestPathMapper(descriptor, localPrefix)
 
-  override val fs: PosixNioBasedEelFileSystemApi = EelTestFileSystemPosixApi(mapper, fileSystem)
+  override val fs: PosixNioBasedEelFileSystemApi = EelTestFileSystemPosixApi(descriptor, mapper, fileSystem)
 
   override val archive: EelArchiveApi
     get() = TODO()
@@ -41,7 +41,7 @@ internal class EelTestPosixApi(fileSystem: EelUnitTestFileSystem, localPrefix: S
 
 }
 
-private class EelTestFileSystemPosixApi(val mapper: EelPathMapper, fileSystem: EelUnitTestFileSystem) : PosixNioBasedEelFileSystemApi(fileSystem, EelTestPosixUserInfo()) {
+private class EelTestFileSystemPosixApi(override val descriptor: EelTestDescriptor, val mapper: EelPathMapper, fileSystem: EelUnitTestFileSystem) : PosixNioBasedEelFileSystemApi(fileSystem, EelTestPosixUserInfo(descriptor)) {
 
   override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
     TODO("Not yet implemented")
@@ -59,11 +59,10 @@ private class EelTestFileSystemPosixApi(val mapper: EelPathMapper, fileSystem: E
   }
 }
 
-private class EelTestPosixUserInfo : EelUserPosixInfo {
+private class EelTestPosixUserInfo(descriptor: EelTestDescriptor) : EelUserPosixInfo {
   override val uid: Int
     get() = 1001
   override val gid: Int
     get() = 1
-  override val home: EelPath
-    get() = EelPath.parse("/home", EelPath.OS.UNIX)
+  override val home: EelPath = EelPath.parse("/home", descriptor)
 }

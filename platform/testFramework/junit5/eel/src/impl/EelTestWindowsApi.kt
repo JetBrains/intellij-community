@@ -2,6 +2,7 @@
 package com.intellij.platform.testFramework.junit5.eel.impl
 
 import com.intellij.platform.eel.EelArchiveApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPathMapper
 import com.intellij.platform.eel.EelPlatform
@@ -16,8 +17,8 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.util.system.CpuArch
 
-internal class EelTestWindowsApi(fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelWindowsApi {
-  override val userInfo: EelUserWindowsInfo = EelTestWindowsUserInfo()
+internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelWindowsApi {
+  override val userInfo: EelUserWindowsInfo = EelTestWindowsUserInfo(descriptor)
 
   override val platform: EelPlatform.Windows
     get() = if (CpuArch.CURRENT == CpuArch.ARM64) {
@@ -27,9 +28,9 @@ internal class EelTestWindowsApi(fileSystem: EelUnitTestFileSystem, localPrefix:
       EelPlatform.X64Windows
     }
 
-  override val mapper: EelPathMapper = EelTestPathMapper(EelPath.OS.WINDOWS, fileSystem, localPrefix)
+  override val mapper: EelPathMapper = EelTestPathMapper(descriptor, localPrefix)
 
-  override val fs: WindowsNioBasedEelFileSystemApi = EelTestFileSystemWindowsApi(fileSystem)
+  override val fs: WindowsNioBasedEelFileSystemApi = EelTestFileSystemWindowsApi(descriptor, fileSystem)
 
   override val archive: EelArchiveApi
     get() = TODO()
@@ -39,7 +40,7 @@ internal class EelTestWindowsApi(fileSystem: EelUnitTestFileSystem, localPrefix:
 
 }
 
-private class EelTestFileSystemWindowsApi(fileSystem: EelUnitTestFileSystem) : WindowsNioBasedEelFileSystemApi(fileSystem, EelTestWindowsUserInfo()) {
+private class EelTestFileSystemWindowsApi(override val descriptor: EelDescriptor, fileSystem: EelUnitTestFileSystem) : WindowsNioBasedEelFileSystemApi(fileSystem, EelTestWindowsUserInfo(descriptor)) {
 
   override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
     TODO("Not yet implemented")
@@ -54,7 +55,6 @@ private class EelTestFileSystemWindowsApi(fileSystem: EelUnitTestFileSystem) : W
   }
 }
 
-private class EelTestWindowsUserInfo : EelUserWindowsInfo {
-  override val home: EelPath
-    get() = EelPath.parse("/home", EelPath.OS.UNIX)
+private class EelTestWindowsUserInfo(descriptor: EelDescriptor) : EelUserWindowsInfo {
+  override val home: EelPath = EelPath.parse("C:\\Users\\Test.User", descriptor)
 }

@@ -6,12 +6,11 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.pathOs
 
-internal class EelTestDescriptor(val id: String, val api: EelApi) : EelDescriptor {
-  override val operatingSystem: EelPath.OS
-    get() = api.platform.pathOs
+internal class EelTestDescriptor(val id: String, os: EelPath.OS, val apiProvider: () -> EelApi) : EelDescriptor {
+  override val operatingSystem: EelPath.OS = os
 
   override suspend fun upgrade(): EelApi {
-    return api
+    return apiProvider()
   }
 
   override fun equals(other: Any?): Boolean {
@@ -20,7 +19,7 @@ internal class EelTestDescriptor(val id: String, val api: EelApi) : EelDescripto
 
   override fun hashCode(): Int {
     var result = id.hashCode()
-    result = 31 * result + api.hashCode()
+    result = 31 * result + apiProvider.hashCode()
     return result
   }
 }

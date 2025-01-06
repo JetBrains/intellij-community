@@ -132,7 +132,7 @@ class JdkInstaller : JdkInstallerBase() {
       val builder = EelExecApi
         .ExecuteProcessOptions.Builder(command.first())
         .args(command.drop(1))
-        .workingDirectory(EelPath.parse(dir, null))
+        .workingDirectory(EelPath.parse(dir, eel.descriptor))
         .build()
       val process = eel.exec.execute(builder).getOrThrow()
       try {

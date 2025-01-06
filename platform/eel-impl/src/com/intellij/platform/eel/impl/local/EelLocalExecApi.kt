@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.local
 
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.util.EnvironmentUtil
 import com.pty4j.PtyProcessBuilder
 import org.jetbrains.annotations.ApiStatus
@@ -19,6 +21,9 @@ class EelLocalExecApi : EelExecApi {
      */
     val errorPattern = Regex(".*error=(-?[0-9]{1,9}),.*")
   }
+
+  override val descriptor: EelDescriptor
+    get() = LocalEelDescriptor
 
   override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
     val args = builder.args.toTypedArray()

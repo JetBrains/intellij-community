@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -115,6 +116,13 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       }
     }
   }
+
+  override val descriptor: EelDescriptor by lazy {
+    runBlocking {
+      holder.withDelegateRetrying { descriptor }
+    }
+  }
+
 
   override suspend fun listDirectory(
     path: EelPath,

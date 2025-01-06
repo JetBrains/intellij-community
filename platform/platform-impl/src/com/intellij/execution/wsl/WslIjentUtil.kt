@@ -140,7 +140,7 @@ fun runProcessBlocking(
                                                     .args(args)
                                                     .env(explicitEnvironmentVariables)
                                                     .ptyOrStdErrSettings(ptyOrStdErrSettings)
-                                                    .workingDirectory(workingDirectory?.let { EelPath.parse(it, null) })
+                                                    .workingDirectory(workingDirectory?.let { EelPath.parse(it, ijentApi.descriptor) })
                                                     .build()
   )) {
     is EelResult.Ok ->

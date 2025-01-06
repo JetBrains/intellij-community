@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath.OS
 
@@ -18,16 +19,21 @@ sealed interface EelPath {
   companion object {
     @Throws(EelPathException::class)
     @JvmStatic
-    fun parse(raw: String, os: OS?): EelPath {
-      return ArrayListEelAbsolutePath.parseOrNull(raw, os) ?: throw EelPathException(raw, "Not a valid absolute path")
+    fun parse(raw: String, descriptor: EelDescriptor): EelPath {
+      return ArrayListEelAbsolutePath.parseOrNull(raw, descriptor) ?: throw EelPathException(raw, "Not a valid absolute path")
     }
 
     @Throws(EelPathException::class)
     @JvmStatic
-    fun build(parts: List<String>, os: OS?): EelPath {
-      return ArrayListEelAbsolutePath.build(parts, os)
+    fun build(parts: List<String>, descriptor: EelDescriptor): EelPath {
+      return ArrayListEelAbsolutePath.build(parts, descriptor)
     }
   }
+
+  /**
+   * The identificator of an environment where this path belongs to.
+   */
+  val descriptor: EelDescriptor
 
 
   /**

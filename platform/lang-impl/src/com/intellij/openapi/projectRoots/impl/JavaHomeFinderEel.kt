@@ -27,7 +27,7 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
   }
 
   override fun getPath(path: String, vararg more: String): Path =
-    eel.mapper.toNioPath(more.fold(EelPath.parse(path, null), EelPath::resolve))
+    eel.mapper.toNioPath(more.fold(EelPath.parse(path, eel.descriptor), EelPath::resolve))
 
   override fun getUserHome(): Path? = with(eel) {
     mapper.toNioPath(fs.user.home)
@@ -35,7 +35,7 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
 
   override fun getFsRoots(): Collection<Path> = runBlockingMaybeCancellable {
     val paths = when (val fs = eel.fs) {
-      is EelFileSystemPosixApi -> listOf(EelPath.build(listOf("/"), null))
+      is EelFileSystemPosixApi -> listOf(EelPath.build(listOf("/"), eel.descriptor))
       is EelFileSystemWindowsApi -> fs.getRootDirectories()
       else -> error(fs)
     }

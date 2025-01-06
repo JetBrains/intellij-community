@@ -45,7 +45,7 @@ private class EelEphemeralRootAwareMapper(
 ) : EelPathMapper {
   override fun getOriginalPath(path: Path): EelPath? {
     if (path.startsWith(ephemeralRoot)) {
-      return EelPath.build(ephemeralRoot.relativize(path).map(Path::toString), eelApi.platform.pathOs)
+      return EelPath.build(ephemeralRoot.relativize(path).map(Path::toString), eelApi.descriptor)
     }
     return null
   }

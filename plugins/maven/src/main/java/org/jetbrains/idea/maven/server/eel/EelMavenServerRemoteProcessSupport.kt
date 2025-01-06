@@ -14,6 +14,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPathOrNull
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.util.coroutines.childScope
@@ -110,7 +112,7 @@ private class EelMavenCmdState(
     eelParams.charset = parameters.charset
     eelParams.vmParametersList.add("-classpath")
     eelParams.vmParametersList.add(parameters.classPath.pathList.mapNotNull {
-      runBlockingCancellable { eel.mapper.maybeUploadPath(Path(it), scope).toString() }
+      runBlockingCancellable { EelPathUtils.maybeUploadPath(scope, Path(it), eel.descriptor).toString() }
     }.joinToString(eel.fs.pathSeparator))
 
     return eelParams
@@ -123,7 +125,7 @@ private class EelMavenCmdState(
           when (part) {
             is ParameterTargetValuePart.Const -> append(part.localValue)
             is ParameterTargetValuePart.Path -> runBlockingCancellable {
-              append(eel.mapper.maybeUploadPath(Path.of(part.localValue), scope).toString())
+              append(EelPathUtils.maybeUploadPath(scope, Path.of(part.localValue), eel.descriptor).toString())
             }
             ParameterTargetValuePart.PathSeparator -> append(eel.fs.pathSeparator)
             is ParameterTargetValuePart.PromiseValue -> append(part.localValue) // todo?
@@ -143,11 +145,11 @@ private class EelMavenCmdState(
        * Params normalization should be performed automatically
        * @see [com.intellij.execution.eel.EelApiWithPathsNormalization]
        */
-      val exe = eel.mapper.getOriginalPath(Path.of(cmd.exePath)) ?: error("Cannot find exe for ${cmd.exePath}")
+      val exe = Path.of(cmd.exePath).asEelPathOrNull() ?: error("Cannot find exe for ${cmd.exePath}")
       val builder = EelExecApi.ExecuteProcessOptions.Builder(exe.toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)
-        .workingDirectory(EelPath.parse(workingDirectory, null))
+        .workingDirectory(EelPath.parse(workingDirectory, eel.descriptor))
 
       eel.exec.execute(builder.build()).getOrThrow()
     }

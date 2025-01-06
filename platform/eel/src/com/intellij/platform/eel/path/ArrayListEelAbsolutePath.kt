@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
+import com.intellij.platform.eel.EelDescriptor
+
 internal class ArrayListEelAbsolutePath private constructor(
+  override val descriptor: EelDescriptor,
   private val _root: Root,
   override val parts: List<String>,
 ) : EelPath, Comparable<EelPath> {
@@ -12,13 +15,13 @@ internal class ArrayListEelAbsolutePath private constructor(
 
   override val root: EelPath by lazy {
     if (parts.isEmpty()) this
-    else ArrayListEelAbsolutePath(_root, listOf())
+    else ArrayListEelAbsolutePath(descriptor, _root, listOf())
   }
 
   override val parent: EelPath?
     get() =
       if (parts.isEmpty()) null
-      else ArrayListEelAbsolutePath(_root, parts.dropLast(1))
+      else ArrayListEelAbsolutePath(descriptor, _root, parts.dropLast(1))
 
   override fun startsWith(other: EelPath): Boolean =
     nameCount >= other.nameCount &&
@@ -44,7 +47,7 @@ internal class ArrayListEelAbsolutePath private constructor(
           result += part
       }
     }
-    return ArrayListEelAbsolutePath(_root, result)
+    return ArrayListEelAbsolutePath(descriptor, _root, result)
   }
 
   override fun resolve(other: String): EelPath {
@@ -57,13 +60,13 @@ internal class ArrayListEelAbsolutePath private constructor(
       }
     }
     val newList = parts + otherParts
-    return ArrayListEelAbsolutePath(_root, newList)
+    return ArrayListEelAbsolutePath(descriptor, _root, newList)
   }
 
   override fun getChild(name: String): EelPath {
     val error = checkFileName(name)
     return if (error == null)
-      ArrayListEelAbsolutePath(_root, parts + name)
+      ArrayListEelAbsolutePath(descriptor, _root, parts + name)
     else
       throw EelPathException(name, error)
   }
@@ -134,11 +137,11 @@ internal class ArrayListEelAbsolutePath private constructor(
     })
 
   companion object {
-    fun build(parts: List<String>, os: EelPath.OS?): EelPath {
+    fun build(parts: List<String>, descriptor: EelDescriptor): EelPath {
       require(parts.isNotEmpty()) { "Can't build an absolute path from no path parts" }
 
-      val windowsRoot = when (os) {
-        EelPath.OS.WINDOWS, null -> findAbsoluteUncPath(parts.first()) ?: findAbsoluteTraditionalDosPath(parts.first())
+      val windowsRoot = when (descriptor.operatingSystem) {
+        EelPath.OS.WINDOWS -> findAbsoluteUncPath(parts.first(), descriptor) ?: findAbsoluteTraditionalDosPath(parts.first(), descriptor)
         EelPath.OS.UNIX -> null
       }
       when (windowsRoot) {
@@ -155,7 +158,7 @@ internal class ArrayListEelAbsolutePath private constructor(
             val error = checkFileName(part, isWindows = false)
             if (error != null) throw EelPathException(part, error)
           }
-          return ArrayListEelAbsolutePath(Root.Unix, parts)
+          return ArrayListEelAbsolutePath(descriptor, Root.Unix, parts)
         }
 
         else -> {
@@ -164,24 +167,20 @@ internal class ArrayListEelAbsolutePath private constructor(
             val error = checkFileName(part, isWindows = true)
             if (error != null) throw EelPathException(part, error)
           }
-          return ArrayListEelAbsolutePath(windowsRoot._root, parts)
+          return ArrayListEelAbsolutePath(descriptor, windowsRoot._root, parts)
         }
       }
     }
 
     @Throws(EelPathException::class)
-    fun parseOrNull(raw: String, os: EelPath.OS?): ArrayListEelAbsolutePath? =
-      when (os) {
-        EelPath.OS.WINDOWS -> findAbsoluteUncPath(raw) ?: findAbsoluteTraditionalDosPath(raw)
-        EelPath.OS.UNIX -> findAbsoluteUnixPath(raw)
-        null ->
-          findAbsoluteUncPath(raw)
-          ?: findAbsoluteTraditionalDosPath(raw)
-          ?: findAbsoluteUnixPath(raw)
+    fun parseOrNull(raw: String, descriptor: EelDescriptor): ArrayListEelAbsolutePath? =
+      when (descriptor.operatingSystem) {
+        EelPath.OS.WINDOWS -> findAbsoluteUncPath(raw, descriptor) ?: findAbsoluteTraditionalDosPath(raw, descriptor)
+        EelPath.OS.UNIX -> findAbsoluteUnixPath(raw, descriptor)
       }
 
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths */
-    private fun findAbsoluteUncPath(raw: String): ArrayListEelAbsolutePath? {
+    private fun findAbsoluteUncPath(raw: String, descriptor: EelDescriptor): ArrayListEelAbsolutePath? {
       if (raw.length < 3) return null
       if (raw.getOrNull(0) != raw.getOrNull(1)) return null
 
@@ -220,12 +219,12 @@ internal class ArrayListEelAbsolutePath private constructor(
         if (error != null) throw EelPathException(raw, error)
       }
 
-      return ArrayListEelAbsolutePath(Root.Windows(raw.substring(0, index).replace("/", "\\")), parts)
+      return ArrayListEelAbsolutePath(descriptor, Root.Windows(raw.substring(0, index).replace("/", "\\")), parts)
     }
 
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#traditional-dos-paths */
     @Throws(EelPathException::class)
-    private fun findAbsoluteTraditionalDosPath(raw: String): ArrayListEelAbsolutePath? {
+    private fun findAbsoluteTraditionalDosPath(raw: String, descriptor: EelDescriptor): ArrayListEelAbsolutePath? {
       if (raw.length < 3) return null
       if (!raw[0].isLetter()) return null
       if (raw[1] != ':') return null
@@ -242,10 +241,10 @@ internal class ArrayListEelAbsolutePath private constructor(
       }
 
       val driveRoot = raw.substring(0, 3).replace('/', '\\') // sometimes we have DOS paths containing forward slashes from users or VFS
-      return ArrayListEelAbsolutePath(Root.Windows(driveRoot), parts)
+      return ArrayListEelAbsolutePath(descriptor, Root.Windows(driveRoot), parts)
     }
 
-    private fun findAbsoluteUnixPath(raw: String): ArrayListEelAbsolutePath? {
+    private fun findAbsoluteUnixPath(raw: String, descriptor: EelDescriptor): ArrayListEelAbsolutePath? {
       if (raw.getOrNull(0) != '/') return null
 
       val parts = raw
@@ -258,7 +257,7 @@ internal class ArrayListEelAbsolutePath private constructor(
         if (error != null) throw EelPathException(raw, error)
       }
 
-      return ArrayListEelAbsolutePath(Root.Unix, parts)
+      return ArrayListEelAbsolutePath(descriptor, Root.Unix, parts)
     }
 
     private fun checkFileName(name: String, isWindows: Boolean): String? {

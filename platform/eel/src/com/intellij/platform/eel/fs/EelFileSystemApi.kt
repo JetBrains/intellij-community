@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserInfo
 import com.intellij.platform.eel.EelUserPosixInfo
@@ -27,9 +29,8 @@ val EelFileSystemApi.pathSeparator: String
     else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
   }
 
-@JvmOverloads
-fun EelFileSystemApi.getPath(string: String, os: EelPath.OS? = null): EelPath {
-  return EelPath.parse(string, os)
+fun EelFileSystemApi.getPath(string: String): EelPath {
+  return EelPath.parse(string, descriptor)
 }
 
 // TODO Integrate case-(in)sensitiveness into the interface.
@@ -41,6 +42,8 @@ interface EelFileSystemApi {
    * in other cases outside the filesystem.
    */
   val user: EelUserInfo
+
+  val descriptor: EelDescriptor
 
   // TODO: document
   // see com.intellij.platform.ijent.impl.IjentNioFsKt.makeNioFs

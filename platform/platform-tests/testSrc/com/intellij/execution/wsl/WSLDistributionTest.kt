@@ -17,6 +17,7 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
@@ -519,6 +520,16 @@ class WSLDistributionTest {
 enum class WslTestStrategy { Legacy, Ijent }
 
 private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
+  override val descriptor: EelDescriptor
+    get() = object : EelDescriptor {
+      override val operatingSystem: EelPath.OS
+        get() = EelPath.OS.UNIX
+
+      override suspend fun upgrade(): EelApi {
+        throw UnsupportedOperationException()
+      }
+    }
+
   override val platform: EelPlatform.Posix get() = throw UnsupportedOperationException()
 
   override val archive: EelArchiveApi get() = throw UnsupportedOperationException()
@@ -542,6 +553,7 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
 private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {
 
+  override val descriptor: EelDescriptor get() = throw UnsupportedOperationException()
 
   override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError> = executeResultMock.also {
     adapter.exePath = builder.exe

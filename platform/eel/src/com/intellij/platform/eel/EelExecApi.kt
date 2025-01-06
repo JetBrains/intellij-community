@@ -10,6 +10,8 @@ import org.jetbrains.annotations.CheckReturnValue
  */
 interface EelExecApi {
 
+  val descriptor: EelDescriptor
+
   /**
    * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
    *

@@ -12,6 +12,8 @@ import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 interface LocalEelApi : EelApi
 
 interface EelApiBase {
+  val descriptor: EelDescriptor
+
   val platform: EelPlatform
 
   /** Docs: [EelFileSystemApi] */

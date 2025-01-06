@@ -269,7 +269,7 @@ object ExecUtil {
     val exe = args.first()
     val rest = args.subList(1, args.size)
     val env = builder.environment()
-    val workingDir = builder.directory()?.toPath()?.pathString?.let { EelPath.parse(it, null) }
+    val workingDir = builder.directory()?.toPath()?.pathString?.replace('\\', '/')?.let { EelPath.parse(it, descriptor) }
 
     val options = EelExecApi.ExecuteProcessOptions.Builder(exe)
       .args(rest)

@@ -72,7 +72,7 @@ class IjentNioFileSystem internal constructor(
       is IjentFileSystemWindowsApi -> EelPath.OS.WINDOWS
     }
     return try {
-      more.fold(EelPath.parse(first, os)) { path, newPart -> path.resolve(newPart) }.toNioPath()
+      more.fold(EelPath.parse(first, ijentFs.descriptor)) { path, newPart -> path.resolve(newPart) }.toNioPath()
     }
     catch (_: EelPathException) {
       RelativeIjentNioPath(first.split(*os.directorySeparators) + more, this)

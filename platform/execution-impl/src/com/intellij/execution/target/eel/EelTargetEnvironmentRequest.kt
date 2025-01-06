@@ -17,6 +17,9 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asEelPathOrNull
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.util.coroutines.channel.ChannelInputStream
@@ -91,7 +94,7 @@ class EelTargetEnvironmentRequest(override val configuration: Configuration) : B
     override val asTargetConfig: TargetEnvironmentConfiguration = this
 
     override fun getTargetPathIfLocalPathIsOnTarget(probablyPathOnTarget: Path): FullPathOnTarget? {
-      return eel.mapper.getOriginalPath(probablyPathOnTarget)?.toString()
+      return probablyPathOnTarget.asEelPathOrNull()?.toString()
     }
   }
 
@@ -188,7 +191,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     override val targetRoot: String,
   ) : UploadableVolume, DownloadableVolume {
     private fun targetRootPath(): Path {
-      return eel.mapper.toNioPath(eel.fs.getPath(targetRoot))
+      return eel.fs.getPath(targetRoot).asNioPath()
     }
 
     override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
@@ -208,7 +211,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     }
 
     override fun resolveTargetPath(relativePath: String): String {
-      return eel.mapper.getOriginalPath(targetRootPath().resolve(relativePath))!!.toString()
+      return targetRootPath().resolve(relativePath).asEelPath().toString()
     }
 
     companion object {
@@ -260,7 +263,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
     builder.args(command.drop(1))
     builder.env(commandLine.environmentVariables)
-    builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, null) })
+    builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, eel.descriptor) })
 
     return runBlockingCancellable { eel.exec.execute(builder.build()).getOrThrow().convertToJavaProcess() }
   }

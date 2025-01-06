@@ -38,7 +38,10 @@ class MavenSerializedRepositoryManager(private val project: Project) : Persisten
 
   override fun loadState(state: MavenSerializedRepositoryManager.State) {
     myState.mavenHomePath = state.mavenHomePath
-    path = myState.mavenHomePath?.let { runBlocking { project.getEelApi() }.mapper.toNioPath(EelPath.parse(it, null)) }
+    path = myState.mavenHomePath?.let {
+      val api = runBlocking { project.getEelApi() }
+      api.mapper.toNioPath(EelPath.parse(it, api.descriptor))
+    }
   }
 
   class State : BaseState() {

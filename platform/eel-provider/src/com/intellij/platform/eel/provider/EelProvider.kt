@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
@@ -17,7 +17,6 @@ import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.pathOs
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.system.OS
@@ -31,13 +30,13 @@ interface LocalPosixEelApi : LocalEelApi, EelPosixApi
 private val LOG by lazy { logger<EelProvider>() }
 
 suspend fun Path.getEelApi(): EelApi {
-  val eels = EelProvider.EP_NAME.extensionList.mapNotNull { it.getEelApi(this) }
+  val eelDescriptors = EelProvider.EP_NAME.extensionList.mapNotNull { it.tryConvert(this)?.descriptor }
 
-  if (eels.size > 1) {
-    LOG.error("Multiple EEL providers found for $this: $eels")
+  if (eelDescriptors.size > 1) {
+    LOG.error("Multiple EEL providers found for $this: $eelDescriptors")
   }
 
-  return eels.firstOrNull() ?: localEel
+  return eelDescriptors.firstOrNull()?.upgrade() ?: localEel
 }
 
 object EelInitialization {
@@ -56,13 +55,17 @@ object EelInitialization {
  * The only purpose of that identity is to compare it with other identities, in order to check if two paths belong to the same [EelApi].
  */
 fun Path.getEelDescriptor(): EelDescriptor {
-  val eels = EelProvider.EP_NAME.extensionList.mapNotNull { it.getEelDescriptor(this) }
+  return tryConvert()?.descriptor ?: LocalEelDescriptor
+}
+
+internal fun Path.tryConvert(): EelPath? {
+  val eels = EelProvider.EP_NAME.extensionList.mapNotNull { it.tryConvert(this) }
 
   if (eels.size > 1) {
     LOG.error("Multiple EEL providers found for $this: $eels")
   }
 
-  return eels.firstOrNull() ?: LocalEelDescriptor
+  return eels.firstOrNull()
 }
 
 val localEel: LocalEelApi by lazy {
@@ -94,7 +97,9 @@ interface EelProvider {
 
   suspend fun getEelApi(path: Path): EelApi?
 
-  fun getEelDescriptor(path: Path): EelDescriptor?
+  fun tryConvert(path: Path): EelPath?
+
+  fun nioRoots(): Path
 
   /**
    * Runs an initialization process for [EelApi] relevant to [project] during the process of its opening.
@@ -104,6 +109,17 @@ interface EelProvider {
    * so the implementation is expected to exit quickly if it decides that it is not responsible for [project].
    */
   suspend fun tryInitialize(project: Project)
+}
+
+internal fun EelDescriptor.findRoot(): Path {
+  val requiredDescriptor = this
+  val maybeRoot = EelProvider.EP_NAME.extensionList.mapNotNull { ext ->
+    ext.nioRoots().find { ext.tryConvert(it)?.descriptor == requiredDescriptor }
+  }
+  if (maybeRoot.size > 1) {
+    LOG.error("Multiple EEL providers found for $requiredDescriptor: $maybeRoot")
+  }
+  return requireNotNull(maybeRoot.singleOrNull()) { "No Eel provider found for $requiredDescriptor" }
 }
 
 fun EelApi.systemOs(): OS {

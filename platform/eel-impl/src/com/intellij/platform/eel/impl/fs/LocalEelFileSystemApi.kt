@@ -10,6 +10,7 @@ import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -46,10 +47,10 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
     catch (err: FileSystemException) {
       val path =
         try {
-          EelPath.parse(err.file.toString(), pathOs)
+          EelPath.parse(err.file.toString(), LocalEelDescriptor)
         }
         catch (_: EelPathException) {
-          EelPath.parse(fs.rootDirectories.first().toString(), pathOs)
+          EelPath.parse(fs.rootDirectories.first().toString(), LocalEelDescriptor)
         }
       val err: EelFsError = when (err) {
         is AccessDeniedException -> EelFsResultImpl.PermissionDenied(path, err.message!!)
@@ -94,7 +95,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
   override suspend fun canonicalize(path: EelPath): EelResult<EelPath, EelFileSystemApi.CanonicalizeError> =
     wrapIntoEelResult {
       val realPath = path.toNioPath().toRealPath()
-      EelPath.parse(realPath.toString(), pathOs)
+      EelPath.parse(realPath.toString(), LocalEelDescriptor)
     }
 
   override suspend fun stat(
@@ -204,7 +205,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
     }
   }
 
-private class LocalEelOpenedFileReader(
+internal class LocalEelOpenedFileReader(
   private val eelFs: NioBasedEelFileSystemApi,
   private val byteChannel: SeekableByteChannel,
   private val path_: EelPath,
@@ -417,7 +418,7 @@ abstract class WindowsNioBasedEelFileSystemApi(
 
   override suspend fun getRootDirectories(): Collection<EelPath> =
     FileSystems.getDefault().rootDirectories.map { path ->
-      EelPath.parse(path.toString(), pathOs)
+      EelPath.parse(path.toString(), LocalEelDescriptor)
     }
 
   override suspend fun listDirectoryWithAttrs(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<

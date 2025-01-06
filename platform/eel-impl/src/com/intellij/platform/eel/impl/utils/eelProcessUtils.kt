@@ -100,7 +100,7 @@ suspend fun EelApiBase.where(exe: String): EelPath? {
     return null
   }
   else {
-    return fs.getPath(result.stdout.trim(), null)
+    return EelPath.parse(result.stdout.trim(), descriptor)
   }
 }
 

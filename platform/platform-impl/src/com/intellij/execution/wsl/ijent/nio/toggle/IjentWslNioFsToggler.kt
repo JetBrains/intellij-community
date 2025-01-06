@@ -106,10 +106,18 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       return EelApiWithPathsMapping(ephemeralRoot = distro.getUNCRootPath(), WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false))
     }
 
-    override fun getEelDescriptor(path: Path): EelDescriptor? =
-      service<IjentWslNioFsToggler>().strategy?.enabledInDistros
-        ?.find { distro -> path.root != null && distro.getUNCRootPath() == path.root }
+    override fun tryConvert(path: Path): EelPath? {
+      val root = path.root
+      val relevantPath = path.toString().substring(root.toString().length)
+      val distro = service<IjentWslNioFsToggler>().strategy?.enabledInDistros
+        ?.find { distro -> path.root != null && distro.getUNCRootPath().toString() == root.toString() }
         ?.let { WslEelDescriptor(it) }
+      return distro?.let { EelPath.parse(relevantPath, it) }
+    }
+
+    override fun nioRoots(): Path {
+      TODO("Not yet implemented")
+    }
 
     /**
      * Starts the IJent if a project on WSL is opened.

@@ -9,7 +9,6 @@ import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
@@ -50,7 +49,7 @@ class EelFsShowcase {
     val fsdata = fsAndEelUnix.get()
     val mapper = fsdata.eelApi.mapper
     val nio = fsdata.storageRoot.resolve("a").resolve("b").resolve("c").resolve("d").resolve("e")
-    val eel = EelPath.parse("/a/b/c/d/e", null)
+    val eel = EelPath.parse("/a/b/c/d/e", fsdata.eelDescriptor)
     val eelNio = mapper.getOriginalPath(nio)!!
     val nioEel = mapper.toNioPath(eel)
     val nioEelNio = mapper.toNioPath(eelNio)
