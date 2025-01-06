@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:20.04 AS build_env
+FROM registry.jetbrains.team/p/ij/docker-hub/ubuntu:20.04@sha256:8e5c4f0285ecbb4ead070431d29b576a530d3166df73ec44affc1cd27555141b AS build_env
 LABEL Description="Community Build Environment"
 RUN apt-get update && \
     apt-get install -y wget \
@@ -25,7 +25,7 @@ LABEL Description="Community Build Environment with Docker (required to build Sn
 RUN apt-get update && \
     apt-get install -y docker.io \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=docker/buildx-bin:latest /buildx /usr/libexec/docker/cli-plugins/docker-buildx
+COPY --from=registry.jetbrains.team/p/ij/docker-hub/docker/buildx-bin@sha256:acb92208a71a4b4b8d393cad2574aa932a58c4507fce6f0d05e50498d2acb547 /buildx /usr/libexec/docker/cli-plugins/docker-buildx
 RUN docker buildx version
 # Docker daemon socket is expected to be mounted with --volume /var/run/docker.sock:/var/run/docker.sock
 # and the container should be run as the root user to be able to connect to the socket
