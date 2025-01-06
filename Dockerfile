@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 FROM registry.jetbrains.team/p/ij/docker-hub/ubuntu:20.04@sha256:8e5c4f0285ecbb4ead070431d29b576a530d3166df73ec44affc1cd27555141b AS build_env
-LABEL Description="Community Build Environment"
+LABEL Description="IDE Build Environment"
 RUN apt-get update && \
     apt-get install -y wget \
     tar \
@@ -26,4 +26,14 @@ RUN git init /community && \
     git config --global --add safe.directory /community && \
     rm -rf /community/.git
 
+FROM build_env AS tests_env
+LABEL Description="Tests Environment"
+ENTRYPOINT ["/bin/sh", "./tests.cmd"]
+
+FROM build_env AS intellij_idea
+LABEL Description="IntelliJ IDEA Build Environment"
 ENTRYPOINT ["/bin/sh", "./installers.cmd"]
+
+FROM build_env AS pycharm
+LABEL Description="PyCharm Build Environment"
+ENTRYPOINT ["/bin/sh", "./python/installers.cmd"]
