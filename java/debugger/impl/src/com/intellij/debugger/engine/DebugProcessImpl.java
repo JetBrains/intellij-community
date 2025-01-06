@@ -1675,7 +1675,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
-      ReferenceType result = findLoadedClass(evaluationContext, className, classLoader);
+      SuspendContext suspendContext = evaluationContext != null ? evaluationContext.getSuspendContext() : null;
+      ReferenceType result = findLoadedClass(suspendContext, className, classLoader);
       if (result == null && evaluationContext != null) {
         EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
         if (evalContext.isAutoLoadClasses()) {
@@ -1689,10 +1690,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  public @Nullable ReferenceType findLoadedClass(@Nullable EvaluationContext evaluationContext,
+  public @Nullable ReferenceType findLoadedClass(@Nullable SuspendContext suspendContext,
                                                  String className,
                                                  ClassLoaderReference classLoader) {
-    List<ReferenceType> types = ContainerUtil.filter(getCurrentVm(evaluationContext).classesByName(className), ReferenceType::isPrepared);
+    List<ReferenceType> types = ContainerUtil.filter(getCurrentVm(suspendContext).classesByName(className), ReferenceType::isPrepared);
     // first try to quickly find the equal classloader only
     ReferenceType result = ContainerUtil.find(types, refType -> Objects.equals(classLoader, refType.classLoader()));
     // now do the full visibility check
@@ -1702,10 +1703,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return result;
   }
 
-  private VirtualMachineProxyImpl getCurrentVm(@Nullable EvaluationContext evaluationContext) {
-    return evaluationContext != null
-           ? ((SuspendContextImpl)evaluationContext.getSuspendContext()).getVirtualMachineProxy()
-           : getVirtualMachineProxy();
+  private VirtualMachineProxyImpl getCurrentVm(@Nullable SuspendContext suspendContext) {
+    return suspendContext != null ? ((SuspendContextImpl)suspendContext).getVirtualMachineProxy() : getVirtualMachineProxy();
   }
 
   private static boolean isVisibleFromClassLoader(@NotNull ClassLoaderReference fromLoader, final ReferenceType refType) {
@@ -1753,12 +1752,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return loadClass(evaluationContext, exception.className(), classLoader);
   }
 
-  public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
+  public ReferenceType loadClass(@NotNull EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
     throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException, EvaluateException {
 
     DebuggerManagerThreadImpl.assertIsManagerThread();
     qName = reformatArrayName(qName);
-    VirtualMachineProxyImpl virtualMachine = getCurrentVm(evaluationContext);
+    VirtualMachineProxyImpl virtualMachine = getCurrentVm(evaluationContext.getSuspendContext());
     ClassType classClassType = (ClassType)ContainerUtil.getFirstItem(virtualMachine.classesByName(CommonClassNames.JAVA_LANG_CLASS));
     if (classClassType == null) {
       logError("Unable to find loaded class " + CommonClassNames.JAVA_LANG_CLASS);
