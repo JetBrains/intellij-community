@@ -121,7 +121,7 @@ internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSys
       is AbsoluteIjentNioPath -> other
       is RelativeIjentNioPath -> {
         val curatedSegments = other.segments.filter { it != "." && it != "" }
-        other.segments.fold(eelPath) { acc, part -> acc.resolve(part) }.toNioPath(curatedSegments.isNotEmpty())
+        other.segments.fold(eelPath) { acc, part -> acc.resolve(part) }.toNioPath(curatedSegments.isEmpty())
       }
     }
   }
