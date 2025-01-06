@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -360,6 +360,7 @@ public final class IndexLookupTimingsReporting {
           }
 
           if (COLLECT_AGGREGATED_STATS) {
+            //TODO RC: lookups with N>1 keys should be counted as N lookups during the aggregation?
             collectAggregatedData(lookupFinishedAtMs);
           }
         }
