@@ -2,8 +2,16 @@
 package org.jetbrains.plugins.gradle.properties
 
 import org.jetbrains.plugins.gradle.properties.models.Property
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 
 data class GradleDaemonJvmPropertiesImpl(
   override val version: Property<String>?,
-  override val vendor: Property<String>?
-): GradleDaemonJvmProperties
+  override val vendor: Property<String>?,
+) : GradleDaemonJvmProperties {
+
+  override val criteria: GradleDaemonJvmCriteria
+    get() = GradleDaemonJvmCriteria(
+      version = version?.value,
+      vendor = vendor?.value
+    )
+}

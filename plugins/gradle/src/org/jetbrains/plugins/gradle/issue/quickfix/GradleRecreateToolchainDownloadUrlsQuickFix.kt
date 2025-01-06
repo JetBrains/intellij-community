@@ -18,10 +18,7 @@ class GradleRecreateToolchainDownloadUrlsQuickFix(
 
     override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
         val daemonJvmProperties = GradleDaemonJvmPropertiesFile.getProperties(Path.of(externalProjectPath))
-        val daemonJvmCriteria = GradleDaemonJvmCriteria(
-          version = daemonJvmProperties?.version?.value,
-          vendor = daemonJvmProperties?.vendor?.value
-        )
+        val daemonJvmCriteria = daemonJvmProperties?.criteria ?: GradleDaemonJvmCriteria.ANY
         return GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, daemonJvmCriteria)
     }
 }

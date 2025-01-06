@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gradle.properties
 
 import org.jetbrains.plugins.gradle.properties.models.Property
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 
 interface GradleDaemonJvmProperties {
   val version: Property<String>?
   val vendor: Property<String>?
+  val criteria: GradleDaemonJvmCriteria
 }

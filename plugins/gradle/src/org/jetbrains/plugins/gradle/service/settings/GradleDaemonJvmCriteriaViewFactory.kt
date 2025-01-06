@@ -6,6 +6,7 @@ import org.gradle.internal.jvm.inspection.JvmVendor
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import java.nio.file.Path
 
@@ -14,9 +15,9 @@ object GradleDaemonJvmCriteriaViewFactory {
   @JvmStatic
   fun createView(externalProjectPath: Path, gradleVersion: GradleVersion, disposable: Disposable): GradleDaemonJvmCriteriaView {
     val daemonJvmProperties = GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)
+    val daemonJvmCriteria = daemonJvmProperties?.criteria ?: GradleDaemonJvmCriteria.ANY
     return GradleDaemonJvmCriteriaView(
-      version = daemonJvmProperties?.version?.value,
-      vendor = daemonJvmProperties?.vendor?.value,
+      criteria = daemonJvmCriteria,
       versionsDropdownList = getSuggestedVersions(),
       vendorDropdownList = getSuggestedVendors(),
       displayAdvancedSettings = GradleDaemonJvmHelper.isDamonJvmVendorCriteriaSupported(gradleVersion),

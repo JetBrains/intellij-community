@@ -3,5 +3,10 @@ package org.jetbrains.plugins.gradle.service.execution
 
 data class GradleDaemonJvmCriteria(
   val version: String?,
-  val vendor: String?
-)
+  val vendor: String?,
+) {
+
+  companion object {
+    val ANY = GradleDaemonJvmCriteria(null, null)
+  }
+}

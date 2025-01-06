@@ -23,15 +23,14 @@ import javax.swing.JPanel
 
 @ApiStatus.Internal
 class GradleDaemonJvmCriteriaView(
-  version: String?,
-  vendor: String?,
+  criteria: GradleDaemonJvmCriteria,
   private val versionsDropdownList: IntRange,
   private val vendorDropdownList: List<JvmVendor.KnownJvmVendor>,
   private val displayAdvancedSettings: Boolean,
   disposable: Disposable,
 ): JPanel(VerticalLayout(0)) {
 
-  private var initialVersion: VersionItem? = when (version) {
+  private var initialVersion: VersionItem? = when (val version = criteria.version) {
     null -> null
     else -> when (val knownVersion = version.toIntOrNull()) {
       null -> VersionItem.Custom(version)
@@ -40,7 +39,7 @@ class GradleDaemonJvmCriteriaView(
     }
   }
 
-  private var initialVendor: VendorItem? = when (vendor) {
+  private var initialVendor: VendorItem? = when (val vendor = criteria.vendor) {
     null -> VendorItem.Any
     else -> when (val knownVendor = JvmVendor.fromString(vendor).knownVendor) {
       in vendorDropdownList -> VendorItem.Default(knownVendor)

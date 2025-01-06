@@ -83,19 +83,19 @@ object GradleDaemonJvmHelper {
   fun updateProjectDaemonJvmCriteria(
     project: Project,
     externalProjectPath: String,
-    daemonJvmCriteria: GradleDaemonJvmCriteria?,
+    daemonJvmCriteria: GradleDaemonJvmCriteria,
   ): CompletableFuture<Boolean> {
     val taskSettings = ExternalSystemTaskExecutionSettings().apply {
       this.externalProjectPath = externalProjectPath
       externalSystemIdString = GradleConstants.SYSTEM_ID.id
       taskNames = buildList {
         add(DaemonJvmPropertiesConfigurator.TASK_NAME)
-        val version = daemonJvmCriteria?.version
+        val version = daemonJvmCriteria.version
         if (version != null) {
           add(UPDATE_DAEMON_JVM_TASK_VERSION_OPTION)
           add(StringUtil.wrapWithDoubleQuote(version))
         }
-        val vendor = daemonJvmCriteria?.vendor
+        val vendor = daemonJvmCriteria.vendor
         if (vendor != null) {
           add(UPDATE_DAEMON_JVM_TASK_VENDOR_OPTION)
           add(StringUtil.wrapWithDoubleQuote(vendor))
