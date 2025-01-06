@@ -424,7 +424,10 @@ public final class PluginInstaller {
       if (dependency.isOptional()) continue;
 
       var pluginId = dependency.getPluginId();
-      if (installedDependencies.contains(pluginId) || model.isLoaded(pluginId) || PluginManagerCore.isModuleDependency(pluginId)) {
+      if (installedDependencies.contains(pluginId) ||
+          model.isLoaded(pluginId) ||
+          PluginManagerCore.isModuleDependency(pluginId) ||
+          PluginManagerCore.INSTANCE.findPluginByModuleDependency(pluginId) != null) {
         continue;
       }
 
