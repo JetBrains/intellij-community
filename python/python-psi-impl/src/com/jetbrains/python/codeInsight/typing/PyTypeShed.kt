@@ -126,21 +126,33 @@ object PyTypeShed {
   }
 
   /**
-   * Returns the list of roots in typeshed for the Python language level of [sdk].
+   * Returns the stdlib roots in Typeshed for the Python language level of [sdk].
+   *
+   * For Python 2, there are two entries: typeshed/stdlib and typeshed/stdlib/@python2.
    */
-  fun findRootsForSdk(sdk: Sdk): List<VirtualFile> {
+  fun findStdlibRootsForSdk(sdk: Sdk): List<VirtualFile> {
     val level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)
-    return findRootsForLanguageLevel(level)
+    return findStdlibRootsForLanguageLevel(level)
   }
 
   /**
-   * Returns the list of roots in typeshed for the specified Python language [level].
+   * Returns the stdlib roots in Typeshed for the specified Python language [level].
+   *
+   * For Python 2, there are two entries: typeshed/stdlib and typeshed/stdlib/@python2.
    */
-  fun findRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
+  fun findStdlibRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
     val dir = directory ?: return emptyList()
 
     val stdlib = dir.findChild("stdlib") ?: return emptyList()
     return if (level.isPython2) listOfNotNull(stdlib.findChild("@python2"), stdlib) else listOf(stdlib)
+  }
+
+  /**
+   * Returns both stdlib and third-party stub roots in Typeshed for the specified Python language [level].
+   */
+  fun findAllRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
+    // We no longer include Python 2 stubs for third-party packages, only for stdlib
+    return findStdlibRootsForLanguageLevel(level) + thirdPartyStubRoot?.children?.toList().orEmpty()
   }
 
   /**

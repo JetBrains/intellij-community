@@ -535,7 +535,7 @@ public final class PythonSdkUpdater {
       .addAll(sdkRoots)
       .addAll(getSkeletonsPaths(sdk))
       .addAll(userAddedRoots)
-      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
+      .addAll(PyTypeShed.INSTANCE.findStdlibRootsForSdk(sdk))
       .build();
   }
 
