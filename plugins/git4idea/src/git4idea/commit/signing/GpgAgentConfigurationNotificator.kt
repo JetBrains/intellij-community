@@ -11,6 +11,7 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
@@ -27,8 +28,12 @@ import kotlin.io.path.exists
 @Service(Service.Level.PROJECT)
 internal class GpgAgentConfigurationNotificator(private val project: Project) {
 
+  private fun isEnabled() = Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry.notification.proposal", false)
+
   @RequiresBackgroundThread
   fun proposeCustomPinentryAgentConfiguration(isSuggestion: Boolean) {
+    if (!isEnabled()) return
+
     val executable = GitExecutableManager.getInstance().getExecutable(project)
     if (!GpgAgentConfigurator.isEnabled(project, executable)) return
     if (project.service<GpgAgentConfigurator>().isConfigured(project)) return
