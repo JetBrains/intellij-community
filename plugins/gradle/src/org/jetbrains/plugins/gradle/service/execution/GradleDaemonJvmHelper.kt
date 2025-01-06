@@ -98,7 +98,7 @@ object GradleDaemonJvmHelper {
         val vendor = daemonJvmCriteria.vendor
         if (vendor != null) {
           add(UPDATE_DAEMON_JVM_TASK_VENDOR_OPTION)
-          add(StringUtil.wrapWithDoubleQuote(vendor))
+          add(StringUtil.wrapWithDoubleQuote(vendor.rawVendor))
         }
       }
     }

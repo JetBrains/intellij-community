@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings
 
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.AZUL
 import org.gradle.util.GradleVersion
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -24,13 +25,13 @@ class GradleDaemonJvmCriteriaViewFactoryTest : GradleDaemonJvmCriteriaViewFactor
   @Test
   fun `test Given gradle jvm properties with expected values When create view Then expected values are displayed`() {
     createDaemonJvmPropertiesFile("""
-       toolchainVendor=AZUL
+       toolchainVendor=azul systems
        toolchainVersion=19
     """.trimIndent())
 
     createDaemonJvmCriteriaView(GradleVersion.version("8.9")).run {
       assertEquals("19", initialCriteria.version)
-      assertEquals("AZUL", initialCriteria.vendor)
+      assertEquals(AZUL, initialCriteria.vendor?.knownVendor)
     }
   }
 
@@ -43,7 +44,7 @@ class GradleDaemonJvmCriteriaViewFactoryTest : GradleDaemonJvmCriteriaViewFactor
 
     createDaemonJvmCriteriaView(GradleVersion.version("8.9")).run {
       assertEquals("string version", initialCriteria.version)
-      assertEquals("any other vendor", initialCriteria.vendor)
+      assertEquals("any other vendor", initialCriteria.vendor?.rawVendor)
     }
   }
 

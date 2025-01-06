@@ -8,6 +8,7 @@ import org.gradle.internal.jvm.inspection.JvmVendor
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VendorItem
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VersionItem
+import org.jetbrains.plugins.gradle.util.toJvmVendor
 import org.junit.jupiter.api.Assertions.assertEquals
 import javax.swing.ComboBoxModel
 
@@ -26,7 +27,7 @@ abstract class GradleDaemonJvmCriteriaViewTestCase {
   ) = GradleDaemonJvmCriteriaView(
     criteria = GradleDaemonJvmCriteria(
       version = version,
-      vendor = vendor
+      vendor = vendor?.toJvmVendor()
     ),
     versionsDropdownList = versionsDropdownList,
     vendorDropdownList = vendorDropdownList,

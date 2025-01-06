@@ -42,9 +42,9 @@ class GradleDaemonJvmCriteriaView(
 
   private var initialVendor: VendorItem? = when (val vendor = criteria.vendor) {
     null -> VendorItem.Any
-    else -> when (val knownVendor = vendor.toJvmVendor().knownVendor) {
+    else -> when (val knownVendor = vendor.knownVendor) {
       in vendorDropdownList -> VendorItem.Default(knownVendor)
-      else -> VendorItem.Custom(vendor)
+      else -> VendorItem.Custom(vendor.rawVendor)
     }
   }
 
@@ -62,8 +62,8 @@ class GradleDaemonJvmCriteriaView(
           null -> null
           VendorItem.Any -> null
           VendorItem.SelectCustom -> null
-          is VendorItem.Default -> vendor.vendor.name
-          is VendorItem.Custom -> vendor.value.trim().nullize()
+          is VendorItem.Default -> vendor.vendor.asJvmVendor()
+          is VendorItem.Custom -> vendor.value.trim().nullize()?.toJvmVendor()
         }
       }
     )

@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
-import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.ADOPTOPENJDK
-import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.JETBRAINS
-import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.ADOPTIUM
-import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.IBM
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.*
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VendorItem
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VersionItem
 import org.junit.jupiter.api.Assertions.*
@@ -41,7 +38,7 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
       assertVersionDropdownList(versions, versionModel)
       assertTrue(isValidVersion)
 
-      assertEquals("IBM", initialCriteria.vendor)
+      assertEquals(IBM, initialCriteria.vendor?.knownVendor)
       assertVendorDropdownList(vendors, vendorModel)
       assertTrue(isValidVendor)
     }
@@ -82,7 +79,7 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
     createGradleDaemonJvmCriteriaView("1", "vendor", 1..2, vendors, true).run {
       assertFalse(isModified)
       assertEquals("1", initialCriteria.version)
-      assertEquals("vendor", initialCriteria.vendor)
+      assertEquals("vendor", initialCriteria.vendor?.rawVendor)
       assertEquals(VersionItem.Default(1), selectedVersion)
       assertEquals(VendorItem.Custom("vendor"), selectedVendor)
 
@@ -90,7 +87,7 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
       selectedVendor = VendorItem.Default(ADOPTOPENJDK)
       assertTrue(isModified)
       assertEquals("1", initialCriteria.version)
-      assertEquals("vendor", initialCriteria.vendor)
+      assertEquals("vendor", initialCriteria.vendor?.rawVendor)
       assertEquals(VersionItem.Default(2), selectedVersion)
       assertEquals(VendorItem.Default(ADOPTOPENJDK), selectedVendor)
     }
@@ -102,7 +99,7 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
     createGradleDaemonJvmCriteriaView("1", "vendor", 1..3, vendors, true).run {
       assertFalse(isModified)
       assertEquals("1", initialCriteria.version)
-      assertEquals("vendor", initialCriteria.vendor)
+      assertEquals("vendor", initialCriteria.vendor?.rawVendor)
       assertEquals(VersionItem.Default(1), selectedVersion)
       assertEquals(VendorItem.Custom("vendor"), selectedVendor)
 
@@ -110,14 +107,14 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
       selectedVendor = VendorItem.Default(ADOPTOPENJDK)
       assertTrue(isModified)
       assertEquals("1", initialCriteria.version)
-      assertEquals("vendor", initialCriteria.vendor)
+      assertEquals("vendor", initialCriteria.vendor?.rawVendor)
       assertEquals(VersionItem.Default(2), selectedVersion)
       assertEquals(VendorItem.Default(ADOPTOPENJDK), selectedVendor)
 
       applySelection()
       assertFalse(isModified)
       assertEquals("2", initialCriteria.version)
-      assertEquals("ADOPTOPENJDK", initialCriteria.vendor)
+      assertEquals(ADOPTOPENJDK, initialCriteria.vendor?.knownVendor)
       assertEquals(VersionItem.Default(2), selectedVersion)
       assertEquals(VendorItem.Default(ADOPTOPENJDK), selectedVendor)
 
@@ -125,14 +122,14 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
       selectedVendor = VendorItem.Default(JETBRAINS)
       assertTrue(isModified)
       assertEquals("2", initialCriteria.version)
-      assertEquals("ADOPTOPENJDK", initialCriteria.vendor)
+      assertEquals(ADOPTOPENJDK, initialCriteria.vendor?.knownVendor)
       assertEquals(VersionItem.Default(3), selectedVersion)
       assertEquals(VendorItem.Default(JETBRAINS), selectedVendor)
 
       resetSelection()
       assertFalse(isModified)
       assertEquals("2", initialCriteria.version)
-      assertEquals("ADOPTOPENJDK", initialCriteria.vendor)
+      assertEquals(ADOPTOPENJDK, initialCriteria.vendor?.knownVendor)
       assertEquals(VersionItem.Default(2), selectedVersion)
       assertEquals(VendorItem.Default(ADOPTOPENJDK), selectedVendor)
     }
