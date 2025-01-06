@@ -41,5 +41,6 @@
     <orderEntry type="module" module-name="fleet.preferences" />
     <orderEntry type="module" module-name="fleet.util.os" />
     <orderEntry type="library" name="slf4j-api" level="project" />
+    <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
   </component>
 </module>

@@ -6,7 +6,6 @@ import fleet.util.logging.logger
 import fleet.util.serialization.DelegateSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
-import java.math.BigInteger
 
 /**
  * UID is a random [A-Za-z0-9_-] string, case-sensitive, no more than 36 characters long
@@ -30,10 +29,9 @@ class UID private constructor(val id: String) {
     const val MAX_LENGTH = 36
 
     private const val LEN = 20
-    private const val RADIX = 32
 
     fun random(): UID = with(Random) {
-      UID(BigInteger(nextBytes(16)).toString(RADIX).drop(1).take(LEN))
+      UID(nextUidString(LEN))
     }
 
     fun fromString(id: String): UID = run {
