@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlin-reflect",
     "//platform/util/jdom",
     "//platform/ml-api:ml",
     "@lib//:opentelemetry",
