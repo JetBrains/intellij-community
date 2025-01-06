@@ -6,26 +6,20 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.log.impl.VcsLogApplicationSettings
-import com.intellij.vcs.log.impl.VcsLogUiProperties
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreePath
 
 internal class BranchesDashboardTreeController(
   private val project: Project,
-  private val logProperties: VcsLogUiProperties,
-  private val logFilterer: (branches: List<String>) -> Unit,
-  private val logNavigator: (BranchNodeDescriptor.LogNavigatable, focus: Boolean) -> Unit,
+  private val selectionHandler: BranchesDashboardTreeSelectionHandler,
   private val model: BranchesDashboardTreeModel,
   private val tree: BranchesTreeComponent,
-) : UiDataProvider {
+) : UiDataProvider, BranchesDashboardTreeSelectionHandler by selectionHandler {
 
   var showOnlyMy: Boolean by model::showOnlyMy
 
@@ -33,13 +27,13 @@ internal class BranchesDashboardTreeController(
     val treeSelectionListener = TreeSelectionListener {
       if (!tree.isShowing) return@TreeSelectionListener
 
-      if (logProperties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) {
-        updateLogBranchFilter()
-      }
-      else if (logProperties[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY]) {
-        tree.getSelection().logNavigatableNodeDescriptor?.let { logNavigatableSelection ->
-          logNavigator(logNavigatableSelection, false)
-        }
+      when (selectionHandler.selectionAction) {
+        BranchesDashboardTreeSelectionHandler.SelectionAction.FILTER -> updateLogBranchFilter()
+        BranchesDashboardTreeSelectionHandler.SelectionAction.NAVIGATE ->
+          tree.getSelection().logNavigatableNodeDescriptor?.let { logNavigatableSelection ->
+            selectionHandler.navigateTo(logNavigatableSelection, false)
+          }
+        null -> return@TreeSelectionListener
       }
     }
     tree.addTreeSelectionListener(treeSelectionListener)
@@ -47,11 +41,11 @@ internal class BranchesDashboardTreeController(
 
   fun updateLogBranchFilter() {
     val selectedFilters = tree.getSelection().selectedBranchFilters
-    logFilterer(selectedFilters)
+    selectionHandler.filterBy(selectedFilters)
   }
 
   fun navigateLogToRef(selection: BranchNodeDescriptor.LogNavigatable) {
-    logNavigator(selection, true)
+    selectionHandler.navigateTo(selection, true)
   }
 
   fun getSelectedRemotes(): Map<GitRepository, Set<GitRemote>> {
@@ -84,7 +78,6 @@ internal class BranchesDashboardTreeController(
   override fun uiDataSnapshot(sink: DataSink) {
     sink[BRANCHES_UI_CONTROLLER] = this
     snapshotSelectionActionsKeys(sink, tree.selectionPaths)
-    sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = logProperties
   }
 
   companion object {
@@ -124,15 +117,3 @@ internal class BranchesDashboardTreeController(
     }
   }
 }
-
-@ApiStatus.Internal
-val CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
-  object : VcsLogApplicationSettings.CustomBooleanProperty("Change.Log.Filter.on.Branch.Selection") {
-    override fun defaultValue() = false
-  }
-
-@ApiStatus.Internal
-val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
-  object : VcsLogApplicationSettings.CustomBooleanProperty("Navigate.Log.To.Branch.on.Branch.Selection") {
-    override fun defaultValue() = false
-  }

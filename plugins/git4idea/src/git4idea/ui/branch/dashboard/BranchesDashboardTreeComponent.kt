@@ -18,10 +18,10 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.switcher.QuickActionProvider
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.ui.ProgressStripe
 import git4idea.i18n.GitBundle.message
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
@@ -41,9 +41,7 @@ internal object BranchesDashboardTreeComponent {
     parentDisposable: Disposable,
     project: Project,
     model: BranchesDashboardTreeModel,
-    logProperties: VcsLogUiProperties,
-    logFilterer: (branches: List<String>) -> Unit,
-    logNavigator: (BranchNodeDescriptor.LogNavigatable, focus: Boolean) -> Unit,
+    selectionHandler: BranchesDashboardTreeSelectionHandler,
     searchHeightReferent: JComponent? = null,
   ): JComponent {
     val tree = BranchesTreeComponent(project).apply {
@@ -80,9 +78,7 @@ internal object BranchesDashboardTreeComponent {
       }
     })
 
-    val uiController = BranchesDashboardTreeController(
-      project, logProperties, logFilterer, logNavigator, model, tree
-    )
+    val uiController = BranchesDashboardTreeController(project, selectionHandler, model, tree)
 
     return simplePanel().withBorder(createBorder(SideBorder.LEFT))
       .addToTop(branchesSearchFieldPanel)
@@ -175,5 +171,25 @@ internal object BranchesDashboardTreeComponent {
         speedSearch.update()
       }
     })
+  }
+}
+
+internal interface BranchesDashboardTreeSelectionHandler {
+  @get:RequiresEdt
+  @set:RequiresEdt
+  var selectionAction: SelectionAction?
+
+  @RequiresEdt
+  fun filterBy(branches: List<String>)
+
+  @RequiresEdt
+  fun navigateTo(navigatable: BranchNodeDescriptor.LogNavigatable, focus: Boolean)
+
+  /**
+   * Mode of handling simple selection without an explicit action
+   */
+  enum class SelectionAction {
+    FILTER,
+    NAVIGATE
   }
 }

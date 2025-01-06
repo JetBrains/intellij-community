@@ -36,6 +36,7 @@ import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
 import git4idea.GitVcs
 import git4idea.i18n.GitBundleExtensions.messagePointer
+import git4idea.ui.branch.dashboard.BranchesDashboardTreeSelectionHandler.SelectionAction
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JComponent
@@ -109,12 +110,11 @@ internal class BranchesVcsLogUi(
     filterUi.addFilterListener(logUiFilterListener)
     logUiFilterListener.onFiltersChanged()
 
+    val selectionHandler = SelectionHandler()
     val treePanel = BranchesDashboardTreeComponent.create(this,
                                                           logData.project,
                                                           model,
-                                                          properties,
-                                                          { filter(filterUi, it) },
-                                                          ::jumpTo,
+                                                          selectionHandler,
                                                           mainFrame.toolbar
     )
     val toolbar = ActionManager.getInstance()
@@ -170,23 +170,50 @@ internal class BranchesVcsLogUi(
       }
   }
 
-  private fun filter(logFilterUi: VcsLogFilterUiEx, branches: List<String>) {
-    val oldFilters = logFilterUi.filters
-    val newFilters = if (branches.isNotEmpty()) {
-      oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(branches))
-    }
-    else {
-      oldFilters.without(VcsLogBranchLikeFilter::class.java)
-    }
-    logFilterUi.filters = newFilters
-  }
+  private inner class SelectionHandler : BranchesDashboardTreeSelectionHandler {
+    override var selectionAction: SelectionAction?
+      get() =
+        if (properties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) {
+          SelectionAction.FILTER
+        }
+        else if (properties[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY]) {
+          SelectionAction.NAVIGATE
+        }
+        else null
+      set(value) =
+        when (value) {
+          SelectionAction.FILTER -> {
+            properties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY] = true
+            properties[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY] = false
+          }
+          SelectionAction.NAVIGATE -> {
+            properties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY] = false
+            properties[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY] = true
+          }
+          null -> {
+            properties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY] = false
+            properties[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY] = false
+          }
+        }
 
-  private fun jumpTo(selection: BranchNodeDescriptor.LogNavigatable, focus: Boolean) {
-    val navigateSilently = false
-    when (selection) {
-      BranchNodeDescriptor.Head -> jumpToBranch(VcsLogUtil.HEAD, navigateSilently, focus)
-      is BranchNodeDescriptor.Branch -> jumpToBranch(selection.branchInfo.branchName, navigateSilently, focus)
-      is BranchNodeDescriptor.Ref -> jumpToRefOrHash(selection.refInfo.refName, navigateSilently, focus)
+    override fun filterBy(branches: List<String>) {
+      val oldFilters = filterUi.filters
+      val newFilters = if (branches.isNotEmpty()) {
+        oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(branches))
+      }
+      else {
+        oldFilters.without(VcsLogBranchLikeFilter::class.java)
+      }
+      filterUi.filters = newFilters
+    }
+
+    override fun navigateTo(navigatable: BranchNodeDescriptor.LogNavigatable, focus: Boolean) {
+      val navigateSilently = false
+      when (navigatable) {
+        BranchNodeDescriptor.Head -> jumpToBranch(VcsLogUtil.HEAD, navigateSilently, focus)
+        is BranchNodeDescriptor.Branch -> jumpToBranch(navigatable.branchInfo.branchName, navigateSilently, focus)
+        is BranchNodeDescriptor.Ref -> jumpToRefOrHash(navigatable.refInfo.refName, navigateSilently, focus)
+      }
     }
   }
 
@@ -197,4 +224,16 @@ internal class BranchesVcsLogUi(
 val SHOW_GIT_BRANCHES_LOG_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
   object : VcsLogProjectTabsProperties.CustomBooleanTabProperty("Show.Git.Branches") {
     override fun defaultValue(logId: String) = logId == VcsLogContentProvider.MAIN_LOG_ID
+  }
+
+@ApiStatus.Internal
+val CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
+  object : VcsLogApplicationSettings.CustomBooleanProperty("Change.Log.Filter.on.Branch.Selection") {
+    override fun defaultValue() = false
+  }
+
+@ApiStatus.Internal
+val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsLogUiProperty<Boolean> =
+  object : VcsLogApplicationSettings.CustomBooleanProperty("Navigate.Log.To.Branch.on.Branch.Selection") {
+    override fun defaultValue() = false
   }
