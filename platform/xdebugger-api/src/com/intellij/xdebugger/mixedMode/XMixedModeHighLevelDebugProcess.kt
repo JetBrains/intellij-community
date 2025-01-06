@@ -7,4 +7,9 @@ interface XMixedModeHighLevelDebugProcess : XMixedModeDebugProcess {
   fun getFramesMatcher(): MixedModeFramesBuilder
   fun pauseMixedModeSession()
   suspend fun isStepWillBringIntoNativeCode(suspendContext: XSuspendContext): Boolean
+
+  /**
+   * Check that the high-level debugger supports stopping in this context
+   */
+  suspend fun canStopHere(lowSuspendContext: XSuspendContext): Boolean
 }

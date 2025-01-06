@@ -20,13 +20,13 @@ class MixedModeProcessTransitionStateMachine(
   private val coroutineScope: CoroutineScope,
 ) {
   interface State
-
   object OnlyLowStarted : State
   object BothRunning : State
   class ResumeLowResumeStarted(val high: XSuspendContext) : State
   class ResumeLowRunHighResumeStarted(val high: XSuspendContext) : State
-  class ResumeLowStoppedAfterRunWhileHighResuming() : State
+  class ResumeLowStoppedAfterRunWhileHighResuming(val low: XSuspendContext) : State
   object WaitingForHighProcessPositionReached : State
+  object LeaveHighRunningWaitingForLowStop : State
   class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStoppedWaitingForLowStepToComplete(val highSuspendContext: XSuspendContext) : State
@@ -49,6 +49,8 @@ class MixedModeProcessTransitionStateMachine(
   object HighRun : Event
   object LowRun : Event
   class HighStop(val highSuspendContext: XSuspendContext?) : Event
+
+  private val nullObjectHighLevelSuspendContext: XSuspendContext = object : XSuspendContext() {}
 
   enum class StepType {
     Over, Into, Out
@@ -166,17 +168,25 @@ class MixedModeProcessTransitionStateMachine(
             changeState(BothStopped(lowLevelContext, highLevelSuspendContext))
           }
           is BothRunning, is MixedStepIntoStartedHighDebuggerResumed -> {
-            runBlocking(stateMachineHelperScope.coroutineContext) {
+            val newState = runBlocking(stateMachineHelperScope.coroutineContext) {
               if (currentState is MixedStepIntoStartedHighDebuggerResumed) {
                 low.removeTempBreakpoint(currentState.nativeBreakpointId)
+              }
+              else {
+                // The low-level debug process is stopped, we need to ensure that we will be able to stop the managed one at this position
+                val canStopHere = high.canStopHere(event.suspendContext)
+                if (!canStopHere)
+                  return@runBlocking createStoppedStateWhenHighCantStop(event.suspendContext)
               }
 
               low.continueAllThreads(exceptEventThread = true, silent = true)
 
               // please keep don't await it, it will break the status change logic
               high.pauseMixedModeSession()
+              return@runBlocking WaitingForHighProcessPositionReached
             }
-            changeState(WaitingForHighProcessPositionReached)
+
+            changeState(newState)
           }
           is OnlyHighStopped, is OnlyHighStoppedWaitingForLowStepToComplete -> {
             if (currentState is OnlyHighStoppedWaitingForLowStepToComplete)
@@ -200,7 +210,10 @@ class MixedModeProcessTransitionStateMachine(
             // 3. pause the process
             runBlocking(stateMachineHelperScope.coroutineContext) { low.continueAllThreads(exceptEventThread = true, silent = true) }
 
-            changeState(ResumeLowStoppedAfterRunWhileHighResuming())
+            changeState(ResumeLowStoppedAfterRunWhileHighResuming(event.suspendContext))
+          }
+          LeaveHighRunningWaitingForLowStop -> {
+            changeState(BothStopped(event.suspendContext, nullObjectHighLevelSuspendContext))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -221,10 +234,17 @@ class MixedModeProcessTransitionStateMachine(
       is LowRun -> {
         when (currentState) {
           is ResumeLowResumeStarted -> {
-            runBlocking(stateMachineHelperScope.coroutineContext) {
-              high.asXDebugProcess.resume(currentState.high)
+            if (currentState.high == nullObjectHighLevelSuspendContext) {
+              // The high-level debug process was unable to stop there, and we used null object suspend context,
+              // so the high process is still resumed, we don't need to do anything with it
+              changeState(BothRunning)
             }
-            changeState(ResumeLowRunHighResumeStarted(currentState.high))
+            else {
+              runBlocking(stateMachineHelperScope.coroutineContext) {
+                high.asXDebugProcess.resume(currentState.high)
+              }
+              changeState(ResumeLowRunHighResumeStarted(currentState.high))
+            }
           }
           is BothStopped -> {
             changeState(OnlyHighStopped(currentState.high))
@@ -316,8 +336,18 @@ class MixedModeProcessTransitionStateMachine(
           }
           is ResumeLowStoppedAfterRunWhileHighResuming -> {
             logger.info("We've met a native stop (breakpoint or other kind) while resuming. Now managed resume is completed, " +
-                        "but the event thread is stopped by a low level debugger. Need to pause the process completely")
-            handlePauseEventWhenBothRunning()
+                        "but the event thread is stopped by a low level debugger. Need to pause the process completely if that's possible")
+
+            val canStopHere = runBlocking(stateMachineHelperScope.coroutineContext) { high.canStopHere(currentState.low) }
+            if(canStopHere)
+              handlePauseEventWhenBothRunning()
+            else {
+              logger.info("High-level debug process can't stop here. Will leave it running and pause the low-level process")
+              // we have recovered the high-level debug process from being blocked trying to resume,
+              // now we need to stop the low-debug process
+              low.pauseMixedModeSession(low.getStoppedThreadId(currentState.low))
+              changeState(LeaveHighRunningWaitingForLowStop)
+            }
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -338,6 +368,10 @@ class MixedModeProcessTransitionStateMachine(
     val oldState = state
     state = newState
     logger.info("state change : (${oldState::class.simpleName} -> ${newState::class.simpleName})")
+  }
+
+  private fun createStoppedStateWhenHighCantStop(lowSuspendContext: XSuspendContext): BothStopped {
+    return BothStopped(lowSuspendContext, nullObjectHighLevelSuspendContext)
   }
 
   suspend fun waitFor(c: KClass<*>) {
