@@ -235,30 +235,12 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-11208
   public void testMockPatchObject1() {
-    final String testName = getTestName(true);
-
-    runWithAdditionalClassEntryInSdkRoots(
-      testName + "/lib",
-      () -> {
-        myFixture.configureByFile(testName + "/a.py");
-        myFixture.completeBasic();
-        myFixture.checkResultByFile(testName + "/a.after.py");
-      }
-    );
+    doMultiFileTest();
   }
 
   // PY-11208
   public void testMockPatchObject2() {
-    final String testName = getTestName(true);
-
-    runWithAdditionalClassEntryInSdkRoots(
-      testName + "/lib",
-      () -> {
-        myFixture.configureByFile(testName + "/a.py");
-        myFixture.completeBasic();
-        myFixture.checkResultByFile(testName + "/a.after.py");
-      }
-    );
+    doMultiFileTest();
   }
 
   // PY-21060
