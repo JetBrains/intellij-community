@@ -107,31 +107,20 @@ internal class SimpleColoredTextIconPresentationRenderer {
     private val settings: ThreadsViewSettings = ThreadsViewSettings.getInstance()
     
     fun render(infoData: CoroutineInfoData, isCurrent: Boolean, textToHideFromContext: String): SimpleColoredTextIcon {
-        val thread = infoData.activeThread
-        val name = thread?.name()?.substringBefore(" @${infoData.descriptor.name}") ?: ""
+        val thread = infoData.lastObservedThread
+        val name = thread?.name()?.substringBefore(" @${infoData.name}") ?: ""
         val threadState = if (thread != null) DebuggerUtilsEx.getThreadStatusText(thread.status()) else ""
         
-        val icon = fromState(infoData.descriptor.state, isCurrent)
+        val icon = fromState(infoData.state, isCurrent)
 
-        val label = SimpleColoredTextIcon(icon, !infoData.isCreated())
+        val label = SimpleColoredTextIcon(icon, !infoData.isCreated)
         label.append("\"")
-        label.appendValue(infoData.descriptor.formatName())
-        label.append("\": ${infoData.descriptor.state}")
+        label.appendValue(infoData.coroutineDescriptor)
+        label.append("\": ${infoData.state}")
         if (name.isNotEmpty()) {
             label.append(" on thread \"")
             label.appendValue(name)
             label.append("\": $threadState")
-        }
-        infoData.descriptor.contextSummary?.let {
-            // The context summary is the toString output of the context. We know that CombinedContext concatenates the toString output of
-            // its inner contexts, including CoroutineName, Job and the dispatcher. Remove the name, and remove the job or dispatcher
-            // depending on how we're grouped
-            val text = it.replace("CoroutineName(${infoData.descriptor.name})", "")
-                .replace(textToHideFromContext, "")
-                .replace(Regex("(, )+"), ", ")
-                .replace("[, ", "[")
-                .replace(", ]", "]")
-            label.append(" $text")
         }
         return label
     }
