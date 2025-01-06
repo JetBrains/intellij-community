@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.diagnostic.LoadingState;
@@ -59,6 +59,7 @@ public class IElementType {
     }
   }
 
+  @ApiStatus.Internal
   public static void unregisterElementTypes(@NotNull ClassLoader loader, @NotNull PluginDescriptor pluginDescriptor) {
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
@@ -68,6 +69,7 @@ public class IElementType {
     }
   }
 
+  @ApiStatus.Internal
   public static void unregisterElementTypes(@NotNull Language language, @NotNull PluginDescriptor pluginDescriptor) {
     if (language == Language.ANY) {
       throw new IllegalArgumentException("Trying to unregister Language.ANY");

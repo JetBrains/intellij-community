@@ -4861,8 +4861,6 @@ c:com.intellij.psi.tree.IElementType
 - getLanguage():com.intellij.lang.Language
 - hashCode():I
 - isLeftBound():Z
-- s:unregisterElementTypes(com.intellij.lang.Language,com.intellij.openapi.extensions.PluginDescriptor):V
-- s:unregisterElementTypes(java.lang.ClassLoader,com.intellij.openapi.extensions.PluginDescriptor):V
 com.intellij.psi.tree.IElementType$Predicate
 - a:matches(com.intellij.psi.tree.IElementType):Z
 c:com.intellij.psi.tree.IFileElementType
