@@ -7,54 +7,55 @@ import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.parentsOfType
 import java.io.File
 import java.util.*
 
 object BytecodeViewerManager {
   private val CLASS_SEARCHER_EP = create<ClassSearcher>("ByteCodeViewer.classSearcher")
 
-  @JvmStatic
-  fun loadClassFileBytes(aClass: PsiClass): ByteArray? {
-    val jvmClassName = getJVMClassName(aClass) ?: return null
-    var fileClass: PsiClass = aClass
-    while (PsiUtil.isLocalOrAnonymousClass(fileClass)) {
-      val containingClass = PsiTreeUtil.getParentOfType<PsiClass?>(fileClass, PsiClass::class.java)
-      if (containingClass != null) {
-        fileClass = containingClass
-      }
-    }
+  private fun PsiClass.containingClassFileClass(): PsiClass = parentsOfType<PsiClass>(withSelf = true)
+      .filterNot(PsiUtil::isLocalOrAnonymousClass)
+      .first()
+
+  internal fun findClassFile(aClass: PsiClass): ClassFileInfo? {
+    val fileClass = aClass.containingClassFileClass()
     val file = fileClass.getOriginalElement().getContainingFile().getVirtualFile() ?: return null
-    val index = ProjectFileIndex.getInstance(aClass.getProject())
+    val fileIndex = ProjectFileIndex.getInstance(aClass.getProject())
+    val jvmClassName = getJVMClassName(aClass) ?: return null
     if (FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) {
       // compiled class; looking for the right .class file (inner class 'A.B' is "contained" in 'A.class', but we need 'A$B.class')
       val classFileName = StringUtil.getShortName(jvmClassName) + ".class"
-      if (index.isInLibraryClasses(file)) {
+      if (fileIndex.isInLibraryClasses(file)) {
         val classFile = file.getParent().findChild(classFileName)
-        if (classFile != null) return classFile.contentsToByteArray(false)
+        if (classFile != null) return ClassFileInfo.read(classFile)
       }
       else {
         val classFile = File(file.getParent().getPath(), classFileName)
-        if (classFile.isFile()) return FileUtil.loadFileBytes(classFile)
+        if (classFile.isFile()) return ClassFileInfo.read(classFile)
       }
     }
     else {
       // source code; looking for a .class file in compiler output
-      val module = index.getModuleForFile(file) ?: return null
+      val module = fileIndex.getModuleForFile(file) ?: return null
       val extension = CompilerModuleExtension.getInstance(module) ?: return null
-      val inTests = index.isInTestSourceContent(file)
+      val inTests = fileIndex.isInTestSourceContent(file)
       val classRoot = (if (inTests) extension.getCompilerOutputPathForTests() else extension.getCompilerOutputPath()) ?: return null
       val relativePath = jvmClassName.replace('.', '/') + ".class"
       val classFile = File(classRoot.getPath(), relativePath)
-      if (classFile.exists()) return FileUtil.loadFileBytes(classFile)
+      if (classFile.exists()) return ClassFileInfo.read(classFile)
     }
-
     return null
+  }
+
+  @JvmStatic
+  fun loadClassFileBytes(aClass: PsiClass): ByteArray? {
+    return findClassFile(aClass)?.bytecode
   }
 
   private fun getJVMClassName(aClass: PsiClass): String? {

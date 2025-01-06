@@ -22,61 +22,39 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import java.awt.BorderLayout
-import java.awt.FlowLayout
 import java.util.function.Consumer
-import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.math.min
 
-internal class BytecodeToolWindowPanel(
-  private val project: Project,
-  private val toolWindow: ToolWindow,
-  initialSourceEditor: Editor,
-) : JPanel(BorderLayout()), Disposable {
+internal class BytecodeToolWindowPanel(private val project: Project, private val file: PsiFile) : JPanel(BorderLayout()), Disposable {
   private val bytecodeDocument: Document = EditorFactory.getInstance().createDocument("")
 
-  // TODO: JavaClassFileType doesn't seem right, because its 'isBinary()' method returns true.
-  //  The text we display in the editor is actually a human-readable representation of the bytecode (as returned by ASM ClassReader).
-  private val bytecodeEditor: Editor = EditorFactory.getInstance().createEditor(bytecodeDocument, project, JavaClassFileType.INSTANCE, true)
-
-  private val classNameLabel: JLabel = JLabel()
-
-  private var currentlyDisplayedClassFQN: String? = null
-
-  private var currentlyFocusedSourceFile: VirtualFile?
+  private val bytecodeEditor: Editor = EditorFactory.getInstance()
+    .createEditor(bytecodeDocument, project, JavaClassFileType.INSTANCE, true)
 
   private var existingLoadBytecodeTask: LoadBytecodeTask? = null
 
   init {
-    currentlyFocusedSourceFile = initialSourceEditor.virtualFile
-
-    setUpContent()
-    WriteAction.run<RuntimeException?>(ThrowableRunnable { setBytecodeText(null, DEFAULT_TEXT) })
+    bytecodeEditor.setBorder(null)
+    add(bytecodeEditor.getComponent())
+    WriteAction.run<RuntimeException> {
+      setBytecodeText(null, DEFAULT_TEXT)
+    }
     setUpListeners()
 
     queueLoadBytecodeTask {
-      updateBytecodeSelection(initialSourceEditor)
+      val editor = FileEditorManager.getInstance(project)
+        .getSelectedTextEditor()
+        ?.takeIf { it.virtualFile == file.virtualFile } ?: return@queueLoadBytecodeTask
+      updateBytecodeSelection(editor)
     }
-  }
-
-  private fun setUpContent() {
-    bytecodeEditor.setBorder(null)
-    add(bytecodeEditor.getComponent())
-    val optionPanel = JPanel(FlowLayout(FlowLayout.LEFT, 12, 8)).apply {
-      add(classNameLabel)
-    }
-    add(optionPanel, BorderLayout.NORTH)
   }
 
   private fun setUpListeners() {
@@ -84,21 +62,16 @@ internal class BytecodeToolWindowPanel(
     val messageBusConnection = messageBus.connect(this)
     messageBusConnection.subscribe<FileEditorManagerListener>(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun selectionChanged(event: FileEditorManagerEvent) {
-        if (!toolWindow.isVisible()) return
-
-        currentlyFocusedSourceFile = event.newFile
-
         val newFile = event.newFile
         if (newFile == null) return
         if (!isValidFileType(newFile.fileType)) return
 
         val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(newFile)
         if (fileEditor !is TextEditor) return
+        if (fileEditor.file != file.virtualFile) return
         val sourceEditor = fileEditor.getEditor()
 
-        queueLoadBytecodeTask {
-          updateBytecodeSelection(sourceEditor)
-        }
+        updateBytecodeSelection(sourceEditor)
       }
     })
 
@@ -106,7 +79,6 @@ internal class BytecodeToolWindowPanel(
 
     multicaster.addCaretListener(object : CaretListener {
       override fun caretPositionChanged(event: CaretEvent) {
-        if (!toolWindow.isVisible()) return
         updateBytecodeSelection(event.editor)
       }
     }, this)
@@ -129,13 +101,6 @@ internal class BytecodeToolWindowPanel(
       bytecodeEditor.getSelectionModel().removeSelection()
       return
     }
-    if (containingClass.getQualifiedName() != currentlyDisplayedClassFQN) {
-      // This is required to correctly handle different classes being present in a single Java file
-      queueLoadBytecodeTask(null)
-      return
-    }
-
-    currentlyDisplayedClassFQN = containingClass.getQualifiedName()
 
     val sourceStartOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionStart()
     val sourceEndOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionEnd()
@@ -189,19 +154,11 @@ internal class BytecodeToolWindowPanel(
       }
       existingLoadBytecodeTask = null
     }
-    existingLoadBytecodeTask = LoadBytecodeTask(project, { bytecode ->
+    existingLoadBytecodeTask = LoadBytecodeTask(project) { bytecode ->
       ApplicationManager.getApplication().invokeLater {
         WriteAction.run<RuntimeException> {
           setBytecodeText(bytecode.withDebugInfo, bytecode.withoutDebugInfo)
           onAfterBytecodeLoaded?.run()
-        }
-      }
-    }) { newClass ->
-      ApplicationManager.getApplication().invokeLater {
-        currentlyDisplayedClassFQN = newClass.getQualifiedName()
-        val className = newClass.getName()
-        if (className != null) {
-          setClassName(className)
         }
       }
     }
@@ -216,12 +173,6 @@ internal class BytecodeToolWindowPanel(
     document.setText(StringUtil.convertLineSeparators(bytecodeWithoutDebugInfo))
   }
 
-  @RequiresEdt
-  private fun setClassName(className: @NlsSafe String) {
-    classNameLabel.setText(BytecodeViewerBundle.message("bytecode.for.class", className))
-    classNameLabel.isVisible = true
-  }
-
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(bytecodeEditor)
   }
@@ -229,7 +180,6 @@ internal class BytecodeToolWindowPanel(
   private class LoadBytecodeTask(
     project: Project,
     @param:RequiresEdt private val onBytecodeUpdated: Consumer<Bytecode>,
-    @param:RequiresBackgroundThread private val onClassNameUpdated: Consumer<PsiClass>,
   ) : Task.Backgroundable(project, BytecodeViewerBundle.message("loading.bytecode"), true) {
     private var myProgressIndicator: ProgressIndicator? = null
 
@@ -260,8 +210,6 @@ internal class BytecodeToolWindowPanel(
         val containingClass = BytecodeViewerManager.getContainingClass(selectedPsiElement)
         if (containingClass == null) return@computeCancellable null
 
-        onClassNameUpdated.accept(containingClass)
-
         //CancellationUtil.sleepCancellable(1000); // Uncomment if you want to make sure we continue to not freeze the IDE
         getByteCodeVariants(selectedPsiElement)
       }
@@ -280,7 +228,7 @@ internal class BytecodeToolWindowPanel(
   }
 
   companion object {
-    const val TOOL_WINDOW_ID: String = "Java Bytecode"
+    const val TOOL_WINDOW_ID: String = "Bytecode"
 
     private val LOG = Logger.getInstance(BytecodeToolWindowPanel::class.java)
 
