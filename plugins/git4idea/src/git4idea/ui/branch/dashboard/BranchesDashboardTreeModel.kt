@@ -24,7 +24,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitTagHolder
 import git4idea.repo.GitTagLoaderListener
 import git4idea.ui.branch.GitBranchManager
-import kotlin.properties.Delegates
+import kotlin.properties.Delegates.observable
 
 internal interface BranchesDashboardTreeModel : BranchesTreeModel {
   var showOnlyMy: Boolean
@@ -46,9 +46,9 @@ internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
     )
   }.toMutableMap()
 
-  override var showOnlyMy: Boolean by AtomicObservableProperty(false) { old, new -> if (old != new) updateBranchesIsMyState() }
+  override var showOnlyMy: Boolean by observable(false) { _, old, new -> if (old != new) updateBranchesIsMyState() }
 
-  var rootsToFilter: Set<VirtualFile>? by Delegates.observable(null) { _, old, new ->
+  var rootsToFilter: Set<VirtualFile>? by observable(null) { _, old, new ->
     if (new != null && old != null && old != new) {
       updateBranchesTree()
     }
