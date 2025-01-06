@@ -15,6 +15,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -25,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -94,6 +98,13 @@ public final class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
     for (PsiReference ref : query.findAll()) {
       final PsiElement element = ref.getElement();
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+      if (parent instanceof PsiReturnStatement) {
+        PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, true, PsiMember.class);
+        if (method != null && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+          continue; // skip record accessor return statements
+        }
+      }
       if (!collectElementsToInvert(namedElement, element, elementsToInvert)) {
         collectForeignElementsToInvert(namedElement, element, JavaLanguage.INSTANCE, elementsToInvert);
       }
@@ -215,11 +226,33 @@ public final class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public void collectRefElements(final PsiElement element,
-                                 final RenameProcessor renameProcessor,
+                                 final @Nullable RenameProcessor renameProcessor,
                                  final @NotNull String newName,
                                  final Collection<? super PsiElement> elementsToInvert) {
     collectRefsToInvert(element, elementsToInvert);
 
+    if (element instanceof PsiRecordComponent component) {
+      if (renameProcessor != null) {
+        PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(component);
+        if (accessor != null) renameProcessor.addElement(accessor, newName);
+      }
+
+      PsiElement parent = component.getParent();
+      if (parent instanceof PsiRecordHeader header) {
+        PsiRecordComponent @NotNull [] components = header.getRecordComponents();
+        int index = -1;
+        for (int i = 0; i < components.length; i++) {
+          if (component == components[i]) {
+            index = i;
+            break;
+          }
+        }
+        if (index < 0) return;
+        PsiClass recordClass = header.getContainingClass();
+        if (recordClass == null) return;
+        collectConstructorParameterReferences(JavaPsiRecordUtil.findCanonicalConstructor(recordClass), index, elementsToInvert);
+      }
+    }
     if (element instanceof PsiMethod method) {
       final Collection<PsiMethod> overriders = OverridingMethodsSearch.search(method).findAll();
       if (renameProcessor != null) {
@@ -277,6 +310,33 @@ public final class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         collectRefsToInvert(overriderParameter, elementsToInvert);
       }
     }
+  }
+
+  private static void collectConstructorParameterReferences(PsiMethod constructor, int index, Collection<? super PsiElement> result) {
+    if (constructor == null) return;
+    for (PsiReference reference : MethodReferencesSearch.search(constructor).findAll()) {
+      PsiElement refElement = reference.getElement().getParent();
+      if (!(refElement instanceof PsiCall call)) continue;
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null) continue;
+      PsiExpression expression = argumentList.getExpressions()[index];
+      if (isThisCall(refElement) && expression instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiParameter param) {
+        PsiElement scope = param.getDeclarationScope();
+        if (scope instanceof PsiMethod method) {
+          int newIndex = method.getParameterList().getParameterIndex(param);
+          collectConstructorParameterReferences(method, newIndex, result);
+        }
+      }
+      else {
+        result.add(expression);
+      }
+    }
+  }
+
+  private static boolean isThisCall(PsiElement element) {
+    return element instanceof PsiMethodCallExpression call &&
+           call.getMethodExpression().getLastChild() instanceof PsiKeyword keyword &&
+           PsiUtil.isJavaToken(keyword, JavaTokenType.THIS_KEYWORD);
   }
 
   @Override
