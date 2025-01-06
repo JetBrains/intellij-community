@@ -38,10 +38,9 @@ object GradleDaemonJvmCriteriaDownloadToolchain {
     if (jdkItemAndPath == null) {
       withContext(Dispatchers.EDT) {
         val title = GradleBundle.message("gradle.toolchain.download.error.title")
-        val message = when (version) {
-          null -> GradleBundle.message("gradle.toolchain.download.error.message.without.vendor", version)
-          else -> GradleBundle.message("gradle.toolchain.download.error.message.with.vendor", version, vendor)
-        }
+        val message = GradleBundle.message("gradle.toolchain.download.error.message",
+                                           version ?: GradleBundle.message("gradle.toolchain.download.error.message.any"),
+                                           vendor ?: GradleBundle.message("gradle.toolchain.download.error.message.any"))
         Messages.showErrorDialog(project, message, title)
       }
     }

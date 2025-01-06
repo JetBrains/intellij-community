@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.common.timeoutRunBlocking
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -24,7 +25,7 @@ class  GradleDaemonJvmCriteriaDownloadToolchainTest : GradleDaemonJvmCriteriaDow
       val actualJdkItemAndPath = GradleDaemonJvmCriteriaDownloadToolchain.pickJdkItemAndPathForMatchingCriteria(project, "0", "unknown")
       Assertions.assertNull(actualJdkItemAndPath)
 
-      Assertions.assertTrue(exceptionMessage.startsWith("Failed to locate and download a matching toolchain"))
+      Assertions.assertEquals(GradleBundle.message("gradle.toolchain.download.error.message", "0", "unknown"), exceptionMessage)
     }
   }
 
