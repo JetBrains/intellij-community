@@ -162,15 +162,15 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     createBuildFile("module") { withPrintArgsTask(moduleArgsFile, dependsOn = ":printArgs") }
     importProject { withPrintArgsTask(projectArgsFile) }
 
-    //ensureDeleted(projectArgsFile, moduleArgsFile)
-    //executeRunConfiguration("printArgs")
-    //assertDebugJvmArgs(":printArgs", projectArgsFile)
-    //assertDebugJvmArgs(":module:printArgs", moduleArgsFile)
+    ensureDeleted(projectArgsFile, moduleArgsFile)
+    executeRunConfiguration("printArgs")
+    assertDebugJvmArgs(":printArgs", projectArgsFile)
+    assertDebugJvmArgs(":module:printArgs", moduleArgsFile)
 
-    //ensureDeleted(projectArgsFile, moduleArgsFile)
-    //executeRunConfiguration(":module:printArgs")
-    //assertDebugJvmArgs(":printArgs", projectArgsFile, shouldBeDebugged = false)
-    //assertDebugJvmArgs(":module:printArgs", moduleArgsFile)
+    ensureDeleted(projectArgsFile, moduleArgsFile)
+    executeRunConfiguration(":module:printArgs")
+    assertDebugJvmArgs(":printArgs", projectArgsFile, shouldBeDebugged = false)
+    assertDebugJvmArgs(":module:printArgs", moduleArgsFile)
 
     ensureDeleted(projectArgsFile, moduleArgsFile)
     executeRunConfiguration("module:printArgs")
