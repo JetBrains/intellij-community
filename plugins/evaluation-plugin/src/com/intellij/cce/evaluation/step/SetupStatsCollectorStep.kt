@@ -7,8 +7,8 @@ import com.intellij.cce.evaluation.features.CCEElementFeatureProvider
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
-import com.intellij.completion.ml.experiment.ExperimentInfo
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentInfo
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager

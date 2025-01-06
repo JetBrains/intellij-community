@@ -6,6 +6,7 @@ interface MLRankingExperiment {
   val useMLRanking: Boolean?
   val showArrows: Boolean?
   val calculateFeatures: Boolean?
+  val logElementFeatures: Boolean?
 
   val targetLanguageId: String?
 
@@ -82,19 +83,20 @@ enum class CommonExperiments(
   override val useMLRanking: Boolean? = null,
   override val showArrows: Boolean? = null,
   override val calculateFeatures: Boolean? = null,
+  override val logElementFeatures: Boolean? = null,
 ) : MLRankingExperiment {
   NoExperiment(id = -1),
 
-  StandardCompletion(id = 1, useMLRanking = false, showArrows = false, calculateFeatures = false),
-  DefaultMLModelWithoutArrows(id = 8, useMLRanking = true, showArrows = false, calculateFeatures = true),
-  DefaultMLModelWithArrows(id = 11, useMLRanking = true, showArrows = true, calculateFeatures = true),
-  StandardCompletionNoFeatures(id = 12, useMLRanking = false, showArrows = false, calculateFeatures = false),
-  FirstExperimentalModel(id = 13, useMLRanking = true, showArrows = false, calculateFeatures = true),
-  SecondExperimentalModel(id = 14, useMLRanking = true, showArrows = false, calculateFeatures = true),
-  CompletionPerformanceEarlyML(id = 17, useMLRanking = true, showArrows = false, calculateFeatures = true),
-  CompletionPerformanceEarlyLookup(id = 18, useMLRanking = false, showArrows = false, calculateFeatures = true),
-  CompletionPerformance(id = 19, useMLRanking = false, showArrows = false, calculateFeatures = true),
-  FullLineLlama1536ctx(id = 22, useMLRanking = false, showArrows = false, calculateFeatures = true),
+  StandardCompletion(id = 1, useMLRanking = false, showArrows = false, calculateFeatures = false, logElementFeatures = true),
+  DefaultMLModelWithoutArrows(id = 8, useMLRanking = true, showArrows = false, calculateFeatures = true, logElementFeatures = true),
+  DefaultMLModelWithArrows(id = 11, useMLRanking = true, showArrows = true, calculateFeatures = true, logElementFeatures = true),
+  StandardCompletionNoFeatures(id = 12, useMLRanking = false, showArrows = false, calculateFeatures = false, logElementFeatures = true),
+  FirstExperimentalModel(id = 13, useMLRanking = true, showArrows = false, calculateFeatures = true, logElementFeatures = true),
+  SecondExperimentalModel(id = 14, useMLRanking = true, showArrows = false, calculateFeatures = true, logElementFeatures = true),
+  CompletionPerformanceEarlyML(id = 17, useMLRanking = true, showArrows = false, calculateFeatures = true, logElementFeatures = true),
+  CompletionPerformanceEarlyLookup(id = 18, useMLRanking = false, showArrows = false, calculateFeatures = true, logElementFeatures = true),
+  CompletionPerformance(id = 19, useMLRanking = false, showArrows = false, calculateFeatures = true, logElementFeatures = true),
+  FullLineLlama1536ctx(id = 22, useMLRanking = false, showArrows = false, calculateFeatures = true, logElementFeatures = true),
 
   ControlA(id = 50),
   ControlB(id = 51),

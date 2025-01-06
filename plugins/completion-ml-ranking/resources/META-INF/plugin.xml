@@ -57,11 +57,6 @@
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt 9"/>
       <add-to-group group-id="MaintenanceGroup" anchor="before" relative-to-action="DumpLookupElementWeights"/>
     </action>
-    <action id="DumpMLExperimentGroups"
-            class="com.intellij.completion.ml.actions.DumpMLExperimentsGroupsAction"
-            internal="true">
-      <add-to-group group-id="MaintenanceGroup" anchor="after" relative-to-action="DumpMLCompletionFeatures"/>
-    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -77,8 +72,8 @@
     <applicationService serviceInterface="com.intellij.completion.ml.personalization.UserFactorsManager"
                         serviceImplementation="com.intellij.completion.ml.personalization.impl.UserFactorsManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.completion.ml.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"/>
+    <applicationService serviceInterface="com.intellij.completion.ml.experiments.ExperimentStatus"
+                        serviceImplementation="com.intellij.completion.ml.experiments.ExperimentStatusV2"/>
 
     <projectService serviceImplementation="com.intellij.completion.ml.common.CurrentProjectInfo"/>
 

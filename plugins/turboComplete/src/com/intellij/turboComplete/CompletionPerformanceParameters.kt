@@ -1,7 +1,7 @@
 package com.intellij.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry

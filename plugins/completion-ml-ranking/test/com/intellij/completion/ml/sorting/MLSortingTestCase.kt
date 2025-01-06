@@ -1,8 +1,8 @@
 package com.intellij.completion.ml.sorting
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.completion.ml.experiment.ExperimentInfo
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentInfo
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.internal.ml.DecisionFunction
