@@ -1,3 +1,5 @@
 - name: lib/completionMlRanking.jar
   modules:
   - name: intellij.completionMlRanking
+  - name: intellij.completionMlRanking.experiments
+  - name: intellij.completionMlRanking.ultimate
