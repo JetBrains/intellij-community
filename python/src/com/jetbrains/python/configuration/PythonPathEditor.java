@@ -26,6 +26,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -36,8 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class PythonPathEditor extends SdkPathEditor {
   private final @NotNull PathListModel myPathListModel;
@@ -293,6 +294,9 @@ public class PythonPathEditor extends SdkPathEditor {
         return true;
       }
       else if (PyTypeShed.INSTANCE.isInside(file)) {
+        return true;
+      }
+      else if (PyBundledStubs.INSTANCE.isInside(file)) {
         return true;
       }
       else {
