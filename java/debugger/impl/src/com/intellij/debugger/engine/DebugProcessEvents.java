@@ -697,7 +697,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
         long startTimeNs = System.nanoTime();
         long endTimeNs = 0;
         try {
-          requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
+          if (event.request().isEnabled()) {
+            requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
+          }
         }
         catch (final LocatableEventRequestor.EventProcessingException ex) {
           // stop timer here to prevent reporting dialog opened time
