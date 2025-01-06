@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@Suppress("LightServiceMigrationCode") // IJI-2399
 internal class JUnitDevKitUnitTestingSettings(
   private val project: Project,
 ) : SimplePersistentStateComponent<JUnitDevKitUnitTestingSettingsState>(JUnitDevKitUnitTestingSettingsState()) {
