@@ -339,11 +339,6 @@ abstract class PosixNioBasedEelFileSystemApi(
 ) : NioBasedEelFileSystemApi(fs), EelFileSystemPosixApi {
   override val pathOs: EelPath.OS = EelPath.OS.UNIX
 
-  override fun toNioFs(): FileSystem {
-    return fs
-  }
-
-
   override suspend fun createDirectory(
     path: EelPath,
     attributes: List<EelFileSystemPosixApi.CreateDirAttributePosix>,
@@ -413,8 +408,6 @@ abstract class WindowsNioBasedEelFileSystemApi(
   override val user: EelUserWindowsInfo,
 ) : NioBasedEelFileSystemApi(fs), EelFileSystemWindowsApi {
   override val pathOs: EelPath.OS = EelPath.OS.WINDOWS
-
-  override fun toNioFs(): FileSystem = fs
 
   override suspend fun getRootDirectories(): Collection<EelPath> =
     FileSystems.getDefault().rootDirectories.map { path ->

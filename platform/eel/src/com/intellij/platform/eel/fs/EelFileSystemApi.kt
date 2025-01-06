@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserInfo
@@ -10,10 +9,8 @@ import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
-import java.nio.file.FileSystem
 
 val EelFileSystemApi.pathOs: EelPath.OS
   get() = when (this) {
@@ -44,11 +41,6 @@ interface EelFileSystemApi {
   val user: EelUserInfo
 
   val descriptor: EelDescriptor
-
-  // TODO: document
-  // see com.intellij.platform.ijent.impl.IjentNioFsKt.makeNioFs
-  @ApiStatus.Experimental
-  fun toNioFs(): FileSystem
 
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.

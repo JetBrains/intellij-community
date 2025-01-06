@@ -29,7 +29,7 @@ import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
-internal class LocalWindowsEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefault()) : LocalWindowsEelApi {
+internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalWindowsEelApi {
   init {
     check(SystemInfo.isWindows)
   }
@@ -43,8 +43,6 @@ internal class LocalWindowsEelApiImpl(private val nioFs: FileSystem = FileSystem
 
   override val fs: EelFileSystemWindowsApi = object : WindowsNioBasedEelFileSystemApi(nioFs, userInfo) {
     override val descriptor: EelDescriptor = LocalEelDescriptor
-
-    override fun toNioFs(): FileSystem = nioFs
 
     override suspend fun createTemporaryDirectory(
       options: EelFileSystemApi.CreateTemporaryEntryOptions,
@@ -96,8 +94,6 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
   override val fs: EelFileSystemPosixApi = object : PosixNioBasedEelFileSystemApi(nioFs, userInfo) {
     override val pathOs: EelPath.OS = EelPath.OS.UNIX
     override val descriptor: EelDescriptor get() = LocalEelDescriptor
-
-    override fun toNioFs(): FileSystem = nioFs
 
     override suspend fun createTemporaryDirectory(
       options: EelFileSystemApi.CreateTemporaryEntryOptions,
