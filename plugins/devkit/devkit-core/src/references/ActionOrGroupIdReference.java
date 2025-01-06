@@ -43,7 +43,8 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
   public @NotNull ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     Project project = getElement().getProject();
 
-    final GlobalSearchScope scope = ProjectScope.getContentScope(project);
+    final GlobalSearchScope scope = ProjectScope.getContentScope(project)
+      .union(ProjectScope.getLibrariesScope(project));
 
     CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
     collectResults(myId, scope, processor);
