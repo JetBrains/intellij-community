@@ -458,32 +458,32 @@ def _replay_events(collected, trace_top_level_unhandled):
 
 _expected_tested = (
     # handled
-    pytest.param(raise_handled_exception, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-797")),
-    pytest.param(raise_handled_exception2, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-798")),
-    pytest.param(raise_handled_exception3, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-799")),
-    pytest.param(raise_handled_exception3a, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-800")),
-    pytest.param(raise_handled_exception4, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-801")),
-    pytest.param(raise_handled, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-795")),
-    pytest.param(raise_handled2, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-796")),
+    pytest.param(raise_handled_exception, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-853")),
+    pytest.param(raise_handled_exception2, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-854")),
+    pytest.param(raise_handled_exception3, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-855")),
+    pytest.param(raise_handled_exception3a, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-856")),
+    pytest.param(raise_handled_exception4, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-857")),
+    pytest.param(raise_handled, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-851")),
+    pytest.param(raise_handled2, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-852")),
     pytest.param(raise_handled9, marks=pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-739")),
     pytest.param(raise_handled10, marks=pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-738")),
 
     # unhandled
     raise_unhandled_exception,
-    pytest.param(raise_unhandled_exception_not_in_except_clause, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-807')),
+    pytest.param(raise_unhandled_exception_not_in_except_clause, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-863")),
     pytest.param(raise_unhandled, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-781')),
     raise_unhandled2,
     raise_unhandled3,
-    pytest.param(raise_unhandled4, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-805')),
+    pytest.param(raise_unhandled4, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-861")),
     raise_unhandled5,
     raise_unhandled6,
     pytest.param(raise_unhandled7, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-782')),
     pytest.param(raise_unhandled8, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-783')),
-    pytest.param(raise_unhandled9, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-806')),
-    pytest.param(raise_unhandled10, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-802')),
-    pytest.param(raise_unhandled11, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-803')),
-    pytest.param(raise_unhandled12, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-804')),
-    pytest.param(reraise_handled_exception, marks=pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-808')),
+    pytest.param(raise_unhandled9, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-862")),
+    pytest.param(raise_unhandled10, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-858")),
+    pytest.param(raise_unhandled11, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-859")),
+    pytest.param(raise_unhandled12, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-860")),
+    pytest.param(reraise_handled_exception, marks=pytest.mark.xfail(IS_PY311_OR_GREATER, reason="PCQA-864")),
 )
 
 

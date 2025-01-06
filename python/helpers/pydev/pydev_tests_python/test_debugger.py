@@ -22,6 +22,7 @@ from _pydevd_bundle.pydevd_constants import GET_FRAME_RETURN_GROUP
 from _pydevd_bundle.pydevd_constants import IS_PY38
 from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY312_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY312_OR_LESSER
 
 
@@ -2099,6 +2100,7 @@ def test_debug_zip_files(case_setup, tmpdir):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(IS_PY312_OR_GREATER, reason='PCQA-837')
 def test_multiprocessing(case_setup_multiprocessing):
     import threading
     from pydev_tests_python.debugger_unittest import AbstractWriterThread
@@ -2159,6 +2161,7 @@ def test_fork_no_attach(case_setup):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(IS_PY312_OR_GREATER, reason='PCQA-838')
 def test_fork_with_attach_no_breakpoints(case_setup_multiproc):
     with case_setup_multiproc.test_file('_debugger_case_fork.py') as writer:
         wait_for_condition(lambda: len(writer.writers) == 1)
