@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.vfs
 
 import com.intellij.ide.rpc.deserializeFromRpc
@@ -32,7 +32,7 @@ fun VirtualFileId.virtualFile(): VirtualFile? {
   }
 
   return deserializeFromRpc<VirtualFile>(serializedValue) ?: run {
-    LOG.error("Cannot deserialize VirtualFileRpc: $this")
+    LOG.debug("Cannot deserialize VirtualFileRpc: $this")
     null
   }
 }

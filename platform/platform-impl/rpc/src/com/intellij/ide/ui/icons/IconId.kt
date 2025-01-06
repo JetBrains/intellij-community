@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.icons
 
 import com.intellij.icons.AllIcons
@@ -34,7 +34,7 @@ fun IconId.icon(): Icon {
   }
 
   return deserializeFromRpc<Icon>(serializedValue) ?: run {
-    LOG.warn("Cannot deserialize icon from a remote model, empty icon is used instead.")
+    LOG.debug("Cannot deserialize icon from a remote model, empty icon is used instead.")
     AllIcons.Empty
   }
 }

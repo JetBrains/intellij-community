@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.rpc
 
 import com.intellij.openapi.diagnostic.fileLogger
@@ -30,7 +30,7 @@ fun DocumentId.document(): Document? {
   }
 
   return deserializeFromRpc<Document>(serializedValue) ?: run {
-    LOG.error("Cannot deserialize DocumentId: $this")
+    LOG.debug("Cannot deserialize DocumentId: $this")
     null
   }
 }

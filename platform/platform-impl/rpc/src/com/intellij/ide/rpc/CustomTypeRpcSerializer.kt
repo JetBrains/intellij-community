@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.rpc
 
 import com.intellij.openapi.diagnostic.fileLogger
@@ -39,7 +39,7 @@ internal fun <ValueClass : Any> serializeToRpc(value: ValueClass): SerializedVal
       }
     }
     catch (e: Exception) {
-      LOG.error("Error during custom type serialization", e)
+      LOG.debug("Error during custom type serialization", e)
       null
     }
   }
@@ -61,7 +61,7 @@ internal inline fun <reified ValueClass> deserializeFromRpc(serializedValue: Ser
         }
       }
       catch (e: Exception) {
-        LOG.error("Error during custom type deserialization", e)
+        LOG.debug("Error during custom type deserialization", e)
         null
       }
     }
