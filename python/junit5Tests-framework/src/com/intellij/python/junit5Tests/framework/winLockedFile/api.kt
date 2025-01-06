@@ -1,9 +1,9 @@
 package com.intellij.python.junit5Tests.framework.winLockedFile
 
+import com.intellij.community.wintools.getProcessLockedPath
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.junit5Tests.framework.winLockedFile.impl.deleteCheckLockingImpl
-import com.intellij.python.junit5Tests.framework.winLockedFile.impl.getProcessLockedFileImpl
 import com.jetbrains.python.Result
 import java.io.IOException
 import java.nio.file.Path
@@ -13,7 +13,10 @@ import java.nio.file.Path
  * [path] must be a file or a directory accessible by user.
  * Only works on Windows, so check [SystemInfoRt.isWindows] before calling
  */
-fun getProcessLockedPath(path: Path): Result<List<ProcessHandle>, @NlsSafe String> = getProcessLockedFileImpl(path)
+fun getProcessLockedPath(path: Path): Result<List<ProcessHandle>, @NlsSafe String> = getProcessLockedPath(path).fold(
+  onSuccess = { Result.success(it) },
+  onFailure = { Result.failure(it.message ?: it.toString()) }
+)
 
 /**
  * Deletes [path] throwing [FileLockedException] if a particular file is locked.

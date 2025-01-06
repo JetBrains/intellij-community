@@ -1,5 +1,6 @@
 package com.intellij.python.junit5Tests.framework.winLockedFile.impl
 
+import com.intellij.community.wintools.WinProcessInfo
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.junit5Tests.framework.winLockedFile.FileLockedException
@@ -32,7 +33,8 @@ internal fun deleteCheckLockingImpl(path: Path, vararg processesToKill: Regex) {
         val command = process.info().command().getOrNull() ?: continue
         val fileName = Path.of(command).fileName.toString()
         if (processesToKill.any { it.matches(fileName) }) {
-          fileLogger().info("Killing ${process.pid()} ${process.info()}")
+          val processInfo = WinProcessInfo.get(process.pid())
+          fileLogger().info("Killing ${process.pid()} ${processInfo}")
           killProcess(process)
         }
       }
