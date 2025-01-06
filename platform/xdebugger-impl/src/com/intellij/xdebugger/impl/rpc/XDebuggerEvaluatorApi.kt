@@ -1,9 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.xdebugger.frame.XValuePlace
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -16,11 +19,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
-  suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XEvaluationResult>
+  suspend fun evaluate(evaluatorDto: XDebuggerEvaluatorDto, expression: String): Deferred<XEvaluationResult>
+
+  suspend fun evaluateInDocument(evaluatorDto: XDebuggerEvaluatorDto, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
 
   suspend fun disposeXValue(xValueId: XValueId)
 
-  suspend fun computePresentation(xValueId: XValueId): Flow<XValuePresentation>?
+  suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentation>?
 
   suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>?
 
@@ -58,7 +63,7 @@ data class XValueId(val eid: EID)
 
 @ApiStatus.Internal
 @Serializable
-data class XDebuggerEvaluatorId(val eid: EID)
+data class XDebuggerEvaluatorDto(val eid: EID, val canEvaluateInDocument: Boolean)
 
 @ApiStatus.Internal
 @Serializable

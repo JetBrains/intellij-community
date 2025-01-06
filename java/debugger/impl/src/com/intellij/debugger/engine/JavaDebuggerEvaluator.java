@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -31,17 +31,19 @@ import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerPsiEvaluator;
+import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.Objects;
 
-public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebuggerPsiEvaluator {
+public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebuggerDocumentOffsetEvaluator {
   private final DebugProcessImpl myDebugProcess;
   private final JavaStackFrame myStackFrame;
 
@@ -68,8 +70,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
     });
   }
 
-  @Override
-  public void evaluate(@NotNull PsiElement element, @NotNull XEvaluationCallback baseCallback) {
+  private void evaluatePsiElement(@NotNull PsiElement element, @NotNull XEvaluationCallback baseCallback) {
     evaluate(baseCallback, (DebuggerContextImpl debuggerContext, EvaluationContextImpl evalContext) -> {
       Project project = myDebugProcess.getProject();
       Ref<TextWithImportsImpl> text = new Ref<>();
@@ -152,6 +153,33 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
     });
   }
 
+  @ApiStatus.Internal
+  @Override
+  public final void evaluate(
+    @NotNull Document document,
+    int offset,
+    @NotNull ValueHintType hintType,
+    @NotNull XEvaluationCallback callback
+  ) {
+    getPsiExpressionAtOffsetAsync(
+      myDebugProcess.getProject(), document, offset,
+      hintType == ValueHintType.MOUSE_CLICK_HINT || hintType == ValueHintType.MOUSE_ALT_OVER_HINT
+    ).onProcessed(pair -> {
+      if (pair != null) {
+        PsiElement element = pair.getFirst();
+        if (element instanceof PsiExpression) {
+          evaluatePsiElement(element, callback);
+        }
+        else {
+          evaluate(XExpressionImpl.fromText(element.getText()), callback, null);
+        }
+      }
+      else {
+        callback.errorOccurred(JavaDebuggerBundle.message("evaluation.error.expression.info"));
+      }
+    });
+  }
+
 
   private static @NotNull XEvaluationOrigin getOrigin(@NotNull XEvaluationCallback callback) {
     return callback instanceof XEvaluationCallbackWithOrigin callbackWithOrigin ?
@@ -163,6 +191,20 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
                                                                          @NotNull Document document,
                                                                          int offset,
                                                                          boolean sideEffectsAllowed) {
+    return getPsiExpressionAtOffsetAsync(project, document, offset, sideEffectsAllowed).then((pair) -> {
+      if (pair != null) {
+        return new ExpressionInfo(pair.getSecond(), null, null);
+      }
+      return null;
+    });
+  }
+
+  private static @NotNull Promise<@Nullable Pair<PsiElement, TextRange>> getPsiExpressionAtOffsetAsync(
+    @NotNull Project project,
+    @NotNull Document document,
+    int offset,
+    boolean sideEffectsAllowed
+  ) {
     return ReadAction
       .nonBlocking(() -> {
         PsiElement elementAtCursor = DebuggerUtilsEx.findElementAt(PsiDocumentManager.getInstance(project).getPsiFile(document), offset);
@@ -170,10 +212,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
           EditorTextProvider textProvider = EditorTextProvider.EP.forLanguage(elementAtCursor.getLanguage());
           if (textProvider != null) {
             Pair<PsiElement, TextRange> pair = textProvider.findExpression(elementAtCursor, sideEffectsAllowed);
-            if (pair != null) {
-              PsiElement element = pair.getFirst();
-              return new ExpressionInfo(pair.getSecond(), null, null, element instanceof PsiExpression ? element : null);
-            }
+            return pair;
           }
         }
         return null;

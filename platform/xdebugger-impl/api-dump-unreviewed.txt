@@ -582,8 +582,6 @@ c:com.intellij.xdebugger.impl.evaluate.XExpressionDialog
 - getPreferredFocusedComponent():javax.swing.JComponent
 com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation
 - a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
-com.intellij.xdebugger.impl.evaluate.quick.XDebuggerPsiEvaluator
-- a:evaluate(com.intellij.psi.PsiElement,com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback):V
 c:com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator
 - com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.frame.XValueMarkers):V
@@ -592,7 +590,6 @@ c:com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator
 - getTitle(com.intellij.openapi.util.Pair):java.lang.String
 c:com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 - com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,com.intellij.xdebugger.evaluation.ExpressionInfo,com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.xdebugger.XDebugSession,Z):V
 - p:createHintComponent(javax.swing.Icon,com.intellij.ui.SimpleColoredText,com.intellij.xdebugger.frame.presentation.XValuePresentation,com.intellij.xdebugger.frame.XFullValueEvaluator):javax.swing.JComponent
 - p:evaluateAndShowHint():V
 - hideHint():V

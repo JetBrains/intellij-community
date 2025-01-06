@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -60,16 +60,17 @@ public class XValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(XValueHint.class);
 
   private final XDebuggerEditorsProvider myEditorsProvider;
+  private final int myOffset;
   private final XDebuggerEvaluator myEvaluator;
   private final XDebugSession myDebugSession;
   private final boolean myFromKeyboard;
   private final String myExpression;
   private final String myValueName;
-  private final PsiElement myElement;
   private final XSourcePosition myExpressionPosition;
   private Disposable myDisposable;
   private Disposable myXValueDisposable;
 
+  @ApiStatus.Internal
   public XValueHint(@NotNull Project project,
                     @NotNull Editor editor,
                     @NotNull Point point,
@@ -104,12 +105,12 @@ public class XValueHint extends AbstractValueHint {
                      boolean fromKeyboard) {
     super(project, editor, point, type, expressionInfo.getTextRange());
     myEditorsProvider = editorsProvider;
+    myOffset = expressionInfo.getTextRange().getStartOffset();
     myEvaluator = evaluator;
     myDebugSession = session;
     myFromKeyboard = fromKeyboard;
     myExpression = XDebuggerEvaluateActionHandler.getExpressionText(expressionInfo, editor.getDocument());
     myValueName = XDebuggerEvaluateActionHandler.getDisplayText(expressionInfo, editor.getDocument());
-    myElement = expressionInfo.getElement();
 
     VirtualFile file;
     ConsoleView consoleView = ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW.get(editor);
@@ -150,8 +151,8 @@ public class XValueHint extends AbstractValueHint {
     }, 200, TimeUnit.MILLISECONDS);
 
     XEvaluationCallbackBase callback = new MyEvaluationCallback(showEvaluating);
-    if (myElement != null && myEvaluator instanceof XDebuggerPsiEvaluator xDebuggerPsiEvaluator) {
-      xDebuggerPsiEvaluator.evaluate(myElement, callback);
+    if (myEvaluator instanceof XDebuggerDocumentOffsetEvaluator xDebuggerPsiEvaluator) {
+      xDebuggerPsiEvaluator.evaluate(myEditor.getDocument(), myOffset, myType, callback);
     }
     else {
       myEvaluator.evaluate(myExpression, callback, myExpressionPosition);

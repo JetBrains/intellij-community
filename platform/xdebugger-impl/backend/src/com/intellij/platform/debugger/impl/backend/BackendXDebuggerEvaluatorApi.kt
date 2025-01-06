@@ -1,6 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.ide.rpc.DocumentId
+import com.intellij.ide.rpc.document
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -15,6 +17,8 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil.XValuePresentationTextExtractor
 import kotlinx.coroutines.*
@@ -26,14 +30,41 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
-  override suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XEvaluationResult> {
-    val evaluator = evaluatorId.eid.findValueEntity<XDebuggerEvaluator>()?.value
+  override suspend fun evaluate(evaluatorDto: XDebuggerEvaluatorDto, expression: String): Deferred<XEvaluationResult> {
+    return evaluate(evaluatorDto) { evaluator, callback ->
+      // TODO[IJPL-160146]: pass XSourcePosition
+      evaluator.evaluate(expression, callback, null)
+    }
+  }
+
+  override suspend fun evaluateInDocument(evaluatorDto: XDebuggerEvaluatorDto, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult> {
+    return evaluate(evaluatorDto) { evaluator, callback ->
+      val document = documentId.document()!!
+      if (evaluator is XDebuggerDocumentOffsetEvaluator) {
+        evaluator.evaluate(document, offset, type, callback)
+      }
+      else {
+        callback.errorOccurred(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"))
+      }
+    }
+  }
+
+  override suspend fun disposeXValue(xValueId: XValueId) {
+    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return
+    xValueEntity.delete()
+  }
+
+  private suspend fun evaluate(
+    evaluatorDto: XDebuggerEvaluatorDto,
+    evaluateFun: suspend (XDebuggerEvaluator, XEvaluationCallback) -> Unit,
+  ): Deferred<XEvaluationResult> {
+    val evaluator = evaluatorDto.eid.findValueEntity<XDebuggerEvaluator>()?.value
                     ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
       // TODO[IJPL-160146]: pass XSourcePosition
-      evaluator.evaluate(expression, object : XEvaluationCallback {
+      val callback = object : XEvaluationCallback {
         override fun evaluated(result: XValue) {
           evaluationResult.complete(result)
         }
@@ -41,7 +72,8 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
           evaluationResult.completeExceptionally(EvaluationException(errorMessage))
         }
-      }, null)
+      }
+      evaluateFun(evaluator, callback)
     }
     val evaluationCoroutineScope = EvaluationCoroutineScopeProvider.getInstance().cs
 
@@ -57,14 +89,9 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     }
   }
 
-  override suspend fun disposeXValue(xValueId: XValueId) {
-    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return
-    xValueEntity.delete()
-  }
-
   private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
 
-  override suspend fun computePresentation(xValueId: XValueId): Flow<XValuePresentation>? {
+  override suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentation>? {
     val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return emptyFlow()
     val presentations = Channel<XValuePresentation>(capacity = Int.MAX_VALUE)
     val xValue = xValueEntity.value
@@ -91,8 +118,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           // TODO[IJPL-160146]: implement setFullValueEvaluator
         }
       }
-      // TODO[IJPL-160146]: pass XValuePlace
-      xValue.computePresentation(valueNode, XValuePlace.TOOLTIP)
+      xValue.computePresentation(valueNode, xValuePlace)
 
       launch {
         try {

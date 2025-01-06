@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 
 import com.intellij.ide.ui.icons.icon
@@ -23,7 +23,7 @@ import kotlinx.coroutines.*
 internal class FrontendXValue(private val project: Project, private val xValueId: XValueId) : XValue(), HintXValue {
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     node.childCoroutineScope("FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
-      XDebuggerEvaluatorApi.getInstance().computePresentation(xValueId)?.collect { presentation ->
+      XDebuggerEvaluatorApi.getInstance().computePresentation(xValueId, place)?.collect { presentation ->
         // TODO[IJPL-160146]: support fullValueEvaluator
         // TODO[IJPL-160146]: support passing XValuePresentation
         node.setPresentation(presentation.icon?.icon(), presentation.type, presentation.value, presentation.hasChildren)

@@ -416,10 +416,8 @@ f:com.intellij.xdebugger.evaluation.ExpressionInfo
 - <init>(com.intellij.openapi.util.TextRange):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String):V
-- <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,com.intellij.psi.PsiElement):V
-- b:<init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- b:<init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getDisplayText():java.lang.String
-- f:getElement():com.intellij.psi.PsiElement
 - f:getExpressionText():java.lang.String
 - f:getTextRange():com.intellij.openapi.util.TextRange
 bc:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
@@ -642,10 +640,14 @@ com.intellij.xdebugger.frame.XValueNode
 - a:setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
 e:com.intellij.xdebugger.frame.XValuePlace
 - java.lang.Enum
+- sf:Companion:com.intellij.xdebugger.frame.XValuePlace$Companion
 - sf:TOOLTIP:com.intellij.xdebugger.frame.XValuePlace
 - sf:TREE:com.intellij.xdebugger.frame.XValuePlace
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.xdebugger.frame.XValuePlace
 - s:values():com.intellij.xdebugger.frame.XValuePlace[]
+f:com.intellij.xdebugger.frame.XValuePlace$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 c:com.intellij.xdebugger.frame.presentation.XErrorValuePresentation
 - com.intellij.xdebugger.frame.presentation.XValuePresentation
 - <init>(java.lang.String):V

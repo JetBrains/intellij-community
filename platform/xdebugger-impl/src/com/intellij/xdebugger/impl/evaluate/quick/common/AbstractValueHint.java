@@ -78,8 +78,10 @@ public abstract class AbstractValueHint {
   private RangeHighlighter myHighlighter;
   private boolean myCursorSet;
   private final Project myProject;
-  private final Editor myEditor;
-  private final ValueHintType myType;
+  @ApiStatus.Internal
+  protected final Editor myEditor;
+  @ApiStatus.Internal
+  protected final ValueHintType myType;
   protected final Point myPoint;
   private EditorMouseEvent myEditorMouseEvent;
 
