@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.DataExternalizer;
@@ -26,6 +25,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
+import static com.intellij.util.SystemProperties.getIntProperty;
+import static com.intellij.util.indexing.storage.sharding.ShardableIndexExtension.determineShardsCount;
+
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Trigram">trigram index</a> for fast text search.
  * <p>
@@ -36,7 +38,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   public static final ID<Integer, Void> INDEX_ID = ID.create("Trigram.Index");
 
   @Internal
-  public static final int SHARDS = SystemProperties.getIntProperty("idea.indexes.trigram-index-shards", 1);
+  public static final int SHARDS = determineShardsCount(getIntProperty("idea.indexes.trigram-index-shards", 0));
 
   @Internal
   public TrigramIndex() {

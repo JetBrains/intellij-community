@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.CustomInputMapIndexExtension;
 import com.intellij.util.indexing.CustomInputsIndexFileBasedIndexExtension;
 import com.intellij.util.indexing.InputMapExternalizer;
@@ -13,12 +12,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Map;
 
+import static com.intellij.util.SystemProperties.getIntProperty;
+import static com.intellij.util.indexing.storage.sharding.ShardableIndexExtension.determineShardsCount;
+
 @ApiStatus.Internal
 public final class IdIndexImpl extends IdIndex implements CustomInputsIndexFileBasedIndexExtension<IdIndexEntry>,
                                                           CustomInputMapIndexExtension<IdIndexEntry, Integer>,
                                                           ShardableIndexExtension {
 
-  public static final int SHARDS = SystemProperties.getIntProperty("idea.indexes.id-index-shards", 1);
+  public static final int SHARDS = determineShardsCount(getIntProperty("idea.indexes.id-index-shards", 0));
 
   @Override
   public @NotNull DataExternalizer<Map<IdIndexEntry, Integer>> createInputMapExternalizer() {
