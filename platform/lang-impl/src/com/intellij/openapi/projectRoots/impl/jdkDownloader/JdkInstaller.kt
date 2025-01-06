@@ -26,10 +26,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.impl.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelApiBlocking
-import com.intellij.platform.eel.impl.utils.awaitProcessResult
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
@@ -421,6 +420,8 @@ abstract class JdkInstallerBase {
    *
    * The [JdkInstallRequest] may have another [targetPath] if there is such JDK already installed,
    * or it is being installed right now
+   *
+   * @throws JdkInstallationException if [targetPath] is invalid JDK installation directory.
    */
   fun prepareJdkInstallation(jdkItem: JdkItem, targetPath: Path): JdkInstallRequest {
     if (Registry.`is`("jdk.downloader.reuse.installed")) {
@@ -449,7 +450,7 @@ abstract class JdkInstallerBase {
   private fun prepareJdkInstallationImpl(jdkItem: JdkItem, targetPath: Path) : PendingJdkRequest {
     val (home, error) = validateInstallDir(targetPath.toString())
     if (home == null || error != null) {
-      throw RuntimeException(error ?: "Invalid Target Directory")
+      throw JdkInstallationException(error ?: ProjectBundle.message("dialog.message.error.target.path.invalid"))
     }
 
     val javaHome = jdkItem.resolveJavaHome(targetPath)
@@ -710,3 +711,8 @@ class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkI
     fun getInstance(): JdkInstallerStore = service<JdkInstallerStore>()
   }
 }
+
+@Internal
+class JdkInstallationException(
+  val reason: @Nls String,
+) : Exception(reason)

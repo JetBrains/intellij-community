@@ -4,8 +4,6 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -30,8 +28,6 @@ import kotlin.coroutines.resume
 @ApiStatus.Internal
 object JdkDownloadUtil {
 
-  private val LOG = logger<JdkDownloadUtil>()
-
   suspend fun pickJdkItemAndPath(project: Project, filter: (JdkItem) -> Boolean): Pair<JdkItem, Path>? {
     val wsl = project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
     val eel = if (Registry.`is`("java.home.finder.use.eel")) project.getEelApi() else null
@@ -49,20 +45,18 @@ object JdkDownloadUtil {
   }
 
   suspend fun createDownloadTask(project: Project, jdkItem: JdkItem, jdkHome: Path): SdkDownloadTask? {
-    val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(jdkHome.toString())
-    if (selectedFile == null) {
+    val downloadRequest = try {
+      JdkInstaller.getInstance().prepareJdkInstallation(jdkItem, jdkHome)
+    }
+    catch (ex: JdkInstallationException) {
       withContext(Dispatchers.EDT) {
         Messages.showErrorDialog(project,
-                                 ProjectBundle.message("error.message.text.jdk.download.failed", error),
+                                 ProjectBundle.message("error.message.text.jdk.download.failed", ex.reason),
                                  ProjectBundle.message("error.message.title.download.jdk")
         )
       }
       return null
     }
-
-    val downloadRequest = LOG.runAndLogException {
-      JdkInstaller.getInstance().prepareJdkInstallation(jdkItem, selectedFile)
-    } ?: return null
 
     return JdkDownloadTask(jdkItem, downloadRequest, project)
   }
