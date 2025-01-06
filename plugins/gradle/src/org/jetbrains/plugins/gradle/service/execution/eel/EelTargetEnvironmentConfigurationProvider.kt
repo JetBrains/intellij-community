@@ -7,7 +7,9 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.toNioPath
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asEelPathOrNull
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.PathMapper
 import java.nio.file.Path
 
@@ -26,13 +28,13 @@ class EelTargetEnvironmentConfigurationProvider(val eel: EelApi) : TargetEnviron
 
     override fun canReplaceLocal(localPath: String): Boolean {
       val nio = Path.of(localPath)
-      return eel.mapper.getOriginalPath(nio) != null
+      return nio.asEelPathOrNull() != null
     }
 
     override fun convertToLocal(remotePath: String): String {
       val nio = Path.of(remotePath)
       val eelPath = eel.fs.getPath(nio.toCanonicalPath())
-      return eelPath.toNioPath(eel).toCanonicalPath()
+      return eelPath.asNioPath().toCanonicalPath()
     }
 
     override fun canReplaceRemote(remotePath: String): Boolean {
@@ -41,7 +43,7 @@ class EelTargetEnvironmentConfigurationProvider(val eel: EelApi) : TargetEnviron
 
     override fun convertToRemote(localPath: String): String {
       val nioPath = Path.of(localPath)
-      return eel.mapper.getOriginalPath(nioPath).toString()
+      return nioPath.asEelPath().toString()
     }
 
     override fun convertToRemote(paths: MutableCollection<String>): List<String> {

@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.platform.eel.EelApiBase
-import com.intellij.platform.eel.EelPosixApiBase
-import com.intellij.platform.eel.EelWindowsApiBase
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -16,7 +16,7 @@ import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
  *
  * Usually, [com.intellij.platform.ijent.deploy] creates instances of [com.intellij.platform.ijent.IjentApi].
  */
-sealed interface IjentApi : EelApiBase, AutoCloseable {
+sealed interface IjentApi : EelApi, AutoCloseable {
 
   /**
    * Checks if the API is active and is safe to use. If it returns false, IJent on the other side is certainly unavailable.
@@ -54,12 +54,12 @@ sealed interface IjentApi : EelApiBase, AutoCloseable {
   override val fs: IjentFileSystemApi
 }
 
-interface IjentPosixApi : IjentApi, EelPosixApiBase {
+interface IjentPosixApi : IjentApi, EelPosixApi {
   override val fs: IjentFileSystemPosixApi
   override val tunnels: IjentTunnelsPosixApi
 }
 
-interface IjentWindowsApi : IjentApi, EelWindowsApiBase {
+interface IjentWindowsApi : IjentApi, EelWindowsApi {
   override val fs: IjentFileSystemWindowsApi
   override val tunnels: IjentTunnelsWindowsApi
 }

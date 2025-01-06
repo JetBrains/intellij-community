@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.LocalEelApi;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +96,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
 
     if (!(eel instanceof LocalEelApi)) {
       var config = new EelTargetEnvironmentRequest.Configuration(eel);
-      addJavaLangConfig(config, Objects.requireNonNull(eel.getMapper().getOriginalPath(vitrualFilePath)).toString(), jdk);
+      addJavaLangConfig(config, Objects.requireNonNull(EelNioBridgeServiceKt.asEelPath(vitrualFilePath)).toString(), jdk);
       return config;
     }
     return null;

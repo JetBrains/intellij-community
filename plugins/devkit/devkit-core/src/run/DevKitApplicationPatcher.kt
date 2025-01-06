@@ -14,7 +14,7 @@ import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.eel.provider.getEelApiBlocking
+import com.intellij.platform.eel.provider.asEelPathOrNull
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
@@ -151,7 +151,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
     if (!vmParameters.hasProperty("idea.config.path")) {
       val path = Path.of(configuration.workingDirectory!!)
-      val configDirPath = path.getEelApiBlocking().mapper.getOriginalPath(path)?.toString() ?: path.toString()
+      val configDirPath = path.asEelPathOrNull()?.toString() ?: path.toString()
       val dir = FileUtilRt.toSystemIndependentName("$configDirPath/out/dev-data/${productClassifier.lowercase()}")
       vmParameters.addProperty("idea.config.path", "$dir/config")
       vmParameters.addProperty("idea.system.path", "$dir/system")

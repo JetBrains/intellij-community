@@ -38,6 +38,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.LocalEelApi;
 import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -348,7 +349,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
       var mavenHomePath = mavenDistribution.getMavenHome();
       var effectiveMavenHome = StringUtil.notNullize(
-        Optional.ofNullable(eel.getMapper().getOriginalPath(mavenHomePath)).map(EelPath::toString).orElse(mavenHomePath.toString())
+        Optional.ofNullable(EelNioBridgeServiceKt.asEelPathOrNull(mavenHomePath)).map(EelPath::toString).orElse(mavenHomePath.toString())
       );
 
       var mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());

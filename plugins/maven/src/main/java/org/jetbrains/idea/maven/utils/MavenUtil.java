@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.LocalEelApi;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -677,7 +678,7 @@ public class MavenUtil {
 
     String m2home = envs.get(ENV_M2_HOME);
     if (!isEmptyOrSpaces(m2home)) {
-      final Path homeFromEnv = eel.getMapper().toNioPath(getPath(eel.getFs(), m2home));
+      final Path homeFromEnv = EelNioBridgeServiceKt.asNioPath(getPath(eel.getFs(), m2home));
       if (isValidMavenHome(homeFromEnv)) {
         result.add(new MavenInSpecificPath(m2home));
       }
@@ -685,7 +686,7 @@ public class MavenUtil {
 
     String mavenHome = envs.get("MAVEN_HOME");
     if (!isEmptyOrSpaces(mavenHome)) {
-      final Path mavenHomeFile = eel.getMapper().toNioPath(getPath(eel.getFs(), mavenHome));
+      final Path mavenHomeFile = EelNioBridgeServiceKt.asNioPath(getPath(eel.getFs(), mavenHome));
       if (isValidMavenHome(mavenHomeFile)) {
         result.add(new MavenInSpecificPath(mavenHome));
       }
@@ -693,7 +694,7 @@ public class MavenUtil {
 
     var userHome = eel.getFs().getUser().getHome();
     if (!isEmptyOrSpaces(userHome.toString())) {
-      var nioUserHome = eel.getMapper().toNioPath(userHome);
+      var nioUserHome = EelNioBridgeServiceKt.asNioPath(userHome);
       final Path underUserHome = nioUserHome.resolve(M2_DIR);
       if (isValidMavenHome(underUserHome)) {
         result.add(new MavenInSpecificPath(userHome.toString()));
@@ -712,12 +713,12 @@ public class MavenUtil {
       }
     }
     else if (eel.getPlatform() instanceof EelPlatform.Linux) {
-      Path home = eel.getMapper().toNioPath(getPath(eel.getFs(), "/usr/share/maven"));
+      Path home = EelNioBridgeServiceKt.asNioPath(getPath(eel.getFs(), "/usr/share/maven"));
       if (isValidMavenHome(home)) {
         result.add(new MavenInSpecificPath(home.toAbsolutePath().toString()));
       }
 
-      home = eel.getMapper().toNioPath(getPath(eel.getFs(), "/usr/share/maven2"));
+      home = EelNioBridgeServiceKt.asNioPath(getPath(eel.getFs(), "/usr/share/maven2"));
       if (isValidMavenHome(home)) {
         result.add(new MavenInSpecificPath(home.toAbsolutePath().toString()));
       }
@@ -753,7 +754,7 @@ public class MavenUtil {
       symlinkDir = Path.of("/usr/share/maven");
     }
     else {
-      symlinkDir = eelApi.getMapper().toNioPath(getPath(eelApi.getFs(), "/usr/share/maven"));
+      symlinkDir = EelNioBridgeServiceKt.asNioPath(getPath(eelApi.getFs(), "/usr/share/maven"));
     }
 
     if (isValidMavenHome(symlinkDir)) {
@@ -767,7 +768,7 @@ public class MavenUtil {
       dir = Path.of("/usr/share/java");
     }
     else {
-      dir = eelApi.getMapper().toNioPath(getPath(eelApi.getFs(), "/usr/share/java"));
+      dir = EelNioBridgeServiceKt.asNioPath(getPath(eelApi.getFs(), "/usr/share/java"));
     }
 
     List<Path> list = new ArrayList<>();
@@ -806,7 +807,7 @@ public class MavenUtil {
   }
 
   private static @Nullable Path fromBrew(EelApi eelApi) {
-    final Path brewDir = eelApi.getMapper().toNioPath(getPath(eelApi.getFs(), "/usr/local/Cellar/maven"));
+    final Path brewDir = EelNioBridgeServiceKt.asNioPath(getPath(eelApi.getFs(), "/usr/local/Cellar/maven"));
 
     List<Path> list = new ArrayList<>();
 

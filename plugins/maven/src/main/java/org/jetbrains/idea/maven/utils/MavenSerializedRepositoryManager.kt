@@ -9,6 +9,8 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPathOrNull
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -40,7 +42,7 @@ class MavenSerializedRepositoryManager(private val project: Project) : Persisten
     myState.mavenHomePath = state.mavenHomePath
     path = myState.mavenHomePath?.let {
       val api = runBlocking { project.getEelApi() }
-      api.mapper.toNioPath(EelPath.parse(it, api.descriptor))
+      EelPath.parse(it, api.descriptor).asNioPathOrNull()
     }
   }
 
@@ -56,7 +58,7 @@ class MavenSerializedRepositoryManager(private val project: Project) : Persisten
     }
     val projectFilePath = requireNotNull(project.projectFilePath) { "Components should not be loaded for a default project" }
     val detectedHomePath = MavenUtil.resolveDefaultLocalRepository(Path.of(projectFilePath))
-    val detectedHomePathString = runBlocking { project.getEelApi() }.mapper.getOriginalPath(detectedHomePath)?.toString()
+    val detectedHomePathString = detectedHomePath.asEelPath().toString()
     myState.mavenHomePath = detectedHomePathString
     path = detectedHomePath
     return detectedHomePath

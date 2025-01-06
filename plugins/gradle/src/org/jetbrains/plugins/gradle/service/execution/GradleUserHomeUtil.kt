@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.impl.utils.getEelApi
-import com.intellij.platform.eel.toNioPath
+import com.intellij.platform.eel.provider.asNioPath
 import org.gradle.internal.FileUtils
 import org.gradle.internal.SystemProperties
 import java.io.File
@@ -43,6 +43,6 @@ fun gradleUserHomeDir(project: Project): Path {
         return@runBlockingMaybeCancellable nioUserHome
       }
     }
-    return@runBlockingMaybeCancellable eel.userInfo.home.toNioPath(eel).resolve(".gradle")
+    return@runBlockingMaybeCancellable eel.userInfo.home.asNioPath().resolve(".gradle")
   }
 }

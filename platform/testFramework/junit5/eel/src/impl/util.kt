@@ -13,6 +13,7 @@ import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPath.OS
 import com.intellij.platform.eel.provider.EelProvider
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystemProvider
@@ -78,10 +79,6 @@ internal class TestEelProvider(val fileSystem: EelUnitTestFileSystem, val descri
     return eelPath
   }
 
-  override fun nioRoots(): Path {
-    return Path.of(fileSystem.fakeLocalRoot)
-  }
-
   override suspend fun tryInitialize(project: Project) {
     // trivially initialized
   }
@@ -128,7 +125,7 @@ internal fun eelTempDirectoryFixture(fileSystem: TestFixture<IsolatedFileSystem>
   val fsdata = fileSystem.init()
   val eelApi = fsdata.eelApi
   val tempDir = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOrThrow()
-  val nioTempDir = eelApi.mapper.toNioPath(tempDir)
+  val nioTempDir = tempDir.asNioPath()
   initialized(nioTempDir) {
     Files.delete(nioTempDir)
   }

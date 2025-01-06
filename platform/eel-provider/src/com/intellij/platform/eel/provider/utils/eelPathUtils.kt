@@ -1,19 +1,31 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPathOrNull
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.URI
@@ -24,6 +36,7 @@ import java.nio.file.StandardOpenOption.*
 import java.nio.file.attribute.*
 import kotlin.io.path.createDirectories
 import kotlin.io.path.fileAttributesView
+import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 
 @ApiStatus.Internal
@@ -53,7 +66,7 @@ object EelPathUtils {
     return runBlockingMaybeCancellable {
       val eel = Path.of(projectFilePath).getEelApi()
       val file = eel.fs.createTemporaryFile(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException()
-      eel.mapper.toNioPath(file)
+      file.asNioPath()
     }
   }
 
@@ -72,7 +85,7 @@ object EelPathUtils {
   @JvmStatic
   suspend fun createTemporaryDirectory(eelApi: EelApi, prefix: String = ""): Path {
     val file = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().prefix(prefix).build()).getOrThrowFileSystemException()
-    return eelApi.mapper.toNioPath(file)
+    return file.asNioPath()
   }
 
   @JvmStatic
@@ -81,8 +94,7 @@ object EelPathUtils {
       return path.toString()
     }
     return runBlockingMaybeCancellable {
-      val eel = path.getEelApi()
-      val eelPath = eel.mapper.getOriginalPath(path) ?: return@runBlockingMaybeCancellable path.toString()
+      val eelPath = path.asEelPathOrNull() ?: return@runBlockingMaybeCancellable path.toString()
       eelPath.toString()
     }
   }
@@ -96,7 +108,7 @@ object EelPathUtils {
   @JvmStatic
   fun getUriLocalToEel(path: Path): URI = runBlockingMaybeCancellable {
     val eel = path.getEelApi()
-    val eelPath = eel.mapper.getOriginalPath(path)
+    val eelPath = path.asEelPathOrNull()
     if (eelPath == null || eel is LocalEelApi) {
       // there is not mapping by Eel, hence the path may be considered local
       return@runBlockingMaybeCancellable path.toUri()
@@ -125,7 +137,7 @@ object EelPathUtils {
     // todo: intergrate checksums here so that files could be refreshed in case of changes
     val targetPath = sink ?: runBlockingMaybeCancellable {
       val eelTempDir = eel.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOrThrowFileSystemException()
-      eel.mapper.toNioPath(eelTempDir)
+      eelTempDir.asNioPath()
     }
     if (!Files.exists(targetPath)) {
       walkingTransfer(source, targetPath, false, true)
@@ -140,7 +152,7 @@ object EelPathUtils {
       descriptor.upgrade()
     }
     val someEelPath = api.fs.user.home
-    return api.mapper.toNioPath(someEelPath)
+    return someEelPath.asNioPath()
   }
 
   @RequiresBackgroundThread
@@ -319,5 +331,39 @@ object EelPathUtils {
     catch (err: IOException) {
       LOG.info("Failed to copy basic file attributes from $source to $target: $err")
     }
+  }
+
+  suspend fun maybeUploadPath(scope: CoroutineScope, path: Path, target: EelDescriptor): EelPath {
+    val originalPath = path.asEelPathOrNull()
+
+    if (originalPath != null) {
+      return originalPath
+    }
+
+    val eelApi = target.upgrade()
+
+
+    val options = CreateTemporaryEntryOptions.Builder()
+      .prefix(path.fileName.toString())
+      .suffix("eel")
+      .deleteOnExit(true)
+      .build()
+    val tmpDir = eelApi.fs.createTemporaryDirectory(options).getOrThrow()
+    val referencedPath = tmpDir.resolve(path.name)
+
+    withContext(Dispatchers.IO) {
+      walkingTransfer(path, referencedPath.asNioPath(), removeSource = false, copyAttributes = true)
+    }
+
+    scope.awaitCancellationAndInvoke {
+      withContext(Job()) {
+        when (val result = eelApi.fs.delete(tmpDir, true)) {
+          is EelResult.Ok -> Unit
+          is EelResult.Error -> thisLogger().warn("Failed to delete temporary directory $tmpDir: ${result.error}")
+        }
+      }
+    }
+
+    return referencedPath
   }
 }

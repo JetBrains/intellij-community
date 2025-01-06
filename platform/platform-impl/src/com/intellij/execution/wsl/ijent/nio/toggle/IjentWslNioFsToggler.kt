@@ -2,7 +2,6 @@
 package com.intellij.execution.wsl.ijent.nio.toggle
 
 import com.intellij.diagnostic.VMOptions
-import com.intellij.execution.eel.EelApiWithPathsMapping
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentAvailabilityService
@@ -104,12 +103,12 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       if (enabledDistros == null || distro !in enabledDistros) {
         throw IllegalStateException("IJent is not enabled in $distro")
       }
-      return EelApiWithPathsMapping(ephemeralRoot = distro.getUNCRootPath(), WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false))
+      return WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false)
     }
 
     override fun tryConvert(path: Path): EelPath? {
       val root = path.root ?: return null
-      val relevantPath = path.toString().substring(root.toString().length)
+      val relevantPath = "/" + path.toString().substring(root.toString().length).replace('\\', '/')
       val distro = service<IjentWslNioFsToggler>().strategy?.enabledInDistros
         ?.find { distro -> path.root != null && distro.getUNCRootPath().toString() == root.toString() }
         ?.let { WslEelDescriptor(it) }

@@ -8,7 +8,10 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.toNioPath
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.asNioPathOrNull
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,10 +26,10 @@ object JdkInstallerEel {
     targetDirEel: EelPath,
     packageRootPrefixRaw: String,
   ): Unit = runBlockingMaybeCancellable {
-    var downloadFileEelCopy: EelPath? = eel.mapper.getOriginalPath(downloadFile)
+    var downloadFileEelCopy: EelPath = downloadFile.asEelPath()
 
     val tempDirectory: EelPath? =
-      if (downloadFileEelCopy == null) {
+      if (EelPathUtils.isPathLocal(downloadFile)) {
         // TODO Eel downloading API
         val archiveName = downloadFile.name
 
@@ -34,7 +37,7 @@ object JdkInstallerEel {
           .createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().prefix("download-jdk-").build()).getOrThrow()
           .resolve(archiveName)
 
-        Files.copy(downloadFile, downloadFileEelCopy.toNioPath(eel), StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(downloadFile, downloadFileEelCopy.asNioPath(), StandardCopyOption.REPLACE_EXISTING)
 
         downloadFileEelCopy.parent
       }
@@ -53,7 +56,7 @@ object JdkInstallerEel {
       }
       finally {
         try {
-          NioFiles.deleteRecursively(unpackDir.toNioPath(eel))
+          NioFiles.deleteRecursively(unpackDir.asNioPath())
         }
         catch (_: FileSystemException) {
           // Ignored.
@@ -61,7 +64,7 @@ object JdkInstallerEel {
       }
     }
     finally {
-      tempDirectory?.let(eel.mapper::toNioPath)?.let { absolute ->
+      tempDirectory?.asNioPathOrNull()?.let { absolute ->
         NioFiles.deleteRecursively(absolute)
       }
     }
@@ -85,7 +88,7 @@ object JdkInstallerEel {
       error("Failed to move JDK contents from $unpackDir to $packageRootResolved. Invalid metadata is detected")
     }
 
-    if (!Files.isDirectory(packageRootResolved.toNioPath(eel))) {
+    if (!Files.isDirectory(packageRootResolved.asNioPath())) {
       thisLogger().info("Could not unpack JDK in $packageRootResolved. File system entry is not a directory. ")
       return
     }

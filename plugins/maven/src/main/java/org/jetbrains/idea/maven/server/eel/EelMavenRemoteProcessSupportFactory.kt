@@ -8,6 +8,8 @@ import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.impl.utils.getEelApiBlocking
 import com.intellij.platform.eel.impl.utils.getEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport
@@ -47,13 +49,13 @@ class EelRemotePathTransformFactory : RemotePathTransformerFactory {
     return object : RemotePathTransformerFactory.Transformer {
       override fun toRemotePath(localPath: String): String {
         if (localPath.isEmpty()) return localPath
-        return runCatching { eel.mapper.getOriginalPath(Path(localPath)).toString() }.getOrNull() ?: localPath
+        return runCatching { Path(localPath).asEelPath().toString() }.getOrNull() ?: localPath
       }
 
       override fun toIdePath(remotePath: String): String {
         if (remotePath.isEmpty()) return remotePath
         val remotePathWithFixedSeparators = remotePath.replace('\\', '/')
-        return runCatching { eel.mapper.toNioPath(eel.fs.getPath(remotePathWithFixedSeparators)).toString() }.getOrNull() ?: remotePath
+        return runCatching { eel.fs.getPath(remotePathWithFixedSeparators).asNioPath().toString() }.getOrNull() ?: remotePath
       }
 
       override fun canBeRemotePath(s: String?): Boolean {

@@ -4,7 +4,6 @@ package com.intellij.platform.eel.impl.utils
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.ResultErrImpl
 import com.intellij.platform.eel.provider.ResultOkImpl
@@ -61,7 +60,7 @@ suspend fun EelProcess.awaitProcessResult(): ProcessOutput {
   }
 }
 
-fun EelApiBase.whereBlocking(exe: String): EelPath? {
+fun EelApi.whereBlocking(exe: String): EelPath? {
   return runBlockingMaybeCancellable { where(exe) }
 }
 
@@ -86,10 +85,10 @@ fun EelApiBase.whereBlocking(exe: String): EelPath? {
  * }
  * ```
  */
-suspend fun EelApiBase.where(exe: String): EelPath? {
+suspend fun EelApi.where(exe: String): EelPath? {
   val tool = when (this) {
-    is EelPosixApiBase -> "which"
-    is EelWindowsApiBase -> "where.exe"
+    is EelPosixApi -> "which"
+    is EelWindowsApi -> "where.exe"
     else -> throw IllegalArgumentException("Unsupported OS: $this")
   }
 

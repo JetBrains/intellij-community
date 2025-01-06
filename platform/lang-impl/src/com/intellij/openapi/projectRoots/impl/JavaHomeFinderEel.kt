@@ -10,6 +10,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.impl.utils.awaitProcessResult
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
@@ -27,10 +28,10 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
   }
 
   override fun getPath(path: String, vararg more: String): Path =
-    eel.mapper.toNioPath(more.fold(EelPath.parse(path, eel.descriptor), EelPath::resolve))
+    more.fold(EelPath.parse(path, eel.descriptor), EelPath::resolve).asNioPath()
 
   override fun getUserHome(): Path? = with(eel) {
-    mapper.toNioPath(fs.user.home)
+    fs.user.home.asNioPath()
   }
 
   override fun getFsRoots(): Collection<Path> = runBlockingMaybeCancellable {
@@ -39,7 +40,7 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
       is EelFileSystemWindowsApi -> fs.getRootDirectories()
       else -> error(fs)
     }
-    paths.map(eel.mapper::toNioPath)
+    paths.map { it.asNioPath() }
   }
 
   override fun getPathSeparator(): String? =
@@ -103,7 +104,7 @@ internal fun javaHomeFinderEel(eel: EelApi): JavaHomeFinderBasic {
     is EelPlatform.Linux -> {
       val checkPaths = JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS.toMutableSet()
       val userHome = eel.fs.user.home
-      checkPaths.add(eel.mapper.toNioPath(userHome.resolve(".jdks")).toString())
+      checkPaths.add(userHome.resolve(".jdks").asNioPath().toString())
       JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(*checkPaths.toTypedArray())
     }
 

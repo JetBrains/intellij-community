@@ -14,6 +14,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.impl.utils.getEelApiBlocking
+import com.intellij.platform.eel.provider.asEelPathOrNull
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -49,7 +50,7 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
     dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
     val mavenPath = eel.collectMavenDirectories().firstOrNull()?.let { MavenUtil.getMavenHomePath(it) }
     dataHolder.putUserData(MAVEN_HOME_DIR, mavenPath)
-    val targetMavenPath = mavenPath?.let { eel.mapper.getOriginalPath(it)?.toString() }
+    val targetMavenPath = mavenPath?.let { it.asEelPathOrNull()?.toString() }
     dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath)
     val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
     dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion)

@@ -13,9 +13,13 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.pathSeparator
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asEelPathOrNull
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.forwardLocalServer
 import com.intellij.platform.eel.provider.getEelApiBlocking
+import com.intellij.platform.eel.provider.routingPrefix
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import java.nio.charset.Charset
@@ -25,11 +29,11 @@ import kotlin.io.path.name
 
 class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCommandLineBuilder {
   private val eel: EelApi = exePath.getEelApiBlocking()
-  private val commandLine = GeneralCommandLine().withExePath(eel.mapper.getOriginalPath(exePath).toString())
+  private val commandLine = GeneralCommandLine().withExePath(exePath.asEelPath().toString())
 
   private val workingDirectory: Path = run {
     val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
-    PathManager.getDefaultSystemPathFor(eel.platform.asPathManagerOs(), eel.mapper.toNioPath(eel.userInfo.home).toString(), selector)
+    PathManager.getDefaultSystemPathFor(eel.platform.asPathManagerOs(), eel.userInfo.home.asNioPath().toString(), selector)
   }
 
   override fun addParameter(parameter: String) {
@@ -41,7 +45,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun addPathParameter(prefix: String, path: Path) {
-    commandLine.addParameter(prefix + eel.mapper.getOriginalPath(path).toString())
+    commandLine.addParameter(prefix + path.asEelPathOrNull().toString())
   }
 
   override fun addClasspathParameter(classpathInHost: List<String>, classpathInTarget: List<String>) {
@@ -55,7 +59,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun getWorkingDirectory(): String {
-    val path = eel.mapper.getOriginalPath(workingDirectory)
+    val path = workingDirectory.asEelPathOrNull()
                ?: error("Working directory for a process should be computed by the provided Eel API")
     return path.toString()
   }
@@ -69,7 +73,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun copyPathToHostIfRequired(path: Path): String {
-    return eel.mapper.getOriginalPath(copyPathToTargetIfRequired(path)).toString()
+    return copyPathToTargetIfRequired(path).asEelPath().toString()
   }
 
   override fun getYjpAgentPath(yourKitProfilerService: YourKitProfilerService?): String? {
@@ -91,7 +95,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   fun pathPrefix(): String {
-    return eel.mapper.pathPrefix()
+    return eel.descriptor.routingPrefix().toString()
   }
 
   /**

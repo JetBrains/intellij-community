@@ -11,7 +11,7 @@ import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
  */
 interface LocalEelApi : EelApi
 
-interface EelApiBase {
+interface EelApi {
   val descriptor: EelDescriptor
 
   val platform: EelPlatform
@@ -41,29 +41,16 @@ interface EelApiBase {
   }
 }
 
-/**
- * Provides access to a local machine or an IJent process running on some machine. An instance of this interface gives ability to run commands
- * on a local or a remote machine.
- * in a Docker container, every call to execute a process (see [EelExecApi]) runs a command in the same Docker container.
- *
- */
-interface EelApi : EelApiBase {
-  val mapper: EelPathMapper
-}
-
-interface EelPosixApiBase : EelApiBase {
+interface EelPosixApi : EelApi {
   override val platform: EelPlatform.Posix
   override val tunnels: EelTunnelsPosixApi
   override val userInfo: EelUserPosixInfo
   override val fs: EelFileSystemPosixApi
 }
 
-interface EelWindowsApiBase : EelApiBase {
+interface EelWindowsApi : EelApi {
   override val platform: EelPlatform.Windows
   override val tunnels: EelTunnelsWindowsApi
   override val userInfo: EelUserWindowsInfo
   override val fs: EelFileSystemWindowsApi
 }
-
-interface EelPosixApi : EelApi, EelPosixApiBase
-interface EelWindowsApi : EelApi, EelWindowsApiBase

@@ -4,7 +4,7 @@ package com.intellij.platform.eel.impl.local
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.eel.EelApiBase
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelProcess
 import java.io.IOException
 import com.intellij.platform.eel.KillableProcess
@@ -32,7 +32,7 @@ internal class LocalEelProcess private constructor(
 
   private val scope: CoroutineScope = ApplicationManager.getApplication().service<EelLocalApiService>().scope(LocalEelProcess::class)
 
-  override val pid: EelApiBase.Pid = LocalPid(process.pid())
+  override val pid: EelApi.Pid = LocalPid(process.pid())
   override val stdin: EelSendChannel<IOException> = process.outputStream.asEelChannel()
   override val stdout: EelReceiveChannel<IOException> = process.inputStream.consumeAsEelChannel()
   override val stderr: EelReceiveChannel<IOException> = process.errorStream.consumeAsEelChannel()

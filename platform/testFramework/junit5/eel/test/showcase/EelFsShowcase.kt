@@ -3,6 +3,8 @@ package com.intellij.platform.testFramework.junit5.eel.showcase
 
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
@@ -30,8 +32,7 @@ class EelFsShowcase {
   fun `local path can be mapped back to eel paths`() {
     val fsdata = fsAndEelUnix.get()
     val localPath = fsdata.storageRoot.resolve("a").resolve("b").resolve("c")
-    val mapper = fsdata.eelApi.mapper
-    val eelPath = mapper.getOriginalPath(localPath)!!
+    val eelPath = localPath.asEelPath()
     Assertions.assertEquals("/a/b/c", eelPath.toString())
   }
 
@@ -39,21 +40,19 @@ class EelFsShowcase {
   fun `windows api produces windows paths`() {
     val fsdata = fsAndEelWindows.get()
     val root = fsdata.storageRoot
-    val mapper = fsdata.eelApi.mapper
-    val eelPath = mapper.getOriginalPath(root)!!
+    val eelPath = root.asEelPath()
     Assertions.assertTrue(OSAgnosticPathUtil.isUncPath(eelPath.toString()))
   }
 
   @Test
   fun `path mappings are invertible`() {
     val fsdata = fsAndEelUnix.get()
-    val mapper = fsdata.eelApi.mapper
     val nio = fsdata.storageRoot.resolve("a").resolve("b").resolve("c").resolve("d").resolve("e")
     val eel = EelPath.parse("/a/b/c/d/e", fsdata.eelDescriptor)
-    val eelNio = mapper.getOriginalPath(nio)!!
-    val nioEel = mapper.toNioPath(eel)
-    val nioEelNio = mapper.toNioPath(eelNio)
-    val eelNioEel = mapper.getOriginalPath(nioEel)
+    val eelNio = nio.asEelPath()
+    val nioEel = eel.asNioPath()
+    val nioEelNio = eelNio.asNioPath()
+    val eelNioEel = nioEel.asEelPath()
     Assertions.assertEquals(nio, nioEel)
     Assertions.assertEquals(nioEel, nioEelNio)
     Assertions.assertEquals(eel, eelNio)
@@ -78,7 +77,6 @@ class EelFsShowcase {
     val backwardSlashPath = Path.of(path.toString())
     val forwardSlashPath = Path.of(path.toString().replace('\\', '/'))
     Assertions.assertEquals(backwardSlashPath, forwardSlashPath)
-    val mapper = fsAndEelWindows.get().eelApi.mapper
-    Assertions.assertEquals(mapper.getOriginalPath(backwardSlashPath)!!, mapper.getOriginalPath(forwardSlashPath)!!)
+    Assertions.assertEquals(backwardSlashPath.asEelPath(), forwardSlashPath.asEelPath())
   }
 }

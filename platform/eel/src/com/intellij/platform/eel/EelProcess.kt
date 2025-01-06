@@ -11,7 +11,7 @@ import kotlinx.coroutines.Deferred
  *
  */
 interface EelProcess: KillableProcess {
-  val pid: EelApiBase.Pid
+  val pid: EelApi.Pid
 
   /**
    * Although data transmission via this channel could potentially stall due to overflow of [kotlinx.coroutines.channels.Channel],

@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.provider.EelNioBridgeService;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -568,7 +569,7 @@ public class GeneralCommandLine implements UserDataHolder {
     var builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
     if (myWorkingDirectory != null) {
-      builder.directory(myWorkingDirectory.toFile());
+      builder.directory(new File(myWorkingDirectory.toString()));
     }
     builder.redirectErrorStream(myRedirectErrorStream);
     if (myInputFile != null) {

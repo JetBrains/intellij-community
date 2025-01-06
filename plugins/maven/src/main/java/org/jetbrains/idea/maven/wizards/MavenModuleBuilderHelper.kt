@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.impl.utils.getEelApi
-import com.intellij.platform.eel.toNioPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -182,7 +182,7 @@ open class MavenModuleBuilderHelper(
         deleteOnExit(true)
       }
 
-      eel.fs.createTemporaryDirectory(tmpOptions.build()).getOrThrow { throw IOException(it.message) }.toNioPath(eel)
+      eel.fs.createTemporaryDirectory(tmpOptions.build()).getOrThrow { throw IOException(it.message) }.asNioPath()
     }
     catch (e: IOException) {
       showError(project, e)

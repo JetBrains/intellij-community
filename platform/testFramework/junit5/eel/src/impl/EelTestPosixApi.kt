@@ -3,7 +3,6 @@ package com.intellij.platform.testFramework.junit5.eel.impl
 
 import com.intellij.platform.eel.EelArchiveApi
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelPathMapper
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.EelResult
@@ -11,8 +10,8 @@ import com.intellij.platform.eel.EelTunnelsPosixApi
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.fs.PosixNioBasedEelFileSystemApi
-import com.intellij.platform.eel.impl.local.EelLocalExecApi
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.util.system.CpuArch
 import java.nio.file.Files
@@ -28,9 +27,7 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
       EelPlatform.X8664Linux
     }
 
-  override val mapper: EelPathMapper = EelTestPathMapper(descriptor, localPrefix)
-
-  override val fs: PosixNioBasedEelFileSystemApi = EelTestFileSystemPosixApi(descriptor, mapper, fileSystem)
+  override val fs: PosixNioBasedEelFileSystemApi = EelTestFileSystemPosixApi(descriptor, fileSystem)
 
   override val archive: EelArchiveApi
     get() = TODO()
@@ -41,7 +38,7 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
 
 }
 
-private class EelTestFileSystemPosixApi(override val descriptor: EelTestDescriptor, val mapper: EelPathMapper, fileSystem: EelUnitTestFileSystem) : PosixNioBasedEelFileSystemApi(fileSystem, EelTestPosixUserInfo(descriptor)) {
+private class EelTestFileSystemPosixApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem) : PosixNioBasedEelFileSystemApi(fileSystem, EelTestPosixUserInfo(descriptor)) {
 
   override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
     TODO("Not yet implemented")
@@ -50,7 +47,7 @@ private class EelTestFileSystemPosixApi(override val descriptor: EelTestDescript
   override suspend fun createTemporaryDirectory(options: EelFileSystemApi.CreateTemporaryEntryOptions): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
     return wrapIntoEelResult {
       val nioTempDir = Files.createTempDirectory(fs.rootDirectories.single(), options.prefix)
-      mapper.getOriginalPath(nioTempDir)!!
+      nioTempDir.asEelPath()
     }
   }
 

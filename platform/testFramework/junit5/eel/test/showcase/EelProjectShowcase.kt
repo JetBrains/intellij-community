@@ -2,6 +2,7 @@
 package com.intellij.platform.testFramework.junit5.eel.showcase
 
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
@@ -20,11 +21,10 @@ class EelProjectShowcase {
   @Test
   fun `project is located on eel`() {
     val project = project.get()
-    val eel = eel.get().eelApi
 
     val pathToProjectFile = Path.of(project.projectFilePath!!)
 
-    Assertions.assertNotNull(eel.mapper.getOriginalPath(pathToProjectFile))
+    Assertions.assertNotNull(pathToProjectFile.asEelPath())
     Assertions.assertFalse(EelPathUtils.isPathLocal(pathToProjectFile))
   }
 

@@ -4,7 +4,6 @@ package com.intellij.platform.testFramework.junit5.eel.impl
 import com.intellij.platform.eel.EelArchiveApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelPathMapper
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsWindowsApi
@@ -27,8 +26,6 @@ internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fil
     else {
       EelPlatform.X64Windows
     }
-
-  override val mapper: EelPathMapper = EelTestPathMapper(descriptor, localPrefix)
 
   override val fs: WindowsNioBasedEelFileSystemApi = EelTestFileSystemWindowsApi(descriptor, fileSystem)
 

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveUsingEel
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -21,7 +22,7 @@ class MavenEffectivePomEvaluator {
           val profiles = mavenProject.activatedProfilesIds
           val virtualFile = mavenProject.file
           val projectFile = resolveUsingEel(project, { File(virtualFile.path) }) {
-            File(it.mapper.getOriginalPath(Path(virtualFile.path)).toString())
+            File(Path(virtualFile.path).asEelPath().toString())
           }
           return@withBackgroundProgress embedder.evaluateEffectivePom(projectFile, profiles.enabledProfiles, profiles.disabledProfiles)
         }

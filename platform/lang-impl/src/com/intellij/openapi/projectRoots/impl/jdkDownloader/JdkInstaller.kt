@@ -26,10 +26,13 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.impl.utils.awaitProcessResult
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelApiBlocking
+import com.intellij.platform.eel.impl.utils.awaitProcessResult
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asEelPathOrNull
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
@@ -126,7 +129,7 @@ class JdkInstaller : JdkInstallerBase() {
 
   private class EelForJdkInstallerImpl(override val eel: EelApi) : OsAbstractionForJdkInstaller.Eel {
     override fun getPath(path: Path): String =
-      eel.mapper.getOriginalPath(path)?.toString() ?: error("Failed to map $path to WSL")
+      path.asEelPathOrNull()?.toString() ?: error("Failed to map $path to WSL")
 
     override fun execute(command: List<String>, dir: String, timeout: Int): ProcessOutput = runBlockingCancellable {
       val builder = EelExecApi
@@ -180,7 +183,7 @@ class JdkInstaller : JdkInstallerBase() {
     }
 
     val jdks = userHome.resolve(relativePath)
-    return eel.mapper.toNioPath(jdks)
+    return jdks.asNioPath()
   }
 
   private fun defaultInstallDir(wslDistribution: WSLDistribution?) : Path {
@@ -371,7 +374,7 @@ abstract class JdkInstallerBase {
 
       try {
         if (eel != null) {
-          val targetDirEel = eel.mapper.getOriginalPath(targetDir) ?: TODO("Failed to map $targetDir to $eel")
+          val targetDirEel = targetDir.asEelPath()
           unpackJdkOnEel(eel, downloadFile, targetDirEel, item.packageRootPrefix)
         }
         else if (wslDistribution != null) {
