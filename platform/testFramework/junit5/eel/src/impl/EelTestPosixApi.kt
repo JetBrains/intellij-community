@@ -36,7 +36,8 @@ internal class EelTestPosixApi(fileSystem: EelUnitTestFileSystem, localPrefix: S
     get() = TODO()
   override val tunnels: EelTunnelsPosixApi
     get() = TODO()
-  override val exec: EelExecApi = EelLocalExecApi()
+  override val exec: EelExecApi
+    get() = TODO()
 
 }
 
