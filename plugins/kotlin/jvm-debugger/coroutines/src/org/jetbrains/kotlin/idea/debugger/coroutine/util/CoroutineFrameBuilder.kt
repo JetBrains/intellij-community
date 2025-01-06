@@ -148,8 +148,7 @@ class CoroutineFrameBuilder {
             if (!threadAndContextSupportsEvaluation(suspendContext, frame)) return null
             val (theFollowingFrames, _) = theFollowingFrames(frame)
             val context = DefaultExecutionContext(suspendContext, frame)
-            val continuationHolder = ContinuationHolder.instance(context)
-            val coroutineStacksInfo = continuationHolder.extractCoroutineStacksInfoData(continuation) ?: return null
+            val coroutineStacksInfo = fetchCoroutineStacksInfoData(context, continuation) ?: return null
             return CoroutinePreflightFrame(
                 coroutineStacksInfo,
                 frame,

@@ -1,21 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
+import com.sun.jdi.ObjectReference
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.ContinuationHolder
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineInfo
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.fetchCoroutineStacksInfoData
 
-class CoroutineStackFramesProvider(executionContext: DefaultExecutionContext) {
-    private val continuationHolder = ContinuationHolder.instance(executionContext)
-    
-    fun getContinuationStack(mirror: MirrorOfCoroutineInfo): List<CoroutineStackFrameItem> {
-        val continuation = mirror.lastObservedFrame ?: return emptyList()
-        return continuationHolder.extractCoroutineStacksInfoData(continuation)?.continuationStackFrames
-            ?: emptyList()
+class CoroutineStackFramesProvider(private val executionContext: DefaultExecutionContext) {
+
+    fun fetchCoroutineStackFrames(lastObservedFrame: ObjectReference?): CoroutineStacksInfoData? {
+        lastObservedFrame ?: return null
+        return fetchCoroutineStacksInfoData(executionContext, lastObservedFrame)
     }
-    
-    fun getCreationStackTrace(mirror: MirrorOfCoroutineInfo): List<CreationCoroutineStackFrameItem> =
-        mirror.creationStackTraceProvider.getStackTrace().mapIndexed { index, frame ->
-            CreationCoroutineStackFrameItem(continuationHolder.locationCache.createLocation(frame.stackTraceElement()), index == 0)
-        }
 }
