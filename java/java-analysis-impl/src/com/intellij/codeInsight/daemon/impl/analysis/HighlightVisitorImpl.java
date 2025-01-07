@@ -245,15 +245,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitAnnotation(@NotNull PsiAnnotation annotation) {
     super.visitAnnotation(annotation);
     if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkDuplicateAnnotations(annotation, myLanguageLevel));
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkInvalidAnnotationOnRecordComponent(annotation));
     if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkRepeatableAnnotation(annotation));
-    if (CommonClassNames.JAVA_LANG_OVERRIDE.equals(annotation.getQualifiedName())) {
-      PsiAnnotationOwner owner = annotation.getOwner();
-      PsiElement parent = owner instanceof PsiModifierList list ? list.getParent() : null;
-      if (parent instanceof PsiMethod psiMethod) {
-        add(GenericsHighlightUtil.checkOverrideAnnotation(psiMethod, annotation, myLanguageLevel));
-      }
-    }
   }
 
   private boolean add(@Nullable HighlightInfo.Builder builder) {
@@ -938,7 +930,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitMethod(method);
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(method.getBody()));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkConstructorHandleSuperClassExceptions(method));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkSafeVarargsAnnotation(method, myLanguageLevel));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkRecordAccessorDeclaration(method));
     if (!hasErrorResults()) HighlightMethodUtil.checkRecordConstructorDeclaration(method, myErrorSink);
 

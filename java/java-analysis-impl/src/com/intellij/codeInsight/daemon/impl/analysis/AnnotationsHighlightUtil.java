@@ -14,7 +14,6 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -432,16 +431,6 @@ public final class AnnotationsHighlightUtil {
         .registerFix(moveAnnotationToPackageInfoFileFix, null, null, null, null);
     }
     return null;
-  }
-
-  static HighlightInfo.Builder checkInvalidAnnotationOnRecordComponent(@NotNull PsiAnnotation annotation) {
-    if (!Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_SAFE_VARARGS)) return null;
-    PsiAnnotationOwner owner = annotation.getOwner();
-    if (!(owner instanceof PsiModifierList list)) return null;
-    PsiElement parent = list.getParent();
-    if (!(parent instanceof PsiRecordComponent)) return null;
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation)
-      .descriptionAndTooltip(JavaErrorBundle.message("safevararg.annotation.cannot.be.applied.for.record.component"));
   }
 
   static HighlightInfo.Builder checkRepeatableAnnotation(@NotNull PsiAnnotation annotation) {

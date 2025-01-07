@@ -7,7 +7,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
@@ -72,8 +76,10 @@ final class AnnotationChecker {
     if (!myVisitor.hasErrorResults()) checkAnnotationApplicability(annotation);
     if (!myVisitor.hasErrorResults()) checkAnnotationType(annotation);
     if (!myVisitor.hasErrorResults()) checkMissingAttributes(annotation);
+    if (!myVisitor.hasErrorResults()) checkSafeVarargAnnotation(annotation);
     if (!myVisitor.hasErrorResults()) checkTargetAnnotationDuplicates(annotation);
     if (!myVisitor.hasErrorResults()) checkFunctionalInterface(annotation);
+    if (!myVisitor.hasErrorResults()) checkOverrideAnnotation(annotation);
   }
 
   private void checkFunctionalInterface(@NotNull PsiAnnotation annotation) {
@@ -92,6 +98,23 @@ final class AnnotationChecker {
             myVisitor.report(JavaErrorKinds.LAMBDA_FUNCTIONAL_INTERFACE_SEALED.create(annotation, psiClass));
           }
         }
+      }
+    }
+  }
+
+  private void checkSafeVarargAnnotation(@NotNull PsiAnnotation annotation) {
+    if (!Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_SAFE_VARARGS)) return;
+    PsiAnnotationOwner owner = annotation.getOwner();
+    if (!(owner instanceof PsiModifierList list)) return;
+    PsiElement parent = list.getParent();
+    if (parent instanceof PsiRecordComponent) {
+      myVisitor.report(JavaErrorKinds.SAFE_VARARGS_ON_RECORD_COMPONENT.create(annotation));
+    } else if (parent instanceof PsiMethod method) {
+      if (!method.isVarArgs()) {
+        myVisitor.report(JavaErrorKinds.SAFE_VARARGS_ON_FIXED_ARITY.create(annotation, method));
+      }
+      else if (!GenericsUtil.isSafeVarargsNoOverridingCondition(method)) {
+        myVisitor.report(JavaErrorKinds.SAFE_VARARGS_ON_NON_FINAL_METHOD.create(annotation, method));
       }
     }
   }
@@ -234,6 +257,52 @@ final class AnnotationChecker {
           targets.add(target);
         }
       }
+    }
+  }
+
+  private void checkOverrideAnnotation(@NotNull PsiAnnotation annotation) {
+    if (!CommonClassNames.JAVA_LANG_OVERRIDE.equals(annotation.getQualifiedName())) return;
+    if (!(annotation.getOwner() instanceof PsiModifierList list)) return;
+    if (!(list.getParent() instanceof PsiMethod method)) return;
+    if (method.hasModifierProperty(PsiModifier.STATIC)) {
+      myVisitor.report(JavaErrorKinds.OVERRIDE_ON_STATIC_METHOD.create(annotation, method));
+    }
+    MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
+    PsiClass psiClass = method.getContainingClass();
+    if (psiClass != null) {
+      if (superMethod != null && psiClass.isInterface()) {
+        PsiMethod psiMethod = superMethod.getMethod();
+        PsiClass superClass = psiMethod.getContainingClass();
+        if (superClass != null &&
+            CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()) &&
+            psiMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
+          superMethod = null;
+        }
+      }
+      else if (superMethod == null) {
+        if (IncompleteModelUtil.isIncompleteModel(psiClass)) {
+          if (!IncompleteModelUtil.isHierarchyResolved(psiClass)) {
+            return;
+          }
+        }
+        else {
+          for (PsiClassType type : psiClass.getSuperTypes()) {
+            // There's an unresolvable superclass: likely the error on @Override is induced.
+            // Do not show an error on override, as it's reasonable to fix hierarchy first.
+            if (type.resolve() == null) return;
+          }
+        }
+      }
+    }
+    if (superMethod == null) {
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) == null) {
+        myVisitor.report(JavaErrorKinds.OVERRIDE_ON_NON_OVERRIDING_METHOD.create(annotation, method));
+      }
+      return;
+    }
+    PsiClass superClass = superMethod.getMethod().getContainingClass();
+    if (superClass != null && superClass.isInterface()) {
+      myVisitor.checkFeature(annotation, JavaFeature.OVERRIDE_INTERFACE);
     }
   }
 }

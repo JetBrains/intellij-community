@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
@@ -645,5 +646,16 @@ public final class GenericsUtil {
     if (target == null) return classType;
     return JavaPsiFacade.getElementFactory(target.getProject())
       .createType(target, parameters).annotate(classType.getAnnotationProvider());
+  }
+
+  /**
+   * @param method method to check
+   * @return true if a given method can be annotated as safe-varargs according to its overridability
+   */
+  public static boolean isSafeVarargsNoOverridingCondition(@NotNull PsiMethod method) {
+    return method.hasModifierProperty(PsiModifier.FINAL) ||
+           method.hasModifierProperty(PsiModifier.STATIC) ||
+           method.isConstructor() ||
+           method.hasModifierProperty(PsiModifier.PRIVATE) && PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_9);
   }
 }

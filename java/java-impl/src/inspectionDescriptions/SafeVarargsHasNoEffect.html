@@ -1,0 +1,15 @@
+<html>
+<body>
+Reports write operations inside <code>@SafeVarargs</code> methods where vararg parameter is reassigned to something else.
+In this case, newly assigned array is not related to the variable arity arguments at the call site and might not be safe anymore.
+<p><b>Example:</b></p>
+<pre><code>
+    @SafeVarargs
+    public final &lt;T&gt; void test(T[] tt, T... t) {
+        t = tt;
+        System.out.println(t[0]);
+    }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

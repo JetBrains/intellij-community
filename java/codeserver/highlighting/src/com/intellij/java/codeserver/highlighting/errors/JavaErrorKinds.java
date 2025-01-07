@@ -56,7 +56,7 @@ public final class JavaErrorKinds {
     };
   // Can be anchored on @FunctionalInterface annotation or at call site
   public static final JavaErrorKind<PsiElement, PsiClass> LAMBDA_NO_TARGET_METHOD =
-    new Parameterized<>("lambda.no.target.method.found") {};
+    new Parameterized<>("lambda.no.target.method.found");
   // Can be anchored on @FunctionalInterface annotation or at call site
   public static final JavaErrorKind<PsiElement, PsiClass> LAMBDA_MULTIPLE_TARGET_METHODS =
     new Parameterized<>("lambda.multiple.sam.candidates") {
@@ -66,7 +66,7 @@ public final class JavaErrorKinds {
       }
     };
   public static final JavaErrorKind<PsiAnnotation, PsiClass> LAMBDA_FUNCTIONAL_INTERFACE_SEALED =
-    new Parameterized<>("lambda.sealed.functional.interface") {};
+    new Parameterized<>("lambda.sealed.functional.interface");
   public static final JavaErrorKind<PsiAnnotation, @NotNull List<PsiAnnotation.@NotNull TargetType>> ANNOTATION_NOT_APPLICABLE =
     new Parameterized<>("annotation.not.applicable") {
       @Override
@@ -98,4 +98,14 @@ public final class JavaErrorKinds {
           "annotation.missing.attribute", attributeNames.stream().map(attr -> "'" + attr + "'").collect(Collectors.joining(", "))));
       }
     };
+  public static final JavaSimpleErrorKind<PsiAnnotation> SAFE_VARARGS_ON_RECORD_COMPONENT =
+    new JavaSimpleErrorKind<>("safe.varargs.on.record.component");
+  public static final JavaErrorKind<PsiAnnotation, PsiMethod> SAFE_VARARGS_ON_FIXED_ARITY =
+    new Parameterized<>("safe.varargs.on.fixed.arity");
+  public static final JavaErrorKind<PsiAnnotation, PsiMethod> SAFE_VARARGS_ON_NON_FINAL_METHOD =
+    new Parameterized<>("safe.varargs.on.non.final.method");
+  public static final JavaErrorKind<PsiAnnotation, PsiMethod> OVERRIDE_ON_STATIC_METHOD =
+    new Parameterized<>("override.on.static.method");
+  public static final JavaErrorKind<PsiAnnotation, PsiMethod> OVERRIDE_ON_NON_OVERRIDING_METHOD =
+    new Parameterized<>("override.on.non-overriding.method");
 }

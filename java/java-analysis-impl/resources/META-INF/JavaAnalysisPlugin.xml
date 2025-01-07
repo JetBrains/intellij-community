@@ -134,6 +134,16 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection"
                      key="inspection.safe.varargs.detector.display.name" bundle="messages.JavaAnalysisBundle"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SafeVarargsHasNoEffect"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SafeVarargsHasNoEffectInspection"
+                     key="safe.varargs.not.suppress.potentially.unsafe.operations" bundle="messages.JavaAnalysisBundle"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SafeVarargsOnNonReifiableType"
+                     groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SafeVarargsOnNonReifiableTypeInspection"
+                     key="safe.varargs.on.reifiable.type" bundle="messages.JavaAnalysisBundle"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="CodeBlock2Expr"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection"

@@ -12,7 +12,6 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -30,13 +29,11 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1113,123 +1110,6 @@ public final class GenericsHighlightUtil {
       return info;
     }
     return null;
-  }
-
-  static HighlightInfo.Builder checkOverrideAnnotation(@NotNull PsiMethod method,
-                                               @NotNull PsiAnnotation overrideAnnotation,
-                                               @NotNull LanguageLevel languageLevel) {
-    if (method.hasModifierProperty(PsiModifier.STATIC)) {
-      QuickFixFactory factory = QuickFixFactory.getInstance();
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(overrideAnnotation)
-        .registerFix(factory.createDeleteFix(overrideAnnotation), null, null, null, null)
-        .descriptionAndTooltip(
-          JavaErrorBundle.message("static.method.cannot.be.annotated.with.override"));
-    }
-    try {
-      MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
-      PsiClass psiClass = method.getContainingClass();
-      if (psiClass != null) {
-        if (superMethod != null && psiClass.isInterface()) {
-          PsiMethod psiMethod = superMethod.getMethod();
-          PsiClass superClass = psiMethod.getContainingClass();
-          if (superClass != null &&
-              CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()) &&
-              psiMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
-            superMethod = null;
-          }
-        } else if (superMethod == null) {
-          if (IncompleteModelUtil.isIncompleteModel(psiClass)) {
-            if (!IncompleteModelUtil.isHierarchyResolved(psiClass)) {
-              return null;
-            }
-          } else {
-            for (PsiClassType type : psiClass.getSuperTypes()) {
-              // There's an unresolvable superclass: likely the error on @Override is induced.
-              // Do not show an error on override, as it's reasonable to fix hierarchy first.
-              if (type.resolve() == null) return null;
-            }
-          }
-        }
-      }
-      if (superMethod == null) {
-        if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
-          return null;
-        }
-        String description = JavaErrorBundle.message("method.does.not.override.super");
-        HighlightInfo.Builder builder =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(overrideAnnotation).descriptionAndTooltip(description);
-        List<IntentionAction> registrar = new ArrayList<>();
-        QuickFixFactory factory = QuickFixFactory.getInstance();
-        factory.registerPullAsAbstractUpFixes(method, registrar);
-        for (IntentionAction action : registrar) {
-          builder.registerFix(action, null, null, null, null);
-        }
-        builder.registerFix(factory.createDeleteFix(overrideAnnotation), null, null, null, null);
-        return builder;
-      }
-      PsiClass superClass = superMethod.getMethod().getContainingClass();
-      if (superClass != null && superClass.isInterface()) {
-        return HighlightUtil.checkFeature(overrideAnnotation, JavaFeature.OVERRIDE_INTERFACE, languageLevel,
-                                   overrideAnnotation.getContainingFile());
-      }
-      return null;
-    }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-  }
-
-  static HighlightInfo.Builder checkSafeVarargsAnnotation(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
-    PsiModifierList list = method.getModifierList();
-    PsiAnnotation safeVarargsAnnotation = list.findAnnotation(CommonClassNames.JAVA_LANG_SAFE_VARARGS);
-    if (safeVarargsAnnotation == null) {
-      return null;
-    }
-    try {
-      if (!method.isVarArgs()) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(safeVarargsAnnotation).descriptionAndTooltip(
-          JavaErrorBundle.message("safevarargs.not.allowed.on.methods.with.fixed.arity"));
-      }
-      if (!isSafeVarargsNoOverridingCondition(method, languageLevel)) {
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(safeVarargsAnnotation).descriptionAndTooltip(
-            JavaErrorBundle.message("safevarargs.not.allowed.non.final.instance.methods"));
-        IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.FINAL, true, true);
-        info.registerFix(action, null, null, null, null);
-        return info;
-      }
-
-      PsiParameterList parameterList = method.getParameterList();
-      PsiParameter varParameter = Objects.requireNonNull(parameterList.getParameter(parameterList.getParametersCount() - 1));
-
-      for (PsiReferenceExpression element : VariableAccessUtils.getVariableReferences(varParameter, method.getBody())) {
-        if (!PsiUtil.isAccessedForReading(element)) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element).descriptionAndTooltip(
-            JavaErrorBundle.message("safevarargs.not.suppress.potentially.unsafe.operations"));
-        }
-      }
-
-
-      LOG.assertTrue(varParameter.isVarArgs());
-      PsiEllipsisType ellipsisType = (PsiEllipsisType)varParameter.getType();
-      PsiType componentType = ellipsisType.getComponentType();
-      if (JavaGenericsUtil.isReifiableType(componentType)) {
-        PsiElement element = varParameter.getTypeElement();
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(element).descriptionAndTooltip(
-          JavaErrorBundle.message("safevarargs.not.applicable.for.reifiable.types"));
-      }
-      return null;
-    }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-  }
-
-  public static boolean isSafeVarargsNoOverridingCondition(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
-    return method.hasModifierProperty(PsiModifier.FINAL) ||
-           method.hasModifierProperty(PsiModifier.STATIC) ||
-           method.isConstructor() ||
-           method.hasModifierProperty(PsiModifier.PRIVATE) && languageLevel.isAtLeast(LanguageLevel.JDK_1_9);
   }
 
   static void checkEnumConstantForConstructorProblems(@NotNull Project project,

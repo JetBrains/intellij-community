@@ -40,6 +40,13 @@ final class JavaErrorFixProvider {
   private static final Map<JavaErrorKind<?, ?>, List<JavaFixesProvider<?, ?>>> FIXES = new HashMap<>();
 
   static {
+    single(SAFE_VARARGS_ON_NON_FINAL_METHOD,
+           error -> QuickFixFactory.getInstance().createModifierListFix(error.context(), PsiModifier.FINAL, true, true));
+    multi(OVERRIDE_ON_NON_OVERRIDING_METHOD, error -> {
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      QuickFixFactory.getInstance().registerPullAsAbstractUpFixes(error.context(), registrar);
+      return registrar;
+    });
     JavaFixProvider<PsiElement, Object> annotationRemover = error ->
       error.psi() instanceof PsiAnnotation annotation ? QuickFixFactory.getInstance()
         .createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation")) : null;
@@ -47,7 +54,9 @@ final class JavaErrorFixProvider {
                                             ANNOTATION_NOT_ALLOWED_REF, ANNOTATION_NOT_ALLOWED_VAR,
                                             ANNOTATION_NOT_ALLOWED_VOID, LAMBDA_MULTIPLE_TARGET_METHODS, LAMBDA_NO_TARGET_METHOD,
                                             LAMBDA_NOT_FUNCTIONAL_INTERFACE, ANNOTATION_NOT_APPLICABLE,
-                                            LAMBDA_FUNCTIONAL_INTERFACE_SEALED)) {
+                                            LAMBDA_FUNCTIONAL_INTERFACE_SEALED, OVERRIDE_ON_STATIC_METHOD,
+                                            OVERRIDE_ON_NON_OVERRIDING_METHOD, SAFE_VARARGS_ON_FIXED_ARITY,
+                                            SAFE_VARARGS_ON_NON_FINAL_METHOD, SAFE_VARARGS_ON_RECORD_COMPONENT)) {
       single(kind, annotationRemover);
     }
     single(ANNOTATION_NOT_ALLOWED_VAR, error -> {

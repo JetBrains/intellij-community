@@ -2,7 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -154,7 +153,8 @@ public final class PossibleHeapPollutionVarargsInspection extends AbstractBaseJa
 
     protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
       final LocalQuickFix quickFix;
-      if (GenericsHighlightUtil.isSafeVarargsNoOverridingCondition(method, PsiUtil.getLanguageLevel(method))) {
+      PsiUtil.getLanguageLevel(method);
+      if (GenericsUtil.isSafeVarargsNoOverridingCondition(method)) {
         quickFix = new AnnotateAsSafeVarargsQuickFix(false);
       }
       else {

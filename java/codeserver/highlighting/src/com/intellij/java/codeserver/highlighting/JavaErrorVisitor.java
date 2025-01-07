@@ -6,10 +6,7 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +54,28 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitAnnotation(annotation);
     if (!hasErrorResults()) checkFeature(annotation, JavaFeature.ANNOTATIONS);
     myAnnotationChecker.checkAnnotation(annotation);
+  }
+
+  @Override
+  public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
+    super.visitNameValuePair(pair);
+    myAnnotationChecker.checkNameValuePair(pair);
+  }
+
+  @Override
+  public void visitAnnotationArrayInitializer(@NotNull PsiArrayInitializerMemberValue initializer) {
+    super.visitAnnotationArrayInitializer(initializer);
+    myAnnotationChecker.checkArrayInitializer(initializer);
+  }
+
+  @Override
+  public void visitAnnotationMethod(@NotNull PsiAnnotationMethod method) {
+    super.visitAnnotationMethod(method);
+    PsiType returnType = method.getReturnType();
+    PsiAnnotationMemberValue value = method.getDefaultValue();
+    if (returnType != null && value != null) {
+      myAnnotationChecker.checkMemberValueType(value, returnType, method);
+    }
   }
 
   void checkFeature(@NotNull PsiElement element, @NotNull JavaFeature feature) {
