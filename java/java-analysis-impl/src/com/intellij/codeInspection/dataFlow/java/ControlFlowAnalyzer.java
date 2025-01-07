@@ -1210,8 +1210,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (patternType == null ||
         ((checkType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
          (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context) || !TypeConversionUtil.areTypesConvertible(checkType, patternType))) ||
-        (checkType instanceof PsiClassType ct && ct.resolve() == null) ||
-        (patternType instanceof PsiClassType pt && pt.resolve() == null)) {
+        isUnresolvedType(checkType) || isUnresolvedType(patternType)) {
       addInstruction(new PopInstruction());
       pushUnknown();
       return;
@@ -1269,6 +1268,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushValueInstruction(DfTypes.typedObject(patternType, Nullability.NOT_NULL)));
       addInstruction(new InstanceofInstruction(instanceofAnchor, false));
     }
+  }
+
+  private static boolean isUnresolvedType(@NotNull PsiType type) {
+    return type.getDeepComponentType() instanceof PsiClassType ct && ct.resolve() == null;
   }
 
   private void generateExactTestingConversion(@NotNull PsiElement context,
