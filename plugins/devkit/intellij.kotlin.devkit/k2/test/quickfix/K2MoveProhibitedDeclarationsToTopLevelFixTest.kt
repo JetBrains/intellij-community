@@ -9,4 +9,10 @@ class K2MoveProhibitedDeclarationsToTopLevelFixTest : KtMoveProhibitedDeclaratio
   override val pluginMode: KotlinPluginMode
     get() = KotlinPluginMode.K2
 
+  fun testMoveConflicts() {
+    val expectedConflicts = listOf(
+      "Following declarations would clash: to move function 'fun foo()' and destination function 'fun foo()' declared in scope default",
+    )
+    doTestFixWithConflicts(fixName, expectedConflicts)
+  }
 }
