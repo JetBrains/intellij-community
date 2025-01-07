@@ -1258,14 +1258,6 @@ c:com.intellij.codeInsight.template.impl.MacroCallNode
 f:com.intellij.codeInsight.template.impl.MacroParser
 - <init>():V
 - s:parse(java.lang.String):com.intellij.codeInsight.template.Expression
-com.intellij.codeInsight.template.impl.MacroTokenType
-- sf:COMMA:com.intellij.psi.tree.IElementType
-- sf:EQ:com.intellij.psi.tree.IElementType
-- sf:IDENTIFIER:com.intellij.psi.tree.IElementType
-- sf:LPAREN:com.intellij.psi.tree.IElementType
-- sf:RPAREN:com.intellij.psi.tree.IElementType
-- sf:STRING_LITERAL:com.intellij.psi.tree.IElementType
-- sf:WHITE_SPACE:com.intellij.psi.tree.IElementType
 c:com.intellij.codeInsight.template.impl.SelectionNode
 - com.intellij.codeInsight.template.Expression
 - <init>():V
