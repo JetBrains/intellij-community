@@ -3,7 +3,7 @@ package com.intellij.platform.ide.impl.customization
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.updateSettings.impl.UpdateRequestParameters
+import com.intellij.openapi.updateSettings.impl.UpdateRequestParametersProvider
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
@@ -25,7 +25,7 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
         return Urls.newFromEncoded(customUrl)
       }
       val baseUrl = ApplicationInfoEx.getInstanceEx().updateUrls?.checkingUrl ?: return null
-      return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded(baseUrl))
+      return UpdateRequestParametersProvider.passUpdateParameters(Urls.newFromEncoded(baseUrl))
     }
 
   override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url? {

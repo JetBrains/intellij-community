@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -19,11 +19,16 @@ import java.util.LinkedHashMap;
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 @ApiStatus.Internal
-public final class UpdateRequestParameters {
+public class DefaultUpdateRequestParametersProvider implements UpdateRequestParametersProvider {
   private static final NullableLazyValue<String> ourMachineId =
     lazyNullable(() -> MachineIdManager.INSTANCE.getAnonymizedMachineId("JetBrainsUpdates"));
 
-  public static @NotNull Url amendUpdateRequest(@NotNull Url url) {
+  @Override
+  public @NotNull Url amendUpdateRequest(@NotNull Url url) {
+    return passDefaultParameters(url);
+  }
+
+  public static @NotNull Url passDefaultParameters(@NotNull Url url) {
     if (URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
       return url;
     }
