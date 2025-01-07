@@ -12,6 +12,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint
 import com.intellij.debugger.ui.breakpoints.SteppingBreakpoint
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -166,7 +167,7 @@ class KotlinLambdaAsyncMethodFilter(
             val suspendContext = action.suspendContext ?: return false
             val location = suspendContext.location ?: return false
             if (isInvokeSuspendMethod(location.method())) {
-                thisLogger().debug("Hit AsyncSuspendLambdaBreakpoint and STOPPED at ${context.location?.method()}")
+                thisLogger().debug { "Hit AsyncSuspendLambdaBreakpoint and STOPPED at ${context.location?.method()}" }
                 // Stop if we are inside invokeSuspend of the correct lambda instance
                 return true
             }
@@ -194,7 +195,10 @@ class KotlinLambdaAsyncMethodFilter(
                                     if (location != null && location.method().name() == "<init>" && location.method().declaringType() == lambdaReference.referenceType()) {
                                         val lambdaReferenceCopy = context.thread?.frame(0)?.safeThisObject()
                                         if (lambdaReferenceCopy == null) {
-                                            thisLogger().debug("Could not extract the copied instance of a lambda from the stack frame of <init> invocation, location = ${location.method()}.")
+                                            thisLogger().debug {
+                                                "Could not extract the copied instance of a lambda from the stack frame of <init> invocation, " +
+                                                        "location = ${location.method()}."
+                                            }
                                             return RESUME
                                         }
                                         val invokeSuspendMethod = lambdaReferenceCopy.referenceType().methods().single { it.name() == INVOKE_SUSPEND }
@@ -219,7 +223,7 @@ class KotlinLambdaAsyncMethodFilter(
     ) : StepIntoBreakpoint(context.debugProcess.project, pos, lambdaFilter) {
 
         override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
-            thisLogger().debug("Hit the KotlinLambdaInstanceBreakpoint at ${context.location}")
+            thisLogger().debug { "Hit the KotlinLambdaInstanceBreakpoint at ${context.location}" }
             return super.processLocatableEvent(action, event).also { stopped ->
                 if (stopped) context.debugProcess.requestsManager.deleteRequest(this)
             }

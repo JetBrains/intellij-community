@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.StepIntoMethodBreakpoint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.Location
@@ -28,14 +29,21 @@ object CoroutineBreakpointFacility {
             currentLocation
         } ?: return false
         val nextLocationAfterResume = getLocationOfNextInstructionAfterResume(resumeLocation)
-        thisLogger().debug("Trying to set a resume breakpoint in the current method: resumeMethod: ${resumeLocation.safeMethod()}, nextCallLocationLine = ${nextLocationAfterResume?.lineNumber()}")
+        thisLogger().debug {
+            "Trying to set a resume breakpoint in the current method: " +
+                    "resumeMethod: ${resumeLocation.safeMethod()}, " +
+                    "nextCallLocationLine = ${nextLocationAfterResume?.lineNumber()}"
+        }
         return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResume)
     }
 
     fun installResumeBreakpointInCallerMethod(suspendContext: SuspendContextImpl): Boolean {
         val resumeLocation = StackFrameInterceptor.instance?.callerLocation(suspendContext) ?: return false
         val nextLocationAfterResume = getLocationOfNextInstructionAfterResume(resumeLocation)
-        thisLogger().debug("Trying to set a resume breakpoint in the caller method: resumeMethod: ${resumeLocation.safeMethod()}, nextCallLocationLine = ${nextLocationAfterResume?.lineNumber()}")
+        thisLogger().debug { "Trying to set a resume breakpoint in the caller method: " +
+                "resumeMethod: ${resumeLocation.safeMethod()}, " +
+                "nextCallLocationLine = ${nextLocationAfterResume?.lineNumber()}"
+        }
         return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResume)
     }
 
@@ -57,7 +65,7 @@ object CoroutineBreakpointFacility {
             override fun stopOnlyInBaseClass(): Boolean = true
 
             override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
-                thisLogger().debug("Hit the resume breakpoint at ${context.location}")
+                thisLogger().debug { "Hit the resume breakpoint at ${context.location}" }
                 val result = super.processLocatableEvent(action, event)
                 if (result) {
                     debugProcess.requestsManager.deleteRequest(this) // breakpoint is hit - disable the request already
@@ -86,7 +94,7 @@ object CoroutineBreakpointFacility {
         debugProcess.setSteppingBreakpoint(breakpoint)
 
         val filterThread = debugProcess.requestsManager.filterThread
-        thisLogger().debug("Resume breakpoint for $method in thread $filterThread")
+        thisLogger().debug { "Resume breakpoint for $method in thread $filterThread" }
 
         return true
     }
