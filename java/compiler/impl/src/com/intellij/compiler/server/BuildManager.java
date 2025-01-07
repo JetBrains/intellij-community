@@ -1615,9 +1615,13 @@ public final class BuildManager implements Disposable {
         cmdLine.addParameter("-D"+ GlobalOptions.LANGUAGE_BUNDLE + '=' + FileUtil.toSystemIndependentName(bundlePath));
       }
     }
-    cmdLine.addPathParameter("-D" + PathManager.PROPERTY_HOME_PATH + '=', FileUtil.toSystemIndependentName(PathManager.getHomePath()));
-    cmdLine.addPathParameter("-D" + PathManager.PROPERTY_CONFIG_PATH + '=', FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
-    cmdLine.addPathParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + '=', FileUtil.toSystemIndependentName(PathManager.getPluginsPath()));
+    if (canUseEel() && EelPathUtils.isProjectLocal(project)) {
+      cmdLine.addPathParameter("-D" + PathManager.PROPERTY_HOME_PATH + '=', FileUtil.toSystemIndependentName(PathManager.getHomePath()));
+      cmdLine.addPathParameter("-D" + PathManager.PROPERTY_CONFIG_PATH + '=',
+                               FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
+      cmdLine.addPathParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + '=',
+                               FileUtil.toSystemIndependentName(PathManager.getPluginsPath()));
+    }
 
     cmdLine.addPathParameter("-D" + GlobalOptions.LOG_DIR_OPTION + '=', FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
     if (AdvancedSettings.getBoolean(IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME)) {
