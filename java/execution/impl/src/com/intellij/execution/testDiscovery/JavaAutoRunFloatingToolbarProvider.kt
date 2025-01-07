@@ -52,7 +52,10 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
     }
 
     project.messageBus.connect(parentDisposable).subscribe(AutoTestListener.TOPIC, object: AutoTestListener {
-      override fun runConfigurationsChanged() {
+      override fun autoTestStatusChanged() {
+        updateFloatingToolbarVisibility(floatingPanel, autoRunManager)
+      }
+      override fun autoTestSettingsChanged() {
         updateFloatingToolbarVisibility(floatingPanel, autoRunManager)
       }
     })
@@ -117,7 +120,7 @@ internal class JavaAutoRunFloatingToolbarService : SimplePersistentStateComponen
     set(value) {
       if (value != state.toolbarEnabled) {
         state.toolbarEnabled = value
-        messageBusPublisher.runConfigurationsChanged()
+        messageBusPublisher.autoTestSettingsChanged()
       }
     }
 

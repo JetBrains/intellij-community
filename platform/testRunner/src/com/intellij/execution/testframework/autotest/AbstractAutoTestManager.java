@@ -131,7 +131,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
       }
     }
 
-    environment.getProject().getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).runConfigurationsChanged();
+    myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).autoTestStatusChanged();
   }
 
   public void disableAllAutoTests() {
@@ -144,7 +144,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
       }
     }
     myEnabledRunProfiles.clear();
-    myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).runConfigurationsChanged();
+    myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).autoTestStatusChanged();
   }
 
   @ApiStatus.Internal

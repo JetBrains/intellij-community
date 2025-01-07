@@ -4,12 +4,10 @@ package com.intellij.execution.testframework.autotest
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * Listener to be notified when auto run is enabled or disabled for tests.
- */
 @ApiStatus.Internal
 interface AutoTestListener {
-  fun runConfigurationsChanged()
+  fun autoTestStatusChanged()
+  fun autoTestSettingsChanged()
 
   companion object {
     @Topic.ProjectLevel
