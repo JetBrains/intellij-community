@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.pathSeparator
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.util.coroutines.childScope
@@ -146,7 +147,7 @@ private class EelMavenCmdState(
       val builder = EelExecApi.ExecuteProcessOptions.Builder(exe.toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)
-        .workingDirectory(workingDirectory)
+        .workingDirectory(EelPath.parse(workingDirectory, null))
 
       eel.exec.execute(builder.build()).getOrThrow()
     }

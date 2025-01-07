@@ -38,7 +38,7 @@ class EelLocalExecApi : EelExecApi {
                               .setConsole(true)
                               .setCommand(arrayOf(builder.exe) + args)
                               .setEnvironment(environment)
-                              .setDirectory(builder.workingDirectory)
+                              .setDirectory(builder.workingDirectory?.toString())
                               .setInitialColumns(p.columns)
                               .setInitialRows(p.rows)
                               .start())
@@ -48,7 +48,7 @@ class EelLocalExecApi : EelExecApi {
               environment().putAll(environment)
               redirectErrorStream(p != null)
               builder.workingDirectory?.let {
-                directory(File(it))
+                directory(File(it.toString()))
               }
             }.start())
           }

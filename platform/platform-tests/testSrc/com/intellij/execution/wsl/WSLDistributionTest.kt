@@ -549,7 +549,7 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
       adapter.putUserData(TEST_ROOT_USER_SET, true)
     }
     adapter.addParameters(builder.args)
-    adapter.setWorkDirectory(builder.workingDirectory)
+    adapter.setWorkDirectory(builder.workingDirectory?.toString())
     adapter.environment.putAll(builder.env)
   }
 

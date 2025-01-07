@@ -2,6 +2,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
+import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.CheckReturnValue
 
 /**
@@ -26,9 +27,10 @@ interface EelExecApi {
     val args: List<String>
     val env: Map<String, String>
     val ptyOrStdErrSettings: PtyOrStdErrSettings?
-    val workingDirectory: String?
+    val workingDirectory: EelPath?
 
     // TODO: Use EelPath as soon as it will be merged
+    //  We cannot do it currently until IJPL-163265 is implemented
     val exe: String
 
     interface Builder {
@@ -43,7 +45,7 @@ interface EelExecApi {
        * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
        */
       fun ptyOrStdErrSettings(pty: PtyOrStdErrSettings?): Builder
-      fun workingDirectory(workingDirectory: String?): Builder
+      fun workingDirectory(workingDirectory: EelPath?): Builder
       fun build(): ExecuteProcessOptions
     }
 
@@ -116,11 +118,8 @@ private data class ExecuteProcessBuilderImpl(
   override var args: List<String> = listOf(),
   override var env: Map<String, String> = mapOf(),
   override var ptyOrStdErrSettings: PtyOrStdErrSettings? = null,
-  override var workingDirectory: String? = null,
+  override var workingDirectory: EelPath? = null,
 ) : EelExecApi.ExecuteProcessOptions, EelExecApi.ExecuteProcessOptions.Builder {
-  init {
-    require(exe.isNotEmpty()) { "Executable must be specified" }
-  }
 
   override fun toString(): String =
     "GrpcExecuteProcessBuilder(" +
@@ -143,7 +142,7 @@ private data class ExecuteProcessBuilderImpl(
     this.ptyOrStdErrSettings = ptyOrStderrSettings
   }
 
-  override fun workingDirectory(workingDirectory: String?): ExecuteProcessBuilderImpl = apply {
+  override fun workingDirectory(workingDirectory: EelPath?): ExecuteProcessBuilderImpl = apply {
     this.workingDirectory = workingDirectory
   }
 

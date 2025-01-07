@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -139,7 +140,7 @@ fun runProcessBlocking(
                                                     .args(args)
                                                     .env(explicitEnvironmentVariables)
                                                     .ptyOrStdErrSettings(ptyOrStdErrSettings)
-                                                    .workingDirectory(workingDirectory)
+                                                    .workingDirectory(workingDirectory?.let { EelPath.parse(it, null) })
                                                     .build()
   )) {
     is EelResult.Ok ->

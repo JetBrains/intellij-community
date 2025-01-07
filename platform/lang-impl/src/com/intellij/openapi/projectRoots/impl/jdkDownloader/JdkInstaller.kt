@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.impl.utils.awaitProcessResult
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.util.Urls
@@ -131,7 +132,7 @@ class JdkInstaller : JdkInstallerBase() {
       val builder = EelExecApi
         .ExecuteProcessOptions.Builder(command.first())
         .args(command.drop(1))
-        .workingDirectory(dir)
+        .workingDirectory(EelPath.parse(dir, null))
         .build()
       val process = eel.exec.execute(builder).getOrThrow()
       try {

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.util.coroutines.channel.ChannelInputStream
@@ -259,7 +260,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
     builder.args(command.drop(1))
     builder.env(commandLine.environmentVariables)
-    builder.workingDirectory(commandLine.workingDirectory)
+    builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, null) })
 
     return runBlockingCancellable { eel.exec.execute(builder.build()).getOrThrow().convertToJavaProcess() }
   }

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
@@ -268,7 +269,7 @@ object ExecUtil {
     val exe = args.first()
     val rest = args.subList(1, args.size)
     val env = builder.environment()
-    val workingDir = builder.directory()?.toPath()?.pathString
+    val workingDir = builder.directory()?.toPath()?.pathString?.let { EelPath.parse(it, null) }
 
     val options = EelExecApi.ExecuteProcessOptions.Builder(exe)
       .args(rest)
