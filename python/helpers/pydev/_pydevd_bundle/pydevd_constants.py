@@ -133,6 +133,7 @@ IS_PY311 = False
 IS_PY311_OR_GREATER = False
 IS_PY312_OR_GREATER = False
 IS_PY312_OR_LESSER = False
+IS_PY313 = False
 IS_PY2 = True
 IS_PY27 = False
 IS_PY24 = False
@@ -154,6 +155,7 @@ try:
         IS_PY311_OR_GREATER = sys.version_info >= (3, 11)
         IS_PY312_OR_GREATER = sys.version_info >= (3, 12)
         IS_PY312_OR_LESSER = sys.version_info[:2] <= (3, 12)
+        IS_PY313 = sys.version_info[0] == 3 and sys.version_info[1] == 13
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:

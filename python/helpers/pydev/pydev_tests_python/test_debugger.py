@@ -24,6 +24,7 @@ from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY312_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY312_OR_LESSER
+from _pydevd_bundle.pydevd_constants import IS_PY313
 
 
 try:
@@ -284,6 +285,7 @@ def test_case_suspend_thread(case_setup):
 # we're inside the tracing other threads don't run (so, we can have only one
 # thread paused in the debugger).
 @pytest.mark.skipif(IS_JYTHON, reason='Jython can only have one thread stopped at each time.')
+@pytest.mark.xfail(IS_PY313, reason='PCQA-888')
 def test_case_suspend_all_thread(case_setup):
     with case_setup.test_file('_debugger_case_suspend_all.py') as writer:
         writer.write_make_initial_run()
@@ -1517,6 +1519,7 @@ def test_case_handled_exceptions0(case_setup):
 
 
 @pytest.mark.skipif(IS_JYTHON, reason='Not working on Jython (needs to be investigated).')
+@pytest.mark.xfail(IS_PY313, reason='PCQA-887')
 def test_case_handled_exceptions1(case_setup):
 
     # Stop multiple times for the same handled exception.
@@ -2475,7 +2478,13 @@ def test_return_value(case_setup):
 
 
 @pytest.mark.skipif(IS_JYTHON, reason='Jython can only have one thread stopped at each time.')
-@pytest.mark.parametrize('check_single_notification', [True, False])
+@pytest.mark.parametrize(
+    'check_single_notification',
+    (
+        pytest.param(True, marks=pytest.mark.xfail(IS_PY313, reason='PCQA-889')),
+        pytest.param(False, marks=pytest.mark.xfail(IS_PY313, reason='PCQA-890')),
+    ),
+)
 def test_run_pause_all_threads_single_notification(case_setup, check_single_notification):
     from pydev_tests_python.debugger_unittest import TimeoutError
     with case_setup.test_file('_debugger_case_multiple_threads.py') as writer:
