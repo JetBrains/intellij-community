@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -87,7 +88,8 @@ class UpdateCheckerService {
   private void appStarted() {
     UpdateSettings settings = UpdateSettings.getInstance();
     updateDefaultChannel(settings);
-    if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded()) {
+    if (settings.isCheckNeeded() || settings.isPluginsCheckNeeded() ||
+        SystemProperties.getBooleanProperty("ide.force.platform.update.check", false)) {
       scheduleFirstCheck(settings);
     }
   }
@@ -130,7 +132,8 @@ class UpdateCheckerService {
     BuildNumber lastBuildChecked = BuildNumber.fromString(settings.getLastBuildChecked());
     long timeSinceLastCheck = max(System.currentTimeMillis() - settings.getLastTimeChecked(), 0);
 
-    if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL_MS) {
+    if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL_MS ||
+        SystemProperties.getBooleanProperty("ide.force.platform.update.check", false)) {
       checkUpdates();
     }
     else {
