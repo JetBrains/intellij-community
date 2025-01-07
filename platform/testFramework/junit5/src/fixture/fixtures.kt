@@ -36,16 +36,16 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 
 @TestOnly
-fun tempPathFixture(root: Path? = null): TestFixture<Path> = testFixture {
+fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path> = testFixture {
   val tempDir = withContext(Dispatchers.IO) {
     if (root == null) {
-      Files.createTempDirectory("IJ")
+      Files.createTempDirectory(prefix)
     }
     else {
       if (!root.exists()) {
         root.createDirectories()
       }
-      Files.createTempDirectory(root, "IJ")
+      Files.createTempDirectory(root, prefix)
     }
   }
   initialized(tempDir) {
@@ -57,7 +57,7 @@ fun tempPathFixture(root: Path? = null): TestFixture<Path> = testFixture {
 
 @TestOnly
 fun projectFixture(
-  pathFixture: TestFixture<Path> = tempPathFixture(null),
+  pathFixture: TestFixture<Path> = tempPathFixture(),
   openProjectTask: OpenProjectTask = OpenProjectTask.build(),
   openAfterCreation: Boolean = false,
 ): TestFixture<Project> = testFixture {
