@@ -1064,7 +1064,7 @@
     },
     {
       "key": "Label.warningForeground",
-      "description": "Orange text color for inline warning messages."
+      "description": "Text color for inline warning messages"
     },
     {
       "key": "Label.infoForeground",
