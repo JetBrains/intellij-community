@@ -1,4 +1,3 @@
-// IGNORE_K2
 import kotlin.collections.CollectionsKt;
 import java.util.List;
 
