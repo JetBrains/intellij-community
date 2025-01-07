@@ -4516,10 +4516,6 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$ProgressBar
 - sf:WARNING:java.awt.Color
 - sf:WARNING_END:java.awt.Color
 - <init>():V
-- s:failedStatusValue():java.lang.String
-- s:passedStatusValue():java.lang.String
-- s:statusKey():java.lang.String
-- s:warningStatusValue():java.lang.String
 f:com.intellij.util.ui.JBUI$CurrentTheme$RunWidget
 - sf:FOREGROUND:java.awt.Color
 - sf:HOVER_BACKGROUND:java.awt.Color

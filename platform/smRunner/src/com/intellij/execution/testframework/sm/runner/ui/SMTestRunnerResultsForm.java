@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressBarUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -53,7 +54,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
@@ -233,7 +233,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.updateFromRoot();
 
     // Status line
-    myStatusLine.setStatus(JBUI.CurrentTheme.ProgressBar.passedStatusValue());
+    myStatusLine.setStatus(ProgressBarUtil.PASSED_VALUE);
 
     // Tests tree
     selectAndNotify(myTestsRootNode);
@@ -659,7 +659,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   private void updateStatusLabel(final boolean testingFinished) {
     if (myFailedTestCount > 0) {
-      myStatusLine.setStatus(JBUI.CurrentTheme.ProgressBar.failedStatusValue());
+      myStatusLine.setStatus(ProgressBarUtil.FAILED_VALUE);
     }
 
     // launchedAndFinished - is launched and not in progress. If we remove "launched' that onTestingStarted() before

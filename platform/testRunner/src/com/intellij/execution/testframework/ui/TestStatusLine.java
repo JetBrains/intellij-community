@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.openapi.progress.util.ProgressBarUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HtmlToSimpleColoredComponentConverter;
@@ -46,7 +47,7 @@ public class TestStatusLine extends NonOpaquePanel {
     add(myProgressPanel, BorderLayout.SOUTH);
     myProgressBar.setMaximum(100);
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
-    myProgressBar.putClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey(), JBUI.CurrentTheme.ProgressBar.passedStatusValue());
+    myProgressBar.putClientProperty(ProgressBarUtil.STATUS_KEY, ProgressBarUtil.PASSED_VALUE);
 
     JPanel stateWrapper = new NonOpaquePanel(new GridBagLayout());
     stateWrapper.setBorder(JBUI.Borders.emptyLeft(2));
@@ -161,13 +162,13 @@ public class TestStatusLine extends NonOpaquePanel {
 
   @ApiStatus.Internal
   public String getStatus() {
-    final var property = myProgressBar.getClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey());
+    final var property = myProgressBar.getClientProperty(ProgressBarUtil.STATUS_KEY);
     if (property == null) return null;
     return (String)property;
   }
 
   public void setStatus(@NotNull String status) {
-    myProgressBar.putClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey(), status);
+    myProgressBar.putClientProperty(ProgressBarUtil.STATUS_KEY, status);
   }
 
   /**

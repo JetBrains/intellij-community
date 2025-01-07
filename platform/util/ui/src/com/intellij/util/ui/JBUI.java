@@ -946,11 +946,6 @@ public final class JBUI {
       public static final Color FAILED_END = JBColor.namedColor("ProgressBar.failedEndColor", new JBColor(0xfb8f89, 0xf4a2a0));
 
       public static final Color TRACK = JBColor.namedColor("ProgressBar.trackColor", new JBColor(0x55A76A, 0x4E8052));
-
-      public static @NotNull String statusKey() { return "ProgressBar.status"; }
-      public static @NotNull String passedStatusValue() { return "passed"; }
-      public static @NotNull String warningStatusValue() { return "value"; }
-      public static @NotNull String failedStatusValue() { return "failed"; }
     }
 
     public static final class Spinner {

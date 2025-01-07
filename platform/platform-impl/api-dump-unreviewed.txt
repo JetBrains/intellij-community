@@ -9827,6 +9827,12 @@ f:com.intellij.openapi.progress.util.PotemkinProgress
 - interact():V
 - runInBackground(java.lang.Runnable):V
 - runInSwingThread(java.lang.Runnable):V
+f:com.intellij.openapi.progress.util.ProgressBarUtil
+- sf:FAILED_VALUE:java.lang.String
+- sf:INSTANCE:com.intellij.openapi.progress.util.ProgressBarUtil
+- sf:PASSED_VALUE:java.lang.String
+- sf:STATUS_KEY:java.lang.String
+- sf:WARNING_VALUE:java.lang.String
 com.intellij.openapi.progress.util.ProgressIndicatorListener
 - cancelled():V
 - installToProgress(com.intellij.openapi.wm.ex.ProgressIndicatorEx):V
