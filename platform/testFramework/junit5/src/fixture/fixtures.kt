@@ -17,10 +17,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -85,15 +87,33 @@ fun TestFixture<Project>.moduleFixture(
   }
 }
 
+/**
+ * Create module on [pathFixture].
+ * If [addPathToSourceRoot], we add [pathFixture] to the module sources,
+ * which is convenient for the scripting languages where module root is also source root
+ */
 @TestOnly
 fun TestFixture<Project>.moduleFixture(
   pathFixture: TestFixture<Path>,
+  addPathToSourceRoot: Boolean = false,
 ): TestFixture<Module> = testFixture { _ ->
   val project = this@moduleFixture.init()
   val path = pathFixture.init()
   val manager = ModuleManager.getInstance(project)
   val module = writeAction {
     manager.newModule(path, "")
+  }
+  if (addPathToSourceRoot) {
+    val pathVfs = withContext(Dispatchers.IO) {
+      VirtualFileManager.getInstance().findFileByNioPath(path)!!
+    }
+
+    writeAction {
+      module.rootManager.modifiableModel.apply {
+        addContentEntry(pathVfs).addSourceFolder(pathVfs, false)
+        commit()
+      }
+    }
   }
   initialized(module) {
     writeAction {
