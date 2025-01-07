@@ -17,7 +17,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import org.junit.Assert
 import org.junit.Assert.*
 import java.util.*
 
@@ -71,9 +70,22 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
       while (expected.isNotEmpty()) {
         val (text, injectedLanguage) = expected.pop()
         val found = (foundInjections.find { (psi, file) -> psi.text == text && file.language.id == injectedLanguage }
-                     ?: Assert.fail(
+                     ?: fail(
                        "no injection '$text' -> '$injectedLanguage' were found, remains: ${foundInjections.joinToString { (psi, file) -> "'${psi.text}' -> '${file.language}'" }}   "))
         foundInjections.remove(found)
+      }
+    }
+  }
+
+  fun assertNotInjected(vararg notExpectedInjections: InjectionAssertionData) {
+    runReadAction {
+      val notExpected = notExpectedInjections.toCollection(LinkedList())
+      val foundInjections = getAllInjections().toCollection(LinkedList())
+
+      while (notExpected.isNotEmpty()) {
+        val (text, injectedLanguage) = notExpected.pop()
+        val matchingInjection = foundInjections.find { (psi, psiFile) -> psi.text == text && psiFile.language.id == injectedLanguage }
+        if (matchingInjection != null) fail("not expected injection '$text' -> '$injectedLanguage' is found")
       }
     }
   }
