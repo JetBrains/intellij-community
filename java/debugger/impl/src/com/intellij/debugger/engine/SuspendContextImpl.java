@@ -60,7 +60,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   protected final Set<ThreadReferenceProxyImpl> myNotExecutableThreads = new HashSet<>();
 
   // There may be several events for the same break-point. So let's use custom processing if any of them is wanted it.
-  protected boolean myIsCustomSuspendLogic = false;
   protected boolean mySuspendAllSwitchedContext = false;
 
   private EventSet myEventSet;
@@ -437,7 +436,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
 
     sb.append("mySuspendAllSwitchedContext = ").append(mySuspendAllSwitchedContext).append("\n");
-    sb.append("myIsCustomSuspendLogic = ").append(myIsCustomSuspendLogic).append("\n");
     sb.append("myPostponedCommands: ").append(myPostponedCommands.size()).append("\n");
     sb.append("myKeptReferences: ").append(myKeptReferences.size()).append("\n");
     sb.append("myIsVotedForResume = ").append(myIsVotedForResume).append("\n");
