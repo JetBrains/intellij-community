@@ -1,0 +1,19 @@
+<idea-plugin package="com.intellij.devkit.apiDump.lang">
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+
+  <resource-bundle>messages.ApiDumpLangBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType language="ADLanguage"
+              name="ADLanguage"
+              extensions=""
+              implementationClass="com.intellij.devkit.apiDump.lang.ADFileType"
+              fieldName="INSTANCE"/>
+
+    <lang.parserDefinition language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.ADParserDefinition"/>
+  </extensions>
+
+</idea-plugin>

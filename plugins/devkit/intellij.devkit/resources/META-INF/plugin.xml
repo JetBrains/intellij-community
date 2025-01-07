@@ -30,6 +30,7 @@
     <module name="intellij.devkit.debugger"/>
     <module name="intellij.devkit.stacktrace"/>
     <module name="intellij.devkit.apiDump"/>
+    <module name="intellij.devkit.apiDump.lang"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

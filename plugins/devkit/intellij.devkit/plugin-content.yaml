@@ -26,3 +26,4 @@
   - name: intellij.devkit.debugger
   - name: intellij.devkit.stacktrace
   - name: intellij.devkit.apiDump
+  - name: intellij.devkit.apiDump.lang
