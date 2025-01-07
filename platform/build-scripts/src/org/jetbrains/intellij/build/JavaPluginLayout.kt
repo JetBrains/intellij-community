@@ -59,6 +59,7 @@ object JavaPluginLayout {
       }
 
       spec.withModules(listOf(
+        "intellij.java.codeserver.highlighting",
         "intellij.java.compiler.impl",
         "intellij.java.debugger.impl",
         "intellij.java.terminal",

@@ -9,9 +9,11 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.jvm.JvmModifier;
@@ -64,6 +66,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private @NotNull PsiFile myFile;
   private PsiJavaModule myJavaModule;
+  private JavaErrorCollector myCollector;
 
   private PreviewFeatureUtil.PreviewFeatureVisitor myPreviewFeatureVisitor;
 
@@ -164,6 +167,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visit(@NotNull PsiElement element) {
     myHasError = false;
     element.accept(this);
+    myCollector.processElement(element);
   }
 
   @Override
@@ -215,6 +219,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       .notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
     myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
     myPreviewFeatureVisitor = myLanguageLevel.isPreview() ? null : new PreviewFeatureUtil.PreviewFeatureVisitor(myLanguageLevel, myErrorSink);
+    myCollector = new JavaErrorCollector(myFile, error -> {
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(error.anchor())
+        .descriptionAndTooltip(error.description().toString());
+      for (CommonIntentionAction fix : JavaErrorFixProvider.getFixes(error)) {
+        info.registerFix(fix.asIntention(), null, null, null, null);
+      }
+      add(info);
+    });
   }
 
   @Override
@@ -231,10 +244,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitAnnotation(@NotNull PsiAnnotation annotation) {
     super.visitAnnotation(annotation);
-    if (!hasErrorResults()) add(checkFeature(annotation, JavaFeature.ANNOTATIONS));
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkApplicability(annotation, myLanguageLevel, myFile));
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkAnnotationType(annotation));
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkMissingAttributes(annotation));
     if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
     if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkDuplicateAnnotations(annotation, myLanguageLevel));
     if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkFunctionalInterface(annotation, myLanguageLevel));

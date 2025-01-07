@@ -312,6 +312,9 @@ public abstract class QuickFixFactory {
   public abstract @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
                                                                                 @NotNull List<? super IntentionAction> registrar);
 
+  /**
+   * @param annotationMethods unused, could be empty array
+   */
   public abstract @NotNull IntentionAction createAddMissingRequiredAnnotationParametersFix(@NotNull PsiAnnotation annotation,
                                                                                            PsiMethod @NotNull [] annotationMethods,
                                                                                            @NotNull Collection<String> missedElements);

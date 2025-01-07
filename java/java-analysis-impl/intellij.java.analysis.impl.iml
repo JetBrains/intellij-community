@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.java.frontback.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" />
   </component>
 </module>

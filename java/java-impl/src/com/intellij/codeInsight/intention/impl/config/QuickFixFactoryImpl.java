@@ -747,7 +747,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createAddMissingRequiredAnnotationParametersFix(final @NotNull PsiAnnotation annotation,
                                                                                   final PsiMethod @NotNull [] annotationMethods,
                                                                                   final @NotNull Collection<String> missedElements) {
-    return new AddMissingRequiredAnnotationParametersFix(annotation, annotationMethods, missedElements).asIntention();
+    return new AddMissingRequiredAnnotationParametersFix(annotation, missedElements).asIntention();
   }
 
   @Override
