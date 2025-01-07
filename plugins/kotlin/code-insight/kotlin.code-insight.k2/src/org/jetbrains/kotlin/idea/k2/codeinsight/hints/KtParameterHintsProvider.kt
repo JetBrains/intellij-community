@@ -134,8 +134,13 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     private fun KtValueArgument.isArgumentNamed(symbol: KaValueParameterSymbol): Boolean {
-        // avoid cases like "`value:` value"
-        if (this.text == symbol.name.asString()) return true
+        // avoid cases like "`value =` value"
+        val argumentText = this.text
+        val symbolName = symbol.name.asString()
+        if (argumentText == symbolName) return true
+
+        // avoid cases like "`value =` myValue"
+        if (symbolName.length > 1 && argumentText.endsWith(symbolName[0].uppercaseChar() + symbolName.substring(1))) return true
 
         // avoid cases like "/* value = */ value"
         var sibling: PsiElement? = this.prevSibling
