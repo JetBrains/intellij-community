@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.StepIntoMethodBreakpoint
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
@@ -83,7 +85,8 @@ object CoroutineBreakpointFacility {
         breakpoint.createRequest(debugProcess)
         debugProcess.setSteppingBreakpoint(breakpoint)
 
-        thisLogger().debug("Resume breakpoint for $method in context $context")
+        val filterThread = debugProcess.requestsManager.filterThread
+        thisLogger().debug("Resume breakpoint for $method in thread $filterThread")
 
         return true
     }

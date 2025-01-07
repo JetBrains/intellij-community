@@ -79,7 +79,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer, InternalDebugLoggingRequestor {
+public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer {
   private static final ExecutorService RELOAD_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("Breakpoint reload", 1);
   public static final Key<Breakpoint<?>> DATA_KEY = Key.create("JavaBreakpoint");
   private static final Key<Long> HIT_COUNTER = Key.create("HIT_COUNTER");
@@ -89,8 +89,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   private static final @NonNls String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   protected boolean myCachedVerifiedState = false;
-
-  private boolean myIsDebugLogBreakpoint;
 
   protected Breakpoint(@NotNull Project project, XBreakpoint<P> xBreakpoint) {
     myProject = project;
@@ -824,14 +822,5 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected void fireBreakpointChanged() {
     ((XBreakpointBase<?, ?, ?>)myXBreakpoint).fireBreakpointChanged();
-  }
-
-  public void setIsDebugLogBreakpoint(boolean isDebugLogBreakpoint) {
-    myIsDebugLogBreakpoint = isDebugLogBreakpoint;
-  }
-
-  @Override
-  public boolean isDebugLogBreakpoint() {
-    return myIsDebugLogBreakpoint;
   }
 }

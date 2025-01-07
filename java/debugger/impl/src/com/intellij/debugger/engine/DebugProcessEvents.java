@@ -18,7 +18,10 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.StatisticsStorage;
-import com.intellij.debugger.ui.breakpoints.*;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.ide.BrowserUtil;
@@ -648,22 +651,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
         final SuspendManager suspendManager = getSuspendManager();
 
         final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
-
-        boolean isDebugLogBreakpoint = requestor instanceof InternalDebugLoggingRequestor dReq && dReq.isDebugLogBreakpoint();
-
-        if (isDebugLogBreakpoint) {
-          String firstArgument;
-          try {
-            firstArgument = suspendContext.getEventThread().frame(0).getArgumentValues().get(0).toString();
-          }
-          catch (Throwable e) {
-            firstArgument = e.getMessage();
-          }
-          LOG.debug("Debug log breakpoint: " + firstArgument);
-          suspendManager.voteResume(suspendContext);
-          return;
-        }
-
         ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
         boolean isEvaluationOnCurrentThread = threadProxy != null && threadProxy.isEvaluating();
         if ((isEvaluationOnCurrentThread || myThreadBlockedMonitor.isInResumeAllMode()) &&
