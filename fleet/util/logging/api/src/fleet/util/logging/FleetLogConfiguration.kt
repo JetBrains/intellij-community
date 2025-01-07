@@ -3,7 +3,7 @@ package fleet.util.logging
 
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.EnumMap
+import java.util.*
 import kotlin.io.path.readText
 
 data class FleetLogConfiguration(val refreshTimeout: Int?,
@@ -15,7 +15,6 @@ data class FleetLogConfiguration(val refreshTimeout: Int?,
     val userHomeConfigPath = System.getProperty("user.home")?.let { Paths.get(it, ".fleet", LOG_FILE_NAME) }
     fun getLogFiles(configDir: Path?): List<Path> {
       return listOfNotNull(
-        System.getProperty(FLEET_LOG_CONFIG_PATH_PROPERTY)?.let { Paths.get(it).toAbsolutePath().normalize() },
         configDir?.resolve(LOG_FILE_NAME),
         userHomeConfigPath
       ).distinct()
@@ -160,4 +159,5 @@ data class FleetLogConfiguration(val refreshTimeout: Int?,
   }
 }
 
+@Deprecated("do not use")
 const val FLEET_LOG_CONFIG_PATH_PROPERTY = "fleet.log.config.path"
