@@ -42,7 +42,7 @@ private interface DarwinPThread : Library {
   fun pthread_set_qos_class_self_np(qosClass: Int, relPriority: Int): Int
 }
 
-fun setUserInteractiveQosClassForCurrentThread() {
+internal fun setUserInteractiveQosClassForCurrentThread() {
   runCatching {
     val qos = QosClass.UserInteractive
     val ret = DarwinPThread.instance.pthread_set_qos_class_self_np(qos.priority, 0)

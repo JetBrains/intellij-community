@@ -52,5 +52,3 @@ e:com.intellij.platform.ide.bootstrap.StartupWizardStage
 - s:values():com.intellij.platform.ide.bootstrap.StartupWizardStage[]
 f:com.intellij.platform.ide.bootstrap.UiKt
 - sf:checkHiDPISettings():V
-f:com.intellij.ui.mac.EdtQoSDarwinFixerKt
-- sf:setUserInteractiveQosClassForCurrentThread():V
