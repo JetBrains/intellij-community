@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.frame.XCompositeNode
@@ -41,6 +42,32 @@ internal class FrontendXValue(private val project: Project, private val xValueId
               childrenList.add(computeChildrenEvent.names[i], FrontendXValue(project, computeChildrenEvent.children[i]))
             }
             node.addChildren(childrenList, computeChildrenEvent.isLast)
+          }
+          is XValueComputeChildrenEvent.SetAlreadySorted -> {
+            node.setAlreadySorted(computeChildrenEvent.value)
+          }
+          is XValueComputeChildrenEvent.SetErrorMessage -> {
+            node.setErrorMessage(computeChildrenEvent.message, computeChildrenEvent.link)
+          }
+          is XValueComputeChildrenEvent.SetMessage -> {
+            // TODO[IJPL-160146]: support SimpleTextAttributes serialization -- don't pass SimpleTextAttributes.REGULAR_ATTRIBUTES
+            node.setMessage(
+              computeChildrenEvent.message,
+              computeChildrenEvent.icon?.icon(),
+              computeChildrenEvent.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES,
+              computeChildrenEvent.link
+            )
+          }
+          is XValueComputeChildrenEvent.TooManyChildren -> {
+            val addNextChildren = computeChildrenEvent.addNextChildren
+            if (addNextChildren != null) {
+              node.tooManyChildren(computeChildrenEvent.remaining, addNextChildren)
+            }
+            else {
+              // TODO[IJPL-160146]: support addNextChildren serialization. Now it leads to weird behaviour in Remote Dev
+              @Suppress("DEPRECATION")
+              node.tooManyChildren(computeChildrenEvent.remaining)
+            }
           }
         }
       }

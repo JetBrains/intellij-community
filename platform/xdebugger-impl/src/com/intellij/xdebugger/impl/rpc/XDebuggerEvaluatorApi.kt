@@ -5,6 +5,8 @@ import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.jetbrains.rhizomedb.EID
@@ -12,8 +14,10 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -37,13 +41,33 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   }
 }
 
-// TODO[IJPL-160146]: support other events see [com.intellij.xdebugger.frame.XCompositeNode]
 @ApiStatus.Internal
 @Serializable
 sealed interface XValueComputeChildrenEvent {
   // TODO[IJPL-160146]: support [XValueGroup]
   @Serializable
   data class AddChildren(val names: List<String>, val children: List<XValueId>, val isLast: Boolean) : XValueComputeChildrenEvent
+
+  @Serializable
+  data class SetAlreadySorted(val value: Boolean) : XValueComputeChildrenEvent
+
+  // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
+  @Serializable
+  data class SetErrorMessage(val message: String, @Transient val link: XDebuggerTreeNodeHyperlink? = null) : XValueComputeChildrenEvent
+
+  // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
+  // TODO[IJPL-160146]: support SimpleTextAttributes serialization
+  @Serializable
+  data class SetMessage(
+    val message: String,
+    val icon: IconId?,
+    @Transient val attributes: SimpleTextAttributes? = null,
+    @Transient val link: XDebuggerTreeNodeHyperlink? = null,
+  ) : XValueComputeChildrenEvent
+
+  // TODO[IJPL-160146]: support addNextChildren serialization
+  @Serializable
+  data class TooManyChildren(val remaining: Int, @Transient val addNextChildren: Runnable? = null) : XValueComputeChildrenEvent
 }
 
 @ApiStatus.Internal
