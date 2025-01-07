@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.CommonBundle;
@@ -33,6 +33,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -241,9 +242,8 @@ public final class RunContentBuilder extends RunTab {
 
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
     ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(mainGroupId);
-    AnAction[] mainChildren = ((CustomisedActionGroup)toolbarGroup).getDefaultChildrenOrStubs();
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
-    addAvoidingDuplicates(actionGroup, mainChildren);
+    addAvoidingDuplicates(actionGroup, ((CustomisedActionGroup)toolbarGroup).getDefaultChildrenOrStubs());
 
     DefaultActionGroup afterRunActions = new DefaultActionGroup(restartActions);
     if (!isNewLayout) {
@@ -253,10 +253,10 @@ public final class RunContentBuilder extends RunTab {
 
     MoreActionGroup moreGroup = null;
     if (isNewLayout) {
-      moreGroup = new MoreActionGroup();
+      moreGroup = createToolbarMoreActionGroup(actionGroup);
       ActionGroup moreActionGroup =
         (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP);
-      addAvoidingDuplicates(moreGroup, ((CustomisedActionGroup)moreActionGroup).getDefaultChildrenOrStubs(), mainChildren);
+      addAvoidingDuplicates(moreGroup, ((CustomisedActionGroup)moreActionGroup).getDefaultChildrenOrStubs());
     }
 
     addActionsWithConstraints(afterRunActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
@@ -427,10 +427,24 @@ public final class RunContentBuilder extends RunTab {
     }
   }
 
-  public static void addAvoidingDuplicates(DefaultActionGroup group, AnAction[] actions, AnAction[] existingActions) {
-    addAvoidingDuplicates(group, actions, Constraints.LAST, existingActions);
+  /**
+   * Creates a {@link MoreActionGroup} for the specified toolbar action group.
+   * The returned group excludes actions from the toolbar in its post-processed
+   * visible children.
+   */
+  @ApiStatus.Internal
+  public static MoreActionGroup createToolbarMoreActionGroup(ActionGroup toolbar) {
+    return new MoreActionGroup() {
+      @Override
+      public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                                                 @NotNull List<? extends @NotNull AnAction> visibleChildren) {
+        List<? extends AnAction> toolbarChildren = e.getUpdateSession().children(toolbar);
+        return ContainerUtil.filter(visibleChildren, action -> action instanceof Separator || !toolbarChildren.contains(action));
+      }
+    };
   }
 
+  @ApiStatus.Internal
   public static void addAvoidingDuplicates(DefaultActionGroup group, AnAction[] actions) {
     addAvoidingDuplicates(group, actions, Constraints.LAST, AnAction.EMPTY_ARRAY);
   }

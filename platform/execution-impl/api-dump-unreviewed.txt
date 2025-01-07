@@ -1493,8 +1493,6 @@ f:com.intellij.execution.runners.RunContentBuilder
 - s:addActionsWithConstraints(java.util.List,com.intellij.openapi.actionSystem.Constraints,com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - s:addActionsWithConstraints(com.intellij.openapi.actionSystem.AnAction[],com.intellij.openapi.actionSystem.Constraints,com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - s:addAdditionalConsoleEditorActions(com.intellij.execution.ui.ExecutionConsole,com.intellij.ui.content.Content):V
-- s:addAvoidingDuplicates(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.AnAction[]):V
-- s:addAvoidingDuplicates(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.AnAction[],com.intellij.openapi.actionSystem.AnAction[]):V
 - s:buildConsoleUiDefault(com.intellij.execution.ui.RunnerLayoutUi,com.intellij.execution.ui.ExecutionConsole):com.intellij.ui.content.Content
 - s:fix(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.runners.ProgramRunner):com.intellij.execution.runners.ExecutionEnvironment
 - getSearchScope():com.intellij.psi.search.GlobalSearchScope
