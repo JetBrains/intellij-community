@@ -10,7 +10,7 @@ class Os private constructor() {
     get() = System.getProperty("os.name")
 
   val version: String
-    get() = System.getProperty("os.version")
+    get() = System.getProperty("os.version").lowercase()
 
   val arch: String
     get() = System.getProperty("os.arch")
