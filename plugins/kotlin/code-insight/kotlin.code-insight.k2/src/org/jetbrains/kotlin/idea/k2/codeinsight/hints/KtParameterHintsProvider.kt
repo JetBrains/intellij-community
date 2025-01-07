@@ -98,7 +98,10 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             val symbolName = symbol.name
             val name: Name = symbolName
             val arg = args.filter { (_, signature) -> signature.symbol == symbol }.keys.firstOrNull() ?: continue
-            val argument = arg.parent as? KtValueArgument ?: continue
+            val argument = arg.parent as? KtValueArgument
+
+            // do not show inlay hint for lambda parameter out of parenthesis
+            if (argument?.parent !is KtValueArgumentList) continue
 
             // do not put inlay hints for a named argument
             if (argument.isNamed()) {

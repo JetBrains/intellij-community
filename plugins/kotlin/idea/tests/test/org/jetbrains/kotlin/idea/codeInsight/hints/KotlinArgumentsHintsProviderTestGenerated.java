@@ -45,6 +45,11 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         runTest("testData/codeInsight/hints/arguments/javaParameters.kt");
     }
 
+    @TestMetadata("lambdaLastParameter.kt")
+    public void testLambdaLastParameter() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/lambdaLastParameter.kt");
+    }
+
     @TestMetadata("namedParameters.kt")
     public void testNamedParameters() throws Exception {
         runTest("testData/codeInsight/hints/arguments/namedParameters.kt");
