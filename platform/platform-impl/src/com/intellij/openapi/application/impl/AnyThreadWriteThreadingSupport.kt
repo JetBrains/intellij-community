@@ -8,10 +8,13 @@ import com.intellij.core.rwmutex.*
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicatorProvider
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ThrowableComputable
@@ -766,7 +769,13 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     val delay = ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting
     val reportSlowWrite: Future<*>? = if (delay <= 0 || PerformanceWatcher.getInstanceIfCreated() == null) null
     else AppExecutorUtil.getAppScheduledExecutorService()
-      .scheduleWithFixedDelay({ PerformanceWatcher.getInstance().dumpThreads("waiting", true, true) },
+      .scheduleWithFixedDelay({
+                                val path = PerformanceWatcher.getInstance().dumpThreads("waiting", true, true)
+                                if (path != null && ApplicationManagerEx.isInIntegrationTest()) {
+                                  val message = "Long write action takes more than ${ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting}ms, details saved to $path"
+                                  logger.error(message)
+                                }
+                              },
                               delay.toLong(), delay.toLong(), TimeUnit.MILLISECONDS)
     val t = System.currentTimeMillis()
     val permit = acquisitor()
