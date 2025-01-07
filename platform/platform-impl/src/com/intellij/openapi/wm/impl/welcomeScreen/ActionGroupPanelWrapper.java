@@ -49,8 +49,25 @@ public final class ActionGroupPanelWrapper {
                                                                       @NotNull Disposable parentDisposable) {
     var presentationFactory = new PresentationFactory();
     var dataContext = DataContext.EMPTY_CONTEXT;
+    class Wrapper extends ActionGroupWrapper {
+      Wrapper(@NotNull ActionGroup action) {
+        super(action);
+      }
+
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        if (e == null) return EMPTY_ARRAY;
+        AnAction[] children = super.getChildren(e);
+        for (int i = 0; i < children.length; i++) {
+          if (children[i] instanceof ActionGroup g &&
+              !e.getUpdateSession().presentation(g).isPopupGroup()) children[i] = new Wrapper(g);
+          else setParentGroupName(e.getPresentation().getText(), children[i]);
+        }
+        return children;
+      }
+    }
     List<AnAction> flatChildren = Utils.expandActionGroup(
-      actionGroup, presentationFactory, dataContext, ActionPlaces.NEW_PROJECT_WIZARD, ActionUiKind.NONE);
+      new Wrapper(actionGroup), presentationFactory, dataContext, ActionPlaces.NEW_PROJECT_WIZARD, ActionUiKind.NONE);
     return createActionGroupPanel(flatChildren, backAction, parentDisposable);
   }
 
@@ -289,10 +306,10 @@ public final class ActionGroupPanelWrapper {
 
   private static @NotNull List<AnAction> flattenActionGroups(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
     ArrayList<AnAction> groups = new ArrayList<>();
+    var groupName = event.getUpdateSession().presentation(actionGroup).getText();
     for (AnAction action : event.getUpdateSession().children(actionGroup)) {
       if (action instanceof ActionGroup g) {
         var children = event.getUpdateSession().children(g);
-        String groupName = g.getTemplateText();
         if (groupName != null) {
           for (AnAction childAction : children) {
             setParentGroupName(groupName, childAction);
