@@ -23,7 +23,7 @@ class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>() {
         Use this tool to add or remove breakpoints programmatically.
         Requires two parameters:
         - filePathInProject: The relative path to the file within the project
-        - line: The line number where to toggle the breakpoint
+        - line: The line number where to toggle the breakpoint. The line number is starts at 1 for the first line.
         Returns one of two possible responses:
         - "ok" if the breakpoint was successfully toggled
         - "can't find project dir" if the project directory cannot be determined
@@ -39,7 +39,7 @@ class ToggleBreakpointTool : AbstractMcpTool<ToggleBreakpointArgs>() {
         val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(projectDir.resolveRel(args.filePathInProject))
 
         runWriteAction {
-            val position = XSourcePositionImpl.create(virtualFile, args.line - 1) // Convert line from 1-based to 0-based
+            val position = XSourcePositionImpl.create(virtualFile, args.line - 1)
             XBreakpointUtil.toggleLineBreakpoint(project, position, false, null, false, true, true).onSuccess {
                  invokeLater {
                      position.createNavigatable(project).navigate(true)
