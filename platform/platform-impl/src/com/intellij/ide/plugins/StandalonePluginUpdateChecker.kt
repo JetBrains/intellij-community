@@ -78,7 +78,6 @@ sealed class PluginUpdateStatus {
 /**
  * When [notificationGroup] is null, [StandalonePluginUpdateChecker] doesn't create any notifications about available plugin updates.
  */
-@Deprecated("Deprecated without replacement, plugins must not check if there are updates available additionally to what IDE does according to user settings")
 open class StandalonePluginUpdateChecker(
   val pluginId: PluginId,
   private val updateTimestampProperty: String,
@@ -184,7 +183,7 @@ open class StandalonePluginUpdateChecker(
     val buildNumber = ApplicationInfo.getInstance().apiVersion
     val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
     val pluginId = pluginId.idString
-    var url = "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os"
+    val url = "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os"
 
     val responseDoc = HttpRequests.request(url).connect { JDOMUtil.load(it.inputStream) }
     if (responseDoc.name != "plugin-repository") {
