@@ -93,7 +93,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     for (PsiElement element : myElementsToMove) {
       if (mySearchForReferences) {
         for (PsiReference reference : ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject))) {
-          result.add(new MyUsageInfo(reference, element));
+          result.add(new MovedFileOrDirectoryUsageInfo(reference, element));
         }
       }
       findElementUsages(result, element);
@@ -336,7 +336,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   protected void retargetUsages(UsageInfo @NotNull [] usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     for (UsageInfo usageInfo : usages) {
-      if (usageInfo instanceof MyUsageInfo info) {
+      if (usageInfo instanceof MovedFileOrDirectoryUsageInfo info) {
         PsiElement element = info.myTarget;
 
         if (info.getReference() instanceof FileReference || info.getReference() instanceof PsiDynaReference) {
@@ -368,14 +368,17 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  protected static final class MyUsageInfo extends UsageInfo {
-    public final PsiElement myTarget;
-    public final PsiReference myReference;
+  protected static final class MovedFileOrDirectoryUsageInfo extends UsageInfo {
+    private final PsiElement myTarget;
+    final PsiReference myReference;
 
-    MyUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
+    MovedFileOrDirectoryUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
       super(reference);
       myReference = reference;
       myTarget = target;
     }
+
+    public PsiElement getTarget() { return myTarget; }
+    public PsiReference getUpdatedReference() { return myReference; }
   }
 }

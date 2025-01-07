@@ -16604,6 +16604,8 @@ c:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesPro
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement[],com.intellij.psi.PsiDirectory,Z,Z,com.intellij.refactoring.move.MoveCallback,java.lang.Runnable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement[],com.intellij.psi.PsiDirectory,Z,Z,Z,com.intellij.refactoring.move.MoveCallback,java.lang.Runnable):V
 - p:createUsageViewDescriptor(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageViewDescriptor
+- p:doMoveDirectory(com.intellij.psi.PsiDirectory,com.intellij.psi.PsiDirectory):V
+- p:doMoveFile(com.intellij.psi.PsiFile,com.intellij.psi.PsiDirectory):V
 - p:findUsages():com.intellij.usageView.UsageInfo[]
 - p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
 - p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
@@ -16615,6 +16617,10 @@ c:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesPro
 - p:refreshElements(com.intellij.psi.PsiElement[]):V
 - p:retargetUsages(com.intellij.usageView.UsageInfo[],java.util.Map):V
 - p:shouldDisableAccessChecks():Z
+pf:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor$MovedFileOrDirectoryUsageInfo
+- com.intellij.usageView.UsageInfo
+- getTarget():com.intellij.psi.PsiElement
+- getUpdatedReference():com.intellij.psi.PsiReference
 f:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 - s:checkIfMoveIntoSelf(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
 - s:checkMove(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
