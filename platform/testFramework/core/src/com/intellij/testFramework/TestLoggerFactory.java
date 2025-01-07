@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -229,11 +229,11 @@ public final class TestLoggerFactory implements Logger.Factory {
     if (t == null) return null;
 
     StringBuilder sb = new StringBuilder();
-    ExceptionUtil.findCauseAndSuppressed(t, ComparisonFailure.class).forEach(e ->
+    ExceptionUtil.causeAndSuppressed(t, ComparisonFailure.class).forEach(e ->
       logComparisonFailure(sb, e.getExpected(), e.getActual())
     );
 
-    ExceptionUtil.findCauseAndSuppressed(t, junit.framework.ComparisonFailure.class).forEach(e ->
+    ExceptionUtil.causeAndSuppressed(t, junit.framework.ComparisonFailure.class).forEach(e ->
       logComparisonFailure(sb, e.getExpected(), e.getActual())
     );
 

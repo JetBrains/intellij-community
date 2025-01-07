@@ -1,16 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.function.Function;
@@ -90,7 +89,7 @@ public abstract class Logger {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logFactoryChanged(Class<? extends Factory> factory) {
-    if (SystemProperties.getBooleanProperty("idea.log.logger.factory.changed", false)) {
+    if (Boolean.getBoolean("idea.log.logger.factory.changed")) {
       System.out.println("Changing log factory from " + ourFactory.getClass().getCanonicalName() +
                          " to " + factory.getCanonicalName() + '\n' + ExceptionUtil.getThrowableText(new Throwable()));
     }
@@ -389,7 +388,11 @@ public abstract class Logger {
   }
 
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING::apply));
+    String[] result = (String[])Array.newInstance(String.class, attachments.length);
+    for (int i = 0; i < attachments.length; i++) {
+      result[i] = ATTACHMENT_TO_STRING.apply(attachments[i]);
+    }
+    error(message, t, result);
   }
 
   /**

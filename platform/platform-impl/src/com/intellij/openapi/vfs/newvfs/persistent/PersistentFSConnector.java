@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
-import static com.intellij.util.ExceptionUtil.findCauseAndSuppressed;
 
 /**
  * Static helper responsible for 'connecting' (opening, initializing) {@linkplain PersistentFSConnection} object,
@@ -187,8 +186,8 @@ final class PersistentFSConnector {
       try {
         vfsLoader.closeEverything();
 
-        List<StorageAlreadyInUseException> storageAlreadyInUseExceptions = findCauseAndSuppressed(e, StorageAlreadyInUseException.class);
-        if(!storageAlreadyInUseExceptions.isEmpty()){
+        List<StorageAlreadyInUseException> storageAlreadyInUseExceptions = ExceptionUtil.findCauseAndSuppressed(e, StorageAlreadyInUseException.class);
+        if (!storageAlreadyInUseExceptions.isEmpty()) {
           //some of the storages are used by another process: don't clean VFS (it doesn't help), interrupt startup instead
           throw new IOException("Some of VFS storages are already in use: is an IDE process already running?", e);
         }
@@ -202,7 +201,7 @@ final class PersistentFSConnector {
 
       //Try to unwrap exception, so the real cause appears, we could throw VFSNeedsRebuildException with it:
 
-      List<VFSInitException> vfsNeedsRebuildExceptions = findCauseAndSuppressed(e, VFSInitException.class);
+      List<VFSInitException> vfsNeedsRebuildExceptions = ExceptionUtil.findCauseAndSuppressed(e, VFSInitException.class);
       if (!vfsNeedsRebuildExceptions.isEmpty()) {
         VFSInitException mainEx = vfsNeedsRebuildExceptions.get(0);
         for (VFSInitException suppressed : vfsNeedsRebuildExceptions.subList(1, vfsNeedsRebuildExceptions.size())) {
@@ -212,11 +211,11 @@ final class PersistentFSConnector {
       }
 
       //VersionUpdatedException extends CorruptedException, so we must look for VersionUpdated first:
-      if (!findCauseAndSuppressed(e, VersionUpdatedException.class).isEmpty()) {
+      if (!ExceptionUtil.findCauseAndSuppressed(e, VersionUpdatedException.class).isEmpty()) {
         throw new VFSInitException(IMPL_VERSION_MISMATCH, "Some of storages versions were changed", e);
       }
 
-      if (!findCauseAndSuppressed(e, CorruptedException.class).isEmpty()) {
+      if (!ExceptionUtil.findCauseAndSuppressed(e, CorruptedException.class).isEmpty()) {
         //'not closed properly' is the most likely explanation of corrupted enumerator -- but not the only one,
         // it could also be a code bug
         throw new VFSInitException(NOT_CLOSED_PROPERLY, "Some of storages were corrupted", e);

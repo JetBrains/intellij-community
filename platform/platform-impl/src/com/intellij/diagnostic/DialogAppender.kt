@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -86,7 +86,7 @@ class DialogAppender : Handler() {
 
   private fun extractLoggingEvent(messageObject: Any?, throwable: Throwable): IdeaLoggingEvent {
     var message: String? = null
-    val withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments::class.java)
+    val withAttachments = ExceptionUtil.causeAndSuppressed(throwable, ExceptionWithAttachments::class.java).toList()
     (withAttachments.firstOrNull() as? RuntimeExceptionWithAttachments)?.let {
       message = it.userMessage
     }
