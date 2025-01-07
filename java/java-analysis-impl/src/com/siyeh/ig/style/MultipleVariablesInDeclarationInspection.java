@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -86,11 +86,9 @@ public final class MultipleVariablesInDeclarationInspection extends BaseInspecti
       else {
         highlightType = ProblemHighlightType.WARNING;
       }
-      if (highlightType == ProblemHighlightType.INFORMATION
-          || InspectionProjectProfileManager.isInformationLevel(getShortName(), statement)) {
-        if (isOnTheFly()) {
-          registerError(statement, highlightType);
-        }
+      if (isOnTheFly() && (highlightType == ProblemHighlightType.INFORMATION
+                           || InspectionProjectProfileManager.isInformationLevel(getShortName(), statement))) {
+        registerError(statement, highlightType);
       }
       else {
         final PsiElement nameIdentifier = ((PsiVariable)declaredElements[0]).getNameIdentifier();
