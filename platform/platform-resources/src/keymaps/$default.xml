@@ -529,6 +529,9 @@
   <action id="Diff.ShowDiff">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
+  <action id="Compare.SameVersion">
+    <keyboard-shortcut first-keystroke="control D"/>
+  </action>
   <action id="Diff.ShowSettingsPopup">
     <keyboard-shortcut first-keystroke="control shift D"/>
   </action>

@@ -26,6 +26,7 @@ public final class VcsActionPromoter implements ActionPromoter {
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.MoveChangedLinesToChangelist", "ChangesView.Move");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.ShowDiffChangedLines", "Diff.ShowDiff");
+    reorderActionPair(reorderedActions, reorderedIds, "Compare.SameVersion", "CompareTwoFiles");
 
     boolean isInMessageEditor = isCommitMessageEditor(context);
     for (AnAction action : actions) {
