@@ -168,7 +168,7 @@ private fun <T : PsiElement> getPsiElementPopup(
         .createPopup(project, title)
 }
 
-private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer<PsiElement>() {
+fun popupPresentationProvider(): TargetPresentationProvider<PsiElement> = object : PsiTargetPresentationRenderer<PsiElement>() {
 
     @NlsSafe
     private fun PsiElement.renderText(): String = when (this) {
@@ -190,11 +190,11 @@ private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer
         is KtNamedFunction -> {
             val list = mutableListOf<String>()
             for (child in allChildren) {
-                if (child is PsiComment || child is PsiWhiteSpace) continue
+                if (child is PsiComment) continue
                 if (child is KtBlockExpression) break
                 list.add(child.text)
             }
-            StringUtil.shortenTextWithEllipsis(list.joinToString(separator = " "), 53, 0)
+            StringUtil.shortenTextWithEllipsis(list.joinToString(separator = "").trim(), 53, 0)
         }
         else -> {
             val text = text ?: "<invalid text>"
