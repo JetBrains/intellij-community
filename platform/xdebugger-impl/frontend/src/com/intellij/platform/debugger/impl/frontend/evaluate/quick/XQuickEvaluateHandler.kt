@@ -74,7 +74,7 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
           }
         }
         // TODO[IJPL-160146]: support passing session: basically valueMarkers and currentPosition
-        XValueHint(project, editorsProvider, editor, point, type, expressionInfo, frontendEvaluator, false)
+        XValueHint(project, editorsProvider, editor, point, type, offset, expressionInfo, frontendEvaluator, false)
       }
       else if (FrontendApplicationInfo.getFrontendType() is FrontendType.RemoteDev) {
         RemoteValueHint(project, projectId, editor, point, type, offset, expressionInfo, fromPlugins = false)
@@ -88,7 +88,7 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         if (evaluator == null) {
           return@async null
         }
-        XValueHint(project, editor, point, type, expressionInfo, evaluator, session, false)
+        XValueHint(project, editor, point, type, offset, expressionInfo, evaluator, session, false)
       }
     }
     hintDeferred.invokeOnCompletion {

@@ -231,18 +231,19 @@ public abstract class XVariablesViewBase extends XDebugView {
         int offset = range.getStartOffset();
         LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
         Point point = myEditor.logicalPositionToXY(pos);
-        showTooltip(point, info, evaluator, session);
+        showTooltip(point, offset, info, evaluator, session);
       }
     }
 
     private void showTooltip(@NotNull Point point,
+                             int offset,
                              @NotNull ExpressionInfo info,
                              @NotNull XDebuggerEvaluator evaluator,
                              @NotNull XDebugSession session) {
       ALARM.cancelAllRequests();
       ALARM.addRequest(() -> {
         if (DocumentUtil.isValidOffset(info.getTextRange().getEndOffset(), myEditor.getDocument())) {
-          new XValueHint(myProject, myEditor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session, true).invokeHint();
+          new XValueHint(myProject, myEditor, point, ValueHintType.MOUSE_OVER_HINT, offset, info, evaluator, session, true).invokeHint();
         }
       }, EVALUATION_DELAY_MILLIS);
     }

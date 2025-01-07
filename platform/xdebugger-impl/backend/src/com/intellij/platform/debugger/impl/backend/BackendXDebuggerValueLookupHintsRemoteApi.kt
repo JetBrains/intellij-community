@@ -115,7 +115,7 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
           return@withContext null
         }
         val expressionInfo = getExpressionInfo(evaluator, project, hintType, editor, offset) ?: return@withContext null
-        XValueHint(project, editor, point, hintType, expressionInfo, evaluator, session, false)
+        XValueHint(project, editor, point, hintType, offset, expressionInfo, evaluator, session, false)
       }
       val hintEntity = newValueEntity(hint)
       RemoteValueHintId(hintEntity.id)

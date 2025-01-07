@@ -75,11 +75,12 @@ public class XValueHint extends AbstractValueHint {
                     @NotNull Editor editor,
                     @NotNull Point point,
                     @NotNull ValueHintType type,
+                    int offset,
                     @NotNull ExpressionInfo expressionInfo,
                     @NotNull XDebuggerEvaluator evaluator,
                     @NotNull XDebugSession session,
                     boolean fromKeyboard) {
-    this(project, session.getDebugProcess().getEditorsProvider(), editor, point, type, expressionInfo, evaluator, session, fromKeyboard);
+    this(project, session.getDebugProcess().getEditorsProvider(), editor, point, type, offset, expressionInfo, evaluator, session, fromKeyboard);
   }
 
   @ApiStatus.Internal
@@ -88,10 +89,11 @@ public class XValueHint extends AbstractValueHint {
                        @NotNull Editor editor,
                        @NotNull Point point,
                        @NotNull ValueHintType type,
+                       int offset,
                        @NotNull ExpressionInfo expressionInfo,
                        @NotNull XDebuggerEvaluator evaluator,
                        boolean fromKeyboard) {
-    this(project, editorsProvider, editor, point, type, expressionInfo, evaluator, null, fromKeyboard);
+    this(project, editorsProvider, editor, point, type, offset, expressionInfo, evaluator, null, fromKeyboard);
   }
 
   private XValueHint(@NotNull Project project,
@@ -99,13 +101,14 @@ public class XValueHint extends AbstractValueHint {
                      @NotNull Editor editor,
                      @NotNull Point point,
                      @NotNull ValueHintType type,
+                     int offset,
                      @NotNull ExpressionInfo expressionInfo,
                      @NotNull XDebuggerEvaluator evaluator,
                      @Nullable XDebugSession session,
                      boolean fromKeyboard) {
     super(project, editor, point, type, expressionInfo.getTextRange());
     myEditorsProvider = editorsProvider;
-    myOffset = expressionInfo.getTextRange().getStartOffset();
+    myOffset = offset;
     myEvaluator = evaluator;
     myDebugSession = session;
     myFromKeyboard = fromKeyboard;
