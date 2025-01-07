@@ -4355,6 +4355,11 @@ public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends Abs
         public void testKotlinLibraryUsage() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/libraryUsage/kotlinLibraryUsage.java");
         }
+
+        @TestMetadata("multifilePartUsage.java")
+        public void testMultifilePartUsage() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/libraryUsage/multifilePartUsage.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
