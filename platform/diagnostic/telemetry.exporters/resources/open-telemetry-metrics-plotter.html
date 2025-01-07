@@ -514,6 +514,7 @@ as an example
       const ramPlusSwapMinusFileMappingsBytes = extractTimeSeries("MEM.ramPlusSwapMinusFileMappingsBytes")
 
       const usedHeapBytes = extractTimeSeries("JVM.usedHeapBytes")
+      const committedHeapBytes = extractTimeSeries("JVM.committedHeapBytes")
       const maxHeapBytes = extractTimeSeries("JVM.maxHeapBytes")
       const usedNativeBytes = extractTimeSeries("JVM.usedNativeBytes")
       const maxNativeBytes = extractTimeSeries("JVM.maxNativeBytes")
@@ -556,6 +557,10 @@ as an example
           name: 'Used heap, Mb',
           color: 'green',
           series: usedHeapBytes.mulScalar(1.0 / 1024 / 1024)
+        }, {
+          name: 'Committed heap, Mb',
+          color: 'orange',
+          series: committedHeapBytes.mulScalar(1.0 / 1024 / 1024)
         }, {
           name: 'Max heap, Mb',
           color: 'red',

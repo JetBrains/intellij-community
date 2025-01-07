@@ -57,6 +57,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
 
       //JVM memory metrics
       val usedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.usedHeapBytes").ofLongs().buildObserver()
+      val committedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.committedHeapBytes").ofLongs().buildObserver()
       val maxHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.maxHeapBytes").ofLongs().buildObserver()
 
       //Off-heap memory used by JVM structures
@@ -115,6 +116,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
           val nonHeapUsage = memoryMXBean.nonHeapMemoryUsage
 
           usedHeapMemoryGauge.record(heapUsage.used)
+          committedHeapMemoryGauge.record(heapUsage.committed)
           maxHeapMemoryGauge.record(heapUsage.max)
 
           usedNativeMemoryGauge.record(nonHeapUsage.used)
@@ -156,7 +158,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
         ramGauge, ramMinusFileMappingsGauge, ramPlusSwapMinusFileMappingsGauge, fileMappingsRamGauge,
         avgRamGauge, avgRamMinusFileMappingsGauge, avgRamPlusSwapMinusFileMappingsGauge, avgFileMappingsRamGauge,
 
-        usedHeapMemoryGauge, maxHeapMemoryGauge,
+        usedHeapMemoryGauge, committedHeapMemoryGauge, maxHeapMemoryGauge,
         usedNativeMemoryGauge, totalDirectByteBuffersGauge,
 
         threadCountGauge, threadCountMaxGauge, newThreadsCounter,
