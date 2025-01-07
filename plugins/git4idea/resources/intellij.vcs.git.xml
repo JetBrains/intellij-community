@@ -502,8 +502,7 @@
     </group>
 
     <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
-      <add-to-group group-id="MainToolbarQuickActions" relative-to-action="MainToolbarQuickActions.Run" anchor="after"/>
-      <separator key="MainToolbarQuickActions.vcs.separator"/>
+      <add-to-group group-id="MainToolbarQuickActions" relative-to-action="MainToolbarQuickActions.Run" anchor="before"/>
       <group id="MainToolbarQuickActions.VCS" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false" popup="false"/>
     </group>
 
@@ -831,10 +830,8 @@
     <postStartupActivity implementation="git4idea.commit.GitMergeCommitMessageActivity"/>
     <vcs.defaultCommitMessagePolicy implementation="git4idea.commit.GitMergeCommitMessagePolicy"/>
 
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdateQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdatePushQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.PushQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.DiffQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
 

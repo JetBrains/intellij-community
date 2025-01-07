@@ -10,12 +10,7 @@ import com.intellij.idea.ActionsBundle
 private val generalActionsStrategy = GroupEnd("MainToolbarNewUI", "MainToolbarGeneralActionsGroup")
 private val runActionsStrategy = GroupStart("MainToolbarNewUI", "MainToolbarRight")
 
-class OpenFileQuickAction: ToolbarAddQuickActionInfo(listOf("OpenFile"), ActionsBundle.message("MainToolbarQuickActions.OpenFile.text"), AllIcons.Actions.MenuOpen, generalActionsStrategy)
 class SaveAllQuickAction: ToolbarAddQuickActionInfo(listOf("SaveAll"), ActionsBundle.message("MainToolbarQuickActions.SaveAll.text"), AllIcons.Actions.MenuSaveall, generalActionsStrategy)
-class SynchronizeQuickAction: ToolbarAddQuickActionInfo(listOf("Synchronize"), ActionsBundle.message("MainToolbarQuickActions.Synchronize.text"), AllIcons.Actions.Refresh, generalActionsStrategy)
 class BackForwardQuickAction: ToolbarAddQuickActionInfo(listOf("Back", "Forward"), ActionsBundle.message("MainToolbarQuickActions.BackForward.text"), AllIcons.Actions.Back, generalActionsStrategy)
-class UndoRedoQuickAction: ToolbarAddQuickActionInfo(listOf("\$Undo", "\$Redo"), ActionsBundle.message("MainToolbarQuickActions.UndoRedo.text"), AllIcons.Actions.Undo, generalActionsStrategy)
 
 class BuildQuickAction: ToolbarAddQuickActionInfo(listOf("CompileDirty"), ActionsBundle.message("MainToolbarQuickActions.Build.text"), AllIcons.Actions.Compile, runActionsStrategy)
-class CoverageQuickAction: ToolbarAddQuickActionInfo(listOf("Coverage"), ActionsBundle.message("MainToolbarQuickActions.Coverage.text"), AllIcons.General.RunWithCoverage, runActionsStrategy)
-class ProfilerQuickAction: ToolbarAddQuickActionInfo(listOf("Profiler"), ActionsBundle.message("MainToolbarQuickActions.Profile.text"), AllIcons.Actions.Profile, runActionsStrategy)

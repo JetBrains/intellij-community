@@ -1701,11 +1701,11 @@
     <action id="TopStripeEnableAction" class="com.intellij.toolWindow.EnableStripeGroup"/>
 
     <group id="MainToolbarQuickActions" searchable="false" popup="true">
-      <separator key="MainToolbarQuickActions.run.separator"/>
+      <group id="MainToolbarQuickActions.General" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false"
+             popup="false"/>
       <group id="MainToolbarQuickActions.Run" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false"
              popup="false"/>
-      <separator key="MainToolbarQuickActions.General.separator"/>
-      <group id="MainToolbarQuickActions.General" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false"
+      <group id="MainToolbarQuickActions.GeneralLast" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false"
              popup="false"/>
     </group>
 

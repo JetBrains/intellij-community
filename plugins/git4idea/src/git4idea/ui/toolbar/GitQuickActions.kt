@@ -10,9 +10,7 @@ import git4idea.i18n.GitBundle
 private val insertStrategy = GroupEnd("MainToolbarNewUI", "MainToolbarVCSGroup")
   .orElse(GroupEnd("MainToolbarNewUI", IdeActions.GROUP_MAIN_TOOLBAR_LEFT))
 
-class UpdateQuickAction: ToolbarAddQuickActionInfo(listOf("Vcs.UpdateProject"), GitBundle.message("MainToolbarQuickActions.Git.Update.text"), AllIcons.Actions.CheckOut, insertStrategy)
+class UpdatePushQuickAction: ToolbarAddQuickActionInfo(listOf("Vcs.UpdateProject", "Vcs.Push"), GitBundle.message("MainToolbarQuickActions.Git.UpdatePush.text"), AllIcons.Actions.CheckOut, insertStrategy)
 class CommitQuickAction: ToolbarAddQuickActionInfo(listOf("CheckinProject"), GitBundle.message("MainToolbarQuickActions.Git.Commit.text"), AllIcons.Actions.Commit, insertStrategy)
-class PushQuickAction: ToolbarAddQuickActionInfo(listOf("Vcs.Push"), GitBundle.message("MainToolbarQuickActions.Git.Push.text"), AllIcons.Vcs.Push, insertStrategy)
-class DiffQuickAction: ToolbarAddQuickActionInfo(listOf("Compare.SameVersion"), GitBundle.message("MainToolbarQuickActions.Git.Diff.text"), AllIcons.Actions.Diff, insertStrategy)
 class HistoryQuickAction: ToolbarAddQuickActionInfo(listOf("Vcs.ShowTabbedFileHistory"), GitBundle.message("MainToolbarQuickActions.Git.History.text"), AllIcons.Vcs.History, insertStrategy)
 class RollbackQuickAction: ToolbarAddQuickActionInfo(listOf("ChangesView.Revert"), GitBundle.message("MainToolbarQuickActions.Git.Rollback.text"), AllIcons.Diff.Revert, insertStrategy)
