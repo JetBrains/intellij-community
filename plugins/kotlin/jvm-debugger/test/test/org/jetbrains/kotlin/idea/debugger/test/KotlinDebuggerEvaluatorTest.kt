@@ -3,6 +3,9 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.ui.JVMDebuggerEvaluatorTest
 
+/**
+ * See also [AbstractSelectExpressionForDebuggerTest].
+ */
 class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
 
     fun testConstructor() {
@@ -17,7 +20,8 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
         doTestRangeExpression("va<caret>l a = 5", noExpressions())
         doTestRangeExpression("val <caret>a = 5", expressionWithoutSideEffects("a"))
         doTestRangeExpression("val a <caret>= 5", noExpressions())
-        // doTestRangeExpression("val a = <caret>5", expressionWithoutSideEffects("5"))
+        doTestRangeExpression("val a = <caret>5", noExpressions()) // just a constant expression, considered not interesting
+        doTestRangeExpression("val a = <caret>bar(5)", expressionWithSideEffects("bar(5)"))
     }
 
     fun testInstanceof() {
@@ -65,25 +69,36 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
         doTestRangeExpression("val ins = A(); ins.f<caret>oo()", expressionWithSideEffects("ins.foo()"))
     }
 
+    fun testThis() {
+        doTestRangeExpression("th<caret>is.bar(5)", expressionWithoutSideEffects("this"))
+        doTestRangeExpression("this.ba<caret>r(5)", expressionWithSideEffects("this.bar(5)"))
+        doTestRangeExpression("th<caret>is@A.bar(5)", expressionWithoutSideEffects("this@A"))
+    }
+
     fun testTernaryOperator() {
-        doTestRangeExpression("val expr = true; val a = if (expr<caret>) 56 else 73", expressionWithoutSideEffects("if (expr) 56 else 73"))
-        doTestRangeExpression("val expr = true; val a = if (expr)<caret> 56 else 73", expressionWithoutSideEffects("if (expr) 56 else 73"))
-        doTestRangeExpression("val expr = true; val a = if (expr) 5<caret>6 else 73", expressionWithoutSideEffects("if (expr) 56 else 73"))
-        doTestRangeExpression("val expr = true; val a = if (expr) 56<caret> else 73", expressionWithoutSideEffects("if (expr) 56 else 73"))
-        doTestRangeExpression("val expr = true; val a = if (expr) 56 <caret>else 73", expressionWithoutSideEffects("if (expr) 56 else 73"))
-        doTestRangeExpression("val expr = true; val a = if (expr) 56 else<caret> 73", expressionWithoutSideEffects("if (expr) 56 else 73"))
+        // Actually, all of them could be evaluated without side effects.
+        doTestRangeExpression("val expr = true; val a = if (expr<caret>) 56 else 73", expressionWithSideEffects("if (expr) 56 else 73"))
+        doTestRangeExpression("val expr = true; val a = if (expr)<caret> 56 else 73", expressionWithSideEffects("if (expr) 56 else 73"))
+        doTestRangeExpression("val expr = true; val a = if (expr) 5<caret>6 else 73", expressionWithSideEffects("if (expr) 56 else 73"))
+        doTestRangeExpression("val expr = true; val a = if (expr) 56<caret> else 73", expressionWithSideEffects("if (expr) 56 else 73"))
+        doTestRangeExpression("val expr = true; val a = if (expr) 56 <caret>else 73", expressionWithSideEffects("if (expr) 56 else 73"))
+        doTestRangeExpression("val expr = true; val a = if (expr) 56 else<caret> 73", expressionWithSideEffects("if (expr) 56 else 73"))
     }
 
     fun testTernaryOperatorWithMethods() {
-        // doTestRangeExpression("val expr = false; val a = if (expr) 5<caret>6 else bar()", expressionWithSideEffects("if (expr) 56 else bar()"))
+        doTestRangeExpression("val expr = false; val a = if (expr) 5<caret>6 else bar(56)", expressionWithSideEffects("if (expr) 56 else bar(56)"))
     }
 
     fun testTryWithMethods() {
-        // doTestRangeExpression("try { prin<caret>tln(37) } finally {}", expressionWithSideEffects("println(37)"))
-        // doTestRangeExpression("t<caret>ry { println(37) } finally {}", expressionWithSideEffects("try { println(37) } finally {}"))
-        // doTestRangeExpression("try { println(37) }<caret> finally {}", expressionWithSideEffects("try { println(37) } finally {}"))
-        // doTestRangeExpression("try { println(37) } <caret>finally {}", expressionWithSideEffects("try { println(37) } finally {}"))
-        // doTestRangeExpression("try { println(37) } fina<caret>lly {}", expressionWithSideEffects("try { println(37) } finally {}"))
+        doTestRangeExpression("try { b<caret>ar(37) } finally {}", expressionWithSideEffects("bar(37)"))
+        doTestRangeExpression("t<caret>ry { bar(37) } finally {}", expressionWithSideEffects("try { bar(37) } finally {}"))
+        doTestRangeExpression("try { bar(37) }<caret> finally {}", expressionWithSideEffects("try { bar(37) } finally {}"))
+        doTestRangeExpression("try { bar(37) } <caret>finally {}", expressionWithSideEffects("try { bar(37) } finally {}"))
+        doTestRangeExpression("try { bar(37) } fina<caret>lly {}", expressionWithSideEffects("try { bar(37) } finally {}"))
+    }
+
+    fun testWhenWithMethods() {
+        doTestRangeExpression("val x = 37; when (x) { 1<caret>0 -> bar(10); 20 -> bar(20) }", expressionWithSideEffects("when (x) { 10 -> bar(10); 20 -> bar(20) }"))
     }
 
     fun testArrayAccess() {
@@ -102,13 +117,13 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
     }
 
     fun testMethodReference() {
-        doTestRangeExpression("(::b<caret>ar)()", expressionWithoutSideEffects("::bar"))
-        doTestRangeExpression("(::bar)(<caret>)", expressionWithSideEffects("(::bar)()"))
+        doTestRangeExpression("(::f<caret>oo)()", expressionWithoutSideEffects("::foo"))
+        doTestRangeExpression("(::foo)(<caret>)", expressionWithSideEffects("(::foo)()"))
     }
 
     fun testCast() {
         doTestRangeExpression("val a = 5 a<caret>s Int", expressionWithoutSideEffects("5 as Int"))
-        doTestRangeExpression("(::bar a<caret>s (Int) -> Unit)(25)", expressionWithoutSideEffects("::bar as (Int) -> Unit"))
+        doTestRangeExpression("(::bar a<caret>s (Int) -> Int)(25)", expressionWithoutSideEffects("::bar as (Int) -> Int"))
     }
 
     fun testMethodParenthesis() {
@@ -122,7 +137,7 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
     //////////// Utility methods
 
     private fun doTestRangeExpression(code: String, expected: ExpectedExpression) {
-        doTestRange("class A { fun foo() {" + code + "} fun bar() = 37 }", expected)
+        doTestRange("class A { fun foo() {" + code + "} fun bar(x: Int) = 37 }", expected)
     }
 
     private fun doTestRange(code: String, expected: ExpectedExpression) {
