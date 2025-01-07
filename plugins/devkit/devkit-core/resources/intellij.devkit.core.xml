@@ -643,8 +643,6 @@
     <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
                  description="Enables commit messages validation for intellij project"/>
 
-    <fileIconProvider implementation="org.jetbrains.idea.devkit.apiDump.ApiDumpFileIconProvider"/>
-    <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.apiDump.ApiDumpGeneratedSourcesFilter"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.contentReport.ContentReportGeneratedSourcesFilter"/>
 
     <!-- INTERNAL -->

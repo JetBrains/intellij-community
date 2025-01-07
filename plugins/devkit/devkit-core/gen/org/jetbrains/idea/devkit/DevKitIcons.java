@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit;
 
 import com.intellij.ui.IconManager;
@@ -18,10 +18,6 @@ public final class DevKitIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, DevKitIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Add_sdk = load("icons/expui/addSDK.svg", "icons/add_sdk.svg", 641117830, 2);
-  /** 16x16 */ public static final @NotNull Icon ApiDump = load("icons/expui/apiDump.svg", 526115583, 2);
-  /** 16x16 */ public static final @NotNull Icon ApiDumpExperimental = load("icons/expui/apiDumpExperimental.svg", 300380643, 2);
-  /** 16x16 */ public static final @NotNull Icon ApiDumpExposed = load("icons/expui/apiDumpExposed.svg", -1434881986, 2);
-  /** 16x16 */ public static final @NotNull Icon ApiDumpUnreviewed = load("icons/expui/apiDumpUnreviewed.svg", -530972223, 2);
 
   public static final class Gutter {
     /** 12x12 */ public static final @NotNull Icon DescriptionFile = load("icons/expui/gutter/descriptionFile@14x14.svg", "icons/gutter/descriptionFile.svg", 1318760137, 2);

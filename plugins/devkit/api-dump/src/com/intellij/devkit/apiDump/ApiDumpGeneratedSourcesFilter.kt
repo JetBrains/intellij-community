@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.apiDump
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.devkit.apiDump
 
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
@@ -16,6 +16,6 @@ internal class ApiDumpGeneratedSourcesFilter : GeneratedSourcesFilter() {
   }
 
   override fun getNotificationText(file: VirtualFile, project: Project): @NlsContexts.LinkLabel String? {
-    return org.jetbrains.idea.devkit.DevKitBundle.message("api.dump.generated.sources.filter.notification")
+    return ApiDumpBundle.message("api.dump.generated.sources.filter.notification")
   }
 }
