@@ -146,7 +146,9 @@ class PluginVerifier(
     "com.intellij.vcs.ShelveTitleProvider",
 
     // To Fix
-    "com.intellij.jupyter.core.jupyter.editor.outputs.JupyterOutputDataKeyExtractorKt.getOutputsForIndex"
+    "com.intellij.jupyter.core.jupyter.editor.outputs.JupyterOutputDataKeyExtractorKt.getOutputsForIndex",
+
+    "com.intellij.llmInstaller.AiAutoEnableManager.AutoEnableState"
 
   )
 

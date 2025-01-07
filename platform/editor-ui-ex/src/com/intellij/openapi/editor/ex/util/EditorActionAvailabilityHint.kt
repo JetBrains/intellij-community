@@ -63,6 +63,19 @@ class EditorActionAvailabilityHint @JvmOverloads constructor(val actionId: Strin
  *
  * NB: when marking a range marker you have to ensure that you do it inside highlighter initialization block.
  * See the last parameter of [com.intellij.openapi.editor.ex.MarkupModelEx.addRangeHighlighterAndChangeAttributes]
+ *
+ * NB: this method is preserved to keep LLM plugin compatibility
+ */
+@Experimental
+fun RangeMarker.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
+  (this as UserDataHolder).addActionAvailabilityHint(*hints)
+}
+
+/**
+ * Marks [RangeMarker] with [EditorActionAvailabilityHint]
+ *
+ * NB: when marking a range marker you have to ensure that you do it inside highlighter initialization block.
+ * See the last parameter of [com.intellij.openapi.editor.ex.MarkupModelEx.addRangeHighlighterAndChangeAttributes]
  */
 @Experimental
 fun UserDataHolder.addActionAvailabilityHint(vararg hints: EditorActionAvailabilityHint) {
