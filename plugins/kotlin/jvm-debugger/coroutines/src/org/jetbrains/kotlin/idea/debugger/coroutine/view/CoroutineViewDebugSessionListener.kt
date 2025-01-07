@@ -18,13 +18,22 @@ internal class CoroutineViewDebugSessionListener(
 
     override fun sessionPaused() {
         val suspendContext = session.suspendContext ?: return requestClear()
+        if (coroutineView.isLiveUpdateEnabled) {
+            coroutineView.saveState()
+        } else {
+            coroutineView.collapseCoroutineHierarchyNode()
+        }
         coroutineView.alarm.cancel()
         renew(suspendContext)
     }
 
     override fun sessionResumed() {
-        coroutineView.saveState()
         val suspendContext = session.suspendContext ?: return requestClear()
+        if (coroutineView.isLiveUpdateEnabled) {
+            coroutineView.saveState()
+        } else {
+            coroutineView.collapseCoroutineHierarchyNode()
+        }
         renew(suspendContext)
     }
 

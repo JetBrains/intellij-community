@@ -29,6 +29,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.sun.jdi.request.EventRequest
 import org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebuggerContentInfo
 import org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebuggerContentInfo.Companion.XCOROUTINE_POPUP_ACTION_GROUP
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesPr
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import java.awt.BorderLayout
 import javax.swing.JPanel
+import javax.swing.tree.TreePath
 
 internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
     Disposable, XDebugSessionListenerProvider, CreateContentParamsProvider {
@@ -50,6 +52,7 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
     }
     
     val alarm = SingleAlarm({ resetRoot() }, VIEW_CLEAR_DELAY_MS, this)
+    val isLiveUpdateEnabled = Registry.`is`("coroutine.panel.live.update")
     private val debugProcess = javaDebugProcess.debuggerSession.process
     private val renderer = SimpleColoredTextIconPresentationRenderer()
     private val mainPanel = JPanel(BorderLayout())
@@ -78,6 +81,7 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
     }
 
     fun saveState() {
+        if (!isLiveUpdateEnabled) return
         DebuggerUIUtil.invokeLater {
             if (panel.tree.root !is EmptyNode) {
                 treeState = XDebuggerTreeState.saveState(panel.tree)
@@ -88,6 +92,17 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
     fun resetRoot() {
         DebuggerUIUtil.invokeLater {
             panel.tree.setRoot(EmptyNode(), false)
+        }
+    }
+
+    fun collapseCoroutineHierarchyNode() {
+        if (isLiveUpdateEnabled) return
+        DebuggerUIUtil.invokeLater {
+            val rootNode = panel.tree.root.children.firstOrNull() ?: return@invokeLater
+            val pathToRootNode = TreePath(panel.tree.treeModel.getPathToRoot(rootNode))
+            if ((rootNode as? XValueNodeImpl)?.name == KotlinDebuggerCoroutinesBundle.message("coroutine.view.node.jobs") && !panel.tree.isCollapsed(pathToRootNode)) {
+                panel.tree.collapsePath(pathToRootNode)
+            }
         }
     }
 
