@@ -137,6 +137,10 @@ internal class MCPServerStartupValidator : ProjectActivity {
     override suspend fun execute(project: Project) {
         val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(GROUP_ID)
         val settingsService = service<PluginSettings>()
+        if (SystemInfo.isLinux) {
+            logger.info("No Claude Client on Linux, skipping validation")
+            return
+        }
         if (!ClaudeConfigManager.isClaudeClientInstalled() && settingsService.state.shouldShowClaudeNotification) {
             val notification = notificationGroup.createNotification(
                 "Claude Client is not installed",
