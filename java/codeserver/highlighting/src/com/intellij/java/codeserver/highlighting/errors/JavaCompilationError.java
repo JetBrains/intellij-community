@@ -28,6 +28,13 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
   }
 
   /**
+   * @return a desired highlighting type to display the error
+   */
+  public @NotNull JavaErrorHighlightType highlightType() {
+    return kind.highlightType(psi, context);
+  }
+
+  /**
    * @return a user-readable localized error description
    */
   public @NotNull HtmlChunk description() {

@@ -7,11 +7,14 @@ import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.highlighting.errors.JavaAnnotationValueErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,16 +43,22 @@ final class JavaErrorFixProvider {
   private static final Map<JavaErrorKind<?, ?>, List<JavaFixesProvider<?, ?>>> FIXES = new HashMap<>();
 
   static {
+    multi(UNSUPPORTED_FEATURE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
+    createAnnotationFixes();
+  }
+
+  private static void createAnnotationFixes() {
+    QuickFixFactory factory = QuickFixFactory.getInstance();
     single(SAFE_VARARGS_ON_NON_FINAL_METHOD,
-           error -> QuickFixFactory.getInstance().createModifierListFix(error.context(), PsiModifier.FINAL, true, true));
+           error -> factory.createModifierListFix(error.context(), PsiModifier.FINAL, true, true));
     multi(OVERRIDE_ON_NON_OVERRIDING_METHOD, error -> {
       List<CommonIntentionAction> registrar = new ArrayList<>();
-      QuickFixFactory.getInstance().registerPullAsAbstractUpFixes(error.context(), registrar);
+      factory.registerPullAsAbstractUpFixes(error.context(), registrar);
       return registrar;
     });
     JavaFixProvider<PsiElement, Object> annotationRemover = error ->
-      error.psi() instanceof PsiAnnotation annotation ? QuickFixFactory.getInstance()
-        .createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation")) : null;
+      error.psi() instanceof PsiAnnotation annotation ? factory.createDeleteFix(annotation, JavaAnalysisBundle.message(
+        "intention.text.remove.annotation")) : null;
     for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_NOT_ALLOWED_CLASS, ANNOTATION_NOT_ALLOWED_HERE,
                                             ANNOTATION_NOT_ALLOWED_REF, ANNOTATION_NOT_ALLOWED_VAR,
                                             ANNOTATION_NOT_ALLOWED_VOID, LAMBDA_MULTIPLE_TARGET_METHODS, LAMBDA_NO_TARGET_METHOD,
@@ -70,12 +79,54 @@ final class JavaErrorFixProvider {
     multi(ANNOTATION_NOT_APPLICABLE, error -> {
       if (!BaseIntentionAction.canModify(Objects.requireNonNull(error.psi().resolveAnnotationType()))) return List.of();
       return ContainerUtil.map(error.context(),
-                               targetType -> QuickFixFactory.getInstance().createAddAnnotationTargetFix(error.psi(), targetType));
+                               targetType -> factory.createAddAnnotationTargetFix(error.psi(), targetType));
     });
     single(ANNOTATION_NOT_ALLOWED_STATIC, error -> new MoveAnnotationOnStaticMemberQualifyingTypeFix(error.psi()));
-    multi(UNSUPPORTED_FEATURE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
-    single(ANNOTATION_MISSING_ATTRIBUTE, error -> QuickFixFactory.getInstance().createAddMissingRequiredAnnotationParametersFix(
+    single(ANNOTATION_MISSING_ATTRIBUTE, error -> factory.createAddMissingRequiredAnnotationParametersFix(
       error.psi(), PsiMethod.EMPTY_ARRAY, error.context()));
+    multi(ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING,
+          error -> List.copyOf(factory.createAddAnnotationAttributeNameFixes(error.psi())));
+    multi(ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD, error -> {
+      PsiNameValuePair pair = error.psi();
+      if (pair.getName() != null) return List.of();
+      return List.copyOf(factory.createAddAnnotationAttributeNameFixes(pair));
+    });
+    single(ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD, error -> factory.createCreateAnnotationMethodFromUsageFix(error.psi()));
+    single(ANNOTATION_ATTRIBUTE_DUPLICATE, error -> factory.createDeleteFix(error.psi()));
+    single(ANNOTATION_ATTRIBUTE_DUPLICATE, error -> factory.createMergeDuplicateAttributesFix(error.psi()));
+    JavaFixProvider<PsiAnnotationMemberValue, JavaAnnotationValueErrorKind.AnnotationValueErrorContext> incompatibleTypeFix = error -> {
+      PsiAnnotationMemberValue value = error.psi();
+      PsiAnnotationMethod method = error.context().method();
+      PsiType type = null;
+      if (value instanceof PsiAnnotation annotation) {
+        PsiClass annotationClass = annotation.resolveAnnotationType();
+        if (annotationClass != null) {
+          type = TypeUtils.getType(annotationClass);
+        }
+      } else if (value instanceof PsiArrayInitializerMemberValue arrayInitializer) {
+        PsiAnnotationMemberValue[] initializers = arrayInitializer.getInitializers();
+        PsiType componentType = initializers.length == 0 ? error.context().expectedType() :
+                                initializers[0] instanceof PsiExpression firstInitializer ? firstInitializer.getType() : null;
+        if (componentType != null) {
+          type = componentType.createArrayType();
+        }
+      } else if (value instanceof PsiExpression expression) {
+        type = expression.getType();
+      }
+      if (type == null) return null;
+      return factory.createAnnotationMethodReturnFix(method, type, error.context().fromDefaultValue());
+    };
+    single(ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE, incompatibleTypeFix);
+    single(ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE, 
+           error -> factory.createSurroundWithQuotesAnnotationParameterValueFix(error.psi(), error.context().expectedType()));
+    single(ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER, incompatibleTypeFix);
+    single(ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER, error -> {
+      PsiAnnotationMemberValue[] initializers = error.psi().getInitializers();
+      if (initializers.length != 1 || !(initializers[0] instanceof PsiExpression firstInitializer)) return null;
+      PsiType expectedType = error.context().expectedType();
+      if (!TypeConversionUtil.areTypesAssignmentCompatible(expectedType, firstInitializer)) return null;
+      return factory.createUnwrapArrayInitializerMemberValueAction(error.psi());
+    });
   }
 
   private static <Psi extends PsiElement, Context> void single(@NotNull JavaErrorKind<Psi, Context> kind,

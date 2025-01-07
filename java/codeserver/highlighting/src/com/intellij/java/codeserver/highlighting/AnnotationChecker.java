@@ -10,10 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -303,6 +300,134 @@ final class AnnotationChecker {
     PsiClass superClass = superMethod.getMethod().getContainingClass();
     if (superClass != null && superClass.isInterface()) {
       myVisitor.checkFeature(annotation, JavaFeature.OVERRIDE_INTERFACE);
+    }
+  }
+
+  void checkNameValuePair(@NotNull PsiNameValuePair pair) {
+    if (pair.getFirstChild() instanceof PsiErrorElement) return;
+    PsiIdentifier identifier = pair.getNameIdentifier();
+    if (identifier == null && pair.getParent() instanceof PsiAnnotationParameterList list) {
+      PsiNameValuePair[] attributes = list.getAttributes();
+      if (attributes.length > 1) {
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING.create(pair));
+        return;
+      }
+    }
+    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
+    if (annotation == null) return;
+    PsiClass annotationClass = annotation.resolveAnnotationType();
+    if (annotationClass == null) return;
+    PsiReference ref = pair.getReference();
+    if (ref == null) return;
+    PsiMethod method = (PsiMethod)ref.resolve();
+    if (method == null) {
+      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD.create(pair, ref.getCanonicalText()));
+    }
+    else if (method instanceof PsiAnnotationMethod annotationMethod) {
+      PsiAnnotationMemberValue value = pair.getValue();
+      if (value != null) {
+        PsiType expectedType = Objects.requireNonNull(method.getReturnType());
+        checkMemberValueType(value, expectedType, annotationMethod);
+      }
+
+      checkDuplicateAttribute(pair);
+    }
+  }
+
+  private void checkDuplicateAttribute(@NotNull PsiNameValuePair pair) {
+    PsiAnnotationParameterList annotation = (PsiAnnotationParameterList)pair.getParent();
+    PsiNameValuePair[] attributes = annotation.getAttributes();
+    for (PsiNameValuePair attribute : attributes) {
+      if (attribute == pair) break;
+      String name = pair.getName();
+      if (Objects.equals(attribute.getName(), name)) {
+        myVisitor.report(
+          JavaErrorKinds.ANNOTATION_ATTRIBUTE_DUPLICATE.create(pair, name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name));
+      }
+    }
+  }
+
+  void checkMemberValueType(@NotNull PsiAnnotationMemberValue value,
+                            @NotNull PsiType expectedType,
+                            @NotNull PsiAnnotationMethod method) {
+    if (expectedType instanceof PsiClassType && expectedType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+      if (!(value instanceof PsiClassObjectAccessExpression)) {
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_NON_CLASS_LITERAL.create(value));
+        return;
+      }
+    }
+    if (method instanceof SyntheticElement) return;
+
+    if (value instanceof PsiAnnotation annotation) {
+      PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+      if (nameRef == null) return;
+
+      if (expectedType instanceof PsiClassType classType) {
+        PsiClass aClass = classType.resolve();
+        if (aClass != null && nameRef.isReferenceTo(aClass)) return;
+      }
+
+      if (expectedType instanceof PsiArrayType arrayType) {
+        PsiType componentType = arrayType.getComponentType();
+        if (componentType instanceof PsiClassType classType) {
+          PsiClass aClass = classType.resolve();
+          if (aClass != null && nameRef.isReferenceTo(aClass)) return;
+        }
+      }
+
+      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE.create(annotation, method, expectedType));
+      return;
+    }
+
+    if (value instanceof PsiArrayInitializerMemberValue arrayValue && !(expectedType instanceof PsiArrayType)) {
+      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER.create(arrayValue, method, expectedType));
+      return;
+    }
+
+    if (value instanceof PsiExpression expr) {
+      PsiType type = expr.getType();
+
+      PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      if (psiClass != null &&
+          psiClass.isEnum() &&
+          !(expr instanceof PsiReferenceExpression referenceExpression && referenceExpression.resolve() instanceof PsiEnumConstant)) {
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_NON_ENUM_CONSTANT.create(expr));
+        return;
+      }
+
+      if (type != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expr) ||
+          expectedType instanceof PsiArrayType arrayType &&
+          TypeConversionUtil.areTypesAssignmentCompatible(arrayType.getComponentType(), expr)) {
+        return;
+      }
+
+      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE.create(expr, method, expectedType));
+    }
+  }
+
+  void checkArrayInitializer(@NotNull PsiArrayInitializerMemberValue initializer) {
+    PsiMethod method = null;
+
+    PsiElement parent = initializer.getParent();
+    if (parent instanceof PsiNameValuePair) {
+      PsiReference reference = parent.getReference();
+      if (reference != null) {
+        method = (PsiMethod)reference.resolve();
+      }
+    }
+    else if (PsiUtil.isAnnotationMethod(parent)) {
+      method = (PsiMethod)parent;
+    }
+
+    if (method instanceof PsiAnnotationMethod annotationMethod) {
+      PsiType type = method.getReturnType();
+      if (type instanceof PsiArrayType arrayType) {
+        type = arrayType.getComponentType();
+        PsiAnnotationMemberValue[] initializers = initializer.getInitializers();
+        for (PsiAnnotationMemberValue initializer1 : initializers) {
+          checkMemberValueType(initializer1, type, annotationMethod);
+        }
+      }
     }
   }
 }

@@ -38,6 +38,15 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> permits P
   /**
    * @param psi PSI element associated with an error
    * @param context a context in which the error should be rendered
+   * @return preferred type of highlighting
+   */
+  default @NotNull JavaErrorHighlightType highlightType(@NotNull Psi psi, Context context) {
+    return JavaErrorHighlightType.ERROR;
+  }
+
+  /**
+   * @param psi PSI element associated with an error
+   * @param context a context in which the error should be rendered
    * @throws IllegalArgumentException if the context or PSI element are not applicable to this error kind
    */
   default void validate(@NotNull Psi psi, Context context) throws IllegalArgumentException {

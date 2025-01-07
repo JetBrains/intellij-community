@@ -7,12 +7,14 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * All possible Java error kinds
@@ -46,6 +48,53 @@ public final class JavaErrorKinds {
     new JavaSimpleErrorKind<>("annotation.type.expected");
   public static final JavaSimpleErrorKind<PsiReferenceExpression> ANNOTATION_REPEATED_TARGET =
     new JavaSimpleErrorKind<>("annotation.repeated.target");
+  public static final JavaSimpleErrorKind<PsiNameValuePair> ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING =
+    new JavaSimpleErrorKind<>("annotation.attribute.annotation.name.is.missing");
+  public static final JavaSimpleErrorKind<PsiAnnotationMemberValue> ANNOTATION_ATTRIBUTE_NON_CLASS_LITERAL =
+    new JavaSimpleErrorKind<>("annotation.attribute.non.class.literal");
+  public static final JavaSimpleErrorKind<PsiExpression> ANNOTATION_ATTRIBUTE_NON_ENUM_CONSTANT =
+    new JavaSimpleErrorKind<>("annotation.attribute.non.enum.constant");
+  public static final JavaAnnotationValueErrorKind<PsiAnnotationMemberValue> ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE =
+    new JavaAnnotationValueErrorKind<>("annotation.attribute.incompatible.type") {
+      @Override
+      public @NotNull HtmlChunk description(@NotNull PsiAnnotationMemberValue value, 
+                                            JavaAnnotationValueErrorKind.@NotNull AnnotationValueErrorContext context) {
+        String text = value instanceof PsiAnnotation annotation ? requireNonNull(annotation.getNameReferenceElement()).getText() :
+                      PsiTypesUtil.removeExternalAnnotations(requireNonNull(((PsiExpression)value).getType())).getInternalCanonicalText();
+        return HtmlChunk.raw(JavaCompilationErrorBundle.message("annotation.attribute.incompatible.type", context.typeText(), text));
+      }
+    };
+  public static final JavaAnnotationValueErrorKind<PsiArrayInitializerMemberValue> ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER =
+    new JavaAnnotationValueErrorKind<>("annotation.attribute.illegal.array.initializer") {
+      @Override
+      public @NotNull HtmlChunk description(@NotNull PsiArrayInitializerMemberValue element, AnnotationValueErrorContext context) {
+        return HtmlChunk.raw(JavaCompilationErrorBundle.message("annotation.attribute.illegal.array.initializer", context.typeText()));
+      }
+    };
+  public static final JavaErrorKind<PsiNameValuePair, String> ANNOTATION_ATTRIBUTE_DUPLICATE =
+    new Parameterized<>("annotation.attribute.duplicate") {
+      @Override
+      public @NotNull HtmlChunk description(@NotNull PsiNameValuePair element, String attribute) {
+        return HtmlChunk.raw(JavaCompilationErrorBundle.message("annotation.attribute.duplicate", attribute));
+      }
+    };
+  public static final JavaErrorKind<PsiNameValuePair, String> ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD =
+    new Parameterized<>("annotation.attribute.unknown.method") {
+      @Override
+      public @NotNull JavaErrorHighlightType highlightType(@NotNull PsiNameValuePair pair, String s) {
+        return pair.getName() == null ? JavaErrorHighlightType.ERROR : JavaErrorHighlightType.WRONG_REF;
+      }
+
+      @Override
+      public @NotNull PsiElement anchor(@NotNull PsiNameValuePair pair, String s) {
+        return requireNonNull(pair.getReference()).getElement();
+      }
+
+      @Override
+      public @NotNull HtmlChunk description(@NotNull PsiNameValuePair pair, String methodName) {
+        return HtmlChunk.raw(JavaCompilationErrorBundle.message("annotation.attribute.unknown.method", methodName));
+      }
+    };
   // Can be anchored on @FunctionalInterface annotation or at call site
   public static final JavaErrorKind<PsiElement, PsiClass> LAMBDA_NOT_FUNCTIONAL_INTERFACE =
     new Parameterized<>("lambda.not.a.functional.interface") {
@@ -89,7 +138,7 @@ public final class JavaErrorKinds {
     new Parameterized<>("annotation.missing.attribute") {
       @Override
       public @NotNull PsiElement anchor(@NotNull PsiAnnotation annotation, @NotNull List<String> strings) {
-        return Objects.requireNonNull(annotation.getNameReferenceElement());
+        return requireNonNull(annotation.getNameReferenceElement());
       }
 
       @Override

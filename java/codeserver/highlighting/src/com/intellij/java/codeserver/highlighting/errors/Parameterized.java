@@ -25,7 +25,7 @@ non-sealed class Parameterized<Psi extends PsiElement, Context> implements JavaE
   }
 
   @Override
-  public @NotNull HtmlChunk description(@NotNull Psi element, Context aClass) {
-    return HtmlChunk.raw(JavaCompilationErrorBundle.message("lambda.sealed.functional.interface"));
+  public @NotNull HtmlChunk description(@NotNull Psi element, Context context) {
+    return HtmlChunk.raw(JavaCompilationErrorBundle.message(myKey));
   }
 }

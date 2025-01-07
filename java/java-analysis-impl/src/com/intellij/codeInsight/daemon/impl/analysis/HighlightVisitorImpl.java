@@ -220,7 +220,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
     myPreviewFeatureVisitor = myLanguageLevel.isPreview() ? null : new PreviewFeatureUtil.PreviewFeatureVisitor(myLanguageLevel, myErrorSink);
     myCollector = new JavaErrorCollector(myFile, error -> {
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+      HighlightInfoType type = switch (error.highlightType()) {
+        case ERROR -> HighlightInfoType.ERROR;
+        case WRONG_REF -> HighlightInfoType.WRONG_REF;
+      };
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(type)
         .range(error.anchor())
         .descriptionAndTooltip(error.description().toString());
       for (CommonIntentionAction fix : JavaErrorFixProvider.getFixes(error)) {
@@ -260,39 +264,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitAnnotationArrayInitializer(@NotNull PsiArrayInitializerMemberValue initializer) {
-    PsiMethod method = null;
-
-    PsiElement parent = initializer.getParent();
-    if (parent instanceof PsiNameValuePair) {
-      PsiReference reference = parent.getReference();
-      if (reference != null) {
-        method = (PsiMethod)reference.resolve();
-      }
-    }
-    else if (PsiUtil.isAnnotationMethod(parent)) {
-      method = (PsiMethod)parent;
-    }
-
-    if (method != null) {
-      PsiType type = method.getReturnType();
-      if (type instanceof PsiArrayType arrayType) {
-        type = arrayType.getComponentType();
-        PsiAnnotationMemberValue[] initializers = initializer.getInitializers();
-        for (PsiAnnotationMemberValue initializer1 : initializers) {
-          add(AnnotationsHighlightUtil.checkMemberValueType(initializer1, type, method));
-        }
-      }
-    }
-  }
-
-  @Override
   public void visitAnnotationMethod(@NotNull PsiAnnotationMethod method) {
     PsiType returnType = method.getReturnType();
-    PsiAnnotationMemberValue value = method.getDefaultValue();
-    if (returnType != null && value != null) {
-      add(AnnotationsHighlightUtil.checkMemberValueType(value, returnType, method));
-    }
 
     PsiTypeElement typeElement = method.getReturnTypeElement();
     if (typeElement != null) {
@@ -1030,11 +1003,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       catch (IndexNotReadyException ignored) {
       }
     }
-  }
-
-  @Override
-  public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
-    add(AnnotationsHighlightUtil.checkNameValuePair(pair));
   }
 
   @Override
