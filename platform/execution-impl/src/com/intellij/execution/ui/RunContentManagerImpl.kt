@@ -106,7 +106,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     fun getExecutorByContent(content: Content): Executor? = content.getUserData(EXECUTOR_KEY)
 
     @JvmStatic
-    fun getLiveIndicator(icon: Icon?): Icon = ExecutionUtil.getLiveIndicator(icon)
+    fun getLiveIndicator(icon: Icon?): Icon = ExecutionUtil.withLiveIndicator(icon ?: EmptyIcon.ICON_13)
   }
 
   // must be called on EDT
