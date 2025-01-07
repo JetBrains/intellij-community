@@ -304,7 +304,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
                                         Color borderColor,
                                         boolean cancelOnWindowDeactivation,
                                         @Nullable BooleanFunction<? super KeyEvent> keyEventHandler) {
-    assert !requestFocus || focusable : "Incorrect argument combination: requestFocus=true focusable=false";
+    if (requestFocus && !focusable) {
+      requestFocus = false;
+      LOG.error("Incorrect argument combination: requestFocus=true focusable=false");
+    }
 
     all.add(this);
 
