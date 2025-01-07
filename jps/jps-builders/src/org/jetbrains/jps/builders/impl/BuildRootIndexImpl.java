@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.Key;
@@ -32,11 +32,14 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
   private static final Key<Map<BuildTarget<?>, List<? extends BuildRootDescriptor>>> TEMP_TARGET_ROOTS_MAP = Key.create("_module_to_root_map");
   private final IgnoredFileIndex myIgnoredFileIndex;
   private final Map<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
-  private final Map<File,List<BuildRootDescriptor>> myRootToDescriptors;
+  private final Map<File, List<BuildRootDescriptor>> myRootToDescriptors;
   private final ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
 
-  public BuildRootIndexImpl(@NotNull BuildTargetRegistry targetRegistry, @NotNull JpsModel model, @NotNull ModuleExcludeIndex index,
-                            @NotNull BuildDataPaths dataPaths, @NotNull IgnoredFileIndex ignoredFileIndex) {
+  public BuildRootIndexImpl(@NotNull BuildTargetRegistry targetRegistry,
+                            @NotNull JpsModel model,
+                            @NotNull ModuleExcludeIndex index,
+                            @NotNull BuildDataPaths dataPaths,
+                            @NotNull IgnoredFileIndex ignoredFileIndex) {
     myIgnoredFileIndex = ignoredFileIndex;
     myRootsByTarget = new HashMap<>();
     myRootToDescriptors = FileCollectionFactory.createCanonicalFileMap();
@@ -76,13 +79,10 @@ public final class BuildRootIndexImpl implements BuildRootIndex {
     myRootsByTarget.put(target, descriptors);
   }
 
-  private void registerDescriptor(BuildRootDescriptor descriptor) {
-    List<BuildRootDescriptor> list = myRootToDescriptors.get(descriptor.getRootFile());
-    if (list == null) {
-      list = new SmartList<>();
-      myRootToDescriptors.put(descriptor.getRootFile(), list);
-    }
-    list.add(descriptor);
+  private void registerDescriptor(@NotNull BuildRootDescriptor descriptor) {
+    myRootToDescriptors.computeIfAbsent(descriptor.getRootFile(), k -> {
+      return new SmartList<>();
+    }).add(descriptor);
   }
 
   @Override

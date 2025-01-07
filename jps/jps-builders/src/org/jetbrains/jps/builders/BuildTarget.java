@@ -70,10 +70,12 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @see AdditionalRootsProviderService
    * @see org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
    */
-  public abstract @NotNull List<R> computeRootDescriptors(@NotNull JpsModel model,
-                                                 @NotNull ModuleExcludeIndex index,
-                                                 @NotNull IgnoredFileIndex ignoredFileIndex,
-                                                 @NotNull BuildDataPaths dataPaths);
+  public abstract @NotNull @Unmodifiable List<R> computeRootDescriptors(
+    @NotNull JpsModel model,
+    @NotNull ModuleExcludeIndex index,
+    @NotNull IgnoredFileIndex ignoredFileIndex,
+    @NotNull BuildDataPaths dataPaths
+  );
 
   /**
    * Finds a source root by its serialized ID.

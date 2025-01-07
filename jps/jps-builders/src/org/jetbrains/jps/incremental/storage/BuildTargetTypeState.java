@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +32,7 @@ public final class BuildTargetTypeState {
   private final Path myTargetsFile;
   private volatile long myAverageTargetBuildTimeMs = -1;
 
-  public BuildTargetTypeState(BuildTargetType<?> targetType, BuildTargetsState state) {
+  public BuildTargetTypeState(@NotNull BuildTargetType<?> targetType, @NotNull BuildTargetsState state) {
     targetIds.defaultReturnValue(-1);
 
     myTargetType = targetType;

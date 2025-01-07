@@ -60,7 +60,7 @@ public final class FSOperations {
     markDirty(context, CompilationRound.NEXT, file);
   }
 
-  public static void markDirty(CompileContext context, final CompilationRound round, final File file) throws IOException {
+  public static void markDirty(@NotNull CompileContext context, @NotNull CompilationRound round, @NotNull File file) throws IOException {
     JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rootDescriptor != null) {
       ProjectDescriptor projectDescriptor = context.getProjectDescriptor();

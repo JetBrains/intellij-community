@@ -48,7 +48,13 @@ public final class BuildDataManager {
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
 
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
-  private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED? 1 : 0) + (JavaBuilderUtil.isDepGraphEnabled()? 2 : 0);
+
+  @ApiStatus.Internal
+  public static final int STORAGE_VERSION = 39;
+  private static final int VERSION = STORAGE_VERSION +
+                                     (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0) +
+                                     (JavaBuilderUtil.isDepGraphEnabled() ? 2 : 0);
+
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
   private static final String OUT_TARGET_STORAGE = "out-target";
@@ -239,12 +245,15 @@ public final class BuildDataManager {
   }
 
   @ApiStatus.Internal
-  public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
+  public @NotNull SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(
+    @NotNull BuildTargetType<?> targetType,
+    @NotNull String targetId
+  ) throws IOException {
     return new SourceToOutputMappingImpl(getSourceToOutputMapRoot(targetType, targetId).resolve(SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
   }
 
   public @NotNull <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
-    final BuildTargetStorages targetStorages = myTargetStorages.computeIfAbsent(target, t -> new BuildTargetStorages(t, myDataPaths));
+    BuildTargetStorages targetStorages = myTargetStorages.computeIfAbsent(target, t -> new BuildTargetStorages(t, myDataPaths));
     return targetStorages.getOrCreateStorage(provider, myRelativizer);
   }
 

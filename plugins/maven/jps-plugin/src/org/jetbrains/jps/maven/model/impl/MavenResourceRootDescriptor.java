@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -55,11 +55,6 @@ public final class MavenResourceRootDescriptor extends BuildRootDescriptor {
   @Override
   public @NotNull FileFilter createFileFilter() {
     return new MavenResourceFileFilter(myFile, myConfig);
-  }
-
-  @Override
-  public boolean canUseFileCache() {
-    return true;
   }
 
   public int getIndexInPom() {

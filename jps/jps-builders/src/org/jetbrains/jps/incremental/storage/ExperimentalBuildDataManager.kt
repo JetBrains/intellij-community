@@ -12,7 +12,6 @@ internal class ExperimentalBuildDataManager(
   private val storageManager: StorageManager,
   private val relativizer: PathRelativizerService,
 ) {
-  // only for new experimental storage
   private val targetToMapManager = ConcurrentHashMap<BuildTarget<*>, PerTargetMapManager>()
 
   /**

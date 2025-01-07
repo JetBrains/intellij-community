@@ -5,10 +5,7 @@ import com.dynatrace.hash4j.hashing.HashSink;
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.*;
@@ -46,30 +43,29 @@ import java.util.Set;
  * Describes a step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module.
  * These targets are built by {@link ModuleLevelBuilder} and they are the only targets that can have circular dependencies on each other.
  */
-public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> implements BuildTargetHashSupplier {
+@ApiStatus.NonExtendable
+// open for Bazel - we cannot introduce an interface for ModuleBuildTarget to avoid using `instanceOf` for now,
+// as it would involve a relatively massive and potentially unsafe change.
+public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> implements BuildTargetHashSupplier {
   private static final Logger LOG = Logger.getInstance(ModuleBuildTarget.class);
 
   public static final Boolean REBUILD_ON_DEPENDENCY_CHANGE = Boolean.valueOf(
     System.getProperty(GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION, "true")
   );
-  private final JavaModuleBuildTargetType myTargetType;
+  private final JavaModuleBuildTargetType targetType;
 
   public ModuleBuildTarget(@NotNull JpsModule module, @NotNull JavaModuleBuildTargetType targetType) {
     super(targetType, module);
-    myTargetType = targetType;
+    this.targetType = targetType;
   }
 
   public @Nullable File getOutputDir() {
-    return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, myTargetType.isTests());
+    return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, targetType.isTests());
   }
 
   @Override
-  public @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
-    Collection<File> result = new ArrayList<>();
+  public @NotNull @Unmodifiable Collection<File> getOutputRoots(@NotNull CompileContext context) {
     File outputDir = getOutputDir();
-    if (outputDir != null) {
-      result.add(outputDir);
-    }
 
     JpsModule module = getModule();
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
@@ -77,34 +73,34 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     if (profile.isEnabled()) {
       File annotationOut = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(module, isTests(), profile);
       if (annotationOut != null) {
-        result.add(annotationOut);
+        return outputDir == null ? List.of(annotationOut) : List.of(outputDir, annotationOut);
       }
     }
-    return result;
+    return outputDir == null ? List.of() : List.of(outputDir);
   }
 
   @Override
   public boolean isTests() {
-    return myTargetType.isTests();
+    return targetType.isTests();
   }
 
   @Override
-  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
+  public @NotNull @Unmodifiable Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     JpsJavaDependenciesEnumeratorImpl enumerator = (JpsJavaDependenciesEnumeratorImpl)JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
       enumerator.productionOnly();
     }
-    final ArrayList<BuildTarget<?>> dependencies = new ArrayList<>();
+    List<BuildTarget<?>> dependencies = new ArrayList<>();
     enumerator.processDependencies(dependencyElement -> {
       if (dependencyElement instanceof JpsModuleDependency) {
         JpsModule depModule = ((JpsModuleDependency)dependencyElement).getModule();
         if (depModule != null) {
           JavaModuleBuildTargetType targetType;
-          if (myTargetType.equals(JavaModuleBuildTargetType.PRODUCTION) && enumerator.isProductionOnTests(dependencyElement)) {
+          if (this.targetType.equals(JavaModuleBuildTargetType.PRODUCTION) && enumerator.isProductionOnTests(dependencyElement)) {
             targetType = JavaModuleBuildTargetType.TEST;
           }
           else {
-            targetType = myTargetType;
+            targetType = this.targetType;
           }
           dependencies.add(new ModuleBuildTarget(depModule, targetType));
         }
@@ -114,7 +110,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     if (isTests()) {
       dependencies.add(new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.PRODUCTION));
     }
-    final Collection<ModuleBasedTarget<?>> moduleBased = targetRegistry.getModuleBasedTargets(
+    Collection<ModuleBasedTarget<?>> moduleBased = targetRegistry.getModuleBasedTargets(
       getModule(), isTests() ? BuildTargetRegistry.ModuleTargetSelector.TEST : BuildTargetRegistry.ModuleTargetSelector.PRODUCTION
     );
     for (ModuleBasedTarget<?> target : moduleBased) {
@@ -122,16 +118,20 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
         dependencies.add(target);
       }
     }
-    dependencies.trimToSize();
     return dependencies;
   }
 
   @Override
-  public @NotNull List<JavaSourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
+  public @NotNull @Unmodifiable List<JavaSourceRootDescriptor> computeRootDescriptors(
+    @NotNull JpsModel model,
+    @NotNull ModuleExcludeIndex index,
+    @NotNull IgnoredFileIndex ignoredFileIndex,
+    @NotNull BuildDataPaths dataPaths
+  ) {
     List<JavaSourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
-    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myModule.getProject());
+    JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myModule.getProject());
 
     roots_loop:
     for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
@@ -167,7 +167,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
 
   @Override
   public @NotNull String getPresentableName() {
-    return "Module '" + getModule().getName() + "' " + (myTargetType.isTests() ? "tests" : "production");
+    return "Module '" + getModule().getName() + "' " + (targetType.isTests() ? "tests" : "production");
   }
 
   @Override

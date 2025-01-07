@@ -1627,7 +1627,6 @@ org.jetbrains.jps.builders.BuildOutputConsumer
 - a:registerOutputFile(java.io.File,java.util.Collection):V
 a:org.jetbrains.jps.builders.BuildRootDescriptor
 - <init>():V
-- canUseFileCache():Z
 - createFileFilter():java.io.FileFilter
 - getExcludedRoots():java.util.Set
 - a:getRootFile():java.io.File
@@ -1777,15 +1776,14 @@ c:org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 - f:rootFile:java.nio.file.Path
 - f:target:org.jetbrains.jps.incremental.ModuleBuildTarget
 - <init>(java.io.File,org.jetbrains.jps.incremental.ModuleBuildTarget,Z,Z,java.lang.String,java.util.Set,java.io.FileFilter):V
-- canUseFileCache():Z
 - createFileFilter():java.io.FileFilter
 - s:createJavaSourceRootDescriptor(java.io.File,org.jetbrains.jps.incremental.ModuleBuildTarget,Z,Z,java.lang.String,java.util.Set,java.io.FileFilter):org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
-- getExcludedRoots():java.util.Set
-- getPackagePrefix():java.lang.String
-- getRootFile():java.io.File
-- getRootId():java.lang.String
-- getTarget():org.jetbrains.jps.incremental.ModuleBuildTarget
-- isGenerated():Z
+- f:getExcludedRoots():java.util.Set
+- f:getPackagePrefix():java.lang.String
+- f:getRootFile():java.io.File
+- f:getRootId():java.lang.String
+- f:getTarget():org.jetbrains.jps.incremental.ModuleBuildTarget
+- f:isGenerated():Z
 f:org.jetbrains.jps.builders.java.ResourcesTargetType
 - org.jetbrains.jps.builders.ModuleBasedBuildTargetType
 - sf:ALL_TYPES:java.util.List
@@ -2204,7 +2202,7 @@ f:org.jetbrains.jps.incremental.GlobalContextKey
 org.jetbrains.jps.incremental.MessageHandler
 - sf:DEAF:org.jetbrains.jps.incremental.MessageHandler
 - a:processMessage(org.jetbrains.jps.incremental.messages.BuildMessage):V
-f:org.jetbrains.jps.incremental.ModuleBuildTarget
+Fc:org.jetbrains.jps.incremental.ModuleBuildTarget
 - org.jetbrains.jps.builders.ModuleBasedTarget
 - sf:REBUILD_ON_DEPENDENCY_CHANGE:java.lang.Boolean
 - <init>(org.jetbrains.jps.model.module.JpsModule,org.jetbrains.jps.builders.java.JavaModuleBuildTargetType):V

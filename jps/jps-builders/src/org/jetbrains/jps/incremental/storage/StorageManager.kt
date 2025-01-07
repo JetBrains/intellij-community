@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage
 
 import com.intellij.openapi.diagnostic.Logger
@@ -19,7 +19,7 @@ private val MV_STORE_CACHE_SIZE_IN_MB = System.getProperty("jps.new.storage.cach
 private val LOG = logger<StorageManager>()
 
 @ApiStatus.Internal
-class StorageManager constructor(@JvmField val file: Path) {
+class StorageManager(@JvmField val file: Path) {
   private val storeValue = SynchronizedClearableLazy {
     LOG.debug { "Opening storage $file" }
     createOrResetMvStore(file = file, readOnly = false, logSupplier = { LOG })
