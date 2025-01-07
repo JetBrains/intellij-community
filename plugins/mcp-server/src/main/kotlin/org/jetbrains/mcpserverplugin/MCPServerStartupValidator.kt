@@ -128,6 +128,7 @@ internal class MCPServerStartupValidator : ProjectActivity {
         val completed = handler.waitFor(5000)
 
         logger.info("Unix - which npx completed with success: $completed")
+        logger.info("Unix - which npx completed with code: ${handler.exitCode}")
         if (output.isNotBlank()) logger.info("Unix - Output: $output")
         if (error.isNotBlank()) logger.warn("Unix - Error: $error")
 
