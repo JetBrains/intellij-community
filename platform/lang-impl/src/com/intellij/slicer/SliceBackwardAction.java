@@ -28,6 +28,9 @@ public final class SliceBackwardAction extends CodeInsightAction {
     if (LanguageSlicing.getProvider(file) == null) {
       return false;
     }
+    if (editor.getSelectionModel().hasSelection()) {
+      return false;
+    }
     PsiElement expression = getHandler().getExpressionAtCaret(editor, file);
     return expression != null;
   }
