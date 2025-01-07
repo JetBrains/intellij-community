@@ -303,7 +303,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       connection.subscribe(ModuleListener.TOPIC, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-          fail("Adding modules is not permitted in light tests.");
+          fail("Adding modules is not permitted in light tests: " + module.getName());
         }
       });
 
