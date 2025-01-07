@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Formats;
 import com.intellij.openapi.util.text.StringUtil;
@@ -633,27 +634,23 @@ public final class IncProjectBuilder {
     final long cleanStart = System.nanoTime();
     try {
       final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(projectDescriptor.getProject());
+      
+      Function<Runnable, Future<?>> cleanup = runnable -> {
+        if (SYNC_DELETE) {
+          runnable.run();
+          return CompletableFuture.completedFuture(null);
+        }
+        return cleanupExecutor.submit(runnable);
+      };
+
       if (configuration.isClearOutputDirectoryOnRebuild()) {
-        clearOutputs(context, runnable -> {
-          if (SYNC_DELETE) {
-            runnable.run();
-            return CompletableFuture.completedFuture(null);
-          }
-          else {
-            return cleanupExecutor.submit(runnable);
-          }
-        }, cleanupTasks);
+        clearOutputs(context, cleanup, cleanupTasks);
       }
       else {
         for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
           context.checkCanceled();
           if (context.getScope().isBuildForced(target)) {
-            if (SYNC_DELETE) {
-              clearOutputFilesUninterruptibly(context, target);
-            }
-            else {
-              cleanupTasks.add(cleanupExecutor.submit(() -> clearOutputFilesUninterruptibly(context, target)));
-            }
+            cleanupTasks.add(cleanup.apply(() -> clearOutputFilesUninterruptibly(context, target)));
           }
         }
       }
@@ -886,11 +883,13 @@ public final class IncProjectBuilder {
             return PARTIAL;
           }
         }
-        else if (count > 0) {
-          return PARTIAL;
+        else {
+          if (count > 0) {
+            return PARTIAL;
+          }
         }
       }
-      return count == 0 ? NONE : ALL;
+      return count == 0? NONE : ALL;
     }
   }
 
@@ -931,7 +930,7 @@ public final class IncProjectBuilder {
 
     // check that output and source roots are not overlapping
     final CompileScope compileScope = context.getScope();
-    final List<Path> filesToDelete = new ArrayList<>();
+    final List<File> filesToDelete = new ArrayList<>();
     final Predicate<BuildTarget<?>> forcedBuild = compileScope::isBuildForced;
     for (Map.Entry<File, Collection<BuildTarget<?>>> entry : rootsToDelete.entrySet()) {
       context.checkCanceled();
@@ -974,14 +973,13 @@ public final class IncProjectBuilder {
         if (children != null) {
           for (File child : children) {
             if (!child.delete()) {
-              filesToDelete.add(child.toPath());
+              filesToDelete.add(child);
             }
           }
         }
-        else {
-          // the output root must be a file
+        else { // the output root must be a file
           if (!outputRoot.delete()) {
-            filesToDelete.add(outputRoot.toPath());
+            filesToDelete.add(outputRoot);
           }
         }
         registerTargetsWithClearedOutput(context, rootTargets);
@@ -999,24 +997,15 @@ public final class IncProjectBuilder {
 
     if (!filesToDelete.isEmpty()) {
       context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.cleaning.output.directories")));
-      asyncTasks.add(cleanupExecutor.apply(() -> {
-        for (Path file : filesToDelete) {
-          try {
-            context.checkCanceled();
-          }
-          catch (ProjectBuildException e) {
-            throw new CompletionException(e);
-          }
-          try {
-            FileUtilRt.deleteRecursively(file);
-          }
-          catch (IOException ignored) {
-          }
-          catch (Exception e) {
-            LOG.info(e);
-          }
+      if (SYNC_DELETE) {
+        for (var file : filesToDelete) {
+          context.checkCanceled();
+          FileUtilRt.delete(file);
         }
-      }));
+      }
+      else {
+        asyncTasks.add(FileUtil.asyncDelete(filesToDelete));
+      }
     }
   }
 
