@@ -4,7 +4,7 @@
 import androidx.compose.runtime.Composable
 
 @Composable fun A() {}
-val aCallable: () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'"), HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'kotlin.Function0<kotlin.Unit>', actual 'androidx.compose.runtime.internal.KComposableFunction0<kotlin.Unit>'.'")!>::A<!>
+val aCallable: () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'"), HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'Function0<Unit>', actual 'KComposableFunction0<Unit>'.'")!>::A<!>
 val bCallable: @Composable () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'")!>::A<!>
 val cCallable = <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_FUNCTION_REFERENCE] Function References of @Composable functions are not currently supported'")!>::A<!>
 fun doSomething(fn: () -> Unit) { print(fn) }
