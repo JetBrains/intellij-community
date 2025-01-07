@@ -22,6 +22,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
@@ -41,7 +42,7 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
   for (entry in entries) {
     val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) } ?: continue
 
-    val pathInDist = rootPath.relativize(entry.path).pathString
+    val pathInDist = rootPath.relativize(entry.path).invariantSeparatorsPathString
     repositoryEntries.add(RuntimeModuleRepositoryEntry(distribution = distribution, relativePath = pathInDist, origin = entry))
   }
 
@@ -78,7 +79,7 @@ suspend fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<Distrib
     if (entry.path.startsWith(targetDirectory)) {
       RuntimeModuleRepositoryEntry(
         distribution = null,
-        relativePath = targetDirectory.relativize(entry.path).pathString,
+        relativePath = targetDirectory.relativize(entry.path).invariantSeparatorsPathString,
         origin = entry,
       )
     }
@@ -132,6 +133,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
 
 private data class RuntimeModuleRepositoryEntry(
   @JvmField val distribution: SupportedDistribution?,
+  /** Relative path from the distribution root ('Contents' directory on macOS) with '/' as a separator */
   @JvmField val relativePath: String,
   @JvmField val origin: DistributionFileEntry,
 )
