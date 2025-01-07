@@ -3,6 +3,7 @@ package org.jetbrains.mcpserverplugin.notification
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.intellij.openapi.util.SystemInfo
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -55,10 +56,10 @@ object ClaudeConfigManager {
 
     private fun getClaudeConfigPath(): Path {
         return when {
-            System.getProperty("os.name").toLowerCase().contains("mac") ->
+            SystemInfo.isMac ->
                 Paths.get(System.getProperty("user.home"), "Library", "Application Support", "Claude")
 
-            System.getProperty("os.name").toLowerCase().contains("windows") ->
+            SystemInfo.isWindows ->
                 Paths.get(System.getenv("APPDATA"), "Claude")
 
             else -> throw IllegalStateException("Unsupported operating system")

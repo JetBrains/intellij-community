@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.mcpserverplugin.notification.ClaudeConfigManager
 import org.jetbrains.mcpserverplugin.settings.PluginSettings
 import java.io.File
@@ -26,9 +27,7 @@ internal class MCPServerStartupValidator : ProjectActivity {
     fun isNpxInstalled(): Boolean {
         return try {
             logger.info("Starting npx installation check")
-
-            val isWindows = System.getProperty("os.name").lowercase().contains("windows")
-            if (isWindows) {
+            if (SystemInfo.isWindows) {
                 logger.info("Detected Windows OS, using 'where' command")
                 checkNpxWindows()
             } else {
