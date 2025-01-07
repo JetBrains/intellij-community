@@ -10,6 +10,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.sdk.persist
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.tools.PythonType
 import com.jetbrains.python.tools.SdkCreationRequest.LocalPython
 import com.jetbrains.python.tools.createSdk
@@ -59,6 +60,9 @@ fun PySdkFixture.pyVenvFixture(
     }
     if (addToSdkTable) {
       venvSdk.persist()
+      if (module != null) {
+        module.pythonSdk = venvSdk
+      }
     }
     initialized(venvSdk) {
       writeAction {
