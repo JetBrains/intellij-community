@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.isAncestor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduc
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.tryFindConflict
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.internalUsageElements
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.internalUsageInfo
@@ -31,10 +33,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willNotBeMoved
 import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
@@ -90,12 +90,34 @@ private fun PsiNamedElement.lightIsVisibleTo(usage: PsiElement): Boolean {
 }
 
 private fun KaModule.isFriendDependencyFor(other: KaModule): Boolean {
-        return when (this) {
-            in other.directFriendDependencies,
-            in other.transitiveDependsOnDependencies -> true
-            else -> false
+    return when (this) {
+        in other.directFriendDependencies,
+        in other.transitiveDependsOnDependencies -> true
+
+        else -> false
+    }
+}
+
+context(KaSession)
+private fun isPrivateVisibleAt(referencingElement: PsiElement, target: K2MoveTargetDescriptor.DeclarationTarget<*>): Boolean {
+    return when (target) {
+        is K2MoveTargetDescriptor.File -> {
+            // For top level declarations, private members will be visible within the entire file
+            referencingElement.containingFile == target.getTarget()
+        }
+        is K2MoveTargetDescriptor.ClassBodyTarget<*> -> {
+            val targetClass = target.getTarget() ?: return false
+            // Companion objects can access private members in its parent and vice versa
+            val visibilityTarget = if (targetClass is KtObjectDeclaration && targetClass.isCompanion()) {
+                targetClass.containingClass() ?: targetClass
+            } else {
+                targetClass
+            }
+            // Private members are visible anywhere inside its hierarchy
+            visibilityTarget.isAncestor(referencingElement)
         }
     }
+}
 
 /**
  * Check whether the moved external usages are still visible towards their non-physical declaration.
@@ -103,7 +125,8 @@ private fun KaModule.isFriendDependencyFor(other: KaModule): Boolean {
 internal fun checkVisibilityConflictForNonMovedUsages(
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     usages: List<MoveRenameUsageInfo>,
-    targetDir: PsiDirectory
+    targetDir: PsiDirectory,
+    target: K2MoveTargetDescriptor.DeclarationTarget<*>? = null
 ): MultiMap<PsiElement, String> {
     return usages
         .filter { usageInfo -> usageInfo.willNotBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
@@ -115,10 +138,14 @@ internal fun checkVisibilityConflictForNonMovedUsages(
                     val usageKaModule = usageElement.module?.toKaSourceModuleForProductionOrTest()
                     val referencedDeclarationKaModule = targetDir.module?.toKaSourceModuleForProductionOrTest()
                     val isVisible = when (referencedDeclaration.symbol.visibility) {
-                        KaSymbolVisibility.PRIVATE -> false
+                        KaSymbolVisibility.PRIVATE -> {
+                            target != null && isPrivateVisibleAt(referencedDeclaration, target)
+                        }
+
                         KaSymbolVisibility.INTERNAL -> usageElement.module == targetDir.module ||
                                 (referencedDeclarationKaModule != null && usageKaModule != null &&
                                         referencedDeclarationKaModule.isFriendDependencyFor(usageKaModule))
+
                         else -> true
                     }
                     if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
@@ -166,7 +193,8 @@ fun checkVisibilityConflictsForInternalUsages(
     topLevelDeclarationsToMove: Collection<KtNamedDeclaration>,
     allDeclarationsToMove: Collection<KtNamedDeclaration>,
     targetPkg: FqName,
-    targetDir: PsiDirectory
+    targetDir: PsiDirectory,
+    target: K2MoveTargetDescriptor.DeclarationTarget<*>? = null
 ): MultiMap<PsiElement, String> {
     val usageKaModule = targetDir.module?.toKaSourceModuleForProductionOrTest()
 
@@ -190,16 +218,18 @@ fun checkVisibilityConflictsForInternalUsages(
                             symbol.visibility
                         }
                         when (visibility) {
-                            KaSymbolVisibility.PRIVATE -> false
+                            KaSymbolVisibility.PRIVATE -> target != null && isPrivateVisibleAt(usageElement, target)
                             KaSymbolVisibility.INTERNAL -> referencedDeclaration.module == targetDir.module ||
                                     (referencedDeclarationKaModule != null && usageKaModule != null &&
                                             referencedDeclarationKaModule.isFriendDependencyFor(usageKaModule))
-                            KaSymbolVisibility.PROTECTED ->  {
+
+                            KaSymbolVisibility.PROTECTED -> {
                                 val refererSymbol = usageElement.getStrictParentOfType<KtNamedDeclaration>()?.symbol
                                 if (refererSymbol != null) {
                                     referencedDeclaration.symbol.isProtectedVisibleFrom(refererSymbol)
                                 } else true
                             }
+
                             else -> true
                         }
                     }
@@ -218,7 +248,8 @@ fun checkVisibilityConflictsForInternalUsages(
                                     analyze(usageElement) {
                                         // For Java, we still use the analysis API to check for protected visibility
                                         // to reuse the same code as for Kotlin.
-                                        val refererSymbol = usageElement.getStrictParentOfType<KtNamedDeclaration>()?.symbol ?: return@analyze false
+                                        val refererSymbol =
+                                            usageElement.getStrictParentOfType<KtNamedDeclaration>()?.symbol ?: return@analyze false
                                         val referencedSymbol = (usageElement as? KtReferenceExpression)?.mainReference?.resolveToSymbol()
                                             ?: usageElement.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.symbol
                                             ?: return@analyze false
@@ -229,6 +260,7 @@ fun checkVisibilityConflictsForInternalUsages(
                                 }
                             }
                         }
+
                         else -> true
                     }
                 } else true
