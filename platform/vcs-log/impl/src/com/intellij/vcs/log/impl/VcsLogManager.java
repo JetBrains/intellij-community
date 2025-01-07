@@ -180,6 +180,11 @@ public class VcsLogManager implements Disposable {
     return ui;
   }
 
+  @ApiStatus.Internal
+  public <U extends VcsLogUiEx, W extends PostponableLogRefresher.VcsLogWindow> void registerLogWindow(@NotNull U ui, @NotNull W window) {
+    Disposer.register(ui, myPostponableRefresher.addLogWindow(window));
+  }
+
   public @NotNull List<? extends VcsLogUi> getLogUis() {
     if (myTabsWatcher == null) return Collections.emptyList();
     return getTabsWatcher().getTabs();
