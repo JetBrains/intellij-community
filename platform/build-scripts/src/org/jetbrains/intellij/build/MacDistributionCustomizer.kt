@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -169,7 +169,7 @@ open class MacDistributionCustomizer {
    * So, the different IDEs may get the same UUIDs.
    * And according to [the technote](https://developer.apple.com/documentation/technotes/tn3178-checking-for-and-resolving-build-uuid-problems), this may lead to the troubles:
    * > Each distinct Mach-O image must have its own unique build UUID.
-   * > If you have two apps with different bundle IDs and the same main executable UUID, you might encounter strange problems with those subsystems.
+   * > If you have two apps with different bundle IDs and the same main executable UUID, you might encounter weird problems with those subsystems.
    * > For example, the network subsystem might apply constraints for one of your apps to the other app.
    */
   @ApiStatus.Internal
