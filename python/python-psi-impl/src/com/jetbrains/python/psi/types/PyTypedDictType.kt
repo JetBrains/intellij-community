@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.TDFields
+import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyPsiUtils
@@ -174,7 +175,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
                    context: TypeEvalContext,
                    value: PyExpression?): TypeCheckingResult? {
       if (!actual.isInferred()) {
-        return TypeCheckingResult(checkStructuralCompatibility(expected, actual, context))
+        val match = checkStructuralCompatibility(expected, actual, context) ?: return null
+        return TypeCheckingResult(match)
       }
       if (expected !is PyTypedDictType) return null
 
@@ -283,13 +285,17 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
      */
     private fun checkStructuralCompatibility(expected: PyType?,
                                              actual: PyTypedDictType,
-                                             context: TypeEvalContext): Boolean {
+                                             context: TypeEvalContext): Boolean? {
       if (expected is PyCollectionType && PyTypingTypeProvider.MAPPING == expected.classQName) {
         val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
         val elementTypes = expected.elementTypes
         return elementTypes.size == 2
                && builtinCache.strType == elementTypes[0]
                && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name)
+      }
+
+      if (expected is PyClassLikeType && isProtocol(expected, context)) {
+        return null
       }
 
       if (expected !is PyTypedDictType) {

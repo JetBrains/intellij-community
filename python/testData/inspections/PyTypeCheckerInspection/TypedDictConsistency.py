@@ -1,4 +1,4 @@
-from typing import TypedDict, Optional, Union, Mapping, Any
+from typing import TypedDict, Optional, Union, Mapping, Any, Protocol
 
 
 class A(TypedDict):
@@ -73,9 +73,13 @@ a: A3 = B3(x = '', y = '')
 b: B3 = <warning descr="Expected type 'B3', got 'A3' instead">A3(x = '')</warning>
 
 
+class P(Protocol):
+    pass
+
 class A4(TypedDict):
     x: int
 def f3(a: A4):
-    v: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'A4' instead">a</warning>
+    v1: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'A4' instead">a</warning>
+    v2: P = a
 def f4(d: dict[str, int]):
     v: A4 = <warning descr="Expected type 'A4', got 'dict[str, int]' instead">d</warning>
