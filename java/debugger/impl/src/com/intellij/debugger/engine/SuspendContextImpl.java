@@ -54,6 +54,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private ThreadReferenceProxyImpl myThread;
   boolean myIsVotedForResume = true;
 
+  private @Nullable Object myLightThreadFilter = null;
+
   protected int myVotesToVote;
   protected Set<ThreadReferenceProxyImpl> myResumedThreads;
 
@@ -378,6 +380,16 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public void setIsEvaluating(EvaluationContextImpl evaluationContext) {
     assertCanBeUsed();
     myEvaluationContext = evaluationContext;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Object getLightThreadFilter() {
+    return myLightThreadFilter;
+  }
+
+  @ApiStatus.Internal
+  public void setLightThreadFilter(@Nullable Object lightThreadFilter) {
+    myLightThreadFilter = lightThreadFilter;
   }
 
   @Override
