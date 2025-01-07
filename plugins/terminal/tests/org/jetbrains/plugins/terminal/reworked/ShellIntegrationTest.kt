@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.reworked
 import com.google.common.base.Ascii
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -15,11 +16,14 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInputEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.output.*
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
+import org.jetbrains.plugins.terminal.reworked.util.ZshPS1Customizer
+import org.junit.Assert
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
@@ -27,6 +31,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.awt.event.KeyEvent
 import java.nio.file.Path
+import kotlin.io.path.name
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
@@ -172,6 +177,22 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     )
 
     assertSameEvents(shellIntegrationEvents, expectedEvents, events)
+  }
+
+  @Test
+  fun `zsh integration can change PS1`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "zsh")
+    // It's a good idea to configure Zsh with PowerLevel10k.
+    val ps1Suffix = "MyCustomPS1Suffix"
+    ExtensionTestUtil.maskExtensions(
+      LocalTerminalCustomizer.EP_NAME,
+      listOf(ZshPS1Customizer(ps1Suffix)),
+      disposableRule.disposable
+    )
+    val events = startSessionAndCollectOutputEvents {}
+    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
+    val suffixFound = contentUpdatedEvents.any { it.text.contains(ps1Suffix) }
+    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
   }
 
   private suspend fun startSessionAndCollectOutputEvents(
