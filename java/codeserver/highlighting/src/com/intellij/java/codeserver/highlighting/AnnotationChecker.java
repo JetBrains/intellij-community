@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -27,9 +28,9 @@ final class AnnotationChecker {
     psiElement().withParents(PsiModifierList.class, PsiParameterList.class)
   );
 
-  private final JavaErrorVisitor myVisitor;
+  private final @NotNull JavaErrorVisitor myVisitor;
 
-  AnnotationChecker(JavaErrorVisitor visitor) { myVisitor = visitor; }
+  AnnotationChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
 
   private void checkReferenceTarget(@NotNull PsiAnnotation annotation, @Nullable PsiJavaCodeReferenceElement ref) {
     if (ref == null) return;
@@ -71,6 +72,28 @@ final class AnnotationChecker {
     if (!myVisitor.hasErrorResults()) checkAnnotationApplicability(annotation);
     if (!myVisitor.hasErrorResults()) checkAnnotationType(annotation);
     if (!myVisitor.hasErrorResults()) checkMissingAttributes(annotation);
+    if (!myVisitor.hasErrorResults()) checkTargetAnnotationDuplicates(annotation);
+    if (!myVisitor.hasErrorResults()) checkFunctionalInterface(annotation);
+  }
+
+  private void checkFunctionalInterface(@NotNull PsiAnnotation annotation) {
+    if (myVisitor.isApplicable(JavaFeature.LAMBDA_EXPRESSIONS) &&
+        Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
+      PsiAnnotationOwner owner = annotation.getOwner();
+      if (owner instanceof PsiModifierList list) {
+        PsiElement parent = list.getParent();
+        if (parent instanceof PsiClass psiClass) {
+          switch (LambdaUtil.checkInterfaceFunctional(psiClass)) {
+            case NOT_INTERFACE -> myVisitor.report(JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(annotation, psiClass));
+            case NO_ABSTRACT_METHOD -> myVisitor.report(JavaErrorKinds.LAMBDA_NO_TARGET_METHOD.create(annotation, psiClass));
+            case MULTIPLE_ABSTRACT_METHODS -> myVisitor.report(JavaErrorKinds.LAMBDA_MULTIPLE_TARGET_METHODS.create(annotation, psiClass));
+          }
+          if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
+            myVisitor.report(JavaErrorKinds.LAMBDA_FUNCTIONAL_INTERFACE_SEALED.create(annotation, psiClass));
+          }
+        }
+      }
+    }
   }
 
   private void checkMissingAttributes(@NotNull PsiAnnotation annotation) {
@@ -181,6 +204,34 @@ final class AnnotationChecker {
             PsiJavaCodeReferenceElement ref = getOutermostReferenceElement(typeElement.getInnermostComponentReferenceElement());
             checkReferenceTarget(annotation, ref);
           }
+        }
+      }
+    }
+  }
+
+  private void checkTargetAnnotationDuplicates(@NotNull PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+    if (nameRef == null) return;
+
+    PsiElement resolved = nameRef.resolve();
+    if (!(resolved instanceof PsiClass psiClass) || !CommonClassNames.JAVA_LANG_ANNOTATION_TARGET.equals(psiClass.getQualifiedName())) {
+      return;
+    }
+
+    PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+    if (attributes.length < 1) return;
+    PsiAnnotationMemberValue value = attributes[0].getValue();
+    if (!(value instanceof PsiArrayInitializerMemberValue initializerMemberValue)) return;
+    PsiAnnotationMemberValue[] arrayInitializers = initializerMemberValue.getInitializers();
+    Set<PsiElement> targets = new HashSet<>();
+    for (PsiAnnotationMemberValue initializer : arrayInitializers) {
+      if (initializer instanceof PsiReferenceExpression referenceExpression) {
+        PsiElement target = referenceExpression.resolve();
+        if (target != null) {
+          if (targets.contains(target)) {
+            myVisitor.report(JavaErrorKinds.ANNOTATION_REPEATED_TARGET.create(referenceExpression));
+          }
+          targets.add(target);
         }
       }
     }

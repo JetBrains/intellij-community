@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
@@ -435,36 +434,6 @@ public final class AnnotationsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkTargetAnnotationDuplicates(@NotNull PsiAnnotation annotation) {
-    PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-    if (nameRef == null) return null;
-
-    PsiElement resolved = nameRef.resolve();
-    if (!(resolved instanceof PsiClass psiClass) || !CommonClassNames.JAVA_LANG_ANNOTATION_TARGET.equals(psiClass.getQualifiedName())) {
-      return null;
-    }
-
-    PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    if (attributes.length < 1) return null;
-    PsiAnnotationMemberValue value = attributes[0].getValue();
-    if (!(value instanceof PsiArrayInitializerMemberValue initializerMemberValue)) return null;
-    PsiAnnotationMemberValue[] arrayInitializers = initializerMemberValue.getInitializers();
-    Set<PsiElement> targets = new HashSet<>();
-    for (PsiAnnotationMemberValue initializer : arrayInitializers) {
-      if (initializer instanceof PsiReferenceExpression referenceExpression) {
-        PsiElement target = referenceExpression.resolve();
-        if (target != null) {
-          if (targets.contains(target)) {
-            String description = JavaErrorBundle.message("repeated.annotation.target");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(initializer).descriptionAndTooltip(description);
-          }
-          targets.add(target);
-        }
-      }
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkInvalidAnnotationOnRecordComponent(@NotNull PsiAnnotation annotation) {
     if (!Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_SAFE_VARARGS)) return null;
     PsiAnnotationOwner owner = annotation.getOwner();
@@ -473,37 +442,6 @@ public final class AnnotationsHighlightUtil {
     if (!(parent instanceof PsiRecordComponent)) return null;
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation)
       .descriptionAndTooltip(JavaErrorBundle.message("safevararg.annotation.cannot.be.applied.for.record.component"));
-  }
-
-  static HighlightInfo.Builder checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
-    if (JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(languageLevel) && 
-        Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
-      PsiAnnotationOwner owner = annotation.getOwner();
-      if (owner instanceof PsiModifierList list) {
-        PsiElement parent = list.getParent();
-        if (parent instanceof PsiClass psiClass) {
-          String errorMessage = LambdaHighlightingUtil.checkInterfaceFunctional(psiClass, JavaErrorBundle.message("not.a.functional.interface", psiClass.getName()));
-          if (errorMessage != null) {
-            HighlightInfo.Builder info =
-              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotation).descriptionAndTooltip(errorMessage);
-            IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(annotation);
-            info.registerFix(action, null, null, null, null);
-            return info;
-          }
-
-          if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
-            HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(annotation)
-              .descriptionAndTooltip(
-                JavaErrorBundle.message("functional.interface.must.not.be.sealed.error.description", PsiModifier.SEALED));
-            IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(annotation);
-            info.registerFix(action, null, null, null, null);
-            return info;
-          }
-        }
-      }
-    }
-    return null;
   }
 
   static HighlightInfo.Builder checkRepeatableAnnotation(@NotNull PsiAnnotation annotation) {

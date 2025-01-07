@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -21,5 +22,10 @@ non-sealed abstract class Parameterized<Psi extends PsiElement, Context> impleme
   @Override
   public String toString() {
     return "JavaErrorKind[" + myKey + "]";
+  }
+
+  @Override
+  public @NotNull HtmlChunk description(@NotNull Psi element, Context aClass) {
+    return HtmlChunk.raw(JavaCompilationErrorBundle.message("lambda.sealed.functional.interface"));
   }
 }

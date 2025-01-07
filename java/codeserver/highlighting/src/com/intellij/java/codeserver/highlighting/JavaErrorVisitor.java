@@ -35,6 +35,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     myErrorConsumer.accept(error);
     myHasError = true;
   }
+  
+  @Contract(pure = true)
+  boolean isApplicable(@NotNull JavaFeature feature) {
+    return feature.isSufficient(myLanguageLevel);
+  }
 
   @Contract(pure = true)
   boolean hasErrorResults() {

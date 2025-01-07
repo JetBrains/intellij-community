@@ -6,9 +6,7 @@ import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +43,30 @@ public final class JavaErrorKinds {
   public static final JavaSimpleErrorKind<PsiAnnotation> ANNOTATION_NOT_ALLOWED_STATIC =
     new JavaSimpleErrorKind<>("annotation.not.allowed.static");
   public static final JavaSimpleErrorKind<PsiJavaCodeReferenceElement> ANNOTATION_TYPE_EXPECTED =
-    new JavaSimpleErrorKind<>("annotation.annotation.type.expected");
+    new JavaSimpleErrorKind<>("annotation.type.expected");
+  public static final JavaSimpleErrorKind<PsiReferenceExpression> ANNOTATION_REPEATED_TARGET =
+    new JavaSimpleErrorKind<>("annotation.repeated.target");
+  // Can be anchored on @FunctionalInterface annotation or at call site
+  public static final JavaErrorKind<PsiElement, PsiClass> LAMBDA_NOT_FUNCTIONAL_INTERFACE =
+    new Parameterized<>("lambda.not.a.functional.interface") {
+      @Override
+      public @NotNull HtmlChunk description(@NotNull PsiElement element, PsiClass aClass) {
+        return HtmlChunk.raw(JavaCompilationErrorBundle.message("lambda.not.a.functional.interface", aClass.getName()));
+      }
+    };
+  // Can be anchored on @FunctionalInterface annotation or at call site
+  public static final JavaErrorKind<PsiElement, PsiClass> LAMBDA_NO_TARGET_METHOD =
+    new Parameterized<>("lambda.no.target.method.found") {};
+  // Can be anchored on @FunctionalInterface annotation or at call site
+  public static final JavaErrorKind<PsiElement, PsiClass> LAMBDA_MULTIPLE_TARGET_METHODS =
+    new Parameterized<>("lambda.multiple.sam.candidates") {
+      @Override
+      public @NotNull HtmlChunk description(@NotNull PsiElement element, PsiClass aClass) {
+        return HtmlChunk.raw(JavaCompilationErrorBundle.message("lambda.multiple.sam.candidates", aClass.getName()));
+      }
+    };
+  public static final JavaErrorKind<PsiAnnotation, PsiClass> LAMBDA_FUNCTIONAL_INTERFACE_SEALED =
+    new Parameterized<>("lambda.sealed.functional.interface") {};
   public static final JavaErrorKind<PsiAnnotation, @NotNull List<PsiAnnotation.@NotNull TargetType>> ANNOTATION_NOT_APPLICABLE =
     new Parameterized<>("annotation.not.applicable") {
       @Override

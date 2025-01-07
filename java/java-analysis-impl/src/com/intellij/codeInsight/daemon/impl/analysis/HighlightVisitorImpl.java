@@ -244,9 +244,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitAnnotation(@NotNull PsiAnnotation annotation) {
     super.visitAnnotation(annotation);
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkTargetAnnotationDuplicates(annotation));
     if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkDuplicateAnnotations(annotation, myLanguageLevel));
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkFunctionalInterface(annotation, myLanguageLevel));
     if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkInvalidAnnotationOnRecordComponent(annotation));
     if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkRepeatableAnnotation(annotation));
     if (CommonClassNames.JAVA_LANG_OVERRIDE.equals(annotation.getQualifiedName())) {
