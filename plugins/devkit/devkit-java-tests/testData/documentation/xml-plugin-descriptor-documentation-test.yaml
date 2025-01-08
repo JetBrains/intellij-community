@@ -191,3 +191,13 @@ elements:
               {title="Custom Title"}
             requirement:
               required: no
+        - element:
+            name: elementWithChildrenDescription
+            description: any
+            childrenDescription: Test children description.
+            # should not be rendered
+            children:
+              - element:
+                  name: child1
+              - element:
+                  name: child2

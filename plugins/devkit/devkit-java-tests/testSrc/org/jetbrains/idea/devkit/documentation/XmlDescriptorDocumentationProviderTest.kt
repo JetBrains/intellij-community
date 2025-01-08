@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
@@ -37,6 +37,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<li><a href=\"psi_element://#element:root__deprecatedElement\"><code>&lt;deprecatedElement&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithDeprecatedAttribute\"><code>&lt;elementWithDeprecatedAttribute&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithCallouts\"><code>&lt;elementWithCallouts&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__elementWithChildrenDescription\"><code>&lt;elementWithChildrenDescription&gt;</code></a></li>" +
       "</ul>"
     )
   }
@@ -252,6 +253,20 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "</blockquote>" +
       "<h5>Requirement</h5>" +
       "<p>Required: no"
+    )
+  }
+
+  fun `test element with children description`() {
+    doTestDocContains(
+      """
+        <root>
+          <elementWith<caret>ChildrenDescription/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;elementWithChildrenDescription&gt;</code></b><hr/>\n" +
+      "any" +
+      "<h5>Children</h5>" +
+      "<p>Test children description."
     )
   }
 

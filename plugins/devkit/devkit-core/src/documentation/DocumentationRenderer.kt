@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL
@@ -156,7 +156,7 @@ internal class DocumentationRenderer(private val project: Project) {
     appendRequirement(element.requirement)
     appendDefaultValue(element.defaultValue)
     appendAttributes(element.attributes)
-    appendChildren(element.children)
+    appendChildren(element)
     appendExamples(element.examples)
     appendReferences(element.references)
     return this
@@ -277,16 +277,21 @@ internal class DocumentationRenderer(private val project: Project) {
     }
   }
 
-  private fun StringBuilder.appendChildren(children: List<ElementWrapper>) {
-    if (children.isEmpty()) return
+  private fun StringBuilder.appendChildren(element: Element) {
+    if (element.children.isEmpty() && element.childrenDescription == null) return
     appendLine("\n$HEADER_LEVEL Children")
-    for (child in children) {
-      val childElement = child.element ?: continue
-      val linkText = childElement.name
-      val linkPath = childElement.path.toPathString()
-      appendLine("- [`<$linkText>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)${getRequirementSimpleText(child.element?.requirement)}")
+    if (element.childrenDescription != null) {
+      appendLine(element.childrenDescription)
+      appendParagraphSeparator()
+    } else {
+      for (child in element.children) {
+        val childElement = child.element ?: continue
+        val linkText = childElement.name
+        val linkPath = childElement.path.toPathString()
+        appendLine("- [`<$linkText>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)${getRequirementSimpleText(child.element?.requirement)}")
+      }
+      appendParagraphSeparator()
     }
-    appendParagraphSeparator()
   }
 
   private fun StringBuilder.appendExamples(examples: List<String>?) {
