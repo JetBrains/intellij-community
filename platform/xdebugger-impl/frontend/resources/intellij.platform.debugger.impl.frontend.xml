@@ -15,5 +15,8 @@
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
+
+    <registryKey defaultValue="false" description="Allows to modify values during debugging on the frontend side"
+                 key="debugger.frontendValuesModification"/>
   </extensions>
 </idea-plugin>

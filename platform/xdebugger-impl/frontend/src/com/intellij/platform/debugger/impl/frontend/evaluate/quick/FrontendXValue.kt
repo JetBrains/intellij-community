@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ConcurrencyUtil
@@ -31,7 +32,7 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
   init {
     cs.launch {
       val canBeModified = xValueDto.canBeModified.await()
-      if (canBeModified) {
+      if (canBeModified && Registry.`is`("debugger.frontendValuesModification")) {
         modifier = FrontendXValueModifier(project, xValueDto)
       }
     }
