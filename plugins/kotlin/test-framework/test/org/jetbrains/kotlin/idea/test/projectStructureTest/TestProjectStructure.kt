@@ -104,9 +104,11 @@ data class TestContentRoot(
     val kind: TestContentRootKind,
 )
 
-enum class TestContentRootKind(val defaultDirectoryName: String) {
+enum class TestContentRootKind(val defaultDirectoryName: String, val alternativeName: String? = null) {
     PRODUCTION("src"),
     TESTS("test"),
+    RESOURCES("resources"),
+    TEST_RESOURCES("testResources", alternativeName = "testResources"),
 }
 
 /**
@@ -184,13 +186,18 @@ object TestProjectModuleParser {
     private fun parseContentRoot(element: JsonElement): TestContentRoot = when (element) {
         is JsonObject -> {
             val path = element.getString(CONTENT_ROOT_PATH_FIELD)
-            val kind = TestContentRootKind.valueOf(element.getString(CONTENT_ROOT_KIND_FIELD).uppercase())
+            val kind = parseTestContentRootKind(element.getString(CONTENT_ROOT_KIND_FIELD))
             TestContentRoot(path, kind)
         }
         is JsonPrimitive -> {
-            val kind = TestContentRootKind.valueOf(element.asString.uppercase())
+            val kind = parseTestContentRootKind(element.asString)
             TestContentRoot(kind.defaultDirectoryName, kind)
         }
         else -> error("Unexpected content root JSON element type: ${element::class.java}")
     }
+
+    private fun parseTestContentRootKind(name: String): TestContentRootKind =
+        TestContentRootKind.entries.firstOrNull { kind ->
+            kind.alternativeName == name || kind.name == name.uppercase()
+        }?: error("Unexpected content root kind: $name")
 }

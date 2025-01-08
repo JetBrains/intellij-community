@@ -25,13 +25,14 @@ abstract class AbstractCombinedSourceAndClassRootsScopeContainsTest : AbstractCo
         val libraryFiles = getAllLibraryClassFiles(includedTestLibraries)
         val librarySourceFiles = getAllLibrarySourceFiles(includedTestLibraries)
 
+        val allResourceFiles = getAllSourceFiles(testModules, TestContentRootKind.RESOURCES, TestContentRootKind.TEST_RESOURCES)
         val excludedProductionSourceFiles = getAllSourceFiles(excludedTestModules, TestContentRootKind.PRODUCTION)
         val excludedTestSourceFiles = getAllSourceFiles(excludedTestModules, TestContentRootKind.TESTS)
         val excludedLibraryFiles = getAllLibraryClassFiles(excludedTestLibraries)
         val excludedLibrarySourceFiles = getAllLibraryClassFiles(excludedTestLibraries)
 
         val allIncludedFiles = productionSourceFiles + testSourceFiles + libraryFiles + librarySourceFiles
-        val allExcludedFiles = excludedProductionSourceFiles + excludedTestSourceFiles + excludedLibraryFiles + excludedLibrarySourceFiles
+        val allExcludedFiles = excludedProductionSourceFiles + excludedTestSourceFiles + excludedLibraryFiles + excludedLibrarySourceFiles + allResourceFiles
 
         val allFiles = allIncludedFiles + allExcludedFiles
 
@@ -86,9 +87,9 @@ abstract class AbstractCombinedSourceAndClassRootsScopeContainsTest : AbstractCo
         }
     }
 
-    private fun getAllSourceFiles(testModules: List<TestProjectModule>, contentRootKind: TestContentRootKind): List<VirtualFile> =
+    private fun getAllSourceFiles(testModules: List<TestProjectModule>, vararg contentRootKinds: TestContentRootKind): List<VirtualFile> =
         testModules
-            .flatMap { it.contentRootVirtualFilesByKind(contentRootKind) }
+            .flatMap { it.contentRootVirtualFilesByKind(*contentRootKinds) }
             .flatMap { findAllChildren(it, KotlinFileType.INSTANCE) }
 
     private fun getAllLibraryClassFiles(testLibraries: List<TestProjectLibrary>): List<VirtualFile> =

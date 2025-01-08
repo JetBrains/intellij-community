@@ -51,7 +51,7 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
         KotlinRoot.DIR.resolve("base").resolve("project-structure").resolve("testData").resolve("combinedSourceAndClassRootsScope")
 
     override fun doTestWithProjectStructure(testDirectory: String) {
-        testProjectStructure.modules.forEach { testProjectModule ->
+        testModules.forEach { testProjectModule ->
             require(!testProjectModule.contentRoots.isNullOrEmpty()) {
                 "Modules in combined scope tests should have explicitly specified content roots."
             }
@@ -85,7 +85,7 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
         get() = testProjectStructure.libraries.filter { it.name in testProjectStructure.excludedLibraries }
 
     internal val includedTestModules: List<TestProjectModule>
-        get() = testProjectStructure.modules.filterNot { it.name in testProjectStructure.excludedModules }
+        get() = testModules.filterNot { it.name in testProjectStructure.excludedModules }
 
     internal val includedTestModulesWithProductionRoots: List<TestProjectModule>
         get() = includedTestModules.filterByContentRootKind(TestContentRootKind.PRODUCTION)
@@ -94,7 +94,10 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
         get() = includedTestModules.filterByContentRootKind(TestContentRootKind.TESTS)
 
     internal val excludedTestModules: List<TestProjectModule>
-        get() = testProjectStructure.modules.filter { it.name in testProjectStructure.excludedModules }
+        get() = testModules.filter { it.name in testProjectStructure.excludedModules }
+
+    internal val testModules: List<TestProjectModule>
+        get() = testProjectStructure.modules
 
     internal fun List<CombinableSourceAndClassRootsScope>.combine(): CombinedSourceAndClassRootsScope? =
         CombinedSourceAndClassRootsScope.create(this, project) as? CombinedSourceAndClassRootsScope

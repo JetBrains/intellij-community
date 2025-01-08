@@ -192,6 +192,8 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
             when (testContentRoot.kind) {
                 TestContentRootKind.PRODUCTION -> PsiTestUtil.addSourceRoot(module, contentRoot)
                 TestContentRootKind.TESTS -> PsiTestUtil.addSourceRoot(module, contentRoot, true)
+                TestContentRootKind.RESOURCES -> PsiTestUtil.addResourceContentToRoots(module, contentRoot, false)
+                TestContentRootKind.TEST_RESOURCES -> PsiTestUtil.addResourceContentToRoots(module, contentRoot, true)
             }
 
             contentRootVirtualFiles.add(contentRoot)
@@ -283,13 +285,13 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
     /**
      * Returns all content root virtual files in the [TestProjectModule] of the given [kind] while preserving their original order.
      */
-    protected fun TestProjectModule.contentRootVirtualFilesByKind(kind: TestContentRootKind): List<VirtualFile> {
+    protected fun TestProjectModule.contentRootVirtualFilesByKind(vararg kinds: TestContentRootKind): List<VirtualFile> {
         val module = toModule()
         val contentRoots = contentRoots ?: return emptyList()
         return contentRoots
             .zip(moduleContentRoots.getValue(module))
             .mapNotNull { (testContentRoot, contentRootFile) ->
-                if (testContentRoot.kind == kind) contentRootFile else null
+                if (testContentRoot.kind in kinds) contentRootFile else null
             }
     }
 
