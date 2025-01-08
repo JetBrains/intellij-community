@@ -8,6 +8,7 @@ import org.gradle.api.Task
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
+import org.gradle.api.specs.Spec
 import org.gradle.api.tasks.TaskContainer
 import org.junit.jupiter.api.io.TempDir
 import org.slf4j.Marker
@@ -91,11 +92,30 @@ abstract class GradleTasksUtilTestCase {
     override fun toString(): String = if (path == ":") "root project '$name'" else "project $path"
   }
 
-  class MockTaskContainer : TaskContainer by notImplemented(TaskContainer::class.java) {
-    private val delegate = LinkedHashSet<Task>()
+  class MockTaskContainer private constructor(
+    private val delegate: MutableSet<Task>,
+  ) : TaskContainer by notImplemented(TaskContainer::class.java), MutableSet<Task> {
 
-    override fun iterator(): MutableIterator<Task> = delegate.iterator()
-    override fun add(e: Task): Boolean = delegate.add(e)
+    constructor() : this(LinkedHashSet())
+    constructor(delegate: Collection<Task>) : this(LinkedHashSet(delegate))
+
+    override fun hashCode() = delegate.hashCode()
+    override fun equals(other: Any?) = delegate == other
+    override fun toString() = delegate.toString()
+
+    override val size: Int by delegate::size
+    override fun isEmpty() = delegate.isEmpty()
+    override fun contains(element: Task) = delegate.contains(element)
+    override fun containsAll(elements: Collection<Task>) = delegate.containsAll(elements)
+    override fun iterator() = delegate.iterator()
+    override fun add(element: Task) = delegate.add(element)
+    override fun addAll(elements: Collection<Task>) = delegate.addAll(elements)
+    override fun remove(element: Task) = delegate.remove(element)
+    override fun removeAll(elements: Collection<Task>) = delegate.removeAll(elements)
+    override fun retainAll(elements: Collection<Task>) = delegate.retainAll(elements)
+    override fun clear() = delegate.clear()
+
+    override fun matching(spec: Spec<in Task>) = MockTaskContainer(delegate.filter { spec.isSatisfiedBy(it) })
   }
 
   class MockTask(

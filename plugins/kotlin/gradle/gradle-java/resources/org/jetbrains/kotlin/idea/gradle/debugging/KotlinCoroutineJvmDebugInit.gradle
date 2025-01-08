@@ -3,6 +3,7 @@
 
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleTasksUtil
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 
 import java.util.regex.Pattern
@@ -20,15 +21,13 @@ def debugAllIsEnabled = Boolean.valueOf(System.getProperty("idea.gradle.debug.al
 logger.debug("idea.gradle.debug.all is {}", debugAllIsEnabled)
 
 GradleLifecycleUtil.afterProject(gradle) { Project project ->
-    project.gradle.taskGraph.whenReady {
-        def tasks = debugAllIsEnabled ? project.tasks : GradleTasksUtil.getStartTasks(project)
-        for (Task task in tasks) {
-            if (task instanceof Test || (task instanceof JavaExecSpec && task instanceof JavaForkOptions)) {
-                if (Properties.disabledDebugJvmArgument in task.getJvmArgs()) {
-                    continue
-                }
-                task.jvmArgumentProviders.add(new KotlinCoroutineJvmDebugArgumentsProvider(task))
+    def tasks = debugAllIsEnabled ? project.tasks : GradleTasksUtil.getStartTasks(project)
+    GradleCollectionUtil.configureEach(tasks) { Task task ->
+        if (task instanceof Test || (task instanceof JavaExecSpec && task instanceof JavaForkOptions)) {
+            if (Properties.disabledDebugJvmArgument in task.getJvmArgs()) {
+                return
             }
+            task.jvmArgumentProviders.add(new KotlinCoroutineJvmDebugArgumentsProvider(task))
         }
     }
 }
