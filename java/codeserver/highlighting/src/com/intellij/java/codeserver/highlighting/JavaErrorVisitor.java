@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
+/**
+ * An internal visitor to gather error messages for Java sources. Should not be used directly.
+ * Use {@link JavaErrorCollector} instead.
+ */
 final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull Consumer<JavaCompilationError<?, ?>> myErrorConsumer;
   private final @NotNull Project myProject;

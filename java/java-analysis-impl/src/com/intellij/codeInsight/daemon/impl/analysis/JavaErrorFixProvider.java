@@ -24,7 +24,9 @@ import java.util.*;
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
 
 /**
- * Fixes attached to error messages provided by {@link com.intellij.java.codeserver.highlighting.JavaErrorCollector}
+ * Fixes attached to error messages provided by {@link com.intellij.java.codeserver.highlighting.JavaErrorCollector}.
+ * To add new fixes use {@link #single(JavaErrorKind, JavaFixProvider)} or {@link #multi(JavaErrorKind, JavaFixesProvider)}
+ * methods and return a fix or a list of fixes from lambda.
  */
 final class JavaErrorFixProvider {
   @FunctionalInterface
