@@ -15,7 +15,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -63,6 +63,17 @@ fun List<WebSymbol>.asSingleSymbol(force: Boolean = false): WebSymbol? =
 
 fun WebSymbol.withMatchedName(matchedName: String): WebSymbol =
   if (matchedName != name) {
+    val nameSegment = if (this is WebSymbolMatch && nameSegments.size == 1)
+      nameSegments[0].withRange(0, matchedName.length)
+    else
+      WebSymbolNameSegment.create(0, matchedName.length, this)
+    WebSymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
+  }
+  else this
+
+fun WebSymbol.withMatchedKind(qualifiedKind: WebSymbolQualifiedKind): WebSymbol =
+  if (qualifiedKind != this.qualifiedKind) {
+    val matchedName = this.asSafely<WebSymbolMatch>()?.matchedName ?: name
     val nameSegment = if (this is WebSymbolMatch && nameSegments.size == 1)
       nameSegments[0].withRange(0, matchedName.length)
     else
