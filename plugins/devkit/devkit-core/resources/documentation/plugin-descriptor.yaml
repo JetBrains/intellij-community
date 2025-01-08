@@ -463,20 +463,20 @@ elements:
             examples:
               - |
                 Extensions' declaration with a default namespace:
-                ```xml
-                <extensions defaultExtensionNs="com.intellij">
-                  <applicationService
-                      serviceImplementation="com.example.Service"/>
-                </extensions>
-                ```
+                    ```xml
+                    <extensions defaultExtensionNs="com.intellij">
+                      <applicationService
+                          serviceImplementation="com.example.Service"/>
+                    </extensions>
+                    ```
               - |
                 Extensions' declaration using the fully qualified extension name:
-                ```xml
-                <extensions>
-                  <com.example.vcs.myExtension
-                      implementation="com.example.MyExtension"/>
-                </extensions>
-                ```
+                    ```xml
+                    <extensions>
+                      <com.example.vcs.myExtension
+                          implementation="com.example.MyExtension"/>
+                    </extensions>
+                    ```
             #language=Markdown
             childrenDescription: |
               The children elements are registrations of the extension points defined by
