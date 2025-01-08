@@ -32,11 +32,13 @@ import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.VcsLogUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal object VcsLogComponents {
+@ApiStatus.Internal
+object VcsLogComponents {
   @JvmStatic
   fun createTable(
     logData: VcsLogData,
