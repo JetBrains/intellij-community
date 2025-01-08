@@ -54,6 +54,10 @@ internal data class Element(
   fun copy(): Element {
     return this.copy(attributes = this.attributes.map { it.copy() })
   }
+
+  override fun toString(): String {
+    return "Element(name=$name, path=$path)"
+  }
 }
 
 // allows for referencing attributes by anchors in YAML
@@ -79,6 +83,10 @@ internal data class Attribute(
   fun getPresentableName(): String {
     val elementName = path[path.lastIndex - 1]
     return "$elementName@$name"
+  }
+
+  override fun toString(): String {
+    return "Attribute(name=$name, path=$path)"
   }
 }
 
