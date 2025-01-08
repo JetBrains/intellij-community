@@ -28,6 +28,7 @@ import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
 import kotlinx.coroutines.*
 
 internal class FrontendXValue(private val project: Project, private val xValueDto: XValueDto) : XValue(), HintXValue {
+  // TODO[IJPL-160146]: For evaluation in toolwindow this CoroutineScope won't be cancelled
   private val cs = project.service<FrontendXValueDisposer>().cs.childScope("FrontendXValue")
 
   @Volatile
