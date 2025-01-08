@@ -80,5 +80,7 @@
     <string>An application in @@bundle_name@@ requests access to Bluetooth.</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>An application in @@bundle_name@@ requests the ability to send Apple events.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>@@bundle_name@@'s features, such as SSH and database connectivity, require permissions for accessing the local network and sending broadcast requests.</string>
   </dict>
 </plist>
