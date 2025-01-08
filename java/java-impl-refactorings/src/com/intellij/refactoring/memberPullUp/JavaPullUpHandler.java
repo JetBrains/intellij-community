@@ -111,8 +111,7 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
     mySubclass = aClass;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, element -> {
       if (mySubclass.isEnum()) {
-        if (element instanceof PsiMethod method &&
-            PullUpDialog.isEnumSyntheticMethod(method.getSignature(PsiSubstitutor.EMPTY), aClass.getProject())) {
+        if (element instanceof PsiMethod method && PullUpDialog.isEnumSyntheticMethod(method)) {
           return false;
         }
         else if (element instanceof PsiEnumConstant || element instanceof PsiClassInitializer) {
