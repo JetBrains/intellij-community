@@ -4,7 +4,7 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.devkit.plugin.noKotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit.plugin.main.noKotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.kotlin.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.workspaceModel" scope="RUNTIME" />
