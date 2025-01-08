@@ -23,20 +23,11 @@ import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-
 interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
 interface LocalPosixEelApi : LocalEelApi, EelPosixApi
 
-private val LOG by lazy { logger<EelProvider>() }
-
 suspend fun Path.getEelApi(): EelApi {
-  val eelDescriptors = EelProvider.EP_NAME.extensionList.mapNotNull { it.tryConvert(this)?.descriptor }
-
-  if (eelDescriptors.size > 1) {
-    LOG.error("Multiple EEL providers found for $this: $eelDescriptors")
-  }
-
-  return eelDescriptors.firstOrNull()?.upgrade() ?: localEel
+  return getEelDescriptor().upgrade()
 }
 
 object EelInitialization {
@@ -48,24 +39,8 @@ object EelInitialization {
   }
 }
 
-/**
- * TODO It is an obscuring API. It was created like that because it's the easiest way to implement lazy checkers.
- *
- * Returns some unique identity for Eel that corresponds to some path.
- * The only purpose of that identity is to compare it with other identities, in order to check if two paths belong to the same [EelApi].
- */
 fun Path.getEelDescriptor(): EelDescriptor {
-  return tryConvert()?.descriptor ?: LocalEelDescriptor
-}
-
-fun Path.tryConvert(): EelPath? {
-  val eels = EelProvider.EP_NAME.extensionList.mapNotNull { it.tryConvert(this) }
-
-  if (eels.size > 1) {
-    LOG.error("Multiple EEL providers found for $this: $eels")
-  }
-
-  return eels.firstOrNull()
+  return ApplicationManager.getApplication().service<EelNioBridgeService>().tryGetEelDescriptor(this) ?: LocalEelDescriptor
 }
 
 val localEel: LocalEelApi by lazy {
@@ -94,11 +69,6 @@ interface EelProvider {
   companion object {
     val EP_NAME: ExtensionPointName<EelProvider> = ExtensionPointName<EelProvider>("com.intellij.eelProvider")
   }
-
-  suspend fun getEelApi(path: Path): EelApi?
-
-  fun tryConvert(path: Path): EelPath?
-
   /**
    * Runs an initialization process for [EelApi] relevant to [project] during the process of its opening.
    *

@@ -3,7 +3,6 @@
 
 package com.intellij.platform.testFramework.junit5.eel.impl
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.eel.EelApi
@@ -11,16 +10,12 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.EelPath.OS
-import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystemProvider
-import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestPath
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
-import com.intellij.testFramework.junit5.fixture.extensionPointFixture
 import com.intellij.util.containers.with
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.delete
@@ -52,39 +47,6 @@ internal fun eelApiByOs(fileSystem: EelUnitTestFileSystem, descriptor: EelTestDe
   }
 }
 
-internal class TestEelProvider(val fileSystem: EelUnitTestFileSystem, val descriptor: EelDescriptor, val eelApi: EelApi) : EelProvider {
-
-  override suspend fun getEelApi(path: Path): EelApi? {
-    if (path.root.toString() != fileSystem.fakeLocalRoot) {
-      return null
-    }
-    return eelApi
-  }
-
-  override fun tryConvert(path: Path): EelPath? {
-    val relativeRemainder = if (path.toString().startsWith(fileSystem.fakeLocalRoot) || path is EelUnitTestPath) {
-      path.map { it.toString() }
-    }
-    else {
-      return null
-    }
-
-    val root = if (descriptor.operatingSystem == OS.WINDOWS) {
-      EelPath.parse(FAKE_WINDOWS_ROOT, descriptor)
-    }
-    else {
-      EelPath.parse("/", descriptor)
-    }
-    val eelPath = relativeRemainder.fold(root, EelPath::resolve)
-    return eelPath
-  }
-
-  override suspend fun tryInitialize(project: Project) {
-    // trivially initialized
-  }
-
-}
-
 internal data class IsolatedFileSystemImpl(override val storageRoot: Path, override val eelDescriptor: EelDescriptor, override val eelApi: EelApi) : IsolatedFileSystem
 
 internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFileSystem> = TestFixtureInitializer { initialized ->
@@ -112,7 +74,6 @@ internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFile
   val apiRef = AtomicReference<EelApi>(null)
   val descriptor = EelTestDescriptor(Ksuid.generate().toString(), os, apiRef::get)
   val eelApi = eelApiByOs(fakeLocalFileSystem, descriptor, os)
-  extensionPointFixture(EelProvider.EP_NAME, TestEelProvider(fakeLocalFileSystem, descriptor, eelApi)).init()
   val root = Path.of(fakeRoot)
   initialized(IsolatedFileSystemImpl(root, descriptor, eelApi)) {
     FileSystems.newFileSystem(dirUri, paramMap.with("KEY_FUNCTION", (BiFunction<FileSystemProvider, FileSystem?, FileSystem?> { _, _ -> null })))

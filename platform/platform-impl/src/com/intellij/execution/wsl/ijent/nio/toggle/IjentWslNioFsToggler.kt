@@ -27,7 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -85,18 +84,6 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
 
   // TODO Move to ijent.impl?
   internal class WslEelProvider : EelProvider {
-    override suspend fun getEelApi(path: Path): EelApi? {
-      val distribution = withContext(Dispatchers.IO) { WslDistributionManager.getInstance().installedDistributions }.firstOrNull { distro -> distro.getUNCRootPath().toString().compareTo(path.root.toString(), true) == 0 }
-      if (distribution == null) {
-        return null
-      }
-      return try {
-        getApiByDistribution(distribution)
-      }
-      catch (_: IllegalStateException) {
-        return null
-      }
-    }
 
     suspend fun getApiByDistribution(distro: WSLDistribution): EelApi {
       val enabledDistros = serviceAsync<IjentWslNioFsToggler>().strategy?.enabledInDistros
@@ -104,15 +91,6 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
         throw IllegalStateException("IJent is not enabled in $distro")
       }
       return WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false)
-    }
-
-    override fun tryConvert(path: Path): EelPath? {
-      val root = path.root ?: return null
-      val relevantPath = "/" + path.toString().substring(root.toString().length).replace('\\', '/')
-      val distro = service<IjentWslNioFsToggler>().strategy?.enabledInDistros
-        ?.find { distro -> path.root != null && distro.getUNCRootPath().toString() == root.toString() }
-        ?.let { WslEelDescriptor(it) }
-      return distro?.let { EelPath.parse(relevantPath, it) }
     }
 
     /**
@@ -131,7 +109,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       !WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem() -> null
 
       defaultProvider.javaClass.name == MultiRoutingFileSystemProvider::class.java.name -> {
-        IjentWslNioFsToggleStrategy(defaultProvider, coroutineScope)
+        IjentWslNioFsToggleStrategy(coroutineScope)
       }
 
       else -> {
