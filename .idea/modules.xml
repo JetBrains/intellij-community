@@ -771,6 +771,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" filepath="$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" filepath="$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" filepath="$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/ml-tools/intellij.platform.ml.tools.iml" filepath="$PROJECT_DIR$/platform/ml-tools/intellij.platform.ml.tools.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/monolith/intellij.platform.monolith.iml" filepath="$PROJECT_DIR$/platform/monolith/intellij.platform.monolith.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/main/intellij.platform.monolith.main/intellij.platform.monolith.main.iml" filepath="$PROJECT_DIR$/platform/main/intellij.platform.monolith.main/intellij.platform.monolith.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/shared/intellij.platform.navbar.iml" filepath="$PROJECT_DIR$/platform/navbar/shared/intellij.platform.navbar.iml" />
@@ -936,6 +937,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.helpers.tests.iml" filepath="$PROJECT_DIR$/python/intellij.python.helpers.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/IntelliLang-python/intellij.python.langInjection.iml" filepath="$PROJECT_DIR$/python/IntelliLang-python/intellij.python.langInjection.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-markdown/intellij.python.markdown.iml" filepath="$PROJECT_DIR$/python/python-markdown/intellij.python.markdown.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/intellij.python.ml.features/intellij.python.ml.features.iml" filepath="$PROJECT_DIR$/python/intellij.python.ml.features/intellij.python.ml.features.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-parser/intellij.python.parser.iml" filepath="$PROJECT_DIR$/python/python-parser/intellij.python.parser.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-psi-api/intellij.python.psi.iml" filepath="$PROJECT_DIR$/python/python-psi-api/intellij.python.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-psi-impl/intellij.python.psi.impl.iml" filepath="$PROJECT_DIR$/python/python-psi-impl/intellij.python.psi.impl.iml" />

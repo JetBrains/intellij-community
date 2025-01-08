@@ -5,15 +5,15 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.jetbrains.ml.*
-import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportCandidate
-import com.jetbrains.python.psi.PyFile
-import one.util.streamex.StreamEx
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.ml.features.api.feature.*
+import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
+import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyImportElement
 
-class ImportsFeatures : FeatureProvider(MLUnitImportCandidate) {
+object ImportsFeatures : ImportCandidateFeatures() {
   object Features {
     val EXISTING_IMPORT_FROM_PREFIX = FeatureDeclaration.int("existing_import_from_prefix") { "A maximal prefix for which there exists some import from" }.nullable()
     val EXISTING_IMPORT_PREFIX = FeatureDeclaration.int("existing_import_prefix") { "A maximal prefix for which there exists some import" }.nullable()
@@ -23,12 +23,11 @@ class ImportsFeatures : FeatureProvider(MLUnitImportCandidate) {
 
   override val featureComputationPolicy = FeatureComputationPolicy(false, true)
 
-  override val featureDeclarations = extractFieldsAsFeatureDeclarations(Features)
+  override val featureDeclarations = extractFeatureDeclarations(Features)
 
-  override suspend fun computeFeatures(units: MLUnitsMap, usefulFeaturesFilter: FeatureFilter) = buildList {
-    val importCandidate = units[MLUnitImportCandidate]
-    val project = importCandidate.importable?.project ?: return@buildList
-
+  override suspend fun computeFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = buildList {
+    val importCandidate = instance.candidate
+    val project = readAction { importCandidate.importable?.project } ?: return@buildList
     val editor = readAction { FileEditorManager.getInstance(project).selectedEditor } ?: return@buildList
     val psiFile = readAction { PsiManager.getInstance(project).findFile(editor.file) } ?: return@buildList
 
@@ -52,16 +51,12 @@ class ImportsFeatures : FeatureProvider(MLUnitImportCandidate) {
 }
 
 private fun hasImportsFrom(fromImports:  List<PyFromImportStatement>, qName: QualifiedName): Boolean {
-  return StreamEx.of(fromImports).map { it.getImportSourceQName() }
-      .nonNull()
-      .anyMatch { qName == it }
+  return fromImports.mapNotNull { it.getImportSourceQName() }
+    .any { qName == it }
 }
 
 private fun hasImports(importTargets:  List<PyImportElement>, qName: QualifiedName): Boolean {
-  return StreamEx.of(importTargets).map { it.importedQName }
-      .nonNull()
-      .anyMatch { qName == it }
-
+  return importTargets.map { it.importedQName }.any { qName == it }
 }
 
 fun depthImportsFrom(file: PsiFile, qName: QualifiedName): Int {

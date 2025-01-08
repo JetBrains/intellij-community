@@ -18,8 +18,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import com.intellij.platform.ml.feature.FeatureDeclaration as OldFeatureDeclaration
-import com.jetbrains.ml.Feature as NewFeature
-import com.jetbrains.ml.FeatureDeclaration as NewFeatureDeclaration
 
 @ApiStatus.Internal
 @Service
@@ -46,12 +44,6 @@ class TypingSpeedTracker {
     else 0.5.pow(duration / decayDuration.toDouble(DurationUnit.MILLISECONDS)).toFloat()
 
   fun getTypingSpeedEventPairs(): Collection<Pair<EventPair<*>, Feature>> = DECAY_DURATIONS.mapNotNull { (decayDuration, eventFieldAndFeature) ->
-    typingSpeeds[decayDuration]?.let {
-      (eventFieldAndFeature.first with it) to (eventFieldAndFeature.second with it)
-    }
-  }
-
-  fun getTypingSpeedNewEventPairs(): Collection<Pair<EventPair<*>, NewFeature>> = DECAY_DURATIONS_NEW.mapNotNull { (decayDuration, eventFieldAndFeature) ->
     typingSpeeds[decayDuration]?.let {
       (eventFieldAndFeature.first with it) to (eventFieldAndFeature.second with it)
     }
@@ -96,12 +88,9 @@ class TypingSpeedTracker {
           ),
           OldFeatureDeclaration.float("typing_speed_${it}s").nullable())
       }
-    private val DECAY_DURATIONS_NEW = listOf(1, 2, 5, 30)
-      .associate { it.seconds to Pair(EventFields.Float("typing_speed_${it}s"), NewFeatureDeclaration.float("typing_speed_${it}s").nullable()) }
 
     fun getInstance(): TypingSpeedTracker = service()
     fun getEventFields(): Array<EventField<*>> = DECAY_DURATIONS.values.map { it.first }.toTypedArray()
     fun getFeatures(): Set<OldFeatureDeclaration<*>> = DECAY_DURATIONS.values.map { it.second }.toSet()
-    fun getFeaturesNew(): List<NewFeatureDeclaration<*>> = DECAY_DURATIONS_NEW.values.map { it.second }
   }
 }

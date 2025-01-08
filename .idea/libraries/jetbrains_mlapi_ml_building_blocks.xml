@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="jetbrains.mlapi.ml.building.blocks" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:ml-building-blocks:58">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-building-blocks/58/ml-building-blocks-58.jar">
+          <sha256sum>65b9f465f00474bcbfff5949458631a92c6a4cf0587f05fac4d0acd65cfae4cf</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-building-blocks/58/ml-building-blocks-58.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-building-blocks/58/ml-building-blocks-58-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-building-blocks/58/ml-building-blocks-58-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

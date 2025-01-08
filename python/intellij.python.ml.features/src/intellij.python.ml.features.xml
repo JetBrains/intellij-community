@@ -1,0 +1,17 @@
+<idea-plugin package="com.intellij.python.ml.features">
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.ml.features.imports.PyCharmImportsRankingLogs"/>
+    <registryKey
+      key="quickfix.ranking.ml.model.path"
+      defaultValue=""
+      restartRequired="true"
+      description="Absolute path to a custom ML model used for ranking missing imports"/>
+    <registryKey
+      key="quickfix.ranking.ml"
+      defaultValue="[IN_EXPERIMENT*|ENABLED|DISABLED]"
+      description="Enable ML ranking in quick fix for missing imports"/>
+    <postStartupActivity implementation="com.intellij.python.ml.features.imports.QuickfixRankingModelLoading"/>
+    <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser"
+                        serviceImplementation="com.intellij.python.ml.features.imports.PyMLImportChooser" overrides="true"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jetbrains.mlapi.ml.feature.api" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:ml-feature-api:58">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-feature-api/58/ml-feature-api-58.jar">
+          <sha256sum>8f0300408884fe7ea8b3665f4bc2e7f725cda763806ae92677cf141f4d781193</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-feature-api/58/ml-feature-api-58.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-feature-api/58/ml-feature-api-58-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

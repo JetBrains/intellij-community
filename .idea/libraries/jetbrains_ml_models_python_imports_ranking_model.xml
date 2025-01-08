@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jetbrains.ml.models.python.imports.ranking.model" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.ml.models:python-imports-ranking-model:lilac-coua">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/lilac-coua/python-imports-ranking-model-lilac-coua.jar">
+          <sha256sum>0516e6383101eb995b8f4d9c7dc217578bbc7467a806895d5c4e2390c27bba7d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/lilac-coua/python-imports-ranking-model-lilac-coua.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/lilac-coua/python-imports-ranking-model-lilac-coua-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
