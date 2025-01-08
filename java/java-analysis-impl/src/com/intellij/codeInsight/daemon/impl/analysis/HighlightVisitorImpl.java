@@ -167,7 +167,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visit(@NotNull PsiElement element) {
     myHasError = false;
     element.accept(this);
-    myCollector.processElement(element);
   }
 
   @Override
@@ -236,6 +235,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitElement(@NotNull PsiElement element) {
+    myCollector.processElement(element);
     if (!(myFile instanceof ServerPageFile)) {
       add(DefaultHighlightUtil.checkUnicodeBadCharacter(element));
     }
