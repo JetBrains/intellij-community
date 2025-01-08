@@ -57,7 +57,7 @@ class GradleExecutionHelperJvmArgumentsTest : GradleExecutionHelperJvmArgumentsT
       "-Dname=value",
       "-Xmx10g"
     ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEquals(expectedJvmArguments, operation.jvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
   }
 
   @Test
@@ -109,7 +109,7 @@ class GradleExecutionHelperJvmArgumentsTest : GradleExecutionHelperJvmArgumentsT
       "-Dname2=value",
       "-Xmx2g"
     ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEquals(expectedJvmArguments, operation.jvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
   }
 
   @Test
@@ -136,7 +136,7 @@ class GradleExecutionHelperJvmArgumentsTest : GradleExecutionHelperJvmArgumentsT
       "-Dname=value",
       "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=*:5005"
     ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEquals(expectedJvmArguments, operation.jvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
   }
 
   @Test
@@ -178,7 +178,7 @@ class GradleExecutionHelperJvmArgumentsTest : GradleExecutionHelperJvmArgumentsT
       "-Xms256m",
       "-Xmx512m"
     ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEquals(expectedJvmArguments, operation.jvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
   }
 
   @Test
@@ -221,6 +221,6 @@ class GradleExecutionHelperJvmArgumentsTest : GradleExecutionHelperJvmArgumentsT
       "-Xms256m",
       "-Xmx512m"
     ) + IMMUTABLE_JVM_ARGUMENTS
-    CollectionAssertions.assertEquals(expectedJvmArguments, operation.jvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, operation.jvmArguments)
   }
 }

@@ -20,7 +20,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     project.tasks.add(task)
 
     val startTasks = GradleTasksUtil.getStartTasks(project)
-    CollectionAssertions.assertEquals(listOf(task), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(task), startTasks)
   }
 
   @Test
@@ -36,7 +36,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     project.tasks.add(task)
 
     val startTasks = GradleTasksUtil.getStartTasks(project)
-    CollectionAssertions.assertEquals(listOf(task), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(task), startTasks)
   }
 
   @Test
@@ -56,7 +56,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     project.tasks.add(task3)
 
     val startTasks = GradleTasksUtil.getStartTasks(project)
-    CollectionAssertions.assertEquals(listOf(task1, task2), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(task1, task2), startTasks)
   }
 
   @Test
@@ -76,7 +76,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     project.tasks.add(task3)
 
     val startTasks = GradleTasksUtil.getStartTasks(project)
-    CollectionAssertions.assertEquals(listOf(task1, task2), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(task1, task2), startTasks)
   }
 
   @Test
@@ -98,7 +98,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     project.tasks.add(task22)
 
     val startTasks = GradleTasksUtil.getStartTasks(project)
-    CollectionAssertions.assertEquals(listOf(task11, task12), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(task11, task12), startTasks)
   }
 
   @Test
@@ -120,7 +120,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     project.tasks.add(task22)
 
     val startTasks = GradleTasksUtil.getStartTasks(project)
-    CollectionAssertions.assertEquals(listOf(task11, task12), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(task11, task12), startTasks)
   }
 
   @Test
@@ -139,7 +139,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     moduleProject.tasks.add(moduleProjectTask)
 
     val startTasks = GradleTasksUtil.getStartTasks(moduleProject)
-    CollectionAssertions.assertEquals(listOf(moduleProjectTask), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(moduleProjectTask), startTasks)
   }
 
   @Test
@@ -158,7 +158,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     moduleProject.tasks.add(moduleProjectTask)
 
     val startTasks = GradleTasksUtil.getStartTasks(moduleProject)
-    CollectionAssertions.assertEquals(listOf(moduleProjectTask), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(moduleProjectTask), startTasks)
   }
 
   @Test
@@ -177,7 +177,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     moduleProject.tasks.add(moduleProjectTask)
 
     val startTasks = GradleTasksUtil.getStartTasks(moduleProject)
-    CollectionAssertions.assertEquals(listOf(moduleProjectTask), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(moduleProjectTask), startTasks)
   }
 
   @Test
@@ -196,7 +196,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     moduleProject.tasks.add(moduleProjectTask)
 
     val startTasks = GradleTasksUtil.getStartTasks(moduleProject)
-    CollectionAssertions.assertEquals(listOf(moduleProjectTask), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(moduleProjectTask), startTasks)
   }
 
   @Test
@@ -215,7 +215,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     moduleProject.tasks.add(moduleProjectTask)
 
     val startTasks = GradleTasksUtil.getStartTasks(moduleProject)
-    CollectionAssertions.assertEquals(listOf(moduleProjectTask), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(moduleProjectTask), startTasks)
   }
 
   @Test
@@ -256,7 +256,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     includedBuildProject.tasks.add(includedBuildProjectTask)
 
     val startTasks = GradleTasksUtil.getStartTasks(includedBuildProject)
-    CollectionAssertions.assertEquals(listOf(includedBuildProjectTask), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(includedBuildProjectTask), startTasks)
   }
 
   @Test
@@ -278,7 +278,7 @@ class GradleTasksUtilTest : GradleTasksUtilTestCase() {
     includedBuildProject.tasks.add(includedBuildProjectTask)
 
     val startTasks = GradleTasksUtil.getStartTasks(includedBuildProject)
-    CollectionAssertions.assertEquals(listOf(includedBuildProjectTask), startTasks)
+    CollectionAssertions.assertEqualsOrdered(listOf(includedBuildProjectTask), startTasks)
   }
 
   @Test

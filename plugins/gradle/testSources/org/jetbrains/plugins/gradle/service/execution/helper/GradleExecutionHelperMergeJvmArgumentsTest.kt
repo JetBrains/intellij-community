@@ -37,7 +37,7 @@ class GradleExecutionHelperMergeJvmArgumentsTest : GradleExecutionHelperMergeJvm
       "-X:foo"
     ) + IMMUTABLE_JVM_ARGUMENTS
 
-    CollectionAssertions.assertEquals(expectedJvmArguments, actualJvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, actualJvmArguments)
   }
 
   @Test
@@ -56,7 +56,7 @@ class GradleExecutionHelperMergeJvmArgumentsTest : GradleExecutionHelperMergeJvm
       "-X:foo"
     ) + IMMUTABLE_JVM_ARGUMENTS
 
-    CollectionAssertions.assertEquals(expectedJvmArguments, actualJvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, actualJvmArguments)
   }
 
   @Test
@@ -71,7 +71,7 @@ class GradleExecutionHelperMergeJvmArgumentsTest : GradleExecutionHelperMergeJvm
 
     val expectedJvmArguments = emptyList<String>() + IMMUTABLE_JVM_ARGUMENTS
 
-    CollectionAssertions.assertEquals(expectedJvmArguments, actualJvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, actualJvmArguments)
   }
 
   @Test
@@ -92,7 +92,7 @@ class GradleExecutionHelperMergeJvmArgumentsTest : GradleExecutionHelperMergeJvm
       "-Dp=newVal"
     ) + IMMUTABLE_JVM_ARGUMENTS
 
-    CollectionAssertions.assertEquals(expectedJvmArguments, actualJvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, actualJvmArguments)
   }
 
   @Test
@@ -114,7 +114,7 @@ class GradleExecutionHelperMergeJvmArgumentsTest : GradleExecutionHelperMergeJvm
       "-X:foo"
     ) + IMMUTABLE_JVM_ARGUMENTS
 
-    CollectionAssertions.assertEquals(expectedJvmArguments, actualJvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, actualJvmArguments)
   }
 
   @Test
@@ -138,7 +138,7 @@ class GradleExecutionHelperMergeJvmArgumentsTest : GradleExecutionHelperMergeJvm
       "-Foo", "baz=002"
     ) + IMMUTABLE_JVM_ARGUMENTS
 
-    CollectionAssertions.assertEquals(expectedJvmArguments, actualJvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, actualJvmArguments)
   }
 
   @Test
@@ -159,7 +159,7 @@ class GradleExecutionHelperMergeJvmArgumentsTest : GradleExecutionHelperMergeJvm
       "-Xmx512",
     ) + IMMUTABLE_JVM_ARGUMENTS
 
-    CollectionAssertions.assertEquals(expectedJvmArguments, actualJvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, actualJvmArguments)
   }
 
   @Test
@@ -178,6 +178,6 @@ class GradleExecutionHelperMergeJvmArgumentsTest : GradleExecutionHelperMergeJvm
 
     val expectedJvmArguments = emptyList<String>() + IMMUTABLE_JVM_ARGUMENTS
 
-    CollectionAssertions.assertEquals(expectedJvmArguments, actualJvmArguments)
+    CollectionAssertions.assertEqualsOrdered(expectedJvmArguments, actualJvmArguments)
   }
 }

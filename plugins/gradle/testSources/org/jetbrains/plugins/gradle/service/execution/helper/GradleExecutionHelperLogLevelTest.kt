@@ -37,7 +37,7 @@ class GradleExecutionHelperLogLevelTest : GradleExecutionHelperLogLeveTestCase()
     // By default, the "--info" flag is present only in the unit test mode.
     // In production, IDEA doesn't provide any default logging level.
     val expectedArguments = listOf("--info")
-    CollectionAssertions.assertEquals(expectedArguments, settings.arguments)
+    CollectionAssertions.assertEqualsOrdered(expectedArguments, settings.arguments)
   }
 
   @Test
@@ -53,7 +53,7 @@ class GradleExecutionHelperLogLevelTest : GradleExecutionHelperLogLeveTestCase()
     GradleExecutionHelper.setupLogging(settings, buildEnvironment)
 
     val expectedArguments = listOf("-d")
-    CollectionAssertions.assertEquals(expectedArguments, settings.arguments)
+    CollectionAssertions.assertEqualsOrdered(expectedArguments, settings.arguments)
   }
 
   @Test
@@ -69,7 +69,7 @@ class GradleExecutionHelperLogLevelTest : GradleExecutionHelperLogLeveTestCase()
     GradleExecutionHelper.setupLogging(settings, buildEnvironment)
 
     val expectedArguments = listOf("--debug")
-    CollectionAssertions.assertEquals(expectedArguments, settings.arguments)
+    CollectionAssertions.assertEqualsOrdered(expectedArguments, settings.arguments)
   }
 
   @Test
@@ -88,7 +88,7 @@ class GradleExecutionHelperLogLevelTest : GradleExecutionHelperLogLeveTestCase()
     GradleExecutionHelper.setupLogging(settings, buildEnvironment)
 
     val expectedArguments = listOf("--debug")
-    CollectionAssertions.assertEquals(expectedArguments, settings.arguments)
+    CollectionAssertions.assertEqualsOrdered(expectedArguments, settings.arguments)
   }
 
   @Test
@@ -108,7 +108,7 @@ class GradleExecutionHelperLogLevelTest : GradleExecutionHelperLogLeveTestCase()
     GradleExecutionHelper.setupLogging(settings, buildEnvironment)
 
     val expectedArguments = listOf("-d")
-    CollectionAssertions.assertEquals(expectedArguments, settings.arguments)
+    CollectionAssertions.assertEqualsOrdered(expectedArguments, settings.arguments)
   }
 
   @Test
@@ -130,7 +130,7 @@ class GradleExecutionHelperLogLevelTest : GradleExecutionHelperLogLeveTestCase()
     GradleExecutionHelper.setupLogging(settings, buildEnvironment)
 
     val expectedArguments = listOf("-d")
-    CollectionAssertions.assertEquals(expectedArguments, settings.arguments)
+    CollectionAssertions.assertEqualsOrdered(expectedArguments, settings.arguments)
   }
 
   @Test
@@ -154,6 +154,6 @@ class GradleExecutionHelperLogLevelTest : GradleExecutionHelperLogLeveTestCase()
     GradleExecutionHelper.setupLogging(settings, buildEnvironment)
 
     val expectedArguments = listOf("-d")
-    CollectionAssertions.assertEquals(expectedArguments, settings.arguments)
+    CollectionAssertions.assertEqualsOrdered(expectedArguments, settings.arguments)
   }
 }

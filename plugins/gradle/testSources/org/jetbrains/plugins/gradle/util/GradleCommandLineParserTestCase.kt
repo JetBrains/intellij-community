@@ -38,7 +38,7 @@ abstract class GradleCommandLineParserTestCase {
   }
 
   fun GradleCommandLine.assertTokens(vararg expectedTokens: String) = apply {
-    CollectionAssertions.assertEquals(expectedTokens.asList(), tokens)
+    CollectionAssertions.assertEqualsOrdered(expectedTokens.asList(), tokens)
   }
 
   fun GradleCommandLine.assertNoTaskTokens() = apply {
@@ -46,7 +46,7 @@ abstract class GradleCommandLineParserTestCase {
   }
 
   fun GradleCommandLine.assertTaskTokens(vararg expectedTokens: String) = apply {
-    CollectionAssertions.assertEquals(expectedTokens.asList(), tasks.tokens)
+    CollectionAssertions.assertEqualsOrdered(expectedTokens.asList(), tasks.tokens)
   }
 
   fun GradleCommandLine.assertNoOptionTokens() = apply {
@@ -54,7 +54,7 @@ abstract class GradleCommandLineParserTestCase {
   }
 
   fun GradleCommandLine.assertOptionTokens(vararg expectedTokens: String) = apply {
-    CollectionAssertions.assertEquals(expectedTokens.asList(), options.tokens)
+    CollectionAssertions.assertEqualsOrdered(expectedTokens.asList(), options.tokens)
   }
 
   fun GradleCommandLine.assertNoTasks() = apply {
@@ -66,11 +66,11 @@ abstract class GradleCommandLineParserTestCase {
   }
 
   fun GradleCommandLine.assertTasks(vararg expectedTasks: SimpleTask) = apply {
-    CollectionAssertions.assertEquals(expectedTasks.asList(), tasks.map(SimpleTask::valueOf))
+    CollectionAssertions.assertEqualsOrdered(expectedTasks.asList(), tasks.map(SimpleTask::valueOf))
   }
 
   fun GradleCommandLine.assertOptions(vararg expectedOptions: SimpleOption) = apply {
-    CollectionAssertions.assertEquals(expectedOptions.asList(), options.map(SimpleOption::valueOf))
+    CollectionAssertions.assertEqualsOrdered(expectedOptions.asList(), options.map(SimpleOption::valueOf))
   }
 
   data class SimpleTask(val name: String, val options: List<SimpleOption>) {
