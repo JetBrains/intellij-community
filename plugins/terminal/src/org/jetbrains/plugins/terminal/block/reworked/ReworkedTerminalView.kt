@@ -112,6 +112,7 @@ internal class ReworkedTerminalView(
     )
 
     val blocksModel = TerminalBlocksModelImpl(outputModel)
+    TerminalBlocksDecorator(outputModel, blocksModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
     controller = TerminalSessionController(
       sessionModel,
