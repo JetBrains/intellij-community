@@ -71,7 +71,9 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
         boolean onlyOneYieldAfterLabel = true;
         boolean isOldSwitchWithoutRule = true;
         int statementAfterLabelCount = 0;
-        for (PsiStatement statement : body.getStatements()) {
+        PsiStatement[] statements = body.getStatements();
+        if (statements.length == 0) return;
+        for (PsiStatement statement : statements) {
           if (statement instanceof PsiSwitchLabeledRuleStatement) {
             isOldSwitchWithoutRule = false;
             break;
