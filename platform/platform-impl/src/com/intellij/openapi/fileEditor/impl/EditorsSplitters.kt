@@ -1330,7 +1330,8 @@ private fun getSplittersToActivate(activeWindow: Window, project: Project?): Edi
   return getSplittersForProject(activeWindow, project)
 }
 
-internal fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
+@Internal
+fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
   return object : Splitter(isVertical, proportion, minProp, maxProp) {
     init {
       setDividerWidth(1)

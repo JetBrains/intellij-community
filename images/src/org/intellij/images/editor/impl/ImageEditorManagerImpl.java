@@ -16,6 +16,8 @@
 package org.intellij.images.editor.impl;
 
 import org.intellij.images.options.*;
+import org.intellij.images.ui.ImageComponent;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,5 +47,10 @@ public final class ImageEditorManagerImpl {
 
     ui.setImageProvider((scale, ancestor) -> image, format);
     return ui;
+  }
+
+  @Internal
+  public static ImageComponent getImageComponent(ImageEditorUI comp) {
+    return comp.getImageComponent();
   }
 }
