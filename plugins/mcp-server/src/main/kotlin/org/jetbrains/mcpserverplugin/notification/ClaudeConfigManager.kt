@@ -1,6 +1,7 @@
 package org.jetbrains.mcpserverplugin.notification
 
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.util.SystemInfo
@@ -43,7 +44,8 @@ object ClaudeConfigManager {
             mcpServers.add("jetbrains", jetbrainsConfig)
 
             try {
-                configFile.writeText(gson.toJson(jsonObject))
+                val prettyGson = GsonBuilder().setPrettyPrinting().create()
+                configFile.writeText(prettyGson.toJson(jsonObject))
             } catch (e: Exception) {
                 throw RuntimeException("Failed to write configuration file", e)
             }
