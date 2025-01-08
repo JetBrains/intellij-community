@@ -1211,8 +1211,8 @@ public final class PyTypeChecker {
               )
             )
           );
-          return new PyTypedDictType("TypedDict", substitutedTDFields, typedDictType.myClass, PyTypedDictType.DefinitionLevel.INSTANCE,
-                                     List.of());
+          return new PyTypedDictType(typedDictType.getName(), substitutedTDFields, typedDictType.myClass,
+                                     PyTypedDictType.DefinitionLevel.INSTANCE, List.of());
         }
         else if (type instanceof PyNarrowedType pyNarrowedType) {
           return pyNarrowedType.substitute(substitute(pyNarrowedType.getNarrowedType(), substitutions, context, substituting));
