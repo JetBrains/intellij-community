@@ -69,7 +69,7 @@ private fun createJediTermServices(
 ): JediTermServices {
   val styleState = StyleState()
   val textBuffer = TerminalTextBuffer(termSize.columns, termSize.rows, styleState, maxHistoryLinesCount)
-  val terminalDisplay = TerminalDisplayImpl()
+  val terminalDisplay = TerminalDisplayImpl(settings)
   val controller = ObservableJediTerminal(terminalDisplay, textBuffer, styleState)
   val typeAheadManager = TerminalTypeAheadManager(JediTermTypeAheadModel(controller, textBuffer, settings))
   val executorService = TerminalExecutorServiceManagerImpl()
