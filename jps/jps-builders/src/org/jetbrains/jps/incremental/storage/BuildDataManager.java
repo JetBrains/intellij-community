@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.tracing.Tracer;
-import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,9 +31,6 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,12 +44,6 @@ public final class BuildDataManager {
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
 
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
-
-  @ApiStatus.Internal
-  public static final int STORAGE_VERSION = 39;
-  private static final int VERSION = STORAGE_VERSION +
-                                     (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0) +
-                                     (JavaBuilderUtil.isDepGraphEnabled() ? 2 : 0);
 
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
@@ -75,14 +65,14 @@ public final class BuildDataManager {
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
   private final @Nullable OutputToTargetRegistry outputToTargetMapping;
-  private final Path versionFile;
+  private final BuildDataVersionManager versionManager;
   private final PathRelativizerService myRelativizer;
   private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
 
   @ApiStatus.Internal
   @TestOnly
   public BuildDataManager(BuildDataPaths dataPaths, BuildTargetsState targetsState, @NotNull PathRelativizerService relativizer) throws IOException {
-    this(dataPaths, targetsState, relativizer, null, null);
+    this(dataPaths, targetsState, relativizer, null, null, null);
   }
 
   @ApiStatus.Internal
@@ -94,14 +84,33 @@ public final class BuildDataManager {
          targetsState,
          relativizer,
          storageManager,
-         storageManager != null || ProjectStamps.PORTABLE_CACHES ? null : new ProjectStamps(dataPaths.getDataStorageRoot().toPath(), targetsState));
+         storageManager != null || ProjectStamps.PORTABLE_CACHES ? null : new ProjectStamps(dataPaths.getDataStorageRoot().toPath(), targetsState),
+         null);
+
+
   }
 
-  private BuildDataManager(BuildDataPaths dataPaths,
+  @SuppressWarnings("unused")
+  @ApiStatus.Internal
+  public static BuildDataManager createSingleDb(BuildDataPaths dataPaths,
+                                                BuildTargetsState targetsState,
+                                                @NotNull PathRelativizerService relativizer,
+                                                @NotNull BuildDataVersionManager versionManager,
+                                                @NotNull StorageManager storageManager) throws IOException {
+    return new BuildDataManager(dataPaths,
+                                targetsState,
+                                relativizer,
+                                storageManager,
+                                null,
+                                versionManager);
+  }
+
+  private BuildDataManager(@NotNull BuildDataPaths dataPaths,
                            BuildTargetsState targetsState,
                            @NotNull PathRelativizerService relativizer,
                            @Nullable StorageManager storageManager,
-                           @Nullable ProjectStamps projectStamps) throws IOException {
+                           @Nullable ProjectStamps projectStamps,
+                           @Nullable BuildDataVersionManager versionManager) throws IOException {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     myFileStampService = projectStamps;
@@ -140,7 +149,8 @@ public final class BuildDataManager {
       }
       throw e;
     }
-    versionFile = dataStorageRoot.resolve("version.dat");
+
+    this.versionManager = versionManager == null ? new BuildDataVersionManagerImpl(dataStorageRoot.resolve("version.dat")) : versionManager;
     myDepGraphPathMapper = new PathSourceMapper(relativizer::toFull, relativizer::toRelative);
     myRelativizer = relativizer;
   }
@@ -583,41 +593,12 @@ public final class BuildDataManager {
     }
   }
 
-  private Boolean myVersionDiffers = null;
-
   public boolean versionDiffers() {
-    Boolean cached = myVersionDiffers;
-    if (cached != null) {
-      return cached;
-    }
-
-    try {
-      ByteBuffer data = ByteBuffer.wrap(Files.readAllBytes(versionFile));
-      boolean diff = data.getInt(0) != VERSION;
-      myVersionDiffers = diff;
-      return diff;
-    }
-    catch (NoSuchFileException ignored) {
-      return false; // treat it as a new dir
-    }
-    catch (IOException ex) {
-      LOG.info(ex);
-    }
-    return true;
+    return versionManager.versionDiffers();
   }
 
   public void saveVersion() {
-    Boolean differs = myVersionDiffers;
-    if (differs != null && !differs) {
-      return;
-    }
-
-    try {
-      Files.createDirectories(versionFile.getParent());
-      Files.write(versionFile, ByteBuffer.allocate(Integer.BYTES).putInt(VERSION).array());
-    }
-    catch (IOException ignored) {
-    }
+    versionManager.saveVersion();
   }
 
   public void reportUnhandledRelativizerPaths() {
