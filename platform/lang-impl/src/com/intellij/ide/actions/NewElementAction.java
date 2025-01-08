@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -223,11 +222,12 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
           SimpleTextAttributes.LINK_ATTRIBUTES,
           linkActionEvent -> {
             Disposer.dispose(popup);
-            @SuppressWarnings("DialogTitleCapitalization")
-            var actionPresentation = new Presentation(IdeBundle.message("popup.new.element.empty.text.2"));
-            var inputEvent = linkActionEvent.getSource() instanceof InputEvent linkInputEvent ? linkInputEvent : null;
-            var actionEvent = AnActionEvent.createEvent(event.getDataContext(), actionPresentation, EMPTY_TEXT_LINK_PLACE, ActionUiKind.POPUP, inputEvent);
-            ActionUtil.invokeAction(ActionManager.getInstance().getAction("NewFile"), actionEvent, null);
+            var component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+            if (component != null) {
+              var inputEvent = linkActionEvent.getSource() instanceof InputEvent linkInputEvent ? linkInputEvent : null;
+              var actionManager = ActionManager.getInstance();
+              actionManager.tryToExecute(actionManager.getAction("NewFile"), inputEvent, component, EMPTY_TEXT_LINK_PLACE, true);
+            }
           }
         );
         // The capitalization is wrong here because this line continues the previous one.

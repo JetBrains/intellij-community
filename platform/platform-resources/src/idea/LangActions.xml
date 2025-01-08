@@ -536,7 +536,9 @@
     </group>
 
     <group id="NewGroup" popup="true" searchable="false">
-      <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction" icon="AllIcons.FileTypes.Text"/>
+      <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction" icon="AllIcons.FileTypes.Text">
+        <override-text place="NewElementInProjectViewPopupEmptyTextLink" />
+      </action>
       <reference ref="NewScratchFile"/>
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <group class="com.intellij.ide.fileTemplates.actions.FileTemplateSeparator" id="FileTemplateSeparatorGroup"/>
