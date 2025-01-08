@@ -14,5 +14,5 @@ class JupyterAddNewCellToolbar(  // PY-66455
 ) : JupyterAbstractAboveCellToolbar(actionGroup, toolbarTargetComponent, place) {
 
   override fun getArcSize(): Int = JBUI.scale(16)
-  override fun getHorizontalPadding() = JBUI.scale(3)
+  override fun getHorizontalPadding(): Int = JBUI.scale(3)
 }

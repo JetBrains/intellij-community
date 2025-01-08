@@ -31,6 +31,8 @@ class EditorCellInput(
 
   val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this, ::getFoldingBounds)
 
+  val cellActionsToolbar: EditorCellActionsToolbarManager = EditorCellActionsToolbarManager(editor)
+
   var folded: Boolean = false
     private set
 
@@ -64,7 +66,8 @@ class EditorCellInput(
 
   override fun dispose() {
     super.dispose()
-    folding.dispose()
+    Disposer.dispose(folding)
+    Disposer.dispose(cellActionsToolbar)
     Disposer.dispose(draggableBar)
   }
 

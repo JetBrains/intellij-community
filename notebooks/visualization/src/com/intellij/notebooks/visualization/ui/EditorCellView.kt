@@ -76,6 +76,7 @@ class EditorCellView(
       updateFolding()
       updateRunButtonVisibility()
       updateCellHighlight()
+      updateCellActionsToolbarVisibility()
     }
 
   private var mouseOver = false
@@ -352,6 +353,16 @@ class EditorCellView(
 
   private fun updateRunButtonVisibility() {
     input.runCellButton?.visible = !disableActions && (mouseOver || selected)
+  }
+
+  private fun updateCellActionsToolbarVisibility() {
+    when (selected) {
+      true -> {
+        val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
+        input.cellActionsToolbar.showToolbar(targetComponent, interval.type)
+      }
+      else -> input.cellActionsToolbar.hideToolbar()
+    }
   }
 
   override fun calculateBounds(): Rectangle {
