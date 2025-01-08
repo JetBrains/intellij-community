@@ -26,7 +26,7 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
    */
   val pathForVEnv: Path
     get() = when (moduleOrProject) {
-              is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath()
+              is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath() ?: moduleOrProject.project.basePath?.toNioPathOrNull()
               is ModuleOrProject.ProjectOnly -> moduleOrProject.project.basePath?.toNioPathOrNull()
             } ?: envReader.getVEnvRootDir()
 
