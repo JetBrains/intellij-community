@@ -27,8 +27,7 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> = poetryUninstallPackage(sdk, pkg.name)
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    val output = poetryReloadPackages(sdk).getOrElse { return Result.failure(it) }
-    return Result.success(parsePoetryShow(output))
+    return poetryShowPackages(sdk)
   }
 
   override suspend fun reloadPackages(): Result<List<PythonPackage>> {
@@ -57,21 +56,6 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
 /**
  * Parses the output of `poetry show` into a list of packages.
  */
-private fun parsePoetryShow(input: String): List<PythonPackage> {
-  val result = mutableListOf<PythonPackage>()
-  input.split("\n").forEach { line ->
-    if (line.isNotBlank()) {
-      val packageInfo = line.trim().split(" ").map { it.trim() }.filter { it.isNotBlank() }
-      result.add(PythonPackage(packageInfo[0], packageInfo[1], false))
-    }
-  }
-  return result
-}
-
-@TestOnly
-fun parsePoetryShowTest(input: String): List<PythonPackage> {
-  return parsePoetryShow(input)
-}
 
 @TestOnly
 fun parsePoetryShowOutdatedTest(input: String): Map<String, PythonOutdatedPackage> {
