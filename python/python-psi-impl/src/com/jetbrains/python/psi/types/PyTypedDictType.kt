@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.codeInsight.typing.TDFields
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
@@ -15,7 +13,7 @@ import java.util.*
 
 class PyTypedDictType @JvmOverloads constructor(
   private val name: String,
-  val fields: LinkedHashMap<String, FieldTypeAndTotality>,
+  val fields: Map<String, FieldTypeAndTotality>,
   private val dictClass: PyClass,
   private val definitionLevel: DefinitionLevel,
   private val ancestors: List<PyTypedDictType>,
@@ -136,20 +134,6 @@ class PyTypedDictType @JvmOverloads constructor(
   companion object {
 
     const val TYPED_DICT_TOTAL_PARAMETER: String = "total"
-
-    fun createFromKeysToValueTypes(
-      anchor: PsiElement,
-      keysToValueTypes: Map<String, Pair<PyExpression?, PyType?>>,
-    ): PyTypedDictType? {
-      val dict = PyBuiltinCache.getInstance(anchor).dictType?.pyClass
-      return if (dict != null) {
-        val fields = TDFields(keysToValueTypes.entries.associate {
-          it.key to FieldTypeAndTotality(it.value.first, it.value.second)
-        })
-        PyTypedDictType("TypedDict", fields, dict, DefinitionLevel.INSTANCE, emptyList())
-      }
-      else null
-    }
 
     /**
      * [actual] matches [expected] if:

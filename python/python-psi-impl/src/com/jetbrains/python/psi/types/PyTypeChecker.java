@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.PyNames.FUNCTION;
 import static com.jetbrains.python.psi.PyUtil.*;
@@ -1200,17 +1201,18 @@ public final class PyTypeChecker {
           return ((PyUnionType)type).map(member -> substitute(member, substitutions, context, substituting));
         }
         else if (type instanceof PyTypedDictType typedDictType) {
-          final var substitutedTDFields = ContainerUtil.map2Map(
-            typedDictType.getFields().entrySet(),
-            field -> Pair.create(
-              field.getKey(),
-              new kotlin.Pair<>(
+          final var substitutedTDFields = typedDictType.getFields().entrySet().stream().collect(
+            Collectors.toMap(
+              Map.Entry::getKey,
+              field -> new PyTypedDictType.FieldTypeAndTotality(
                 field.getValue().getValue(),
-                substitute(field.getValue().getType(), substitutions, context, substituting)
+                substitute(field.getValue().getType(), substitutions, context, substituting),
+                new PyTypedDictType.TypedDictFieldQualifiers()
               )
             )
           );
-          return PyTypedDictType.Companion.createFromKeysToValueTypes(typedDictType.myClass, substitutedTDFields);
+          return new PyTypedDictType("TypedDict", substitutedTDFields, typedDictType.myClass, PyTypedDictType.DefinitionLevel.INSTANCE,
+                                     List.of());
         }
         else if (type instanceof PyNarrowedType pyNarrowedType) {
           return pyNarrowedType.substitute(substitute(pyNarrowedType.getNarrowedType(), substitutions, context, substituting));
