@@ -537,8 +537,19 @@ public class HighlightInfo implements Segment {
 
     @NotNull Builder range(@NotNull PsiElement element);
 
+    /**
+     * @param element element to highlight
+     * @param rangeInElement range within element
+     * @return this builder
+     */
     @NotNull Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement);
 
+    /**
+     * @param element element to highlight
+     * @param start absolute start offset in the file (not within element)
+     * @param end absolute end offset in the file (not within element)
+     * @return this builder
+     */
     @NotNull Builder range(@NotNull PsiElement element, int start, int end);
 
     @NotNull Builder range(int start, int end);
