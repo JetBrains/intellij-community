@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -22,12 +22,10 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IconManager
 import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.isWindowIconAlreadyExternallySet
-import com.intellij.ui.mac.setUserInteractiveQosClassForCurrentThread
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
-import com.sun.jna.platform.win32.Kernel32
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Font
@@ -37,7 +35,6 @@ import java.awt.dnd.DragSource
 import java.lang.invoke.MethodHandles
 import javax.swing.JOptionPane
 import javax.swing.RepaintManager
-import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 
@@ -186,46 +183,9 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
   }
 
   span("set QoS for EDT") {
-    if (setUserInteractiveQosForEdt) {
-      SwingUtilities.invokeLater {
-        when {
-          SystemInfoRt.isMac -> setUserInteractiveQosClassForCurrentThread()
-          SystemInfoRt.isWindows -> bumpEdtThreadPriority()
-        }
-      }
+    if (!isHeadless && setUserInteractiveQosForEdt) {
+      UiThreadPriority.adjust()
     }
-  }
-}
-
-/**
- * Sets maximum thread priority for EDT thread to process UI events regardless of Default dispatcher load or other background dispatchers.
- *
- * Note that thread priority is relative to process priority.
- * See [MSDN SetThreadPriority](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadpriority#remarks)
- */
-private fun bumpEdtThreadPriority() {
-  val jvmThreadPriorityBefore = Thread.currentThread().priority
-  val nativeThreadPriorityBefore = Kernel32.INSTANCE.GetThreadPriority(Kernel32.INSTANCE.GetCurrentThread())
-
-  // The actual work
-  Thread.currentThread().priority = Thread.MAX_PRIORITY
-
-  val nativeThreadPriorityAfter = Kernel32.INSTANCE.GetThreadPriority(Kernel32.INSTANCE.GetCurrentThread())
-  val jvmThreadPriorityAfter = Thread.currentThread().priority
-
-  if (System.getProperty("ide.set.qos.for.edt.debug", "false").toBoolean()) {
-    val nativeThreadId = Kernel32.INSTANCE.GetCurrentThreadId()
-
-    /**
-     * Expected output:
-     *
-     * EDT JVM Thread ID = 66, Native Thread ID 47108, Name = AWT-EventQueue-0
-     *   Before: JVM Thread Priority = 6, Native Thread Priority = 0
-     *   After: JVM Thread Priority = 10, Native Thread Priority = 2
-     */
-    println("EDT JVM Thread ID = ${Thread.currentThread().id}, Native Thread ID = ${nativeThreadId}, Name = ${Thread.currentThread().name}\n" +
-            "  Before: JVM Thread Priority = $jvmThreadPriorityBefore, Native Thread Priority = $nativeThreadPriorityBefore\n" +
-            "  After: JVM Thread Priority = $jvmThreadPriorityAfter, Native Thread Priority = $nativeThreadPriorityAfter")
   }
 }
 
