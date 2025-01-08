@@ -20,6 +20,8 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
@@ -228,8 +230,41 @@ fun poetryInstallPackage(sdk: Sdk, pkg: String, extraArgs: List<String>): Result
 fun poetryUninstallPackage(sdk: Sdk, pkg: String): Result<String> = runPoetry(sdk, "remove", pkg)
 
 @Internal
-fun poetryReloadPackages(sdk: Sdk): Result<String> {
-  runPoetry(sdk, "update").onFailure { return Result.failure(it) }
-  runPoetry(sdk, "install", "--no-root").onFailure { return Result.failure(it) }
-  return runPoetry(sdk, "show")
+suspend fun poetryShowPackages(sdk: Sdk): Result<List<PythonPackage>> {
+  val output = runPoetryWithSdk(sdk, "show").getOrElse {
+    return Result.failure(it)
+  }
+
+  return parsePoetryShow(output).let { Result.success(it) }
+}
+
+@Internal
+fun parsePoetryShow(input: String): List<PythonPackage> {
+  val result = mutableListOf<PythonPackage>()
+  input.split("\n").forEach { line ->
+    if (line.isNotBlank()) {
+      val packageInfo = line.trim().split(" ").map { it.trim() }.filter { it.isNotBlank() && it != "(!)"}
+      result.add(PythonPackage(packageInfo[0], packageInfo[1], false))
+    }
+  }
+
+  return result
+}
+
+/**
+ * Configures the Poetry environment for the specified module path with the given arguments.
+ * Runs command: GeneralCommandLine("poetry config [args]").withWorkingDirectory([modulePath])
+ *
+ * @param [modulePath] The path to the module where the Poetry environment is to be configured.
+ * Can be null, in which case the global Poetry environment will be configured.
+ * @param [args] A vararg array of String arguments to pass to the Poetry configuration command.
+ */
+@Internal
+suspend fun configurePoetryEnvironment(modulePath: Path?, vararg args: String) {
+  runPoetry(modulePath, "config", *args)
+}
+
+private suspend fun getPoetryEnvs(projectPath: Path): List<String> {
+  val executionResult = runPoetry(projectPath, "env", "list", "--full-path")
+  return executionResult.getOrNull()?.lineSequence()?.map { it.split(" ")[0] }?.filterNot { it.isEmpty() }?.toList() ?: emptyList()
 }
