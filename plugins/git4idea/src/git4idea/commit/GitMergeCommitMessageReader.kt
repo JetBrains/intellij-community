@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import git4idea.GitUtil
 import git4idea.config.GitConfigUtil
 import git4idea.repo.GitRepository
 import java.io.IOException
@@ -31,7 +32,8 @@ class GitMergeCommitMessageReader(private val project: Project) {
           LOG.debug("Squash message file $squashMsgFile exists")
          FileUtil.loadFile(squashMsgFile, encoding)
       } else null
-      DvcsUtil.joinMessagesOrNull(listOfNotNull(squashMsg, mergeMsg))
+
+      return fixCommentCharsIfNeeded(DvcsUtil.joinMessagesOrNull(listOfNotNull(squashMsg, mergeMsg)), repository)
     }
     catch (e: IOException) {
       LOG.warn("Unable to load merge message", e)
@@ -39,9 +41,23 @@ class GitMergeCommitMessageReader(private val project: Project) {
     }
   }
 
-  companion object {
-    fun getInstance(project: Project) = project.service<GitMergeCommitMessageReader>()
+  /**
+   * commentChar is redefined in interactive rebase
+   *
+   * @see [git4idea.commands.GitImpl.REBASE_CONFIG_PARAMS]
+   */
+  private fun fixCommentCharsIfNeeded(message: String?, repository: GitRepository): String? {
+    if (message == null) return null
 
+    if (message.lines().none { it.startsWith(GitUtil.COMMENT_CHAR) }) return message
+    val replaceWith = GitConfigUtil.getValue(project, repository.root, GitConfigUtil.CORE_COMMENT_CHAR) ?: "#"
+    return message.replace(COMMENT_CHAR_REGEX, replaceWith)
+  }
+
+  companion object {
     private val LOG = thisLogger()
+    private val COMMENT_CHAR_REGEX = Regex("^${GitUtil.COMMENT_CHAR}", RegexOption.MULTILINE)
+
+    fun getInstance(project: Project): GitMergeCommitMessageReader = project.service<GitMergeCommitMessageReader>()
   }
 }

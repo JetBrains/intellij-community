@@ -2,13 +2,19 @@
 package git4idea.commit
 
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.LineSeparator
 import com.intellij.vcs.commit.CommitMessage
 import com.intellij.vcs.commit.DefaultCommitMessagePolicy
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
+import git4idea.GitUtil
+import git4idea.branch.GitRebaseParams
+import git4idea.config.GitConfigUtil
 import git4idea.test.GitSingleRepoTest
+import git4idea.test.TestGitImpl
 import git4idea.test.checkout
 import org.mockito.Mockito
 import org.mockito.Mockito.times
+import kotlin.text.lines
 
 class GitMergeCommitMessageProviderTest: GitSingleRepoTest() {
   private val mergeMessageProvider = GitMergeCommitMessagePolicy()
@@ -53,6 +59,34 @@ class GitMergeCommitMessageProviderTest: GitSingleRepoTest() {
     assertNull(mergeMessageProvider.getMessage(project))
     Mockito.verify(commitMessageControllerMock, times(1)).tryRestoreCommitMessage()
   }
+
+  fun `test merge message set with proper comment char during rebase`() {
+    val commentChar = "!"
+    GitConfigUtil.setValue(project, repo.root, GitConfigUtil.CORE_COMMENT_CHAR, commentChar)
+
+    val file = file("test")
+    file.create("initial\n").addCommit("initial")
+    file.write("more\n").addCommit("more")
+
+    git.setInteractiveRebaseEditor(
+      TestGitImpl.InteractiveRebaseEditor({
+                                            it.lines().mapIndexed { i, s ->
+                                              if (i == 0) s.replace("pick", "drop") else s
+                                            }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
+                                          }, null))
+    git.rebase(repo, GitRebaseParams(vcs.version, null, null, "HEAD~2", true, false))
+
+    refresh()
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
+
+    val message = checkNotNull(mergeMessageProvider.getMessage(project))
+    assertTrue(message.disposable)
+    assertTrue(message.text.lines().none { it.startsWith(GitUtil.COMMENT_CHAR) })
+    assertTrue(message.text, message.text.contains("$commentChar Conflicts:"))
+
+    verifyCommitMessageSet(message)
+  }
+
 
   fun `test merge message based on MERGE_MSG + SQUASH_MSG`() {
     val newBranch = "new-branch"

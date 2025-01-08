@@ -35,6 +35,7 @@ public final class GitConfigUtil {
   public static final @NlsSafe String CORE_AUTOCRLF = "core.autocrlf";
   public static final @NlsSafe String CREDENTIAL_HELPER = "credential.helper";
   public static final @NlsSafe String CORE_SSH_COMMAND = "core.sshCommand";
+  public static final @NlsSafe String CORE_COMMENT_CHAR = "core.commentChar";
   public static final @NlsSafe String LOG_OUTPUT_ENCODING = "i18n.logoutputencoding";
   public static final @NlsSafe String COMMIT_ENCODING = "i18n.commitencoding";
   public static final @NlsSafe String COMMIT_TEMPLATE = "commit.template";

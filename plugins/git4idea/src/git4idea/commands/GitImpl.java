@@ -30,6 +30,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
+import git4idea.config.GitConfigUtil;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
@@ -64,7 +65,7 @@ public class GitImpl extends GitImplBase {
   /**
    * @see GitRebaseUtils#createRebaseEditor(Project, VirtualFile, boolean)
    */
-  public static final List<String> REBASE_CONFIG_PARAMS = singletonList("core.commentChar=" + COMMENT_CHAR);
+  public static final List<String> REBASE_CONFIG_PARAMS = singletonList("%s=%s".formatted(GitConfigUtil.CORE_COMMENT_CHAR, COMMENT_CHAR));
 
   public GitImpl() {
   }
