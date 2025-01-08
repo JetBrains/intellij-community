@@ -2341,6 +2341,7 @@ com.intellij.openapi.wm.StatusBarWidget$WidgetPresentation
 com.intellij.openapi.wm.ToolWindow
 - com.intellij.openapi.util.BusyObject
 - sf:SHOW_CONTENT_ICON:com.intellij.openapi.util.Key
+- sf:SHOW_CONTENT_TAB_LABEL_TEXT:com.intellij.openapi.util.Key
 - activate(java.lang.Runnable):V
 - activate(java.lang.Runnable,Z):V
 - a:activate(java.lang.Runnable,Z,Z):V
