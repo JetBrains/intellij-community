@@ -245,6 +245,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/MethodFromStdLib.kt");
     }
 
+    @TestMetadata("NoDefaultValueForValParameter.kt")
+    public void testNoDefaultValueForValParameter() throws Exception {
+        runTest("testData/editor/quickDoc/NoDefaultValueForValParameter.kt");
+    }
+
     @TestMetadata("ObjectLiteral.kt")
     public void testObjectLiteral() throws Exception {
         runTest("testData/editor/quickDoc/ObjectLiteral.kt");

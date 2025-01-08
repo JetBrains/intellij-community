@@ -95,8 +95,11 @@ internal class KotlinIdeDeclarationRenderer(
                     with(highlightingManager) {
                         val builder = StringBuilder()
                         if (defaultValue is KtNameReferenceExpression) {
-                            builder.append(highlight(defaultValue.text) { asParameter })
-                            builder.append(highlight(" = ") { asOperationSign })
+                            val value = defaultValue.text
+                            if (value != text) {
+                                builder.append(highlight(value) { asParameter })
+                                builder.append(highlight(" = ") { asOperationSign })
+                            }
                         }
                         builder.appendCodeSnippetHighlightedByLexer(text)
                         printer.append(builder)

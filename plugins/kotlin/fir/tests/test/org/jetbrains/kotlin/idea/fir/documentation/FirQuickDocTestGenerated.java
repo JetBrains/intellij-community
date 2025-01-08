@@ -247,6 +247,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/MethodFromStdLib.kt");
         }
 
+        @TestMetadata("NoDefaultValueForValParameter.kt")
+        public void testNoDefaultValueForValParameter() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/NoDefaultValueForValParameter.kt");
+        }
+
         @TestMetadata("ObjectLiteral.kt")
         public void testObjectLiteral() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/ObjectLiteral.kt");
