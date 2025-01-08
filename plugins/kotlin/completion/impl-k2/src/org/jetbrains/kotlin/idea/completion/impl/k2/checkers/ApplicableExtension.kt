@@ -1,6 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.completion.checkers
+package org.jetbrains.kotlin.idea.completion.impl.k2.checkers
 
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
@@ -12,6 +11,8 @@ internal data class ApplicableExtension(
     private val _signature: KaCallableSignature<*>,
     val insertionOptions: CallableInsertionOptions,
 ): KaLifetimeOwner {
+
     override val token: KaLifetimeToken get() = _signature.token
+
     val signature: KaCallableSignature<*> = withValidityAssertion { _signature }
 }

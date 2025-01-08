@@ -31,9 +31,9 @@ import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -77,14 +77,9 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     @KaExperimentalApi
-    protected open fun getInsertionStrategyForExtensionFunction(
-        signature: KaCallableSignature<*>,
-        applicabilityResult: KaExtensionApplicabilityResult?
-    ): CallableInsertionStrategy? = when (applicabilityResult) {
-        is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(signature)
-        is KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> CallableInsertionStrategy.AsCall
-        else -> null
-    }
+    protected open fun getInsertionStrategyForFunctionalVariables(
+        applicabilityResult: KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall,
+    ): CallableInsertionStrategy? = CallableInsertionStrategy.AsCall
 
     context(KaSession)
     private fun getOptions(
@@ -94,18 +89,6 @@ internal open class FirCallableCompletionContributor(
         getImportStrategy(signature, isImportDefinitelyNotRequired),
         getInsertionStrategy(signature)
     )
-
-    context(KaSession)
-    @KaExperimentalApi
-    private fun getExtensionOptions(
-        signature: KaCallableSignature<*>,
-        applicability: KaExtensionApplicabilityResult?
-    ): CallableInsertionOptions? {
-        val insertionStrategy = getInsertionStrategyForExtensionFunction(signature, applicability) ?: return null
-        val isFunctionalVariableCall = applicability is KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall
-        val importStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol, isFunctionalVariableCall)
-        return CallableInsertionOptions(importStrategy, insertionStrategy)
-    }
 
     context(KaSession)
     protected open fun filter(symbol: KaCallableSymbol): Boolean =
@@ -568,27 +551,48 @@ internal open class FirCallableCompletionContributor(
             .filter { filter(it) }
             .mapNotNull { callable -> checkApplicabilityAndSubstitute(callable, hasSuitableExtensionReceiver) }
 
+    context(KaSession)
+    protected fun createApplicableExtension(
+        signature: KaCallableSignature<*>,
+        importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(symbol = signature.symbol),
+        insertionStrategy: CallableInsertionStrategy = getInsertionStrategy(signature),
+    ): ApplicableExtension = ApplicableExtension(
+        _signature = signature,
+        insertionOptions = CallableInsertionOptions(importingStrategy, insertionStrategy),
+    )
+
     /**
-     * If [callableSymbol] is applicable returns substituted signature and insertion options, otherwise, null.
+     * If [candidate] is applicable returns substituted signature and insertion options, otherwise, null.
      * When [extensionChecker] is null, no check is carried and applicability result is null.
      */
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun checkApplicabilityAndSubstitute(
-        callableSymbol: KaCallableSymbol,
-        extensionChecker: KaCompletionExtensionCandidateChecker?
+    protected open fun checkApplicabilityAndSubstitute(
+        candidate: KaCallableSymbol,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
     ): ApplicableExtension? {
-        val (signature, applicabilityResult) = if (extensionChecker != null) {
-            val result = extensionChecker.computeApplicability(callableSymbol) as? KaExtensionApplicabilityResult.Applicable ?: return null
-            val signature = callableSymbol.substitute(result.substitutor)
+        val applicabilityResult = extensionChecker?.computeApplicability(candidate) as? KaExtensionApplicabilityResult.Applicable
+            ?: return null
 
-            signature to result
-        } else {
-            callableSymbol.asSignature() to null
+        val substitutor = applicabilityResult.substitutor
+        return when (applicabilityResult) {
+            is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable ->
+                createApplicableExtension(signature = candidate.substitute(substitutor))
+
+            is KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> {
+                val insertionStrategy = getInsertionStrategyForFunctionalVariables(applicabilityResult)
+                    ?: return null
+
+                return createApplicableExtension(
+                    signature = candidate.substitute(substitutor), // do not run before null check
+                    importingStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(
+                        symbol = candidate,
+                        isFunctionalVariableCall = true,
+                    ),
+                    insertionStrategy = insertionStrategy,
+                )
+            }
         }
-
-        val insertionOptions = getExtensionOptions(signature, applicabilityResult) ?: return null
-        return ApplicableExtension(signature, insertionOptions)
     }
 
     /**
@@ -740,14 +744,9 @@ internal class FirCallableReferenceCompletionContributor(
 
     context(KaSession)
     @KaExperimentalApi
-    override fun getInsertionStrategyForExtensionFunction(
-        signature: KaCallableSignature<*>,
-        applicabilityResult: KaExtensionApplicabilityResult?
-    ): CallableInsertionStrategy? = when (applicabilityResult) {
-        is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable -> CallableInsertionStrategy.AsIdentifier
-        is KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
-        else -> null
-    }
+    override fun getInsertionStrategyForFunctionalVariables(
+        applicabilityResult: KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall,
+    ): CallableInsertionStrategy? = null
 
     context(KaSession)
     override fun filter(symbol: KaCallableSymbol): Boolean = when {
@@ -818,14 +817,9 @@ internal class FirInfixCallableCompletionContributor(
 
     context(KaSession)
     @KaExperimentalApi
-    override fun getInsertionStrategyForExtensionFunction(
-        signature: KaCallableSignature<*>,
-        applicabilityResult: KaExtensionApplicabilityResult?
-    ): CallableInsertionStrategy? = when (applicabilityResult) {
-        is KaExtensionApplicabilityResult.ApplicableAsExtensionCallable -> getInsertionStrategy(signature)
-        is KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall -> null
-        else -> null
-    }
+    override fun getInsertionStrategyForFunctionalVariables(
+        applicabilityResult: KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall,
+    ): CallableInsertionStrategy? = null
 
     context(KaSession)
     override fun filter(symbol: KaCallableSymbol): Boolean =
@@ -854,12 +848,21 @@ internal class FirKDocCallableCompletionContributor(
     override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
         CallableInsertionStrategy.AsIdentifier
 
+    /**
+     * Is not used directly, @see [checkApplicabilityAndSubstitute].
+     */
     context(KaSession)
     @KaExperimentalApi
-    override fun getInsertionStrategyForExtensionFunction(
-        signature: KaCallableSignature<*>,
-        applicabilityResult: KaExtensionApplicabilityResult?
-    ): CallableInsertionStrategy = CallableInsertionStrategy.AsIdentifier
+    override fun getInsertionStrategyForFunctionalVariables(
+        applicabilityResult: KaExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall,
+    ): CallableInsertionStrategy = throw RuntimeException("Should not be used directly")
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    override fun checkApplicabilityAndSubstitute(
+        candidate: KaCallableSymbol,
+        extensionChecker: KaCompletionExtensionCandidateChecker?,
+    ): ApplicableExtension? = createApplicableExtension(signature = candidate.asSignature())
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)

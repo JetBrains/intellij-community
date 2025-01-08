@@ -12,13 +12,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 data class CallableInsertionOptions(
     val importingStrategy: ImportStrategy,
     val insertionStrategy: CallableInsertionStrategy,
-) {
-    fun withImportingStrategy(newImportStrategy: ImportStrategy): CallableInsertionOptions =
-        copy(importingStrategy = newImportStrategy)
-
-    fun withInsertionStrategy(newInsertionStrategy: CallableInsertionStrategy): CallableInsertionOptions =
-        copy(insertionStrategy = newInsertionStrategy)
-}
+)
 
 context(KaSession)
 internal fun detectCallableOptions(symbol: KaCallableSymbol, importStrategyDetector: ImportStrategyDetector): CallableInsertionOptions {

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
+import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -51,10 +51,10 @@ internal class ShadowedCallablesFilter {
         if ((isAlreadyImported || symbolOrigin is CompletionSymbolOrigin.Scope)
             && options.importingStrategy != ImportStrategy.DoNothing
         ) {
-            val updatedOptions = options.withImportingStrategy(ImportStrategy.DoNothing)
+            val updatedOptions = options.copy(importingStrategy = ImportStrategy.DoNothing)
             val excludeFromCompletion = processSignatureConsideringOptions(callable, updatedOptions, symbolOrigin, typeArgumentsAreRequired)
             if (!excludeFromCompletion) {
-                return FilterResult(excludeFromCompletion, updatedOptions)
+                return FilterResult(excludeFromCompletion = false, updatedOptions)
             }
         }
 
