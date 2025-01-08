@@ -23,7 +23,12 @@ private fun <S : ChangeBrowserSettings> RepositoryLocationCommittedChangesPanel<
 @ApiStatus.Internal
 class FilterCommittedAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.getSelectedChangesViewContent<RepositoryLocationCommittedChangesPanel<*>>() != null
+    val changesPanel = e.getSelectedChangesViewContent<RepositoryLocationCommittedChangesPanel<*>>()
+    e.presentation.isEnabledAndVisible = changesPanel != null
+
+    if (changesPanel != null) {
+      e.presentation.icon = getFilterIcon(changesPanel.settings)
+    }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
