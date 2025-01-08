@@ -462,7 +462,7 @@ elements:
             #language=Markdown
             examples:
               - |
-                Extensions' declaration with the default namespace:
+                Extensions' declaration with a default namespace:
                 ```xml
                 <extensions defaultExtensionNs="com.intellij">
                   <applicationService
