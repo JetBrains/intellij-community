@@ -41,7 +41,7 @@ abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : Inco
 
 }
 
-@TestDataPath("/inspections/incorrectCeHandling")
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectCeHandling")
 class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : KtIncorrectCancellationExceptionHandlingInspectionTestBase() {
 
   fun testIncorrectPceHandlingTests() {

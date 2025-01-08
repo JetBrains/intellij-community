@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 
-@TestDataPath("/inspections/canBeDumbAware")
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/canBeDumbAware")
 class CanBeDumbAwareInspectionTest : LightDevKitInspectionFixTestBase() {
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/canBeDumbAware"
