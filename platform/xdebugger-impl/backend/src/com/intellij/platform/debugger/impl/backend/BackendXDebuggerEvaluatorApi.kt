@@ -31,10 +31,9 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
-  override suspend fun evaluate(evaluatorDto: XDebuggerEvaluatorDto, expression: String): Deferred<XEvaluationResult> {
+  override suspend fun evaluate(evaluatorDto: XDebuggerEvaluatorDto, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
     return evaluate(evaluatorDto) { evaluator, callback ->
-      // TODO[IJPL-160146]: pass XSourcePosition
-      evaluator.evaluate(expression, callback, null)
+      evaluator.evaluate(expression, callback, position?.sourcePosition())
     }
   }
 
@@ -64,7 +63,6 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
-      // TODO[IJPL-160146]: pass XSourcePosition
       val callback = object : XEvaluationCallback {
         override fun evaluated(result: XValue) {
           evaluationResult.complete(result)

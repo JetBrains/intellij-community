@@ -13,6 +13,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorDto
 import com.intellij.xdebugger.impl.rpc.XEvaluationResult
+import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +34,7 @@ internal open class FrontendXDebuggerEvaluator(private val project: Project, pri
   override fun evaluate(expression: String, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
     scope.launch(Dispatchers.EDT) {
       try {
-        val evaluation = XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorDto, expression).await()
+        val evaluation = XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorDto, expression, expressionPosition?.toRpc()).await()
         when (evaluation) {
           is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(project, evaluation.valueId))
           is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
