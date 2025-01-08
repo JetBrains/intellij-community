@@ -6,7 +6,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A concrete instance of a Java compilation error
+ * A concrete instance of a Java compilation error. Note that the instance is bound to a PSI element, so it should not
+ * outlive the read-action. Otherwise it may become invalid.
  * 
  * @param kind error kind
  * @param psi PSI element where the error occurred

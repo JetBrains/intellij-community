@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
  * Java compilation error connected to annotation attribute value
  * @param <Psi> type of annotation attribute value
  */
-public abstract class JavaAnnotationValueErrorKind<Psi extends PsiAnnotationMemberValue> 
-  extends Parameterized<Psi, JavaAnnotationValueErrorKind.@NotNull AnnotationValueErrorContext> {
+public abstract class JavaAnnotationValueErrorKind<Psi extends PsiAnnotationMemberValue>
+  extends JavaParameterizedErrorKind<Psi, JavaAnnotationValueErrorKind.@NotNull AnnotationValueErrorContext> {
   JavaAnnotationValueErrorKind(@NotNull String key) {
     super(key);
   }

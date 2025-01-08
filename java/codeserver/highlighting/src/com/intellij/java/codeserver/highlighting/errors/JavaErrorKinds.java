@@ -23,7 +23,7 @@ public final class JavaErrorKinds {
   private JavaErrorKinds() {}
   
   public static final JavaErrorKind<PsiElement, @NotNull JavaFeature> UNSUPPORTED_FEATURE =
-    new Parameterized<>("insufficient.language.level") {
+    new JavaParameterizedErrorKind<>("insufficient.language.level") {
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiElement element, @NotNull JavaFeature feature) {
         String name = feature.getFeatureName();
@@ -72,14 +72,14 @@ public final class JavaErrorKinds {
       }
     };
   public static final JavaErrorKind<PsiNameValuePair, String> ANNOTATION_ATTRIBUTE_DUPLICATE =
-    new Parameterized<>("annotation.attribute.duplicate") {
+    new JavaParameterizedErrorKind<>("annotation.attribute.duplicate") {
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiNameValuePair element, String attribute) {
         return HtmlChunk.raw(JavaCompilationErrorBundle.message("annotation.attribute.duplicate", attribute));
       }
     };
   public static final JavaErrorKind<PsiNameValuePair, String> ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD =
-    new Parameterized<>("annotation.attribute.unknown.method") {
+    new JavaParameterizedErrorKind<>("annotation.attribute.unknown.method") {
       @Override
       public @NotNull JavaErrorHighlightType highlightType(@NotNull PsiNameValuePair pair, String s) {
         return pair.getName() == null ? JavaErrorHighlightType.ERROR : JavaErrorHighlightType.WRONG_REF;
@@ -97,7 +97,7 @@ public final class JavaErrorKinds {
     };
   // Can be anchored on @FunctionalInterface annotation or at call site
   public static final JavaErrorKind<PsiElement, PsiClass> LAMBDA_NOT_FUNCTIONAL_INTERFACE =
-    new Parameterized<>("lambda.not.a.functional.interface") {
+    new JavaParameterizedErrorKind<>("lambda.not.a.functional.interface") {
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiElement element, PsiClass aClass) {
         return HtmlChunk.raw(JavaCompilationErrorBundle.message("lambda.not.a.functional.interface", aClass.getName()));
@@ -105,19 +105,19 @@ public final class JavaErrorKinds {
     };
   // Can be anchored on @FunctionalInterface annotation or at call site
   public static final JavaErrorKind<PsiElement, PsiClass> LAMBDA_NO_TARGET_METHOD =
-    new Parameterized<>("lambda.no.target.method.found");
+    new JavaParameterizedErrorKind<>("lambda.no.target.method.found");
   // Can be anchored on @FunctionalInterface annotation or at call site
   public static final JavaErrorKind<PsiElement, PsiClass> LAMBDA_MULTIPLE_TARGET_METHODS =
-    new Parameterized<>("lambda.multiple.sam.candidates") {
+    new JavaParameterizedErrorKind<>("lambda.multiple.sam.candidates") {
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiElement element, PsiClass aClass) {
         return HtmlChunk.raw(JavaCompilationErrorBundle.message("lambda.multiple.sam.candidates", aClass.getName()));
       }
     };
   public static final JavaErrorKind<PsiAnnotation, PsiClass> LAMBDA_FUNCTIONAL_INTERFACE_SEALED =
-    new Parameterized<>("lambda.sealed.functional.interface");
+    new JavaParameterizedErrorKind<>("lambda.sealed.functional.interface");
   public static final JavaErrorKind<PsiAnnotation, @NotNull List<PsiAnnotation.@NotNull TargetType>> ANNOTATION_NOT_APPLICABLE =
-    new Parameterized<>("annotation.not.applicable") {
+    new JavaParameterizedErrorKind<>("annotation.not.applicable") {
       @Override
       public void validate(@NotNull PsiAnnotation annotation, @NotNull List<PsiAnnotation.@NotNull TargetType> types)
         throws IllegalArgumentException {
@@ -135,7 +135,7 @@ public final class JavaErrorKinds {
       }
     };
   public static final JavaErrorKind<PsiAnnotation, @NotNull List<String>> ANNOTATION_MISSING_ATTRIBUTE =
-    new Parameterized<>("annotation.missing.attribute") {
+    new JavaParameterizedErrorKind<>("annotation.missing.attribute") {
       @Override
       public @NotNull PsiElement anchor(@NotNull PsiAnnotation annotation, @NotNull List<String> strings) {
         return requireNonNull(annotation.getNameReferenceElement());
@@ -150,11 +150,11 @@ public final class JavaErrorKinds {
   public static final JavaSimpleErrorKind<PsiAnnotation> SAFE_VARARGS_ON_RECORD_COMPONENT =
     new JavaSimpleErrorKind<>("safe.varargs.on.record.component");
   public static final JavaErrorKind<PsiAnnotation, PsiMethod> SAFE_VARARGS_ON_FIXED_ARITY =
-    new Parameterized<>("safe.varargs.on.fixed.arity");
+    new JavaParameterizedErrorKind<>("safe.varargs.on.fixed.arity");
   public static final JavaErrorKind<PsiAnnotation, PsiMethod> SAFE_VARARGS_ON_NON_FINAL_METHOD =
-    new Parameterized<>("safe.varargs.on.non.final.method");
+    new JavaParameterizedErrorKind<>("safe.varargs.on.non.final.method");
   public static final JavaErrorKind<PsiAnnotation, PsiMethod> OVERRIDE_ON_STATIC_METHOD =
-    new Parameterized<>("override.on.static.method");
+    new JavaParameterizedErrorKind<>("override.on.static.method");
   public static final JavaErrorKind<PsiAnnotation, PsiMethod> OVERRIDE_ON_NON_OVERRIDING_METHOD =
-    new Parameterized<>("override.on.non-overriding.method");
+    new JavaParameterizedErrorKind<>("override.on.non-overriding.method");
 }

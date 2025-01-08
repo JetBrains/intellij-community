@@ -13,7 +13,7 @@ import org.jetbrains.annotations.PropertyKey;
  * @param <Psi> type of context PSI element required for this error
  * @param <Context> additional context required for a particular kind, if any
  */
-public sealed interface JavaErrorKind<Psi extends PsiElement, Context> permits Parameterized, JavaSimpleErrorKind {
+public sealed interface JavaErrorKind<Psi extends PsiElement, Context> permits JavaParameterizedErrorKind, JavaSimpleErrorKind {
   /**
    * @return a key, which uniquely identifies the error kind
    */

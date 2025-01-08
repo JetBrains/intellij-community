@@ -7,10 +7,10 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-non-sealed class Parameterized<Psi extends PsiElement, Context> implements JavaErrorKind<Psi, Context> {
+non-sealed class JavaParameterizedErrorKind<Psi extends PsiElement, Context> implements JavaErrorKind<Psi, Context> {
   private final @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String myKey;
 
-  Parameterized(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
+  JavaParameterizedErrorKind(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
     myKey = key;
   }
 
