@@ -86,7 +86,9 @@ public final class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       final PsiExpression condition = statement.getCondition();
       final PsiField field = getFieldIfSimpleFieldComparison(condition);
       if (field == null) return;
-      if (body != null && (VariableAccessUtils.variableIsAssigned(field, body) || containsCall(body, ThreadingUtils::isWaitCall))) {
+      if (body != null &&
+          (VariableAccessUtils.variableIsAssigned(field, body) ||
+           containsCall(body, expression -> ThreadingUtils.isWaitCall(expression) || ThreadingUtils.isAwaitCall(expression)))) {
         return;
       }
       boolean java9 = PsiUtil.isLanguageLevel9OrHigher(field);
