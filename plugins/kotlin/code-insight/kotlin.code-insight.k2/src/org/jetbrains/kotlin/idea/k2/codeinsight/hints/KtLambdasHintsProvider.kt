@@ -106,13 +106,9 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
                 val anonymousFunctionSymbol = functionLiteral.symbol
                 anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
                     val skipped = functionLiteral.getParentOfType<KtCallExpression>(false, KtBlockExpression::class.java)?.let { callExpression ->
-                        val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@let false
+                        val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@let true
                         val functionSymbol = functionCall.symbol
-                        val excludeListed = functionSymbol.isExcludeListed(excludeListMatchers)
-                        if (!excludeListed) {
-                            Unit
-                        }
-                        excludeListed
+                        functionSymbol.isExcludeListed(excludeListMatchers)
                     }
 
                     if (skipped != true) {
