@@ -47,6 +47,10 @@ internal object DialogsCounterUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 }
 
+ /**This ensures that invocation places are collected only from internal plugins
+ and plugins from the marketplace that are safe to report.
+ This is done to prevent the collection of any potentially personal or sensitive information,
+ as only explicitly-defined and safe invocation places are considered.*/
 internal class ListValidationRule : CustomValidationRule() {
   override fun getRuleId(): String = "dialog_invocation_place"
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
