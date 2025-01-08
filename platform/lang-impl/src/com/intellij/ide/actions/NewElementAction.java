@@ -20,7 +20,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.ActionPopupStep;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -198,6 +197,8 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
   }
 
   private class ProjectViewPopupHandler extends PopupHandler {
+    private static final String EMPTY_TEXT_LINK_PLACE = "NewElementInProjectViewPopupEmptyTextLink";
+
     ProjectViewPopupHandler(@NotNull AnActionEvent e) {
       super(e);
     }
@@ -224,13 +225,8 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
             Disposer.dispose(popup);
             @SuppressWarnings("DialogTitleCapitalization")
             var actionPresentation = new Presentation(IdeBundle.message("popup.new.element.empty.text.2"));
-            var place = ActionPlaces.POPUP;
-            var step = listPopup.getStep();
-            if (step instanceof ActionPopupStep actionPopupStep) {
-              place = actionPopupStep.getActionPlace();
-            }
             var inputEvent = linkActionEvent.getSource() instanceof InputEvent linkInputEvent ? linkInputEvent : null;
-            var actionEvent = AnActionEvent.createEvent(event.getDataContext(), actionPresentation, place, ActionUiKind.POPUP, inputEvent);
+            var actionEvent = AnActionEvent.createEvent(event.getDataContext(), actionPresentation, EMPTY_TEXT_LINK_PLACE, ActionUiKind.POPUP, inputEvent);
             ActionUtil.invokeAction(ActionManager.getInstance().getAction("NewFile"), actionEvent, null);
           }
         );
