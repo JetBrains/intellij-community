@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTree
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
-import com.intellij.testFramework.utils.notImplemented
+import com.intellij.testFramework.common.mock.notImplemented
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier
 import org.gradle.tooling.model.ProjectIdentifier
 import org.gradle.tooling.model.ProjectModel

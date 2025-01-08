@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.util
 
-import com.intellij.testFramework.utils.notImplemented
+import com.intellij.testFramework.common.mock.notImplemented
 import org.gradle.StartParameter
 import org.gradle.api.Project
 import org.gradle.api.Task

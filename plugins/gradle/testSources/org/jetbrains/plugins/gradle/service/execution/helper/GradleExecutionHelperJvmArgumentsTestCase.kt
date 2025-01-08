@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.gradle.service.execution.helper
 
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.utils.notImplemented
+import com.intellij.testFramework.common.mock.notImplemented
 import org.gradle.process.internal.JvmOptions
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.model.BuildIdentifier
