@@ -176,7 +176,8 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
     // do not crash AWT on exceptions
     AWTExceptionHandler.register()
   }
-  if (!isHeadless && "true" == System.getProperty("idea.check.swing.threading")) {
+
+  if (!isHeadless && System.getProperty("idea.check.swing.threading").toBoolean()) {
     span("repaint manager set") {
       RepaintManager.setCurrentManager(AssertiveRepaintManager())
     }
@@ -195,7 +196,7 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
 private fun blockATKWrapper() {
   // the registry must not be used here, because this method is called before application loading
   @Suppress("SpellCheckingInspection")
-  if (!SystemInfoRt.isLinux || !java.lang.Boolean.parseBoolean(System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true"))) {
+  if (!SystemInfoRt.isLinux || !System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true").toBoolean()) {
     return
   }
 
@@ -210,7 +211,7 @@ private fun blockATKWrapper() {
 
 @VisibleForTesting
 fun checkHiDPISettings() {
-  if (!java.lang.Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
+  if (!System.getProperty("hidpi", "true").toBoolean()) {
     // suppress JRE-HiDPI mode
     System.setProperty("sun.java2d.uiScale.enabled", "false")
   }
