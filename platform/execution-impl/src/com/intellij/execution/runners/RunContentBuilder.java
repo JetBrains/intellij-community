@@ -433,12 +433,12 @@ public final class RunContentBuilder extends RunTab {
    * visible children.
    */
   @ApiStatus.Internal
-  public static MoreActionGroup createToolbarMoreActionGroup(ActionGroup toolbar) {
+  public static MoreActionGroup createToolbarMoreActionGroup(ActionGroup toolbarGroup) {
     return new MoreActionGroup() {
       @Override
       public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
                                                                                                  @NotNull List<? extends @NotNull AnAction> visibleChildren) {
-        List<? extends AnAction> toolbarChildren = e.getUpdateSession().children(toolbar);
+        List<? extends AnAction> toolbarChildren = e.getUpdateSession().children(toolbarGroup);
         return ContainerUtil.filter(visibleChildren, action -> action instanceof Separator || !toolbarChildren.contains(action));
       }
     };
