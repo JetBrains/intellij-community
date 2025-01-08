@@ -46,14 +46,15 @@ abstract class CommitSelectionListener<T : VcsCommitMetadata?> protected constru
       val indicator = EmptyProgressIndicator()
       lastRequest = indicator
 
-      val commitIds = graphTable.model.createSelection(toLoad).ids
+      val model = graphTable.model
+      val commitIds = toLoad.map(model::getId)
       commitDetailsGetter.loadCommitsData(commitIds, Consumer { detailsList: List<T> ->
         if (lastRequest === indicator && !indicator.isCanceled) {
           if (toLoad.size != detailsList.size) {
             LOG.error("Loaded incorrect number of details " + detailsList + " for selection " + toLoad.contentToString())
           }
           lastRequest = null
-          onDetailsLoaded(detailsList)
+          onDetailsLoaded(commitIds, detailsList)
           onLoadingStopped()
         }
       }, Consumer { t: Throwable ->
@@ -81,7 +82,13 @@ abstract class CommitSelectionListener<T : VcsCommitMetadata?> protected constru
   protected abstract fun onError(error: Throwable)
 
   @RequiresEdt
-  protected abstract fun onDetailsLoaded(detailsList: List<T>)
+  protected open fun onDetailsLoaded(commitsIds: List<Int>, detailsList: List<T>) {
+    onDetailsLoaded(detailsList)
+  }
+
+  @RequiresEdt
+  @Deprecated("onDetailsLoaded with additional parameter is preferred")
+  protected open fun onDetailsLoaded(detailsList: List<T>) {}
 
   @RequiresEdt
   protected abstract fun onSelection(selection: IntArray): IntArray

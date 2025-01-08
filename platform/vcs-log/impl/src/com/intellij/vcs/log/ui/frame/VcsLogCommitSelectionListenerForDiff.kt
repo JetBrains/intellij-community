@@ -23,7 +23,7 @@ open class VcsLogCommitSelectionListenerForDiff(
     changesBrowser.setSelectedDetails(emptyList())
   }
 
-  override fun onDetailsLoaded(detailsList: List<VcsFullCommitDetails>) {
+  override fun onDetailsLoaded(commitsIds: List<Int>, detailsList: List<VcsFullCommitDetails>) {
     val maxSize = VcsLogUtil.getMaxSize(detailsList)
     if (maxSize > VcsLogUtil.getShownChangesLimit()) {
       val sizeText = VcsLogUtil.getSizeText(maxSize)
