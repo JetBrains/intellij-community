@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -45,6 +45,7 @@ import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider,
                                                       PinToTopParentValue, PinToTopMemberValue {
@@ -505,6 +507,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Override
   public @Nullable XValueModifier getModifier() {
     return myValueDescriptor.canSetValue() ? myValueDescriptor.getModifier(this) : null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull CompletableFuture<@Nullable XValueModifier> getModifierAsync() {
+    return myValueDescriptor.canSetValueAsync().thenApply((canSetValue) -> canSetValue ? myValueDescriptor.getModifier(this) : null);
   }
 
   private volatile XExpression evaluationExpression = null;

@@ -13,18 +13,33 @@ import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
+import com.intellij.xdebugger.frame.XValueModifier
 import com.intellij.xdebugger.frame.XValueNode
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.evaluate.quick.HintXValue
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
-import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.XValueDto
 import kotlinx.coroutines.*
 
-internal class FrontendXValue(private val project: Project, private val xValueId: XValueId) : XValue(), HintXValue {
+internal class FrontendXValue(private val project: Project, private val xValueDto: XValueDto) : XValue(), HintXValue {
+  private val cs = project.service<FrontendXValueDisposer>().cs.childScope("FrontendXValue")
+
+  @Volatile
+  private var modifier: XValueModifier? = null
+
+  init {
+    cs.launch {
+      val canBeModified = xValueDto.canBeModified.await()
+      if (canBeModified) {
+        modifier = FrontendXValueModifier(project, xValueDto)
+      }
+    }
+  }
+
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     node.childCoroutineScope("FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
-      XDebuggerEvaluatorApi.getInstance().computePresentation(xValueId, place)?.collect { presentation ->
+      XDebuggerEvaluatorApi.getInstance().computePresentation(xValueDto, place)?.collect { presentation ->
         // TODO[IJPL-160146]: support fullValueEvaluator
         // TODO[IJPL-160146]: support passing XValuePresentation
         node.setPresentation(presentation.icon?.icon(), presentation.type, presentation.value, presentation.hasChildren)
@@ -34,7 +49,7 @@ internal class FrontendXValue(private val project: Project, private val xValueId
 
   override fun computeChildren(node: XCompositeNode) {
     node.childCoroutineScope("FrontendXValue#computeChildren").launch(Dispatchers.EDT) {
-      XDebuggerEvaluatorApi.getInstance().computeChildren(xValueId)?.collect { computeChildrenEvent ->
+      XDebuggerEvaluatorApi.getInstance().computeChildren(xValueDto)?.collect { computeChildrenEvent ->
         when (computeChildrenEvent) {
           is XValueComputeChildrenEvent.AddChildren -> {
             val childrenList = XValueChildrenList()
@@ -74,8 +89,14 @@ internal class FrontendXValue(private val project: Project, private val xValueId
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun getModifier(): XValueModifier? {
+    return modifier
+  }
+
   override fun dispose() {
-    project.service<FrontendXValueDisposer>().dispose(xValueId)
+    project.service<FrontendXValueDisposer>().dispose(xValueDto)
+    cs.cancel()
   }
 }
 
@@ -94,9 +115,9 @@ private fun Obsolescent.childCoroutineScope(name: String): CoroutineScope {
 
 @Service(Service.Level.PROJECT)
 private class FrontendXValueDisposer(project: Project, val cs: CoroutineScope) {
-  fun dispose(xValueId: XValueId) {
+  fun dispose(xValueDto: XValueDto) {
     cs.launch(Dispatchers.IO) {
-      XDebuggerEvaluatorApi.getInstance().disposeXValue(xValueId)
+      XDebuggerEvaluatorApi.getInstance().disposeXValue(xValueDto)
     }
   }
 }

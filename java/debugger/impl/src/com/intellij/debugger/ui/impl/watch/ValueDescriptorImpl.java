@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -725,6 +725,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public boolean canSetValue() {
     return isValueReady() && isLvalue();
+  }
+
+  @ApiStatus.Internal
+  public CompletableFuture<Boolean> canSetValueAsync() {
+    return myInitFuture.thenApply((init) -> {
+      return isLvalue();
+    });
   }
 
   public XValueModifier getModifier(JavaValue value) {

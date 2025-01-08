@@ -23,6 +23,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -46,8 +48,8 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     }
   }
 
-  override suspend fun disposeXValue(xValueId: XValueId) {
-    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return
+  override suspend fun disposeXValue(xValueDto: XValueDto) {
+    val xValueEntity = xValueDto.eid.findValueEntity<XValue>() ?: return
     xValueEntity.delete()
   }
 
@@ -82,14 +84,14 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
       val xValueEntity = newValueEntity(xValue)
-      XEvaluationResult.Evaluated(XValueId(xValueEntity.id))
+      XEvaluationResult.Evaluated(XValueDto(xValueEntity.id, canBeModified = xValue.modifierAsync.thenApply { it != null }.asDeferred()))
     }
   }
 
   private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
 
-  override suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentation>? {
-    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return emptyFlow()
+  override suspend fun computePresentation(xValueDto: XValueDto, xValuePlace: XValuePlace): Flow<XValuePresentation>? {
+    val xValueEntity = xValueDto.eid.findValueEntity<XValue>() ?: return emptyFlow()
     val presentations = Channel<XValuePresentation>(capacity = Int.MAX_VALUE)
     val xValue = xValueEntity.value
     return channelFlow {
@@ -132,8 +134,8 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     }
   }
 
-  override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>? {
-    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return emptyFlow()
+  override suspend fun computeChildren(xValueDto: XValueDto): Flow<XValueComputeChildrenEvent>? {
+    val xValueEntity = xValueDto.eid.findValueEntity<XValue>() ?: return emptyFlow()
     val rawEvents = Channel<RawComputeChildrenEvent>(capacity = Int.MAX_VALUE)
     val xValue = xValueEntity.value
 
@@ -203,8 +205,13 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
             cascadeDeleteBy(parentXValueEntity)
           }
         }
-        val childrenXValueIds = childrenXValueEntities.map { XValueId(it.id) }
-        return XValueComputeChildrenEvent.AddChildren(names, childrenXValueIds, last)
+        val childrenXValueDtos = childrenXValueEntities.map {
+          XValueDto(
+            it.id,
+            canBeModified = it.value.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred()
+          )
+        }
+        return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last)
       }
     }
 

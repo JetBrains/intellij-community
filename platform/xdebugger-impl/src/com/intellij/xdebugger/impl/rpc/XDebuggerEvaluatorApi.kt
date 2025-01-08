@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Runnable
@@ -27,11 +28,11 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
 
   suspend fun evaluateInDocument(evaluatorDto: XDebuggerEvaluatorDto, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
 
-  suspend fun disposeXValue(xValueId: XValueId)
+  suspend fun disposeXValue(xValueDto: XValueDto)
 
-  suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentation>?
+  suspend fun computePresentation(xValueDto: XValueDto, xValuePlace: XValuePlace): Flow<XValuePresentation>?
 
-  suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>?
+  suspend fun computeChildren(xValueDto: XValueDto): Flow<XValueComputeChildrenEvent>?
 
   companion object {
     @JvmStatic
@@ -46,7 +47,7 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
 sealed interface XValueComputeChildrenEvent {
   // TODO[IJPL-160146]: support [XValueGroup]
   @Serializable
-  data class AddChildren(val names: List<String>, val children: List<XValueId>, val isLast: Boolean) : XValueComputeChildrenEvent
+  data class AddChildren(val names: List<String>, val children: List<XValueDto>, val isLast: Boolean) : XValueComputeChildrenEvent
 
   @Serializable
   data class SetAlreadySorted(val value: Boolean) : XValueComputeChildrenEvent
@@ -74,7 +75,7 @@ sealed interface XValueComputeChildrenEvent {
 @Serializable
 sealed interface XEvaluationResult {
   @Serializable
-  data class Evaluated(val valueId: XValueId) : XEvaluationResult
+  data class Evaluated(val valueId: XValueDto) : XEvaluationResult
 
   @Serializable
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XEvaluationResult
@@ -82,7 +83,7 @@ sealed interface XEvaluationResult {
 
 @ApiStatus.Internal
 @Serializable
-data class XValueId(val eid: EID)
+data class XValueDto(val eid: EID, @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>)
 
 
 @ApiStatus.Internal

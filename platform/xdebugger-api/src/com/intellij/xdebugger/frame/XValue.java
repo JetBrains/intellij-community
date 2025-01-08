@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.util.ThreeState;
@@ -6,10 +6,13 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Represents a value in debugger tree.
@@ -54,6 +57,14 @@ public abstract class XValue extends XValueContainer {
    */
   public @Nullable XValueModifier getModifier() {
     return null;
+  }
+
+  /**
+   * Asynchronously computes {@link XValueModifier} instance which can be used to modify the value.
+   */
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<@Nullable XValueModifier> getModifierAsync() {
+    return CompletableFuture.completedFuture(getModifier());
   }
 
   /**
