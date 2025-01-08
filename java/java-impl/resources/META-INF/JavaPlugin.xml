@@ -977,7 +977,6 @@
     <codeInsight.externalLibraryResolver implementation="com.intellij.codeInspection.concurrencyAnnotations.JCiPExternalLibraryResolver"/>
     <codeInsight.externalLibraryResolver
       implementation="com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver"/>
-    <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
     <generation.toStringClassFilter implementation="org.jetbrains.generate.tostring.GenerateToStringInterfaceFilter" order="last"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoVarTypeHandler"/>
     <annotator language="SPI" implementationClass="com.intellij.spi.SPIAnnotator"/>
