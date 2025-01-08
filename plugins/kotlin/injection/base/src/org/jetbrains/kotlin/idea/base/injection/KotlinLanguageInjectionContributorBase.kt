@@ -185,7 +185,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
             ?: injectWithReceiver(place)
             ?: injectWithVariableUsage(place, originalHost)
             ?: injectWithMutation(place)
-            ?: injectWithInfixCall(place)
+            ?: injectWithInfixCallOrOperator(place)
     }
 
     private val stringMutationOperators: List<KtSingleValueToken> = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
@@ -327,35 +327,60 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return null
     }
 
-    private fun injectWithInfixCall(host: KtElement): InjectionInfo? {
-        val fixedHost = (host.parent as? KtContainerNode)?.parent as? KtArrayAccessExpression ?: host
-        val binaryExpression = fixedHost.parent as? KtBinaryExpression ?: return null
+    private fun injectWithInfixCallOrOperator(host: KtElement): InjectionInfo? {
+        // infix calls and operators are similar from the syntax point of view
+        val deparenthesized = host.deparenthesized()
+        val arrayAccessExpression = (deparenthesized.parent as? KtContainerNode)?.parent as? KtArrayAccessExpression
+        val fixedHost = arrayAccessExpression ?: deparenthesized
+        val binaryExpression = fixedHost.parent as? KtBinaryExpression ?: return arrayAccessExpression?.let { injectWithArrayReadAccess(deparenthesized, arrayAccessExpression) }
         val left = binaryExpression.left
         val right = binaryExpression.right
         if (fixedHost != left && fixedHost != right || binaryExpression.isStandardConcatenationExpression()) return null
         val operationExpression = binaryExpression.operationReference
+        // all kotlin operators have two parameters, so they could be expressed as `left` `operator` `right`
+        // exceptions are get and set operators, those use syntax of array access:
+        // e.g. `a[key1, key2...]` for getter, and `a[key, key2...] = value` for setter
+        val isArrayAccessExpression = left is KtArrayAccessExpression
 
         for (reference in operationExpression.references) {
             ProgressManager.checkCanceled()
 
-            val resolvedTo = resolveReference(reference) as? KtFunction ?: continue
-            val isArrayAccessExpression = left is KtArrayAccessExpression
+            val ktFunction = resolveReference(reference) as? KtFunction ?: continue
             when (fixedHost) {
               right -> {
-                  val argumentIndex = if (isArrayAccessExpression) 1 else 0
-                  injectionForKotlinInfixCallParameter(resolvedTo, reference, argumentIndex)?.let { return it }
+                  injectionForKotlinInfixCallParameter(ktFunction, reference, ktFunction.valueParameters.size - 1)?.let { return it }
               }
               left -> {
                   if (isArrayAccessExpression) {
-                      injectionForKotlinInfixCallParameter(resolvedTo, reference, 0)?.let { return it }
+                      injectionForKotlinInfixCallParameter(ktFunction, reference, left.indexExpressions.indexOf(deparenthesized))?.let { return it }
                   } else {
-                      val injectionInfo = resolvedTo.receiverTypeReference?.findInjection() ?: injectionInfoByAnnotation(resolvedTo)
+                      val injectionInfo = ktFunction.receiverTypeReference?.findInjection() ?: injectionInfoByAnnotation(ktFunction)
                       injectionInfo?.let { return it }
                   }
               }
             }
         }
 
+        return null
+    }
+
+    private fun KtElement.deparenthesized(): KtElement {
+        var element = this
+        while (element.parent is KtParenthesizedExpression) {
+            element = element.parent as? KtElement ?: break
+        }
+
+        return element
+    }
+
+    private fun injectWithArrayReadAccess(host: KtElement, arrayAccessExpression: KtArrayAccessExpression): InjectionInfo? {
+        // get operator
+        for (reference in arrayAccessExpression.references) {
+            ProgressManager.checkCanceled()
+
+            val ktFunction = resolveReference(reference) as? KtFunction ?: continue
+            injectionForKotlinInfixCallParameter(ktFunction, reference, arrayAccessExpression.indexExpressions.indexOf(host))?.let { return it }
+        }
         return null
     }
 
