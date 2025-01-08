@@ -18,6 +18,7 @@ import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
@@ -184,10 +185,25 @@ suspend fun poetryInstallPackage(sdk: Sdk, pkg: String, extraArgs: List<String>)
 suspend fun poetryUninstallPackage(sdk: Sdk, pkg: String): Result<String> = runPoetryWithSdk(sdk, "remove", pkg)
 
 @Internal
-suspend fun poetryReloadPackages(sdk: Sdk): Result<String> {
-  runPoetryWithSdk(sdk, "update").onFailure { return Result.failure(it) }
-  runPoetryWithSdk(sdk, "install", "--no-root").onFailure { return Result.failure(it) }
-  return runPoetryWithSdk(sdk, "show")
+suspend fun poetryShowPackages(sdk: Sdk): Result<List<PythonPackage>> {
+  val output = runPoetryWithSdk(sdk, "show").getOrElse {
+    return Result.failure(it)
+  }
+
+  return parsePoetryShow(output).let { Result.success(it) }
+}
+
+@Internal
+fun parsePoetryShow(input: String): List<PythonPackage> {
+  val result = mutableListOf<PythonPackage>()
+  input.split("\n").forEach { line ->
+    if (line.isNotBlank()) {
+      val packageInfo = line.trim().split(" ").map { it.trim() }.filter { it.isNotBlank() && it != "(!)"}
+      result.add(PythonPackage(packageInfo[0], packageInfo[1], false))
+    }
+  }
+
+  return result
 }
 
 /**
