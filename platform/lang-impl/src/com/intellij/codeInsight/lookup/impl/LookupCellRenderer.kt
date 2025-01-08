@@ -373,7 +373,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
       val width = getStringWidth(candidate, metrics)
       if (width <= maxWidth) -1 else 1
     }
-    val i = max(0.0, (-insIndex - 2).toDouble()).toInt()
+    val i = max(0, -insIndex - 2)
 
     return text.substring(0, i) + ELLIPSIS
   }
@@ -560,8 +560,8 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     }
     if (icon.iconWidth > emptyIcon.iconWidth || icon.iconHeight > emptyIcon.iconHeight) {
       emptyIcon = EmptyIcon.create(
-        max(icon.iconWidth.toDouble(), emptyIcon.iconWidth.toDouble()).toInt(),
-        max(icon.iconHeight.toDouble(), emptyIcon.iconHeight.toDouble()).toInt())
+        max(icon.iconWidth, emptyIcon.iconWidth),
+        max(icon.iconHeight, emptyIcon.iconHeight))
       setIconInsets(nameComponent)
     }
   }

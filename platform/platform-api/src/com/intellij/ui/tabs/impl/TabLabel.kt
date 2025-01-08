@@ -252,7 +252,7 @@ open class TabLabel @Internal constructor(
   override fun getPreferredSize(): Dimension {
     val size = notStrictPreferredSize
     if (isPinned) {
-      size.width = min(TabLayout.getMaxPinnedTabWidth().toDouble(), size.width.toDouble()).toInt()
+      size.width = min(TabLayout.getMaxPinnedTabWidth(), size.width)
     }
     return size
   }
@@ -475,7 +475,7 @@ open class TabLabel @Internal constructor(
         val tabWidth = this@TabLabel.width
         val minTabWidth = JBUI.scale(MIN_WIDTH_TO_CROP_ICON)
         return if (isCompressionEnabled && tabWidth < minTabWidth) {
-          max((iconWidth - (minTabWidth - tabWidth)).toDouble(), (iconWidth / 2).toDouble()).toInt()
+          max(iconWidth - (minTabWidth - tabWidth), iconWidth / 2)
         }
         else {
           iconWidth
@@ -805,7 +805,7 @@ open class TabLabel @Internal constructor(
       }
 
       if (center != null) {
-        val width = min(center.preferredSize.width.toDouble(), (maxX - curX).toDouble()).toInt()
+        val width = min(center.preferredSize.width, (maxX - curX))
         center.setBounds(curX, insets.top, width, height)
       }
 

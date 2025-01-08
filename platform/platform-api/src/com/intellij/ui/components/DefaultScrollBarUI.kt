@@ -642,8 +642,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
         thumbMax = track.bounds.y + track.bounds.height - thumb.bounds.height
         thumbPos = MathUtil.clamp(y - myOffset, thumbMin, thumbMax)
         if (thumb.bounds.y != thumbPos) {
-          val minY: Int = min(thumb.bounds.y.toDouble(), thumbPos.toDouble()).toInt()
-          val maxY: Int = (max(thumb.bounds.y.toDouble(), thumbPos.toDouble()) + thumb.bounds.height).toInt()
+          val minY: Int = min(thumb.bounds.y, thumbPos)
+          val maxY: Int = max(thumb.bounds.y, thumbPos) + thumb.bounds.height
           thumb.bounds.y = thumbPos
           state.animationBehavior.onThumbMove()
           repaint(thumb.bounds.x, minY, thumb.bounds.width, maxY - minY)
@@ -654,8 +654,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
         thumbMax = track.bounds.x + track.bounds.width - thumb.bounds.width
         thumbPos = MathUtil.clamp(x - myOffset, thumbMin, thumbMax)
         if (thumb.bounds.x != thumbPos) {
-          val minX: Int = min(thumb.bounds.x.toDouble(), thumbPos.toDouble()).toInt()
-          val maxX: Int = (max(thumb.bounds.x.toDouble(), thumbPos.toDouble()) + thumb.bounds.width).toInt()
+          val minX: Int = min(thumb.bounds.x, thumbPos)
+          val maxX: Int = max(thumb.bounds.x, thumbPos) + thumb.bounds.width
           thumb.bounds.x = thumbPos
           state.animationBehavior.onThumbMove()
           repaint(minX, thumb.bounds.y, maxX - minX, thumb.bounds.height)
@@ -786,4 +786,4 @@ private fun addPreferredHeight(preferred: Dimension, component: Component?) {
  */
 private fun convert(newRange: Double, oldValue: Double, oldRange: Double): Int = (.5 + newRange * oldValue / oldRange).toInt()
 
-private fun adjust(value: Int, min: Int, max: Int): Int = max(min.toDouble(), min(value.toDouble(), max.toDouble())).toInt()
+private fun adjust(value: Int, min: Int, max: Int): Int = max(min, min(value, max))

@@ -58,8 +58,8 @@ class MatchData private constructor(@JvmField val matched: Boolean,
         val offsets = IntArray(matchedRegion.numRegs * 2)
         for (i in 0..<matchedRegion.numRegs) {
           val startIndex = i * 2
-          offsets[startIndex] = max(matchedRegion.getBeg(i).toDouble(), 0.0).toInt()
-          offsets[startIndex + 1] = max(matchedRegion.getEnd(i).toDouble(), 0.0).toInt()
+          offsets[startIndex] = max(matchedRegion.getBeg(i), 0)
+          offsets[startIndex + 1] = max(matchedRegion.getEnd(i), 0)
         }
         return MatchData(true, offsets)
       }

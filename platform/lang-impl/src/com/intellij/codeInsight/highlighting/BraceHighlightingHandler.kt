@@ -85,7 +85,7 @@ class BraceHighlightingHandler internal constructor(
         val syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, psiFile.virtualFile)
         val highlighter = object : LexerEditorHighlighter(syntaxHighlighter, editor.colorsScheme) {
           override fun createIterator(startOffset: Int): HighlighterIterator {
-            return object : HighlighterIteratorWrapper(super.createIterator(max((startOffset - offset).toDouble(), 0.0).toInt())) {
+            return object : HighlighterIteratorWrapper(super.createIterator(max(startOffset - offset, 0))) {
               override fun getStart(): Int = super.getStart() + offset
 
               override fun getEnd(): Int = super.getEnd() + offset

@@ -295,7 +295,7 @@ abstract class MavenMultiVersionImportingTestCaseLegacy : MavenImportingTestCase
 
       if (folderUrl.startsWith(rootUrl)) {
         val length = rootUrl.length + 1
-        folderUrl = folderUrl.substring(min(length.toDouble(), folderUrl.length.toDouble()).toInt())
+        folderUrl = folderUrl.substring(min(length, folderUrl.length))
       }
 
       actual.add(folderUrl)

@@ -125,11 +125,10 @@ internal class BytecodeToolWindowPanel(private val project: Project, private val
       return
     }
 
-    val endSelectionLineIndex = min((linesRange.last + 1).toDouble(), bytecodeDocument.getLineCount().toDouble()).toInt()
+    val endSelectionLineIndex = min((linesRange.last + 1), bytecodeDocument.getLineCount())
 
     val startOffset = bytecodeDocument.getLineStartOffset(linesRange.first)
-    val endOffset = min(bytecodeDocument.getLineEndOffset(endSelectionLineIndex).toDouble(),
-                        bytecodeDocument.textLength.toDouble()).toInt()
+    val endOffset = min(bytecodeDocument.getLineEndOffset(endSelectionLineIndex), bytecodeDocument.textLength)
 
     if (bytecodeDocument.textLength <= startOffset || bytecodeDocument.textLength <= endOffset) {
       return

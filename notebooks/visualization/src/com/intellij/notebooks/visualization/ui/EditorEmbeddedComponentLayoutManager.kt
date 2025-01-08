@@ -74,7 +74,7 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
       val newBounds = Rectangle(
         inlayBounds.x,
         inlayBounds.y,
-        min((if (constraint.isFullWidth) visibleWidth else size.width).toDouble(), visibleWidth.toDouble()).toInt(),
+        min((if (constraint.isFullWidth) visibleWidth else size.width), visibleWidth),
         size.height
       )
       if (newBounds != component.bounds) {

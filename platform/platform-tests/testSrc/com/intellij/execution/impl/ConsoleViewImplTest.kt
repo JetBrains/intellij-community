@@ -442,7 +442,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
           if (bufferRestSize == 0) {
             bufferRestSize = bufferSize
           }
-          val endInd = min((printedTextSize + bufferRestSize).toDouble(), text.length.toDouble()).toInt()
+          val endInd = min(printedTextSize + bufferRestSize, text.length)
           val textToPrint = text.substring(printedTextSize, endInd)
           processHandler.notifyTextAvailable(textToPrint, outputType)
           bufferRestSize -= textToPrint.length

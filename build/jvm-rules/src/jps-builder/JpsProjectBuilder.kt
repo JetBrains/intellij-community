@@ -1021,7 +1021,7 @@ private fun reportRebuiltModules(context: CompileContextImpl) {
     return
   }
 
-  val shown = if (modules.size == 6) 6 else min(5.0, modules.size.toDouble()).toInt()
+  val shown = if (modules.size == 6) 6 else min(5, modules.size)
   val modulesText = modules.stream().limit(shown.toLong()).map { m -> "'" + m.name + "'" }.collect(Collectors.joining(", "))
   val text = JpsBuildBundle.message("build.messages.modules.were.fully.rebuilt", modulesText, modules.size,
     modules.size - shown, if (ModuleBuildTarget.REBUILD_ON_DEPENDENCY_CHANGE) 1 else 0)

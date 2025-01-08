@@ -199,8 +199,8 @@ object ByLineRt {
       fun flush(line1: Int, line2: Int) {
         if (sample == null) return
 
-        val start1 = max(last1.toDouble(), builder.index1.toDouble()).toInt()
-        val start2 = max(last2.toDouble(), builder.index2.toDouble()).toInt()
+        val start1 = max(last1, builder.index1)
+        val start2 = max(last2, builder.index2)
 
         val subLines1: IntList = IntArrayList()
         val subLines2: IntList = IntArrayList()
@@ -224,12 +224,12 @@ object ByLineRt {
       }
 
       fun alignExactMatching(subLines1: IntList, subLines2: IntList) {
-        val n = max(subLines1.size.toDouble(), subLines2.size.toDouble()).toInt()
+        val n = max(subLines1.size, subLines2.size)
         val skipAligning = n > 10 ||  // we use brute-force algorithm (C_n_k). This will limit search space by ~250 cases.
                            subLines1.size == subLines2.size // nothing to do
 
         if (skipAligning) {
-          val count = min(subLines1.size.toDouble(), subLines2.size.toDouble()).toInt()
+          val count = min(subLines1.size, subLines2.size)
           for (i in 0 until count) {
             val index1 = subLines1.getInt(i)
             val index2 = subLines2.getInt(i)
