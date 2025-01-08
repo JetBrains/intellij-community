@@ -263,6 +263,7 @@ final class AnnotationChecker {
     if (!(list.getParent() instanceof PsiMethod method)) return;
     if (method.hasModifierProperty(PsiModifier.STATIC)) {
       myVisitor.report(JavaErrorKinds.OVERRIDE_ON_STATIC_METHOD.create(annotation, method));
+      return;
     }
     MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
     PsiClass psiClass = method.getContainingClass();
