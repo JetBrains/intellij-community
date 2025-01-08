@@ -1,8 +1,8 @@
 #file: noinspection MarkdownUnresolvedFileReference,MarkdownUnresolvedHeaderReference
 
 # This file content is rendered by:
-# - SDK Docs (see https://github.com/JetBrains/intellij-sdk-docs/blob/main/.github/scripts/plugin_configuration_file_generation.main.kts)
-# - org.jetbrains.idea.devkit.documentation.PluginDescriptorDocumentationProvider
+# - SDK Docs (see https://github.com/JetBrains/intellij-sdk-docs/blob/main/.github/scripts/generate_descriptor_pages.main.kts)
+# - org.jetbrains.idea.devkit.documentation.TemplatesDescriptorDocumentationTargetProvider
 # Textual values must be compatible with Writerside Markdown format.
 # Some of the Writerside-specific markup require cleaning up
 # (see org.jetbrains.idea.devkit.documentation.DocumentationRenderer.removeWritersideSpecificTags).
