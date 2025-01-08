@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -14,10 +14,10 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 
-const val ELEMENT_PATH_PREFIX = "#element:"
-const val ATTRIBUTE_PATH_PREFIX = "#attribute:"
-const val ELEMENT_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ELEMENT_PATH_PREFIX"
-const val ATTRIBUTE_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ATTRIBUTE_PATH_PREFIX"
+internal const val ELEMENT_PATH_PREFIX = "#element:"
+internal const val ATTRIBUTE_PATH_PREFIX = "#attribute:"
+internal const val ELEMENT_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ELEMENT_PATH_PREFIX"
+internal const val ATTRIBUTE_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ATTRIBUTE_PATH_PREFIX"
 
 /**
  * Base class for XML descriptors (for example, plugin.xml) documentation providers.
