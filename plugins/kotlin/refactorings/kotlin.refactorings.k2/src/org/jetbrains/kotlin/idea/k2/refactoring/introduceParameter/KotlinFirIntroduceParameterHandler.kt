@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
@@ -496,7 +497,12 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(editor: 
         defaultValue = if (withDefaultValue) defaultValue else null,
         context = targetCallable
     )
-    changeInfo.addParameter(parameterInfo)
+
+    val containingParameter = defaultValue?.parentOfType<KtParameter>()
+
+    val targetParameterIndex = containingParameter?.let { (callable as? KtFunction)?.valueParameterList?.parameters?.indexOf(containingParameter) } ?: -1
+
+    changeInfo.addParameter(parameterInfo, targetParameterIndex)
 
     object : KotlinChangeSignatureProcessor(targetCallable.project, changeInfo) {
         override fun performRefactoring(usages: Array<out UsageInfo?>) {

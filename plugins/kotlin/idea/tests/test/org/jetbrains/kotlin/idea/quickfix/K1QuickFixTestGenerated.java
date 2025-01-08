@@ -6956,6 +6956,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/inFun.kt");
                 }
 
+                @TestMetadata("inFunFromDefaultValue.kt")
+                public void testInFunFromDefaultValue() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/inFunFromDefaultValue.kt");
+                }
+
                 @TestMetadata("inFunInClass.kt")
                 public void testInFunInClass() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/inFunInClass.kt");
