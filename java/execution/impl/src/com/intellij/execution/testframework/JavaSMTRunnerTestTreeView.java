@@ -41,9 +41,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
         if (testProxy.getDurationStrategy() != TestDurationStrategy.AUTOMATIC) {
           return testProxy.getDurationString(consoleProperties);
         }
-        if (testProxy.isInProgress() &&
-            !testProxy.isSubjectToHide(consoleProperties) &&
-            JavaAwareTestConsoleProperties.SHOW_LIVE_TIME.value(consoleProperties)) {
+        if (testProxy.isInProgress() && !testProxy.isSubjectToHide(consoleProperties)) {
           Long startedAt;
           if (testProxy.isSuite() && !JavaAwareTestConsoleProperties.USE_WALL_TIME.value(consoleProperties)) {
             startedAt = getFirstChildStartedAt(testProxy);

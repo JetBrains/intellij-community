@@ -29,7 +29,6 @@ import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
 import java.io.File;
 
-import static com.intellij.execution.testframework.JavaAwareTestConsoleProperties.SHOW_LIVE_TIME;
 import static com.intellij.execution.testframework.JavaAwareTestConsoleProperties.USE_WALL_TIME;
 
 /**
@@ -70,9 +69,6 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties implemen
       DumbAwareToggleBooleanProperty property =
         new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.wall.time"), null, null, target, USE_WALL_TIME);
       actionGroup.add(property);
-      DumbAwareToggleBooleanProperty liveProperty =
-        new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.live.time"), null, null, target, SHOW_LIVE_TIME);
-      actionGroup.add(liveProperty);
     }
     actionGroup.add(Separator.getInstance());
     actionGroup.add(createShowInternalNodesAction(target));

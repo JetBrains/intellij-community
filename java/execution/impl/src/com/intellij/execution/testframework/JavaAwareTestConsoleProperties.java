@@ -52,17 +52,6 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
    * It is public because it can be used not only by inheritances but also some java-style test consoles (for example, Gradle)
    */
   public static final BooleanProperty USE_WALL_TIME = new BooleanProperty("useWallTime", false);
-  /**
-   * A {@link BooleanProperty} that determines whether the live time display is enabled
-   * in the test framework console. This property allows enabling or disabling the
-   * inclusion of live timing information, typically used to monitor ongoing test execution.
-   * <p>
-   * The default value for this property is {@code true}, meaning live time display is
-   * enabled by default.
-   * <p>
-   * It is public because it can be used not only by inheritances but also some java-style test consoles (for example, Gradle)
-   */
-  public static final BooleanProperty SHOW_LIVE_TIME = new BooleanProperty("liveTime", true);
 
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
     super(configuration, testFrameworkName, executor);
@@ -165,9 +154,6 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
       DumbAwareToggleBooleanProperty property =
         new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.wall.time"), null, null, target, USE_WALL_TIME);
       actionGroup.add(property);
-      DumbAwareToggleBooleanProperty liveProperty =
-        new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.live.time"), null, null, target, SHOW_LIVE_TIME);
-      actionGroup.add(liveProperty);
     }
   }
 }
