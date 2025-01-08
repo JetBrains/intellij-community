@@ -232,7 +232,7 @@ internal fun <T : MoveRenameUsageInfo> Map<PsiFile, List<T>>.sortedByOffset(): M
 
 internal fun collectOuterInstanceReferences(member: KtNamedDeclaration): List<OuterInstanceReferenceUsageInfo> {
     val result = SmartList<OuterInstanceReferenceUsageInfo>()
-    traverseOuterInstanceReferences(member, false) { result += it }
+    traverseOuterInstanceReferences(member) { result += it }
     return result
 }
 
@@ -240,11 +240,6 @@ internal fun collectOuterInstanceReferences(member: KtNamedDeclaration): List<Ou
 fun KtNamedDeclaration.usesOuterInstanceParameter(): Boolean {
     return collectOuterInstanceReferences(this).isNotEmpty()
 }
-
-internal fun traverseOuterInstanceReferences(
-    member: KtNamedDeclaration,
-    stopAtFirst: Boolean
-) = traverseOuterInstanceReferences(member, stopAtFirst) { }
 
 context(KaSession)
 private fun KaSymbol.isStrictAncestorOf(other: KaSymbol): Boolean {
@@ -258,7 +253,6 @@ private fun KaSymbol.isStrictAncestorOf(other: KaSymbol): Boolean {
 
 private fun traverseOuterInstanceReferences(
     member: KtNamedDeclaration,
-    stopAtFirst: Boolean,
     body: (OuterInstanceReferenceUsageInfo) -> Unit
 ): Boolean {
     if (member is KtObjectDeclaration || member is KtClass && !member.isInner()) return false
@@ -318,7 +312,6 @@ private fun traverseOuterInstanceReferences(
                 getOuterInstanceReference(element)?.let {
                     body(it)
                     found = true
-                    if (stopAtFirst) stopWalking()
                     return
                 }
                 super.visitElement(element)
