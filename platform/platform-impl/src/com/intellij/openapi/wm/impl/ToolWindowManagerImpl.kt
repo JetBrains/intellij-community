@@ -355,7 +355,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
             }
             if (Registry.`is`("auto.hide.all.tool.windows.on.any.action", true)) {
               val focusedComponent = IdeFocusManager.getInstance(manager.project).focusOwner
-              val actionToolWindowId = getToolWindowIdForComponent(event.inputEvent?.component)
+              val actionComponent = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) ?: event.inputEvent?.component
+              val actionToolWindowId = getToolWindowIdForComponent(actionComponent)
               if (focusedComponent != null) {
                 hideAllUnfocusedAutoHideToolWindows(manager, focusedComponent) { id -> id != actionToolWindowId }
               }
