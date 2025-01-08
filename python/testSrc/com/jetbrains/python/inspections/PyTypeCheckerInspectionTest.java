@@ -1449,7 +1449,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("""
-                           from typing_extensions import TypedDict
+                           from typing_extensions import TypedDict, Literal
                            class EasyDict(TypedDict):
                                a: str
                                b: str
@@ -1497,6 +1497,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                    'b': {'a': 'a', 'b': 'b', 'c': 'c'}
                                }
                            }</warning>
+                           
+                           
+                           class TDWithUnionField(TypedDict):
+                               i: int
+                               d: Literal[""] | EasyDict
+                           s5: TDWithUnionField = {'i': -1, 'd': <warning descr="Expected type 'Literal[\\"\\"] | EasyDict', got 'dict[str, str]' instead">{'a': 'a'}</warning>}
+                           s6: TDWithUnionField = {'i': 7, 'd': {'a': 'a', 'b': 'b', 'c': 'c'}}
                            
                            
                            class Movie(TypedDict):

@@ -170,7 +170,7 @@ class PyTypedDictType @JvmOverloads constructor(
             else {
               actualFieldType
             }
-            if (!strictUnionMatch(expectedFieldType, promotedType, context)) {
+            if (!match(expectedFieldType, promotedType, actualFieldValue, context, result)) {
               result.valueTypeErrors.add(ValueTypeError(actualFieldValue, expectedFieldType, actualFieldType))
             }
           }
@@ -189,6 +189,34 @@ class PyTypedDictType @JvmOverloads constructor(
       if (missingKeys.isNotEmpty()) {
         result.missingKeys.add(MissingKeysError(expression, expectedType.name, missingKeys))
       }
+    }
+
+    private fun match(
+      expectedType: PyType?,
+      actualType: PyType?,
+      actualExpression: PyExpression?,
+      context: TypeEvalContext,
+      result: TypeCheckingResult,
+    ): Boolean {
+      if (actualExpression != null && isDictExpression(actualExpression, context)) {
+        val types = PyTypeUtil.toStream(expectedType).toList()
+        for (subType in types) {
+          if (subType is PyTypedDictType) {
+            val res = if (types.size <= 1) result else TypeCheckingResult()
+            checkExpression(subType, actualExpression, context, res)
+            if (!res.hasErrors) {
+              return true
+            }
+          }
+          else {
+            if (strictUnionMatch(subType, actualType, context)) {
+              return true
+            }
+          }
+        }
+        return false
+      }
+      return strictUnionMatch(expectedType, actualType, context)
     }
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
