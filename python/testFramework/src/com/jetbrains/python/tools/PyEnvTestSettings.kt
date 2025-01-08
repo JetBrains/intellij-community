@@ -36,8 +36,8 @@ data class PyEnvTestSettings(
   internal val pythons: List<File> = foldersWithPythons
     .filter(File::exists)
     .flatMap { it.listFiles()?.toList() ?: emptyList() }
-    .filter { it.isDirectory && !it.name.startsWith('.') }
     .plus(additionalInterpreters)
+    .filter { it.isDirectory && !it.name.startsWith('.') }
 
   /**
    * Configuration in readable format
