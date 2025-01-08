@@ -56,9 +56,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
@@ -108,7 +106,7 @@ public final class SettingsEntryPointAction extends ActionGroup
 
   @ApiStatus.Internal
   public @NotNull JBPopup createPopup(@NotNull AnActionEvent e) {
-    JBPopup popup = createMainPopup(this, e.getDataContext());
+    JBPopup popup = createMainPopup(this, e.getDataContext(), e.getPlace());
     PopupUtil.addToggledStateListener(popup, e.getPresentation());
     return popup;
   }
@@ -171,6 +169,13 @@ public final class SettingsEntryPointAction extends ActionGroup
     result.add(Separator.getInstance());
     ContainerUtil.addIfNotNull(result, ActionManager.getInstance().getAction("SettingsEntryPointGroup"));
 
+    if (ExperimentalUI.isNewUI() &&
+        ContainerUtil.exists(event.getPlace().split("@"), place -> place.equals(ActionPlaces.MAIN_TOOLBAR))) {
+      result.add(Separator.getInstance());
+      AnAction customizeMainToolbarAction = ActionManager.getInstance().getAction("CustomizeMainToolbarGroup");
+      ContainerUtil.addIfNotNull(result, customizeMainToolbarAction);
+    }
+
     if (ExperimentalUI.isNewUI()) {
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
         try {
@@ -184,16 +189,27 @@ public final class SettingsEntryPointAction extends ActionGroup
     return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private static @NotNull ListPopup createMainPopup(@NotNull ActionGroup group, @NotNull DataContext context) {
+  private static @NotNull ListPopup createMainPopup(@NotNull ActionGroup group, @NotNull DataContext context, @Nullable String eventPlace) {
     boolean hasLastActions = ContainerUtil.find(
       ActionProvider.EP_NAME.getExtensionList(), o -> !o.getLastActions(context).isEmpty()) != null;
+
+    ListPopup popup;
+
     if (hasLastActions && ExperimentalUI.isNewUI()) {
-      return new MyPopup(group, context, new PresentationFactory());
+      popup = new MyPopup(group, context, new PresentationFactory());
     }
     else {
-      return JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, ActionSelectionAid.MNEMONICS, true, ActionPlaces.getPopupPlace("SettingsEntryPoint"));
+      String place = "SettingsEntryPoint";
+      if (eventPlace != null) {
+        place += "@" + eventPlace;
+      }
+      popup = JBPopupFactory.getInstance().createActionGroupPopup(
+        null, group, context, ActionSelectionAid.MNEMONICS, true, ActionPlaces.getPopupPlace(place));
     }
+
+    popup.setShowSubmenuOnHover(true);
+
+    return popup;
   }
 
   private static class MyPopup extends PopupFactoryImpl.ActionGroupPopup {
@@ -638,7 +654,7 @@ public final class SettingsEntryPointAction extends ActionGroup
         Component component = event.getComponent();
         ListPopup popup = createMainPopup(
           (ActionGroup)ActionManager.getInstance().getAction("SettingsEntryPoint"),
-          DataManager.getInstance().getDataContext(component));
+          DataManager.getInstance().getDataContext(component), null);
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {

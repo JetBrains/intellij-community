@@ -502,7 +502,7 @@
     </group>
 
     <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
-      <add-to-group group-id="MainToolbarQuickActions" relative-to-action="MainToolbarQuickActions.Run" anchor="before"/>
+      <add-to-group group-id="MainToolbarQuickActionsRaw" relative-to-action="MainToolbarQuickActions.Run" anchor="before"/>
       <group id="MainToolbarQuickActions.VCS" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false" popup="false"/>
     </group>
 

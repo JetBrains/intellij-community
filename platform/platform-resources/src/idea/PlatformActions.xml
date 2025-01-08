@@ -1700,13 +1700,17 @@
     <group id="TopStripeActionGroup" class="com.intellij.toolWindow.StripeActionGroup"/>
     <action id="TopStripeEnableAction" class="com.intellij.toolWindow.EnableStripeGroup"/>
 
-    <group id="MainToolbarQuickActions" searchable="false" popup="true">
+    <group id="MainToolbarQuickActionsRaw" searchable="false" popup="false">
       <group id="MainToolbarQuickActions.General" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false"
              popup="false"/>
       <group id="MainToolbarQuickActions.Run" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false"
              popup="false"/>
       <group id="MainToolbarQuickActions.GeneralLast" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false"
              popup="false"/>
+    </group>
+
+    <group id="MainToolbarQuickActions" searchable="false" popup="true">
+      <reference ref = "MainToolbarQuickActionsRaw"/>
     </group>
 
     <group id="ChangeProjectColorActionGroup"
@@ -1759,5 +1763,11 @@
     <!-- copy of CheckVfsSanityInMenu: !internal so could be invoked via 'search everywhere' -->
     <action id="CheckVfsSanity" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>
     <action id="PaintEditorLineStripeComponentAction" class="com.intellij.codeInsight.editorLineStripeHint.PaintEditorLineStripeHintComponentAction" internal="true"/>
+
+    <group id="CustomizeMainToolbarGroup" popup="true" searchable="false">
+      <action id="CustomizeMainToolbarAction" class="com.intellij.ide.actions.CustomizeMainToolbarAction"/>
+      <separator key="group.MainToolbarQuickActions.text"/>
+      <reference ref="MainToolbarQuickActionsRaw"/>
+    </group>
   </actions>
 </idea-plugin>
