@@ -1190,9 +1190,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
 
   override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon {
     val uniqueId = settings.uniqueID
-    if (selectedConfiguration?.uniqueID == uniqueId) {
-      iconAndInvalidCache.checkValidity(uniqueId, project)
-    }
+    iconAndInvalidCache.checkValidity(uniqueId, project)
     var icon = iconAndInvalidCache.get(uniqueId, settings, project)
     if (withLiveIndicator) {
       val runningDescriptors = ExecutionManagerImpl.getInstanceIfCreated(project)
