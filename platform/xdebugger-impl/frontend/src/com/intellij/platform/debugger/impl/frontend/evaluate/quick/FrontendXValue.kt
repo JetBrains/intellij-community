@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
@@ -17,10 +18,13 @@ import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueModifier
 import com.intellij.xdebugger.frame.XValueNode
 import com.intellij.xdebugger.frame.XValuePlace
+import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.evaluate.quick.HintXValue
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
+import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
 import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
 import com.intellij.xdebugger.impl.rpc.XValueDto
+import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
 import kotlinx.coroutines.*
 
 internal class FrontendXValue(private val project: Project, private val xValueDto: XValueDto) : XValue(), HintXValue {
@@ -42,8 +46,14 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
     node.childCoroutineScope("FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
       XDebuggerEvaluatorApi.getInstance().computePresentation(xValueDto, place)?.collect { presentation ->
         // TODO[IJPL-160146]: support fullValueEvaluator
-        // TODO[IJPL-160146]: support passing XValuePresentation
-        node.setPresentation(presentation.icon?.icon(), presentation.type, presentation.value, presentation.hasChildren)
+        when (presentation) {
+          is XValuePresentationEvent.SetSimplePresentation -> {
+            node.setPresentation(presentation.icon?.icon(), presentation.presentationType, presentation.value, presentation.hasChildren)
+          }
+          is XValuePresentationEvent.SetAdvancedPresentation -> {
+            node.setPresentation(presentation.icon?.icon(), FrontendXValuePresentation(presentation), presentation.hasChildren)
+          }
+        }
       }
     }
   }
@@ -98,6 +108,65 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
   override fun dispose() {
     project.service<FrontendXValueDisposer>().dispose(xValueDto)
     cs.cancel()
+  }
+
+  private class FrontendXValuePresentation(private val advancedPresentation: XValuePresentationEvent.SetAdvancedPresentation) : XValuePresentation() {
+    override fun renderValue(renderer: XValueTextRenderer) {
+      for (part in advancedPresentation.parts) {
+        when (part) {
+          is XValueAdvancedPresentationPart.Comment -> {
+            renderer.renderComment(part.comment)
+          }
+          is XValueAdvancedPresentationPart.Error -> {
+            renderer.renderError(part.error)
+          }
+          is XValueAdvancedPresentationPart.KeywordValue -> {
+            renderer.renderKeywordValue(part.value)
+          }
+          is XValueAdvancedPresentationPart.NumericValue -> {
+            renderer.renderNumericValue(part.value)
+          }
+          is XValueAdvancedPresentationPart.SpecialSymbol -> {
+            renderer.renderSpecialSymbol(part.symbol)
+          }
+          is XValueAdvancedPresentationPart.StringValue -> {
+            renderer.renderStringValue(part.value)
+          }
+          is XValueAdvancedPresentationPart.StringValueWithHighlighting -> {
+            renderer.renderStringValue(part.value, part.additionalSpecialCharsToHighlight, part.maxLength)
+          }
+          is XValueAdvancedPresentationPart.Value -> {
+            renderer.renderValue(part.value)
+          }
+          is XValueAdvancedPresentationPart.ValueWithAttributes -> {
+            // TODO[IJPL-160146]: support [TextAttributesKey] serialization
+            val attributesKey = part.key
+            if (attributesKey != null) {
+              renderer.renderValue(part.value, attributesKey)
+            }
+            else {
+              renderer.renderValue(part.value)
+            }
+          }
+        }
+      }
+    }
+
+    override fun getSeparator(): @NlsSafe String {
+      return advancedPresentation.separator
+    }
+
+    override fun isShowName(): Boolean {
+      return advancedPresentation.isShownName
+    }
+
+    override fun getType(): @NlsSafe String? {
+      return advancedPresentation.presentationType
+    }
+
+    override fun isAsync(): Boolean {
+      return advancedPresentation.isAsync
+    }
   }
 }
 

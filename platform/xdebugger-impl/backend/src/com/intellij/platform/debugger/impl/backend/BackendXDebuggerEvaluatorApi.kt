@@ -7,24 +7,26 @@ import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.kernel.backend.*
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.presentation.XValuePresentation
+import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.*
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil.XValuePresentationTextExtractor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -90,9 +92,9 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
 
   private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
 
-  override suspend fun computePresentation(xValueDto: XValueDto, xValuePlace: XValuePlace): Flow<XValuePresentation>? {
+  override suspend fun computePresentation(xValueDto: XValueDto, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>? {
     val xValueEntity = xValueDto.eid.findValueEntity<XValue>() ?: return emptyFlow()
-    val presentations = Channel<XValuePresentation>(capacity = Int.MAX_VALUE)
+    val presentations = Channel<XValuePresentationEvent>(capacity = Int.MAX_VALUE)
     val xValue = xValueEntity.value
     return channelFlow {
       var isObsolete = false
@@ -103,14 +105,18 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
 
         override fun setPresentation(icon: Icon?, type: @NonNls String?, value: @NonNls String, hasChildren: Boolean) {
-          presentations.trySend(XValuePresentation(icon?.rpcId(), type, value, hasChildren))
+          presentations.trySend(XValuePresentationEvent.SetSimplePresentation(icon?.rpcId(), type, value, hasChildren))
         }
 
-        override fun setPresentation(icon: Icon?, presentation: com.intellij.xdebugger.frame.presentation.XValuePresentation, hasChildren: Boolean) {
-          // TODO[IJPL-160146]: handle XValuePresentation fully
-          val textExtractor = XValuePresentationTextExtractor()
-          presentation.renderValue(textExtractor)
-          setPresentation(icon, presentation.type, textExtractor.text, hasChildren)
+        override fun setPresentation(icon: Icon?, presentation: XValuePresentation, hasChildren: Boolean) {
+          val partsCollector = XValueTextRendererPartsCollector()
+          presentation.renderValue(partsCollector)
+
+          presentations.trySend(XValuePresentationEvent.SetAdvancedPresentation(
+            icon?.rpcId(), hasChildren,
+            presentation.separator, presentation.isShowName, presentation.type, presentation.isAsync,
+            partsCollector.parts
+          ))
         }
 
         override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {
@@ -190,6 +196,49 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       for (event in rawEvents) {
         send(event.convertToRpcEvent(xValueEntity))
       }
+    }
+  }
+
+  private class XValueTextRendererPartsCollector : XValueTextRenderer {
+    private val _parts = mutableListOf<XValueAdvancedPresentationPart>()
+
+    val parts: List<XValueAdvancedPresentationPart>
+      get() = _parts
+
+    override fun renderValue(value: @NlsSafe String) {
+      _parts.add(XValueAdvancedPresentationPart.Value(value))
+    }
+
+    override fun renderStringValue(value: @NlsSafe String) {
+      _parts.add(XValueAdvancedPresentationPart.StringValue(value))
+    }
+
+    override fun renderNumericValue(value: @NlsSafe String) {
+      _parts.add(XValueAdvancedPresentationPart.NumericValue(value))
+    }
+
+    override fun renderKeywordValue(value: @NlsSafe String) {
+      _parts.add(XValueAdvancedPresentationPart.KeywordValue(value))
+    }
+
+    override fun renderValue(value: @NlsSafe String, key: TextAttributesKey) {
+      _parts.add(XValueAdvancedPresentationPart.ValueWithAttributes(value, key))
+    }
+
+    override fun renderStringValue(value: @NlsSafe String, additionalSpecialCharsToHighlight: @NlsSafe String?, maxLength: Int) {
+      _parts.add(XValueAdvancedPresentationPart.StringValueWithHighlighting(value, additionalSpecialCharsToHighlight, maxLength))
+    }
+
+    override fun renderComment(comment: @NlsSafe String) {
+      _parts.add(XValueAdvancedPresentationPart.Comment(comment))
+    }
+
+    override fun renderSpecialSymbol(symbol: @NlsSafe String) {
+      _parts.add(XValueAdvancedPresentationPart.SpecialSymbol(symbol))
+    }
+
+    override fun renderError(error: @NlsSafe String) {
+      _parts.add(XValueAdvancedPresentationPart.Error(error))
     }
   }
 

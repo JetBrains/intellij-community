@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
@@ -30,7 +31,7 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
 
   suspend fun disposeXValue(xValueDto: XValueDto)
 
-  suspend fun computePresentation(xValueDto: XValueDto, xValuePlace: XValuePlace): Flow<XValuePresentation>?
+  suspend fun computePresentation(xValueDto: XValueDto, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>?
 
   suspend fun computeChildren(xValueDto: XValueDto): Flow<XValueComputeChildrenEvent>?
 
@@ -92,9 +93,70 @@ data class XDebuggerEvaluatorDto(val eid: EID, val canEvaluateInDocument: Boolea
 
 @ApiStatus.Internal
 @Serializable
-data class XValuePresentation(
-  @JvmField val icon: IconId?,
-  @JvmField val type: String?,
-  @JvmField val value: String,
-  @JvmField val hasChildren: Boolean,
-)
+sealed interface XValuePresentationEvent {
+  @ApiStatus.Internal
+  @Serializable
+  data class SetSimplePresentation(
+    @JvmField val icon: IconId?,
+    @JvmField val presentationType: String?,
+    @JvmField val value: String,
+    @JvmField val hasChildren: Boolean,
+  ) : XValuePresentationEvent
+
+  @ApiStatus.Internal
+  @Serializable
+  data class SetAdvancedPresentation(
+    @JvmField val icon: IconId?,
+    @JvmField val hasChildren: Boolean,
+    @JvmField val separator: String,
+    @JvmField val isShownName: Boolean,
+    @JvmField val presentationType: String?,
+    @JvmField val isAsync: Boolean,
+    @JvmField val parts: List<XValueAdvancedPresentationPart>,
+  ) : XValuePresentationEvent
+}
+
+@ApiStatus.Internal
+@Serializable
+sealed interface XValueAdvancedPresentationPart {
+  @ApiStatus.Internal
+  @Serializable
+  data class Value(@JvmField val value: String) : XValueAdvancedPresentationPart
+
+  @ApiStatus.Internal
+  @Serializable
+  data class StringValue(@JvmField val value: String) : XValueAdvancedPresentationPart
+
+  @ApiStatus.Internal
+  @Serializable
+  data class NumericValue(@JvmField val value: String) : XValueAdvancedPresentationPart
+
+  @ApiStatus.Internal
+  @Serializable
+  data class KeywordValue(@JvmField val value: String) : XValueAdvancedPresentationPart
+
+  // TODO[IJPL-160146]: support [TextAttributesKey] serialization
+  @ApiStatus.Internal
+  @Serializable
+  data class ValueWithAttributes(@JvmField val value: String, @Transient @JvmField val key: TextAttributesKey? = null) : XValueAdvancedPresentationPart
+
+  @ApiStatus.Internal
+  @Serializable
+  data class StringValueWithHighlighting(
+    @JvmField val value: String,
+    @JvmField val additionalSpecialCharsToHighlight: String?,
+    @JvmField val maxLength: Int,
+  ) : XValueAdvancedPresentationPart
+
+  @ApiStatus.Internal
+  @Serializable
+  data class Comment(@JvmField val comment: String) : XValueAdvancedPresentationPart
+
+  @ApiStatus.Internal
+  @Serializable
+  data class SpecialSymbol(@JvmField val symbol: String) : XValueAdvancedPresentationPart
+
+  @ApiStatus.Internal
+  @Serializable
+  data class Error(@JvmField val error: String) : XValueAdvancedPresentationPart
+}
