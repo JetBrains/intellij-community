@@ -10,3 +10,4 @@ NSNetworkVolumesUsageDescription = "@@bundle_name@@ 내의 애플리케이션이
 NSRemovableVolumesUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 이동식 볼륨에 대한 액세스를 요청합니다.";
 NSBluetoothAlwaysUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 블루투스 액세스를 요청합니다.";
 NSAppleEventsUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 Apple 이벤트를 보낼 권한을 요청합니다.";
+NSLocalNetworkUsageDescription = "@@bundle_name@@'s features, such as SSH and database connectivity, require permissions for accessing the local network and sending broadcast requests.";

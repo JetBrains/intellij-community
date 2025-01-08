@@ -10,3 +10,4 @@ NSNetworkVolumesUsageDescription = "An application in @@bundle_name@@ requests a
 NSRemovableVolumesUsageDescription = "An application in @@bundle_name@@ requests access to files on a removable volume.";
 NSBluetoothAlwaysUsageDescription = "An application in @@bundle_name@@ requests access to Bluetooth.";
 NSAppleEventsUsageDescription = "An application in @@bundle_name@@ requests the ability to send Apple events.";
+NSLocalNetworkUsageDescription = "@@bundle_name@@'s features, such as SSH and database connectivity, require permissions for accessing the local network and sending broadcast requests.";
