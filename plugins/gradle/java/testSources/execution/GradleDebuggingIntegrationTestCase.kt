@@ -72,7 +72,10 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     dependsOn: String? = null,
   ) {
     withJavaPlugin()
-    withTask(name, "JavaExec", dependsOn) {
+    withTask(name, "JavaExec") {
+      if (dependsOn != null) {
+        call("dependsOn", dependsOn)
+      }
       assign("classpath", code("rootProject.sourceSets.main.runtimeClasspath"))
       if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.0")) {
         assign("mainClass", "pack.AClass")
