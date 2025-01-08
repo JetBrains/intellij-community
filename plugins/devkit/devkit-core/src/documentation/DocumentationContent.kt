@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 internal data class DocumentationContent(
@@ -14,7 +14,7 @@ internal data class DocumentationContent(
     if (path.isEmpty()) return null
     val name = path.first()
     val remainingPath = path.drop(1)
-    val currentElement = currentElements.find { it.element?.name == name }?.element ?: return null
+    val currentElement = currentElements.find { it.element?.name == name || it.element?.isWildcard() == true }?.element ?: return null
     return if (remainingPath.isEmpty()) currentElement else findElementRecursively(currentElement.children, remainingPath)
   }
 
@@ -51,6 +51,11 @@ internal data class Element(
   var examples: List<String> = emptyList(),
   var path: List<String> = emptyList(),
 ) {
+
+  fun isWildcard(): Boolean {
+    return name == "*"
+  }
+
   fun copy(): Element {
     return this.copy(attributes = this.attributes.map { it.copy() })
   }

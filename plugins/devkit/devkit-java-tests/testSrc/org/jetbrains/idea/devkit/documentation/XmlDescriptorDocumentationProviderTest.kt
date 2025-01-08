@@ -270,6 +270,50 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
     )
   }
 
+  fun `test attribute of a wildcard element`() {
+    doTestDocContains(
+      """
+        <root>
+          <anyNameElement attribute<caret>UnderWildcard="any"/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <code>*</code> / <b><code>@attributeUnderWildcard</code></b><hr/>\n" +
+      "Description of <code>attributeUnderWildcard</code>."
+    )
+  }
+
+  fun `test element under wildcard element`() {
+    doTestDocContains(
+      """
+        <root>
+          <anyNameElement>
+            <childUnder<caret>Wildcard/>
+          </anyNameElement>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <code>*</code> / <b><code>&lt;childUnderWildcard&gt;</code></b><hr/>\n" +
+      "Description of <code>childUnderWildcard</code>." +
+      "<h5>Attributes</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#attribute:root__*__childUnderWildcard__attributeOfElementUnderWildcard\"><code>attributeOfElementUnderWildcard</code></a></li>" +
+      "</ul>"
+    )
+  }
+
+  fun `test attribute of element under wildcard element`() {
+    doTestDocContains(
+      """
+        <root>
+          <anyNameElement>
+            <childUnderWildcard attribute<caret>OfElementUnderWildcard="any"/>
+          </anyNameElement>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <code>*</code> / <a href=\"psi_element://#element:root__*__childUnderWildcard\"><code>&lt;childUnderWildcard&gt;</code></a> / <b><code>@attributeOfElementUnderWildcard</code></b><hr/>\n" +
+      "Description of <code>attributeOfElementUnderWildcard</code>."
+    )
+  }
+
   private fun doTestDocContains(@Language("XML") fileText: String, @Language("HTML") expectedDoc: String) {
     myFixture.configureByText(TEST_XML_FILE_NAME, fileText)
     val targets = IdeDocumentationTargetProvider.getInstance(project)

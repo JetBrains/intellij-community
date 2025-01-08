@@ -43,7 +43,7 @@ internal abstract class AbstractXmlDescriptorDocumentationTargetProvider : PsiDo
     val content = DocumentationContentProvider.getInstance().getContent(docYamlCoordinates) ?: return null
     return when (xmlElement) {
       is XmlTag -> {
-        val docElement = content.findElement(elementPath) ?: return null
+        val docElement = content.findElement(elementPath)?.takeIf { !it.isWildcard() } ?: return null
         XmlDescriptorElementDocumentationTarget(element.project, content, docElement)
       }
       is XmlAttribute -> {

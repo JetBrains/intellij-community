@@ -201,3 +201,17 @@ elements:
                   name: child1
               - element:
                   name: child2
+        - element:
+            name: "*"
+            attributes:
+              - attribute:
+                  name: attributeUnderWildcard
+                  description: Description of `attributeUnderWildcard`.
+            children:
+              - element:
+                  name: childUnderWildcard
+                  description: Description of `childUnderWildcard`.
+                  attributes:
+                    - attribute:
+                        name: attributeOfElementUnderWildcard
+                        description: Description of `attributeOfElementUnderWildcard`.

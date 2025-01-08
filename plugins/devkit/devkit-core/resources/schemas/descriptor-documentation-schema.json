@@ -31,7 +31,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "description": "Name of the element."
+          "description": "Name of the element. For elements with unknown names, it supports wildcard: *. The purpose of wildcard elements is to provide documentation for known sub-children or attributes."
         },
         "sdkDocsFixedPath": {
           "type": "array",

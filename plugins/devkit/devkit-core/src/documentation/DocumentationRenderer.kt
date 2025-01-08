@@ -168,23 +168,28 @@ internal class DocumentationRenderer(private val project: Project) {
       if (i > 0) {
         append(" / ")
       }
-      append(elementLink(linkElements[i], linkElements.take(i + 1)))
+      append(elementLinkOrWildcard(linkElements[i], linkElements.take(i + 1)))
     }
     if (linkElements.isNotEmpty()) {
       append(" / ")
     }
     val lastElementName = elementPath.last()
     if (linkForLast) {
-      append(elementLink(lastElementName, elementPath))
+      append(elementLinkOrWildcard(lastElementName, elementPath))
     }
     else {
       append("**`<$lastElementName>`**")
     }
   }
 
-  private fun elementLink(text: String, path: List<String>): String {
-    val linkPath = path.toPathString()
-    return "[`<$text>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)"
+  private fun elementLinkOrWildcard(text: String, path: List<String>): String {
+    if (text != "*") {
+      val linkPath = path.toPathString()
+      return "[`<$text>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)"
+    }
+    else {
+      return "`*`"
+    }
   }
 
   private fun StringBuilder.appendDeprecation(deprecatedSince: String?, deprecationNote: String?) {
@@ -285,7 +290,7 @@ internal class DocumentationRenderer(private val project: Project) {
       appendParagraphSeparator()
     } else {
       for (child in element.children) {
-        val childElement = child.element ?: continue
+        val childElement = child.element?.takeIf { !it.isWildcard() } ?: continue
         val linkText = childElement.name
         val linkPath = childElement.path.toPathString()
         appendLine("- [`<$linkText>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)${getRequirementSimpleText(child.element?.requirement)}")
