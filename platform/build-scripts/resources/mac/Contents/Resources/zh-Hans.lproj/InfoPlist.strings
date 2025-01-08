@@ -10,3 +10,4 @@ NSNetworkVolumesUsageDescription = "@@bundle_name@@ 中的应用程序请求访�
 NSRemovableVolumesUsageDescription = "@@bundle_name@@ 中的应用程序请求访问可移动卷上的文件。";
 NSBluetoothAlwaysUsageDescription = "@@bundle_name@@ 中的应用程序请求访问蓝牙。";
 NSAppleEventsUsageDescription = "@@bundle_name@@ 中的应用程序请求发送 Apple 事件的功能。";
+NSLocalNetworkUsageDescription = "@@bundle_name@@'s features, such as SSH and database connectivity, require permissions for accessing the local network and sending broadcast requests.";
