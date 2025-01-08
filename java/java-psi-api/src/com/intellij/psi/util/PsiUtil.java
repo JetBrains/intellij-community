@@ -1107,6 +1107,7 @@ public final class PsiUtil extends PsiUtilCore {
    * @param element element to get Java language level for
    * @return the language level.
    */
+  @Contract(pure = true)
   public static @NotNull LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       return JavaDirectoryService.getInstance().getLanguageLevel((PsiDirectory)element);

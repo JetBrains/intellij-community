@@ -153,7 +153,6 @@ public final class PossibleHeapPollutionVarargsInspection extends AbstractBaseJa
 
     protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
       final LocalQuickFix quickFix;
-      PsiUtil.getLanguageLevel(method);
       if (GenericsUtil.isSafeVarargsNoOverridingCondition(method)) {
         quickFix = new AnnotateAsSafeVarargsQuickFix(false);
       }
