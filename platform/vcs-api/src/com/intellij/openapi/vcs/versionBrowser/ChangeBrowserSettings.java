@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,8 +36,8 @@ public class ChangeBrowserSettings {
   public boolean USE_CHANGE_BEFORE_FILTER = false;
   public boolean USE_CHANGE_AFTER_FILTER = false;
 
-  public String DATE_BEFORE = "";
-  public String DATE_AFTER = "";
+  public @Nullable String DATE_BEFORE = "";
+  public @Nullable String DATE_AFTER = "";
 
   public String CHANGE_BEFORE = "";
   public String CHANGE_AFTER = "";
