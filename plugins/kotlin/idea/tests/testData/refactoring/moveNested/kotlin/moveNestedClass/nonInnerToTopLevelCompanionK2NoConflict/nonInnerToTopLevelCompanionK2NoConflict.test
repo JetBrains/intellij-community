@@ -1,0 +1,7 @@
+{
+  "mainFile": "test.kt",
+  "type": "MOVE_KOTLIN_NESTED_CLASS",
+  "withRuntime": "true",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

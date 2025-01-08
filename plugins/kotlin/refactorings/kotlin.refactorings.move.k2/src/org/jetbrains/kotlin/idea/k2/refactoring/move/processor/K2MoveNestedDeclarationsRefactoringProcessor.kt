@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.DeclarationTarget
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.DeclarationTarget.DeclarationTargetType
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.ImplicitCompanionAsDispatchReceiverUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInstanceReferenceUsageInfo
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -74,17 +73,6 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                     } else {
                         false
                     }
-                }
-
-                is ImplicitCompanionAsDispatchReceiverUsageInfo -> {
-                    val isValidTarget = isValidTargetForImplicitCompanionAsDispatchReceiver(moveDescriptor.target, usage.companionObject)
-                    if (!isValidTarget) {
-                        conflicts.putValue(
-                            element,
-                            KotlinBundle.message("text.implicit.companion.object.will.be.inaccessible.0", element.text)
-                        )
-                    }
-                    true
                 }
 
                 is OuterInstanceReferenceUsageInfo -> {

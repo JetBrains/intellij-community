@@ -360,6 +360,11 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/nonInnerToTopLevelCompanionConflict/nonInnerToTopLevelCompanionConflict.test");
     }
 
+    @TestMetadata("kotlin/moveNestedClass/nonInnerToTopLevelCompanionK2NoConflict/nonInnerToTopLevelCompanionK2NoConflict.test")
+    public void testKotlin_moveNestedClass_nonInnerToTopLevelCompanionK2NoConflict_NonInnerToTopLevelCompanionK2NoConflict() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/nonInnerToTopLevelCompanionK2NoConflict/nonInnerToTopLevelCompanionK2NoConflict.test");
+    }
+
     @TestMetadata("kotlin/moveNestedClass/nonInnerToTopLevelPrivateClass/nonInnerToTopLevelPrivateClass.test")
     public void testKotlin_moveNestedClass_nonInnerToTopLevelPrivateClass_NonInnerToTopLevelPrivateClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/nonInnerToTopLevelPrivateClass/nonInnerToTopLevelPrivateClass.test");
