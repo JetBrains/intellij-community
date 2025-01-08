@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.google.common.base.Strings;
@@ -6,12 +6,14 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.*;
 import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.process.ProcessNotCreatedException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.provider.EelNioBridgeService;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.EnvironmentUtil;
@@ -451,6 +453,11 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     final var exePath = Path.of(exe);
+
+    if (ApplicationManager.getApplication().getServiceIfCreated(EelNioBridgeService.class) == null) {
+      // some distributions of the IDE do not include `PlatformExtensions.xml`
+      return null;
+    }
 
     if (getEelDescriptor(exePath) != LocalEelDescriptor.INSTANCE) { // fast check
       eelApi = getEelApiBlocking(exePath);
