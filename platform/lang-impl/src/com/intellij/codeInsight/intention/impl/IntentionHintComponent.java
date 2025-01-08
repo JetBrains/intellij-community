@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -911,7 +911,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
             PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
             PsiElement container = suppressAction.getContainer(at);
             if (container != null) {
-              return () -> injectionHighlighter.highlight(container, Collections.singletonList(container));
+              return () -> {
+                highlighter.dropHighlight();
+                injectionHighlighter.highlight(container, Collections.singletonList(container));
+              };
             }
           }
           else {
