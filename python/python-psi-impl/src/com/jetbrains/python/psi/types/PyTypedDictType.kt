@@ -312,5 +312,7 @@ class PyTypedDictType @JvmOverloads constructor(
     val valueTypeErrors: MutableList<ValueTypeError> = mutableListOf()
     val missingKeys: MutableList<MissingKeysError> = mutableListOf()
     val extraKeys: MutableList<ExtraKeyError> = mutableListOf()
+
+    val hasErrors: Boolean get() = valueTypeErrors.isNotEmpty() || missingKeys.isNotEmpty() || extraKeys.isNotEmpty()
   }
 }

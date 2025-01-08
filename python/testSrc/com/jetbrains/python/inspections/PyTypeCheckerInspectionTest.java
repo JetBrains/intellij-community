@@ -1497,6 +1497,19 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                    'b': {'a': 'a', 'b': 'b', 'c': 'c'}
                                }
                            }</warning>
+                           
+                           
+                           class Movie(TypedDict):
+                               title: str
+                               year: int
+                           
+                           movies1: list[Movie] = [
+                               {"title": "Blade Runner", "year": 1982}, # OK
+                               {"title": "The Matrix"},
+                           ]
+                           movies2: list[Movie] = <warning descr="Expected type 'list[Movie]', got 'list[dict[str, str]]' instead">[
+                               {"title": "The Matrix"},
+                           ]</warning>
                            """
       )
     );
