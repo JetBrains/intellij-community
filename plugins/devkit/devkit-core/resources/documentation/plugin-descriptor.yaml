@@ -72,7 +72,7 @@ elements:
             examples:
               - |
                 ```xml
-                <id>com.company.framework</id>
+                <id>com.example.framework</id>
                 ```
 
         - element:
