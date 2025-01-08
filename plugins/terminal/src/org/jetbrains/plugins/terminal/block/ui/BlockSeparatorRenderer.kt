@@ -14,14 +14,15 @@ import java.awt.geom.Rectangle2D
  */
 internal class BlockSeparatorRenderer : CustomHighlighterRenderer {
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
-    if (highlighter.endOffset == editor.document.textLength) {
-      return
+    if (highlighter.startOffset == 0) {
+      return  // Do not paint separator if it is the first block
     }
 
     val visibleArea = editor.scrollingModel.visibleArea
-    val rightX = visibleArea.width - JBUI.scale(TerminalUi.blockSeparatorRightOffset).toFloat()
-    val bottomY = editor.offsetToXY(highlighter.endOffset).y.toFloat() + editor.lineHeight + JBUI.scale(TerminalUi.blockBottomInset)
-    val rect = Rectangle2D.Float(0f, bottomY, rightX, 1f)
+    val width = visibleArea.width - JBUI.scale(TerminalUi.blockSeparatorRightOffset).toFloat()
+    val separatorHeight = 1f
+    val y = editor.offsetToXY(highlighter.startOffset).y.toFloat() - JBUI.scale(TerminalUi.blockTopInset) - separatorHeight
+    val rect = Rectangle2D.Float(0f, y, width, separatorHeight)
 
     val g2d = g.create() as Graphics2D
     try {
