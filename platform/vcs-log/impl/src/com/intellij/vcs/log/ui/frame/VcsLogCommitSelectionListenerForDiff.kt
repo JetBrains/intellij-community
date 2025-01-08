@@ -6,42 +6,36 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.StatusText
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.data.CommitDetailsGetter
-import com.intellij.vcs.log.ui.table.CommitSelectionListener
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 open class VcsLogCommitSelectionListenerForDiff(
   private val changesLoadingPane: JBLoadingPanel,
-  private val changesBrowser: VcsLogChangesBrowser,
-  graphTable: VcsLogGraphTable,
-  commitDetailsGetter: CommitDetailsGetter
-) : CommitSelectionListener<VcsFullCommitDetails>(graphTable, commitDetailsGetter) {
+  private val changesBrowser: VcsLogChangesBrowser
+) : CommitDetailsLoader.Listener<VcsFullCommitDetails> {
   override fun onEmptySelection() {
     changesBrowser.setSelectedDetails(emptyList())
   }
 
-  override fun onDetailsLoaded(commitsIds: List<Int>, detailsList: List<VcsFullCommitDetails>) {
-    val maxSize = VcsLogUtil.getMaxSize(detailsList)
+  override fun onDetailsLoaded(commitIds: List<Int>, details: List<VcsFullCommitDetails>) {
+    val maxSize = VcsLogUtil.getMaxSize(details)
     if (maxSize > VcsLogUtil.getShownChangesLimit()) {
       val sizeText = VcsLogUtil.getSizeText(maxSize)
       changesBrowser.setEmptyWithText { statusText: StatusText ->
-        statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", detailsList.size, sizeText))
+        statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", details.size, sizeText))
         statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.changes.too.many.show.anyway.status.action"),
                                        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
-        ) { changesBrowser.setSelectedDetails(detailsList) }
+        ) { changesBrowser.setSelectedDetails(details) }
       }
     }
     else {
-      changesBrowser.setSelectedDetails(detailsList)
+      changesBrowser.setSelectedDetails(details)
     }
   }
 
-  override fun onSelection(selection: IntArray): IntArray {
+  override fun onSelection() {
     changesBrowser.setEmpty()
-    return selection
   }
 
   override fun onLoadingStarted() {

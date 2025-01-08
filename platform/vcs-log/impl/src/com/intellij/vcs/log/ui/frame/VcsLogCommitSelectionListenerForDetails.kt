@@ -15,26 +15,22 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.data.ContainingBranchesGetter
 import com.intellij.vcs.log.data.VcsCommitExternalStatus
+import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel.RootColor
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation
-import com.intellij.vcs.log.ui.table.CommitSelectionListener
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.Nls
-import kotlin.math.min
 
-internal class VcsLogCommitSelectionListenerForDetails private constructor(
-  graphTable: VcsLogGraphTable,
+internal class VcsLogCommitSelectionListenerForDetails(
+  private val logData: VcsLogData,
   private val colorManager: VcsLogColorManager,
   private val detailsPanel: CommitDetailsListPanel,
   parentDisposable: Disposable,
-) : CommitSelectionListener<VcsCommitMetadata>(graphTable, graphTable.logData.miniDetailsGetter), Disposable {
-
-  private val logData = graphTable.logData
+) : CommitDetailsLoader.Listener<VcsCommitMetadata>, Disposable {
 
   private val hashesResolver = CommitDataLoader()
   private val containingBranchesLoader = ContainingBranchesAsyncLoader(logData.containingBranchesGetter, detailsPanel).also {
@@ -48,16 +44,16 @@ internal class VcsLogCommitSelectionListenerForDetails private constructor(
     Disposer.register(parentDisposable, this)
   }
 
-  override fun onSelection(selection: IntArray): IntArray {
+  override fun onSelection() {
     cancelLoading()
-    return selection.copyOf(min(selection.size, MAX_COMMITS_TO_LOAD))
   }
 
   override fun onDetailsLoaded(hashedCommitsIds: List<Int>, detailsList: List<VcsCommitMetadata>) {
+    val detailsList = detailsList.take(MAX_COMMITS_TO_LOAD)
     //TODO: replace with detailsPanel.setCommits
     val commitIds = detailsList.map { CommitId(it.id, it.root) }
     detailsPanel.rebuildPanel(commitIds)
-    detailsPanel.showOverflowLabelIfNeeded(MAX_COMMITS_TO_LOAD, detailsList.size)
+    detailsPanel.showOverflowLabelIfNeeded(MAX_COMMITS_TO_LOAD, hashedCommitsIds.size)
 
     val unResolvedHashes = mutableSetOf<String>()
     val presentations = detailsList.map { CommitPresentationUtil.buildPresentation(logData.project, it, unResolvedHashes) }
@@ -304,17 +300,6 @@ internal class VcsLogCommitSelectionListenerForDetails private constructor(
   }
 
   companion object {
-
-    private const val MAX_COMMITS_TO_LOAD = 50
-
-    @JvmOverloads
-    @JvmStatic
-    fun install(graphTable: VcsLogGraphTable,
-                detailsPanel: CommitDetailsListPanel,
-                disposable: Disposable,
-                colorManager: VcsLogColorManager = graphTable.colorManager) {
-      val listener = VcsLogCommitSelectionListenerForDetails(graphTable, colorManager, detailsPanel, disposable)
-      graphTable.selectionModel.addListSelectionListener(listener)
-    }
+    internal const val MAX_COMMITS_TO_LOAD = 50
   }
 }

@@ -15,6 +15,7 @@ import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
 @ApiStatus.Internal
+@Deprecated("Unused, see VcsLogTableCommitSelectionListener")
 abstract class CommitSelectionListener<T : VcsCommitMetadata?> protected constructor(
   protected val graphTable: VcsLogGraphTable,
   private val commitDetailsGetter: DataGetter<out T?>,

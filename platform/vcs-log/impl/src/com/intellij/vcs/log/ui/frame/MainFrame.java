@@ -22,6 +22,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -32,6 +33,7 @@ import com.intellij.vcs.log.ui.details.CommitDetailsListPanel;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.table.VcsLogTableCommitSelectionListener;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -96,7 +98,12 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
         return Unit.INSTANCE;
       });
     });
-    VcsLogCommitSelectionListenerForDetails.install(myGraphTable, myDetailsPanel, this);
+
+    CommitDetailsLoader<VcsFullCommitDetails> commitDetailsLoader = new CommitDetailsLoader<>(logData.getCommitDetailsGetter(), this);
+
+    VcsLogCommitSelectionListenerForDetails listenerForDetails =
+      new VcsLogCommitSelectionListenerForDetails(logData, colorManager, myDetailsPanel, this);
+    commitDetailsLoader.addListener(listenerForDetails);
 
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
@@ -116,16 +123,9 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
 
     VcsLogCommitSelectionListenerForDiff commitSelectionListener =
-      new VcsLogCommitSelectionListenerForDiff(changesLoadingPane, myChangesBrowser, myGraphTable,
-                                               myLogData.getCommitDetailsGetter()) {
+      new VcsLogCommitSelectionListenerForDiff(changesLoadingPane, myChangesBrowser) {
         @Override
-        protected void onLoadingScheduled() {
-          myIsLoading = true;
-          myPathToSelect = null;
-        }
-
-        @Override
-        protected void onLoadingStopped() {
+        public void onLoadingStopped() {
           super.onLoadingStopped();
           myIsLoading = false;
           if (myPathToSelect != null) {
@@ -135,8 +135,23 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
         }
       };
 
-    myGraphTable.getSelectionModel().addListSelectionListener(commitSelectionListener);
-    Disposer.register(disposable, () -> myGraphTable.getSelectionModel().removeListSelectionListener(commitSelectionListener));
+    commitDetailsLoader.addListener(commitSelectionListener);
+
+    VcsLogTableCommitSelectionListener tableCommitSelectionListener = new VcsLogTableCommitSelectionListener(myGraphTable) {
+      @Override
+      protected void handleSelection(@NotNull List<@NotNull Integer> commitIds) {
+        commitDetailsLoader.loadDetails(commitIds);
+      }
+
+      @Override
+      protected void onHandlingScheduled() {
+        myIsLoading = true;
+        myPathToSelect = null;
+      }
+    };
+
+    myGraphTable.getSelectionModel().addListSelectionListener(tableCommitSelectionListener);
+    Disposer.register(disposable, () -> myGraphTable.getSelectionModel().removeListSelectionListener(tableCommitSelectionListener));
 
     myNotificationLabel = new EditorNotificationPanel(UIUtil.getPanelBackground(), EditorNotificationPanel.Status.Warning);
     myNotificationLabel.setVisible(false);
