@@ -177,28 +177,21 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
-          val agentContext = when (session.agentInfo.agentType) {
-            RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol)
-            RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol)
-            RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, protocol)
-          }
-
-
           suspend fun <T> runNext(
             actionTitle: String,
             timeout: Duration,
-            contextGetter: () -> CoroutineContext,
+            coroutineContextGetter: () -> CoroutineContext,
             requestFocusBeforeStart: Boolean?,
-            action: suspend () -> T,
+            action: suspend AgentContext.() -> T,
           ): T {
             try {
               assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
               LOG.info("'$actionTitle': received action execution request")
 
-              val providedContext = contextGetter.invoke()
-              val clientId = providedContext.clientId() ?: ClientId.current
+              val providedCoroutineContext = coroutineContextGetter.invoke()
+              val clientId = providedCoroutineContext.clientId() ?: ClientId.current
 
-              return withContext(providedContext) {
+              return withContext(providedCoroutineContext) {
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
                 if (!app.isHeadlessEnvironment && isNotRdHost && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(silent = false)
@@ -206,8 +199,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
 
+                val agentContext = when (session.agentInfo.agentType) {
+                  RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol, coroutineContext)
+                  RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol, coroutineContext)
+                  RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, protocol, coroutineContext)
+                }
+
                 val result = runLogged(actionTitle, timeout) {
-                  action()
+                   agentContext.action()
                 }
 
                 // Assert state
@@ -226,10 +225,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           session.runNextAction.setSuspend(sessionBgtDispatcher) { _, parameters ->
             val actionTitle = parameters.title
             val queue = actionsMap[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
-            val action = queue.remove()
+            val agentAction = queue.remove()
 
-            return@setSuspend runNext(actionTitle, action.timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
-              action.action(agentContext, parameters.parameters)
+            return@setSuspend runNext(actionTitle, agentAction.timeout, agentAction.coroutineContextGetter, agentAction.requestFocusBeforeStart) {
+              agentAction.action.invoke(this, parameters.parameters)
             }
           }
 
@@ -238,10 +237,11 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             val actionTitle = parameters.title
             val queue = getComponentDataRequests[actionTitle]
                         ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
-            val action = queue.remove()
+            val agentActionGetComponentData = queue.remove()
 
-            return@setSuspend runNext(actionTitle, action.timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
-              action.action(agentContext, parameters.parameters)
+            return@setSuspend runNext(actionTitle, agentActionGetComponentData.timeout,
+                                      agentActionGetComponentData.coroutineContextGetter, agentActionGetComponentData.requestFocusBeforeStart) {
+              agentActionGetComponentData.action(this, parameters.parameters)
             }
           }
         }
