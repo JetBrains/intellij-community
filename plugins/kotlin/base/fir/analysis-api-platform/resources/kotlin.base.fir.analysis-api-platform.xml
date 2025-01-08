@@ -31,13 +31,15 @@
   </extensions>
 
   <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$BuiltinsFileDocumentListener"
+              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$SingleFileModuleModificationListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$LibraryUpdatesListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$NonWorkspaceModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
-    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$FileDocumentListener"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$ProjectFileDocumentListener"
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$MyDynamicPluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>

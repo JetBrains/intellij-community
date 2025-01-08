@@ -56,8 +56,8 @@ private val STDLIB_PATTERN = Pattern.compile("kotlin-stdlib-(\\d*)\\.(\\d*)\\.(\
 
 @Service(Service.Level.PROJECT)
 class FirIdeModuleStateModificationService(val project: Project) : Disposable {
-    init {
-        val files: Set<String> by lazy {
+    internal class BuiltinsFileDocumentListener(private val project: Project) : FileDocumentManagerListener {
+        private val builtinsFiles: Set<String> by lazy {
             val result = mutableSetOf<String>()
             object : BuiltinsVirtualFileProviderBaseImpl() {
                 override fun findVirtualFile(url: URL): VirtualFile {
@@ -68,25 +68,23 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             result
         }
 
-        project.messageBus.connect(this).subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
-            override fun fileWithNoDocumentChanged(file: VirtualFile) {
-                // Builtins sessions are created based on `BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()`
-                // Those files are located inside IDE distribution and are outside the project.
-                // So if those files are changed on the disk e.g., after update from sources, VFS watcher detects this:
-                // `onContentReloaded` event is emitted.
-                // Stub index for those files is rebuild (see `BuiltInsIndexableSetContributor`).
-                // To ensure that no cached psi with stale stubs/virtual files,
-                // it's required to clear caches manually,
-                // otherwise opening file which referred the old builtins would let to PIEAE exceptions
-                val jarPath = URLUtil.splitJarUrl(file.path)?.first
-                if (jarPath != null && jarPath in files) {
-                    runWriteAction {
-                        PsiManager.getInstance(project).dropPsiCaches()
-                        project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
-                    }
+        override fun fileWithNoDocumentChanged(file: VirtualFile) {
+            // Builtins sessions are created based on `BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()`
+            // Those files are located inside IDE distribution and are outside the project.
+            // So if those files are changed on the disk e.g., after update from sources, VFS watcher detects this:
+            // `onContentReloaded` event is emitted.
+            // Stub index for those files is rebuild (see `BuiltInsIndexableSetContributor`).
+            // To ensure that no cached psi with stale stubs/virtual files,
+            // it's required to clear caches manually,
+            // otherwise opening file which referred the old builtins would let to PIEAE exceptions
+            val jarPath = URLUtil.splitJarUrl(file.path)?.first
+            if (jarPath != null && jarPath in builtinsFiles) {
+                runWriteAction {
+                    PsiManager.getInstance(project).dropPsiCaches()
+                    project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
                 }
             }
-        })
+        }
     }
 
     /**
@@ -162,7 +160,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
         }
     }
 
-    internal class FileDocumentListener(private val project: Project) : FileDocumentManagerListener {
+    internal class ProjectFileDocumentListener(private val project: Project) : FileDocumentManagerListener {
         override fun fileWithNoDocumentChanged(file: VirtualFile) {
             // `FileDocumentManagerListener` may receive events from other projects via `FileDocumentManagerImpl`'s `AsyncFileListener`.
             if (!project.isInitialized || !ProjectFileIndex.getInstance(project).isInContent(file)) {
