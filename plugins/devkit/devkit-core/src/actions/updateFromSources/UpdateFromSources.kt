@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.task.ProjectTaskManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Restarter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.nio.file.Files
 import java.nio.file.Path
@@ -46,7 +47,8 @@ import kotlin.io.path.*
 
 private val LOG = Logger.getInstance("org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesKt")
 
-internal fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutomatically: Boolean) {
+@ApiStatus.Internal
+fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutomatically: Boolean) {
   LOG.debug("Update from sources requested")
 
   val state = UpdateFromSourcesSettings.getState()

@@ -72,7 +72,6 @@
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
-    <orderEntry type="module" module-name="intellij.smart.update" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />

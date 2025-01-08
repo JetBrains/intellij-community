@@ -1,0 +1,3 @@
+- name: lib/smart-update.jar
+  modules:
+  - name: intellij.smart.update

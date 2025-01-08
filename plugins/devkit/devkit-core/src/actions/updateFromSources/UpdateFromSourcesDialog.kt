@@ -15,6 +15,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.enteredTextSatisfies
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.event.ActionEvent
 import java.nio.file.Path
@@ -88,7 +89,8 @@ class UpdateFromSourcesDialog(private val project: Project,
   }
 }
 
-internal fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState): TextFieldWithHistoryWithBrowseButton {
+@ApiStatus.Internal
+fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState): TextFieldWithHistoryWithBrowseButton {
   val pathField = textFieldWithHistoryWithBrowseButton(
     project,
     FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title")),

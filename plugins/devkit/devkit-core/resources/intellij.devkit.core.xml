@@ -639,7 +639,6 @@
     <registryKey key="devkit.inlay.threading" defaultValue="false"
                  description="Experimental inlays for Threading Annotations"/>
 
-    <smartUpdateStep implementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesStep" order="first"/>
     <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
                  description="Enables commit messages validation for intellij project"/>
 

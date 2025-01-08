@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.actions.updateFromSources
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.smartupdate
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -10,6 +10,9 @@ import com.intellij.smartUpdate.beforeRestart
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings
+import org.jetbrains.idea.devkit.actions.updateFromSources.optionsPanel
+import org.jetbrains.idea.devkit.actions.updateFromSources.updateFromSources
 import javax.swing.JComponent
 
 internal class UpdateFromSourcesStep: StepOption {
