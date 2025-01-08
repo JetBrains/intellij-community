@@ -20,6 +20,7 @@ val LenientJson = Json {
   encodeDefaults = true
   isLenient = true
   allowTrailingComma = true
+  allowComments = true
 }
 
 fun <T> JsonElement.lenientDecodeOrNull(deserializer: DeserializationStrategy<T>): T? {
