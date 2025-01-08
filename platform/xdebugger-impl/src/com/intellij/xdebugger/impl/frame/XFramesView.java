@@ -755,7 +755,8 @@ public final class XFramesView extends XDebugView {
    * @see #shouldFoldHiddenFrames()
    */
   public static class HiddenStackFramesItem extends XStackFrame implements XDebuggerFramesList.ItemWithCustomBackgroundColor,
-                                                                           ItemWithSeparatorAbove {
+                                                                           ItemWithSeparatorAbove,
+                                                                           HiddenFramesStackFrame {
     final List<XStackFrame> hiddenFrames;
 
     public HiddenStackFramesItem(List<XStackFrame> hiddenFrames) {
@@ -776,7 +777,8 @@ public final class XFramesView extends XDebugView {
       return null;
     }
 
-    public List<XStackFrame> getHiddenFrames() {
+    @Override
+    public @NotNull List<XStackFrame> getHiddenFrames() {
       return hiddenFrames;
     }
 
