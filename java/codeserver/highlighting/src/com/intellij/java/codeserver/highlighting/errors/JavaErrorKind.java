@@ -2,9 +2,11 @@
 package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 /**
@@ -35,6 +37,15 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> permits J
     return psi;
   }
 
+  /**
+   * @param psi PSI element associated with an error
+   * @param context a context in which the error should be rendered
+   * @return range within anchor to highlight; or null if the whole anchor should be highlighted
+   */
+  default @Nullable TextRange range(@NotNull Psi psi, Context context) {
+    return null;
+  }
+  
   /**
    * @param psi PSI element associated with an error
    * @param context a context in which the error should be rendered

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationToPackageInfoFileFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -18,7 +17,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.ClassUtil;
@@ -128,31 +126,6 @@ public final class AnnotationsHighlightUtil {
     return false;
   }
 
-  static HighlightInfo.Builder checkConstantExpression(@NotNull PsiExpression expression) {
-    PsiElement parent = expression.getParent();
-    if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
-      if (!PsiUtil.isConstantExpression(expression)) {
-        if (IncompleteModelUtil.isIncompleteModel(expression) && 
-            IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expression)) {
-          return null;
-        }
-        String description = JavaErrorBundle.message("annotation.non.constant.attribute.value");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
-      }
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkValidAnnotationType(@Nullable PsiType type, @NotNull PsiTypeElement typeElement) {
-    if (type != null && type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
-      return null;
-    }
-    String description = JavaErrorBundle
-      .message("annotation.invalid.annotation.member.type", type != null ? type.getPresentableText() : null);
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
-  }
-
   private static @NotNull HighlightInfo.Builder createAnnotationError(@NotNull PsiAnnotation annotation, @NotNull @NlsContexts.DetailedDescription String message) {
     LocalQuickFixAndIntentionActionOnPsiElement fix = QuickFixFactory.getInstance()
       .createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
@@ -194,66 +167,6 @@ public final class AnnotationsHighlightUtil {
       }
     }
     return false;
-  }
-
-  static HighlightInfo.Builder checkClashesWithSuperMethods(@NotNull PsiAnnotationMethod psiMethod) {
-    PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
-    if (nameIdentifier != null) {
-      PsiMethod[] methods = psiMethod.findDeepestSuperMethods();
-      for (PsiMethod method : methods) {
-        PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null) {
-          String qualifiedName = containingClass.getQualifiedName();
-          if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName) || CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(qualifiedName)) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier).descriptionAndTooltip(
-              JavaErrorBundle.message("error.interface.member.clashes", JavaHighlightUtil.formatMethod(method),
-                                      HighlightUtil.formatClass(containingClass)));
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkAnnotationDeclaration(@Nullable PsiElement parent, @NotNull PsiReferenceList list) {
-    if (PsiUtil.isAnnotationMethod(parent)) {
-      PsiAnnotationMethod method = (PsiAnnotationMethod)parent;
-      if (list == method.getThrowsList()) {
-        String description = JavaErrorBundle.message("annotation.members.may.not.have.throws.list");
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list.getFirstChild()).descriptionAndTooltip(description);
-        IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
-        info.registerFix(action, null, null, null, null);
-        return info;
-      }
-    }
-    else if (parent instanceof PsiClass aClass && aClass.isAnnotationType()) {
-      PsiElement child = list.getFirstChild();
-      if (PsiUtil.isJavaToken(child, JavaTokenType.EXTENDS_KEYWORD)) {
-        String description = JavaErrorBundle.message("annotation.may.not.have.extends.list");
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(child).descriptionAndTooltip(description);
-        IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
-        info.registerFix(action, null, null, null, null);
-        return info;
-      }
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkPackageAnnotationContainingFile(@NotNull PsiPackageStatement statement, @NotNull PsiFile file) {
-    PsiModifierList annotationList = statement.getAnnotationList();
-    if (annotationList != null && !PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
-      String message = JavaErrorBundle.message("invalid.package.annotation.containing.file");
-      IntentionAction deleteFix =
-        QuickFixFactory.getInstance().createDeleteFix(annotationList, JavaAnalysisBundle.message("intention.text.remove.annotation"));
-      HighlightInfo.Builder builder =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotationList).descriptionAndTooltip(message);
-      var moveAnnotationToPackageInfoFileFix = new MoveAnnotationToPackageInfoFileFix(statement);
-      return builder.registerFix(deleteFix, null, null, null, null)
-        .registerFix(moveAnnotationToPackageInfoFileFix, null, null, null, null);
-    }
-    return null;
   }
 
   static HighlightInfo.Builder checkRepeatableAnnotation(@NotNull PsiAnnotation annotation) {

@@ -37,13 +37,11 @@ import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -63,12 +61,6 @@ import java.util.stream.Stream;
 
 public final class HighlightMethodUtil {
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
-
-  private static final MethodSignature ourValuesEnumSyntheticMethod =
-    MethodSignatureUtil.createMethodSignature("values",
-                                              PsiType.EMPTY_ARRAY,
-                                              PsiTypeParameter.EMPTY_ARRAY,
-                                              PsiSubstitutor.EMPTY);
 
   private HighlightMethodUtil() { }
 
@@ -1362,32 +1354,6 @@ public final class HighlightMethodUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkDuplicateMethod(@NotNull PsiClass aClass,
-                                            @NotNull PsiMethod method,
-                                            @NotNull MostlySingularMultiMap<MethodSignature, PsiMethod> duplicateMethods) {
-    if (method instanceof ExternallyDefinedPsiElement) return null;
-    MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-    int methodCount = 1;
-    List<PsiMethod> methods = (List<PsiMethod>)duplicateMethods.get(methodSignature);
-    if (methods.size() > 1) {
-      methodCount++;
-    }
-
-    if (methodCount == 1 && aClass.isEnum() && isEnumSyntheticMethod(methodSignature, aClass.getProject())) {
-      methodCount++;
-    }
-    if (methodCount > 1) {
-      String description = JavaErrorBundle.message("duplicate.method",
-                                                   JavaHighlightUtil.formatMethod(method),
-                                                   HighlightUtil.formatClass(aClass));
-      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
-        range(method, textRange.getStartOffset(), textRange.getEndOffset()).
-        descriptionAndTooltip(description);
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkMethodCanHaveBody(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
     PsiClass aClass = method.getContainingClass();
     boolean hasNoBody = method.getBody() == null;
@@ -2315,14 +2281,6 @@ public final class HighlightMethodUtil {
       return info;
     }
     return null;
-  }
-
-  public static boolean isEnumSyntheticMethod(@NotNull MethodSignature methodSignature, @NotNull Project project) {
-    if (methodSignature.equals(ourValuesEnumSyntheticMethod)) return true;
-    PsiType javaLangString = PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
-    MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString},
-                                                                              PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
-    return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
   }
 
   static boolean hasSurroundingInferenceError(@NotNull PsiElement context) {

@@ -2,8 +2,8 @@
 package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle.message;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorFormatUtil.*;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -28,12 +30,21 @@ public final class JavaErrorKinds {
       public @NotNull HtmlChunk description(@NotNull PsiElement element, @NotNull JavaFeature feature) {
         String name = feature.getFeatureName();
         String version = JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(element)).getDescription();
-        return HtmlChunk.raw(JavaCompilationErrorBundle.message("insufficient.language.level", name, version));
+        return HtmlChunk.raw(message("insufficient.language.level", name, version));
       }
     };
 
   public static final JavaSimpleErrorKind<PsiAnnotation> ANNOTATION_NOT_ALLOWED_HERE =
     new JavaSimpleErrorKind<>("annotation.not.allowed.here");
+  public static final JavaSimpleErrorKind<PsiPackageStatement> ANNOTATION_NOT_ALLOWED_ON_PACKAGE =
+    new JavaSimpleErrorKind<PsiPackageStatement>("annotation.not.allowed.on.package")
+      .withAnchor(statement -> requireNonNull(statement.getAnnotationList()));
+  public static final JavaSimpleErrorKind<PsiReferenceList> ANNOTATION_MEMBER_THROWS_NOT_ALLOWED =
+    new JavaSimpleErrorKind<PsiReferenceList>("annotation.member.may.not.have.throws.list")
+      .withAnchor(list -> requireNonNull(list.getFirstChild()));
+  public static final JavaSimpleErrorKind<PsiReferenceList> ANNOTATION_NOT_ALLOWED_EXTENDS =
+    new JavaSimpleErrorKind<PsiReferenceList>("annotation.may.not.have.extends.list")
+      .withAnchor(list -> requireNonNull(list.getFirstChild()));
   public static final JavaSimpleErrorKind<PsiAnnotation> ANNOTATION_NOT_ALLOWED_VAR =
     new JavaSimpleErrorKind<>("annotation.not.allowed.var");
   public static final JavaSimpleErrorKind<PsiAnnotation> ANNOTATION_NOT_ALLOWED_VOID =
@@ -54,6 +65,31 @@ public final class JavaErrorKinds {
     new JavaSimpleErrorKind<>("annotation.attribute.non.class.literal");
   public static final JavaSimpleErrorKind<PsiExpression> ANNOTATION_ATTRIBUTE_NON_ENUM_CONSTANT =
     new JavaSimpleErrorKind<>("annotation.attribute.non.enum.constant");
+  public static final JavaSimpleErrorKind<PsiExpression> ANNOTATION_ATTRIBUTE_NON_CONSTANT =
+    new JavaSimpleErrorKind<>("annotation.attribute.non.constant");
+  public static final JavaSimpleErrorKind<PsiTypeElement> ANNOTATION_CYCLIC_TYPE =
+    new JavaSimpleErrorKind<>("annotation.cyclic.element.type");
+  public static final JavaErrorKind<PsiMethod, PsiMethod> ANNOTATION_MEMBER_CLASH =
+    new JavaParameterizedErrorKind<>("annotation.member.clash") {
+      @Override
+      public @NotNull HtmlChunk description(@NotNull PsiMethod curMethod, PsiMethod clashMethod) {
+        PsiClass containingClass = requireNonNull(clashMethod.getContainingClass());
+        return HtmlChunk.raw(message("annotation.member.clash", formatMethod(clashMethod), formatClass(containingClass)));
+      }
+
+      @Override
+      public @NotNull PsiElement anchor(@NotNull PsiMethod curMethod, PsiMethod clashMethod) {
+        return requireNonNull(curMethod.getNameIdentifier());
+      }
+    };
+  public static final JavaErrorKind<PsiTypeElement, PsiType> ANNOTATION_METHOD_INVALID_TYPE =
+    new JavaParameterizedErrorKind<>("annotation.member.invalid.type") {
+      @Override
+      public @NotNull HtmlChunk description(@NotNull PsiTypeElement element, PsiType type) {
+        return HtmlChunk.raw(message("annotation.member.invalid.type", 
+                                                                type == null ? null : type.getPresentableText()));
+      }
+    };
   public static final JavaAnnotationValueErrorKind<PsiAnnotationMemberValue> ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE =
     new JavaAnnotationValueErrorKind<>("annotation.attribute.incompatible.type") {
       @Override
@@ -61,21 +97,21 @@ public final class JavaErrorKinds {
                                             JavaAnnotationValueErrorKind.@NotNull AnnotationValueErrorContext context) {
         String text = value instanceof PsiAnnotation annotation ? requireNonNull(annotation.getNameReferenceElement()).getText() :
                       PsiTypesUtil.removeExternalAnnotations(requireNonNull(((PsiExpression)value).getType())).getInternalCanonicalText();
-        return HtmlChunk.raw(JavaCompilationErrorBundle.message("annotation.attribute.incompatible.type", context.typeText(), text));
+        return HtmlChunk.raw(message("annotation.attribute.incompatible.type", context.typeText(), text));
       }
     };
   public static final JavaAnnotationValueErrorKind<PsiArrayInitializerMemberValue> ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER =
     new JavaAnnotationValueErrorKind<>("annotation.attribute.illegal.array.initializer") {
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiArrayInitializerMemberValue element, AnnotationValueErrorContext context) {
-        return HtmlChunk.raw(JavaCompilationErrorBundle.message("annotation.attribute.illegal.array.initializer", context.typeText()));
+        return HtmlChunk.raw(message("annotation.attribute.illegal.array.initializer", context.typeText()));
       }
     };
   public static final JavaErrorKind<PsiNameValuePair, String> ANNOTATION_ATTRIBUTE_DUPLICATE =
     new JavaParameterizedErrorKind<>("annotation.attribute.duplicate") {
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiNameValuePair element, String attribute) {
-        return HtmlChunk.raw(JavaCompilationErrorBundle.message("annotation.attribute.duplicate", attribute));
+        return HtmlChunk.raw(message("annotation.attribute.duplicate", attribute));
       }
     };
   public static final JavaErrorKind<PsiNameValuePair, String> ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD =
@@ -92,7 +128,7 @@ public final class JavaErrorKinds {
 
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiNameValuePair pair, String methodName) {
-        return HtmlChunk.raw(JavaCompilationErrorBundle.message("annotation.attribute.unknown.method", methodName));
+        return HtmlChunk.raw(message("annotation.attribute.unknown.method", methodName));
       }
     };
   // Can be anchored on @FunctionalInterface annotation or at call site
@@ -100,7 +136,7 @@ public final class JavaErrorKinds {
     new JavaParameterizedErrorKind<>("lambda.not.a.functional.interface") {
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiElement element, PsiClass aClass) {
-        return HtmlChunk.raw(JavaCompilationErrorBundle.message("lambda.not.a.functional.interface", aClass.getName()));
+        return HtmlChunk.raw(message("lambda.not.a.functional.interface", aClass.getName()));
       }
     };
   // Can be anchored on @FunctionalInterface annotation or at call site
@@ -111,7 +147,7 @@ public final class JavaErrorKinds {
     new JavaParameterizedErrorKind<>("lambda.multiple.sam.candidates") {
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiElement element, PsiClass aClass) {
-        return HtmlChunk.raw(JavaCompilationErrorBundle.message("lambda.multiple.sam.candidates", aClass.getName()));
+        return HtmlChunk.raw(message("lambda.multiple.sam.candidates", aClass.getName()));
       }
     };
   public static final JavaErrorKind<PsiAnnotation, PsiClass> LAMBDA_FUNCTIONAL_INTERFACE_SEALED =
@@ -130,7 +166,7 @@ public final class JavaErrorKinds {
       public @NotNull HtmlChunk description(@NotNull PsiAnnotation annotation, @NotNull List<PsiAnnotation.@NotNull TargetType> types) {
         String target = JavaPsiBundle.message("annotation.target." + types.get(0));
         PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-        return HtmlChunk.raw(JavaCompilationErrorBundle.message(
+        return HtmlChunk.raw(message(
           "annotation.not.applicable", nameRef != null ? nameRef.getText() : annotation.getText(), target));
       }
     };
@@ -143,7 +179,7 @@ public final class JavaErrorKinds {
 
       @Override
       public @NotNull HtmlChunk description(@NotNull PsiAnnotation annotation, @NotNull List<String> attributeNames) {
-        return HtmlChunk.raw(JavaCompilationErrorBundle.message(
+        return HtmlChunk.raw(message(
           "annotation.missing.attribute", attributeNames.stream().map(attr -> "'" + attr + "'").collect(Collectors.joining(", "))));
       }
     };
@@ -157,4 +193,18 @@ public final class JavaErrorKinds {
     new JavaParameterizedErrorKind<>("override.on.static.method");
   public static final JavaErrorKind<PsiAnnotation, PsiMethod> OVERRIDE_ON_NON_OVERRIDING_METHOD =
     new JavaParameterizedErrorKind<>("override.on.non-overriding.method");
+
+  public static final JavaSimpleErrorKind<PsiMethod> METHOD_DUPLICATE =
+    new JavaSimpleErrorKind<>("method.duplicate") {
+      @Override
+      public @NotNull TextRange range(@NotNull PsiMethod method, Void unused) {
+        return getMethodDeclarationTextRange(method);
+      }
+
+      @Override
+      public @NotNull HtmlChunk description(@NotNull PsiMethod method, Void unused) {
+        PsiClass aClass = requireNonNull(method.getContainingClass());
+        return HtmlChunk.raw(message("method.duplicate", formatMethod(method), formatClass(aClass)));
+      }
+    };
 }

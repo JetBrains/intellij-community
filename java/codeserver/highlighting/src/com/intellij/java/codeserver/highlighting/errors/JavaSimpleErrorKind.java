@@ -7,10 +7,12 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Function;
+
 /**
  * Java compilation error without additional context
  */
-public final class JavaSimpleErrorKind<Psi extends PsiElement> implements JavaErrorKind<Psi, Void> {
+public non-sealed class JavaSimpleErrorKind<Psi extends PsiElement> implements JavaErrorKind<Psi, Void> {
   private final @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String myKey;
 
   JavaSimpleErrorKind(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
@@ -29,6 +31,15 @@ public final class JavaSimpleErrorKind<Psi extends PsiElement> implements JavaEr
 
   public @NotNull JavaCompilationError<Psi, Void> create(@NotNull Psi psi) {
     return JavaErrorKind.super.create(psi, null);
+  }
+  
+  JavaSimpleErrorKind<Psi> withAnchor(@NotNull Function<? super @NotNull Psi, ? extends @NotNull PsiElement> anchorExtractor) {
+    return new JavaSimpleErrorKind<>(myKey) {
+      @Override
+      public @NotNull PsiElement anchor(@NotNull Psi psi, Void unused) {
+        return anchorExtractor.apply(psi);
+      }
+    };
   }
 
   @Override

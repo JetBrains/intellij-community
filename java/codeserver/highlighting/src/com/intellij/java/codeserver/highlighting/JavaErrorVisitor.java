@@ -19,6 +19,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull PsiFile myFile;
   private final @NotNull LanguageLevel myLanguageLevel;
   private final @NotNull AnnotationChecker myAnnotationChecker = new AnnotationChecker(this);
+  private final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   JavaErrorVisitor(@NotNull PsiFile file, @NotNull Consumer<JavaCompilationError<?, ?>> consumer) {
@@ -38,6 +39,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     return feature.isSufficient(myLanguageLevel);
   }
 
+  @NotNull PsiFile file() {
+    return myFile;
+  }
+
   @Contract(pure = true)
   boolean hasErrorResults() {
     return myHasError;
@@ -55,11 +60,42 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) checkFeature(annotation, JavaFeature.ANNOTATIONS);
     myAnnotationChecker.checkAnnotation(annotation);
   }
-
+  
+  @Override
+  public void visitPackageStatement(@NotNull PsiPackageStatement statement) {
+    super.visitPackageStatement(statement);
+    myAnnotationChecker.checkPackageAnnotationContainingFile(statement);
+  }
+  
   @Override
   public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
     super.visitNameValuePair(pair);
     myAnnotationChecker.checkNameValuePair(pair);
+  }
+
+  @Override
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+    super.visitReferenceExpression(expression);
+    if (!hasErrorResults()) {
+      visitExpression(expression);
+      if (hasErrorResults()) return;
+    }
+  }
+
+  @Override
+  public void visitReferenceList(@NotNull PsiReferenceList list) {
+    super.visitReferenceList(list);
+    if (list.getFirstChild() == null) return;
+    PsiElement parent = list.getParent();
+    if (!(parent instanceof PsiTypeParameter)) {
+      myAnnotationChecker.checkAnnotationDeclaration(parent, list);
+    }
+  }
+
+  @Override
+  public void visitExpression(@NotNull PsiExpression expression) {
+    super.visitExpression(expression);
+    if (!hasErrorResults()) myAnnotationChecker.checkConstantExpression(expression);
   }
 
   @Override
@@ -69,12 +105,40 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitMethod(@NotNull PsiMethod method) {
+    super.visitMethod(method);
+    PsiClass aClass = method.getContainingClass();
+    if (!hasErrorResults() &&
+        (method.hasModifierProperty(PsiModifier.DEFAULT) ||
+         aClass != null && aClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC))) {
+      checkFeature(method, JavaFeature.EXTENSION_METHODS);
+    }
+    if (!hasErrorResults() && aClass != null) {
+      myMethodChecker.checkDuplicateMethod(aClass, method);
+    }
+  }
+
+  @Override
   public void visitAnnotationMethod(@NotNull PsiAnnotationMethod method) {
-    super.visitAnnotationMethod(method);
     PsiType returnType = method.getReturnType();
     PsiAnnotationMemberValue value = method.getDefaultValue();
     if (returnType != null && value != null) {
       myAnnotationChecker.checkMemberValueType(value, returnType, method);
+    }
+    PsiTypeElement typeElement = method.getReturnTypeElement();
+    if (typeElement != null) {
+      myAnnotationChecker.checkValidAnnotationType(returnType, typeElement);
+    }
+
+    PsiClass aClass = method.getContainingClass();
+    if (typeElement != null && aClass != null) {
+      myAnnotationChecker.checkCyclicMemberType(typeElement, aClass);
+    }
+
+    myAnnotationChecker.checkClashesWithSuperMethods(method);
+
+    if (!hasErrorResults() && aClass != null) {
+      myMethodChecker.checkDuplicateMethod(aClass, method);
     }
   }
 

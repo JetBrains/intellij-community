@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationToPackageInfoFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -43,7 +44,14 @@ final class JavaErrorFixProvider {
   private static final Map<JavaErrorKind<?, ?>, List<JavaFixesProvider<?, ?>>> FIXES = new HashMap<>();
 
   static {
+    QuickFixFactory factory = QuickFixFactory.getInstance();
     multi(UNSUPPORTED_FEATURE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
+    JavaFixProvider<PsiElement, Object> genericRemover = error -> factory.createDeleteFix(error.psi());
+    for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_MEMBER_THROWS_NOT_ALLOWED, ANNOTATION_ATTRIBUTE_DUPLICATE,
+                                            ANNOTATION_NOT_ALLOWED_EXTENDS)) {
+      single(kind, genericRemover);
+    }
+    
     createAnnotationFixes();
   }
 
@@ -92,7 +100,6 @@ final class JavaErrorFixProvider {
       return List.copyOf(factory.createAddAnnotationAttributeNameFixes(pair));
     });
     single(ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD, error -> factory.createCreateAnnotationMethodFromUsageFix(error.psi()));
-    single(ANNOTATION_ATTRIBUTE_DUPLICATE, error -> factory.createDeleteFix(error.psi()));
     single(ANNOTATION_ATTRIBUTE_DUPLICATE, error -> factory.createMergeDuplicateAttributesFix(error.psi()));
     JavaFixProvider<PsiAnnotationMemberValue, JavaAnnotationValueErrorKind.AnnotationValueErrorContext> incompatibleTypeFix = error -> {
       PsiAnnotationMemberValue value = error.psi();
@@ -127,6 +134,12 @@ final class JavaErrorFixProvider {
       if (!TypeConversionUtil.areTypesAssignmentCompatible(expectedType, firstInitializer)) return null;
       return factory.createUnwrapArrayInitializerMemberValueAction(error.psi());
     });
+    multi(ANNOTATION_NOT_ALLOWED_ON_PACKAGE, error ->
+      List.of(factory.createDeleteFix(Objects.requireNonNull(error.psi().getAnnotationList()), 
+                                      JavaAnalysisBundle.message("intention.text.remove.annotation")),
+              new MoveAnnotationToPackageInfoFileFix(error.psi())));
+    single(ANNOTATION_NOT_ALLOWED_ON_PACKAGE, error ->
+      factory.createDeleteFix(error.psi(), JavaAnalysisBundle.message("intention.text.remove.annotation")));
   }
 
   private static <Psi extends PsiElement, Context> void single(@NotNull JavaErrorKind<Psi, Context> kind,

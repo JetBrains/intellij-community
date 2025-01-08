@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.*;
@@ -35,6 +35,11 @@ import java.awt.event.ItemListener;
 import java.util.List;
 
 public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo, PsiMember, PsiClass> {
+  private static final MethodSignature ourValuesEnumSyntheticMethod =
+    MethodSignatureUtil.createMethodSignature("values",
+                                              PsiType.EMPTY_ARRAY,
+                                              PsiTypeParameter.EMPTY_ARRAY,
+                                              PsiSubstitutor.EMPTY);
   private final Callback myCallback;
   private DocCommentPanel myJavaDocPanel;
 
@@ -46,6 +51,14 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   };
 
   private static final @NonNls String PULL_UP_STATISTICS_KEY = "pull.up##";
+
+  static boolean isEnumSyntheticMethod(@NotNull MethodSignature methodSignature, @NotNull Project project) {
+    if (methodSignature.equals(ourValuesEnumSyntheticMethod)) return true;
+    PsiType javaLangString = PsiType.getJavaLangString(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
+    MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString},
+                                                                              PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+    return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
+  }
 
   public interface Callback {
     boolean checkConflicts(PullUpDialog dialog);
@@ -207,7 +220,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
         PsiClass aClass = method.getContainingClass();
         if (aClass != null && aClass.isEnum()) {
           MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-          if (HighlightMethodUtil.isEnumSyntheticMethod(methodSignature, aClass.getProject())) {
+          if (isEnumSyntheticMethod(methodSignature, aClass.getProject())) {
             return false;
           }
         }

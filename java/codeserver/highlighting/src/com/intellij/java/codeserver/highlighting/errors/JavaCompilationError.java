@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A concrete instance of a Java compilation error. Note that the instance is bound to a PSI element, so it should not
@@ -26,6 +28,13 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
    */
   public @NotNull PsiElement anchor() {
     return kind.anchor(psi, context);
+  }
+
+  /**
+   * @return range within anchor to highlight; or null if the whole anchor should be highlighted
+   */
+  public @Nullable TextRange range() {
+    return kind.range(psi, context);
   }
 
   /**
