@@ -170,7 +170,7 @@ public abstract class DialogWrapper {
   private final Map<Action, JButton> myButtonMap = new LinkedHashMap<>();
   private final boolean myCreateSouthSection;
   private final List<JBOptionButton> optionButtons = new ArrayList<>();
-  private final Alarm myValidationAlarm = new Alarm(getValidationThreadToUse(), myDisposable);
+  private final Alarm myValidationAlarm = new Alarm(getContinuousValidationThreadToUse(), myDisposable);
 
   private boolean myClosed;
   private boolean myDisposed;
@@ -371,7 +371,7 @@ public abstract class DialogWrapper {
     myDoNotAsk = doNotAsk;
   }
 
-  protected @NotNull Alarm.ThreadToUse getValidationThreadToUse() {
+  protected @NotNull Alarm.ThreadToUse getContinuousValidationThreadToUse() {
     return Alarm.ThreadToUse.SWING_THREAD;
   }
 
@@ -1459,7 +1459,7 @@ public abstract class DialogWrapper {
       }
     };
 
-    if (getValidationThreadToUse() == Alarm.ThreadToUse.SWING_THREAD) {
+    if (getContinuousValidationThreadToUse() == Alarm.ThreadToUse.SWING_THREAD) {
       // null if headless
       JRootPane rootPane = getRootPane();
       myValidationAlarm.addRequest(validateRequest, myValidationDelay,

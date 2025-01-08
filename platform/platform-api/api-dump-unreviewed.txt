@@ -3444,6 +3444,7 @@ a:com.intellij.openapi.ui.DialogWrapper
 - p:getCancelAction():javax.swing.Action
 - getContentPane():java.awt.Container
 - getContentPanel():javax.swing.JComponent
+- p:getContinuousValidationThreadToUse():com.intellij.util.Alarm$ThreadToUse
 - f:getDimensionKey():java.lang.String
 - p:getDimensionServiceKey():java.lang.String
 - f:getDisposable():com.intellij.openapi.Disposable
@@ -3465,7 +3466,6 @@ a:com.intellij.openapi.ui.DialogWrapper
 - getSize():java.awt.Dimension
 - p:getStyle():com.intellij.openapi.ui.DialogWrapper$DialogStyle
 - getTitle():java.lang.String
-- p:getValidationThreadToUse():com.intellij.util.Alarm$ThreadToUse
 - f:getVerticalStretch():F
 - getWindow():java.awt.Window
 - p:hasErrors(javax.swing.JComponent):Z

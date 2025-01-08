@@ -876,7 +876,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   }
 
   @Override
-  protected @NotNull Alarm.ThreadToUse getValidationThreadToUse() {
+  protected @NotNull Alarm.ThreadToUse getContinuousValidationThreadToUse() {
     return Alarm.ThreadToUse.POOLED_THREAD;
   }
 
