@@ -850,24 +850,30 @@ class MavenProject(val file: VirtualFile) {
 
   val testSourceLevel: String?
     get() {
-      return getCompilerLevel(true, "source")
+      getCompilerLevel(true, "source")?.let { return it }
+      // ok, try production compiler configs with testSource
+      return getCompilerLevel(false, "testSource")
+
     }
 
   val testTargetLevel: String?
     get() {
-      return getCompilerLevel(true, "target")
+      return getCompilerLevel(true, "target")?.let { return it }
+      // ok, try production compiler configs with testTarget
+      return getCompilerLevel(false, "testTarget")
     }
 
   val testReleaseLevel: String?
     get() {
-      return getCompilerLevel(true, "release")
+      return getCompilerLevel(true, "release")?.let { return it }
+      // ok, try production compiler configs with testRelease
+      return getCompilerLevel(false, "testRelease")
     }
 
   private fun getCompilerLevel(forTests: Boolean, level: String): String? {
     val configs: List<Element> = if (forTests) testCompilerConfigs else compilerConfigs
     val fallbackProperty = if (forTests) "test${level.replaceFirstChar { it.titlecase() }}" else level
     if (configs.size == 1) return getCompilerLevel(level, configs[0], "maven.compiler.$fallbackProperty")
-
     return configs
              .mapNotNull { findChildValueByPath(it, level) }
              .map { LanguageLevel.parse(it) ?: LanguageLevel.HIGHEST }
