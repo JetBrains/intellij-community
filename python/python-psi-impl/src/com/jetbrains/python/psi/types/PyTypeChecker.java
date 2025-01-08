@@ -1200,14 +1200,13 @@ public final class PyTypeChecker {
           return ((PyUnionType)type).map(member -> substitute(member, substitutions, context, substituting));
         }
         else if (type instanceof PyTypedDictType typedDictType) {
-          final Map<String, kotlin.Pair<PyExpression, PyType>> tdFields = typedDictType.getKeysToValuesWithTypes();
           final var substitutedTDFields = ContainerUtil.map2Map(
-            tdFields.entrySet(),
+            typedDictType.getFields().entrySet(),
             field -> Pair.create(
               field.getKey(),
               new kotlin.Pair<>(
-                field.getValue().getFirst(),
-                substitute(field.getValue().getSecond(), substitutions, context, substituting)
+                field.getValue().getValue(),
+                substitute(field.getValue().getType(), substitutions, context, substituting)
               )
             )
           );

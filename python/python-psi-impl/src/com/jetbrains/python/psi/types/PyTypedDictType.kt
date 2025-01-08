@@ -93,10 +93,6 @@ class PyTypedDictType @JvmOverloads constructor(
     else null
   }
 
-  fun getKeysToValuesWithTypes(): Map<String, Pair<PyExpression?, PyType?>> {
-    return fields.mapValues { Pair(it.value.value, it.value.type) }
-  }
-
   override fun toString(): String {
     return "PyTypedDictType: $name"
   }
@@ -174,13 +170,12 @@ class PyTypedDictType @JvmOverloads constructor(
 
       val mandatoryArguments = expected.fields.filterValues { it.qualifiers.isRequired == true}.mapValues { Pair(it.value.value, it.value.type) }
       val actualArguments = getTypedDictFieldsFromExpression(value, context) ?: return null
-      val expectedArguments = expected.getKeysToValuesWithTypes()
 
-      return match(mandatoryArguments, expectedArguments, actualArguments, context, value, expected.name)
+      return match(mandatoryArguments, expected.fields, actualArguments, context, value, expected.name)
     }
 
     private fun match(mandatoryArguments: Map<String, Pair<PyExpression?, PyType?>>,
-                      expectedArguments: Map<String, Pair<PyExpression?, PyType?>>,
+                      expectedArguments: Map<String, FieldTypeAndTotality>,
                       actualArguments: Map<String, Pair<PyExpression?, PyType?>>,
                       context: TypeEvalContext,
                       actualTypedDict: PyExpression?,
@@ -208,7 +203,7 @@ class PyTypedDictType @JvmOverloads constructor(
             return TypeCheckingResult(false)
           }
         }
-        val expectedType = expectedArguments[key]?.second
+        val expectedType = expectedArguments[key]?.type
         val actualType = it.value.second
         if (expectedType is PyTypedDictType && (actualType is PyTypedDictType || isDictExpression(actualValue, context))) {
           val res = checkTypes(expectedType, actualType, context, actualValue)
