@@ -306,9 +306,9 @@ public final class ActionGroupPanelWrapper {
 
   private static @NotNull List<AnAction> flattenActionGroups(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
     ArrayList<AnAction> groups = new ArrayList<>();
-    var groupName = event.getUpdateSession().presentation(actionGroup).getText();
     for (AnAction action : event.getUpdateSession().children(actionGroup)) {
       if (action instanceof ActionGroup g) {
+        var groupName = event.getUpdateSession().presentation(g).getText();
         var children = event.getUpdateSession().children(g);
         if (groupName != null) {
           for (AnAction childAction : children) {
