@@ -19,6 +19,7 @@ import git4idea.GitLocalBranch
 import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
+import git4idea.fetch.GitFetchInProgressListener
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitTagHolder
@@ -28,8 +29,6 @@ import kotlin.properties.Delegates.observable
 
 internal interface BranchesDashboardTreeModel : BranchesTreeModel {
   var showOnlyMy: Boolean
-
-  fun launchFetch()
 }
 
 internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
@@ -90,18 +89,16 @@ internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
     Disposer.register(this) {
       logData.removeDataPackChangeListener(changeListener)
     }
+
+    project.messageBus.connect(this).subscribe(GitFetchInProgressListener.TOPIC, object : GitFetchInProgressListener {
+      override fun fetchStarted() = runInEdt { startLoading() }
+      override fun fetchFinished() = runInEdt { finishLoading() }
+    })
   }
 
   override fun dispose() {
     refs.forEach { infos, _ -> infos.clear() }
     rootsToFilter = null
-  }
-
-  override fun launchFetch() {
-    startLoading()
-    GitFetch.performFetch(project) {
-      finishLoading()
-    }
   }
 
   private fun refreshTree() {

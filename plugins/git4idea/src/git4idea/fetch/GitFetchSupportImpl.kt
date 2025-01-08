@@ -111,7 +111,11 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
 
   private fun fetch(arguments: List<RemoteRefCoordinates>): GitFetchResult {
     try {
-      fetchRequestCounter.incrementAndGet()
+      val counterAfterIncrement = fetchRequestCounter.incrementAndGet()
+      if (counterAfterIncrement == 1) {
+        project.messageBus.syncPublisher(GitFetchInProgressListener.TOPIC).fetchStarted()
+      }
+
       return withIndicator {
         val activity = VcsStatisticsCollector.FETCH_ACTIVITY.started(project)
 
@@ -134,7 +138,10 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       }
     }
     finally {
-      fetchRequestCounter.decrementAndGet()
+      val counterAfterDecrement = fetchRequestCounter.decrementAndGet()
+      if (counterAfterDecrement == 0) {
+        project.messageBus.syncPublisher(GitFetchInProgressListener.TOPIC).fetchFinished()
+      }
     }
   }
 

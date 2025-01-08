@@ -46,8 +46,7 @@ public class GitFetch extends DumbAwareAction {
     result.showNotification();
   }
 
-  @ApiStatus.Internal
-  public static void performUpdate(@NotNull AnActionEvent e) {
+  private static void performUpdate(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
@@ -67,9 +66,8 @@ public class GitFetch extends DumbAwareAction {
     e.getPresentation().setEnabledAndVisible(true);
   }
 
-  @ApiStatus.Internal
   @RequiresEdt
-  public static void performFetch(@NotNull Project project, @Nullable Consumer<@NotNull GitFetchResult> onFetchFinished) {
+  private static void performFetch(@NotNull Project project, @Nullable Consumer<@NotNull GitFetchResult> onFetchFinished) {
     GitVcs.runInBackground(new Task.Backgroundable(project, GitBundle.message("fetching"), true) {
       GitFetchResult result;
 

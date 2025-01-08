@@ -20,7 +20,6 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.util.VcsLogUtil.HEAD
 import git4idea.GitRemoteBranch
-import git4idea.actions.GitFetch
 import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialName
 import git4idea.branch.*
 import git4idea.commands.Git
@@ -441,27 +440,6 @@ internal object BranchesDashboardActions {
           message("action.Git.Show.My.Branches.description.is.my.branch")
         }
       }
-    }
-  }
-
-  class FetchAction : DumbAwareAction() {
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-    override fun update(e: AnActionEvent) {
-      val controller = e.getData(BRANCHES_UI_CONTROLLER)
-      if (controller == null) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
-
-      GitFetch.performUpdate(e)
-      e.presentation.text = message("action.Git.Fetch.title")
-      e.presentation.icon = AllIcons.Vcs.Fetch
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return
-      controller.launchFetch()
     }
   }
 

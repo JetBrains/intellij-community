@@ -25,7 +25,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.ui.ProgressStripe
 import git4idea.i18n.GitBundle.message
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
-import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
@@ -119,7 +118,7 @@ internal object BranchesDashboardTreeComponent {
     val diffAction = ShowBranchDiffAction()
     val deleteAction = DeleteBranchAction()
     val toggleFavoriteAction = ToggleFavoriteAction()
-    val fetchAction = FetchAction()
+    val fetchAction = actionManager.getAction("Git.Fetch")
     val showMyBranchesAction = ShowMyBranchesAction()
     val newBranchAction = actionManager.getAction("Git.New.Branch.In.Log")
     val updateSelectedAction = UpdateSelectedBranchAction()

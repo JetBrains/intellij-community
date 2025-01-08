@@ -73,8 +73,6 @@ internal class BranchesDashboardTreeController(
     return result
   }
 
-  fun launchFetch() = model.launchFetch()
-
   override fun uiDataSnapshot(sink: DataSink) {
     sink[BRANCHES_UI_CONTROLLER] = this
     snapshotSelectionActionsKeys(sink, tree.selectionPaths)
