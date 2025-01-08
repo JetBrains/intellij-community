@@ -17,7 +17,6 @@ class CustomizeMainToolbarAction: DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.text = IdeBundle.message("action.customizations.customize.action")
     e.presentation.icon = AllIcons.General.GearPlain
   }
 
