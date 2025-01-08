@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.mmapped;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -134,6 +134,13 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   private Page[] pages;
 
   private final RegionAllocationAtomicityLock regionAllocationAtomicityLock;
+
+  /**
+   * Stack trace of {@linkplain #close()} call -- stored to provide more information to 'already closed' exception
+   * in use-after-close scenario
+   */
+  //@GuardedBy(pagesLock)
+  private transient Exception closeStackTrace = null;
 
   /** Use {@link MMappedFileStorageFactory} */
   MMappedFileStorage(@NotNull Path path,
@@ -381,6 +388,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
             Arrays.fill(pages, null);
           }
         }
+
+        this.closeStackTrace = new Exception("Close stack trace");
       }
     }
     finally {
@@ -411,7 +420,11 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   private Page pageByIndexLocked(int pageIndex) throws IOException {
     synchronized (pagesLock) {
       if (!channel.isOpen()) {
-        throw new ClosedStorageException("Storage already closed");
+        ClosedStorageException ex = new ClosedStorageException("Storage already closed");
+        if (closeStackTrace != null) {
+          ex.addSuppressed(closeStackTrace);
+        }
+        throw ex;
       }
       if (pageIndex >= pages.length) {
         pages = Arrays.copyOf(pages, pageIndex + 1);
