@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -318,8 +318,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   /**
-   * Avoid using directly - use {@link com.intellij.debugger.impl.DebuggerUtilsImpl#mirrorOfString} instead
+   * Avoid using directly, as the result may be garbage collected immediately - use {@link com.intellij.debugger.impl.DebuggerUtilsEx#mirrorOfString} instead
    */
+  @ApiStatus.Obsolete
   public StringReference mirrorOf(String s) {
     return myVirtualMachine.mirrorOf(s);
   }
