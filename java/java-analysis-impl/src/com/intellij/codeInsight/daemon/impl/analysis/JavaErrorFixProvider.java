@@ -58,7 +58,7 @@ final class JavaErrorFixProvider {
     });
     JavaFixProvider<PsiElement, Object> annotationRemover = error ->
       error.psi() instanceof PsiAnnotation annotation ? factory.createDeleteFix(annotation, JavaAnalysisBundle.message(
-        "intention.text.remove.annotation")) : null;
+        "remove.annotation")) : null;
     for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_NOT_ALLOWED_CLASS, ANNOTATION_NOT_ALLOWED_HERE,
                                             ANNOTATION_NOT_ALLOWED_REF, ANNOTATION_NOT_ALLOWED_VAR,
                                             ANNOTATION_NOT_ALLOWED_VOID, LAMBDA_MULTIPLE_TARGET_METHODS, LAMBDA_NO_TARGET_METHOD,
