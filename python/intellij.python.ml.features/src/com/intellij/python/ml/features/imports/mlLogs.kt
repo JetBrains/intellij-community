@@ -12,7 +12,7 @@ import com.jetbrains.ml.building.blocks.task.MLFeaturesTree
 
 
 internal object PyCharmImportsRankingLogs : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("pycharm.quickfix.imports", 4, ML_RECORDER_ID)
+  private val GROUP = EventLogGroup("pycharm.quickfix.imports", 5, ML_RECORDER_ID)
   val mlLogger = FusLoggerFactories
     .withOneEvent(
       fusEventName = "pycharm_import_statements_ranking",
