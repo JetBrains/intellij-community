@@ -7,13 +7,16 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate
 import java.awt.Component
+import java.awt.Container
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.accessibility.AccessibleContext
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
@@ -124,7 +127,16 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
     border = JBUI.Borders.empty(1, wg, 0, wg)
   }
 
-  val pane = JPanel().apply {
+  val pane = object : JPanel() {
+    override fun getAccessibleContext(): AccessibleContext? {
+      if (accessibleContext == null) {
+        accessibleContext = object : AccessibleContextDelegate(ch.accessibleContext) {
+          override fun getDelegateParent(): Container? = parent
+        }
+      }
+      return accessibleContext
+    }
+  }.apply {
     layout = GridBagLayout()
     val constraint = GridBagConstraints()
     constraint.weightx = 1.0
