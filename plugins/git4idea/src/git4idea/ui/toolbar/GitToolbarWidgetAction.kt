@@ -145,21 +145,17 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
       }
     }
 
-    if (!GitMainToolbar.showIncomingOutgoing) {
-      val rightIcons = mutableListOf<Icon>()
-      if (syncStatus?.incoming == true) {
-        rightIcons.add(DvcsImplIcons.Incoming)
-      }
-      if (syncStatus?.outgoing == true) {
-        rightIcons.add(DvcsImplIcons.Outgoing)
-      }
-      e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, when {
-        rightIcons.isNotEmpty() -> RowIcon(*rightIcons.toTypedArray())
-        else -> null
-      })
-    } else {
-      e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, null)
+    val rightIcons = mutableListOf<Icon>()
+    if (syncStatus?.incoming == true) {
+      rightIcons.add(DvcsImplIcons.Incoming)
     }
+    if (syncStatus?.outgoing == true) {
+      rightIcons.add(DvcsImplIcons.Outgoing)
+    }
+    e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, when {
+      rightIcons.isNotEmpty() -> RowIcon(*rightIcons.toTypedArray())
+      else -> null
+    })
   }
 
   companion object {
