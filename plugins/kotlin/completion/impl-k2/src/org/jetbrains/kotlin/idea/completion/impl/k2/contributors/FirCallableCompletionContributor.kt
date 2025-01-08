@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
+import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -118,15 +119,13 @@ internal open class FirCallableCompletionContributor(
     ) {
         val scopesContext = originalKtFile.scopeContext(positionContext.nameExpression)
 
-        val extensionChecker = if (positionContext is KotlinSimpleNameReferencePositionContext) {
-            CachingKtCompletionExtensionCandidateChecker(
-                createExtensionCandidateChecker(
-                    originalKtFile,
-                    positionContext.nameExpression,
-                    positionContext.explicitReceiver
-                )
+        val extensionChecker = (positionContext as? KotlinSimpleNameReferencePositionContext)?.let {
+            KtCompletionExtensionCandidateChecker.create(
+                originalFile = originalKtFile,
+                nameExpression = it.nameExpression,
+                explicitReceiver = it.explicitReceiver
             )
-        } else null
+        }
 
         val receiver = positionContext.explicitReceiver
         val expectedType = weighingContext.expectedType
@@ -910,35 +909,6 @@ internal class FirKDocCallableCompletionContributor(
                         )
                     )
                 }
-        }
-    }
-}
-
-private class CachingKtCompletionExtensionCandidateChecker(
-    private val delegate: KaCompletionExtensionCandidateChecker
-) : KaCompletionExtensionCandidateChecker {
-    /**
-     * Cached applicability results for callable extension symbols.
-     * The cache **must not outlive the lifetime of a single completion session**.
-     *
-     * If an extension is applicable but some of its type parameters are substituted to error types, then multiple calls to
-     * [computeApplicability] produce unequal substitutors, and subsequently unequal signatures, because
-     * error types are considered equal only if their underlying types are referentially equal, so we need to use [cache] in order
-     * to avoid unexpected unequal signatures.
-     *
-     * The cache also helps to avoid recalculation of applicability for extensions which are suggested twice:
-     * the first time while processing the scope context and the second time while processing callables from indexes.
-     */
-    @OptIn(KaExperimentalApi::class)
-    private val cache: MutableMap<KaCallableSymbol, KaExtensionApplicabilityResult> = mutableMapOf()
-
-    override val token: KaLifetimeToken
-        get() = delegate.token
-
-    @KaExperimentalApi
-    override fun computeApplicability(candidate: KaCallableSymbol): KaExtensionApplicabilityResult {
-        return cache.computeIfAbsent(candidate) {
-            delegate.computeApplicability(candidate)
         }
     }
 }
