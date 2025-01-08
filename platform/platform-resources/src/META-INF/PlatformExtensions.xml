@@ -1563,6 +1563,9 @@
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider"
                                       order="first"/>
 
+    <settingsEntryPointActionProvider implementation="com.intellij.ide.ui.InProductLicenseNotificationActionProvider"/>
+    <settingsEntryPointIconCustomizer implementation="com.intellij.ide.ui.InProductLicenseNotificationActionProvider"/>
+
     <backgroundPostStartupActivity implementation="com.intellij.notification.impl.RemindLaterActivity"/>
 
     <applicationConfigurable id="advanced.settings"

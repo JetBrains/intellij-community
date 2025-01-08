@@ -2259,6 +2259,7 @@ f:com.intellij.ide.actions.SettingsEntryPointAction
 com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - getLastActions(com.intellij.openapi.actionSystem.DataContext):java.util.Collection
+- getTooltip():java.lang.String
 - a:getUpdateActions(com.intellij.openapi.actionSystem.DataContext):java.util.Collection
 com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -2266,11 +2267,14 @@ com.intellij.ide.actions.SettingsEntryPointAction$IconCustomizer
 - getSecondIcon():javax.swing.Icon
 a:com.intellij.ide.actions.SettingsEntryPointAction$LastAction
 - com.intellij.openapi.project.DumbAwareAction
+- sf:POPUP:com.intellij.openapi.util.Key
 - sf:SECOND_TEXT:com.intellij.openapi.util.Key
 - p:<init>():V
 - p:<init>(java.lang.String):V
 - p:<init>(java.lang.String,java.lang.String,javax.swing.Icon):V
 - getSecondText():java.lang.String
+- p:handleMouseExit(java.awt.event.MouseEvent):V
+- p:handleMouseMove(java.awt.event.MouseEvent):V
 com.intellij.ide.actions.SettingsEntryPointAction$NoDots
 a:com.intellij.ide.actions.SettingsEntryPointAction$UpdateAction
 - com.intellij.openapi.project.DumbAwareAction

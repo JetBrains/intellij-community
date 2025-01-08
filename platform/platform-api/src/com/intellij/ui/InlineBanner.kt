@@ -11,7 +11,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkLabel.LEADING
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.scale.JBUIScale

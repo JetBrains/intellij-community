@@ -1,2 +1,3 @@
 skip: gradientBackground*
 skip: questionSign.png
+skip: Expiration.png
