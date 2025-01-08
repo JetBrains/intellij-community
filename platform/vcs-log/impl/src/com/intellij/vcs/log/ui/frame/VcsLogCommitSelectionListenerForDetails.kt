@@ -79,7 +79,7 @@ internal class VcsLogCommitSelectionListenerForDetails private constructor(graph
     }
 
     refsLoader.loadData(
-      { currentSelection.map(myGraphTable.model::getRefsAtRow) },
+      { currentSelection.map(graphTable.model::getRefsAtRow) },
       { panel, refs -> panel.setRefs(sortRefs(refs)) })
 
     containingBranchesLoader.requestData(commitIds)
