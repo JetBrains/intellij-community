@@ -488,10 +488,10 @@ final class AnnotationChecker {
     }
   }
 
-  void checkArrayInitializer(@NotNull PsiArrayInitializerMemberValue initializer) {
+  void checkArrayInitializer(@NotNull PsiArrayInitializerMemberValue list) {
     PsiMethod method = null;
 
-    PsiElement parent = initializer.getParent();
+    PsiElement parent = list.getParent();
     if (parent instanceof PsiNameValuePair) {
       PsiReference reference = parent.getReference();
       if (reference != null) {
@@ -506,9 +506,9 @@ final class AnnotationChecker {
       PsiType type = method.getReturnType();
       if (type instanceof PsiArrayType arrayType) {
         type = arrayType.getComponentType();
-        PsiAnnotationMemberValue[] initializers = initializer.getInitializers();
-        for (PsiAnnotationMemberValue initializer1 : initializers) {
-          checkMemberValueType(initializer1, type, annotationMethod);
+        PsiAnnotationMemberValue[] initializers = list.getInitializers();
+        for (PsiAnnotationMemberValue initializer : initializers) {
+          checkMemberValueType(initializer, type, annotationMethod);
         }
       }
     }
