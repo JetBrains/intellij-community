@@ -17,27 +17,29 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 class EditorCellActionsToolbarManager(private val editor: EditorEx): Disposable {
-  private var cellActionsToolbar: JupyterCellActionsToolbar? = null
+  private var toolbar: JupyterCellActionsToolbar? = null
 
   fun showToolbar(targetComponent: JComponent, cellType: NotebookCellLines.CellType) {
     val actionGroup = getAdditionalActionGroup(cellType) ?: return
-    if (cellActionsToolbar == null) cellActionsToolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
 
-    editor.contentComponent.add(cellActionsToolbar, 0)
+    if (targetComponent.width == 0 || targetComponent.height == 0) return
+    if (toolbar == null) toolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
+
+    editor.contentComponent.add(toolbar, 0)
     updateToolbarPosition(targetComponent)
     refreshUI()
   }
 
   private fun updateToolbarPosition(targetComponent: JComponent) {
-    cellActionsToolbar?.let { toolbar ->
+    toolbar?.let { toolbar ->
       toolbar.bounds = calculateToolbarBounds(editor, targetComponent, toolbar)
     }
   }
 
   fun hideToolbar() {
-    cellActionsToolbar?.let {
+    toolbar?.let {
       editor.contentComponent.remove(it)
-      cellActionsToolbar = null
+      toolbar = null
       refreshUI()
     }
   }
