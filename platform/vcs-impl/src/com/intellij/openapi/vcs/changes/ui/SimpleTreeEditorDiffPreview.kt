@@ -6,9 +6,11 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import javax.swing.JComponent
 
 @Deprecated("Use ChangesTreeEditorDiffPreview")
+@ScheduledForRemoval
 abstract class SimpleTreeEditorDiffPreview(
   protected val changeViewProcessor: ChangeViewDiffRequestProcessor,
   tree: ChangesTree,

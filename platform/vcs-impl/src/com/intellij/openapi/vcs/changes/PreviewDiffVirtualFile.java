@@ -19,6 +19,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * @deprecated Use {@link com.intellij.diff.editor.DiffViewerVirtualFile} and {@link DiffVirtualFileWithTabName} instead
+ */
+@Deprecated(forRemoval = true)
 public class PreviewDiffVirtualFile extends DiffVirtualFile implements DiffVirtualFileWithTabName {
   private final @NotNull DiffPreviewProvider myProvider;
 
