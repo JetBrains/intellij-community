@@ -340,6 +340,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../../idea/tests/testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
         }
 
+        @TestMetadata("NoDefaultValueForValParameter.kt")
+        public void testNoDefaultValueForValParameter() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/NoDefaultValueForValParameter.kt");
+        }
+
         @TestMetadata("NoShadowedDeclarations.kt")
         public void testNoShadowedDeclarations() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/NoShadowedDeclarations.kt");

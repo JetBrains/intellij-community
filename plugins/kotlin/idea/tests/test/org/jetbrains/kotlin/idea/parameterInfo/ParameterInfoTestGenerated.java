@@ -321,6 +321,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
         }
 
+        @TestMetadata("NoDefaultValueForValParameter.kt")
+        public void testNoDefaultValueForValParameter() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoDefaultValueForValParameter.kt");
+        }
+
         @TestMetadata("NoShadowedDeclarations.kt")
         public void testNoShadowedDeclarations() throws Exception {
             runTest("testData/parameterInfo/functionCall/NoShadowedDeclarations.kt");
