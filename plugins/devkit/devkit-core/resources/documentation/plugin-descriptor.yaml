@@ -492,6 +492,7 @@ elements:
             children:
               - element:
                   name: "*"
+                  descriptiveName: "An Extension"
                   #language=Markdown
                   description: |
                     An extension instance registered under [`<extensions>`](#element:idea-plugin__extensions).

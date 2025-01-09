@@ -34,6 +34,7 @@ internal data class ElementWrapper(
 
 internal data class Element(
   var name: String? = null,
+  var descriptiveName: String? = null,
   var sdkDocsFixedPath: List<String> = emptyList(),
   var since: String? = null,
   var until: String? = null,
