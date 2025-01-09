@@ -109,6 +109,19 @@ final class JavaErrorFixProvider {
                           factory.createModifierListFix(error.context(), modifier, true, false)));
     single(CLASS_DUPLICATE, error -> factory.createRenameFix(requireNonNullElse(error.psi().getNameIdentifier(), error.psi())));
     single(CLASS_DUPLICATE, error -> factory.createNavigateToDuplicateElementFix(error.context()));
+    multi(INSTANTIATION_ABSTRACT, error -> {
+      PsiClass aClass = error.context();
+      PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      if (!aClass.isInterface() && anyAbstractMethod == null) {
+        registrar.addAll(JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(
+          JvmModifier.ABSTRACT, false)));
+      }
+      if (anyAbstractMethod != null && error.psi() instanceof PsiNewExpression newExpression && newExpression.getClassReference() != null) {
+        registrar.add(factory.createImplementAbstractClassMethodsFix(newExpression));
+      }
+      return registrar;
+    });
   }
 
   private void createReceiverParameterFixes(@NotNull QuickFixFactory factory) {

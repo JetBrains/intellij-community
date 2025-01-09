@@ -226,6 +226,10 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_NO_ENCLOSING_INSTANCE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.no.enclosing.instance")
       .withRawDescription((ref, target) -> message("class.reference.list.no.enclosing.instance", formatClass(target)));
+  public static final Simple<PsiExpression> INSTANTIATION_ENUM = error("instantiation.enum");
+  public static final Parameterized<PsiExpression, PsiClass> INSTANTIATION_ABSTRACT = 
+    parameterized(PsiExpression.class, PsiClass.class, "instantiation.abstract")
+      .withRawDescription((expr, aClass) -> message("instantiation.abstract", aClass.getName()));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {
     return new Simple<>(key);

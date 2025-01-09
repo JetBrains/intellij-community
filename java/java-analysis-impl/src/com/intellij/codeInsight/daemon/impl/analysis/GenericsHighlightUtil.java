@@ -925,15 +925,6 @@ public final class GenericsHighlightUtil {
     return enumClass != null && enumClass.isEnum() ? enumClass : null;
   }
 
-  static HighlightInfo.Builder checkEnumInstantiation(@NotNull PsiElement expression, @Nullable PsiClass aClass) {
-    if (aClass != null && aClass.isEnum() &&
-        !(expression instanceof PsiNewExpression newExpression && newExpression.isArrayCreation())) {
-      String description = JavaErrorBundle.message("enum.types.cannot.be.instantiated");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
-    }
-    return null;
-  }
-
   public static HighlightInfo.Builder checkGenericArrayCreation(@NotNull PsiElement element, @Nullable PsiType type) {
     if (type instanceof PsiArrayType arrayType) {
       if (element instanceof PsiNewExpression newExpression) {

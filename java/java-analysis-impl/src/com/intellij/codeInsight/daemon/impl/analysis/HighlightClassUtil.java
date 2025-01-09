@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -55,34 +54,6 @@ import java.util.function.Consumer;
  * Generates HighlightInfoType.ERROR-only HighlightInfos at PsiClass level.
  */
 public final class HighlightClassUtil {
-
-  static HighlightInfo.Builder checkInstantiationOfAbstractClass(@NotNull PsiClass aClass, @NotNull PsiElement highlightElement) {
-    HighlightInfo.Builder errorResult = null;
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-        (!(highlightElement instanceof PsiNewExpression newExpression) || !(newExpression.getType() instanceof PsiArrayType))) {
-      String baseClassName = aClass.getName();
-      PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
-      String message;
-      if (aClass.isEnum()) {
-        if (anyAbstractMethod == null || anyAbstractMethod.getContainingClass() != aClass) return null;
-        message = JavaErrorBundle.message("enum.constant.must.implement.method", highlightElement.getText(),
-                                          JavaHighlightUtil.formatMethod(anyAbstractMethod), baseClassName);
-      }
-      else {
-        message = JavaErrorBundle.message("abstract.cannot.be.instantiated", baseClassName);
-      }
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(highlightElement).descriptionAndTooltip(message);
-      if (!aClass.isInterface() && anyAbstractMethod == null) {
-        // suggest to make not abstract only if possible
-        QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, false)));
-      }
-      if (anyAbstractMethod != null && highlightElement instanceof PsiNewExpression newExpression && newExpression.getClassReference() != null) {
-        IntentionAction action = QuickFixFactory.getInstance().createImplementAbstractClassMethodsFix(highlightElement);
-        errorResult.registerFix(action, null, null, null, null);
-      }
-    }
-    return errorResult;
-  }
 
   static HighlightInfo.Builder checkDuplicateTopLevelClass(@NotNull PsiClass aClass) {
     if (aClass instanceof PsiImplicitClass) return null; //check in HighlightImplicitClassUtil

@@ -964,8 +964,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(expression, type, aClass));
     }
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
-    if (aClass != null && !hasErrorResults()) add(HighlightClassUtil.checkInstantiationOfAbstractClass(aClass, expression));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkEnumInstantiation(expression, aClass));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
     try {
       if (!hasErrorResults()) HighlightMethodUtil.checkNewExpression(getProject(), expression, type, myJavaSdkVersion, myErrorSink);
@@ -1293,7 +1291,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
-    add(checkFeature(expression, JavaFeature.METHOD_REFERENCES));
+    visitElement(expression);
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (toReportFunctionalExpressionProblemOnParent(parent)) return;
     PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
@@ -1422,13 +1420,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (expression.isConstructor()) {
           PsiClass containingClass = PsiMethodReferenceUtil.getQualifierResolveResult(expression).getContainingClass();
 
-          if (containingClass != null) {
-            if (!add(HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, expression)) &&
-                !add(GenericsHighlightUtil.checkEnumInstantiation(expression, containingClass)) &&
-                containingClass.isPhysical() &&
-                description == null) {
-              description = JavaErrorBundle.message("cannot.resolve.constructor", containingClass.getName());
-            }
+          if (containingClass != null && 
+              containingClass.isPhysical() &&
+              description == null) {
+            description = JavaErrorBundle.message("cannot.resolve.constructor", containingClass.getName());
           }
         }
         else if (description == null) {

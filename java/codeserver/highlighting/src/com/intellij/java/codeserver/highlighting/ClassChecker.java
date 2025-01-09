@@ -184,6 +184,16 @@ final class ClassChecker {
       myVisitor.report(JavaErrorKinds.CLASS_CYCLIC_INHERITANCE.create(aClass, circularClass));
     }
   }
+  
+  void checkIllegalInstantiation(@NotNull PsiClass aClass, @NotNull PsiExpression highlightElement) {
+    if (highlightElement instanceof PsiNewExpression newExpression && newExpression.isArrayCreation()) return;
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      myVisitor.report(JavaErrorKinds.INSTANTIATION_ABSTRACT.create(highlightElement, aClass));
+    }
+    if (aClass.isEnum()) {
+      myVisitor.report(JavaErrorKinds.INSTANTIATION_ENUM.create(highlightElement));
+    }
+  }
 
   /**
    * 15.9 Class Instance Creation Expressions | 15.9.2 Determining Enclosing Instances

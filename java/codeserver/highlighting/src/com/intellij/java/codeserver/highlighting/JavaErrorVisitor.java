@@ -10,6 +10,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +95,46 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
     super.visitEnumConstant(enumConstant);
     if (!hasErrorResults()) myClassChecker.checkEnumWithAbstractMethods(enumConstant);
+  }
+
+  @Override
+  public void visitNewExpression(@NotNull PsiNewExpression expression) {
+    super.visitNewExpression(expression);
+    PsiType type = expression.getType();
+    PsiClass aClass = PsiUtil.resolveClassInType(type);
+    if (aClass != null && !hasErrorResults()) myClassChecker.checkIllegalInstantiation(aClass, expression);
+  }
+
+  @Override
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
+    super.visitMethodReferenceExpression(expression);
+    checkFeature(expression, JavaFeature.METHOD_REFERENCES);
+    PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+    if (functionalInterfaceType != null && !PsiTypesUtil.allTypeParametersResolved(expression, functionalInterfaceType)) return;
+
+    JavaResolveResult result;
+    JavaResolveResult[] results;
+    try {
+      results = expression.multiResolve(true);
+      result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+    }
+    catch (IndexNotReadyException e) {
+      return;
+    }
+    if (!hasErrorResults()) {
+      boolean resolvedButNonApplicable = results.length == 1 && results[0] instanceof MethodCandidateInfo methodInfo &&
+                                         !methodInfo.isApplicable() &&
+                                         functionalInterfaceType != null;
+      if (results.length != 1 || resolvedButNonApplicable) {
+        if (expression.isConstructor()) {
+          PsiClass containingClass = PsiMethodReferenceUtil.getQualifierResolveResult(expression).getContainingClass();
+
+          if (containingClass != null) {
+            myClassChecker.checkIllegalInstantiation(containingClass, expression);
+          }
+        }
+      }
+    }
   }
 
   @Override
