@@ -1870,6 +1870,26 @@ public class Py3TypeTest extends PyTestCase {
         """);
   }
 
+  public void testUnionWithEnumMembers() {
+    doTest(
+      "Color",
+      """
+        from enum import Enum
+        
+        class Color(Enum):
+            R = 1
+            G = 2
+            B = 3
+        
+        def f(v: str | Color):
+            if isinstance(v, str):
+                pass
+            else:
+                expr = v
+        """
+    );
+  }
+
   public void testEnumMemberNonmember() {
     doTest(
       "tuple[int, Literal[Example.A], Literal[Example.B], Literal[Example.method]]",

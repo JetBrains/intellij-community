@@ -39,7 +39,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       }
 
     @JvmStatic
-    fun enumMember(enumClass: PyClass, memberName: String): PyType {
+    fun enumMember(enumClass: PyClass, memberName: String): PyLiteralType {
       val expression = PyElementGenerator.getInstance(enumClass.getProject())
         .createExpressionFromText(LanguageLevel.forElement(enumClass), "${enumClass.name}.$memberName")
       assert(expression is PyReferenceExpression)

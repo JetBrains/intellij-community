@@ -1,12 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
+import com.google.common.collect.Streams;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ast.PyAstClass;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator;
@@ -19,6 +22,7 @@ import com.jetbrains.python.psi.stubs.PyEnumAttributeStub;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +31,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -134,16 +141,16 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (!(ScopeUtil.getScopeOwner(element) instanceof PyClass cls && isCustomEnum(cls, context))) return null;
 
     if (element instanceof PyTargetExpression targetExpression) {
-      EnumAttributeInfo info = getEnumAttributeInfo(targetExpression, context);
+      EnumAttributeInfo info = getEnumAttributeInfo(cls, targetExpression, context);
       if (info != null) {
-        PyType assignedValueType = info.assignedValueType;
-        if (info.isMemberOrAlias) {
-          boolean isAlias = assignedValueType instanceof PyLiteralType literalType && literalType.getPyClass().equals(cls);
-          if (!isAlias) {
-            assignedValueType = PyLiteralType.enumMember(cls, Objects.requireNonNull(targetExpression.getName()));
-          }
+        PyType type;
+        if (info.attributeKind == EnumAttributeKind.MEMBER) {
+          type = PyLiteralType.enumMember(cls, Objects.requireNonNull(targetExpression.getName()));
         }
-        return Ref.create(assignedValueType);
+        else {
+          type = info.assignedValueType;
+        }
+        return Ref.create(type);
       }
     }
     else if (isEnumMember((PyDecoratable)element, context)) {
@@ -169,9 +176,29 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @ApiStatus.Internal
-  public static @Nullable EnumAttributeInfo getEnumAttributeInfo(@NotNull PyTargetExpression targetExpression,
+  public static Stream<PyLiteralType> getEnumMembers(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    assert isCustomEnum(enumClass, context);
+
+    return Streams
+      .concat(
+        enumClass.getClassAttributes().stream().filter(targetExpr -> {
+          EnumAttributeInfo info = getEnumAttributeInfo(enumClass, targetExpr, context);
+          return info != null && info.attributeKind == EnumAttributeKind.MEMBER;
+        }),
+        Stream.of(enumClass.getNestedClasses()).filter(cls -> isEnumMember(cls, context)),
+        Stream.of(enumClass.getMethods()).filter(method -> isEnumMember(method, context))
+      )
+      .map(element -> {
+        String name = element.getName();
+        return name != null ? PyLiteralType.enumMember(enumClass, name) : null;
+      });
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable EnumAttributeInfo getEnumAttributeInfo(@NotNull PyClass enumClass,
+                                                                 @NotNull PyTargetExpression targetExpression,
                                                                  @NotNull TypeEvalContext context) {
-    assert ScopeUtil.getScopeOwner(targetExpression) instanceof PyClass cls && isCustomEnum(cls, context);
+    assert isCustomEnum(enumClass, context);
 
     String name = targetExpression.getName();
     if (name == null || PyUtil.isClassPrivateName(name)) return null;
@@ -181,7 +208,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       if (value == null) return null;
 
       PyType type = context.getType(value);
-      return getEnumAttributeInfo(type, context);
+      return getEnumAttributeInfo(enumClass, type, context);
     }
     else {
       if (!targetExpression.hasAssignedValue()) return null;
@@ -193,17 +220,15 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       if (attributeStub != null) {
         PyLiteralKind literalKind = attributeStub.getLiteralKind();
         PyType type = literalKind != null ? PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(targetExpression)) : null;
-        return new EnumAttributeInfo(type, attributeStub.isMember());
+        return new EnumAttributeInfo(type, attributeStub.isMember() ? EnumAttributeKind.MEMBER : EnumAttributeKind.NONMEMBER);
       }
 
       QualifiedName assignedQName = targetExpression.getAssignedQName();
       if (assignedQName != null) {
-        PyClass pyClass = (PyClass)ScopeUtil.getScopeOwner(targetExpression);
-        assert pyClass != null;
-        PsiElement value = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(assignedQName, pyClass, context));
+        PsiElement value = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(assignedQName, enumClass, context));
         if (value != null) {
           Ref<PyType> type = getEnumAttributeType(value, context);
-          return type == null ? null : getEnumAttributeInfo(type.get(), context);
+          return type == null ? null : getEnumAttributeInfo(enumClass, type.get(), context);
         }
       }
 
@@ -211,18 +236,18 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
                                   ? stub.getAssignedLiteralKind()
                                   : PyLiteralKind.fromExpression(targetExpression.findAssignedValue());
       if (literalKind == null) {
-        return new EnumAttributeInfo(null, false);
+        return EnumAttributeInfo.nonMember(null);
       }
       else {
         PyType type = PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(targetExpression));
-        return new EnumAttributeInfo(type, true);
+        return new EnumAttributeInfo(type, EnumAttributeKind.MEMBER);
       }
     }
   }
 
-  private static @NotNull EnumAttributeInfo getEnumAttributeInfo(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  private static @NotNull EnumAttributeInfo getEnumAttributeInfo(@NotNull PyClass enumClass, @Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type == null) {
-      return new EnumAttributeInfo(null, false);
+      return EnumAttributeInfo.nonMember(null);
     }
     PyQualifiedNameOwner typeDeclarationElement = type.getDeclarationElement();
     if (typeDeclarationElement != null) {
@@ -231,30 +256,47 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
         PyType genericParameterType = ContainerUtil.getOnlyItem(genericType.getElementTypes());
         if (genericParameterType != null) {
           if (PyNames.TYPE_ENUM_MEMBER.equals(typeDeclarationQName)) {
-            return new EnumAttributeInfo(genericParameterType, true);
+            return EnumAttributeInfo.memberOrAlias(enumClass, genericParameterType);
           }
           if (PyNames.TYPE_ENUM_NONMEMBER.equals(typeDeclarationQName)) {
-            return new EnumAttributeInfo(genericParameterType, false);
+            return EnumAttributeInfo.nonMember(genericParameterType);
           }
         }
       }
     }
     if (typeDeclarationElement instanceof PyCallable) {
-      return new EnumAttributeInfo(type, false);
+      return EnumAttributeInfo.nonMember(type);
     }
     boolean isDescriptor = !ContainerUtil.isEmpty(
       type.resolveMember(PyNames.DUNDER_GET, null, AccessDirection.READ, PyResolveContext.defaultContext(context)));
     if (isDescriptor) {
-      return new EnumAttributeInfo(type, false);
+      return EnumAttributeInfo.nonMember(type);
     }
-    return new EnumAttributeInfo(type, true);
+    return EnumAttributeInfo.memberOrAlias(enumClass, type);
   }
 
   @ApiStatus.Internal
-  public record EnumAttributeInfo(@Nullable PyType assignedValueType, boolean isMemberOrAlias) { }
+  public record EnumAttributeInfo(@Nullable PyType assignedValueType, @NotNull EnumAttributeKind attributeKind) {
+    private static @NotNull EnumAttributeInfo memberOrAlias(@NotNull PyClass enumClass, @Nullable PyType type) {
+      EnumAttributeKind attributeKind = type instanceof PyLiteralType literalType && literalType.getPyClass().equals(enumClass)
+                                        ? EnumAttributeKind.MEMBER_ALIAS
+                                        : EnumAttributeKind.MEMBER;
+      return new EnumAttributeInfo(type, attributeKind);
+    }
+
+    private static @NotNull EnumAttributeInfo nonMember(@Nullable PyType type) {
+      return new EnumAttributeInfo(type, EnumAttributeKind.NONMEMBER);
+    }
+  }
 
   @ApiStatus.Internal
-  public static boolean isEnumMember(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
+  public enum EnumAttributeKind {
+    MEMBER,
+    MEMBER_ALIAS,
+    NONMEMBER
+  }
+
+  private static boolean isEnumMember(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
     return PyKnownDecoratorUtil.getKnownDecorators(decoratable, context).contains(KnownDecorator.ENUM_MEMBER);
   }
 

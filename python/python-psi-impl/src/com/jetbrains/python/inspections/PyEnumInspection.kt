@@ -5,8 +5,10 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.util.containers.isEmpty
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider.EnumAttributeKind
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyClass
@@ -18,17 +20,24 @@ class PyEnumInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     return object : PyInspectionVisitor(holder, getContext(session)) {
       override fun visitPyClass(node: PyClass) {
+        validateSuperClasses(node)
+        validateEnumMembers(node)
+      }
+
+      private fun validateSuperClasses(node: PyClass) {
         for (superClassExpression in node.superClassExpressions) {
           val superClassType = myTypeEvalContext.getType(superClassExpression)
           if (superClassType is PyClassType) {
-            if (isEnumClassWithMembers(superClassType.pyClass, myTypeEvalContext)) {
-              registerProblem(superClassExpression,
-                              PyPsiBundle.message("INSP.enum.enum.class.is.final.and.cannot.be.subclassed", superClassType.pyClass.name),
-                              ProblemHighlightType.GENERIC_ERROR)
+            val superClass = superClassType.pyClass
+            if (PyStdlibTypeProvider.isCustomEnum(superClass, myTypeEvalContext)) {
+              if (!PyStdlibTypeProvider.getEnumMembers(superClass, myTypeEvalContext).isEmpty()) {
+                registerProblem(superClassExpression,
+                                PyPsiBundle.message("INSP.enum.enum.class.is.final.and.cannot.be.subclassed", superClass.name),
+                                ProblemHighlightType.GENERIC_ERROR)
+              }
             }
           }
         }
-        validateEnumMembers(node)
       }
 
       private fun validateEnumMembers(pyClass: PyClass) {
@@ -38,21 +47,17 @@ class PyEnumInspection : PyInspection() {
         val declaredTypeName = PythonDocumentationProvider.getVerboseTypeName(declaredType, myTypeEvalContext)
 
         for (attribute in pyClass.classAttributes) {
-          val info = PyStdlibTypeProvider.getEnumAttributeInfo(attribute, myTypeEvalContext)
-          if (info == null || !info.isMemberOrAlias) continue
+          val info = PyStdlibTypeProvider.getEnumAttributeInfo(pyClass, attribute, myTypeEvalContext)
+          if (info == null || info.attributeKind == EnumAttributeKind.NONMEMBER) continue
 
-          if (declaredType != null) {
-            val type = info.assignedValueType
-            val isAlias = type is PyLiteralType && type.pyClass == pyClass
-            if (!isAlias) {
-              val value = attribute.findAssignedValue()
-              if (PyPsiUtils.flattenParens(value) is PyTupleExpression) {
-                // TODO: > Type checkers may validate consistency between assigned tuple values and the constructor signature
-              }
-              else if (!PyTypeChecker.match(declaredType, type, myTypeEvalContext)) {
-                val valueTypeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext)
-                registerProblem(value, PyPsiBundle.message("INSP.enum.type.is.not.assignable.to.declared.type", valueTypeName, declaredTypeName))
-              }
+          if (declaredType != null && info.attributeKind == EnumAttributeKind.MEMBER) {
+            val value = attribute.findAssignedValue()
+            if (PyPsiUtils.flattenParens(value) is PyTupleExpression) {
+              // TODO: > Type checkers may validate consistency between assigned tuple values and the constructor signature
+            }
+            else if (!PyTypeChecker.match(declaredType, info.assignedValueType, myTypeEvalContext)) {
+              val valueTypeName = PythonDocumentationProvider.getTypeName(info.assignedValueType, myTypeEvalContext)
+              registerProblem(value, PyPsiBundle.message("INSP.enum.type.is.not.assignable.to.declared.type", valueTypeName, declaredTypeName))
             }
           }
 
@@ -64,15 +69,6 @@ class PyEnumInspection : PyInspection() {
       }
     }
   }
-}
-
-private fun isEnumClassWithMembers(pyClass: PyClass, context: TypeEvalContext): Boolean {
-  if (PyStdlibTypeProvider.isCustomEnum(pyClass, context)) {
-    return pyClass.classAttributes.any { PyStdlibTypeProvider.getEnumAttributeInfo(it, context)?.isMemberOrAlias == true } ||
-           pyClass.nestedClasses.any { PyStdlibTypeProvider.isEnumMember(it, context) } ||
-           pyClass.methods.any { PyStdlibTypeProvider.isEnumMember(it, context) }
-  }
-  return false
 }
 
 private fun getDeclaredEnumMemberType(enumClass: PyClass, context: TypeEvalContext): PyType? {

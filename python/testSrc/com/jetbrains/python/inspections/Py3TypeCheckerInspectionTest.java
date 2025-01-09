@@ -491,6 +491,46 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  public void testEnumMembers() {
+    doTestByText(
+      """
+        from enum import Enum
+        from typing import Literal
+
+        class Color(Enum):
+            R = 1
+            G = 2
+            B = 3
+            RED = R
+            GREEN = G
+            BLUE = B
+
+        def foo(v: Color | str) -> None:
+            if v is Color.RED:
+                r: Literal[Color.R] = v
+            elif v is Color.G:
+                g: Literal[Color.G] = v
+            elif v is Color.B:
+                b: Literal[Color.B] = v
+            else:
+                s: str = v
+                c: Color = <warning descr="Expected type 'Color', got 'str' instead">v</warning>
+        
+            if v is Color.BLUE or isinstance(v, str):
+                pass
+            else:
+                s: str = <warning descr="Expected type 'str', got 'Literal[Color.R, Color.G]' instead">v</warning>
+
+        def bar(v: Literal[Color.R, "1"]) -> None:
+            if isinstance(v, Color):
+                r: Literal[Color.R] = v
+            else:
+                s: Literal["1"] = v
+                c: Color = <warning descr="Expected type 'Color', got 'Literal[\\"1\\"]' instead">v</warning>
+        """
+    );
+  }
+
   // PY-77937
   public void testListOfEnumMembers() {
     doTestByText(

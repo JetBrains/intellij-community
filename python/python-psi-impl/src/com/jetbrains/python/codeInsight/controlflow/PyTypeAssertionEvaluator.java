@@ -143,7 +143,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       }
       if (initial instanceof PyUnionType unionType) {
         if (!unionType.isWeak()) {
-          var matched = ContainerUtil.filter(unionType.getMembers(), (member) -> match(suggested, member, context));
+          var matched = ContainerUtil.filter(unionType.getMembers(), member -> match(suggested, member, context));
           if (!matched.isEmpty()) {
             return Ref.create(PyUnionType.union(matched));
           }
@@ -151,13 +151,48 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       }
       return Ref.create(suggested);
     }
-    else if (initial instanceof PyUnionType unionType) {
-      return Ref.create(unionType.exclude(suggested, context));
+    else {
+      if (initial instanceof PyUnionType unionType) {
+        return Ref.create(excludeFromUnion(unionType, suggested, context));
+      }
+      if (match(suggested, initial, context)) {
+        return null;
+      }
+      Ref<@Nullable PyType> diff = trySubtract(initial, suggested, context);
+      return diff != null ? diff : Ref.create(initial);
     }
-    else if (match(suggested, initial, context)) {
-      return null;
+  }
+
+  private static @Nullable PyType excludeFromUnion(@NotNull PyUnionType unionType,
+                                                   @Nullable PyType type,
+                                                   @NotNull TypeEvalContext context) {
+    final List<PyType> members = new ArrayList<>();
+    for (PyType m : unionType.getMembers()) {
+      Ref<@Nullable PyType> diff = trySubtract(m, type, context);
+      if (diff != null) {
+        members.add(diff.get());
+      }
+      else if (!PyTypeChecker.match(type, m, context)) {
+        members.add(m);
+      }
     }
-    return Ref.create(initial);
+    return PyUnionType.union(members);
+  }
+
+  private static @Nullable Ref<@Nullable PyType> trySubtract(@Nullable PyType type1,
+                                                             @Nullable PyType type2,
+                                                             @NotNull TypeEvalContext context) {
+    assert !(type1 instanceof PyUnionType);
+
+    if (!(type1 instanceof PyLiteralType) &&
+        type1 instanceof PyClassType classType &&
+        PyStdlibTypeProvider.isCustomEnum(classType.getPyClass(), context)) {
+      List<PyLiteralType> enumMembers = PyStdlibTypeProvider.getEnumMembers(classType.getPyClass(), context).toList();
+      List<PyType> filteredEnumMembers = ContainerUtil.filter(enumMembers, m -> !PyTypeChecker.match(type2, m, context));
+      PyType type = enumMembers.size() == filteredEnumMembers.size() ? type1 : PyUnionType.union(filteredEnumMembers);
+      return Ref.create(type);
+    }
+    return null;
   }
 
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context) {
