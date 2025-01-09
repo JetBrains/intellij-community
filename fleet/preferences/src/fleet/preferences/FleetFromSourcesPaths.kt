@@ -8,6 +8,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
 import kotlin.io.path.absolute
+import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.io.path.toPath
@@ -45,11 +47,24 @@ object FleetFromSourcesPaths {
 
   // TODO: remove the usages of this property and delete it.
   // Ideally `skiko.library.path` should always be set by the tooling or distribution argfile, making `skikoLibraryDirectory` property redundant.
-  // Currently, this is needed for GalleryApp and some isolated UI tests, which can be run using JPS and which would break missing `skiko.library.path` property.
+  // Currently, this is needed for GalleryApp and some isolated UI tests.
+  // Once our test running logic is unified, we will be able to wire the proper preparation steps to test runs avoiding such code.
   val skikoLibraryDirectory: Path by lazy {
-    val appDirectory = fleetProperty("fleet.distribution.app.directory")?.let { Path.of(it) }
-      ?: projectRoot.resolve("build/build/localDistribution") // FIXME: this will break when we move to `:fl` and `:air` projects (only works if `:fleet-build-project:run` was once run)
-    appDirectory.resolve("libs")
+    val skiko = projectRoot.resolve("build/fleet-skiko/build/skiko/buildPlatform")
+    require(skiko.takeIf { it.exists()}?.listDirectoryEntries()?.isNotEmpty() == true) {
+      """
+        '$skiko' is empty or does not exist.
+        
+        Usually, this directory is automatically populated when required. However a few use cases are outside of the normal test flow.
+        If you are in such case (standalone noria UI tests, etc.), you should either:
+         - run `./fleet.sh :fleet-skiko:downloadSkikoForJps` Gradle command
+         - or, set the JVM system property `skiko.library.path` to a valid skiko downloaded on your machine
+        
+        If you ran through a JPS configuration, probably it is misconfigured, please contact #fleet-platform.
+        If you ran through the Fleet Gradle build tooling, probably it is misconfigured, please contact #fleet-platform.
+      """.trimIndent()
+    }
+    skiko
   }
 
   //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.plugins.keymap.test", "fleet.app.fleet.tests"])
