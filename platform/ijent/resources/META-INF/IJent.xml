@@ -7,5 +7,8 @@
     <applicationService
       serviceInterface="com.intellij.platform.ijent.IjentExecFileProvider"
       serviceImplementation="com.intellij.platform.ijent.DefaultIjentExecFileProvider"/>
+
+    <!-- The timeout is taken at random to measure real initialization time -->
+    <registryKey defaultValue="60000" description="Shell initialization timeout" key="ijent.shell.initialization.timeout"/>
   </extensions>
 </idea-plugin>
