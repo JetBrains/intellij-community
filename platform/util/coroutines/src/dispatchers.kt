@@ -27,10 +27,10 @@ import kotlin.coroutines.CoroutineContext
  * _should not_ be replaced by `.softLimitedParallelism(1)`.
  */
 @ExperimentalCoroutinesApi
-fun CoroutineDispatcher.softLimitedParallelism(parallelism: Int): CoroutineDispatcher {
+fun CoroutineDispatcher.softLimitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
   @OptIn(InternalCoroutinesApi::class)
   with(IntellijCoroutines) {
-    return softLimitedParallelism(parallelism)
+    return softLimitedParallelism(parallelism, name)
   }
 }
 
