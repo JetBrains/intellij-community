@@ -152,6 +152,7 @@ object EelPathUtils {
       val target: Path,
       val sourceAttrs: BasicFileAttributes,
     )
+
     var lastDirectory: LastDirectoryInfo? = null
 
     while (true) {
@@ -283,8 +284,10 @@ object EelPathUtils {
         if (targetView != null) {
           // TODO It's ineffective for IjentNioFS, because there are 6 consequential system calls.
           targetView.setPermissions(sourceAttrs.permissions())
-          targetView.setOwner(sourceAttrs.owner())
-          targetView.setGroup(sourceAttrs.group())
+          runCatching<UnsupportedOperationException>(
+            { targetView.setOwner(sourceAttrs.owner()) },
+            { targetView.setGroup(sourceAttrs.group()) }
+          )
         }
       }
       catch (err: IOException) {
@@ -350,5 +353,18 @@ object EelPathUtils {
     }
 
     return referencedPath
+  }
+}
+
+private inline fun <reified T : Throwable> runCatching(vararg blocks: () -> Unit) {
+  blocks.forEach {
+    try {
+      it()
+    }
+    catch (t: Throwable) {
+      if (!T::class.isInstance(t)) {
+        throw t
+      }
+    }
   }
 }
