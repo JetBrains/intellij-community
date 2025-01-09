@@ -484,6 +484,7 @@ a:com.intellij.refactoring.rename.RenamePsiElementProcessorBase
 - getElementToSearchInStringsAndComments(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - getHelpID(com.intellij.psi.PsiElement):java.lang.String
 - getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
+- getPostRenameCallback(com.intellij.psi.PsiElement,java.lang.String,java.util.Collection,java.util.Map,com.intellij.refactoring.listeners.RefactoringElementListener):java.lang.Runnable
 - getQualifiedNameAfterRename(com.intellij.psi.PsiElement,java.lang.String,Z):java.lang.String
 - getTextOccurrenceSearchStrings(com.intellij.psi.PsiElement,java.lang.String):com.intellij.openapi.util.Pair
 - isInplaceRenameSupported():Z
