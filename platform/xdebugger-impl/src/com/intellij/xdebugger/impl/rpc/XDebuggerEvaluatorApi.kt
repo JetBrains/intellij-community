@@ -26,19 +26,19 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
-  suspend fun evaluate(evaluatorDto: XDebuggerEvaluatorDto, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult>
+  suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult>
 
-  suspend fun evaluateXExpression(evaluatorDto: XDebuggerEvaluatorDto, xExpressionDto: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult>
+  suspend fun evaluateXExpression(evaluatorId: XDebuggerEvaluatorId, xExpressionDto: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult>
 
-  suspend fun evaluateInDocument(evaluatorDto: XDebuggerEvaluatorDto, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
+  suspend fun evaluateInDocument(evaluatorId: XDebuggerEvaluatorId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
 
   suspend fun evaluateFullValue(fullValueEvaluatorId: XFullValueEvaluatorId): Deferred<XFullValueEvaluatorResult>
 
-  suspend fun disposeXValue(xValueDto: XValueDto)
+  suspend fun disposeXValue(xValueId: XValueId)
 
-  suspend fun computePresentation(xValueDto: XValueDto, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>?
+  suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>?
 
-  suspend fun computeChildren(xValueDto: XValueDto): Flow<XValueComputeChildrenEvent>?
+  suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>?
 
   companion object {
     @JvmStatic
@@ -89,12 +89,20 @@ sealed interface XEvaluationResult {
 
 @ApiStatus.Internal
 @Serializable
-data class XValueDto(val eid: EID, @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>)
+data class XValueId(val eid: EID)
+
+@ApiStatus.Internal
+@Serializable
+data class XValueDto(val id: XValueId, @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>)
 
 
 @ApiStatus.Internal
 @Serializable
-data class XDebuggerEvaluatorDto(val eid: EID, val canEvaluateInDocument: Boolean)
+data class XDebuggerEvaluatorId(val eid: EID)
+
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerEvaluatorDto(val id: XDebuggerEvaluatorId, val canEvaluateInDocument: Boolean)
 
 @ApiStatus.Internal
 @Serializable

@@ -35,20 +35,20 @@ import java.awt.Font
 import javax.swing.Icon
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
-  override suspend fun evaluate(evaluatorDto: XDebuggerEvaluatorDto, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
-    return evaluate(evaluatorDto) { evaluator, callback ->
+  override suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
+    return evaluate(evaluatorId) { evaluator, callback ->
       evaluator.evaluate(expression, callback, position?.sourcePosition())
     }
   }
 
-  override suspend fun evaluateXExpression(evaluatorDto: XDebuggerEvaluatorDto, expression: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
-    return evaluate(evaluatorDto) { evaluator, callback ->
+  override suspend fun evaluateXExpression(evaluatorId: XDebuggerEvaluatorId, expression: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
+    return evaluate(evaluatorId) { evaluator, callback ->
       evaluator.evaluate(expression.xExpression(), callback, position?.sourcePosition())
     }
   }
 
-  override suspend fun evaluateInDocument(evaluatorDto: XDebuggerEvaluatorDto, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult> {
-    return evaluate(evaluatorDto) { evaluator, callback ->
+  override suspend fun evaluateInDocument(evaluatorId: XDebuggerEvaluatorId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult> {
+    return evaluate(evaluatorId) { evaluator, callback ->
       val document = documentId.document()!!
       if (evaluator is XDebuggerDocumentOffsetEvaluator) {
         evaluator.evaluate(document, offset, type, callback)
@@ -94,16 +94,16 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     return result
   }
 
-  override suspend fun disposeXValue(xValueDto: XValueDto) {
-    val xValueEntity = xValueDto.eid.findValueEntity<XValue>() ?: return
+  override suspend fun disposeXValue(xValueId: XValueId) {
+    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return
     xValueEntity.delete()
   }
 
   private suspend fun evaluate(
-    evaluatorDto: XDebuggerEvaluatorDto,
+    evaluatorId: XDebuggerEvaluatorId,
     evaluateFun: suspend (XDebuggerEvaluator, XEvaluationCallback) -> Unit,
   ): Deferred<XEvaluationResult> {
-    val evaluator = evaluatorDto.eid.findValueEntity<XDebuggerEvaluator>()?.value
+    val evaluator = evaluatorId.eid.findValueEntity<XDebuggerEvaluator>()?.value
                     ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
     val evaluationResult = CompletableDeferred<XValue>()
 
@@ -129,14 +129,14 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
       val xValueEntity = newValueEntity(xValue)
-      XEvaluationResult.Evaluated(XValueDto(xValueEntity.id, canBeModified = xValue.modifierAsync.thenApply { it != null }.asDeferred()))
+      XEvaluationResult.Evaluated(XValueDto(XValueId(xValueEntity.id), canBeModified = xValue.modifierAsync.thenApply { it != null }.asDeferred()))
     }
   }
 
   private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
 
-  override suspend fun computePresentation(xValueDto: XValueDto, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>? {
-    val xValueEntity = xValueDto.eid.findValueEntity<XValue>() ?: return emptyFlow()
+  override suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>? {
+    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return emptyFlow()
     val presentations = Channel<XValuePresentationEvent>(capacity = Int.MAX_VALUE)
     val xValue = xValueEntity.value
     return channelFlow {
@@ -201,8 +201,8 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     }
   }
 
-  override suspend fun computeChildren(xValueDto: XValueDto): Flow<XValueComputeChildrenEvent>? {
-    val xValueEntity = xValueDto.eid.findValueEntity<XValue>() ?: return emptyFlow()
+  override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>? {
+    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return emptyFlow()
     val rawEvents = Channel<RawComputeChildrenEvent>(capacity = Int.MAX_VALUE)
     val xValue = xValueEntity.value
 
@@ -317,7 +317,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
         val childrenXValueDtos = childrenXValueEntities.map {
           XValueDto(
-            it.id,
+            XValueId(it.id),
             canBeModified = it.value.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred()
           )
         }

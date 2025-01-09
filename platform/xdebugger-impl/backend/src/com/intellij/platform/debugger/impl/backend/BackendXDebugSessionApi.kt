@@ -9,6 +9,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluat
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorDto
+import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
@@ -21,7 +22,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     // NB!: we assume that the current evaluator depends only on the current StackFrame
     val currentEvaluator = (session as XDebugSessionImpl).currentStackFrameFlow.map { it?.get()?.evaluator }
     return currentEvaluator.withNullableIDsFlow { id, evaluator ->
-      id?.let { XDebuggerEvaluatorDto(id, canEvaluateInDocument = evaluator is XDebuggerDocumentOffsetEvaluator) }
+      id?.let { XDebuggerEvaluatorDto(XDebuggerEvaluatorId(id), canEvaluateInDocument = evaluator is XDebuggerDocumentOffsetEvaluator) }
     }
   }
 }

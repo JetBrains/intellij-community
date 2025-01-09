@@ -45,7 +45,7 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     node.childCoroutineScope("FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
-      XDebuggerEvaluatorApi.getInstance().computePresentation(xValueDto, place)?.collect { presentationEvent ->
+      XDebuggerEvaluatorApi.getInstance().computePresentation(xValueDto.id, place)?.collect { presentationEvent ->
         when (presentationEvent) {
           is XValuePresentationEvent.SetSimplePresentation -> {
             node.setPresentation(presentationEvent.icon?.icon(), presentationEvent.presentationType, presentationEvent.value, presentationEvent.hasChildren)
@@ -63,7 +63,7 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
 
   override fun computeChildren(node: XCompositeNode) {
     node.childCoroutineScope("FrontendXValue#computeChildren").launch(Dispatchers.EDT) {
-      XDebuggerEvaluatorApi.getInstance().computeChildren(xValueDto)?.collect { computeChildrenEvent ->
+      XDebuggerEvaluatorApi.getInstance().computeChildren(xValueDto.id)?.collect { computeChildrenEvent ->
         when (computeChildrenEvent) {
           is XValueComputeChildrenEvent.AddChildren -> {
             val childrenList = XValueChildrenList()
@@ -190,7 +190,7 @@ internal fun Obsolescent.childCoroutineScope(name: String): CoroutineScope {
 private class FrontendXValueDisposer(project: Project, val cs: CoroutineScope) {
   fun dispose(xValueDto: XValueDto) {
     cs.launch(Dispatchers.IO) {
-      XDebuggerEvaluatorApi.getInstance().disposeXValue(xValueDto)
+      XDebuggerEvaluatorApi.getInstance().disposeXValue(xValueDto.id)
     }
   }
 }

@@ -24,7 +24,7 @@ internal class FrontendXValueModifier(private val project: Project, private val 
 
   override fun setValue(expression: XExpression, callback: XModificationCallback) {
     project.service<FrontendXValueModifierCoroutineScopeProvider>().cs.launch {
-      val result = XDebuggerValueModifierApi.getInstance().setValue(xValueDto, expression.toRpc()).await()
+      val result = XDebuggerValueModifierApi.getInstance().setValue(xValueDto.id, expression.toRpc()).await()
 
       when (result) {
         SetValueResult.Success -> {
@@ -42,7 +42,7 @@ internal class FrontendXValueModifier(private val project: Project, private val 
       return
     }
     project.service<FrontendXValueModifierCoroutineScopeProvider>().cs.launch {
-      val initialValue = XDebuggerValueModifierApi.getInstance().initialValueEditorText(xValueDto)
+      val initialValue = XDebuggerValueModifierApi.getInstance().initialValueEditorText(xValueDto.id)
       callback.setValue(initialValue)
     }
   }

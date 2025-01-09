@@ -10,8 +10,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 
 internal class BackendXDebuggerValueModifierApi : XDebuggerValueModifierApi {
-  override suspend fun setValue(xValueDto: XValueDto, xExpressionDto: XExpressionDto): Deferred<SetValueResult> {
-    val xValue = xValueDto.eid.findValueEntity<XValue>()?.value ?: return CompletableDeferred(SetValueResult.Success)
+  override suspend fun setValue(xValueId: XValueId, xExpressionDto: XExpressionDto): Deferred<SetValueResult> {
+    val xValue = xValueId.eid.findValueEntity<XValue>()?.value ?: return CompletableDeferred(SetValueResult.Success)
     val valueSetDeferred = CompletableDeferred<SetValueResult>()
 
     val modifier = xValue.modifier
@@ -33,8 +33,8 @@ internal class BackendXDebuggerValueModifierApi : XDebuggerValueModifierApi {
     return valueSetDeferred
   }
 
-  override suspend fun initialValueEditorText(xValueDto: XValueDto): String? {
-    val xValue = xValueDto.eid.findValueEntity<XValue>()?.value ?: return null
+  override suspend fun initialValueEditorText(xValueId: XValueId): String? {
+    val xValue = xValueId.eid.findValueEntity<XValue>()?.value ?: return null
     val modifier = xValue.modifier
     if (modifier == null) {
       return null

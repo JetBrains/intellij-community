@@ -35,13 +35,13 @@ internal fun createFrontendXDebuggerEvaluator(project: Project, scope: Coroutine
 internal open class FrontendXDebuggerEvaluator(private val project: Project, private val scope: CoroutineScope, private val evaluatorDto: XDebuggerEvaluatorDto) : XDebuggerEvaluator() {
   override fun evaluate(expression: String, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
     evaluateByRpc(callback) {
-      XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorDto, expression, expressionPosition?.toRpc())
+      XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorDto.id, expression, expressionPosition?.toRpc())
     }
   }
 
   override fun evaluate(expression: XExpression, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
     evaluateByRpc(callback) {
-      XDebuggerEvaluatorApi.getInstance().evaluateXExpression(evaluatorDto, expression.toRpc(), expressionPosition?.toRpc())
+      XDebuggerEvaluatorApi.getInstance().evaluateXExpression(evaluatorDto.id, expression.toRpc(), expressionPosition?.toRpc())
     }
   }
 
@@ -69,7 +69,7 @@ private class FrontendXDebuggerDocumentOffsetEvaluator(
 ) : FrontendXDebuggerEvaluator(project, scope, evaluatorDto), XDebuggerDocumentOffsetEvaluator {
   override fun evaluate(document: Document, offset: Int, hintType: ValueHintType, callback: XEvaluationCallback) {
     evaluateByRpc(callback) {
-      XDebuggerEvaluatorApi.getInstance().evaluateInDocument(evaluatorDto, document.rpcId(), offset, hintType)
+      XDebuggerEvaluatorApi.getInstance().evaluateInDocument(evaluatorDto.id, document.rpcId(), offset, hintType)
     }
   }
 }
