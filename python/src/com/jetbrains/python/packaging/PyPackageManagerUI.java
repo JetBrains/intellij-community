@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.packaging.management.PythonPackagesInstaller;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -259,17 +260,22 @@ public final class PyPackageManagerUI {
     @Override
     protected @NotNull List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
       final List<ExecutionException> exceptions = new ArrayList<>();
-
       if (myProject == null) {
+        // FIXME: proper error
         return exceptions;
       }
 
-      PythonPackagesInstallerAsync.Companion.installPackages(
+      var result = PythonPackagesInstaller.Companion.installPackages(
         myProject,
         myRequirements,
         myExtraArgs,
         indicator
       );
+
+      // FIXME: use packaging tool window service for managing error dialog
+      if (result != null) {
+        exceptions.add(result);
+      }
 
       return exceptions;
     }
