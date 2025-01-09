@@ -35,7 +35,7 @@ internal suspend fun pyProjectToml(module: Module): VirtualFile? {
 }
 
 internal fun suggestedSdkName(basePath: Path): @NlsSafe String {
-  return "UV (${PathUtil.getFileName(basePath.pathString)})"
+  return "uv (${PathUtil.getFileName(basePath.pathString)})"
 }
 
 // FIXME: use proper icon
