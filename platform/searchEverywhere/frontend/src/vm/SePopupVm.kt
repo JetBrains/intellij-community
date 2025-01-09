@@ -18,6 +18,7 @@ class SePopupVm(val coroutineScope: CoroutineScope,
                 private val project: Project,
                 private val sessionRef: DurableRef<SeSessionEntity>,
                 tabs: List<SeTab>,
+                initialSearchPattern: String?,
                 private val onClose: suspend () -> Unit) {
 
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(0)
@@ -25,7 +26,7 @@ class SePopupVm(val coroutineScope: CoroutineScope,
   val currentTab: Flow<SeTabVm>
   val searchResults: Flow<Flow<SeItemData>>
 
-  val searchPattern = MutableStateFlow("")
+  val searchPattern = MutableStateFlow(initialSearchPattern ?: "")
 
   val tabVms: List<SeTabVm> = tabs.map {
     SeTabVm(coroutineScope, it, searchPattern)

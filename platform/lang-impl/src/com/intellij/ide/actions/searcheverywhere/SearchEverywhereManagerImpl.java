@@ -21,6 +21,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendService;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
@@ -37,14 +38,14 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
-import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
+import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DIALOG_CLOSED;
 
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
@@ -77,6 +78,11 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
   @Override
   public void show(@NotNull String tabID, @Nullable String searchText, @NotNull AnActionEvent initEvent) {
+    if (SeFrontendService.Companion.isEnabled()) {
+      SeFrontendService.getInstance(myProject).showPopup(searchText);
+      return;
+    }
+
     if (isShown()) {
       throw new IllegalStateException("Method should cannot be called when popup is shown");
     }
