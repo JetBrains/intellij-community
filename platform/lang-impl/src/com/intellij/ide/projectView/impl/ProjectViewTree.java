@@ -68,7 +68,10 @@ public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataPro
       var obj = TreeUtil.getUserObject(node);
       if (obj instanceof BasePsiNode<?> pvNode) {
         var file = pvNode.getVirtualFile();
-        return file != null && !file.isDirectory(); // true means "don't expand", so we only auto-expand directories
+        // true means "don't expand", so we put the condition inside !(),
+        // expressing inside the "it's a directory, and not a hidden one (starting with a dot)" condition
+        // (the file == null check is to stay on the safe side and expand if we don't know what it is)
+        return !(file == null || (file.isDirectory() && !file.getName().startsWith(".")));
       }
       else if (obj instanceof AbstractTreeNode<?> abstractTreeNode) {
         return !abstractTreeNode.isAutoExpandAllowed();
