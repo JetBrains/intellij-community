@@ -35,15 +35,10 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
         // The timeout is taken at random.
-        try {
-          withTimeout(10.seconds) {
-            write("set -ex")
-            ensureActive()
-            filterOutBanners()
-          }
-        } catch (ce: TimeoutCancellationException) {
-          logger<IjentDeployingOverShellProcessStrategy>().warn("Cancelled because of", ce)
-          throw ce
+        withTimeout(10.seconds) {
+          write("set -ex")
+          ensureActive()
+          filterOutBanners()
         }
       })
     }
