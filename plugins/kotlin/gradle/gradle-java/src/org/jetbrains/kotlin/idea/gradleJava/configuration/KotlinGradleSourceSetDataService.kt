@@ -256,9 +256,9 @@ fun configureFacetByGradleModule(
 
     val platformKind = detectPlatformKindByPlugin(moduleNode) ?: detectPlatformByLibrary(moduleNode)
     val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
-        .firstOrNull { it.data.sourceSetName == sourceSetName }
+        .firstOrNull { it.data.sourceSetName == sourceSetName } ?: return null
 
-    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion?.let(IdeKotlinVersion::opt)
+    val compilerVersion = kotlinGradleSourceSetDataNode.data?.kotlinPluginVersion?.let(IdeKotlinVersion::opt)
     // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
         ?: KotlinGradleFacade.getInstance()?.findKotlinPluginVersion(moduleNode)
 
