@@ -144,6 +144,14 @@ public abstract class RenamePsiElementProcessorBase {
     return null;
   }
 
+  public @Nullable Runnable getPostRenameCallback(@NotNull PsiElement element,
+                                                  @NotNull String newName,
+                                                  @NotNull Collection<UsageInfo> usages,
+                                                  @NotNull Map<PsiElement, String> allRenames,
+                                                  @NotNull RefactoringElementListener elementListener) {
+    return getPostRenameCallback(element, newName, elementListener);
+  }
+
   public @Nullable @NonNls String getHelpID(final PsiElement element) {
     if (element instanceof PsiFile) {
       return "refactoring.renameFile";
