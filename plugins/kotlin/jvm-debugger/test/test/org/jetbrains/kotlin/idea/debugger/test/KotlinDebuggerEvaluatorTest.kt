@@ -29,19 +29,26 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
     }
 
     fun testLogical() {
-        doTestRangeExpression("val a = (1 > 2) <caret>&& (3 > 4)", expressionWithoutSideEffects("(1 > 2) && (3 > 4)"))
-        doTestRangeExpression("val a = (1 > 2) &<caret>& (3 > 4)", expressionWithoutSideEffects("(1 > 2) && (3 > 4)"))
-        doTestRangeExpression("val a = (1 > 2) <caret>&& (3 > 4)", expressionWithoutSideEffects("(1 > 2) && (3 > 4)"))
-        doTestRangeExpression("val a = (1 > 2) <caret>&& (3 > 4) && true", expressionWithoutSideEffects("(1 > 2) && (3 > 4)"))
+        doTestRangeExpression("val a = true <caret>&& isOdd(5)", expressionWithSideEffects("true && isOdd(5)"))
+
+        // The following ones could be evaluated without side effects, but we are not yet smart enough.
+        doTestRangeExpression("val a = true <caret>&& false", expressionWithSideEffects("true && false"))
+        doTestRangeExpression("val a = true &<caret>& false", expressionWithSideEffects("true && false"))
+        doTestRangeExpression("val a = true <caret>&& false || true", expressionWithSideEffects("true && false"))
     }
 
     fun testArithmetical() {
-        // doTestRangeExpression("val a = 1 <caret>+ 2", expressionWithoutSideEffects("1 + 2"))
-        // doTestRangeExpression("val a = (1 <caret>> 2) && (3 > 4) ", expressionWithoutSideEffects("1 > 2"))
-        // doTestRangeExpression("val a = (1 ><caret> 2) && (3 > 4) ", expressionWithoutSideEffects("1 > 2"))
-        // doTestRangeExpression("val a = (1 > 2) && (3 <caret>> 4) ", expressionWithoutSideEffects("3 > 4"))
-        // doTestRangeExpression("val a = 1 + 2 <caret>+ 3 > 4", expressionWithoutSideEffects("1 + 2 + 3"))
-        // doTestRangeExpression("val a = 1 + <caret>2 + 3 > 4", expressionWithoutSideEffects("1 + 2 + 3"))
+        // Operators could be overloaded, we have to be careful.
+        doTestRangeExpression("1 <caret>+ 2", expressionWithSideEffects("1 + 2"))
+        doTestRangeExpression("1 <caret>> 2", expressionWithSideEffects("1 > 2"))
+        doTestRangeExpression("1 <caret>== 2", expressionWithSideEffects("1 == 2"))
+        doTestRangeExpression("val a = 1 <caret>+ 2", expressionWithSideEffects("1 + 2"))
+        doTestRangeExpression("(1 <caret>> 2) && (3 > 4) ", expressionWithSideEffects("1 > 2"))
+        doTestRangeExpression("val a = (1 <caret>> 2) && (3 > 4) ", expressionWithSideEffects("1 > 2"))
+        doTestRangeExpression("val a = (1 ><caret> 2) && (3 > 4) ", expressionWithSideEffects("1 > 2"))
+        doTestRangeExpression("val a = (1 > 2) && (3 <caret>> 4) ", expressionWithSideEffects("3 > 4"))
+        doTestRangeExpression("val a = 1 + 2 <caret>+ 3 > 4", expressionWithSideEffects("1 + 2 + 3"))
+        doTestRangeExpression("val a = 1 + <caret>2 + 3 > 4", expressionWithSideEffects("1 + 2"))
     }
 
     fun testClassNamePure() {
@@ -137,7 +144,7 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
     //////////// Utility methods
 
     private fun doTestRangeExpression(code: String, expected: ExpectedExpression) {
-        doTestRange("class A { fun foo() {" + code + "} fun bar(x: Int) = 37 }", expected)
+        doTestRange("class A { fun foo() {" + code + "} fun bar(x: Int) = 37 fun isOdd(x: Int) = (x % 2 != 0) }", expected)
     }
 
     private fun doTestRange(code: String, expected: ExpectedExpression) {

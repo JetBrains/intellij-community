@@ -97,8 +97,11 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
         val isAllowed = when (target) {
             is KtBinaryExpressionWithTypeRHS, is KtIsExpression, is KtDoubleColonExpression, is KtThisExpression -> true
             is LeafPsiElement -> target.elementType == KtTokens.IDENTIFIER
-            is KtOperationExpression -> isReferenceAllowed(target.operationReference, allowMethodCalls)
             is KtReferenceExpression -> isReferenceAllowed(target, allowMethodCalls)
+            is KtOperationExpression -> {
+                isReferenceAllowed(target.operationReference, allowMethodCalls) &&
+                        (allowMethodCalls || false /* TODO: check operation arguments */)
+            }
             is KtQualifiedExpression -> {
                 val selector = target.selectorExpression
                 selector is KtReferenceExpression && isReferenceAllowed(selector, allowMethodCalls)
