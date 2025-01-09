@@ -12,15 +12,18 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.kernel.backend.*
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +31,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.NonNls
+import java.awt.Font
 import javax.swing.Icon
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
@@ -53,6 +57,41 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         callback.errorOccurred(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"))
       }
     }
+  }
+
+  override suspend fun evaluateFullValue(fullValueEvaluatorId: XFullValueEvaluatorId): Deferred<XFullValueEvaluatorResult> {
+    val xFullValueEvaluator = fullValueEvaluatorId.eid.findValueEntity<XFullValueEvaluator>()?.value
+                              ?: return CompletableDeferred(XFullValueEvaluatorResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.full.value.evaluator.not.available")))
+
+    val result = CompletableDeferred<XFullValueEvaluatorResult>()
+    var isObsolete = false
+
+    val callback = object : XFullValueEvaluationCallback, Obsolescent {
+      override fun isObsolete(): Boolean {
+        return isObsolete
+      }
+
+      override fun evaluated(fullValue: String) {
+        result.complete(XFullValueEvaluatorResult.Evaluated(fullValue))
+      }
+
+      override fun evaluated(fullValue: String, font: Font?) {
+        // TODO[IJPL-160146]: support Font?
+        result.complete(XFullValueEvaluatorResult.Evaluated(fullValue))
+      }
+
+      override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
+        result.complete(XFullValueEvaluatorResult.EvaluationError(errorMessage))
+      }
+    }
+
+    result.invokeOnCompletion {
+      isObsolete = true
+    }
+
+    xFullValueEvaluator.startEvaluation(callback)
+
+    return result
   }
 
   override suspend fun disposeXValue(xValueDto: XValueDto) {
@@ -101,6 +140,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     val presentations = Channel<XValuePresentationEvent>(capacity = Int.MAX_VALUE)
     val xValue = xValueEntity.value
     return channelFlow {
+      val channelCs = this@channelFlow as CoroutineScope
       var isObsolete = false
 
       val valueNode = object : XValueNode {
@@ -124,7 +164,24 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
 
         override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {
-          // TODO[IJPL-160146]: implement setFullValueEvaluator
+          channelCs.launch {
+            val fullValueEvaluatorEntity = newValueEntity(fullValueEvaluator).apply {
+              cascadeDeleteBy(xValueEntity)
+            }
+
+            presentations.trySend(
+              XValuePresentationEvent.SetFullValueEvaluator(
+                XFullValueEvaluatorDto(
+                  XFullValueEvaluatorId(fullValueEvaluatorEntity.id),
+                  fullValueEvaluator.linkText,
+                  fullValueEvaluator.isEnabled,
+                  fullValueEvaluator.isShowValuePopup,
+                  fullValueEvaluator.linkAttributes?.let {
+                    FullValueEvaluatorLinkAttributes(it.linkIcon?.rpcId(), it.linkTooltipText, it.shortcutSupplier?.get())
+                  }
+                ))
+            )
+          }
         }
       }
       xValue.computePresentation(valueNode, xValuePlace)

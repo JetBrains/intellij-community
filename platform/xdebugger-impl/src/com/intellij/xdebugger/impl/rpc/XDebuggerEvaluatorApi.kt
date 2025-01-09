@@ -5,6 +5,7 @@ import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
@@ -30,6 +31,8 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   suspend fun evaluateXExpression(evaluatorDto: XDebuggerEvaluatorDto, xExpressionDto: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult>
 
   suspend fun evaluateInDocument(evaluatorDto: XDebuggerEvaluatorDto, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
+
+  suspend fun evaluateFullValue(fullValueEvaluatorId: XFullValueEvaluatorId): Deferred<XFullValueEvaluatorResult>
 
   suspend fun disposeXValue(xValueDto: XValueDto)
 
@@ -116,6 +119,43 @@ sealed interface XValuePresentationEvent {
     @JvmField val isAsync: Boolean,
     @JvmField val parts: List<XValueAdvancedPresentationPart>,
   ) : XValuePresentationEvent
+
+  @ApiStatus.Internal
+  @Serializable
+  data class SetFullValueEvaluator(val fullValueEvaluatorDto: XFullValueEvaluatorDto) : XValuePresentationEvent
+}
+
+@ApiStatus.Internal
+@Serializable
+data class XFullValueEvaluatorDto(
+  @JvmField val xFullValueEvaluatorId: XFullValueEvaluatorId,
+  @NlsSafe @JvmField val linkText: String,
+  @JvmField val isEnabled: Boolean,
+  @JvmField val isShowValuePopup: Boolean,
+  @JvmField val attributes: FullValueEvaluatorLinkAttributes?,
+) {
+  @Serializable
+  data class FullValueEvaluatorLinkAttributes(
+    @JvmField val linkIcon: IconId?,
+    @NlsSafe @JvmField val tooltipText: String?,
+    // TODO[IJPL-160146]: deal with Supplier<String>?
+    @JvmField val shortcut: String?,
+  )
+}
+
+@ApiStatus.Internal
+@Serializable
+data class XFullValueEvaluatorId(val eid: EID)
+
+@ApiStatus.Internal
+@Serializable
+sealed interface XFullValueEvaluatorResult {
+  // TODO[IJPL-160146]: support Font?
+  @Serializable
+  data class Evaluated(val fullValue: String) : XFullValueEvaluatorResult
+
+  @Serializable
+  data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XFullValueEvaluatorResult
 }
 
 @ApiStatus.Internal

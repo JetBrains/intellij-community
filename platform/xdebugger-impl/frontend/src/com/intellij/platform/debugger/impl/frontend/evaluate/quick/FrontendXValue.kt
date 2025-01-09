@@ -45,14 +45,16 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     node.childCoroutineScope("FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
-      XDebuggerEvaluatorApi.getInstance().computePresentation(xValueDto, place)?.collect { presentation ->
-        // TODO[IJPL-160146]: support fullValueEvaluator
-        when (presentation) {
+      XDebuggerEvaluatorApi.getInstance().computePresentation(xValueDto, place)?.collect { presentationEvent ->
+        when (presentationEvent) {
           is XValuePresentationEvent.SetSimplePresentation -> {
-            node.setPresentation(presentation.icon?.icon(), presentation.presentationType, presentation.value, presentation.hasChildren)
+            node.setPresentation(presentationEvent.icon?.icon(), presentationEvent.presentationType, presentationEvent.value, presentationEvent.hasChildren)
           }
           is XValuePresentationEvent.SetAdvancedPresentation -> {
-            node.setPresentation(presentation.icon?.icon(), FrontendXValuePresentation(presentation), presentation.hasChildren)
+            node.setPresentation(presentationEvent.icon?.icon(), FrontendXValuePresentation(presentationEvent), presentationEvent.hasChildren)
+          }
+          is XValuePresentationEvent.SetFullValueEvaluator -> {
+            node.setFullValueEvaluator(FrontendXFullValueEvaluator(presentationEvent.fullValueEvaluatorDto))
           }
         }
       }
@@ -172,7 +174,7 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private fun Obsolescent.childCoroutineScope(name: String): CoroutineScope {
+internal fun Obsolescent.childCoroutineScope(name: String): CoroutineScope {
   val obsolescent = this
   val scope = GlobalScope.childScope(name)
   scope.launch(context = Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
