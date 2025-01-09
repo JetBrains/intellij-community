@@ -11,15 +11,13 @@ module fleet.util.core {
   exports fleet.util.text;
   exports fleet.util.tree;
   exports com.tylerthrailkill.helpers.prettyprint;
-  exports fleet.util.fastutil;
-  exports fleet.util.fastutil.ints;
-  exports fleet.util.fastutil.longs;
 
   requires kotlin.stdlib;
   requires kotlinx.coroutines.core;
   requires kotlinx.coroutines.slf4j;
   requires transitive kotlinx.collections.immutable.jvm;
   requires transitive fleet.util.logging.api;
+  requires transitive fleet.fastutil;
   requires kotlinx.serialization.core;
   requires kotlinx.serialization.json;
   requires kotlinx.datetime;

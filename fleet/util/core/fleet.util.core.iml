@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="fleet.reporting.api" />
     <orderEntry type="module" module-name="fleet.preferences" />
     <orderEntry type="module" module-name="fleet.util.os" />
+    <orderEntry type="module" module-name="fleet.fastutil" exported="" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
   </component>
