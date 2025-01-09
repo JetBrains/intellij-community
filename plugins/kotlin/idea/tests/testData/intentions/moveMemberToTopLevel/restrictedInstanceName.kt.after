@@ -5,4 +5,4 @@ class Class {
 
 }
 
-fun foo(`class`: Class): Int = `class`.test
+fun foo(klass: Class): Int = klass.test
