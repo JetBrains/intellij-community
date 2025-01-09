@@ -231,7 +231,7 @@ fun KtNamedDeclaration.deleteWithCompanion() {
     }
 }
 
-fun PsiElement.getAllExtractionContainers(strict: Boolean = true): List<KtElement> {
+fun PsiElement.getAllExtractionContainers(strict: Boolean = true, acceptScript: Boolean = false): List<KtElement> {
     val containers = ArrayList<KtElement>()
 
     var objectOrNonInnerNestedClassFound = false
@@ -239,13 +239,15 @@ fun PsiElement.getAllExtractionContainers(strict: Boolean = true): List<KtElemen
     for (element in parents) {
         val isValidContainer = when (element) {
             is KtFile -> true
+            is KtScript -> acceptScript
             is KtClassBody -> !objectOrNonInnerNestedClassFound || element.parent is KtObjectDeclaration
             is KtBlockExpression -> !objectOrNonInnerNestedClassFound
             else -> false
         }
         if (!isValidContainer) continue
-
         containers.add(element as KtElement)
+
+        if (element is KtScript) break
 
         if (!objectOrNonInnerNestedClassFound) {
             val bodyParent = (element as? KtClassBody)?.parent
@@ -271,7 +273,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
             .firstOrNull()
     }
 
-    if (includeAll) return getAllExtractionContainers(strict)
+    if (includeAll) return getAllExtractionContainers(strict, acceptScript)
 
     val enclosingDeclaration = getEnclosingDeclaration(this, strict)?.let {
         if (it is KtDeclarationWithBody || it is KtAnonymousInitializer) getEnclosingDeclaration(it, true) else it
@@ -280,7 +282,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
     return when (enclosingDeclaration) {
         is KtFile -> Collections.singletonList(enclosingDeclaration)
         is KtScript -> Collections.singletonList(enclosingDeclaration)
-        is KtClassBody -> getAllExtractionContainers(strict).filterIsInstance<KtClassBody>()
+        is KtClassBody -> getAllExtractionContainers(strict, acceptScript).filterIsInstance<KtClassBody>()
         else -> {
             val targetContainer = when (enclosingDeclaration) {
                 is KtDeclarationWithBody -> enclosingDeclaration.bodyExpression
