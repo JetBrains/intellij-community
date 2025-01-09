@@ -46,9 +46,12 @@ internal class RunConfigurationIconAndInvalidCache : RunConfigurationIconCache {
 
   fun checkValidity(id: String, project: Project) {
     val configurationInfo = resultMap[id]
+    val lafId = LafManager.getInstance().currentUIThemeLookAndFeel?.id
     val expired = configurationInfo == null ||
                   (System.currentTimeMillis() - configurationInfo.finishTime) > (max(configurationInfo.calculationTime, 150L) * 10) ||
-                  LafManager.getInstance().currentUIThemeLookAndFeel?.id != configurationInfo.lafId
+                  lafId != configurationInfo.lafId
+
+    RunManagerImpl.LOG.debug("=== RunConfigIconCache: $id | $lafId | $configurationInfo | $expired ===")
 
     if (expired) {
       recalculateIcon(id, project)
