@@ -25,9 +25,9 @@ object KotlinParameterInfoBase {
 
         if (defaultValue is KtConstantExpression || defaultValue is KtStringTemplateExpression) {
             if (text.startsWith("\"")) {
-                return "\"${text.substring(0, 30)}$ellipsis\""
+                return "${text.substring(0, 30)}$ellipsis\""
             } else if (text.startsWith("\'")) {
-                return "\'${text.substring(0, 30)}$ellipsis\'"
+                return "${text.substring(0, 30)}$ellipsis\'"
             }
         }
 

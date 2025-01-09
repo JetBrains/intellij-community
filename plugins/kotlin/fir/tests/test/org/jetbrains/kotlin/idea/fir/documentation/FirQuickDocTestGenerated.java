@@ -107,6 +107,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/ClassPropertyWithInitializer.kt");
         }
 
+        @TestMetadata("ConstDefaultLongParameterValue.kt")
+        public void testConstDefaultLongParameterValue() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/ConstDefaultLongParameterValue.kt");
+        }
+
         @TestMetadata("ConstDefaultParameter.kt")
         public void testConstDefaultParameter() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/ConstDefaultParameter.kt");
