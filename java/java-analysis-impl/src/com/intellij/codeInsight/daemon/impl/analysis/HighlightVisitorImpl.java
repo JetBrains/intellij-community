@@ -204,6 +204,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       .notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
     myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
     myPreviewFeatureVisitor = myLanguageLevel.isPreview() ? null : new PreviewFeatureUtil.PreviewFeatureVisitor(myLanguageLevel, myErrorSink);
+    JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
     myCollector = new JavaErrorCollector(myFile, error -> {
       JavaErrorHighlightType javaHighlightType = error.highlightType();
       HighlightInfoType type = switch (javaHighlightType) {
@@ -221,7 +222,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       } else {
         info.range(error.anchor());
       }
-      for (CommonIntentionAction fix : JavaErrorFixProvider.getFixes(error)) {
+      for (CommonIntentionAction fix : errorFixProvider.getFixes(error)) {
         info.registerFix(fix.asIntention(), null, null, null, null);
       }
       add(info);
@@ -509,7 +510,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
     super.visitEnumConstant(enumConstant);
     if (!hasErrorResults()) {
-      GenericsHighlightUtil.checkEnumConstantForConstructorProblems(getProject(), enumConstant, myJavaSdkVersion, myErrorSink);
+      PsiClass containingClass = Objects.requireNonNull(enumConstant.getContainingClass());
+      PsiClassType type = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass);
+      HighlightMethodUtil.checkConstructorCall(getProject(), type.resolveGenerics(), enumConstant, type, null, myJavaSdkVersion,
+                                               enumConstant.getArgumentList(), myErrorSink);
     }
     if (!hasErrorResults()) add(HighlightUtil.checkUnhandledExceptions(enumConstant));
   }

@@ -14,6 +14,8 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -28,12 +30,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * Fixes attached to error messages provided by {@link com.intellij.java.codeserver.highlighting.JavaErrorCollector}.
  * To add new fixes use {@link #single(JavaErrorKind, JavaFixProvider)} or {@link #multi(JavaErrorKind, JavaFixesProvider)}
  * methods and return a fix or a list of fixes from lambda.
  */
+@Service(Service.Level.APP)
 final class JavaErrorFixProvider {
   @FunctionalInterface
   private interface JavaFixProvider<Psi extends PsiElement, Context> {
@@ -49,9 +53,9 @@ final class JavaErrorFixProvider {
     @NotNull List<@NotNull CommonIntentionAction> provide(@NotNull JavaCompilationError<? extends Psi, ? extends Context> error);
   }
 
-  private static final Map<JavaErrorKind<?, ?>, List<JavaFixesProvider<?, ?>>> FIXES = new HashMap<>();
+  private final Map<JavaErrorKind<?, ?>, List<JavaFixesProvider<?, ?>>> myFixes = new HashMap<>();
 
-  static {
+  JavaErrorFixProvider() {
     QuickFixFactory factory = QuickFixFactory.getInstance();
     multi(UNSUPPORTED_FEATURE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
     JavaFixProvider<PsiElement, Object> genericRemover = error -> factory.createDeleteFix(error.psi());
@@ -64,8 +68,12 @@ final class JavaErrorFixProvider {
     createAnnotationFixes(factory);
     createReceiverParameterFixes(factory);
   }
+  
+  public static JavaErrorFixProvider getInstance() {
+    return ApplicationManager.getApplication().getService(JavaErrorFixProvider.class);
+  }
 
-  private static void createClassFixes(QuickFixFactory factory) {
+  private void createClassFixes(QuickFixFactory factory) {
     single(CLASS_NO_ABSTRACT_METHOD, error -> {
       if (error.psi() instanceof PsiClass aClass && !(aClass instanceof PsiAnonymousClass) && !aClass.isEnum()
           && aClass.getModifierList() != null
@@ -75,13 +83,16 @@ final class JavaErrorFixProvider {
       return null;
     });
     multi(CLASS_NO_ABSTRACT_METHOD, error -> {
-      PsiClass aClass = error.psi() instanceof PsiClass cls ? cls : Objects.requireNonNull(error.psi().getContainingClass());
+      PsiMember member = error.psi();
+      PsiClass aClass = member instanceof PsiEnumConstant enumConstant ?
+                        requireNonNullElse(enumConstant.getInitializingClass(), member.getContainingClass()) : (PsiClass)member;
       PsiClass containingClass = Objects.requireNonNull(error.context().getContainingClass());
-      PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
+      PsiMethod anyMethodToImplement = member instanceof PsiEnumConstant ? ClassUtil.getAnyAbstractMethod(aClass) : 
+                                       ClassUtil.getAnyMethodToImplement(aClass);
       if (anyMethodToImplement == null) return List.of();
       if (!anyMethodToImplement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) ||
           JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, containingClass)) {
-        return List.of(factory.createImplementMethodsFix(error.psi()));
+        return List.of(factory.createImplementMethodsFix(member));
       }
       else {
         return StreamEx.of(JvmModifier.PROTECTED, JvmModifier.PUBLIC)
@@ -96,11 +107,11 @@ final class JavaErrorFixProvider {
       ContainerUtil.map(List.of(PsiModifier.PUBLIC, PsiModifier.PROTECTED),
                         (@PsiModifier.ModifierConstant String modifier) ->
                           factory.createModifierListFix(error.context(), modifier, true, false)));
-    single(CLASS_DUPLICATE, error -> factory.createRenameFix(Objects.requireNonNullElse(error.psi().getNameIdentifier(), error.psi())));
+    single(CLASS_DUPLICATE, error -> factory.createRenameFix(requireNonNullElse(error.psi().getNameIdentifier(), error.psi())));
     single(CLASS_DUPLICATE, error -> factory.createNavigateToDuplicateElementFix(error.context()));
   }
 
-  private static void createReceiverParameterFixes(@NotNull QuickFixFactory factory) {
+  private void createReceiverParameterFixes(@NotNull QuickFixFactory factory) {
     single(RECEIVER_TYPE_MISMATCH, error -> factory.createReceiverParameterTypeFix(error.psi(), error.context()));
     single(RECEIVER_NAME_MISMATCH,
            error -> error.context() == null ? null : factory.createReceiverParameterNameFix(error.psi(), error.context()));
@@ -118,7 +129,7 @@ final class JavaErrorFixProvider {
     });
   }
 
-  private static void createAnnotationFixes(@NotNull QuickFixFactory factory) {
+  private void createAnnotationFixes(@NotNull QuickFixFactory factory) {
     single(SAFE_VARARGS_ON_NON_FINAL_METHOD,
            error -> factory.createModifierListFix(error.context(), PsiModifier.FINAL, true, true));
     multi(OVERRIDE_ON_NON_OVERRIDING_METHOD, error -> {
@@ -206,18 +217,18 @@ final class JavaErrorFixProvider {
     single(ANNOTATION_DUPLICATE_NON_REPEATABLE, error -> factory.createCollapseAnnotationsFix(error.psi()));
   }
 
-  private static <Psi extends PsiElement, Context> void single(@NotNull JavaErrorKind<Psi, Context> kind,
+  private <Psi extends PsiElement, Context> void single(@NotNull JavaErrorKind<Psi, Context> kind,
                                                                @NotNull JavaFixProvider<? super Psi, ? super Context> fixProvider) {
     multi(kind, fixProvider.asMulti());
   }
 
-  private static <Psi extends PsiElement, Context> void multi(@NotNull JavaErrorKind<Psi, Context> kind,
+  private <Psi extends PsiElement, Context> void multi(@NotNull JavaErrorKind<Psi, Context> kind,
                                                               @NotNull JavaFixesProvider<? super Psi, ? super Context> fixProvider) {
-    FIXES.computeIfAbsent(kind, k -> new ArrayList<>()).add(fixProvider);
+    myFixes.computeIfAbsent(kind, k -> new ArrayList<>()).add(fixProvider);
   }
 
-  static @NotNull List<CommonIntentionAction> getFixes(@NotNull JavaCompilationError<?, ?> error) {
-    var providers = FIXES.get(error.kind());
+  @NotNull List<CommonIntentionAction> getFixes(@NotNull JavaCompilationError<?, ?> error) {
+    var providers = myFixes.get(error.kind());
     if (providers == null) return List.of();
     List<CommonIntentionAction> fixes = new ArrayList<>();
     for (var provider : providers) {

@@ -56,59 +56,6 @@ import java.util.function.Consumer;
  */
 public final class HighlightClassUtil {
 
-  static HighlightInfo.Builder checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull PsiElement implementsFixElement, @NotNull TextRange range) {
-    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
-    if (abstractMethod == null) {
-      return null;
-    }
-
-    PsiClass containingClass = abstractMethod.getContainingClass();
-    if (containingClass == null ||
-        containingClass == aClass ||
-        implementsFixElement instanceof PsiEnumConstant && !hasEnumConstantsWithInitializer(aClass)) {
-      return null;
-    }
-
-    final @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String messageKey;
-    final String referenceName;
-    if (aClass instanceof PsiEnumConstantInitializer enumConstant) {
-      messageKey = "enum.constant.must.implement.method";
-      referenceName = enumConstant.getEnumConstant().getName();
-    }
-    else {
-      messageKey = aClass.isEnum() || aClass.isRecord() || aClass instanceof PsiAnonymousClass
-                   ? "class.must.implement.method"
-                   : "class.must.be.abstract";
-      referenceName = HighlightUtil.formatClass(aClass, false);
-    }
-
-    String message = JavaErrorBundle.message(messageKey,
-                                             referenceName,
-                                             JavaHighlightUtil.formatMethod(abstractMethod),
-                                             HighlightUtil.formatClass(containingClass, false));
-    HighlightInfo.Builder errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
-    PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
-    if (anyMethodToImplement != null) {
-      if (!anyMethodToImplement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) ||
-          JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, containingClass)) {
-        IntentionAction action = QuickFixFactory.getInstance().createImplementMethodsFix(implementsFixElement);
-        errorResult.registerFix(action, null, null, null, null);
-      }
-      else {
-        QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(JvmModifier.PROTECTED, true)));
-        QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true)));
-      }
-    }
-    if (!(aClass instanceof PsiAnonymousClass) &&
-        !aClass.isEnum()
-        && aClass.getModifierList() != null
-        && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
-      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.ABSTRACT, true, false);
-      errorResult.registerFix(action, null, null, null, null);
-    }
-    return errorResult;
-  }
-
   static HighlightInfo.Builder checkInstantiationOfAbstractClass(@NotNull PsiClass aClass, @NotNull PsiElement highlightElement) {
     HighlightInfo.Builder errorResult = null;
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
@@ -135,18 +82,6 @@ public final class HighlightClassUtil {
       }
     }
     return errorResult;
-  }
-
-  private static boolean hasEnumConstantsWithInitializer(@NotNull PsiClass aClass) {
-    return CachedValuesManager.getCachedValue(aClass, () -> {
-      PsiField[] fields = aClass.getFields();
-      for (PsiField field : fields) {
-        if (field instanceof PsiEnumConstant constant && constant.getInitializingClass() != null) {
-          return new CachedValueProvider.Result<>(true, PsiModificationTracker.MODIFICATION_COUNT);
-        }
-      }
-      return new CachedValueProvider.Result<>(false, PsiModificationTracker.MODIFICATION_COUNT);
-    });
   }
 
   static HighlightInfo.Builder checkDuplicateTopLevelClass(@NotNull PsiClass aClass) {

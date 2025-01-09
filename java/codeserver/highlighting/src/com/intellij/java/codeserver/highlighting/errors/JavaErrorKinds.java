@@ -182,16 +182,17 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiMember, PsiMethod> CLASS_NO_ABSTRACT_METHOD =
     error(PsiMember.class, "class.must.implement.method")
       .withRange(member ->
-                   member instanceof PsiEnumConstant enumConstant ? enumConstant.getNameIdentifier().getTextRange() :
+                   member instanceof PsiEnumConstant enumConstant ? enumConstant.getNameIdentifier().getTextRangeInParent() :
                    member instanceof PsiClass aClass ? JavaErrorFormatUtil.getClassDeclarationTextRange(aClass) : null)
       .<PsiMethod>withContext()
       .withRawDescription((member, abstractMethod) -> {
-        PsiClass aClass = member instanceof PsiClass cls ? cls : requireNonNull(member.getContainingClass());
+        PsiClass aClass = member instanceof PsiEnumConstant enumConstant ?
+                          requireNonNullElse(enumConstant.getInitializingClass(), member.getContainingClass()) : (PsiClass)member;
         @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String messageKey;
         String referenceName;
-        if (aClass instanceof PsiEnumConstantInitializer enumConstant) {
+        if (member instanceof PsiEnumConstant enumConstant) {
           messageKey = "class.must.implement.method.enum.constant";
-          referenceName = enumConstant.getEnumConstant().getName();
+          referenceName = enumConstant.getName();
         }
         else {
           messageKey = aClass.isEnum() || aClass.isRecord() || aClass instanceof PsiAnonymousClass

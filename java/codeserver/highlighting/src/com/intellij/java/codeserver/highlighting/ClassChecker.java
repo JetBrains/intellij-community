@@ -9,6 +9,8 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 final class ClassChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
 
@@ -22,24 +24,34 @@ final class ClassChecker {
     if (parent instanceof PsiAnonymousClass aClass
         && parent.getParent() instanceof PsiNewExpression
         && !PsiUtilCore.hasErrorElementChild(parent.getParent())) {
-      checkClassWithAbstractMethods(aClass, aClass);
+      checkClassWithAbstractMethods(aClass);
     }
   }
 
-  private void checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull PsiMember implementsFixElement) {
+  private void checkClassWithAbstractMethods(@NotNull PsiClass aClass) {
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
-    if (abstractMethod == null) {
-      return;
-    }
+    if (abstractMethod == null) return;
 
     PsiClass containingClass = abstractMethod.getContainingClass();
-    if (containingClass == null ||
-        containingClass == aClass ||
-        implementsFixElement instanceof PsiEnumConstant && !hasEnumConstantsWithInitializer(aClass)) {
+    if (containingClass == null || containingClass == aClass) return;
+
+    myVisitor.report(JavaErrorKinds.CLASS_NO_ABSTRACT_METHOD.create(aClass, abstractMethod));
+  }
+
+  void checkEnumWithAbstractMethods(@NotNull PsiEnumConstant enumConstant) {
+    PsiEnumConstantInitializer initializingClass = enumConstant.getInitializingClass();
+    PsiClass enumClass = enumConstant.getContainingClass();
+    PsiClass aClass = Objects.requireNonNullElse(initializingClass, enumClass);
+    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
+    if (abstractMethod == null) return;
+
+    PsiClass containingClass = abstractMethod.getContainingClass();
+    if (containingClass == null || containingClass == initializingClass || 
+        containingClass != enumClass && initializingClass == null && !hasEnumConstantsWithInitializer(enumClass)) {
       return;
     }
 
-    myVisitor.report(JavaErrorKinds.CLASS_NO_ABSTRACT_METHOD.create(implementsFixElement, abstractMethod));
+    myVisitor.report(JavaErrorKinds.CLASS_NO_ABSTRACT_METHOD.create(enumConstant, abstractMethod));
   }
 
   void checkExtendsDuplicate(@NotNull PsiJavaCodeReferenceElement element, PsiElement resolved) {
@@ -111,7 +123,7 @@ final class ClassChecker {
     boolean mustCheck = aClass.isEnum() ? !hasEnumConstantsWithInitializer(aClass) :
                         !aClass.hasModifierProperty(PsiModifier.ABSTRACT) && aClass.getRBrace() != null;
     if (mustCheck) {
-      checkClassWithAbstractMethods(aClass, aClass);
+      checkClassWithAbstractMethods(aClass);
     }
   }
 

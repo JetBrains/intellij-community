@@ -12,7 +12,6 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -1110,31 +1109,6 @@ public final class GenericsHighlightUtil {
       return info;
     }
     return null;
-  }
-
-  static void checkEnumConstantForConstructorProblems(@NotNull Project project,
-                                                      @NotNull PsiEnumConstant enumConstant,
-                                                      @NotNull JavaSdkVersion javaSdkVersion, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiClass containingClass = enumConstant.getContainingClass();
-    LOG.assertTrue(containingClass != null);
-    if (enumConstant.getInitializingClass() == null) {
-      HighlightInfo.Builder highlightInfo = HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, enumConstant.getNameIdentifier());
-      if (highlightInfo != null) {
-        IntentionAction action = QuickFixFactory.getInstance().createImplementMethodsFix(enumConstant);
-        highlightInfo.registerFix(action, null, null, null, null);
-        errorSink.accept(highlightInfo);
-        return;
-      }
-      highlightInfo = HighlightClassUtil.checkClassWithAbstractMethods(enumConstant.getContainingClass(), enumConstant, enumConstant.getNameIdentifier().getTextRange());
-      if (highlightInfo != null) {
-        errorSink.accept(highlightInfo);
-        return;
-      }
-    }
-    PsiClassType type = JavaPsiFacade.getElementFactory(project).createType(containingClass);
-
-    HighlightMethodUtil.checkConstructorCall(project, type.resolveGenerics(), enumConstant, type, null, javaSdkVersion,
-                                             enumConstant.getArgumentList(), errorSink);
   }
 
   static HighlightInfo.Builder checkEnumSuperConstructorCall(@NotNull PsiMethodCallExpression expr) {

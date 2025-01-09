@@ -90,9 +90,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitEnumConstantInitializer(@NotNull PsiEnumConstantInitializer enumConstantInitializer) {
-    super.visitEnumConstantInitializer(enumConstantInitializer);
-    if (!hasErrorResults()) myClassChecker.checkClassMustBeAbstract(enumConstantInitializer);
+  public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
+    super.visitEnumConstant(enumConstant);
+    if (!hasErrorResults()) myClassChecker.checkEnumWithAbstractMethods(enumConstant);
   }
 
   @Override
