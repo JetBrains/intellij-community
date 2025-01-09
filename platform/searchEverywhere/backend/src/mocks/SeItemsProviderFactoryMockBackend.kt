@@ -5,7 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.mocks.SeItemsProviderMock
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeItemsProviderFactoryMockBackend: SeItemsProviderFactory {
   override fun getItemsProvider(project: Project): SeItemsProvider =
     SeItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 300, delayStep = 5)

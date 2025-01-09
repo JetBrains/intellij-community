@@ -14,19 +14,23 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 
-class SeTabsPane(tabNames: @Nls List<String>,
-                 selectedTabState: MutableStateFlow<Int>,
-                 coroutineScope: CoroutineScope,
-                 toolbar: JComponent? = null): NonOpaquePanel() {
+@Internal
+class SePopupHeaderPane(tabNames: @Nls List<String>,
+                        selectedTabState: MutableStateFlow<Int>,
+                        coroutineScope: CoroutineScope,
+                        toolbar: JComponent? = null): NonOpaquePanel() {
   private lateinit var tabbedPane: JBTabbedPane
   private val panel: DialogPanel
 
   init {
+    background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
+
     panel = panel {
       row {
         tabbedPane = tabbedPaneHeader()
@@ -46,7 +50,10 @@ class SeTabsPane(tabNames: @Nls List<String>,
             .customize(UnscaledGaps(left = 18))
         }
       }
+
     }
+
+    panel.background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
 
     val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
     @Suppress("UseDPIAwareBorders")

@@ -28,7 +28,7 @@ import javax.swing.ScrollPaneConstants
 class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
   val preferableFocusedComponent: JComponent get() = textField
 
-  private val tabsPane: SeTabsPane = SeTabsPane(vm.tabVms.map { it.name }, vm.currentTabIndex, vm.coroutineScope)
+  private val headerPane: SePopupHeaderPane = SePopupHeaderPane(vm.tabVms.map { it.name }, vm.currentTabIndex, vm.coroutineScope)
   private val textField: SeTextField = SeTextField()
 
   private val resultListModel = JBList.createDefaultListModel<SeItemData>()
@@ -43,7 +43,7 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     })
 
     RowsGridBuilder(this)
-      .row().cell(tabsPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
+      .row().cell(headerPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
 
@@ -75,6 +75,8 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     resultsScroll.border = null
     resultsScroll.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     resultsScroll.verticalScrollBar.putClientProperty(JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true)
+    resultsScroll.background = JBUI.CurrentTheme.Popup.BACKGROUND
+    resultList.background = JBUI.CurrentTheme.Popup.BACKGROUND
 
     resultsScroll.preferredSize = JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight())
     return resultsScroll

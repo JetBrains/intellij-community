@@ -9,7 +9,9 @@ import com.intellij.platform.searchEverywhere.SeTabProvider
 import com.intellij.platform.searchEverywhere.mocks.SeItemsProviderFactoryMockAlphaLocal
 import com.intellij.platform.searchEverywhere.mocks.SeItemsProviderFactoryMockBetaLocal
 import fleet.kernel.DurableRef
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeTabProviderMockDeltaMixed : SeTabProvider {
   override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>): SeTab =
     SeTabMock.create(project,

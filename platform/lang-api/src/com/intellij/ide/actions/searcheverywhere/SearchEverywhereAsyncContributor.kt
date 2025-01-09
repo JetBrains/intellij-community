@@ -23,6 +23,7 @@ interface SearchEverywhereAsyncContributor<Item> {
 
 }
 
+@Internal
 interface AsyncProcessor<T> {
   suspend fun process(t: T): Boolean
 }

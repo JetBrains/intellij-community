@@ -6,7 +6,9 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SeTabHelper
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeTabMock(override val name: String,
                 private val helper: SeTabHelper): SeTab {
   override val shortName: String = name

@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.*
@@ -71,6 +72,6 @@ class SeBackendService(val project: Project) {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): SeBackendService = project.getService(SeBackendService::class.java)
+    fun getInstance(project: Project): SeBackendService = project.service<SeBackendService>()
   }
 }

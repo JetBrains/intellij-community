@@ -5,7 +5,9 @@ import com.intellij.platform.searchEverywhere.*
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeItemDataBackendProvider(override val id: SeProviderId,
                                 private val provider: SeItemsProvider): SeItemDataProvider {
   override fun getItems(sessionRef: DurableRef<SeSessionEntity>, params: SeParams): Flow<SeItemData> {

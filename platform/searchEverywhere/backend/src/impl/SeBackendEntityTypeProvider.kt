@@ -3,7 +3,9 @@ package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.jetbrains.rhizomedb.EntityType
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeBackendEntityTypeProvider: EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> = listOf(SeBackendItemDataProvidersHolderEntity)
 }

@@ -7,7 +7,9 @@ import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.SeTab
 import com.intellij.platform.searchEverywhere.SeTabProvider
 import fleet.kernel.DurableRef
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeFilesTabProvider : SeTabProvider {
   override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>): SeTab =
     SeTabMock.create(project,
