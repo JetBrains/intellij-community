@@ -10,7 +10,12 @@ import java.util.List;
 
 public final class GradleDebuggerUtil {
 
-  public static Boolean isDebuggerEnabled() {
+  public static boolean isDebugAllEnabled() {
+    String enabled = System.getProperty("idea.gradle.debug.all");
+    return Boolean.parseBoolean(enabled);
+  }
+
+  public static boolean isDebuggerEnabled() {
     String enabled = GradleObjectUtil.notNull(System.getenv("DEBUGGER_ENABLED"), "false");
     return Boolean.parseBoolean(enabled);
   }

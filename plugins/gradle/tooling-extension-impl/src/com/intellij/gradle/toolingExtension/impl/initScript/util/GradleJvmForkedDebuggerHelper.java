@@ -2,7 +2,9 @@
 package com.intellij.gradle.toolingExtension.impl.initScript.util;
 
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
+import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.tasks.TaskCollection;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.process.JavaForkOptions;
 
@@ -11,6 +13,14 @@ import java.util.List;
 import java.util.Objects;
 
 public class GradleJvmForkedDebuggerHelper {
+
+  public static TaskCollection<Task> getTasksToDebug(Project project) {
+    boolean isDebugAllEnabled = GradleDebuggerUtil.isDebugAllEnabled();
+    project.getLogger().debug("isDebugAllEnabled: {}", isDebugAllEnabled);
+
+    return (isDebugAllEnabled ? project.getTasks() : GradleTasksUtil.getStartTasks(project))
+      .matching(task -> task instanceof JavaForkOptions);
+  }
 
   public static void setupDebugger(Task task, String projectDirectory) {
     if (GradleDebuggerUtil.isDebuggerEnabled()) {

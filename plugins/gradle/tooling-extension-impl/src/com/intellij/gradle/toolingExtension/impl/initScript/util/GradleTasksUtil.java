@@ -129,9 +129,6 @@ public final class GradleTasksUtil {
     List<String> startTaskNames = getStartTaskNames(project);
     project.getLogger().debug("Start Tasks Names: {}", startTaskNames);
 
-    TaskCollection<Task> startTasks = getMatchedTasks(targetProjectPath, project.getTasks(), startTaskNames);
-    project.getLogger().debug("Start Tasks: {}", startTasks);
-
-    return startTasks;
+    return getMatchedTasks(targetProjectPath, project.getTasks(), startTaskNames);
   }
 }

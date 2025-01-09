@@ -3,22 +3,17 @@
 
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleJvmForkedDebuggerHelper
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
-import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleTasksUtil
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil
 
 GradleLifecycleUtil.afterProject(gradle) { Project project ->
   def projectDirectory = project.projectDir.path
-  def debugAllIsEnabled = Boolean.valueOf(System.getProperty("idea.gradle.debug.all"))
-  logger.debug("idea.gradle.debug.all is {}", debugAllIsEnabled)
-  def tasks = debugAllIsEnabled ? project.tasks : GradleTasksUtil.getStartTasks(project)
+  def tasks = GradleJvmForkedDebuggerHelper.getTasksToDebug(project)
   GradleCollectionUtil.configureEach(tasks) { Task task ->
-    if (task instanceof JavaForkOptions) {
-      task.doFirst {
-        GradleJvmForkedDebuggerHelper.setupDebugger(delegate, projectDirectory)
-      }
-      task.doLast {
-        GradleJvmForkedDebuggerHelper.signalizeFinish(delegate)
-      }
+    task.doFirst {
+      GradleJvmForkedDebuggerHelper.setupDebugger(delegate, projectDirectory)
+    }
+    task.doLast {
+      GradleJvmForkedDebuggerHelper.signalizeFinish(delegate)
     }
   }
 }

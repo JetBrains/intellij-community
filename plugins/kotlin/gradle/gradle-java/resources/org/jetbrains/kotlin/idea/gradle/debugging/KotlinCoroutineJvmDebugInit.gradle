@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 //file:noinspection GrPackage
 
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleJvmForkedDebuggerHelper
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
-import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleTasksUtil
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 
@@ -18,16 +18,14 @@ interface Properties {
 }
 
 GradleLifecycleUtil.afterProject(gradle) { Project project ->
-    def debugAllIsEnabled = Boolean.valueOf(System.getProperty("idea.gradle.debug.all"))
-    logger.debug("idea.gradle.debug.all is {}", debugAllIsEnabled)
-    def tasks = debugAllIsEnabled ? project.tasks : GradleTasksUtil.getStartTasks(project)
+    def tasks = GradleJvmForkedDebuggerHelper.getTasksToDebug(project)
+            .matching { task -> task instanceof Test || task instanceof JavaExecSpec }
     GradleCollectionUtil.configureEach(tasks) { Task task ->
-        if (task instanceof Test || (task instanceof JavaExecSpec && task instanceof JavaForkOptions)) {
-            if (Properties.disabledDebugJvmArgument in task.getJvmArgs()) {
-                return
-            }
-            task.jvmArgumentProviders.add(new KotlinCoroutineJvmDebugArgumentsProvider(task))
+        def options = task as JavaForkOptions
+        if (Properties.disabledDebugJvmArgument in options.getJvmArgs()) {
+            return
         }
+        options.jvmArgumentProviders.add(new KotlinCoroutineJvmDebugArgumentsProvider(task))
     }
 }
 
