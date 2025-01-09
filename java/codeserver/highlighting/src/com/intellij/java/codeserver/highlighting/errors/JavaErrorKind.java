@@ -306,6 +306,17 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     /**
+     * Creates a new instance of Parameterized with the specified range function.
+     *
+     * @param range a BiFunction that determines the {@link TextRange} for a given Psi object.
+     *              The range is relative to anchor returned from {@link #anchor(PsiElement, Object)}
+     * @return a new Parameterized instance with the updated range function.
+     */
+    public Parameterized<Psi, Context> withRange(@NotNull BiFunction<? super Psi, ? super Context, ? extends TextRange> range) {
+      return new Parameterized<>(myKey, myDescription, myAnchor, range, myHighlightType, myValidator);
+    }
+
+    /**
      * Creates a new instance of Parameterized with a specified validator function.
      *
      * @param validator a BiConsumer that performs validation based on the given Psi and Context

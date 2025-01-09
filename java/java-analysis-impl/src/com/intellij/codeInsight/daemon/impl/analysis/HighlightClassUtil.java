@@ -109,16 +109,6 @@ public final class HighlightClassUtil {
     return errorResult;
   }
 
-  static HighlightInfo.Builder checkClassMustBeAbstract(@NotNull PsiClass aClass, @NotNull TextRange textRange) {
-    if (aClass.isEnum()) {
-      if (hasEnumConstantsWithInitializer(aClass)) return null;
-    }
-    else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null) {
-      return null;
-    }
-    return checkClassWithAbstractMethods(aClass, aClass, textRange);
-  }
-
   static HighlightInfo.Builder checkInstantiationOfAbstractClass(@NotNull PsiClass aClass, @NotNull PsiElement highlightElement) {
     HighlightInfo.Builder errorResult = null;
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
@@ -217,68 +207,6 @@ public final class HighlightClassUtil {
       info.registerFix(action, null, null, null, null);
     }
     return info;
-  }
-
-  static HighlightInfo.Builder checkDuplicateNestedClass(@NotNull PsiClass aClass) {
-    String name = aClass.getName();
-    if (name == null) {
-      return null;
-    }
-    PsiElement parent = aClass.getParent();
-    boolean checkSiblings;
-    if (parent instanceof PsiClass psiClass && !PsiUtil.isLocalOrAnonymousClass(psiClass) && !PsiUtil.isLocalOrAnonymousClass(aClass)) {
-      // optimization: instead of iterating PsiClass children manually we can get'em all from caches
-      PsiClass innerClass = psiClass.findInnerClassByName(name, false);
-      if (innerClass != null && innerClass != aClass) {
-        if (innerClass.getTextOffset() > aClass.getTextOffset()) {
-          // report duplicate lower in text
-          PsiClass c = innerClass;innerClass=aClass;aClass=c;
-        }
-        HighlightInfo.Builder info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
-        IntentionAction action = QuickFixFactory.getInstance().createNavigateToDuplicateElementFix(innerClass);
-        if (info != null) {
-          info.registerFix(action, null, null, null, null);
-        }
-        return info;
-      }
-      checkSiblings = false; // there still might be duplicates in parents
-    }
-    else {
-      checkSiblings = true;
-    }
-    if (!(parent instanceof PsiDeclarationStatement)) {
-      parent = aClass;
-    }
-    while (parent != null) {
-      if (parent instanceof PsiFile) break;
-      PsiElement element = checkSiblings ? parent.getPrevSibling() : null;
-      if (element == null) {
-        element = parent.getParent();
-        // JLS 14.3:
-        // The name of a local class C may not be redeclared
-        // as a local class of the directly enclosing method, constructor, or initializer block within the scope of C, or a compile-time
-        // error occurs. However, a local class declaration may be shadowed (6.3.1)
-        // anywhere inside a class declaration nested within the local class declaration's scope.
-        if (element instanceof PsiMethod ||
-            element instanceof PsiClass ||
-            element instanceof PsiCodeBlock && element.getParent() instanceof PsiClassInitializer) {
-          checkSiblings = false;
-        }
-      }
-      parent = element;
-
-      if (element instanceof PsiDeclarationStatement) element = PsiTreeUtil.getChildOfType(element, PsiClass.class);
-      if (element instanceof PsiClass psiClass && name.equals(psiClass.getName())) {
-        HighlightInfo.Builder info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
-        IntentionAction action = QuickFixFactory.getInstance().createNavigateToDuplicateElementFix(psiClass);
-        if (info != null) {
-          info.registerFix(action, null, null, null, null);
-        }
-        return info;
-      }
-    }
-
-    return null;
   }
 
   static HighlightInfo.Builder checkPublicClassInRightFile(@NotNull PsiClass aClass) {

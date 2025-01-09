@@ -14,6 +14,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.jvm.JvmModifier;
@@ -204,13 +205,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
     myPreviewFeatureVisitor = myLanguageLevel.isPreview() ? null : new PreviewFeatureUtil.PreviewFeatureVisitor(myLanguageLevel, myErrorSink);
     myCollector = new JavaErrorCollector(myFile, error -> {
-      HighlightInfoType type = switch (error.highlightType()) {
-        case ERROR -> HighlightInfoType.ERROR;
+      JavaErrorHighlightType javaHighlightType = error.highlightType();
+      HighlightInfoType type = switch (javaHighlightType) {
+        case ERROR, FILE_LEVEL_ERROR -> HighlightInfoType.ERROR;
         case WRONG_REF -> HighlightInfoType.WRONG_REF;
       };
       TextRange range = error.range();
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(type)
         .descriptionAndTooltip(error.description().toString());
+      if (javaHighlightType == JavaErrorHighlightType.FILE_LEVEL_ERROR) {
+        info.fileLevelAnnotation();
+      }
       if (range != null) {
         info.range(error.anchor(), range);
       } else {
@@ -507,15 +512,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       GenericsHighlightUtil.checkEnumConstantForConstructorProblems(getProject(), enumConstant, myJavaSdkVersion, myErrorSink);
     }
     if (!hasErrorResults()) add(HighlightUtil.checkUnhandledExceptions(enumConstant));
-  }
-
-  @Override
-  public void visitEnumConstantInitializer(@NotNull PsiEnumConstantInitializer enumConstantInitializer) {
-    super.visitEnumConstantInitializer(enumConstantInitializer);
-    if (!hasErrorResults()) {
-      TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(enumConstantInitializer);
-      add(HighlightClassUtil.checkClassMustBeAbstract(enumConstantInitializer, textRange));
-    }
   }
 
   @Override
@@ -937,11 +933,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     else if (parent instanceof PsiClass aClass) {
       try {
-        if (!hasErrorResults()) add(HighlightClassUtil.checkDuplicateNestedClass(aClass));
-        if (!hasErrorResults() && !(aClass instanceof PsiAnonymousClass)/* anonymous class is highlighted in HighlightClassUtil.checkAbstractInstantiation()*/) {
-          TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-          add(HighlightClassUtil.checkClassMustBeAbstract(aClass, textRange));
-        }
         if (!hasErrorResults()) {
           add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, getResolveHelper(getProject())));
         }
@@ -950,7 +941,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
           myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
         }
-        if (!hasErrorResults()) add(HighlightClassUtil.checkCyclicInheritance(aClass));
       }
       catch (IndexNotReadyException ignored) {
       }

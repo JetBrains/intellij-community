@@ -96,6 +96,8 @@ final class JavaErrorFixProvider {
       ContainerUtil.map(List.of(PsiModifier.PUBLIC, PsiModifier.PROTECTED),
                         (@PsiModifier.ModifierConstant String modifier) ->
                           factory.createModifierListFix(error.context(), modifier, true, false)));
+    single(CLASS_DUPLICATE, error -> factory.createRenameFix(Objects.requireNonNullElse(error.psi().getNameIdentifier(), error.psi())));
+    single(CLASS_DUPLICATE, error -> factory.createNavigateToDuplicateElementFix(error.context()));
   }
 
   private static void createReceiverParameterFixes(@NotNull QuickFixFactory factory) {

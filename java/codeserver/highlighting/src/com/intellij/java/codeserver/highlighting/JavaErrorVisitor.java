@@ -90,6 +90,37 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitEnumConstantInitializer(@NotNull PsiEnumConstantInitializer enumConstantInitializer) {
+    super.visitEnumConstantInitializer(enumConstantInitializer);
+    if (!hasErrorResults()) myClassChecker.checkClassMustBeAbstract(enumConstantInitializer);
+  }
+
+  @Override
+  public void visitModifierList(@NotNull PsiModifierList list) {
+    super.visitModifierList(list);
+    PsiElement parent = list.getParent();
+    if (parent instanceof PsiMethod method) {
+
+    }
+    else if (parent instanceof PsiClass aClass) {
+      if (!hasErrorResults()) myClassChecker.checkDuplicateNestedClass(aClass);
+      if (!hasErrorResults() && !(aClass instanceof PsiAnonymousClass)) {
+        /* anonymous class is highlighted in HighlightClassUtil.checkAbstractInstantiation()*/
+        myClassChecker.checkClassMustBeAbstract(aClass);
+      }
+      if (!hasErrorResults()) {
+        //myClassChecker.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, getResolveHelper(getProject()));
+      }
+      //if (!hasErrorResults()) add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass, myFile, myLanguageLevel));
+      if (!hasErrorResults()) {
+        //GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
+        //myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
+      }
+      if (!hasErrorResults()) myClassChecker.checkCyclicInheritance(aClass);
+    }
+  }
+  
+  @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     JavaResolveResult resultForIncompleteCode = doVisitReferenceElement(expression);
     if (!hasErrorResults()) {

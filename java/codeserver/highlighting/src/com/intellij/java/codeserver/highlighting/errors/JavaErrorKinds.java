@@ -202,6 +202,16 @@ public final class JavaErrorKinds {
         return message(messageKey, referenceName, formatMethod(abstractMethod),
                        formatClass(requireNonNull(abstractMethod.getContainingClass()), false));
       });
+  public static final Parameterized<PsiClass, PsiClass> CLASS_DUPLICATE =
+    error(PsiClass.class, "class.duplicate")
+      .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
+      .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
+      .withRawDescription(cls -> message("class.duplicate", cls.getName()))
+      .withContext();
+  public static final Parameterized<PsiClass, PsiClass> CLASS_CYCLIC_INHERITANCE =
+    error(PsiClass.class, "class.cyclic.inheritance")
+      .withRange(JavaErrorFormatUtil::getClassDeclarationTextRange).<PsiClass>withContext()
+      .withRawDescription((aClass, circularClass) -> message("class.cyclic.inheritance", formatClass(circularClass)));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_DUPLICATE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.duplicate")
       .withRawDescription(

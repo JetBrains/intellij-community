@@ -11,6 +11,11 @@ public enum JavaErrorHighlightType {
   ERROR,
 
   /**
+   * Error highlighting applied for the whole file
+   */
+  FILE_LEVEL_ERROR,
+
+  /**
    * Error highlighting for unresolved/unknown reference
    */
   WRONG_REF

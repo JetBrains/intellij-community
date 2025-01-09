@@ -3,7 +3,6 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -23,11 +22,11 @@ final class ClassChecker {
     if (parent instanceof PsiAnonymousClass aClass
         && parent.getParent() instanceof PsiNewExpression
         && !PsiUtilCore.hasErrorElementChild(parent.getParent())) {
-      checkClassWithAbstractMethods(aClass, aClass, ref.getTextRange());
+      checkClassWithAbstractMethods(aClass, aClass);
     }
   }
 
-  private void checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull PsiMember implementsFixElement, @NotNull TextRange range) {
+  private void checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull PsiMember implementsFixElement) {
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
     if (abstractMethod == null) {
       return;
@@ -106,6 +105,72 @@ final class ClassChecker {
         }
       }
     });
+  }
+
+  void checkClassMustBeAbstract(@NotNull PsiClass aClass) {
+    boolean mustCheck = aClass.isEnum() ? !hasEnumConstantsWithInitializer(aClass) :
+                        !aClass.hasModifierProperty(PsiModifier.ABSTRACT) && aClass.getRBrace() != null;
+    if (mustCheck) {
+      checkClassWithAbstractMethods(aClass, aClass);
+    }
+  }
+
+  void checkDuplicateNestedClass(PsiClass aClass) {
+    String name = aClass.getName();
+    if (name == null) return;
+    PsiElement parent = aClass.getParent();
+    boolean checkSiblings;
+    if (parent instanceof PsiClass psiClass && !PsiUtil.isLocalOrAnonymousClass(psiClass) && !PsiUtil.isLocalOrAnonymousClass(aClass)) {
+      // optimization: instead of iterating PsiClass children manually we can get'em all from caches
+      PsiClass innerClass = psiClass.findInnerClassByName(name, false);
+      if (innerClass != null && innerClass != aClass) {
+        if (innerClass.getTextOffset() > aClass.getTextOffset()) {
+          // report duplicate lower in text
+          PsiClass c = innerClass;
+          innerClass = aClass;
+          aClass = c;
+        }
+        myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, innerClass));
+        return;
+      }
+      checkSiblings = false; // there still might be duplicates in parents
+    }
+    else {
+      checkSiblings = true;
+    }
+    if (!(parent instanceof PsiDeclarationStatement)) {
+      parent = aClass;
+    }
+    while (parent != null) {
+      if (parent instanceof PsiFile) break;
+      PsiElement element = checkSiblings ? parent.getPrevSibling() : null;
+      if (element == null) {
+        element = parent.getParent();
+        // JLS 14.3:
+        // The name of a local class C may not be redeclared
+        // as a local class of the directly enclosing method, constructor, or initializer block within the scope of C, or a compile-time
+        // error occurs. However, a local class declaration may be shadowed (6.3.1)
+        // anywhere inside a class declaration nested within the local class declaration's scope.
+        if (element instanceof PsiMethod ||
+            element instanceof PsiClass ||
+            element instanceof PsiCodeBlock && element.getParent() instanceof PsiClassInitializer) {
+          checkSiblings = false;
+        }
+      }
+      parent = element;
+
+      if (element instanceof PsiDeclarationStatement) element = PsiTreeUtil.getChildOfType(element, PsiClass.class);
+      if (element instanceof PsiClass psiClass && name.equals(psiClass.getName())) {
+        myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, psiClass));
+      }
+    }
+  }
+
+  void checkCyclicInheritance(@NotNull PsiClass aClass) {
+    PsiClass circularClass = InheritanceUtil.getCircularClass(aClass);
+    if (circularClass != null) {
+      myVisitor.report(JavaErrorKinds.CLASS_CYCLIC_INHERITANCE.create(aClass, circularClass));
+    }
   }
 
   /**
