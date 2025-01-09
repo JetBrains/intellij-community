@@ -42,7 +42,7 @@ import javax.swing.*
  * @author Alexander Lobas
  */
 @Internal
-class InProductLicenseNotificationActionProvider : ActionProvider, IconCustomizer {
+class InProductNotificationActionProvider : ActionProvider, IconCustomizer {
   override fun getUpdateActions(context: DataContext): Collection<UpdateAction?> {
     return emptyList()
   }
@@ -63,7 +63,7 @@ class InProductLicenseNotificationActionProvider : ActionProvider, IconCustomize
   override fun getLastActions(context: DataContext): Collection<LastAction?> {
     val days = getExpiresInDays()
     if (0 <= days && days < 15) {
-      return listOf(InProductLicenseNotificationAction(days))
+      return listOf(InProductNotificationAction(days))
     }
     return emptyList()
   }
@@ -79,13 +79,13 @@ class InProductLicenseNotificationActionProvider : ActionProvider, IconCustomize
   override fun getTooltip(): @Nls String? {
     val days = getExpiresInDays()
     if (0 <= days && days < 15) {
-      return IdeBundle.message("in.product.license.notification.action.tooltip", ApplicationInfo.getInstance().fullApplicationName, days)
+      return IdeBundle.message("in.product.notification.action.tooltip", ApplicationInfo.getInstance().fullApplicationName, days)
     }
     return null
   }
 }
 
-private class InProductLicenseNotificationAction(val days: Int) : LastAction(), CustomComponentAction {
+private class InProductNotificationAction(val days: Int) : LastAction(), CustomComponentAction {
   private var myFirstActionUnderline = false
   private var mySecondActionUnderline = false
 
@@ -94,18 +94,18 @@ private class InProductLicenseNotificationAction(val days: Int) : LastAction(), 
   private var myComponent: JComponent? = null
 
   init {
-    templatePresentation.text = IdeBundle.message("in.product.license.notification.action.default.text")
+    templatePresentation.text = IdeBundle.message("in.product.notification.action.default.text")
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Always
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val banner = InlineBanner(IdeBundle.message("in.product.license.notification.action.text", days),
+    val banner = InlineBanner(IdeBundle.message("in.product.notification.action.text", days),
                               EditorNotificationPanel.Status.Info)
     banner.showCloseButton(false)
 
-    banner.addAction(IdeBundle.message("in.product.license.notification.action.renew.button"), {})
+    banner.addAction(IdeBundle.message("in.product.notification.action.renew.button"), {})
 
-    banner.addAction(IdeBundle.message("in.product.license.notification.action.discount.button"), {})
+    banner.addAction(IdeBundle.message("in.product.notification.action.discount.button"), {})
 
     setPaintUnderlineForActions(banner)
 
@@ -132,7 +132,7 @@ private class InProductLicenseNotificationAction(val days: Int) : LastAction(), 
       }
     }
     else {
-      val dialog = InProductLicenseNotificationDialog(e.project, days)
+      val dialog = InProductNotificationDialog(e.project, days)
       dialog.show()
       dialog.handleAction()
     }
@@ -212,7 +212,7 @@ private fun getDiscount() {
 }
 
 @Internal
-class InProductLicenseNotificationDialog(project: Project?, val days: Int) :
+class InProductNotificationDialog(project: Project?, val days: Int) :
   DialogWrapper(project, null, false, IdeModalityType.IDE, false) {
 
   init {
@@ -291,7 +291,7 @@ class InProductLicenseNotificationDialog(project: Project?, val days: Int) :
 
     val message = JBHtmlPane(JBHtmlPaneStyleConfiguration(), configuration)
     message.isOpaque = false
-    message.text = IdeBundle.message("in.product.license.notification.dialog.text", days)
+    message.text = IdeBundle.message("in.product.notification.dialog.text", days)
     message.border = JBUI.Borders.empty(28, 32, 16, 32)
     message.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
 
@@ -301,7 +301,7 @@ class InProductLicenseNotificationDialog(project: Project?, val days: Int) :
     buttons.isOpaque = false
     buttons.border = JBUI.Borders.empty(0, 32, 16, 32)
 
-    myOKAction.putValue(Action.NAME, IdeBundle.message("in.product.license.notification.action.renew.button"))
+    myOKAction.putValue(Action.NAME, IdeBundle.message("in.product.notification.action.renew.button"))
     buttons.add(createJButtonForAction(myOKAction).also { it.isOpaque = false })
 
     val listener = object : LinkListener<Any> {
@@ -309,7 +309,7 @@ class InProductLicenseNotificationDialog(project: Project?, val days: Int) :
         doCancelAction()
       }
     }
-    buttons.add(LinkLabel<Any>(IdeBundle.message("in.product.license.notification.action.dismiss.button"), null, listener))
+    buttons.add(LinkLabel<Any>(IdeBundle.message("in.product.notification.action.dismiss.button"), null, listener))
 
     panel.add(buttons, BorderLayout.SOUTH)
 
@@ -322,7 +322,7 @@ class InProductLicenseNotificationDialog(project: Project?, val days: Int) :
       return HiDPIImage(image, JBUI.scale(width).coerceAtLeast(width), JBUI.scale(height).coerceAtLeast(height), image.type)
     }
     catch (e: Exception) {
-      logger<InProductLicenseNotificationDialog>().error("Image $path is not loaded: $e")
+      logger<InProductNotificationDialog>().error("Image $path is not loaded: $e")
       return null
     }
   }
