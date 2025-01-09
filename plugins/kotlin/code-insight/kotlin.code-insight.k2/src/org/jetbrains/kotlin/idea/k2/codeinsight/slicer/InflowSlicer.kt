@@ -386,9 +386,12 @@ class InflowSlicer(
         val bodyExpression = bodyExpression ?: return
         if (bodyExpression is KtBlockExpression) {
             analyze(bodyExpression) {
-                val returnExpressions = computeExitPointSnapshot(bodyExpression.statements).valuedReturnExpressions
-                returnExpressions.forEach {
-                    ((it as? KtReturnExpression)?.returnedExpression ?: it).passToProcessorAsValue()
+                val statements = bodyExpression.statements
+                if (statements.isNotEmpty()) {
+                    val returnExpressions = computeExitPointSnapshot(statements).valuedReturnExpressions
+                    returnExpressions.forEach {
+                        ((it as? KtReturnExpression)?.returnedExpression ?: it).passToProcessorAsValue()
+                    }
                 }
             }
         } else {

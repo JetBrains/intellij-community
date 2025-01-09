@@ -120,6 +120,11 @@ public class FirSlicerNullnessGroupingTestGenerated extends AbstractFirSlicerNul
         runTest("../../idea/tests/testData/slicer/inflow/doubleLambdaResult.kt");
     }
 
+    @TestMetadata("emptyFun.kt")
+    public void testEmptyFun() throws Exception {
+        runTest("../../idea/tests/testData/slicer/inflow/emptyFun.kt");
+    }
+
     @TestMetadata("enumConstants.kt")
     public void testEnumConstants() throws Exception {
         runTest("../../idea/tests/testData/slicer/inflow/enumConstants.kt");

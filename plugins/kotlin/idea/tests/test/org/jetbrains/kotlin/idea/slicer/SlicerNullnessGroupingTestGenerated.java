@@ -120,6 +120,11 @@ public class SlicerNullnessGroupingTestGenerated extends AbstractSlicerNullnessG
         runTest("testData/slicer/inflow/doubleLambdaResult.kt");
     }
 
+    @TestMetadata("emptyFun.kt")
+    public void testEmptyFun() throws Exception {
+        runTest("testData/slicer/inflow/emptyFun.kt");
+    }
+
     @TestMetadata("enumConstants.kt")
     public void testEnumConstants() throws Exception {
         runTest("testData/slicer/inflow/enumConstants.kt");
