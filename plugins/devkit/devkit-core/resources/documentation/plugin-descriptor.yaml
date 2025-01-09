@@ -479,52 +479,69 @@ elements:
                     ```
             #language=Markdown
             childrenDescription: |
-              The children elements are registrations of the extension points defined by
-              [`<extensionPoint>`](#element:idea-plugin__extensionPoints__extensionPoint) elements. Extension elements names follow the EPs names
-              defined by [`name`](#attribute:idea-plugin__extensionPoints__extensionPoint__name)
+              The children elements are registrations of instances
+              of [extension points](#element:idea-plugin__extensionPoints__extensionPoint) provided by the IntelliJ Platform or plugins.
+              <br/>
+              An extension element name is defined by its extension point via
+              [`name`](#attribute:idea-plugin__extensionPoints__extensionPoint__name)
               or [`qualifiedName`](#attribute:idea-plugin__extensionPoints__extensionPoint__qualifiedName) attributes.
+              <br/>
+              An extension element attributes depend on the extension point implementation, but all extensions support basic attributes:
+              [`id`](#attribute:idea-plugin__extensions__*__id), [`order`](#attribute:idea-plugin__extensions__*__order),
+              and [`os`](#attribute:idea-plugin__extensions__*__os).
             children:
               - element:
                   name: "*"
+                  #language=Markdown
+                  description: |
+                    An extension instance registered under [`<extensions>`](#element:idea-plugin__extensions).
+                    
+                    Listed attributes are basic attributes available for all extensions.
+                    The list of actual attributes can be longer depending on the extension point implementation.
                   attributes:
                     - attribute:
                         name: id
+                        requirement:
+                          required: no
+                        #language=Markdown
                         description: |
                           Unique extension identifier.
                           It allows for referencing an extension in the [`order`](#attribute:idea-plugin__extensions__*__order) attribute.
-                          
+                          <br/>
                           To not clash with other plugins defining extensions with the same identifier,
                           consider prepending the identifier with a prefix related to the plugin [`<id>`](#element:idea-plugin__id) or 
-                          [`<name>`](#element:idea-plugin__name), for example:
-                          ```
-                          id="com.example.myplugin.myExtension"
-                          ```
+                          [`<name>`](#element:idea-plugin__name), for example, `id="com.example.myplugin.myExtension"`.
                     - attribute:
                         name: order
+                        requirement:
+                          required: no
+                        #language=Markdown
                         description: |
                           Allows for ordering the extension relative to other instances of the same extension point.
                           Supported values:
-                          - `first` - orders the extension as first.
-                             It is not guaranteed that the extension will be the first if multiple extensions are defined as `first`.
-                          - `last` - orders the extension as last.
-                             It is not guaranteed that the extension will be the last if multiple extensions are defined as `last`.
-                          - `before extension_id` - orders the extension before an extension with the given [`id`](#attribute:idea-plugin__extensions__*__id)
-                          - `after extension_id` - orders the extension after an extension with the given [`id`](#attribute:idea-plugin__extensions__*__id)
-                          
-                          Values can be combined, for example:
-                          ```
-                          order="after extensionY, before extensionX"
-                          ```
+                            - `first` - orders the extension as first.
+                               It is not guaranteed that the extension will be the first if multiple extensions are defined as `first`.
+                            - `last` - orders the extension as last.
+                               It is not guaranteed that the extension will be the last if multiple extensions are defined as `last`.
+                            - `before extension_id` - orders the extension before an extension with
+                               the given [`id`](#attribute:idea-plugin__extensions__*__id)
+                            - `after extension_id` - orders the extension after an extension with
+                               the given [`id`](#attribute:idea-plugin__extensions__*__id)
+                          <br/>
+                          Values can be combined, for example, `order="after extensionY, before extensionX"`.
                     - attribute:
                         name: os
+                        requirement:
+                          required: no
+                        #language=Markdown
                         description: |
                           Allows restricting an extension to a given OS.
                           Supported values:
-                          - `freebsd`
-                          - `linux`
-                          - `mac`
-                          - `unix`
-                          - `windows`
+                            - `freebsd`
+                            - `linux`
+                            - `mac`
+                            - `unix`
+                            - `windows`
                           
                           For example, `os="windows"` registers the extension on Windows only.
         - element:
