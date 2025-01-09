@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -20,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.RetentionPolicy;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -137,33 +134,6 @@ public final class AnnotationsHighlightUtil {
       .descriptionAndTooltip(message);
     info.registerFix(fix, null, null, null, null);
     return info;
-  }
-
-  static HighlightInfo.Builder checkCyclicMemberType(@NotNull PsiTypeElement typeElement, @NotNull PsiClass aClass) {
-    PsiType type = typeElement.getType();
-    Set<PsiClass> checked = new HashSet<>();
-    if (cyclicDependencies(aClass, type, checked)) {
-      String description = JavaErrorBundle.message("annotation.cyclic.element.type");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
-    }
-    return null;
-  }
-
-  private static boolean cyclicDependencies(@NotNull PsiClass aClass,
-                                            @Nullable PsiType type,
-                                            @NotNull Set<? super PsiClass> checked) {
-    PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
-    if (resolvedClass != null && resolvedClass.isAnnotationType()) {
-      if (aClass == resolvedClass) {
-        return true;
-      }
-      if (!checked.add(resolvedClass) || !BaseIntentionAction.canModify(resolvedClass)) return false;
-      PsiMethod[] methods = resolvedClass.getMethods();
-      for (PsiMethod method : methods) {
-        if (cyclicDependencies(aClass, method.getReturnType(), checked)) return true;
-      }
-    }
-    return false;
   }
 
   static HighlightInfo.Builder checkRepeatableAnnotation(@NotNull PsiAnnotation annotation) {
