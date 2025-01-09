@@ -1,12 +1,13 @@
-PyDev.Debugger
-==============
+# PyDev.Debugger
 
-The sources for the PyDev.Debugger (used in PyDev & PyCharm) may be seen at:
+PyCharms' fork of [PyDev.Debugger][pydevd].
 
-https://github.com/fabioz/PyDev.Debugger
+## Installation
 
 In general, the debugger backend should **NOT** be installed separately if you're using an IDE which already
 bundles it (such as PyDev or PyCharm).
+
+## Compatibility
 
 It is however available in PyPi so that it can be installed for doing remote debugging with `pip` -- so, when
 debugging a process which runs in another machine, it's possible to `pip install pydevd-pycharm` and in the code use
@@ -27,17 +28,26 @@ To generate a distribution to upload to PyPi, `python setup.py sdist bdist_wheel
 which should have a wheel and afterwards `twine upload -s dist/pydevd-*` should be run to actually upload the contents
 to PyPi.
 
-Travis (Linux CI):
+## Tests
 
-.. |travis| image:: https://travis-ci.org/fabioz/PyDev.Debugger.png
-  :target: https://travis-ci.org/fabioz/PyDev.Debugger
+Tests are executed via `tox` with the help of `pytest`.
 
-|travis|
+To run all tests ...
 
-Appveyor (Windows CI):
+```shell
+tox
+```
 
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/j6vjq687brbk20ux?svg=true
-  :target: https://ci.appveyor.com/project/fabioz/pydev-debugger
+To run test vs. a specific Python version, e.g., Python 3.13 ...
 
-|appveyor|
+```shell
+tox -e py313
+```
 
+To run a specific test vs. a specific Python version ...
+
+```shell
+tox -e py313 -- pydev_tests/test_pyserver.py::TestCPython::test_message
+```
+
+[pydevd]: https://github.com/fabioz/PyDev.Debugger
