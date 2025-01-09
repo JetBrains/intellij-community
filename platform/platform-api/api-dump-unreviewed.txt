@@ -2210,9 +2210,15 @@ com.intellij.openapi.fileChooser.FileChooserPanel
 - a:toggleProjectDetection():Z
 c:com.intellij.openapi.fileChooser.FileSaverDescriptor
 - com.intellij.openapi.fileChooser.FileChooserDescriptor
+- <init>(com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - <init>(java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String[]):V
+- withDescription(java.lang.String):com.intellij.openapi.fileChooser.FileSaverDescriptor
+- withTitle(java.lang.String):com.intellij.openapi.fileChooser.FileSaverDescriptor
+f:com.intellij.openapi.fileChooser.FileSaverDescriptorFactory
+- sf:INSTANCE:com.intellij.openapi.fileChooser.FileSaverDescriptorFactory
+- sf:createSingleFileNoJarsDescriptor():com.intellij.openapi.fileChooser.FileSaverDescriptor
 com.intellij.openapi.fileChooser.FileSaverDialog
 - a:save(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFileWrapper
 - save(java.lang.String):com.intellij.openapi.vfs.VirtualFileWrapper
@@ -3205,6 +3211,7 @@ c:com.intellij.openapi.ui.ComponentWithBrowseButton
 - addBrowseFolderListener(com.intellij.openapi.project.Project,com.intellij.openapi.ui.ComponentWithBrowseButton$BrowseFolderActionListener):V
 - addBrowseFolderListener(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
 - addBrowseFolderListener(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor,Z):V
+- addFileSaverDialog(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileSaverDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
 - dispose():V
 - getButton():com.intellij.openapi.ui.FixedSizeButton
 - f:getChildComponent():javax.swing.JComponent

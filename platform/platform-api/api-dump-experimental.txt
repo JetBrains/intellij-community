@@ -231,6 +231,20 @@ c:com.intellij.openapi.ui.ComboBox
 a:com.intellij.openapi.ui.DialogWrapper
 - *:isKeepPopupsOpen():Z
 - *:setKeepPopupsOpen(Z):V
+*c:com.intellij.openapi.ui.FileSaverRunnable
+- java.awt.event.ActionListener
+- java.lang.Runnable
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileSaverDescriptor,javax.swing.JComponent,com.intellij.openapi.ui.TextComponentAccessor):V
+- actionPerformed(java.awt.event.ActionEvent):V
+- pf:chooseFile(com.intellij.openapi.fileChooser.FileChooserDescriptor):V
+- pf:chosenFileToResultingText(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- f:getAccessor():com.intellij.openapi.ui.TextComponentAccessor
+- pf:getComponentText():java.lang.String
+- pf:getInitialFile():kotlin.Pair
+- f:getProject():com.intellij.openapi.project.Project
+- f:getTextComponent():javax.swing.JComponent
+- onFileChosen(java.io.File):V
+- run():V
 *:com.intellij.openapi.ui.UiSwitcher
 - *sf:Companion:com.intellij.openapi.ui.UiSwitcher$Companion
 - s:append(javax.swing.JComponent,com.intellij.openapi.ui.UiSwitcher):V
