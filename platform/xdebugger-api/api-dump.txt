@@ -408,9 +408,13 @@ com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport$ExceptionRe
 e:com.intellij.xdebugger.evaluation.EvaluationMode
 - java.lang.Enum
 - sf:CODE_FRAGMENT:com.intellij.xdebugger.evaluation.EvaluationMode
+- sf:Companion:com.intellij.xdebugger.evaluation.EvaluationMode$Companion
 - sf:EXPRESSION:com.intellij.xdebugger.evaluation.EvaluationMode
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.xdebugger.evaluation.EvaluationMode
 - s:values():com.intellij.xdebugger.evaluation.EvaluationMode[]
+f:com.intellij.xdebugger.evaluation.EvaluationMode$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.xdebugger.evaluation.ExpressionInfo
 - sf:Companion:com.intellij.xdebugger.evaluation.ExpressionInfo$Companion
 - <init>(com.intellij.openapi.util.TextRange):V
