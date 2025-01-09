@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,6 +15,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -185,6 +186,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                   @NotNull PsiMethod result) {
     PsiUtil.setModifierProperty(result, PsiModifier.ABSTRACT, aClass.isInterface() && method.hasModifierProperty(PsiModifier.ABSTRACT));
     PsiUtil.setModifierProperty(result, PsiModifier.NATIVE, false);
+
+    if (method.isConstructor() && aClass.hasModifier(JvmModifier.FINAL) && method.hasModifier(JvmModifier.PROTECTED)) {
+      result.getModifierList().setModifierProperty(PsiModifier.PROTECTED, false);
+    }
 
     if (!toCopyJavaDoc){
       deleteDocComment(result);
