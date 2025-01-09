@@ -7,10 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -65,15 +62,15 @@ public abstract sealed class InternedPath permits InternedPath.WinInternedPath, 
       return false;
     }
 
-    InternedPath path = (InternedPath)o;
+    InternedPath other = (InternedPath)o;
 
     int length = myPath.length;
-    if (path.myPath.length != length) {
+    if (length != other.myPath.length) {
       return false;
     }
 
-    for (int i=length - 1; i>0; i--) {
-      if (myPath[i].equals(path.myPath[i])) {
+    for (int i = length - 1; i >= 0; i--) {
+      if (!Objects.equals(myPath[i], other.myPath[i])) {
         return false;
       }
     }
