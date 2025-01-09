@@ -49,7 +49,7 @@ class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
-  fun testResolveLibrariActionId() {
+  fun testResolveLibraryActionId() {
     val pluginXmlActions = pluginXmlActions("""
       <action id="myAction"/>
     """.trimIndent())
