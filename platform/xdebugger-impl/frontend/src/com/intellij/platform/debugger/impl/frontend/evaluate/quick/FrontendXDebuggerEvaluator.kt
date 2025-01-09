@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
@@ -16,6 +17,7 @@ import com.intellij.xdebugger.impl.rpc.XEvaluationResult
 import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -32,9 +34,21 @@ internal fun createFrontendXDebuggerEvaluator(project: Project, scope: Coroutine
 
 internal open class FrontendXDebuggerEvaluator(private val project: Project, private val scope: CoroutineScope, private val evaluatorDto: XDebuggerEvaluatorDto) : XDebuggerEvaluator() {
   override fun evaluate(expression: String, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
+    evaluateByRpc(callback) {
+      XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorDto, expression, expressionPosition?.toRpc())
+    }
+  }
+
+  override fun evaluate(expression: XExpression, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
+    evaluateByRpc(callback) {
+      XDebuggerEvaluatorApi.getInstance().evaluateXExpression(evaluatorDto, expression.toRpc(), expressionPosition?.toRpc())
+    }
+  }
+
+  protected fun evaluateByRpc(callback: XEvaluationCallback, evaluate: suspend () -> Deferred<XEvaluationResult>) {
     scope.launch(Dispatchers.EDT) {
       try {
-        val evaluation = XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorDto, expression, expressionPosition?.toRpc()).await()
+        val evaluation = evaluate().await()
         when (evaluation) {
           is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(project, evaluation.valueId))
           is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
@@ -49,23 +63,13 @@ internal open class FrontendXDebuggerEvaluator(private val project: Project, pri
 }
 
 private class FrontendXDebuggerDocumentOffsetEvaluator(
-  private val project: Project,
-  private val scope: CoroutineScope,
+  project: Project,
+  scope: CoroutineScope,
   private val evaluatorDto: XDebuggerEvaluatorDto,
 ) : FrontendXDebuggerEvaluator(project, scope, evaluatorDto), XDebuggerDocumentOffsetEvaluator {
   override fun evaluate(document: Document, offset: Int, hintType: ValueHintType, callback: XEvaluationCallback) {
-    scope.launch(Dispatchers.EDT) {
-      try {
-        val evaluation = XDebuggerEvaluatorApi.getInstance().evaluateInDocument(evaluatorDto, document.rpcId(), offset, hintType).await()
-        when (evaluation) {
-          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(project, evaluation.valueId))
-          is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
-        }
-      }
-      catch (e: Exception) {
-        callback.errorOccurred(e.message ?: XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"))
-        LOG.error(e)
-      }
+    evaluateByRpc(callback) {
+      XDebuggerEvaluatorApi.getInstance().evaluateInDocument(evaluatorDto, document.rpcId(), offset, hintType)
     }
   }
 }

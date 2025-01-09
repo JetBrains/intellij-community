@@ -5,15 +5,12 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.kernel.backend.findValueEntity
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueModifier
-import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
-import com.intellij.xdebugger.impl.rpc.SetValueResult
-import com.intellij.xdebugger.impl.rpc.XDebuggerValueModifierApi
-import com.intellij.xdebugger.impl.rpc.XValueDto
+import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 
 internal class BackendXDebuggerValueModifierApi : XDebuggerValueModifierApi {
-  override suspend fun setValue(xValueDto: XValueDto, expression: String): Deferred<SetValueResult> {
+  override suspend fun setValue(xValueDto: XValueDto, xExpressionDto: XExpressionDto): Deferred<SetValueResult> {
     val xValue = xValueDto.eid.findValueEntity<XValue>()?.value ?: return CompletableDeferred(SetValueResult.Success)
     val valueSetDeferred = CompletableDeferred<SetValueResult>()
 
@@ -23,9 +20,7 @@ internal class BackendXDebuggerValueModifierApi : XDebuggerValueModifierApi {
       return CompletableDeferred(SetValueResult.Success)
     }
 
-    // TODO[IJPL-160146]: decide what to do with XExpression
-    val xExpression = XExpressionImpl.fromText(expression)
-    modifier.setValue(xExpression, object : XValueModifier.XModificationCallback {
+    modifier.setValue(xExpressionDto.xExpression(), object : XValueModifier.XModificationCallback {
       override fun valueModified() {
         valueSetDeferred.complete(SetValueResult.Success)
       }

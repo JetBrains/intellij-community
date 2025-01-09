@@ -27,6 +27,8 @@ import org.jetbrains.annotations.ApiStatus
 interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   suspend fun evaluate(evaluatorDto: XDebuggerEvaluatorDto, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult>
 
+  suspend fun evaluateXExpression(evaluatorDto: XDebuggerEvaluatorDto, xExpressionDto: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult>
+
   suspend fun evaluateInDocument(evaluatorDto: XDebuggerEvaluatorDto, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
 
   suspend fun disposeXValue(xValueDto: XValueDto)

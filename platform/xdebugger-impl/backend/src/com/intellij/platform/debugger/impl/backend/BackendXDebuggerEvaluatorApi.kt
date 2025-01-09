@@ -37,6 +37,12 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     }
   }
 
+  override suspend fun evaluateXExpression(evaluatorDto: XDebuggerEvaluatorDto, expression: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
+    return evaluate(evaluatorDto) { evaluator, callback ->
+      evaluator.evaluate(expression.xExpression(), callback, position?.sourcePosition())
+    }
+  }
+
   override suspend fun evaluateInDocument(evaluatorDto: XDebuggerEvaluatorDto, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult> {
     return evaluate(evaluatorDto) { evaluator, callback ->
       val document = documentId.document()!!
