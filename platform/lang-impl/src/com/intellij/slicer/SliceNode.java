@@ -83,6 +83,13 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     Processor<SliceUsage> processor = sliceUsage -> {
       progress.checkCanceled();
+
+      //don't open a node if there is a duplicate above
+      calculateDupNode();
+      if (duplicate != this && duplicate != null) {
+        return true;
+      }
+
       SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
       synchronized (children) {
         node.index = children.size();

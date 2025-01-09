@@ -205,6 +205,11 @@ public class FirSlicerLeafGroupingTestGenerated extends AbstractFirSlicerLeafGro
         runTest("../../idea/tests/testData/slicer/inflow/ifExpression.kt");
     }
 
+    @TestMetadata("infiniteRecursion.kt")
+    public void testInfiniteRecursion() throws Exception {
+        runTest("../../idea/tests/testData/slicer/inflow/infiniteRecursion.kt");
+    }
+
     @TestMetadata("inlineExtensionImplicitReceiver.kt")
     public void testInlineExtensionImplicitReceiver() throws Exception {
         runTest("../../idea/tests/testData/slicer/inflow/inlineExtensionImplicitReceiver.kt");
