@@ -1892,7 +1892,6 @@ f:org.jetbrains.jps.cmdline.ProjectDescriptor
 - getProject():org.jetbrains.jps.model.JpsProject
 - getProjectJavaSdks():java.util.Set
 - getProjectStamps():org.jetbrains.jps.incremental.storage.ProjectStamps
-- getTargetsState():org.jetbrains.jps.incremental.storage.BuildTargetsState
 - incUsageCounter():V
 - release():V
 f:org.jetbrains.jps.dependency.AffectionScopeMetaUsage
@@ -2634,24 +2633,13 @@ f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - versionDiffers():Z
 f:org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
 - sf:MODULES_WITH_TARGET_CONFIG_CHANGED_KEY:com.intellij.openapi.util.Key
-- invalidate():V
 - isTargetDirty(org.jetbrains.jps.cmdline.ProjectDescriptor):Z
 - logDiagnostics(org.jetbrains.jps.incremental.CompileContext):V
 - outputRootWasDeleted(org.jetbrains.jps.incremental.CompileContext):Z
 - save(org.jetbrains.jps.incremental.CompileContext):V
-- storeNonexistentOutputRoots(org.jetbrains.jps.incremental.CompileContext):V
 f:org.jetbrains.jps.incremental.storage.BuildTargetsState
-- clean():V
-- getAverageBuildTime(org.jetbrains.jps.builders.BuildTargetType):J
 - getBuildTargetId(org.jetbrains.jps.builders.BuildTarget):I
-- getFreeId():I
-- getLastSuccessfulRebuildDuration():J
-- getStaleTargetIds(org.jetbrains.jps.builders.BuildTargetType):java.util.List
-- getTargetConfiguration(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
-- markUsedId(I):V
 - save():V
-- setAverageBuildTime(org.jetbrains.jps.builders.BuildTargetType,J):V
-- setLastSuccessfulRebuildDuration(J):V
 a:org.jetbrains.jps.incremental.storage.CompositeStorageOwner
 - org.jetbrains.jps.incremental.storage.StorageOwner
 - <init>():V
@@ -2678,8 +2666,6 @@ f:org.jetbrains.jps.incremental.storage.ProjectStamps
 - sf:PORTABLE_CACHES_PROPERTY:java.lang.String
 - sf:TRACK_LIBRARY_CONTENT:Z
 - sf:TRACK_LIBRARY_CONTENT_PROPERTY:java.lang.String
-- <init>(java.io.File,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
-- <init>(java.nio.file.Path,org.jetbrains.jps.incremental.storage.BuildTargetsState):V
 - clean():V
 - close():V
 - flush(Z):V

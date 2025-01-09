@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -59,7 +59,7 @@ public final class BuildResult implements MessageHandler {
     });
     final Int2ObjectMap<BuildTarget<?>> id2Target = new Int2ObjectOpenHashMap<>();
     for (BuildTarget<?> target : targets) {
-      id2Target.put(pd.dataManager.getTargetsState().getBuildTargetId(target), target);
+      id2Target.put(pd.dataManager.getTargetStateManager().getBuildTargetId(target), target);
     }
     Int2ObjectMap<String> hashCodeToOutputPath=new Int2ObjectOpenHashMap<>();
     for (BuildTarget<?> target : targets) {

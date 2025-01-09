@@ -16,7 +16,7 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.incremental.storage.BuildTargetStateManager;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -74,7 +74,7 @@ public final class BuildProgress {
 
     long expectedTotalTime = 0;
     for (BuildTargetType<?> targetType : targetTypes) {
-      expectedBuildTimeForTarget.put(targetType, this.dataManager.getTargetsState().getAverageBuildTime(targetType));
+      expectedBuildTimeForTarget.put(targetType, dataManager.getTargetStateManager().getAverageBuildTime(targetType));
     }
     for (BuildTargetType<?> type : targetTypes) {
       if (expectedBuildTimeForTarget.getLong(type) == -1) {
@@ -164,8 +164,8 @@ public final class BuildProgress {
       Object2LongMap.Entry<BuildTargetType<?>> entry = iterator.next();
       BuildTargetType<?> type = entry.getKey();
       long totalTime = entry.getLongValue();
-      BuildTargetsState targetsState = dataManager.getTargetsState();
-      long oldAverageTime = targetsState.getAverageBuildTime(type);
+      BuildTargetStateManager targetStateManager = dataManager.getTargetStateManager();
+      long oldAverageTime = targetStateManager.getAverageBuildTime(type);
       long newAverageTime;
       if (oldAverageTime == -1) {
         newAverageTime = totalTime / myNumberOfFullyRebuiltTargets.getInt(type);
@@ -178,7 +178,7 @@ public final class BuildProgress {
         LOG.debug(" " + type.getTypeId() + ": old=" + oldAverageTime + ", new=" + newAverageTime + " (based on " + myNumberOfFullyRebuiltTargets.getInt(type)
                   + " of " + myTotalTargets.getInt(type) + " targets)");
       }
-      targetsState.setAverageBuildTime(type, newAverageTime);
+      targetStateManager.setAverageBuildTime(type, newAverageTime);
     }
   }
 

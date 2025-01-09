@@ -36,7 +36,7 @@ public final class BuildOperations {
 
   public static void ensureFSStateInitialized(@NotNull CompileContext context, @NotNull BuildTarget<?> target, boolean readOnly) throws IOException {
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
-    BuildTargetConfiguration configuration = projectDescriptor.getTargetsState().getTargetConfiguration(target);
+    BuildTargetConfiguration configuration = projectDescriptor.dataManager.getTargetStateManager().getTargetConfiguration(target);
     if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
       StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(target);
       FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampStorage, true, null, null);
@@ -90,8 +90,9 @@ public final class BuildOperations {
   public static void markTargetsUpToDate(CompileContext context, BuildTargetChunk chunk) throws IOException {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     final BuildFSState fsState = projectDescriptor.fsState;
+    BuildDataManager dataManager = projectDescriptor.dataManager;
     for (BuildTarget<?> target : chunk.getTargets()) {
-      projectDescriptor.getTargetsState().getTargetConfiguration(target).storeNonexistentOutputRoots(context);
+      dataManager.getTargetStateManager().storeNonExistentOutputRoots(target, context);
     }
 
     if (Utils.errorsDetected(context) || context.getCancelStatus().isCanceled()) {
@@ -104,7 +105,7 @@ public final class BuildOperations {
         context.clearNonIncrementalMark((ModuleBuildTarget)target);
       }
 
-      StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(target);
+      StampsStorage<?> stampStorage = dataManager.getFileStampStorage(target);
       long targetBuildStartStamp = context.getCompilationStartStamp(target);
       for (BuildRootDescriptor buildRootDescriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
         marked |= fsState.markAllUpToDate(context, buildRootDescriptor, stampStorage, targetBuildStartStamp);
@@ -171,7 +172,7 @@ public final class BuildOperations {
           }
           final int targetId;
           if (!idsCache.containsKey(target)) {
-            targetId = dataManager.getTargetsState().getBuildTargetId(target);
+            targetId = dataManager.getTargetStateManager().getBuildTargetId(target);
             idsCache.put(target, targetId);
           }
           else {

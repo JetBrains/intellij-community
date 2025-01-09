@@ -85,7 +85,8 @@ public final class BuildRunner {
     BuildDataManager dataManager = null;
     StorageManager storageManager = null;
     try {
-      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(dataPaths, jpsModel, buildRootIndex), relativizer, storageManager = createStorageManager(dataStorageRoot));
+      storageManager = createStorageManager(dataStorageRoot);
+      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(new BuildTargetStateManagerImpl(dataPaths, jpsModel)), relativizer, storageManager);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
         msgHandler.processMessage(new CompilerMessage(
@@ -107,7 +108,7 @@ public final class BuildRunner {
       myForceCleanCaches = true;
       FileUtilRt.deleteRecursively(dataStorageRoot);
 
-      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(dataPaths, jpsModel, buildRootIndex), relativizer, createStorageManager(dataStorageRoot));
+      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(new BuildTargetStateManagerImpl(dataPaths, jpsModel)), relativizer, createStorageManager(dataStorageRoot));
       // the second attempt succeeded
       msgHandler.processMessage(new CompilerMessage(
         getRootCompilerName(), BuildMessage.Kind.INFO, JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage()))

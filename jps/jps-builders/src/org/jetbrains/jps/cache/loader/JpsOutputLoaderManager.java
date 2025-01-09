@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.loader;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +29,7 @@ import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.incremental.storage.BuildTargetStateManager;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
@@ -124,13 +124,13 @@ public final class JpsOutputLoaderManager {
   public void updateBuildStatistic(@NotNull ProjectDescriptor projectDescriptor) {
     if (isForceCachesDownload) return;
     if (!hasRunningTask.get() && isCacheDownloaded) {
-      BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+      BuildTargetStateManager targetStateManager = projectDescriptor.dataManager.getTargetStateManager();
       myOriginalBuildStatistic.getBuildTargetTypeStatistic().forEach((buildTargetType, originalBuildTime) -> {
-        targetsState.setAverageBuildTime(buildTargetType, originalBuildTime);
+        targetStateManager.setAverageBuildTime(buildTargetType, originalBuildTime);
         LOG.info("Saving old build statistic for " + buildTargetType.getTypeId() + " with value " + originalBuildTime);
       });
       Long originalBuildStatisticProjectRebuildTime = myOriginalBuildStatistic.getProjectRebuildTime();
-      targetsState.setLastSuccessfulRebuildDuration(originalBuildStatisticProjectRebuildTime);
+      targetStateManager.setLastSuccessfulRebuildDuration(originalBuildStatisticProjectRebuildTime);
       LOG.info("Saving old project rebuild time " + originalBuildStatisticProjectRebuildTime);
     }
   }
@@ -363,16 +363,16 @@ public final class JpsOutputLoaderManager {
       LOG.info("Time spend to context initialization: " + contextInitializationTime);
       CompileScope compilationScope = buildRunner.createCompilationScope(projectDescriptor, scopes);
       long estimatedBuildTime = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, t -> compilationScope.isAffected(t));
-      BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+      BuildTargetStateManager targetStateManager = projectDescriptor.dataManager.getTargetStateManager();
       if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(compilationScope)) {
         LOG.info("Project rebuild enabled, caches will not be download");
         return null;
       }
       Map<BuildTargetType<?>, Long> buildTargetTypeStatistic = new HashMap<>();
       for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
-        buildTargetTypeStatistic.put(type,  targetsState.getAverageBuildTime(type));
+        buildTargetTypeStatistic.put(type,  targetStateManager.getAverageBuildTime(type));
       }
-      myOriginalBuildStatistic = new ProjectBuildStatistic(targetsState.getLastSuccessfulRebuildDuration(), buildTargetTypeStatistic);
+      myOriginalBuildStatistic = new ProjectBuildStatistic(targetStateManager.getLastSuccessfulRebuildDuration(), buildTargetTypeStatistic);
       long totalCalculationTime = System.currentTimeMillis() - startTime;
       LOG.info("Calculated build time: " + StringUtil.formatDuration(estimatedBuildTime));
       LOG.info("Time spend to context initialization and time calculation: " + totalCalculationTime);

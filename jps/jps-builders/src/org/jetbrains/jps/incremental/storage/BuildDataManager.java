@@ -76,15 +76,15 @@ public final class BuildDataManager {
   }
 
   @ApiStatus.Internal
-  public BuildDataManager(BuildDataPaths dataPaths,
-                          BuildTargetsState targetsState,
+  public BuildDataManager(@NotNull BuildDataPaths dataPaths,
+                          @NotNull BuildTargetsState targetsState,
                           @NotNull PathRelativizerService relativizer,
                           @Nullable StorageManager storageManager) throws IOException {
     this(dataPaths,
          targetsState,
          relativizer,
          storageManager,
-         storageManager != null || ProjectStamps.PORTABLE_CACHES ? null : new ProjectStamps(dataPaths.getDataStorageDir(), targetsState),
+         storageManager != null || ProjectStamps.PORTABLE_CACHES ? null : new ProjectStamps(dataPaths.getDataStorageDir(), targetsState.impl),
          null);
 
 
@@ -92,13 +92,13 @@ public final class BuildDataManager {
 
   @SuppressWarnings("unused")
   @ApiStatus.Internal
-  public static BuildDataManager createSingleDb(BuildDataPaths dataPaths,
-                                                BuildTargetsState targetsState,
+  public static BuildDataManager createSingleDb(@NotNull BuildDataPaths dataPaths,
+                                                @NotNull BuildTargetStateManager targetStateManager,
                                                 @NotNull PathRelativizerService relativizer,
                                                 @NotNull BuildDataVersionManager versionManager,
                                                 @NotNull StorageManager storageManager) throws IOException {
     return new BuildDataManager(dataPaths,
-                                targetsState,
+                                new BuildTargetsState(targetStateManager),
                                 relativizer,
                                 storageManager,
                                 null,
@@ -180,8 +180,17 @@ public final class BuildDataManager {
     return myProcessConstantsIncrementally;
   }
 
-  public BuildTargetsState getTargetsState() {
+  /**
+   * @deprecated Use {@link #getTargetStateManager()} or, preferably, avoid using internal APIs.
+   */
+  @Deprecated
+  public @NotNull BuildTargetsState getTargetsState() {
     return targetStateManager;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull BuildTargetStateManager getTargetStateManager() {
+    return targetStateManager.impl;
   }
 
   public void cleanStaleTarget(@NotNull BuildTargetType<?> targetType, @NotNull String targetId) throws IOException {
@@ -192,7 +201,7 @@ public final class BuildDataManager {
       }
     }
     finally {
-      getTargetsState().cleanStaleTarget(targetType, targetId);
+      getTargetStateManager().cleanStaleTarget(targetType, targetId);
     }
   }
 
@@ -236,7 +245,7 @@ public final class BuildDataManager {
       LOG.info(e);
       throw new BuildDataCorruptedException(e);
     }
-    return new SourceToOutputMappingWrapper(map, targetStateManager.getBuildTargetId(target), outputToTargetMapping);
+    return new SourceToOutputMappingWrapper(map, targetStateManager.impl.getBuildTargetId(target), outputToTargetMapping);
   }
 
   public @Nullable StampsStorage<?> getFileStampStorage(@NotNull BuildTarget<?> target) {
@@ -249,6 +258,7 @@ public final class BuildDataManager {
   /**
    * @deprecated Use {@link BuildDataManager#getFileStampStorage(BuildTarget)}.
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
   public @Nullable ProjectStamps getFileStampService() {
     return myFileStampService;
@@ -374,7 +384,7 @@ public final class BuildDataManager {
           }
         }
       }
-      targetStateManager.clean();
+      targetStateManager.impl.clean();
     }
     saveVersion();
   }
@@ -442,7 +452,7 @@ public final class BuildDataManager {
 
   public void close() throws IOException {
     IOOperation.execAll(IOException.class,
-      IOOperation.adapt(targetStateManager, BuildTargetsState::save),
+      IOOperation.adapt(targetStateManager, state -> state.impl.save()),
       IOOperation.adapt(allTargetStorages(), StorageOwner::close),
       () -> {
         myTargetStorages.clear();

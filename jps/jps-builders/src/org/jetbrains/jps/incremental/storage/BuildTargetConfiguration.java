@@ -39,15 +39,13 @@ public final class BuildTargetConfiguration {
   private static final String DIRTY_MARK = "$dirty_mark$";
 
   private final BuildTarget<?> target;
-  private final BuildTargetsState targetState;
   @NotNull private final BuildDataPaths dataPaths;
   private @NotNull String configuration;
   private volatile String currentState;
 
   @ApiStatus.Internal
-  public BuildTargetConfiguration(@NotNull BuildTarget<?> target, @NotNull BuildTargetsState targetState, @NotNull BuildDataPaths dataPaths) {
+  public BuildTargetConfiguration(@NotNull BuildTarget<?> target, @NotNull BuildDataPaths dataPaths) {
     this.target = target;
-    this.targetState = targetState;
     this.dataPaths = dataPaths;
     configuration = load();
   }
@@ -104,7 +102,7 @@ public final class BuildTargetConfiguration {
     persist(getCurrentState(context.getProjectDescriptor()));
   }
 
-  public void invalidate() {
+  void invalidate() {
     persist(DIRTY_MARK);
   }
 
@@ -148,7 +146,7 @@ public final class BuildTargetConfiguration {
     return state;
   }
 
-  public void storeNonexistentOutputRoots(@NotNull CompileContext context) throws IOException {
+  void storeNonExistentOutputRoots(@NotNull CompileContext context) throws IOException {
     PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
     Collection<File> outputRoots = target.getOutputRoots(context);
     List<String> nonexistentOutputRoots = new ArrayList<>();

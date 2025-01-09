@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -17,17 +18,19 @@ public final class ProjectStamps implements StorageOwner{
 
   private final FileTimestampStorage stampStorage;
 
-  public ProjectStamps(@NotNull Path dataStorageRoot, @NotNull BuildTargetsState targetsState) throws IOException {
-    stampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
+  @ApiStatus.Internal
+  public ProjectStamps(@NotNull Path dataStorageRoot, @NotNull BuildTargetStateManager targetStateManager) throws IOException {
+    stampStorage = new FileTimestampStorage(dataStorageRoot, targetStateManager);
   }
 
   /**
-   * @deprecated Please use {@link #ProjectStamps(Path, BuildTargetsState)}
+   * @deprecated Please use {@link #ProjectStamps(Path, BuildTargetStateManager)}
    */
   @SuppressWarnings("unused")
   @Deprecated
+  @ApiStatus.Internal
   public ProjectStamps(File dataStorageRoot, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
-    this(dataStorageRoot.toPath(), targetsState);
+    this(dataStorageRoot.toPath(), targetsState.impl);
   }
 
   public @NotNull StampsStorage<?> getStampStorage() {

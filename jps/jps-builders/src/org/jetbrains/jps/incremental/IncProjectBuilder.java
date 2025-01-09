@@ -323,8 +323,8 @@ public final class IncProjectBuilder {
       return;
     }
 
-    BuildTargetsState targetsState = projectDescriptor.getTargetsState();
-    long timeThreshold = targetsState.getLastSuccessfulRebuildDuration() * 95 / 100; // 95% of last registered clean rebuild time
+    BuildTargetStateManager targetStateManager = projectDescriptor.dataManager.getTargetStateManager();
+    long timeThreshold = targetStateManager.getLastSuccessfulRebuildDuration() * 95 / 100; // 95% of last registered clean rebuild time
     if (timeThreshold <= 0) {
       if (isDebugEnabled) {
         LOG.debug("Rebuild heuristic: no stats available");
@@ -366,7 +366,7 @@ public final class IncProjectBuilder {
       String message = JpsBuildBundle.message("build.message.too.many.modules.require.recompilation.forcing.full.project.rebuild");
       LOG.info(message);
       LOG.info("Estimated build duration (linear): " + Formats.formatDuration(estimatedWorkTime));
-      LOG.info("Last successful rebuild duration (linear): " + Formats.formatDuration(targetsState.getLastSuccessfulRebuildDuration()));
+      LOG.info("Last successful rebuild duration (linear): " + Formats.formatDuration(targetStateManager.getLastSuccessfulRebuildDuration()));
       LOG.info("Rebuild heuristic time threshold: " + Formats.formatDuration(timeThreshold));
       messageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, message));
       throw new RebuildRequestedException(null);
@@ -374,7 +374,7 @@ public final class IncProjectBuilder {
   }
 
   public static long calculateEstimatedBuildTime(@NotNull ProjectDescriptor projectDescriptor, @NotNull Predicate<BuildTarget<?>> isAffected) {
-    final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+    BuildTargetStateManager targetStateManager = projectDescriptor.dataManager.getTargetStateManager();
     // compute estimated times for dirty targets
     long estimatedBuildTime = 0L;
 
@@ -382,11 +382,11 @@ public final class IncProjectBuilder {
     int affectedTargets = 0;
     for (BuildTarget<?> target : targetIndex.getAllTargets()) {
       if (!targetIndex.isDummy(target)) {
-        final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
+        final long avgTimeToBuild = targetStateManager.getAverageBuildTime(target.getTargetType());
         if (avgTimeToBuild > 0) {
           // 1. in general case, this time should include dependency analysis and cache update times
           // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
-          if (targetsState.getTargetConfiguration(target).isTargetDirty(projectDescriptor) && isAffected.test(target)) {
+          if (targetStateManager.getTargetConfiguration(target).isTargetDirty(projectDescriptor) && isAffected.test(target)) {
             estimatedBuildTime += avgTimeToBuild;
             affectedTargets++;
           }
@@ -555,7 +555,7 @@ public final class IncProjectBuilder {
       if (buildProgress != null) {
         buildProgress.updateExpectedAverageTime();
         if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) && !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
-          projectDescriptor.getTargetsState().setLastSuccessfulRebuildDuration(buildProgress.getAbsoluteBuildTime());
+          projectDescriptor.dataManager.getTargetStateManager().setLastSuccessfulRebuildDuration(buildProgress.getAbsoluteBuildTime());
         }
       }
       for (TargetBuilder<?, ?> builder : builderRegistry.getTargetBuilders()) {
@@ -703,11 +703,11 @@ public final class IncProjectBuilder {
         }
       }
       else {
-        final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+        BuildTargetStateManager targetStateManager = projectDescriptor.dataManager.getTargetStateManager();
         for (BuildTarget<?> target : getTargetsWithClearedOutput(context)) {
           // This will ensure the target will be fully rebuilt either in this or in the future build session.
           // if this build fails or is cancelled, all such targets will still be marked as needing recompilation
-          targetsState.getTargetConfiguration(target).invalidate();
+          targetStateManager.invalidate(target);
         }
       }
     }
@@ -715,7 +715,7 @@ public final class IncProjectBuilder {
 
   private void cleanOutputOfStaleTargets(BuildTargetType<?> targetType, CompileContext context) {
     BuildDataManager dataManager = projectDescriptor.dataManager;
-    List<Pair<String, Integer>> targetIds = dataManager.getTargetsState().getStaleTargetIds(targetType);
+    List<Pair<String, Integer>> targetIds = dataManager.getTargetStateManager().getStaleTargetIds(targetType);
     if (targetIds.isEmpty()) {
       return;
     }
@@ -748,7 +748,7 @@ public final class IncProjectBuilder {
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
     BuildTargetType<?> targetType = target.getTargetType();
-    clearOutputFiles(context, map, targetType, context.getProjectDescriptor().dataManager.getTargetsState().getBuildTargetId(target));
+    clearOutputFiles(context, map, targetType, context.getProjectDescriptor().dataManager.getTargetStateManager().getBuildTargetId(target));
     registerTargetsWithClearedOutput(context, Collections.singletonList(target));
   }
 
@@ -769,7 +769,7 @@ public final class IncProjectBuilder {
         if (isTargetOutputCleared(context, target)) {
           continue;
         }
-        final int buildTargetId = context.getProjectDescriptor().getTargetsState().getBuildTargetId(target);
+        int buildTargetId = context.getProjectDescriptor().dataManager.getTargetStateManager().getBuildTargetId(target);
         final boolean shouldPruneEmptyDirs = target instanceof ModuleBasedTarget;
         BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
         final SourceToOutputMapping sourceToOutputStorage = dataManager.getSourceToOutputMap(target);

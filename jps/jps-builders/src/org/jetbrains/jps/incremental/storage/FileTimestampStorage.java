@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.ArrayUtil;
@@ -19,16 +19,16 @@ import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.FileTim
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.TimestampPerTarget;
 
 final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPerTarget[]> implements StampsStorage<FileTimestamp> {
-  private final BuildTargetsState myTargetsState;
+  private final BuildTargetStateManager targetStateManager;
   private final Path timestampRoot;
 
-  FileTimestampStorage(@NotNull Path dataStorageRoot, @NotNull BuildTargetsState targetsState) throws IOException {
+  FileTimestampStorage(@NotNull Path dataStorageRoot, @NotNull BuildTargetStateManager targetStateManager) throws IOException {
     super(calcStorageRoot(dataStorageRoot).resolve("data").toFile(), new FileKeyDescriptor(), new StateExternalizer());
     timestampRoot = calcStorageRoot(dataStorageRoot);
-    myTargetsState = targetsState;
+    this.targetStateManager = targetStateManager;
   }
 
-  private static Path calcStorageRoot(Path dataStorageRoot) {
+  private static @NotNull Path calcStorageRoot(Path dataStorageRoot) {
     return dataStorageRoot.resolve("timestamps");
   }
 
@@ -44,7 +44,7 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
       return null;
     }
 
-    int targetId = myTargetsState.getBuildTargetId(target);
+    int targetId = targetStateManager.getBuildTargetId(target);
     for (TimestampPerTarget timestampPerTarget : state) {
       if (timestampPerTarget.targetId == targetId) {
         long current = timestampPerTarget.timestamp;
@@ -57,7 +57,7 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
 
   @Override
   public void updateStamp(@NotNull Path file, BuildTarget<?> buildTarget, long currentFileTimestamp) throws IOException {
-    int targetId = myTargetsState.getBuildTargetId(buildTarget);
+    int targetId = targetStateManager.getBuildTargetId(buildTarget);
     File ioFile = file.toFile();
     update(ioFile, updateTimestamp(getState(ioFile), targetId, currentFileTimestamp));
   }
@@ -81,7 +81,7 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
     File ioFile = file.toFile();
     TimestampPerTarget[] state = getState(ioFile);
     if (state != null) {
-      int targetId = myTargetsState.getBuildTargetId(buildTarget);
+      int targetId = targetStateManager.getBuildTargetId(buildTarget);
       for (int i = 0; i < state.length; i++) {
         TimestampPerTarget timestampPerTarget = state[i];
         if (timestampPerTarget.targetId == targetId) {

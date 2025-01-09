@@ -32,12 +32,12 @@ public final class BuildTargetTypeState {
   private final List<Pair<String, Integer>> staleTargetIds;
   private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> configurations;
   private final BuildTargetType<?> targetType;
-  private final BuildTargetsState targetStateManager;
+  private final BuildTargetStateManagerImpl targetStateManager;
   private final Path targetStateFile;
   private volatile long myAverageTargetBuildTimeMs = -1;
 
   public BuildTargetTypeState(@NotNull BuildTargetType<?> targetType,
-                              @NotNull BuildTargetsState state,
+                              @NotNull BuildTargetStateManagerImpl state,
                               @NotNull BuildDataPaths dataPaths,
                               @NotNull JpsModel model) {
     targetIds.defaultReturnValue(-1);
@@ -110,7 +110,7 @@ public final class BuildTargetTypeState {
     return new ArrayList<>(staleTargetIds);
   }
 
-  public synchronized void removeStaleTarget(String targetId) {
+  public synchronized void removeStaleTarget(@NotNull String targetId) {
     staleTargetIds.removeIf(pair -> pair.first.equals(targetId));
   }
 
@@ -140,7 +140,7 @@ public final class BuildTargetTypeState {
       return configuration;
     }
 
-    configuration = new BuildTargetConfiguration(target, targetStateManager, dataPaths);
+    configuration = new BuildTargetConfiguration(target, dataPaths);
     BuildTargetConfiguration existing = configurations.putIfAbsent(target, configuration);
     return existing == null ? configuration : existing;
   }
