@@ -3,7 +3,6 @@ package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.SingleFileSourcesTracker;
@@ -11,6 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.JavaPsiSingleFileSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,7 @@ public final class WrongPackageStatementInspection extends AbstractBaseJavaLocal
     }
     if (FileTypeUtils.isInServerPageFile(file)) return null;
 
-    if (JavaHighlightUtil.isJavaHashBangScript(javaFile)) return null;
+    if (JavaPsiSingleFileSourceUtil.isJavaHashBangScript(javaFile)) return null;
 
     PsiDirectory directory = javaFile.getOriginalFile().getContainingDirectory();
     if (directory == null) return null;

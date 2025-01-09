@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
@@ -21,6 +20,7 @@ import com.intellij.psi.ResolveScopeProvider;
 import com.intellij.psi.impl.search.JavaVersionBasedScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
+import com.intellij.psi.util.JavaPsiSingleFileSourceUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
         // For example, java files from test data.
         // There is still a possibility to modify this scope choice with the ResolveScopeEnlarger.
         PsiFile psi = PsiManager.getInstance(project).findFile(file);
-        if (psi == null || !JavaHighlightUtil.isJavaHashBangScript(psi)) {
+        if (psi == null || !JavaPsiSingleFileSourceUtil.isJavaHashBangScript(psi)) {
           return GlobalSearchScope.fileScope(project, file);
         }
       }

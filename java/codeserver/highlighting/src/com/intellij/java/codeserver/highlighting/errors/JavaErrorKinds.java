@@ -48,6 +48,7 @@ public final class JavaErrorKinds {
     error(PsiReferenceList.class, "annotation.member.may.not.have.throws.list").withAnchor(list -> requireNonNull(list.getFirstChild()));
   public static final Simple<PsiReferenceList> ANNOTATION_NOT_ALLOWED_EXTENDS =
     error(PsiReferenceList.class, "annotation.may.not.have.extends.list").withAnchor(list -> requireNonNull(list.getFirstChild()));
+  public static final Simple<PsiElement> ANNOTATION_LOCAL = error("annotation.cannot.be.local");
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_VAR = error("annotation.not.allowed.var");
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_VOID = error("annotation.not.allowed.void");
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_CLASS = error("annotation.not.allowed.class");
@@ -217,6 +218,15 @@ public final class JavaErrorKinds {
       .<PsiClass>withContext()
       .withRawDescription((cls, dupCls) -> message("class.duplicate.in.other.file",
                                                    FileUtil.toSystemDependentName(dupCls.getContainingFile().getVirtualFile().getPath())));
+  public static final Simple<PsiClass> CLASS_CLASHES_WITH_PACKAGE =
+    error(PsiClass.class, "class.clashes.with.package")
+      .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
+      .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
+      .withRawDescription(cls -> message("class.clashes.with.package", cls.getQualifiedName()));
+  public static final Simple<PsiClass> CLASS_WRONG_FILE_NAME =
+    error(PsiClass.class, "class.wrong.filename")
+      .withRange(JavaErrorFormatUtil::getClassDeclarationTextRange)
+      .withRawDescription(cls -> message("class.wrong.filename", cls.getName()));
   public static final Parameterized<PsiClass, PsiClass> CLASS_CYCLIC_INHERITANCE =
     error(PsiClass.class, "class.cyclic.inheritance")
       .withRange(JavaErrorFormatUtil::getClassDeclarationTextRange).<PsiClass>withContext()
@@ -234,10 +244,23 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_NO_ENCLOSING_INSTANCE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.no.enclosing.instance")
       .withRawDescription((ref, target) -> message("class.reference.list.no.enclosing.instance", formatClass(target)));
+  public static final Simple<PsiClass> CLASS_SEALED_NO_INHERITORS =
+    error(PsiClass.class, "class.sealed.no.inheritors").withAnchor(PsiClass::getNameIdentifier);
+  public static final Simple<PsiClass> CLASS_SEALED_INCOMPLETE_PERMITS =
+    error(PsiClass.class, "class.sealed.incomplete.permits").withAnchor(PsiClass::getNameIdentifier);
+  public static final Simple<PsiClass> CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS_CAN_BE_FINAL =
+    error(PsiClass.class, "class.sealed.inheritor.expected.modifiers.can.be.final").withAnchor(PsiClass::getNameIdentifier);
+  public static final Simple<PsiClass> CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS =
+    error(PsiClass.class, "class.sealed.inheritor.expected.modifiers").withAnchor(PsiClass::getNameIdentifier);
+  
   public static final Simple<PsiExpression> INSTANTIATION_ENUM = error("instantiation.enum");
   public static final Parameterized<PsiExpression, PsiClass> INSTANTIATION_ABSTRACT = 
     parameterized(PsiExpression.class, PsiClass.class, "instantiation.abstract")
       .withRawDescription((expr, aClass) -> message("instantiation.abstract", aClass.getName()));
+  
+  public static final Simple<PsiClass> RECORD_NO_HEADER = error(PsiClass.class, "record.no.header")
+    .withAnchor(PsiClass::getNameIdentifier);
+  public static final Simple<PsiRecordHeader> RECORD_HEADER_REGULAR_CLASS = error("record.header.regular.class");
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {
     return new Simple<>(key);

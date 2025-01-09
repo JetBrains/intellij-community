@@ -2,11 +2,11 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
+import com.intellij.psi.util.JavaPsiSingleFileSourceUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -51,7 +51,7 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
                                  |int i = 0;
                                  |}}""".trimMargin())
     myFixture.checkHighlighting()
-    Assert.assertTrue(JavaHighlightUtil.isJavaHashBangScript(file))
+    Assert.assertTrue(JavaPsiSingleFileSourceUtil.isJavaHashBangScript(file))
   }
 
   fun testRequiresJavaBase() {

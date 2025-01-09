@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -11,6 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.JavaPsiSingleFileSourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaProblemHighlightFilter extends ProblemHighlightFilter {
@@ -22,7 +22,7 @@ public final class JavaProblemHighlightFilter extends ProblemHighlightFilter {
     var psiFileType = psiFile.getFileType();
     var isOutsideJavaSourceRoot = JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile);
     var isScratch = ScratchUtil.isScratch(psiFile.getVirtualFile());
-    var isJavaHashBangScript = JavaHighlightUtil.isJavaHashBangScript(psiFile);
+    var isJavaHashBangScript = JavaPsiSingleFileSourceUtil.isJavaHashBangScript(psiFile);
 
     if (ApplicationManagerEx.isInIntegrationTest()) {
       LOG.debug(

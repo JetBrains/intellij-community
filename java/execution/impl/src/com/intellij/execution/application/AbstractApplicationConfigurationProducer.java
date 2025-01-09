@@ -2,7 +2,6 @@
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -11,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiSingleFileSourceUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
       return false;
     }
     PsiFile containingFile = aClass.getContainingFile();
-    if (JavaHighlightUtil.isJavaHashBangScript(containingFile)) {
+    if (JavaPsiSingleFileSourceUtil.isJavaHashBangScript(containingFile)) {
       return false;
     }
     PsiMethod method = PsiMethodUtil.findMainInClass(aClass);

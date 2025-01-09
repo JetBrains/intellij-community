@@ -2,24 +2,30 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ClassUtil;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ImplicitClassSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Stream;
 
 final class ClassChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
@@ -255,6 +261,131 @@ final class ClassChecker {
     }
   }
 
+  void checkMustNotBeLocal(@NotNull PsiClass aClass) {
+    IElementType token;
+    JavaFeature feature;
+    if (aClass.isEnum()) {
+      token = JavaTokenType.ENUM_KEYWORD;
+      feature = JavaFeature.LOCAL_ENUMS;
+    }
+    else if (aClass.isInterface()) {
+      token = JavaTokenType.INTERFACE_KEYWORD;
+      feature = aClass.isAnnotationType() ? null : JavaFeature.LOCAL_INTERFACES;
+    }
+    else {
+      return;
+    }
+    if (!PsiUtil.isLocalClass(aClass)) return;
+    PsiElement anchor = Stream.iterate(aClass.getFirstChild(), Objects::nonNull, PsiElement::getNextSibling)
+      .filter(e -> e instanceof PsiKeyword keyword && keyword.getTokenType().equals(token))
+      .findFirst()
+      .orElseThrow();
+    if (feature == null) {
+      myVisitor.report(JavaErrorKinds.ANNOTATION_LOCAL.create(anchor));
+    } else {
+      myVisitor.checkFeature(anchor, feature);
+    }
+  }
+
+  void checkClassAndPackageConflict(@NotNull PsiClass aClass) {
+    String name = aClass.getQualifiedName();
+    if (name == null) return;
+    if (CommonClassNames.DEFAULT_PACKAGE.equals(name)) {
+      myVisitor.report(JavaErrorKinds.CLASS_CLASHES_WITH_PACKAGE.create(aClass));
+    } else {
+      PsiElement file = aClass.getParent();
+      if (file instanceof PsiJavaFile javaFile && !javaFile.getPackageName().isEmpty()) {
+        PsiDirectory directory = javaFile.getParent();
+        if (directory != null) {
+          String simpleName = aClass.getName();
+          PsiDirectory subDirectory = simpleName == null ? null : directory.findSubdirectory(simpleName);
+          if (subDirectory != null &&
+              simpleName.equals(subDirectory.getName()) &&
+              PsiTreeUtil.findChildOfType(subDirectory, PsiJavaFile.class) != null) {
+            myVisitor.report(JavaErrorKinds.CLASS_CLASHES_WITH_PACKAGE.create(aClass));
+          }
+        }
+      }
+    }
+  }
+
+  void checkPublicClassInRightFile(@NotNull PsiClass aClass) {
+    PsiFile containingFile = aClass.getContainingFile();
+    if (aClass.getParent() != containingFile || !aClass.hasModifierProperty(PsiModifier.PUBLIC) || !(containingFile instanceof PsiJavaFile file))
+      return;
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null || virtualFile.getNameWithoutExtension().equals(aClass.getName())) {
+      return;
+    }
+    if (JavaPsiSingleFileSourceUtil.isJavaHashBangScript(file)) return;
+    myVisitor.report(JavaErrorKinds.CLASS_WRONG_FILE_NAME.create(aClass));
+  }
+
+  void checkWellFormedRecord(@NotNull PsiClass psiClass) {
+    PsiRecordHeader header = psiClass.getRecordHeader();
+    if (!psiClass.isRecord()) {
+      if (header != null) {
+        myVisitor.report(JavaErrorKinds.RECORD_HEADER_REGULAR_CLASS.create(header));
+      }
+      return;
+    }
+    PsiIdentifier identifier = psiClass.getNameIdentifier();
+    if (identifier == null) return;
+    if (header == null) {
+      myVisitor.report(JavaErrorKinds.RECORD_NO_HEADER.create(psiClass));
+    }
+  }
+
+  void checkSealedClassInheritors(@NotNull PsiClass psiClass) {
+    if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
+      PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
+      if (nameIdentifier == null) return;
+      if (psiClass.isEnum()) return;
+
+      Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(psiClass).findAll();
+      if (inheritors.isEmpty()) {
+        myVisitor.report(JavaErrorKinds.CLASS_SEALED_NO_INHERITORS.create(psiClass));
+        return;
+      }
+      PsiFile parentFile = psiClass.getContainingFile();
+      PsiManager manager = parentFile.getManager();
+      boolean hasOutsideClasses = ContainerUtil.exists(inheritors, inheritor -> !manager.areElementsEquivalent(
+        inheritor.getNavigationElement().getContainingFile(), parentFile));
+      if (hasOutsideClasses) {
+        Map<PsiJavaCodeReferenceElement, PsiClass> permittedClassesRefs = getPermittedClassesRefs(psiClass);
+        Collection<PsiClass> permittedClasses = permittedClassesRefs.values();
+        boolean hasMissingInheritors = ContainerUtil.exists(inheritors, inheritor -> !permittedClasses.contains(inheritor));
+        if (hasMissingInheritors) {
+          myVisitor.report(JavaErrorKinds.CLASS_SEALED_INCOMPLETE_PERMITS.create(psiClass));
+        }
+      }
+    }
+  }
+
+  void checkSealedSuper(@NotNull PsiClass aClass) {
+    PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
+    if (nameIdentifier != null &&
+        !(aClass instanceof PsiTypeParameter) &&
+        !aClass.hasModifierProperty(PsiModifier.SEALED) &&
+        !aClass.hasModifierProperty(PsiModifier.NON_SEALED) &&
+        !aClass.hasModifierProperty(PsiModifier.FINAL) &&
+        Arrays.stream(aClass.getSuperTypes())
+          .map(type -> type.resolve())
+          .anyMatch(superClass -> superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED))) {
+      boolean canBeFinal = !aClass.isInterface() && DirectClassInheritorsSearch.search(aClass).findFirst() == null;
+      JavaErrorKind.Simple<PsiClass> errorKind = canBeFinal
+                                              ? JavaErrorKinds.CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS_CAN_BE_FINAL
+                                              : JavaErrorKinds.CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS;
+      myVisitor.report(errorKind.create(aClass));
+    }
+  }
+
+  private static @Unmodifiable @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
+    PsiReferenceList permitsList = psiClass.getPermitsList();
+    if (permitsList == null) return Collections.emptyMap();
+    PsiJavaCodeReferenceElement[] classRefs = permitsList.getReferenceElements();
+    return ContainerUtil.map2Map(classRefs, r -> Pair.create(r, ObjectUtils.tryCast(r.resolve(), PsiClass.class)));
+  }
 
   /**
    * 15.9 Class Instance Creation Expressions | 15.9.2 Determining Enclosing Instances

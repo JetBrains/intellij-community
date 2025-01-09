@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.execution.ApplicationRunLineMarkerHider;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
@@ -9,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiSingleFileSourceUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     else {
       return null;
     }
-    if (JavaHighlightUtil.isJavaHashBangScript(element.getContainingFile())) {
+    if (JavaPsiSingleFileSourceUtil.isJavaHashBangScript(element.getContainingFile())) {
       return null;
     }
 
