@@ -42,7 +42,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
@@ -87,6 +89,14 @@ sealed class ProjectWizardJdkIntent {
   data class AddJdkFromJdkListDownloader(val extension: SdkDownload) : ProjectWizardJdkIntent()
 
   data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String) : ProjectWizardJdkIntent()
+
+  fun isAtLeast(version: Int): Boolean = when (this) {
+    is DownloadJdk -> JavaVersion.tryParse(task.plannedVersion)?.isAtLeast(version)
+    is ExistingJdk -> if (jdk.versionString == null) true
+                      else JavaVersion.tryParse(jdk.versionString)?.isAtLeast(version)
+    is DetectedJdk -> JavaVersion.tryParse(this.version)?.isAtLeast(version)
+    else -> false
+  } ?: true
 }
 
 fun NewProjectWizardStep.projectWizardJdkComboBox(
@@ -195,14 +205,15 @@ private fun ValidationInfoBuilder.validateInstallDir(intent: DownloadJdk): Valid
 }
 
 private fun ValidationInfoBuilder.validateJdkVersion(combo: ProjectWizardJdkComboBox): ValidationInfo? {
-  val intent = combo.selectedItem
+  val intent = combo.selectedItem as? ProjectWizardJdkIntent ?: return null
+
   val versionString = when (intent) {
     is ExistingJdk -> intent.jdk.versionString
     is DetectedJdk -> intent.version
     else -> null
   } ?: return null
 
-  if (!JavaVersion.parse(versionString).isAtLeast(8)) {
+  if (!intent.isAtLeast(8)) {
     return warning(JavaBundle.message("unsupported.jdk.notification.content", versionString))
   }
 
@@ -393,7 +404,7 @@ class ProjectWizardJdkComboBox(
 
     downloadOpenJdkJob?.cancel()
     isLoadingDownloadItem = false
-    if (registered.isEmpty()) {
+    if (registered.isEmpty() || registered.none { it.isAtLeast(8) }) {
       isLoadingDownloadItem = true
       downloadOpenJdkJob = coroutineScope.getDownloadOpenJdkIntent(this)
     }
@@ -411,7 +422,7 @@ class ProjectWizardJdkComboBox(
     }
 
     insertItemAt(task, lastRegisteredJdkIndex)
-    if (selectedItem is NoJdk) selectedIndex = 1
+    if (selectedItem is NoJdk || !(selectedItem as ProjectWizardJdkIntent).isAtLeast(8)) selectedIndex = 1
     isLoadingDownloadItem = false
   }
 
@@ -423,10 +434,11 @@ class ProjectWizardJdkComboBox(
         addItem(it)
       }
     if ((selectedItem is NoJdk || selectedItem is DownloadJdk) && detected.any()) {
-      val regex = "(\\d+)".toRegex()
       detected
-        .maxBy { regex.find(it.version)?.value?.toInt() ?: 0 }
-        .let { selectedItem = it }
+        .map { it to JavaVersion.tryParse(it.version) }
+        .filter { it.second?.isAtLeast(8) ?: false }
+        .maxBy { it.second!!.feature }
+        .let { selectedItem = it.first }
     }
     isLoadingExistingJdks = false
   }
