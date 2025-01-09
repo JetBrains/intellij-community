@@ -24,6 +24,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull LanguageLevel myLanguageLevel;
   private final @NotNull AnnotationChecker myAnnotationChecker = new AnnotationChecker(this);
   private final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
+  private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   JavaErrorVisitor(@NotNull PsiFile file, @NotNull Consumer<JavaCompilationError<?, ?>> consumer) {
@@ -70,7 +71,13 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitPackageStatement(statement);
     myAnnotationChecker.checkPackageAnnotationContainingFile(statement);
   }
-  
+
+  @Override
+  public void visitReceiverParameter(@NotNull PsiReceiverParameter parameter) {
+    super.visitReceiverParameter(parameter);
+    myReceiverChecker.checkReceiver(parameter);
+  }
+
   @Override
   public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
     super.visitNameValuePair(pair);

@@ -13,6 +13,7 @@ import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -50,15 +51,33 @@ final class JavaErrorFixProvider {
     multi(UNSUPPORTED_FEATURE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
     JavaFixProvider<PsiElement, Object> genericRemover = error -> factory.createDeleteFix(error.psi());
     for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_MEMBER_THROWS_NOT_ALLOWED, ANNOTATION_ATTRIBUTE_DUPLICATE,
-                                            ANNOTATION_NOT_ALLOWED_EXTENDS)) {
+                                            ANNOTATION_NOT_ALLOWED_EXTENDS, RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION)) {
       single(kind, genericRemover);
     }
     
-    createAnnotationFixes();
+    createAnnotationFixes(factory);
+    createReceiverParameterFixes(factory);
   }
 
-  private static void createAnnotationFixes() {
-    QuickFixFactory factory = QuickFixFactory.getInstance();
+  private static void createReceiverParameterFixes(@NotNull QuickFixFactory factory) {
+    single(RECEIVER_TYPE_MISMATCH, error -> factory.createReceiverParameterTypeFix(error.psi(), error.context()));
+    single(RECEIVER_NAME_MISMATCH,
+           error -> error.context() == null ? null : factory.createReceiverParameterNameFix(error.psi(), error.context()));
+    single(RECEIVER_STATIC_CONTEXT,
+           error -> error.psi().getParent().getParent() instanceof PsiMethod method ?
+                    factory.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, false, false) : null);
+    single(RECEIVER_WRONG_POSITION, error -> {
+      if (error.psi().getParent().getParent() instanceof PsiMethod method) {
+        PsiReceiverParameter firstReceiverParameter = PsiTreeUtil.getChildOfType(method.getParameterList(), PsiReceiverParameter.class);
+        if (!PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(firstReceiverParameter), JavaTokenType.LPARENTH)) {
+          return factory.createMakeReceiverParameterFirstFix(error.psi());
+        }
+      }
+      return null;
+    });
+  }
+
+  private static void createAnnotationFixes(@NotNull QuickFixFactory factory) {
     single(SAFE_VARARGS_ON_NON_FINAL_METHOD,
            error -> factory.createModifierListFix(error.context(), PsiModifier.FINAL, true, true));
     multi(OVERRIDE_ON_NON_OVERRIDING_METHOD, error -> {

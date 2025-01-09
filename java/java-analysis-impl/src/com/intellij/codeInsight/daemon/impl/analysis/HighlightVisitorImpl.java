@@ -1784,14 +1784,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitReceiverParameter(@NotNull PsiReceiverParameter parameter) {
-    super.visitReceiverParameter(parameter);
-    if (!hasErrorResults()) add(checkFeature(parameter, JavaFeature.RECEIVERS));
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkReceiverPlacement(parameter));
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkReceiverType(parameter));
-  }
-
-  @Override
   public void visitModule(@NotNull PsiJavaModule module) {
     super.visitModule(module);
     if (!hasErrorResults()) add(checkFeature(module, JavaFeature.MODULES));

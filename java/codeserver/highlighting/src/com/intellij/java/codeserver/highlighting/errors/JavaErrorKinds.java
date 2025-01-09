@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 import static com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle.message;
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorFormatUtil.*;
 import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * All possible Java error kinds
@@ -205,6 +207,26 @@ public final class JavaErrorKinds {
       public @NotNull HtmlChunk description(@NotNull PsiMethod method, Void unused) {
         PsiClass aClass = requireNonNull(method.getContainingClass());
         return HtmlChunk.raw(message("method.duplicate", formatMethod(method), formatClass(aClass)));
+      }
+    };
+  public static final JavaSimpleErrorKind<PsiReceiverParameter> RECEIVER_WRONG_CONTEXT =
+    new JavaSimpleErrorKind<PsiReceiverParameter>("receiver.wrong.context").withAnchor(PsiReceiverParameter::getIdentifier);
+  public static final JavaSimpleErrorKind<PsiReceiverParameter> RECEIVER_STATIC_CONTEXT =
+    new JavaSimpleErrorKind<PsiReceiverParameter>("receiver.static.context").withAnchor(PsiReceiverParameter::getIdentifier);
+  public static final JavaSimpleErrorKind<PsiReceiverParameter> RECEIVER_WRONG_POSITION =
+    new JavaSimpleErrorKind<>("receiver.wrong.position");
+  public static final JavaErrorKind<PsiReceiverParameter, PsiType> RECEIVER_TYPE_MISMATCH =
+    new JavaParameterizedErrorKind<>("receiver.type.mismatch") {
+      @Override
+      public @NotNull PsiElement anchor(@NotNull PsiReceiverParameter parameter, PsiType type) {
+        return requireNonNullElse(parameter.getTypeElement(), parameter);
+      }
+    };
+  public static final JavaErrorKind<PsiReceiverParameter, @Nullable String> RECEIVER_NAME_MISMATCH =
+    new JavaParameterizedErrorKind<>("receiver.name.mismatch") {
+      @Override
+      public @NotNull PsiElement anchor(@NotNull PsiReceiverParameter parameter, @Nullable String s) {
+        return parameter.getIdentifier();
       }
     };
 }

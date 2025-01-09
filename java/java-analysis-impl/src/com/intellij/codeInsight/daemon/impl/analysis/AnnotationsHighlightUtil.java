@@ -19,11 +19,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -260,95 +257,6 @@ public final class AnnotationsHighlightUtil {
     PsiType containerType = expression.getOperand().getType();
     if (!(containerType instanceof PsiClassType classType)) return null;
     return classType.resolve();
-  }
-
-  static HighlightInfo.Builder checkReceiverPlacement(@NotNull PsiReceiverParameter parameter) {
-    PsiElement owner = parameter.getParent().getParent();
-    if (owner == null) return null;
-
-    if (!(owner instanceof PsiMethod method)) {
-      String text = JavaErrorBundle.message("receiver.wrong.context");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text);
-    }
-
-    if (isStatic(method) || method.isConstructor() && isStatic(method.getContainingClass())) {
-      String text = JavaErrorBundle.message("receiver.static.context");
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text);
-      IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(parameter);
-      info.registerFix(action1, null, null, null, null);
-      IntentionAction action =
-        QuickFixFactory.getInstance().createModifierListFix(method.getModifierList(), PsiModifier.STATIC, false, false);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-
-    if (!PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(parameter), JavaTokenType.LPARENTH)) {
-      String text = JavaErrorBundle.message("receiver.wrong.position");
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text);
-      IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(parameter);
-      info.registerFix(action1, null, null, null, null);
-      PsiReceiverParameter firstReceiverParameter = PsiTreeUtil.getChildOfType(method.getParameterList(), PsiReceiverParameter.class);
-      if (!PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(firstReceiverParameter), JavaTokenType.LPARENTH)) {
-        IntentionAction action = QuickFixFactory.getInstance().createMakeReceiverParameterFirstFix(parameter);
-        info.registerFix(action, null, null, null, null);
-      }
-      return info;
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkReceiverType(@NotNull PsiReceiverParameter parameter) {
-    PsiElement owner = parameter.getParent().getParent();
-    if (!(owner instanceof PsiMethod method)) return null;
-
-    PsiClass enclosingClass = method.getContainingClass();
-    boolean isConstructor = method.isConstructor();
-    if (isConstructor && enclosingClass != null) {
-      enclosingClass = enclosingClass.getContainingClass();
-    }
-
-    if (enclosingClass != null) {
-      PsiClassType type = PsiElementFactory.getInstance(parameter.getProject()).createType(enclosingClass, PsiSubstitutor.EMPTY);
-      if (!type.equals(parameter.getType())) {
-        PsiElement range = ObjectUtils.notNull(parameter.getTypeElement(), parameter);
-        String text = JavaErrorBundle.message("receiver.type.mismatch");
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(text);
-        IntentionAction action = QuickFixFactory.getInstance().createReceiverParameterTypeFix(parameter, type);
-        info.registerFix(action, null, null, null, null);
-        return info;
-      }
-
-      PsiThisExpression identifier = parameter.getIdentifier();
-      if (!enclosingClass.equals(PsiUtil.resolveClassInType(identifier.getType()))) {
-        String text = JavaErrorBundle.message("receiver.name.mismatch");
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text);
-        String name;
-        if (isConstructor) {
-          String className = enclosingClass.getName();
-          name = className != null ? className + ".this" : null;
-        }
-        else {
-          name = "this";
-        }
-        if (name != null) {
-          IntentionAction action = QuickFixFactory.getInstance().createReceiverParameterNameFix(parameter, name);
-          info.registerFix(action, null, null, null, null);
-        }
-        return info;
-      }
-    }
-
-    return null;
-  }
-
-  private static boolean isStatic(@Nullable PsiModifierListOwner owner) {
-    if (owner == null) return false;
-    if (owner instanceof PsiClass psiClass && ClassUtil.isTopLevelClass(psiClass)) return true;
-    PsiModifierList modifierList = owner.getModifierList();
-    return modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC);
   }
 
   public static @Nullable RetentionPolicy getRetentionPolicy(@NotNull PsiClass annotation) {
