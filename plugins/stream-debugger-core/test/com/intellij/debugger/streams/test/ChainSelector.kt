@@ -10,5 +10,10 @@ fun interface ChainSelector {
     fun byIndex(index: Int): ChainSelector {
       return ChainSelector { chains: List<StreamChain?> -> chains[index]!! }
     }
+
+    @JvmStatic
+    fun last(): ChainSelector {
+      return ChainSelector { chains: List<StreamChain?> -> chains.last()!! }
+    }
   }
 }
