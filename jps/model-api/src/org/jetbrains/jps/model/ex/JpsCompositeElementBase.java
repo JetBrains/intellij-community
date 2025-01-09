@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ public abstract class JpsCompositeElementBase<Self extends JpsCompositeElementBa
    * write the corresponding code in your class directly.
    */
   @Deprecated
-  protected JpsCompositeElementBase(JpsCompositeElementBase<Self> original) {
+  protected JpsCompositeElementBase(@NotNull JpsCompositeElementBase<Self> original) {
     myContainer = JpsExElementFactory.getInstance().createContainerCopy(original.myContainer, this);
   }
 
