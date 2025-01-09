@@ -12,11 +12,13 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.toolbar.floating.*
+import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
+import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.application
-import com.intellij.util.asSafely
 import com.intellij.util.ui.GridBag
 import java.awt.GridBagLayout
 import javax.swing.JComponent
@@ -26,7 +28,7 @@ import javax.swing.JPanel
  * Shows a floating toolbar when tests run automatically.
  */
 class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
-  override val autoHideable: Boolean = true
+  override val autoHideable: Boolean = false
   override val actionGroup: ActionGroup
     get() = DefaultActionGroup(DisableAutoTestAction()).apply {
       add(HideAction())
@@ -38,8 +40,6 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
   }
 
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
-    val floatingPanel = component.asSafely<ActionToolbar>()?.component ?: return
-
     if (component is AbstractFloatingToolbarComponent) {
       component.backgroundAlpha = 0.9f
     }
@@ -48,23 +48,27 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
     val autoRunManager = JavaAutoRunManager.getInstance(project)
 
     application.invokeLater {
-      updateFloatingToolbarVisibility(floatingPanel, autoRunManager)
+      updateFloatingToolbarVisibility(component, autoRunManager)
     }
 
     project.messageBus.connect(parentDisposable).subscribe(AutoTestListener.TOPIC, object: AutoTestListener {
       override fun autoTestStatusChanged() {
-        updateFloatingToolbarVisibility(floatingPanel, autoRunManager)
+        updateFloatingToolbarVisibility(component, autoRunManager)
       }
       override fun autoTestSettingsChanged() {
-        updateFloatingToolbarVisibility(floatingPanel, autoRunManager)
+        updateFloatingToolbarVisibility(component, autoRunManager)
       }
     })
   }
 
-  private fun updateFloatingToolbarVisibility(floatingPanel: JComponent, autoRunManager: JavaAutoRunManager) {
-    val floatingToolbar = floatingPanel.parent as? EditorFloatingToolbar
-    floatingToolbar?.isVisible = service<JavaAutoRunFloatingToolbarService>().toolbarEnabled
-                                 && autoRunManager.hasEnabledAutoTests()
+  private fun updateFloatingToolbarVisibility(component: FloatingToolbarComponent, autoRunManager: JavaAutoRunManager) {
+    val isToolbarEnabled = service<JavaAutoRunFloatingToolbarService>().toolbarEnabled
+    val hasEnabledAutoTests = autoRunManager.hasEnabledAutoTests()
+    if (isToolbarEnabled && hasEnabledAutoTests) {
+      component.scheduleShow()
+    } else {
+      component.scheduleHide()
+    }
   }
 }
 
