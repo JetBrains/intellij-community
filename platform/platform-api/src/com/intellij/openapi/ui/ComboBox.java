@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -32,6 +32,9 @@ import java.awt.im.InputMethodRequests;
  * As the result of our patch, combo box has an internal wrapper for {@link ComboBoxEditor}.
  * It means that {@link #getEditor()} method always returns not the same value you set by {@link #setEditor(ComboBoxEditor)} method.
  * Moreover, adding and removing of action listeners isn't supported by the wrapper.
+ * To enable speed search see {@link #setSwingPopup}
+ *
+ * @see com.intellij.ui.speedSearch.SpeedSearch#installSupplyTo(JComponent, boolean) - to support non-latin speed search input
  */
 public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventListener {
 
@@ -215,6 +218,8 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   /**
    * The {@code false} parameter value enables JBPopup instead of
    * the default ComboBox popup.
+   * <p>
+   * E.g., to enable speed search in the popup, set {@code swingPopup} to {@code false}
    *
    * @param swingPopup {@code false} to enable JBPopup
    * @see ComboBoxPopupState
