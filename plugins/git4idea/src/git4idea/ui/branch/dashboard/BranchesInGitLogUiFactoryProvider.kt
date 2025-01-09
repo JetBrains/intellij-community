@@ -28,10 +28,7 @@ import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRefOrHash
-import com.intellij.vcs.log.ui.MainVcsLogUi
-import com.intellij.vcs.log.ui.VcsLogColorManager
-import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
-import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.ui.*
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -221,22 +218,13 @@ internal class BranchesVcsLogUi(
         }
 
     override fun filterBy(branches: List<String>, repositories: Set<GitRepository>) {
-      val oldFilters = filterUi.filters
-      var newFilters = oldFilters.without(VcsLogBranchLikeFilter::class.java)
-
-      if (branches.isNotEmpty()) {
-        newFilters = newFilters.with(VcsLogFilterObject.fromBranches(branches))
-      }
-
       if (BranchesDashboardBehaviour.filterByBranchAndRoot() && repositories.isNotEmpty()) {
-        newFilters = newFilters.without(VcsLogRootFilter::class.java)
-
-        val newRoots = repositories.map { it.root }
-        if (!Comparing.haveEqualElements(logData.roots, newRoots) ) {
-          newFilters = newFilters.with(VcsLogFilterObject.fromRoots(newRoots))
-        }
+        val roots = repositories.map { it.root }.takeIf { !Comparing.haveEqualElements(logData.roots, it) }
+        filterUi.filterBy(branches, roots)
       }
-      filterUi.filters = newFilters
+      else {
+        filterUi.filterBy(branches)
+      }
     }
 
     override fun navigateTo(navigatable: BranchNodeDescriptor.LogNavigatable, focus: Boolean) {
@@ -250,6 +238,42 @@ internal class BranchesVcsLogUi(
   }
 
   override fun getMainComponent() = mainComponent
+}
+
+@ApiStatus.Internal
+fun VcsLogFilterUiEx.filterBy(branches: List<String>, roots: List<VirtualFile>?) {
+  val oldFilters = filters
+  var newFilters = oldFilters.without(VcsLogBranchLikeFilter::class.java)
+  if (branches.isNotEmpty()) {
+    newFilters = newFilters.with(VcsLogFilterObject.fromBranches(branches))
+  }
+
+  newFilters = newFilters.without(VcsLogRootFilter::class.java)
+  if (roots != null) {
+    newFilters = newFilters.with(VcsLogFilterObject.fromRoots(roots))
+  }
+  filters = newFilters
+}
+
+@ApiStatus.Internal
+fun VcsLogFilterUiEx.filterBy(branches: List<String>) {
+  val oldFilters = filters
+  var newFilters = oldFilters.without(VcsLogBranchLikeFilter::class.java)
+
+  if (branches.isNotEmpty()) {
+    newFilters = newFilters.with(VcsLogFilterObject.fromBranches(branches))
+  }
+  filters = newFilters
+}
+
+@ApiStatus.Internal
+fun VcsLogUiEx.navigateTo(navigatable: BranchNodeDescriptor.LogNavigatable, focus: Boolean) {
+  val navigateSilently = false
+  when (navigatable) {
+    BranchNodeDescriptor.Head -> jumpToBranch(VcsLogUtil.HEAD, navigateSilently, focus)
+    is BranchNodeDescriptor.Branch -> jumpToBranch(navigatable.branchInfo.branchName, navigateSilently, focus)
+    is BranchNodeDescriptor.Ref -> jumpToRefOrHash(navigatable.refInfo.refName, navigateSilently, focus)
+  }
 }
 
 @ApiStatus.Internal
