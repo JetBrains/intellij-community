@@ -43,6 +43,7 @@ public enum JavaFeature {
   METHOD_REFERENCES(LanguageLevel.JDK_1_8, "feature.method.references"),
   LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
   TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
+  REPEATING_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.repeating.annotations"),
   RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
   INTERSECTION_CASTS(LanguageLevel.JDK_1_8, "feature.intersections.in.casts"),
   STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),

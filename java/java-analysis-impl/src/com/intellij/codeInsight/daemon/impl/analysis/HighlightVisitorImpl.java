@@ -235,13 +235,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return reference instanceof PsiJavaReference psiJavaReference ? psiJavaReference.advancedResolve(false) : null;
   }
 
-  @Override
-  public void visitAnnotation(@NotNull PsiAnnotation annotation) {
-    super.visitAnnotation(annotation);
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkDuplicateAnnotations(annotation, myLanguageLevel));
-    if (!hasErrorResults()) add(AnnotationsHighlightUtil.checkRepeatableAnnotation(annotation));
-  }
-
   private boolean add(@Nullable HighlightInfo.Builder builder) {
     if (builder != null) {
       HighlightInfo info = builder.create();

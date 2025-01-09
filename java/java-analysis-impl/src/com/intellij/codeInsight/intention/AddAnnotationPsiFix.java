@@ -6,7 +6,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
@@ -20,10 +19,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.util.JavaElementKind;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -238,7 +234,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
     if (BaseIntentionAction.canModify(modifierListOwner)) {
       PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(annotation, modifierListOwner.getResolveScope());
       if (aClass != null) {
-        if (AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {
+        if (JavaPsiAnnotationUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {
           return AnnotationPlace.IN_CODE;
         }
         if (!CommonClassNames.DEFAULT_PACKAGE.equals(StringUtil.getPackageName(annotation))) {

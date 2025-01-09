@@ -93,7 +93,8 @@ final class JavaErrorFixProvider {
                                             LAMBDA_NOT_FUNCTIONAL_INTERFACE, ANNOTATION_NOT_APPLICABLE,
                                             LAMBDA_FUNCTIONAL_INTERFACE_SEALED, OVERRIDE_ON_STATIC_METHOD,
                                             OVERRIDE_ON_NON_OVERRIDING_METHOD, SAFE_VARARGS_ON_FIXED_ARITY,
-                                            SAFE_VARARGS_ON_NON_FINAL_METHOD, SAFE_VARARGS_ON_RECORD_COMPONENT)) {
+                                            SAFE_VARARGS_ON_NON_FINAL_METHOD, SAFE_VARARGS_ON_RECORD_COMPONENT,
+                                            ANNOTATION_CONTAINER_WRONG_PLACE, ANNOTATION_CONTAINER_NOT_APPLICABLE)) {
       single(kind, annotationRemover);
     }
     single(ANNOTATION_NOT_ALLOWED_VAR, error -> {
@@ -160,6 +161,7 @@ final class JavaErrorFixProvider {
               new MoveAnnotationToPackageInfoFileFix(error.psi())));
     single(ANNOTATION_NOT_ALLOWED_ON_PACKAGE, error ->
       factory.createDeleteFix(error.psi(), JavaAnalysisBundle.message("intention.text.remove.annotation")));
+    single(ANNOTATION_DUPLICATE_NON_REPEATABLE, error -> factory.createCollapseAnnotationsFix(error.psi()));
   }
 
   private static <Psi extends PsiElement, Context> void single(@NotNull JavaErrorKind<Psi, Context> kind,

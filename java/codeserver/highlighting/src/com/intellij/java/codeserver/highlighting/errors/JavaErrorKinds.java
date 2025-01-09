@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
@@ -122,6 +123,34 @@ public final class JavaErrorKinds {
       .<@NotNull List<String>>withContext()
       .withRawDescription((annotation, attributeNames) -> message(
           "annotation.missing.attribute", attributeNames.stream().map(attr -> "'" + attr + "'").collect(Collectors.joining(", "))));
+  public static final Simple<PsiAnnotation> ANNOTATION_CONTAINER_WRONG_PLACE =
+    error(PsiAnnotation.class, "annotation.container.wrong.place")
+      .withRawDescription(annotation ->
+                            message("annotation.container.wrong.place",
+                                    requireNonNull(annotation.resolveAnnotationType()).getQualifiedName()));
+  public static final Parameterized<PsiAnnotation, PsiClass> ANNOTATION_CONTAINER_NOT_APPLICABLE =
+    parameterized(PsiAnnotation.class, PsiClass.class, "annotation.container.not.applicable")
+      .withRawDescription((annotation, containerClass) -> {
+        PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
+        String target = JavaPsiBundle.message("annotation.target." + targets[0]);
+        return message("annotation.container.not.applicable", containerClass.getName(), target);
+      });
+  public static final Simple<PsiAnnotation> ANNOTATION_DUPLICATE =
+    error(PsiAnnotation.class, "annotation.duplicate").withAnchor(annotation -> requireNonNull(annotation.getNameReferenceElement()));
+  public static final Simple<PsiAnnotation> ANNOTATION_DUPLICATE_NON_REPEATABLE =
+    error(PsiAnnotation.class, "annotation.duplicate.non.repeatable")
+      .withAnchor(annotation -> requireNonNull(annotation.getNameReferenceElement()))
+      .withRawDescription(annotation -> message(
+        "annotation.duplicate.non.repeatable", requireNonNull(annotation.resolveAnnotationType()).getQualifiedName()));
+  public static final Parameterized<PsiAnnotation, String> ANNOTATION_DUPLICATE_EXPLAINED =
+    error(PsiAnnotation.class, "annotation.duplicate.explained")
+      .withAnchor(annotation -> requireNonNull(annotation.getNameReferenceElement()))
+      .<String>withContext()
+      .withRawDescription((annotation, message) -> message("annotation.duplicate.explained", message));
+  public static final Parameterized<PsiAnnotationMemberValue, String> ANNOTATION_MALFORMED_REPEATABLE_EXPLAINED =
+    parameterized(PsiAnnotationMemberValue.class, String.class, "annotation.malformed.repeatable.explained")
+      .withRawDescription((containerRef, message) -> message("annotation.malformed.repeatable.explained", message));
+
   public static final Simple<PsiAnnotation> SAFE_VARARGS_ON_RECORD_COMPONENT =
     error("safe.varargs.on.record.component");
   public static final Parameterized<PsiAnnotation, PsiMethod> SAFE_VARARGS_ON_FIXED_ARITY = parameterized("safe.varargs.on.fixed.arity");
