@@ -132,7 +132,7 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
 
   @Override
   public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
-    BuildDataPaths dataPaths = projectDescriptor.getTargetsState().getDataPaths();
+    BuildDataPaths dataPaths = projectDescriptor.dataManager.getDataPaths();
     GradleModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
     if (configuration == null) {
       hash.putBoolean(false);

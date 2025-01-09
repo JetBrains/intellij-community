@@ -63,7 +63,7 @@ public final class BuildDataManager {
   private DependencyGraph myDepGraph;
   private final NodeSourcePathMapper myDepGraphPathMapper;
   private final BuildDataPaths myDataPaths;
-  private final BuildTargetsState myTargetsState;
+  private final BuildTargetsState targetStateManager;
   private final @Nullable OutputToTargetRegistry outputToTargetMapping;
   private final BuildDataVersionManager versionManager;
   private final PathRelativizerService myRelativizer;
@@ -112,7 +112,7 @@ public final class BuildDataManager {
                            @Nullable ProjectStamps projectStamps,
                            @Nullable BuildDataVersionManager versionManager) throws IOException {
     myDataPaths = dataPaths;
-    myTargetsState = targetsState;
+    targetStateManager = targetsState;
     myFileStampService = projectStamps;
     Path dataStorageRoot = dataPaths.getDataStorageDir();
     try {
@@ -181,7 +181,7 @@ public final class BuildDataManager {
   }
 
   public BuildTargetsState getTargetsState() {
-    return myTargetsState;
+    return targetStateManager;
   }
 
   public void cleanStaleTarget(@NotNull BuildTargetType<?> targetType, @NotNull String targetId) throws IOException {
@@ -236,7 +236,7 @@ public final class BuildDataManager {
       LOG.info(e);
       throw new BuildDataCorruptedException(e);
     }
-    return new SourceToOutputMappingWrapper(map, myTargetsState.getBuildTargetId(target), outputToTargetMapping);
+    return new SourceToOutputMappingWrapper(map, targetStateManager.getBuildTargetId(target), outputToTargetMapping);
   }
 
   public @Nullable StampsStorage<?> getFileStampStorage(@NotNull BuildTarget<?> target) {
@@ -374,7 +374,7 @@ public final class BuildDataManager {
           }
         }
       }
-      myTargetsState.clean();
+      targetStateManager.clean();
     }
     saveVersion();
   }
@@ -442,7 +442,7 @@ public final class BuildDataManager {
 
   public void close() throws IOException {
     IOOperation.execAll(IOException.class,
-      IOOperation.adapt(myTargetsState, BuildTargetsState::save),
+      IOOperation.adapt(targetStateManager, BuildTargetsState::save),
       IOOperation.adapt(allTargetStorages(), StorageOwner::close),
       () -> {
         myTargetStorages.clear();

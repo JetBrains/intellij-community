@@ -229,7 +229,7 @@ public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescri
       return;
     }
 
-    Path configurationTextFile = projectDescriptor.getTargetsState().getDataPaths().getTargetDataRootDir(this).resolve("config.dat.debug.txt");
+    Path configurationTextFile = projectDescriptor.dataManager.getDataPaths().getTargetDataRootDir(this).resolve("config.dat.debug.txt");
     @NonNls String oldText;
     try {
       oldText = Files.readString(configurationTextFile);

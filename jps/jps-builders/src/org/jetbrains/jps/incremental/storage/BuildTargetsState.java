@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
-import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
@@ -25,26 +24,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class BuildTargetsState {
   private static final Logger LOG = Logger.getInstance(BuildTargetsState.class);
-  private final BuildDataPaths myDataPaths;
+  private final BuildDataPaths dataPaths;
   private final AtomicInteger myMaxTargetId = new AtomicInteger(0);
   private long myLastSuccessfulRebuildDuration = -1;
   private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> typeToState = new ConcurrentHashMap<>(16, 0.75f, 1);
-  private final JpsModel myModel;
-  private final BuildRootIndex myBuildRootIndex;
+  private final JpsModel model;
 
   /**
    * @deprecated temporary available to enable kotlin tests running. Should be removed eventually
    */
   @Deprecated
   @ApiStatus.Internal
-  public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndexImpl buildRootIndex) {
-    this(dataPaths, model, (BuildRootIndex)buildRootIndex);
+  public BuildTargetsState(@NotNull BuildDataPaths dataPaths, JpsModel model, BuildRootIndexImpl ignored) {
+    this(dataPaths, model);
   }
 
-  public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndex buildRootIndex) {
-    myDataPaths = dataPaths;
-    myModel = model;
-    myBuildRootIndex = buildRootIndex;
+  @ApiStatus.Internal
+  public BuildTargetsState(@NotNull BuildDataPaths dataPaths, @NotNull JpsModel model) {
+    this.dataPaths = dataPaths;
+    this.model = model;
     Path targetTypesFile = getTargetTypesFile();
     try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(targetTypesFile)))) {
       myMaxTargetId.set(input.readInt());
@@ -60,7 +58,7 @@ public final class BuildTargetsState {
   }
 
   private @NotNull Path getTargetTypesFile() {
-    return myDataPaths.getTargetsDataRoot().resolve("targetTypes.dat");
+    return dataPaths.getTargetsDataRoot().resolve("targetTypes.dat");
   }
 
   public void save() {
@@ -96,7 +94,7 @@ public final class BuildTargetsState {
   }
 
   public @NotNull BuildTargetConfiguration getTargetConfiguration(@NotNull BuildTarget<?> target) {
-    return getTypeState(target.getTargetType()).getConfiguration(target);
+    return getTypeState(target.getTargetType()).getConfiguration(target, dataPaths);
   }
 
   public @NotNull @Unmodifiable List<Pair<String, Integer>> getStaleTargetIds(@NotNull BuildTargetType<?> type) {
@@ -116,7 +114,7 @@ public final class BuildTargetsState {
   }
 
   private @NotNull BuildTargetTypeState getTypeState(@NotNull BuildTargetType<?> type) {
-    return typeToState.computeIfAbsent(type, it -> new BuildTargetTypeState(it, this));
+    return typeToState.computeIfAbsent(type, it -> new BuildTargetTypeState(it, this, dataPaths, model));
   }
 
   public void markUsedId(int id) {
@@ -135,21 +133,9 @@ public final class BuildTargetsState {
 
   public void clean() {
     try {
-      FileUtilRt.deleteRecursively(myDataPaths.getTargetsDataRoot());
+      FileUtilRt.deleteRecursively(dataPaths.getTargetsDataRoot());
     }
     catch (IOException ignored) {
     }
-  }
-
-  public JpsModel getModel() {
-    return myModel;
-  }
-
-  public BuildRootIndex getBuildRootIndex() {
-    return myBuildRootIndex;
-  }
-
-  public BuildDataPaths getDataPaths() {
-    return myDataPaths;
   }
 }

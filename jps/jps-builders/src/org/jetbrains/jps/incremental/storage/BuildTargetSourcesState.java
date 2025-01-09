@@ -17,7 +17,6 @@ import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
-import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildListener;
@@ -83,8 +82,7 @@ public final class BuildTargetSourcesState implements BuildListener {
     buildTargetIndex = projectDescriptor.getBuildTargetIndex();
     outputFolderPath = getOutputFolderPath(projectDescriptor.getProject());
 
-    BuildDataPaths dataPaths = projectDescriptor.getTargetsState().getDataPaths();
-    targetStateStorage = dataPaths.getDataStorageDir().resolve(TARGET_SOURCES_STATE_FILE_NAME);
+    targetStateStorage = dataManager.getDataPaths().getDataStorageDir().resolve(TARGET_SOURCES_STATE_FILE_NAME);
 
     // subscribe to events for reporting only changed build targets
     context.addBuildListener(this);
