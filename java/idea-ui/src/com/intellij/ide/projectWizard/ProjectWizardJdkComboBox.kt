@@ -279,7 +279,7 @@ class ProjectWizardJdkComboBox(
   var isLoadingDownloadItem: Boolean = false
   var isLoadingExistingJdks: Boolean = true
   val progressIcon: JBLabel = JBLabel(AnimatedIcon.Default.INSTANCE)
-  val coroutineScope = application.service<ProjectWizardJdkComboBoxService>().childScope("ProjectWizardJdkComboBox")
+  val coroutineScope: CoroutineScope = application.service<ProjectWizardJdkComboBoxService>().childScope("ProjectWizardJdkComboBox")
   private var downloadOpenJdkJob: Job? = null
   private var addExistingJdkJob: Job? = null
 
@@ -463,7 +463,7 @@ class ProjectWizardJdkComboBox(
     }
   }
 
-  val lastRegisteredJdkIndex
+  val lastRegisteredJdkIndex: Int
     get() = (0 until itemCount).firstOrNull { getItemAt(it) is AddJdkFromJdkListDownloader } ?: 0
 
   val comment: String?
