@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.java.codeserver.highlighting.errors.JavaAnnotationValueErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.psi.*;
@@ -122,7 +121,7 @@ final class JavaErrorFixProvider {
     });
     single(ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD, error -> factory.createCreateAnnotationMethodFromUsageFix(error.psi()));
     single(ANNOTATION_ATTRIBUTE_DUPLICATE, error -> factory.createMergeDuplicateAttributesFix(error.psi()));
-    JavaFixProvider<PsiAnnotationMemberValue, JavaAnnotationValueErrorKind.AnnotationValueErrorContext> incompatibleTypeFix = error -> {
+    JavaFixProvider<PsiAnnotationMemberValue, AnnotationValueErrorContext> incompatibleTypeFix = error -> {
       PsiAnnotationMemberValue value = error.psi();
       PsiAnnotationMethod method = error.context().method();
       PsiType type = null;

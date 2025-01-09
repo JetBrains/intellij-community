@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.AnnotationValueErrorContext;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.JavaFeature;
@@ -458,12 +459,14 @@ final class AnnotationChecker {
         }
       }
 
-      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE.create(annotation, method, expectedType));
+      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE.create(
+        annotation, AnnotationValueErrorContext.from(annotation, method, expectedType)));
       return;
     }
 
     if (value instanceof PsiArrayInitializerMemberValue arrayValue && !(expectedType instanceof PsiArrayType)) {
-      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER.create(arrayValue, method, expectedType));
+      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER.create(
+        arrayValue, AnnotationValueErrorContext.from(arrayValue, method, expectedType)));
       return;
     }
 
@@ -484,7 +487,8 @@ final class AnnotationChecker {
         return;
       }
 
-      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE.create(expr, method, expectedType));
+      myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE.create(
+        expr, AnnotationValueErrorContext.from(expr, method, expectedType)));
     }
   }
 
