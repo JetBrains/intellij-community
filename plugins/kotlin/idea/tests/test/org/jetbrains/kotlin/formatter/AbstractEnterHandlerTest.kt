@@ -13,8 +13,6 @@ import org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File
@@ -138,10 +136,6 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         )
     }
 
-    override fun setupEditorForInjectedLanguage() {
-        (file as? KtFile)?.let { ScriptConfigurationsProvider.getInstance(project)!!.getScriptConfiguration(it) }
-        super.setupEditorForInjectedLanguage()
-    }
 
     private fun typeAndCheck(
         beforeFilePath: String,

@@ -13,8 +13,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 
@@ -68,8 +66,6 @@ abstract class AbstractFormatterTest : KotlinLightCodeInsightFixtureTestCase() {
             } else {
                 configurator.configureInvertedSettings()
             }
-
-            (psiFile as? KtFile)?.let { ScriptConfigurationsProvider.getInstance(project)!!.getScriptConfiguration(it) }
 
             customSettings.ALLOW_TRAILING_COMMA_ON_CALL_SITE = callSite
             project.executeWriteCommand("reformat") {
