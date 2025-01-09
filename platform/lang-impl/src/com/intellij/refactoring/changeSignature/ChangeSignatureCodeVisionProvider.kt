@@ -117,6 +117,7 @@ class ChangeSignatureCodeVisionProvider : CodeVisionProvider<Unit> {
         SuggestedRefactoringSupport.Signature.create("foo", "", listOf(), null)!!,
         listOf()
       )
+      @Suppress("HardCodedStringLiteral")
       val data = SuggestedChangeSignatureData.create(state, "foo")
       editor.putUserData(REFACTORING_DATA_KEY, data)
     }
