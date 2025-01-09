@@ -34,6 +34,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private @NotNull List<String> myEnvFilePaths = new ArrayList<>();
   private ExtendableTextComponent.Extension myEnvFilesExtension;
+  private final List<ChangeListener> myEnvFilePathsChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public EnvironmentVariablesTextFieldWithBrowseButton() {
     super();
@@ -71,6 +72,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       EnvFilesDialogKt.addEnvFile(getTextField(), null, s -> {
         myEnvFilePaths.add(s);
         updateText();
+        fireEnvFilePathsChanged();
         return null;
       });
     }
@@ -80,6 +82,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       if (dialog.isOK()) {
         myEnvFilePaths = new ArrayList<>(dialog.getPaths());
         updateText();
+        fireEnvFilePathsChanged();
       }
     }
   }
@@ -174,6 +177,14 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     myListeners.add(changeListener);
   }
 
+  public void addEnvFilePathsChangeListener(@NotNull ChangeListener changeListener) {
+    myListeners.add(changeListener);
+  }
+
+  public void removeEnvFilePathsChangeListener(@NotNull ChangeListener changeListener) {
+    myListeners.remove(changeListener);
+  }
+
   @Override
   public void removeChangeListener(@NotNull ChangeListener changeListener) {
     myListeners.remove(changeListener);
@@ -185,10 +196,17 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     }
   }
 
+  private void fireEnvFilePathsChanged() {
+    for (ChangeListener listener : myEnvFilePathsChangeListeners) {
+      listener.stateChanged(new ChangeEvent(this));
+    }
+  }
+
   void setEnvFilePaths(@NotNull List<String> paths) {
     myEnvFilePaths = new ArrayList<>(paths);
     setData(myData);
     addEnvFilesExtension();
+    fireEnvFilePathsChanged();
   }
 
   @NotNull List<String> getEnvFilePaths() {
@@ -202,6 +220,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     for (int i = 0; i < Math.min(myEnvFilePaths.size(), paths.size()); i++) {
       myEnvFilePaths.set(i, paths.get(i));
     }
+    fireEnvFilePathsChanged();
   }
 
   protected static @Unmodifiable List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {

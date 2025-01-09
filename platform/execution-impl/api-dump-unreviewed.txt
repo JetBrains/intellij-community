@@ -559,6 +559,7 @@ c:com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseBu
 - pf:myParentDefaults:java.util.Map
 - <init>():V
 - addChangeListener(javax.swing.event.ChangeListener):V
+- addEnvFilePathsChangeListener(javax.swing.event.ChangeListener):V
 - ps:convertToVariables(java.util.Map,Z):java.util.List
 - p:createDialog():com.intellij.execution.configuration.EnvironmentVariablesDialog
 - getData():com.intellij.execution.configuration.EnvironmentVariablesData
@@ -570,6 +571,7 @@ c:com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseBu
 - p:isModifiedSysEnv(com.intellij.execution.util.EnvironmentVariable):Z
 - isPassParentEnvs():Z
 - removeChangeListener(javax.swing.event.ChangeListener):V
+- removeEnvFilePathsChangeListener(javax.swing.event.ChangeListener):V
 - setData(com.intellij.execution.configuration.EnvironmentVariablesData):V
 - setEnvs(java.util.Map):V
 - setPassParentEnvs(Z):V
