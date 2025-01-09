@@ -69,7 +69,7 @@ class PyAddNewUvPanel(
   override var newProjectPath: String?,
   context: UserDataHolder,
 ) : PyAddNewEnvPanel() {
-  override val envName = "Uv"
+  override val envName = "uv"
   override val panelName: String get() = PyBundle.message("python.sdk.uv.environment.panel.title")
 
   override val icon: Icon = UV_ICON

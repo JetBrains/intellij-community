@@ -14,10 +14,6 @@ import com.jetbrains.python.sdk.uv.ui.PyAddNewUvPanel
 import org.jdom.Element
 import javax.swing.Icon
 
-/**
- *  This source code is created by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
- */
-
 class UvSdkProvider : PySdkProvider {
   override fun createEnvironmentAssociationFix(
     module: Module,
