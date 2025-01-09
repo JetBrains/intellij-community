@@ -756,6 +756,34 @@ public final class PsiTypesUtil {
     return type;
   }
 
+  /**
+   * @param type type to check
+   * @return true if a given type is a valid return type for an annotation method
+   */
+  public static boolean isValidAnnotationMethodType(@NotNull PsiType type) {
+    if (type instanceof PsiArrayType) {
+      PsiArrayType arrayType = (PsiArrayType)type;
+      if (arrayType.getArrayDimensions() != 1) return false;
+      type = arrayType.getComponentType();
+    }
+    if (type instanceof PsiPrimitiveType) {
+      return !PsiTypes.voidType().equals(type) && !PsiTypes.nullType().equals(type);
+    }
+    if (type instanceof PsiClassType) {
+      PsiClassType classType = (PsiClassType)type;
+      if (classType.getParameters().length > 0) {
+        return classNameEquals(classType, CommonClassNames.JAVA_LANG_CLASS);
+      }
+      if (classType.equalsToText(CommonClassNames.JAVA_LANG_CLASS) || classType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return true;
+      }
+
+      PsiClass aClass = classType.resolve();
+      return aClass != null && (aClass.isAnnotationType() || aClass.isEnum());
+    }
+    return false;
+  }
+
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
     private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
 

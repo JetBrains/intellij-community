@@ -96,7 +96,7 @@ final class AnnotationChecker {
   }
 
   void checkValidAnnotationType(@Nullable PsiType type, @NotNull PsiTypeElement typeElement) {
-    if (type == null || !isValidAnnotationMethodType(type)) {
+    if (type == null || !PsiTypesUtil.isValidAnnotationMethodType(type)) {
       myVisitor.report(JavaErrorKinds.ANNOTATION_METHOD_INVALID_TYPE.create(typeElement, type));
     }
   }
@@ -516,27 +516,5 @@ final class AnnotationChecker {
         }
       }
     }
-  }
-  
-  private static boolean isValidAnnotationMethodType(@NotNull PsiType type) {
-    if (type instanceof PsiArrayType arrayType) {
-      if (arrayType.getArrayDimensions() != 1) return false;
-      type = arrayType.getComponentType();
-    }
-    if (type instanceof PsiPrimitiveType) {
-      return !PsiTypes.voidType().equals(type) && !PsiTypes.nullType().equals(type);
-    }
-    if (type instanceof PsiClassType classType) {
-      if (classType.getParameters().length > 0) {
-        return PsiTypesUtil.classNameEquals(classType, CommonClassNames.JAVA_LANG_CLASS);
-      }
-      if (classType.equalsToText(CommonClassNames.JAVA_LANG_CLASS) || classType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        return true;
-      }
-
-      PsiClass aClass = classType.resolve();
-      return aClass != null && (aClass.isAnnotationType() || aClass.isEnum());
-    }
-    return false;
   }
 }

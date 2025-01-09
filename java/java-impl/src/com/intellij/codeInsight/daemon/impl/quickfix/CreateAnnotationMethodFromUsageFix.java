@@ -5,7 +5,6 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
@@ -14,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -126,7 +126,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
         type = currentType.createArrayType();
       }
     }
-    if (type != null && type.accept(AnnotationsHighlightUtil.AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
+    if (type != null && PsiTypesUtil.isValidAnnotationMethodType(type)) {
       return type;
     }
     return null;

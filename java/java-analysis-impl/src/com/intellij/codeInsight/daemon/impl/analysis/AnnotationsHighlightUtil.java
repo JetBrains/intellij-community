@@ -18,7 +18,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -251,39 +250,5 @@ public final class AnnotationsHighlightUtil {
     }
 
     return null;
-  }
-
-  public static class AnnotationReturnTypeVisitor extends PsiTypeVisitor<Boolean> {
-    public static final AnnotationReturnTypeVisitor INSTANCE = new AnnotationReturnTypeVisitor();
-    @Override
-    public Boolean visitType(@NotNull PsiType type) {
-      return Boolean.FALSE;
-    }
-
-    @Override
-    public Boolean visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
-      return PsiTypes.voidType().equals(primitiveType) || PsiTypes.nullType().equals(primitiveType) ? Boolean.FALSE : Boolean.TRUE;
-    }
-
-    @Override
-    public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
-      if (arrayType.getArrayDimensions() != 1) return Boolean.FALSE;
-      PsiType componentType = arrayType.getComponentType();
-      return componentType.accept(this);
-    }
-
-    @Override
-    public Boolean visitClassType(@NotNull PsiClassType classType) {
-      if (classType.getParameters().length > 0) {
-        return PsiTypesUtil.classNameEquals(classType, CommonClassNames.JAVA_LANG_CLASS);
-      }
-
-      PsiClass aClass = classType.resolve();
-      if (aClass != null && (aClass.isAnnotationType() || aClass.isEnum())) {
-        return Boolean.TRUE;
-      }
-
-      return classType.equalsToText(CommonClassNames.JAVA_LANG_CLASS) || classType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-    }
   }
 }
