@@ -3,13 +3,17 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -23,6 +27,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull PsiFile myFile;
   private final @NotNull LanguageLevel myLanguageLevel;
   private final @NotNull AnnotationChecker myAnnotationChecker = new AnnotationChecker(this);
+  private final @NotNull ClassChecker myClassChecker = new ClassChecker(this);
   private final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
@@ -86,10 +91,44 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-    super.visitReferenceExpression(expression);
+    JavaResolveResult resultForIncompleteCode = doVisitReferenceElement(expression);
     if (!hasErrorResults()) {
       visitExpression(expression);
       if (hasErrorResults()) return;
+    }
+  }
+
+  @Override
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
+    JavaResolveResult result = ref instanceof PsiExpression ? resolveOptimised(ref, myFile) : doVisitReferenceElement(ref);
+    if (result != null) {
+      PsiElement resolved = result.getElement();
+    }
+  }
+
+  private JavaResolveResult doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
+    JavaResolveResult result = resolveOptimised(ref, myFile);
+    if (result == null) return null;
+
+    PsiElement resolved = result.getElement();
+
+    if (!hasErrorResults()) myClassChecker.checkAbstractInstantiation(ref);
+    if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
+    if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);
+    return result;
+  }
+
+  static @Nullable JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
+    try {
+      if (ref instanceof PsiReferenceExpressionImpl) {
+        PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
+        JavaResolveResult[] results = JavaResolveUtil.resolveWithContainingFile(ref, resolver, true, true, containingFile);
+        return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+      }
+      return ref.advancedResolve(true);
+    }
+    catch (IndexNotReadyException e) {
+      return null;
     }
   }
 

@@ -38,6 +38,32 @@ final class JavaErrorFormatUtil {
     return new TextRange(start, end).shiftLeft(method.getTextRange().getStartOffset());
   }
 
+  static @NotNull TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
+    PsiModifierList modifierList = field.getModifierList();
+    TextRange range = field.getTextRange();
+    int start = modifierList == null ? range.getStartOffset() : stripAnnotationsFromModifierList(modifierList);
+    int end = field.getNameIdentifier().getTextRange().getEndOffset();
+    return new TextRange(start, end).shiftLeft(range.getStartOffset());
+  }
+
+  static @NotNull TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
+    if (aClass instanceof PsiEnumConstantInitializer) {
+      throw new IllegalArgumentException();
+    }
+    PsiElement psiElement = aClass instanceof PsiAnonymousClass anonymousClass
+                            ? anonymousClass.getBaseClassReference()
+                            : aClass.getModifierList() == null ? aClass.getNameIdentifier() : aClass.getModifierList();
+    if(psiElement == null) return new TextRange(0, 0);
+    int start = stripAnnotationsFromModifierList(psiElement);
+    PsiElement endElement = aClass instanceof PsiAnonymousClass anonymousClass ?
+                            anonymousClass.getBaseClassReference() :
+                            aClass.getImplementsList();
+    if (endElement == null) endElement = aClass.getNameIdentifier();
+    TextRange endTextRange = endElement == null ? null : endElement.getTextRange();
+    int end = endTextRange == null ? start : endTextRange.getEndOffset();
+    return new TextRange(start, end).shiftLeft(aClass.getTextRange().getStartOffset());
+  }
+
   private static int stripAnnotationsFromModifierList(@NotNull PsiElement element) {
     TextRange textRange = element.getTextRange();
     if (textRange == null) return 0;

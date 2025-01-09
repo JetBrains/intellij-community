@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationToPackageInfoFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
@@ -10,16 +11,21 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
+import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
 
@@ -53,9 +59,43 @@ final class JavaErrorFixProvider {
                                             ANNOTATION_NOT_ALLOWED_EXTENDS, RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION)) {
       single(kind, genericRemover);
     }
-    
+
+    createClassFixes(factory);
     createAnnotationFixes(factory);
     createReceiverParameterFixes(factory);
+  }
+
+  private static void createClassFixes(QuickFixFactory factory) {
+    single(CLASS_NO_ABSTRACT_METHOD, error -> {
+      if (error.psi() instanceof PsiClass aClass && !(aClass instanceof PsiAnonymousClass) && !aClass.isEnum()
+          && aClass.getModifierList() != null
+          && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
+        return factory.createModifierListFix(aClass, PsiModifier.ABSTRACT, true, false);
+      }
+      return null;
+    });
+    multi(CLASS_NO_ABSTRACT_METHOD, error -> {
+      PsiClass aClass = error.psi() instanceof PsiClass cls ? cls : Objects.requireNonNull(error.psi().getContainingClass());
+      PsiClass containingClass = Objects.requireNonNull(error.context().getContainingClass());
+      PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
+      if (anyMethodToImplement == null) return List.of();
+      if (!anyMethodToImplement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) ||
+          JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, containingClass)) {
+        return List.of(factory.createImplementMethodsFix(error.psi()));
+      }
+      else {
+        return StreamEx.of(JvmModifier.PROTECTED, JvmModifier.PUBLIC)
+          .flatCollection(modifier ->
+          JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(modifier, true)))
+          .collect(Collectors.toUnmodifiableList());
+      }
+    });
+    single(CLASS_REFERENCE_LIST_DUPLICATE,
+           error -> factory.createRemoveDuplicateExtendsAction(HighlightUtil.formatClass(error.context())));
+    multi(CLASS_REFERENCE_LIST_INNER_PRIVATE, error ->
+      ContainerUtil.map(List.of(PsiModifier.PUBLIC, PsiModifier.PROTECTED),
+                        (@PsiModifier.ModifierConstant String modifier) ->
+                          factory.createModifierListFix(error.context(), modifier, true, false)));
   }
 
   private static void createReceiverParameterFixes(@NotNull QuickFixFactory factory) {

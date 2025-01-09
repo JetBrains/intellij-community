@@ -55,18 +55,6 @@ import java.util.function.Consumer;
  * Generates HighlightInfoType.ERROR-only HighlightInfos at PsiClass level.
  */
 public final class HighlightClassUtil {
-  /**
-   * new ref(...) or new ref(...) { ... } where ref is abstract class
-   */
-  static HighlightInfo.Builder checkAbstractInstantiation(@NotNull PsiJavaCodeReferenceElement ref) {
-    PsiElement parent = ref.getParent();
-    if (parent instanceof PsiAnonymousClass aClass
-        && parent.getParent() instanceof PsiNewExpression
-        && !PsiUtilCore.hasErrorElementChild(parent.getParent())) {
-      return checkClassWithAbstractMethods(aClass, aClass, ref.getTextRange());
-    }
-    return null;
-  }
 
   static HighlightInfo.Builder checkClassWithAbstractMethods(@NotNull PsiClass aClass, @NotNull PsiElement implementsFixElement, @NotNull TextRange range) {
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
@@ -739,29 +727,6 @@ public final class HighlightClassUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkExtendsDuplicate(@NotNull PsiJavaCodeReferenceElement element, 
-                                                     @Nullable PsiElement resolved, 
-                                                     @NotNull PsiFile containingFile) {
-    if (!(element.getParent() instanceof PsiReferenceList list)) return null;
-    if (!(list.getParent() instanceof PsiClass)) return null;
-    if (!(resolved instanceof PsiClass aClass)) return null;
-    PsiManager manager = containingFile.getManager();
-    PsiJavaCodeReferenceElement sibling = PsiTreeUtil.getPrevSiblingOfType(element, PsiJavaCodeReferenceElement.class);
-    while (true) {
-      if (sibling == null) return null;
-      PsiElement target = sibling.resolve();
-      if (manager.areElementsEquivalent(target, aClass)) break;
-      sibling = PsiTreeUtil.getPrevSiblingOfType(sibling, PsiJavaCodeReferenceElement.class);
-    }
-    String name = HighlightUtil.formatClass(aClass);
-    String description = JavaErrorBundle.message("duplicate.reference.in.list", name, list.getFirstChild().getText());
-    HighlightInfo.Builder info =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-    IntentionAction action = QuickFixFactory.getInstance().createRemoveDuplicateExtendsAction(name);
-    info.registerFix(action, null, null, null, null);
-    return info;
-  }
-
   static HighlightInfo.Builder checkClassAlreadyImported(@NotNull PsiClass aClass, @NotNull PsiElement elementToHighlight) {
     PsiFile file = aClass.getContainingFile();
     if (!(file instanceof PsiJavaFile javaFile)) return null;
@@ -859,107 +824,6 @@ public final class HighlightClassUtil {
       }
     }
     return info;
-  }
-
-
-  /**
-   * class c extends foreign.inner {}
-   *
-   * @param extendRef points to the class in the extends list
-   * @param resolved  extendRef resolved
-   */
-  static HighlightInfo.Builder checkClassExtendsForeignInnerClass(@NotNull PsiJavaCodeReferenceElement extendRef, @Nullable PsiElement resolved) {
-    PsiElement parent = extendRef.getParent();
-    if (!(parent instanceof PsiReferenceList)) {
-      return null;
-    }
-    PsiElement grand = parent.getParent();
-    if (!(grand instanceof PsiClass aClass)) {
-      return null;
-    }
-    PsiClass containerClass;
-    if (aClass instanceof PsiTypeParameter typeParameter) {
-      if (!(typeParameter.getOwner() instanceof PsiClass cls)) {
-        return null;
-      }
-      containerClass = cls;
-    }
-    else {
-      containerClass = aClass;
-    }
-    if (aClass.getExtendsList() != parent && aClass.getImplementsList() != parent) {
-      return null;
-    }
-    if (resolved != null && !(resolved instanceof PsiClass)) {
-      String description = JavaErrorBundle.message("class.name.expected");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(extendRef).descriptionAndTooltip(description);
-    }
-    HighlightInfo.Builder[] infos = new HighlightInfo.Builder[1];
-    extendRef.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (infos[0] != null) return;
-        super.visitElement(element);
-      }
-
-      @Override
-      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
-        super.visitReferenceElement(reference);
-        PsiElement resolve = reference.resolve();
-        if (resolve instanceof PsiClass base) {
-          PsiClass baseClass = base.getContainingClass();
-          if (baseClass != null && base.hasModifierProperty(PsiModifier.PRIVATE) && baseClass == containerClass && baseClass.getContainingClass() == null) {
-            String description = JavaErrorBundle.message("private.symbol",
-                                                         HighlightUtil.formatClass(base),
-                                                         HighlightUtil.formatClass(baseClass));
-            HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(extendRef)
-              .descriptionAndTooltip(description);
-
-            IntentionAction action1 = QuickFixFactory.getInstance().createModifierListFix(base, PsiModifier.PUBLIC, true, false);
-            info.registerFix(action1, null, null, null, null);
-            IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(base, PsiModifier.PROTECTED, true, false);
-            info.registerFix(action, null, null, null, null);
-
-            infos[0] = info;
-            return;
-          }
-
-          // must be inner class
-          if (!PsiUtil.isInnerClass(base)) return;
-
-          if (resolve == resolved && baseClass != null && (!PsiTreeUtil.isAncestor(baseClass, extendRef, true) || aClass.hasModifierProperty(PsiModifier.STATIC)) &&
-              !InheritanceUtil.hasEnclosingInstanceInScope(baseClass, extendRef, psiClass -> psiClass != aClass, true) &&
-              !qualifiedNewCalledInConstructors(aClass)) {
-            String description = JavaErrorBundle.message("no.enclosing.instance.in.scope", HighlightUtil.formatClass(baseClass));
-            infos[0] = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(extendRef).descriptionAndTooltip(description);
-          }
-        }
-      }
-    });
-
-    return infos[0];
-  }
-
-  /**
-   * 15.9 Class Instance Creation Expressions | 15.9.2 Determining Enclosing Instances
-   */
-  private static boolean qualifiedNewCalledInConstructors(@NotNull PsiClass aClass) {
-    PsiMethod[] constructors = aClass.getConstructors();
-    if (constructors.length == 0) return false;
-    for (PsiMethod constructor : constructors) {
-      PsiMethodCallExpression methodCallExpression = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
-      if (methodCallExpression == null) return false;
-      if (JavaPsiConstructorUtil.isChainedConstructorCall(methodCallExpression)) continue;
-      PsiReferenceExpression referenceExpression = methodCallExpression.getMethodExpression();
-      PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(referenceExpression.getQualifierExpression());
-      //If the class instance creation expression is qualified, then the immediately
-      //enclosing instance of i is the object that is the value of the Primary expression or the ExpressionName,
-      //otherwise aClass needs to be a member of a class enclosing the class in which the class instance creation expression appears
-      //already excluded by InheritanceUtil.hasEnclosingInstanceInScope
-      if (qualifierExpression == null) return false;
-    }
-    return true;
   }
 
   static HighlightInfo.Builder checkCreateInnerClassFromStaticContext(@NotNull PsiNewExpression expression, @NotNull PsiType type, @NotNull PsiClass aClass) {

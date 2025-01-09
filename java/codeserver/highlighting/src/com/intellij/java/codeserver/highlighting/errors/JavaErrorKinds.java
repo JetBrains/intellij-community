@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -13,6 +14,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -176,6 +178,43 @@ public final class JavaErrorKinds {
       .withAnchor(parameter -> requireNonNullElse(parameter.getTypeElement(), parameter)).withContext();
   public static final Parameterized<PsiReceiverParameter, @Nullable String> RECEIVER_NAME_MISMATCH =
     error(PsiReceiverParameter.class, "receiver.name.mismatch").withAnchor(PsiReceiverParameter::getIdentifier).withContext();
+  // PsiMember = PsiClass | PsiEnumConstant
+  public static final Parameterized<PsiMember, PsiMethod> CLASS_NO_ABSTRACT_METHOD =
+    error(PsiMember.class, "class.must.implement.method")
+      .withRange(member ->
+                   member instanceof PsiEnumConstant enumConstant ? enumConstant.getNameIdentifier().getTextRange() :
+                   member instanceof PsiClass aClass ? JavaErrorFormatUtil.getClassDeclarationTextRange(aClass) : null)
+      .<PsiMethod>withContext()
+      .withRawDescription((member, abstractMethod) -> {
+        PsiClass aClass = member instanceof PsiClass cls ? cls : requireNonNull(member.getContainingClass());
+        @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String messageKey;
+        String referenceName;
+        if (aClass instanceof PsiEnumConstantInitializer enumConstant) {
+          messageKey = "class.must.implement.method.enum.constant";
+          referenceName = enumConstant.getEnumConstant().getName();
+        }
+        else {
+          messageKey = aClass.isEnum() || aClass.isRecord() || aClass instanceof PsiAnonymousClass
+                       ? "class.must.implement.method"
+                       : "class.must.implement.method.or.abstract";
+          referenceName = formatClass(aClass, false);
+        }
+        return message(messageKey, referenceName, formatMethod(abstractMethod),
+                       formatClass(requireNonNull(abstractMethod.getContainingClass()), false));
+      });
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_DUPLICATE =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.duplicate")
+      .withRawDescription(
+        (ref, target) -> message("class.reference.list.duplicate", formatClass(target), ref.getParent().getFirstChild().getText()));
+  public static final Simple<PsiJavaCodeReferenceElement> CLASS_REFERENCE_LIST_NAME_EXPECTED =
+    error("class.reference.list.name.expected");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_INNER_PRIVATE =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.inner.private")
+      .withRawDescription((ref, target) -> message("class.reference.list.inner.private",
+                                                   formatClass(target), formatClass(requireNonNull(target.getContainingClass()))));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_NO_ENCLOSING_INSTANCE =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.no.enclosing.instance")
+      .withRawDescription((ref, target) -> message("class.reference.list.no.enclosing.instance", formatClass(target)));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {
     return new Simple<>(key);
