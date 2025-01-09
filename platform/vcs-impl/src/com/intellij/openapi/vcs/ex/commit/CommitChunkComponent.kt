@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex.commit
 
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actions.IncrementalFindAction
@@ -25,6 +27,7 @@ import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.RangeExclusionState
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -116,6 +119,11 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
     if (editor != null) {
       adjustEditorSettings(editor)
       centerPanel.border = CommitInputBorder(editor, this)
+
+      ApplicationManagerEx.getApplicationEx().messageBus.connect(tracker.disposable)
+        .subscribe(LafManagerListener.TOPIC, LafManagerListener {
+          commitMessage.updateUI() // otherwise it would be called in case of popup is closed
+        })
     }
 
     setupResizing(commitMessage)
@@ -352,8 +360,7 @@ private object Spec {
   val MAX_HEIGHT: Int
     get() = JBUI.scale(100)
 
-  val INPUT_BACKGROUND: Color
-    get() = EditorColorsManager.getInstance().globalScheme.defaultBackground
+  val INPUT_BACKGROUND: Color = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.defaultBackground }
 
   // actions will be moved to the bottom after a message reaches this limit
   const val INLINED_ACTIONS_TEXT_LIMIT: Int = 50
