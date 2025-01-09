@@ -12,13 +12,10 @@ import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.Assume
 import org.junit.Test
-import java.io.PrintStream
 import java.util.*
 
 class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
     override fun testDataDirName(): String = "multiplatform/commonizerImportAndCheckHighlighting"
-
-    override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
 
     override fun setUp() {
         val testedVersions = setOf(KotlinGradlePluginVersions.latestStable, KotlinGradlePluginVersions.latest)

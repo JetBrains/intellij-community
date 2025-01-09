@@ -58,7 +58,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -79,15 +78,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    var notificationManager = ExternalSystemProgressNotificationManager.getInstance();
-    var notificationListener = new ExternalSystemTaskNotificationListener() {
-      @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-        printOutput(text, stdOut);
-      }
-    };
-    notificationManager.addNotificationListener(notificationListener, getTestDisposable());
+    installExecutionOutputPrinter();
   }
 
   @Override
@@ -103,6 +94,33 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       myTestDisposable = Disposer.newDisposable();
     }
     return myTestDisposable;
+  }
+
+  private void installExecutionOutputPrinter() {
+    var notificationManager = ExternalSystemProgressNotificationManager.getInstance();
+    var notificationListener = new ExternalSystemTaskNotificationListener() {
+
+      @Override
+      public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
+        System.out.print(id + "\\n");
+      }
+
+      @Override
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        if (stdOut) {
+          System.out.print(text.replace("\n", "\\n").replace("\r", "\\r"));
+        }
+        else {
+          System.err.print(text);
+        }
+      }
+
+      @Override
+      public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
+        System.out.println();
+      }
+    };
+    notificationManager.addNotificationListener(notificationListener, getTestDisposable());
   }
 
   protected void assertModulesContains(String... expectedNames) {
@@ -478,7 +496,6 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
             ex.printStackTrace(System.err);
             error.set(Couple.of("Exception occurred in `ProjectDataManager.importData` (see output for the details)", null));
           }
-          System.out.println("External project was successfully imported");
         }
 
         @Override
@@ -498,15 +515,6 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     // (specifically, all the invokeLater that schedule indexing after language level change performed by import)
     runInEdtAndWait(() -> PlatformTestUtil.dispatchAllEventsInIdeEventQueue());
     IndexingTestUtil.waitUntilIndexesAreReady(myProject);
-  }
-
-  protected void printOutput(@NotNull String text, boolean stdOut) {
-    if (StringUtil.isEmptyOrSpaces(text)) return;
-    printOutput(stdOut ? System.out : System.err, text);
-  }
-
-  protected void printOutput(@NotNull PrintStream stream, @NotNull String text) {
-    stream.print(text);
   }
 
   protected void handleImportFailure(@NotNull String errorMessage, @Nullable String errorDetails) {

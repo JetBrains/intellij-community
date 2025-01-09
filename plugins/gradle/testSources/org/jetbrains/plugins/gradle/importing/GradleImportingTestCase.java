@@ -14,7 +14,10 @@ import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.externalSystem.test.JavaExternalSystemImportingTestCase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -126,6 +129,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     cleanScriptsCacheIfNeeded();
 
     installGradleJvmConfigurator();
+    installExecutionDeprecationChecker();
     originalGradleUserHome = getGradleUserHome();
   }
 
@@ -401,21 +405,26 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     handleImportFailure(errorInfo.first, errorInfo.second);
   }
 
-  @Override
-  protected void printOutput(@NotNull String text, boolean stdOut) {
-    if (text.contains("This is scheduled to be removed in Gradle")
-    || text.contains("Deprecated Gradle features were used in this build")) {
-      deprecationTextLineCount = 30;
-    }
-    if (deprecationTextLineCount > 0) {
-      deprecationTextBuilder.append(text);
-      deprecationTextLineCount--;
-      if (deprecationTextLineCount == 0) {
-        deprecationError.set(Couple.of("Deprecation warning from Gradle", deprecationTextBuilder.toString()));
-        deprecationTextBuilder.setLength(0);
+  private void installExecutionDeprecationChecker() {
+    var notificationManager = ExternalSystemProgressNotificationManager.getInstance();
+    var notificationListener = new ExternalSystemTaskNotificationListener() {
+      @Override
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        if (text.contains("This is scheduled to be removed in Gradle")
+            || text.contains("Deprecated Gradle features were used in this build")) {
+          deprecationTextLineCount = 30;
+        }
+        if (deprecationTextLineCount > 0) {
+          deprecationTextBuilder.append(text);
+          deprecationTextLineCount--;
+          if (deprecationTextLineCount == 0) {
+            deprecationError.set(Couple.of("Deprecation warning from Gradle", deprecationTextBuilder.toString()));
+            deprecationTextBuilder.setLength(0);
+          }
+        }
       }
-    }
-    super.printOutput(text, stdOut);
+    };
+    notificationManager.addNotificationListener(notificationListener, getTestDisposable());
   }
 
   @Override
