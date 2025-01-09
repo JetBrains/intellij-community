@@ -1,30 +1,26 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.codeInsight
 
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.ui.components.JBList
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection
 
-class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
+class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
 
-  override fun setUp() {
-    super.setUp()
-    PsiTestUtil.addLibrary(myFixture.module, PathUtil.getJarPathForClass(JBList::class.java))
-    PsiTestUtil.addLibrary(myFixture.module, PathUtil.getJarPathForClass(ActionManager::class.java))
-    PsiTestUtil.addLibrary(myFixture.module,
-                           PathManager.getResourceRoot(LocalInspectionEP::class.java, "/idea/PlatformActions.xml")!!)
+  override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
+    moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList::class.java))
+    moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(ActionManager::class.java))
+    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP::class.java, "/idea/PlatformActions.xml")!!)
   }
 
   private fun pluginXmlActions(actionsText: String): String {
     return """
       <idea-plugin>
-        <resource-bundle>MyBundle</resource-bundle>
-      
         <actions>
         ${actionsText.trimIndent()}
         </actions>
@@ -146,6 +142,6 @@ class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
     ), true)
   }
 
-  val DLR = '$'.toString()
+  private val DLR = '$'.toString()
 
 }
