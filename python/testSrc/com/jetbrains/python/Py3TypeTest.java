@@ -3281,6 +3281,14 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-78044
+  public void testPathlibIterdir() {
+    doTest("Generator[Path, None, None]", """
+      import pathlib
+      expr = pathlib.Path("").iterdir()
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

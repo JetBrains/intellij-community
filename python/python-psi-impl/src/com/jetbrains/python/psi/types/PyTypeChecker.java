@@ -1190,9 +1190,12 @@ public final class PyTypeChecker {
           // TODO For ParamSpecs, replace Any with (*args: Any, **kwargs: Any) as it's a logical "wildcard" for this kind of type parameter
           return substitution;
         }
-        else if (type instanceof PySelfType) {
+        else if (type instanceof PySelfType selfType) {
           var qualifierType = substitutions.qualifierType;
-          var selfScopeClassType = ((PySelfType)type).getScopeClassType();
+          var selfScopeClassType = selfType.getScopeClassType();
+          if (qualifierType == null) {
+            return selfType;
+          }
           return PyTypeUtil.toStream(qualifierType)
             .filter(memberType -> match(selfScopeClassType, memberType, context))
             .collect(PyTypeUtil.toUnion());

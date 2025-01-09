@@ -6267,6 +6267,41 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-78044
+  public void testGeneratorYieldsSelf() {
+    doTest("A", """
+      from collections.abc import Generator
+      from typing import Self
+      
+      class A:
+          @classmethod
+          def f(cls) -> Generator[Self, None, None]:
+              pass
+      
+      for x in A.f():
+          expr = x
+      """);
+  }
+
+  // PY-78044
+  public void testGeneratorYieldsSelfNested() {
+    doTest("C", """
+      from collections.abc import Generator
+      from typing import Self
+      
+      class A:
+          @classmethod
+          def f(cls) -> Generator[Self, None, None]:
+              pass
+      
+      class B(A): ...
+      class C(B): ...
+      
+      for x in C.f():
+          expr = x
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
