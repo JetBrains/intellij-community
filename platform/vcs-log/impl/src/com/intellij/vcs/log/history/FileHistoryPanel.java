@@ -98,8 +98,11 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
 
-    myGraphTable = new VcsLogGraphTable(logUi, logData, logUi.getProperties(), colorManager,
-                                        () -> logUi.requestMore(EmptyRunnable.INSTANCE), disposable) {
+    myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), colorManager,
+                                        () -> logUi.requestMore(EmptyRunnable.INSTANCE),
+                                        (commitHash) -> VcsLogNavigationUtil.jumpToHash(logUi, commitHash, false, true),
+                                        disposable) {
+
       @Override
       protected void updateEmptyText() {
         VisiblePack visiblePack = getModel().getVisiblePack();

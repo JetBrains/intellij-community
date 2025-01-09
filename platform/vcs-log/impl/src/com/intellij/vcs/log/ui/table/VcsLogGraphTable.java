@@ -37,12 +37,10 @@ import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
@@ -65,6 +63,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -97,7 +96,7 @@ public class VcsLogGraphTable extends TableWithProgress
   private static final Color SELECTION_FOREGROUND_INACTIVE = JBColor.namedColor("VersionControl.Log.Commit.selectionInactiveForeground",
                                                                                 NamedColorUtil.getListSelectionForeground(false));
   private final @NotNull VcsLogData myLogData;
-  private final @NotNull VcsLogUiEx myLogUi;
+  private final @NotNull String myLogId;
   private final @NotNull VcsLogUiProperties myProperties;
   private final @NotNull VcsLogColorManager myColorManager;
 
@@ -116,14 +115,17 @@ public class VcsLogGraphTable extends TableWithProgress
   private boolean myDisposed = false;
 
   @ApiStatus.Internal
-  public VcsLogGraphTable(@NotNull VcsLogUiEx logUi, @NotNull VcsLogData logData,
+  public VcsLogGraphTable(@NotNull String logId,
+                          @NotNull VcsLogData logData,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
-                          @NotNull Runnable requestMore, @NotNull Disposable disposable) {
+                          @NotNull Runnable requestMore,
+                          @NotNull Consumer<@NotNull String> commitByHashNavigator,
+                          @NotNull Disposable disposable) {
     super(new GraphTableModel(logData, requestMore, uiProperties));
     Disposer.register(disposable, this);
 
+    myLogId = logId;
     myLogData = logData;
-    myLogUi = logUi;
     myProperties = uiProperties;
     myColorManager = colorManager;
 
@@ -155,7 +157,7 @@ public class VcsLogGraphTable extends TableWithProgress
       }
     });
 
-    myMouseAdapter = new MyMouseAdapter();
+    myMouseAdapter = new MyMouseAdapter(commitByHashNavigator);
     addMouseMotionListener(myMouseAdapter);
     addMouseListener(myMouseAdapter);
 
@@ -198,7 +200,7 @@ public class VcsLogGraphTable extends TableWithProgress
   }
 
   public @NotNull @NonNls String getId() {
-    return myLogUi.getId();
+    return myLogId;
   }
 
   @Override
@@ -822,8 +824,12 @@ public class VcsLogGraphTable extends TableWithProgress
 
   private class MyMouseAdapter extends MouseAdapter {
     private static final int BORDER_THICKNESS = 3;
-    private final @NotNull TableLinkMouseListener myLinkListener = new MyLinkMouseListener();
+    private final @NotNull TableLinkMouseListener myLinkListener;
     private @Nullable Cursor myLastCursor = null;
+
+    private MyMouseAdapter(@NotNull Consumer<String> commitByHashNavigator) {
+      myLinkListener = new MyLinkMouseListener(commitByHashNavigator);
+    }
 
     @Override
     public void mouseClicked(MouseEvent e) {
@@ -940,14 +946,20 @@ public class VcsLogGraphTable extends TableWithProgress
       getExpandableItemsHandler().setEnabled(true);
     }
 
-    private class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
+    private static class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
+      @NotNull private final Consumer<String> myCommitByHashNavigator;
+
+      private MyLinkMouseListener(@NotNull Consumer<String> commitByHashNavigator) {
+        myCommitByHashNavigator = commitByHashNavigator;
+      }
+
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         Object tag = getTagAt(e);
         if ((tag instanceof Runnable)) return super.onClick(e, clickCount);
 
         if (tag instanceof NavigateToCommit navigateToCommitTag) {
-          VcsLogNavigationUtil.jumpToHash(VcsLogGraphTable.this.myLogUi, navigateToCommitTag.getTarget(), false, true);
+          myCommitByHashNavigator.accept(navigateToCommitTag.getTarget());
           return true;
         }
 
@@ -985,7 +997,7 @@ public class VcsLogGraphTable extends TableWithProgress
 
     @Override
     public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-      if (VcsLogUiUtil.isProgressVisible(keys, myLogUi.getId())) {
+      if (VcsLogUiUtil.isProgressVisible(keys, getId())) {
         getEmptyText().setText(VcsLogBundle.message("vcs.log.loading.status"));
       }
       else {

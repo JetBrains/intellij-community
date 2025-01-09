@@ -21,6 +21,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogFilterUi
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.AbstractVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogActionIds
@@ -31,6 +32,7 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.VcsLogUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NonNls
+import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -43,10 +45,11 @@ internal object VcsLogComponents {
     colorManager: VcsLogColorManager,
     parentDisposable: Disposable,
   ): VcsLogGraphTable =
-    VcsLogMainGraphTable(logUi, logData, logUi.properties, colorManager,
+    VcsLogMainGraphTable(logUi.id, logData, logUi.properties, colorManager,
                          { logUi.refresher.onRefresh() },
                          { logUi.requestMore(EmptyRunnable.INSTANCE) },
                          filterUi,
+                         Consumer { commitHash: String? -> logUi.jumpToHash(commitHash!!, false, true) },
                          parentDisposable
     ).apply {
       val vcsDisplayName = VcsLogUtil.getVcsDisplayName(logData.project, logData.logProviders.values)
