@@ -41,6 +41,7 @@ import com.intellij.vcs.log.ui.frame.CommitDetailsLoader;
 import com.intellij.vcs.log.ui.frame.ComponentQuickActionProvider;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.VcsLogTableCommitSelectionListener;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -98,8 +99,12 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
 
-    myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), colorManager,
-                                        () -> logUi.requestMore(EmptyRunnable.INSTANCE),
+    GraphTableModel graphTableModel = new GraphTableModel(
+      logData,
+      () -> logUi.requestMore(EmptyRunnable.INSTANCE),
+      logUi.getProperties()
+    );
+    myGraphTable = new VcsLogGraphTable(logUi.getId(), graphTableModel, logUi.getProperties(), colorManager,
                                         (commitHash) -> VcsLogNavigationUtil.jumpToHash(logUi, commitHash, false, true),
                                         disposable) {
 

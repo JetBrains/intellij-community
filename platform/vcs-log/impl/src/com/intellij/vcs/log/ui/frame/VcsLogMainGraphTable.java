@@ -12,10 +12,10 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
-import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.IndexSpeedSearch;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -30,13 +30,13 @@ class VcsLogMainGraphTable extends VcsLogGraphTable {
   private final @NotNull Runnable myRefresh;
   private final @NotNull VcsLogFilterUiEx myFilterUi;
 
-  VcsLogMainGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
+  VcsLogMainGraphTable(@NotNull String logId, @NotNull GraphTableModel graphTableModel,
                        @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
-                       @NotNull Runnable refresh, @NotNull Runnable requestMore,
+                       @NotNull Runnable refresh,
                        @NotNull VcsLogFilterUiEx filterUi,
                        @NotNull Consumer<@NotNull String> commitByHashNavigator,
                        @NotNull Disposable disposable) {
-    super(logId, logData, uiProperties, colorManager, requestMore, commitByHashNavigator, disposable);
+    super(logId, graphTableModel, uiProperties, colorManager, commitByHashNavigator, disposable);
     myRefresh = refresh;
     myFilterUi = filterUi;
     IndexSpeedSearch speedSearch = new IndexSpeedSearch(getLogData().getProject(), getLogData().getIndex(), getLogData().getStorage(), this) {

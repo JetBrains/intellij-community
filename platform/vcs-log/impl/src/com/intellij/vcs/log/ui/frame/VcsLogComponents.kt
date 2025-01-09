@@ -28,11 +28,11 @@ import com.intellij.vcs.log.ui.VcsLogActionIds
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
+import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.VcsLogUtil
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.NonNls
-import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -44,13 +44,13 @@ internal object VcsLogComponents {
     filterUi: VcsLogFilterUiEx,
     colorManager: VcsLogColorManager,
     parentDisposable: Disposable,
-  ): VcsLogGraphTable =
-    VcsLogMainGraphTable(logUi.id, logData, logUi.properties, colorManager,
-                         { logUi.refresher.onRefresh() },
-                         { logUi.requestMore(EmptyRunnable.INSTANCE) },
-                         filterUi,
-                         Consumer { commitHash: String? -> logUi.jumpToHash(commitHash!!, false, true) },
-                         parentDisposable
+  ): VcsLogGraphTable {
+    val graphTableModel = GraphTableModel(logData, { logUi.requestMore(EmptyRunnable.INSTANCE) }, logUi.properties)
+    return VcsLogMainGraphTable(logUi.id, graphTableModel, logUi.properties, colorManager,
+                                { logUi.refresher.onRefresh() },
+                                filterUi,
+                                { commitHash: String -> logUi.jumpToHash(commitHash, false, true) },
+                                parentDisposable
     ).apply {
       val vcsDisplayName = VcsLogUtil.getVcsDisplayName(logData.project, logData.logProviders.values)
       accessibleContext.accessibleName = VcsLogBundle.message("vcs.log.table.accessible.name", vcsDisplayName)
@@ -58,6 +58,7 @@ internal object VcsLogComponents {
     }.also {
       PopupHandler.installPopupMenu(it, VcsLogActionIds.POPUP_ACTION_GROUP, ActionPlaces.VCS_LOG_TABLE_PLACE)
     }
+  }
 
   @JvmStatic
   fun createActionsToolbar(graphTable: VcsLogGraphTable, filterUi: VcsLogFilterUiEx): JComponent {

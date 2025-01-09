@@ -116,16 +116,15 @@ public class VcsLogGraphTable extends TableWithProgress
 
   @ApiStatus.Internal
   public VcsLogGraphTable(@NotNull String logId,
-                          @NotNull VcsLogData logData,
+                          @NotNull GraphTableModel tableModel,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
-                          @NotNull Runnable requestMore,
                           @NotNull Consumer<@NotNull String> commitByHashNavigator,
                           @NotNull Disposable disposable) {
-    super(new GraphTableModel(logData, requestMore, uiProperties));
+    super(tableModel);
     Disposer.register(disposable, this);
 
     myLogId = logId;
-    myLogData = logData;
+    myLogData = tableModel.getLogData();
     myProperties = uiProperties;
     myColorManager = colorManager;
 
