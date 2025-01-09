@@ -55,6 +55,14 @@ object PyPackageInstallUtils {
     return pythonPackageManager.updatePackage(packageSpecification)
   }
 
+  suspend fun initPackages(project: Project, sdk: Sdk) {
+    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
+    if (pythonPackageManager.installedPackages.isEmpty()) {
+      withContext(Dispatchers.IO) {
+        pythonPackageManager.reloadPackages()
+      }
+    }
+  }
 
   suspend fun installPackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
     val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
@@ -64,6 +72,9 @@ object PyPackageInstallUtils {
     return pythonPackageManager.installPackage(packageSpecification, emptyList<String>())
   }
 
+  /**
+   * NOTE calling this functions REQUIRED init package list before the calling!
+   */
   fun getPackageVersion(project: Project, sdk: Sdk, packageName: String): Version? {
     val pythonPackage = getPackage(project, sdk, packageName)
     val version = pythonPackage?.version ?: return null
@@ -76,7 +87,9 @@ object PyPackageInstallUtils {
     packageName: String,
   ): PythonPackage? {
     val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val pythonPackage = pythonPackageManager.installedPackages.firstOrNull { it.name == packageName }
+    val installedPackages = pythonPackageManager.installedPackages
+
+    val pythonPackage = installedPackages.firstOrNull { it.name == packageName }
     return pythonPackage
   }
 
