@@ -15,9 +15,9 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -46,7 +46,7 @@ public class JavaTestFinder implements TestFinder {
     for (Pair<String, Integer> eachNameWithWeight : TestFinderHelper.collectPossibleClassNamesWithWeights(klass.getName())) {
       List<PsiClass> explicitClasses = Arrays.asList(cache.getClassesByName(eachNameWithWeight.first, scope));
       Collection<PsiImplicitClass> implicitClasses =
-        JavaImplicitClassIndex.getInstance().getElements(eachNameWithWeight.first, klass.getProject(), scope);
+        ImplicitClassSearch.search(eachNameWithWeight.first, klass.getProject(), scope).findAll();
       for (PsiClass eachClass : ContainerUtil.concat(explicitClasses, implicitClasses)) {
         if (isTestSubjectClass(eachClass)) {
           classesWithWeights.add(Pair.create(eachClass, eachNameWithWeight.second));

@@ -422,7 +422,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (aClass instanceof PsiSyntheticClass) return;
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkClassSupersAccessibility(aClass));
-    if (!hasErrorResults()) add(HighlightClassUtil.checkDuplicateTopLevelClass(aClass));
     if (!hasErrorResults()) add(HighlightClassUtil.checkMustNotBeLocal(aClass));
     if (!hasErrorResults()) add(HighlightUtil.checkImplicitThisReferenceBeforeSuper(aClass, myJavaSdkVersion));
     if (!hasErrorResults()) add(HighlightClassUtil.checkClassAndPackageConflict(aClass));

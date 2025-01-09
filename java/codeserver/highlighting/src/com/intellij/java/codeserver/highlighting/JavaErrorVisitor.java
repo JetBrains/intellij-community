@@ -161,7 +161,20 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults()) myClassChecker.checkCyclicInheritance(aClass);
     }
   }
-  
+
+  @Override
+  public void visitClass(@NotNull PsiClass aClass) {
+    super.visitClass(aClass);
+    if (aClass instanceof PsiSyntheticClass) return;
+    if (!hasErrorResults()) myClassChecker.checkDuplicateTopLevelClass(aClass);
+    //if (!hasErrorResults()) myClassChecker.checkMustNotBeLocal(aClass);
+    //if (!hasErrorResults()) myClassChecker.checkClassAndPackageConflict(aClass);
+    //if (!hasErrorResults()) myClassChecker.checkPublicClassInRightFile(aClass);
+    //if (!hasErrorResults()) myClassChecker.checkWellFormedRecord(aClass);
+    //if (!hasErrorResults()) myClassChecker.checkSealedClassInheritors(aClass);
+    //if (!hasErrorResults()) myClassChecker.checkSealedSuper(aClass);
+  }
+
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     JavaResolveResult resultForIncompleteCode = doVisitReferenceElement(expression);

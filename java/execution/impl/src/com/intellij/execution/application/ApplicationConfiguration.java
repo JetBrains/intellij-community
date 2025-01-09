@@ -34,7 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
+import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
@@ -187,9 +187,8 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     if (getOptions().isImplicitClassConfiguration()) {
       if (mainClass != null && !DumbService.isDumb(getProject())) {
         try {
-          final boolean matchingClass = !JavaImplicitClassIndex.getInstance()
-            .getElements(mainClass, getProject(), configurationModule.getSearchScope())
-            .isEmpty();
+          final boolean matchingClass = ImplicitClassSearch.search(mainClass, getProject(), configurationModule.getSearchScope())
+                                          .findFirst() != null;
           if (!matchingClass) {
             throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", mainClass));
           }

@@ -3,12 +3,22 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
 
 final class ClassChecker {
@@ -194,6 +204,57 @@ final class ClassChecker {
       myVisitor.report(JavaErrorKinds.INSTANTIATION_ENUM.create(highlightElement));
     }
   }
+
+  void checkDuplicateTopLevelClass(@NotNull PsiClass aClass) {
+    if (aClass instanceof PsiImplicitClass) return;
+    if (!(aClass.getParent() instanceof PsiFile)) return;
+    String qualifiedName = aClass.getQualifiedName();
+    if (qualifiedName == null) return;
+    int numOfClassesToFind = 2;
+    if (qualifiedName.contains("$")) {
+      qualifiedName = qualifiedName.replace('$', '.');
+      numOfClassesToFind = 1;
+    }
+
+    Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
+    if (module == null) return;
+
+    GlobalSearchScope scope = GlobalSearchScope.moduleScope(module).intersectWith(aClass.getResolveScope());
+    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, scope);
+    if (aClass.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null) {
+      Collection<? extends PsiClass> implicitClasses =
+        ImplicitClassSearch.search(qualifiedName, javaFile.getProject(), scope).findAll();
+      if (!implicitClasses.isEmpty()) {
+        ArrayList<PsiClass> newClasses = new ArrayList<>();
+        ContainerUtil.addAll(newClasses, classes);
+        ContainerUtil.addAll(newClasses, implicitClasses);
+        classes = newClasses.toArray(PsiClass.EMPTY_ARRAY);
+      }
+    }
+    if (classes.length < numOfClassesToFind) return;
+    checkDuplicateClasses(aClass, classes);
+  }
+
+  void checkDuplicateClasses(@NotNull PsiClass aClass, @NotNull PsiClass @NotNull[] classes) {
+    PsiManager manager = aClass.getManager();
+    Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
+    if (module == null) return;
+    ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
+    if (virtualFile == null) return;
+    boolean isTestSourceRoot = fileIndex.isInTestSourceContent(virtualFile);
+    for (PsiClass dupClassCandidate : classes) {
+      // do not use equals
+      if (dupClassCandidate != aClass) {
+        VirtualFile file = dupClassCandidate.getContainingFile().getVirtualFile();
+        if (file != null && manager.isInProject(dupClassCandidate) && fileIndex.isInTestSourceContent(file) == isTestSourceRoot) {
+          myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE_IN_OTHER_FILE.create(aClass, dupClassCandidate));
+          return;
+        }
+      }
+    }
+  }
+
 
   /**
    * 15.9 Class Instance Creation Expressions | 15.9.2 Determining Enclosing Instances

@@ -39,7 +39,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -49,6 +48,7 @@ import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -3576,7 +3576,7 @@ public final class HighlightUtil {
             }
           }
         }
-        else if (!JavaImplicitClassIndex.getInstance().getElements(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).isEmpty()) {
+        else if (ImplicitClassSearch.search(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).findFirst() != null) {
           description = JavaErrorBundle.message("implicit.class.can.not.be.referenced", ref.getText());
           definitelyIncorrect = true;
         }

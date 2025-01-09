@@ -31,9 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -54,36 +52,6 @@ import java.util.function.Consumer;
  * Generates HighlightInfoType.ERROR-only HighlightInfos at PsiClass level.
  */
 public final class HighlightClassUtil {
-
-  static HighlightInfo.Builder checkDuplicateTopLevelClass(@NotNull PsiClass aClass) {
-    if (aClass instanceof PsiImplicitClass) return null; //check in HighlightImplicitClassUtil
-    if (!(aClass.getParent() instanceof PsiFile)) return null;
-    String qualifiedName = aClass.getQualifiedName();
-    if (qualifiedName == null) return null;
-    int numOfClassesToFind = 2;
-    if (qualifiedName.contains("$")) {
-      qualifiedName = qualifiedName.replace('$', '.');
-      numOfClassesToFind = 1;
-    }
-
-    Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
-    if (module == null) return null;
-
-    GlobalSearchScope scope = GlobalSearchScope.moduleScope(module).intersectWith(aClass.getResolveScope());
-    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, scope);
-    if (aClass.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null) {
-      Collection<? extends PsiClass> implicitClasses =
-        JavaImplicitClassIndex.getInstance().getElements(qualifiedName, javaFile.getProject(), scope);
-      if (!implicitClasses.isEmpty()) {
-        ArrayList<PsiClass> newClasses = new ArrayList<>();
-        ContainerUtil.addAll(newClasses, classes);
-        ContainerUtil.addAll(newClasses, implicitClasses);
-        classes = newClasses.toArray(PsiClass.EMPTY_ARRAY);
-      }
-    }
-    if (classes.length < numOfClassesToFind) return null;
-    return checkDuplicateClasses(aClass, classes);
-  }
 
   static @Nullable HighlightInfo.Builder checkDuplicateClasses(@NotNull PsiClass aClass, @NotNull PsiClass @NotNull[] classes) {
     PsiManager manager = aClass.getManager();

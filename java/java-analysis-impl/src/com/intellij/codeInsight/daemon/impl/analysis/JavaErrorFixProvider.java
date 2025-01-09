@@ -109,6 +109,7 @@ final class JavaErrorFixProvider {
                           factory.createModifierListFix(error.context(), modifier, true, false)));
     single(CLASS_DUPLICATE, error -> factory.createRenameFix(requireNonNullElse(error.psi().getNameIdentifier(), error.psi())));
     single(CLASS_DUPLICATE, error -> factory.createNavigateToDuplicateElementFix(error.context()));
+    single(CLASS_DUPLICATE_IN_OTHER_FILE, error -> factory.createNavigateToDuplicateElementFix(error.context()));
     multi(INSTANTIATION_ABSTRACT, error -> {
       PsiClass aClass = error.context();
       PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);

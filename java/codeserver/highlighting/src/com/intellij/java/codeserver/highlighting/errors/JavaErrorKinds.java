@@ -7,6 +7,7 @@ import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -209,6 +210,13 @@ public final class JavaErrorKinds {
       .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
       .withRawDescription(cls -> message("class.duplicate", cls.getName()))
       .withContext();
+  public static final Parameterized<PsiClass, PsiClass> CLASS_DUPLICATE_IN_OTHER_FILE =
+    error(PsiClass.class, "class.duplicate")
+      .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
+      .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
+      .<PsiClass>withContext()
+      .withRawDescription((cls, dupCls) -> message("class.duplicate.in.other.file",
+                                                   FileUtil.toSystemDependentName(dupCls.getContainingFile().getVirtualFile().getPath())));
   public static final Parameterized<PsiClass, PsiClass> CLASS_CYCLIC_INHERITANCE =
     error(PsiClass.class, "class.cyclic.inheritance")
       .withRange(JavaErrorFormatUtil::getClassDeclarationTextRange).<PsiClass>withContext()
