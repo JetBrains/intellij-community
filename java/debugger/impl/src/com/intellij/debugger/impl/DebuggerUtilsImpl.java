@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -479,12 +479,13 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   public static @Nullable Value invokeClassMethod(@NotNull EvaluationContext evaluationContext,
                                                   @NotNull ClassType type,
                                                   @NotNull String methodName,
-                                                  @Nullable String signature) throws EvaluateException {
+                                                  @Nullable String signature,
+                                                  @NotNull List<Value> arguments) throws EvaluateException {
     Method method = findMethod(type, methodName, signature);
     if (method == null) {
       throw new MethodNotFoundException("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
     }
-    return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, type, method, Collections.emptyList());
+    return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, type, method, arguments);
   }
 
   public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContextImpl evaluationContext,

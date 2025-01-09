@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.debugger.engine.DebugProcessImpl
@@ -45,7 +45,7 @@ internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? {
     val suspendContext = evaluationContext.suspendContext as? SuspendContextImpl ?: return null
     if (!debugProcess.isEvaluationPossible(suspendContext)) return null
     val state = evaluationContext.computeAndKeep {
-      DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) as? ObjectReference
+      DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE, emptyList()) as? ObjectReference
     } ?: return null
 
     val stateClass = state.referenceType()
