@@ -67,6 +67,7 @@ public class XValueHint extends AbstractValueHint {
   private final String myExpression;
   private final String myValueName;
   private final XSourcePosition myExpressionPosition;
+  private final boolean myIsManualSelection;
   private Disposable myDisposable;
   private Disposable myXValueDisposable;
 
@@ -112,6 +113,7 @@ public class XValueHint extends AbstractValueHint {
     myEvaluator = evaluator;
     myDebugSession = session;
     myFromKeyboard = fromKeyboard;
+    myIsManualSelection = expressionInfo.isManualSelection();
     myExpression = XDebuggerEvaluateActionHandler.getExpressionText(expressionInfo, editor.getDocument());
     myValueName = XDebuggerEvaluateActionHandler.getDisplayText(expressionInfo, editor.getDocument());
 
@@ -154,7 +156,7 @@ public class XValueHint extends AbstractValueHint {
     }, 200, TimeUnit.MILLISECONDS);
 
     XEvaluationCallbackBase callback = new MyEvaluationCallback(showEvaluating);
-    if (myEvaluator instanceof XDebuggerDocumentOffsetEvaluator xDebuggerPsiEvaluator) {
+    if (!myIsManualSelection && myEvaluator instanceof XDebuggerDocumentOffsetEvaluator xDebuggerPsiEvaluator) {
       xDebuggerPsiEvaluator.evaluate(myEditor.getDocument(), myOffset, myType, callback);
     }
     else {

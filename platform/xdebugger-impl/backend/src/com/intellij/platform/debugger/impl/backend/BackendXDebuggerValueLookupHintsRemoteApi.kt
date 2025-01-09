@@ -69,7 +69,7 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
     if ((type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT) && evaluateExpressionData.hasSelection
         && evaluateExpressionData.adjustedOffset in evaluateExpressionData.selectionStart..evaluateExpressionData.selectionEnd
     ) {
-      return ExpressionInfo(TextRange(evaluateExpressionData.selectionStart, evaluateExpressionData.selectionEnd))
+      return ExpressionInfo(TextRange(evaluateExpressionData.selectionStart, evaluateExpressionData.selectionEnd), isManualSelection = true)
     }
     val expressionInfo = readAction {
       evaluator.getExpressionInfoAtOffsetAsync(project, document, evaluateExpressionData.adjustedOffset,
