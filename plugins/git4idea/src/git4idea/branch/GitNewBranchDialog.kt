@@ -3,39 +3,49 @@ package git4idea.branch
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.dvcs.DvcsUtil
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.WHEN_DOCUMENT_CHANGED
 import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.toMutableProperty
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
 import com.intellij.util.textCompletion.TextCompletionProviderBase
 import com.intellij.util.textCompletion.TextFieldWithCompletion
+import git4idea.GitBranchesUsageCollector.branchDialogRepositoryManuallySelected
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.validators.*
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
 
-data class GitNewBranchOptions @JvmOverloads constructor(val name: String,
-                                                         @get:JvmName("shouldCheckout") val checkout: Boolean = true,
-                                                         @get:JvmName("shouldReset") val reset: Boolean = false,
-                                                         @get:JvmName("shouldSetTracking") val setTracking: Boolean = false)
+data class GitNewBranchOptions @JvmOverloads constructor(
+  val name: String,
+  @get:JvmName("shouldCheckout") val checkout: Boolean = true,
+  @get:JvmName("shouldReset") val reset: Boolean = false,
+  @get:JvmName("shouldSetTracking") val setTracking: Boolean = false,
+  @get:JvmName("repositories") val repositories: Collection<GitRepository> = emptyList(),
+)
 
 
 enum class GitBranchOperationType(@Nls val text: String, @Nls val description: String = "") {
@@ -47,7 +57,7 @@ enum class GitBranchOperationType(@Nls val text: String, @Nls val description: S
 }
 
 internal class GitNewBranchDialog @JvmOverloads constructor(private val project: Project,
-                                                            private val repositories: Collection<GitRepository>,
+                                                            private var repositories: Collection<GitRepository>,
                                                             @NlsContexts.DialogTitle dialogTitle: String,
                                                             initialName: String?,
                                                             private val showCheckOutOption: Boolean = true,
@@ -59,6 +69,8 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
 
   companion object {
     private const val NAME_SEPARATOR = '/'
+
+    private val ALL_REPOSITORIES: GitRepository? = null
   }
 
   private var checkout = true
@@ -68,6 +80,13 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   private val validator = GitRefNameValidator.getInstance()
 
   private val localBranchDirectories = collectDirectories(collectLocalBranchNames().asIterable(), false).toSet()
+
+  private val allRepositories = GitRepositoryManager.getInstance(project).repositories
+  private val initialRepositories = repositories.toList()
+
+  private val iconProvider = GitBranchesTreeIconProvider(project)
+  private val warningVisibilityProperty = AtomicBooleanProperty(false)
+  private var repositoryManuallySelected = false
 
   init {
     title = dialogTitle
@@ -81,10 +100,11 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
 
   fun showAndGetOptions(): GitNewBranchOptions? {
     if (!showAndGet()) return null
-    return GitNewBranchOptions(validator.cleanUpBranchName(branchName).trim(), checkout, reset, tracking)
+    return GitNewBranchOptions(validator.cleanUpBranchName(branchName).trim(), checkout, reset, tracking, repositories)
   }
 
   override fun createCenterPanel() = panel {
+    val repositoriesComboBox = createRepositoriesCombobox()
     val overwriteCheckbox = JCheckBox(GitBundle.message("new.branch.dialog.overwrite.existing.branch.checkbox"))
     val branchNameField = TextFieldWithCompletion(project, createBranchNameCompletion(), branchName,
                                                   /*oneLineMode*/ true,
@@ -100,10 +120,31 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
           selectAll()
         }
         .validationRequestor(WHEN_STATE_CHANGED(overwriteCheckbox))
+        .validationRequestor(WHEN_STATE_CHANGED(repositoriesComboBox))
         .validationRequestor(WHEN_DOCUMENT_CHANGED)
-        .validationOnApply(validateBranchName(true, overwriteCheckbox))
-        .validationOnInput(validateBranchName(false, overwriteCheckbox))
+        .validationOnApply(validateBranchName(true, overwriteCheckbox, repositoriesComboBox))
+        .validationOnInput(validateBranchName(false, overwriteCheckbox, repositoriesComboBox))
     }
+    row(GitBundle.message("new.branch.dialog.branch.root.name")) {
+      cell(repositoriesComboBox)
+        .align(AlignX.FILL)
+        .bindItem({ if (repositories.containsAll(allRepositories)) ALL_REPOSITORIES else repositories.firstOrNull() },
+                  { repository ->
+                    when (repository) {
+                      ALL_REPOSITORIES -> repositories = allRepositories
+                      else -> repositories = listOf(repository!!)
+                    }
+                  })
+        .whenItemChangedFromUi { repository ->
+          warningVisibilityProperty.set(
+            !GitRepositoryManager.getInstance(project).isSyncEnabled
+            && repository != ALL_REPOSITORIES
+            && initialRepositories == allRepositories
+          )
+          repositoryManuallySelected =
+            if (repository == ALL_REPOSITORIES) initialRepositories != allRepositories else initialRepositories.singleOrNull() != repository
+        }
+    }.visible(allRepositories.size > 1 && operation != GitBranchOperationType.RENAME)
     row("") { //align all cells to the right
       if (showCheckOutOption) {
         checkBox(GitBundle.message("new.branch.dialog.checkout.branch.checkbox"))
@@ -120,6 +161,35 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
           .bindSelected(::tracking)
           .component
       }
+    }
+    row("") { //align all cells to the right
+      icon(AllIcons.General.Warning).gap(RightGap.SMALL).align(AlignY.TOP)
+      text(GitBundle.message("new.branch.dialog.branch.root.all.override.warning"), maxLineLength = 50)
+    }
+      .visibleIf(warningVisibilityProperty)
+
+    onApply {
+      if (repositoryManuallySelected) {
+        branchDialogRepositoryManuallySelected()
+      }
+    }
+  }
+
+  private fun createRepositoriesCombobox(): ComboBox<GitRepository?> {
+    val items = listOf<GitRepository?>(ALL_REPOSITORIES, *allRepositories.toTypedArray())
+    return ComboBox(CollectionComboBoxModel(items)).apply {
+      renderer = listCellRenderer<GitRepository?>(GitBundle.message("new.branch.dialog.branch.root.all.name")) {
+        val repo = value
+        if (repo == ALL_REPOSITORIES) {
+          icon(AllIcons.Empty)
+        }
+        else if (repo != null) {
+          icon(iconProvider.forRepository(repo))
+          text(DvcsUtil.getShortRepositoryName(repo))
+        }
+      }
+      setSwingPopup(false)
+      SpeedSearch().installSupplyTo(this, false)
     }
   }
 
@@ -156,7 +226,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
     return directories
   }
 
-  private fun validateBranchName(onApply: Boolean, overwriteCheckbox: JCheckBox)
+  private fun validateBranchName(onApply: Boolean, overwriteCheckbox: JCheckBox, repositoriesComboBox: ComboBox<GitRepository?>)
     : ValidationInfoBuilder.(TextFieldWithCompletion) -> ValidationInfo? = {
 
     // Do not change Document inside DocumentListener callback
@@ -164,13 +234,16 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
       it.cleanBranchNameAndAdjustCursorIfNeeded()
     }
 
+    val selectedRepositories = (repositoriesComboBox.selectedItem as GitRepository?)
+                                                            ?.let(::listOf) ?: allRepositories
+
     val branchName = validator.cleanUpBranchName(it.text).trim()
     val errorInfo = (if (onApply) checkRefNameEmptyOrHead(branchName) else null)
-                    ?: conflictsWithRemoteBranch(repositories, branchName)
+                    ?: conflictsWithRemoteBranch(selectedRepositories, branchName)
                     ?: conflictsWithLocalBranchDirectory(localBranchDirectories, branchName)
     if (errorInfo != null) error(errorInfo.message)
     else {
-      val localBranchConflict = conflictsWithLocalBranch(repositories, branchName)
+      val localBranchConflict = conflictsWithLocalBranch(selectedRepositories, branchName)
 
       if (localBranchConflict == null || overwriteCheckbox.isSelected == true) null // no conflicts or ask to reset
       else if (localBranchConflict.warning && localConflictsAllowed) {

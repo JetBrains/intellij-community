@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.branch
 
 import com.intellij.idea.ActionsBundle
@@ -23,7 +23,7 @@ class GitRenameBranchAction : GitSingleBranchAction(ActionsBundle.messagePointer
                                      false, false,
                                      false, false, GitBranchOperationType.RENAME).showAndGetOptions()
     if (options != null) {
-      GitBrancher.getInstance(project).renameBranch(branchName, options.name, repositories)
+      GitBrancher.getInstance(project).renameBranch(branchName, options.name, options.repositories.toList())
     }
   }
 }

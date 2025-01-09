@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.GroupingKey
@@ -40,7 +40,7 @@ internal fun createOrCheckoutNewBranch(project: Project,
                                        title: String = GitBundle.message("branches.create.new.branch.dialog.title"),
                                        initialName: String? = null) {
   val options = GitNewBranchDialog(project, repositories, title, initialName, true, true, false, true).showAndGetOptions() ?: return
-  GitBranchCheckoutOperation(project, repositories).perform(startPoint, options)
+  GitBranchCheckoutOperation(project, options.repositories).perform(startPoint, options)
 }
 
 internal fun updateBranches(project: Project, repositories: Collection<GitRepository>, localBranchNames: List<String>) {
