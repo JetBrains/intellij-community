@@ -24,6 +24,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluat
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
+import com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -164,6 +165,11 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
 
         override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {
+          if (fullValueEvaluator is CustomComponentEvaluator) {
+            // TODO[IJPL-160146]: support CustomComponentEvaluator
+            return
+          }
+
           channelCs.launch {
             val fullValueEvaluatorEntity = newValueEntity(fullValueEvaluator).apply {
               cascadeDeleteBy(xValueEntity)
