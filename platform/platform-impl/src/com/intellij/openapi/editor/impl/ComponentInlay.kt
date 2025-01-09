@@ -39,45 +39,23 @@ internal object ComponentInlayManager {
     properties: InlayProperties,
     renderer: ComponentInlayRenderer<T>,
   ): Inlay<ComponentInlayRenderer<T>>? {
-    val inlay = if (renderer.alignment == ComponentInlayAlignment.OVERLAY_RIGHT)
-      editor.inlayModel.addAfterLineEndElement(offset, properties, renderer)
-    else
-      editor.inlayModel.addBlockElement(offset, properties, renderer)
+    val inlay = when (renderer.alignment) {
+      ComponentInlayAlignment.OVERLAY_RIGHT -> {
+        editor.inlayModel.addAfterLineEndElement(offset, properties, renderer)
+      }
+      ComponentInlayAlignment.INLINE_COMPONENT -> {
+        editor.inlayModel.addInlineElement(offset, properties, renderer)
+      }
+      else -> {
+        editor.inlayModel.addBlockElement(offset, properties, renderer)
+      }
+    }
 
     if (inlay != null) {
       @Suppress("UNCHECKED_CAST")
       ComponentInlaysContainer.addInlay(inlay as Inlay<ComponentInlayRenderer<*>>)
     }
 
-    return inlay
-  }
-
-  /**
-   * Adds an inline inlay element at the specified offset in the editor.
-   * Inline inlays are placed between the characters of a line and can be used to display
-   * custom components that align with the text.
-   *
-   * Please note that this is experimental and can be deleted in the future
-   *
-   * @param T The type of the component wrapped by the inlay renderer.
-   * @param editor The editor instance where the inlay will be added.
-   * @param offset The offset (character position) in the editor's document where the inlay should be inserted.
-   * @param properties Properties that define characteristics of the inlay such as alignments, priority, etc.
-   * @param renderer The custom renderer responsible for defining the appearance and behavior of the inlay component.
-   * @return The created inline inlay instance, or null if the inlay could not be created.
-   */
-  @Experimental
-  fun <T : Component> addInline(
-    editor: Editor,
-    offset: Int,
-    properties: InlayProperties,
-    renderer: ComponentInlayRenderer<T>,
-  ): Inlay<ComponentInlayRenderer<T>>? {
-    val inlay = editor.inlayModel.addInlineElement(offset, properties, renderer)
-    if (inlay != null) {
-      @Suppress("UNCHECKED_CAST")
-      ComponentInlaysContainer.addInlay(inlay as Inlay<ComponentInlayRenderer<*>>)
-    }
     return inlay
   }
 }

@@ -118,12 +118,12 @@ internal class CommandCompletionService(
     val endOffset = editor.caretModel.offset
     if (endOffset - startOffset != 1) return
     if (lookup.items.none { it.`as`(CommandCompletionLookupElement::class.java) != null }) return
-    if (lookup.editor.inlayModel.getInlineElementsInRange(startOffset, endOffset).isNotEmpty()) return
+    if (editor.inlayModel.getInlineElementsInRange(startOffset, endOffset).isNotEmpty()) return
     val applicationCommandCompletionService = ApplicationManager.getApplication().getService(ApplicationCommandCompletionService::class.java)
     val state = applicationCommandCompletionService.state
     if (state.showCounts > 5) return
     state.showCounts += 1
-    val inlineElement: Inlay<HintRenderer?> = lookup.editor.inlayModel.addInlineElement(endOffset, true, EditorLineStripeTextRenderer("      " + JavaBundle.message("command.completion.filter.hint")))
+    val inlineElement: Inlay<HintRenderer?> = editor.inlayModel.addInlineElement(endOffset, true, EditorLineStripeTextRenderer("      " + JavaBundle.message("command.completion.filter.hint")))
                                               ?: return
     Disposer.register(lookup, inlineElement)
     Disposer.register(lookup) { lookup.removeUserData(INSTALLED_HINT) }
@@ -234,12 +234,13 @@ private class CommandCompletionHighlightingListener(
       val factory = PresentationFactory(editor)
       val iconPresentation = factory.icon(element.icon)
       val presentationRenderer = PresentationRenderer(iconPresentation)
+      val lookupEditor = InjectedLanguageEditorUtil.getTopLevelEditor(lookup.editor)
       val inlay: Inlay<PresentationRenderer?>? =
         if (nonWrittenFiles) {
-          lookup.editor.inlayModel.addInlineElement(0, false, presentationRenderer)
+          lookupEditor.inlayModel.addInlineElement(0, false, presentationRenderer)
         }
         else {
-          lookup.editor.inlayModel.addInlineElement(element.hostStartOffset, true, presentationRenderer)
+          lookupEditor.inlayModel.addInlineElement(element.hostStartOffset, true, presentationRenderer)
         }
       if (inlay != null) {
         lookup.putUserData(ICON_RENDER, inlay)
@@ -250,7 +251,8 @@ private class CommandCompletionHighlightingListener(
   private fun update(lookup: LookupImpl, item: CommandCompletionLookupElement) {
     val installed = ConcurrencyUtil.computeIfAbsent(lookup, INSTALLED_LISTENER_KEY) { AtomicBoolean(false) }
     val startOffset = lookup.lookupOriginalStart - findActualIndex(item.suffix, editor.document.immutableCharSequence, lookup.lookupOriginalStart)
-    val endOffset = lookup.editor.caretModel.offset
+    val lookupEditor = InjectedLanguageEditorUtil.getTopLevelEditor(lookup.editor)
+    val endOffset = lookupEditor.caretModel.offset
     if (!installed.get()) {
       editor.addHighlightingPredicate(SUPPRESS_PREDICATE_KEY, EditorHighlightingPredicate { highlighter ->
         val attributesKey = highlighter.textAttributesKey ?: return@EditorHighlightingPredicate true
@@ -263,8 +265,8 @@ private class CommandCompletionHighlightingListener(
       installed.set(true)
     }
     val previousHighlighting = lookup.getUserData(PROMPT_HIGHLIGHTING)
-    previousHighlighting?.let { lookup.editor.markupModel.removeHighlighter(it) }
-    val highlighter = lookup.editor.markupModel.addRangeHighlighter(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES, startOffset, endOffset, PROMPT_LAYER, HighlighterTargetArea.EXACT_RANGE)
+    previousHighlighting?.let { lookupEditor.markupModel.removeHighlighter(it) }
+    val highlighter = lookupEditor.markupModel.addRangeHighlighter(TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES, startOffset, endOffset, PROMPT_LAYER, HighlighterTargetArea.EXACT_RANGE)
     lookup.putUserData(PROMPT_HIGHLIGHTING, highlighter)
   }
 

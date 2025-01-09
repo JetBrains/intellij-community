@@ -87,7 +87,7 @@ class NonWriteAccessCommandCompletionService(
     textField.maximumSize = size
     textField.minimumSize = size
     textField.preferredSize = size
-    val componentInlay: Inlay<ComponentInlayRenderer<LanguageTextField>>? = editor.addInlineComponentInlay(offset, inlayProperties, ComponentInlayRenderer(textField, ComponentInlayAlignment.INLINE_COMPONENT))
+    val componentInlay: Inlay<ComponentInlayRenderer<LanguageTextField>>? = editor.addComponentInlay(offset, inlayProperties, ComponentInlayRenderer(textField, ComponentInlayAlignment.INLINE_COMPONENT))
     if (componentInlay == null) return
     IdeFocusManager.getInstance(editor.project).requestFocus(textField, true)
     editor.putUserData(INSTALLED_EDITOR, componentInlay)
