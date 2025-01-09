@@ -40,6 +40,7 @@ class ModuleGraph internal constructor(
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 private val COVERAGE_ALIAS_ID = PluginId.getId("com.intellij.modules.coverage")
+private val ML_INLINE_ALIAS_ID = PluginId.getId("com.intellij.ml.inline.completion")
 
 internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraph {
   val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
@@ -96,11 +97,16 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
         moduleMap.get("intellij.platform.collaborationTools")?.let { result.add(it) }
       }
 
+      /* Compatibility Layer */
+
       if (doesDependOnPluginAlias(module, RIDER_ALIAS_ID)) {
         moduleMap.get("intellij.rider")?.let { result.add(it) }
       }
       if (doesDependOnPluginAlias(module, COVERAGE_ALIAS_ID)) {
         moduleMap.get("intellij.platform.coverage")?.let { result.add(it) }
+      }
+      if (doesDependOnPluginAlias(module, ML_INLINE_ALIAS_ID)) {
+        moduleMap.get("intellij.ml.inline.completion")?.let { result.add(it) }
       }
     }
 
