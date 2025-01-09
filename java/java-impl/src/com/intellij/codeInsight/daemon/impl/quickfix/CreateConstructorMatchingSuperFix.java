@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -165,6 +166,9 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
         }
         derived = (PsiMethod)formatter.reformat(derived);
         derived = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(derived);
+        if (targetClass.hasModifier(JvmModifier.FINAL) && derived.hasModifier(JvmModifier.PROTECTED)) {
+          derived.getModifierList().setModifierProperty(PsiModifier.PROTECTED, false);
+        }
         PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(derived);
         info.insert(targetClass, null, true);
         derived = info.getPsiMember();
