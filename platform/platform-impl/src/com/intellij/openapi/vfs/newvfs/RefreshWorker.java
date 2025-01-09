@@ -57,7 +57,9 @@ final class RefreshWorker {
 
   private static final int ourParallelism =
     MathUtil.clamp(Registry.intValue("vfs.refresh.worker.parallelism", 6), 1, Runtime.getRuntime().availableProcessors());
-  private static final Executor ourExecutor = ExecutorsKt.asExecutor(Dispatchers.getIO().limitedParallelism(ourParallelism));
+  private static final Executor ourExecutor = ExecutorsKt.asExecutor(
+    Dispatchers.getIO().limitedParallelism(ourParallelism, "RefreshWorkerDispatcher")
+  );
 
   private final boolean myIsRecursive;
   private final boolean myParallel;
