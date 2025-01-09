@@ -3,7 +3,7 @@ package com.intellij.byteCodeViewer
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.util.JavaAnonymousClassesHelper
-import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -17,11 +17,13 @@ import java.io.File
 import java.util.*
 
 object BytecodeViewerManager {
-  private val CLASS_SEARCHER_EP = create<ClassSearcher>("ByteCodeViewer.classSearcher")
+  private val CLASS_SEARCHER_EP = ExtensionPointName<ClassSearcher>("ByteCodeViewer.classSearcher")
 
-  private fun PsiClass.containingClassFileClass(): PsiClass = parentsOfType<PsiClass>(withSelf = true)
+  private fun PsiClass.containingClassFileClass(): PsiClass {
+    return parentsOfType<PsiClass>(withSelf = true)
       .filterNot(PsiUtil::isLocalOrAnonymousClass)
       .first()
+  }
 
   internal fun findClassFile(aClass: PsiClass): ClassFileInfo? {
     val fileClass = aClass.containingClassFileClass()
