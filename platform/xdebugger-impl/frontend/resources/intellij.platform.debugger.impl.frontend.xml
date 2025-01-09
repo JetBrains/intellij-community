@@ -18,5 +18,8 @@
 
     <registryKey defaultValue="false" description="Allows to modify values during debugging on the frontend side"
                  key="debugger.frontendValuesModification"/>
+
+    <registryKey defaultValue="false" key="debugger.valueLookupFrontendBackend"
+                 description="Provides a way to use frontend-backend implementation of debugger's evaluation popup"/>
   </extensions>
 </idea-plugin>
