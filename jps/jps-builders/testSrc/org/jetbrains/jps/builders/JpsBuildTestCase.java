@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
@@ -194,7 +194,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(myModel);
       ModuleExcludeIndex index = new ModuleExcludeIndexImpl(myModel);
       IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(myModel);
-      BuildDataPaths dataPaths = new BuildDataPathsImpl(myDataStorageRoot);
+      BuildDataPaths dataPaths = new BuildDataPathsImpl(myDataStorageRoot.toPath());
       BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetRegistry, myModel, index, dataPaths, ignoredFileIndex);
       BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
       BuildTargetsState targetsState = new BuildTargetsState(dataPaths, myModel, buildRootIndex);

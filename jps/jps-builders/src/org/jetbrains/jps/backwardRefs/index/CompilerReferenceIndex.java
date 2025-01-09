@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,30 +51,50 @@ public class CompilerReferenceIndex<Input> {
   private final ConcurrentMap<IndexId<?, ?>, InvertedIndex<?, ?, Input>> myIndices;
   private final NameEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
-  private final File myBuildDir;
-  private final Path myIndicesDir;
+  private final Path myBuildDir;
+  private final Path indexDir;
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(() -> force());
 
   private volatile Throwable myRebuildRequestCause;
 
-  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir, boolean readOnly,
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices,
+                                Path buildDir,
+                                boolean readOnly,
                                 int version) {
     this(indices, buildDir, null, readOnly, version);
   }
 
-  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir,
-                                @Nullable PathRelativizerService relativizer, boolean readOnly, int version) {
+  /**
+   * @deprecated Use {@link #CompilerReferenceIndex(Collection, Path, PathRelativizerService, boolean, int)}
+   */
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Deprecated
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices,
+                                File buildDir,
+                                boolean readOnly,
+                                int version) {
+    this(indices, buildDir.toPath(), null, readOnly, version);
+  }
+
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices,
+                                Path buildDir,
+                                @Nullable PathRelativizerService relativizer,
+                                boolean readOnly,
+                                int version) {
     this(indices, buildDir, relativizer, readOnly, version, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir,
-                                @Nullable PathRelativizerService relativizer, boolean readOnly, int version,
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices,
+                                Path buildDir,
+                                @Nullable PathRelativizerService relativizer,
+                                boolean readOnly,
+                                int version,
                                 boolean isCaseSensitive) {
     myBuildDir = buildDir;
-    myIndicesDir = getIndexDir(buildDir.toPath());
+    indexDir = getIndexDir(buildDir);
 
     try {
-      Files.createDirectories(myIndicesDir);
+      Files.createDirectories(indexDir);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -84,7 +104,7 @@ public class CompilerReferenceIndex<Input> {
       if (versionDiffers(buildDir, version)) {
         saveVersion(buildDir, version);
       }
-      myFilePathEnumerator = new PersistentStringEnumerator(myIndicesDir.resolve(FILE_ENUM_TAB)) {
+      myFilePathEnumerator = new PersistentStringEnumerator(indexDir.resolve(FILE_ENUM_TAB)) {
 
         @Override
         public int enumerate(String path) throws IOException {
@@ -114,7 +134,7 @@ public class CompilerReferenceIndex<Input> {
         myIndices.put(indexExtension.getName(), createCompilerIndex(indexExtension, readOnly));
       }
 
-      myNameEnumerator = new NameEnumerator(myIndicesDir.resolve(NAME_ENUM_TAB).toFile());
+      myNameEnumerator = new NameEnumerator(indexDir.resolve(NAME_ENUM_TAB).toFile());
     }
     catch (IOException e) {
       //IJPL-2855: must close all storages opened
@@ -210,12 +230,21 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  public static void removeIndexFiles(File buildDir) {
+  public static void removeIndexFiles(@NotNull Path buildDir) {
     removeIndexFiles(buildDir, null);
   }
 
-  public void saveVersion(@NotNull File buildDir, int version) {
-    Path versionFile = getIndexDir(buildDir.toPath()).resolve(VERSION_FILE);
+  /**
+   * @deprecated Use {@link #removeIndexFiles(Path)}
+   */
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Deprecated
+  public static void removeIndexFiles(@NotNull File buildDir) {
+    removeIndexFiles(buildDir.toPath(), null);
+  }
+
+  public void saveVersion(@NotNull Path buildDir, int version) {
+    Path versionFile = getIndexDir(buildDir).resolve(VERSION_FILE);
     try {
       NioFiles.createParentDirectories(versionFile);
     }
@@ -231,8 +260,17 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  public File getIndicesDir() {
-    return myIndicesDir.toFile();
+  /**
+   * @deprecated Use {@link #getIndexDir()}
+   */
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Deprecated
+  public @NotNull File getIndicesDir() {
+    return indexDir.toFile();
+  }
+
+  public @NotNull Path getIndexDir() {
+    return indexDir;
   }
 
   private <Key, Value> @NotNull CompilerMapReduceIndex<Key, Value> createCompilerIndex(@NotNull IndexExtension<Key, Value, ? super Input> indexExtension,
@@ -241,7 +279,7 @@ public class CompilerReferenceIndex<Input> {
       indexExtension.getKeyDescriptor(),
       indexExtension.getValueExternalizer(),
       indexExtension.getName(),
-      myIndicesDir.toFile(),
+      indexDir,
       readOnly
     );
     try {
@@ -250,7 +288,7 @@ public class CompilerReferenceIndex<Input> {
         return new CompilerMapReduceIndex(indexExtension, indexStorage, /* forwardIndex: */ null, /* forwardIndexAccessor: */ null);
       }
       else {
-        Path storagePath = myIndicesDir.resolve(indexExtension.getName().getName() + ".inputs");
+        Path storagePath = indexDir.resolve(indexExtension.getName().getName() + ".inputs");
         ForwardIndex forwardIndex = new PersistentMapBasedForwardIndex(storagePath, /* readOnly: */ false);
         try {
           ForwardIndexAccessor<Key, Value> forwardIndexAccessor = new KeyCollectionForwardIndexAccessor<>(indexExtension);
@@ -269,8 +307,8 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  public static void removeIndexFiles(File buildDir, Throwable cause) {
-    Path indexDir = getIndexDir(buildDir.toPath());
+  public static void removeIndexFiles(Path buildDir, Throwable cause) {
+    Path indexDir = getIndexDir(buildDir);
     if (Files.exists(indexDir)) {
       try {
         FileUtilRt.deleteRecursively(indexDir);
@@ -290,8 +328,17 @@ public class CompilerReferenceIndex<Input> {
     return myRebuildRequestCause;
   }
 
+  public static boolean exists(@NotNull Path buildDir) {
+    return Files.exists(getIndexDir(buildDir));
+  }
+
+  /**
+   * @deprecated Use {@link #exists(Path)}
+   */
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Deprecated
   public static boolean exists(@NotNull File buildDir) {
-    return Files.exists(getIndexDir(buildDir.toPath()));
+    return exists(buildDir.toPath());
   }
 
   public void setRebuildRequestCause(Throwable e) {
@@ -345,8 +392,17 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
+  /**
+   * @deprecated Use {@link #versionDiffers(Path, int)}
+   */
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Deprecated
   public static boolean versionDiffers(@NotNull File buildDir, int expectedVersion) {
-    Path versionFile = getIndexDir(buildDir.toPath()).resolve(VERSION_FILE);
+    return versionDiffers(buildDir.toPath(), expectedVersion);
+  }
+
+  public static boolean versionDiffers(@NotNull Path buildDir, int expectedVersion) {
+    Path versionFile = getIndexDir(buildDir).resolve(VERSION_FILE);
     try (DataInputStream is = new DataInputStream(Files.newInputStream(versionFile))) {
       int currentIndexVersion = is.readInt();
       boolean isDiffer = currentIndexVersion != expectedVersion;
@@ -367,9 +423,9 @@ public class CompilerReferenceIndex<Input> {
   private static <Key, Value> IndexStorage<Key, Value> createIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
                                                                           @NotNull DataExternalizer<Value> valueExternalizer,
                                                                           @NotNull IndexId<Key, Value> indexId,
-                                                                          @NotNull File indexDir,
+                                                                          @NotNull Path indexDir,
                                                                           boolean readOnly) throws IOException {
-    return new MapIndexStorage<>(new File(indexDir, indexId.getName()).toPath(),
+    return new MapIndexStorage<>(indexDir.resolve(indexId.getName()),
                                  keyDescriptor,
                                  valueExternalizer,
                                  16 * 1024,

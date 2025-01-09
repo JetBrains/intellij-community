@@ -58,7 +58,7 @@ public final class CleanupTempDirectoryExtension implements PreloadedDataExtensi
     }
 
     Path tempDir = Path.of(tempPath).toAbsolutePath().normalize();
-    Path dataRoot = projectDescriptor.dataManager.getDataPaths().getDataStorageRoot().toPath();
+    Path dataRoot = projectDescriptor.dataManager.getDataPaths().getDataStorageDir();
     if (!tempDir.startsWith(dataRoot)) {
       // cleanup only 'local' temp
       return null;

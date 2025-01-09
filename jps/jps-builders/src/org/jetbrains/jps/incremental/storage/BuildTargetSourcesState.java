@@ -84,7 +84,7 @@ public final class BuildTargetSourcesState implements BuildListener {
     outputFolderPath = getOutputFolderPath(projectDescriptor.getProject());
 
     BuildDataPaths dataPaths = projectDescriptor.getTargetsState().getDataPaths();
-    targetStateStorage = dataPaths.getDataStorageRoot().toPath().resolve(TARGET_SOURCES_STATE_FILE_NAME);
+    targetStateStorage = dataPaths.getDataStorageDir().resolve(TARGET_SOURCES_STATE_FILE_NAME);
 
     // subscribe to events for reporting only changed build targets
     context.addBuildListener(this);

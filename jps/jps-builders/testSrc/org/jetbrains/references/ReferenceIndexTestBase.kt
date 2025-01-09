@@ -71,9 +71,8 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   protected fun indexAsText(): String {
     val pd = createProjectDescriptor(BuildLoggingManager(TestProjectBuilderLogger()))
     val manager = pd.dataManager
-    val buildDir = manager.dataPaths.dataStorageRoot
-    val index = JavaCompilerBackwardReferenceIndex(buildDir,
-                                                   PathRelativizerService(myProject), true)
+    val buildDir = manager.dataPaths.dataStorageDir
+    val index = JavaCompilerBackwardReferenceIndex(buildDir, PathRelativizerService(myProject), true)
 
     try {
       val fileEnumerator = index.filePathEnumerator

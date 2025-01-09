@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,13 +82,12 @@ public final class JpsGradleExtensionServiceImpl extends JpsGradleExtensionServi
 
   @Override
   public boolean hasGradleProjectConfiguration(@NotNull BuildDataPaths paths) {
-    return myConfigFileExists.get(new File(paths.getDataStorageRoot(), GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH));
+    return myConfigFileExists.get(paths.getDataStorageDir().resolve(GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH).toFile());
   }
 
   @Override
   public @NotNull GradleProjectConfiguration getGradleProjectConfiguration(BuildDataPaths paths) {
-    final File dataStorageRoot = paths.getDataStorageRoot();
-    return getGradleProjectConfiguration(dataStorageRoot);
+    return getGradleProjectConfiguration(paths.getDataStorageDir().toFile());
   }
 
   public @NotNull GradleProjectConfiguration getGradleProjectConfiguration(@NotNull File dataStorageRoot) {

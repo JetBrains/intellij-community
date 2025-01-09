@@ -16,6 +16,8 @@ import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -43,8 +45,8 @@ public final class BuildTargetsState {
     myDataPaths = dataPaths;
     myModel = model;
     myBuildRootIndex = buildRootIndex;
-    File targetTypesFile = getTargetTypesFile();
-    try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(targetTypesFile)))) {
+    Path targetTypesFile = getTargetTypesFile();
+    try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(targetTypesFile)))) {
       myMaxTargetId.set(input.readInt());
       myLastSuccessfulRebuildDuration = input.readLong();
     }
@@ -57,15 +59,15 @@ public final class BuildTargetsState {
     }
   }
 
-  private File getTargetTypesFile() {
-    return new File(myDataPaths.getTargetsDataRoot(), "targetTypes.dat");
+  private @NotNull Path getTargetTypesFile() {
+    return myDataPaths.getTargetsDataRoot().resolve("targetTypes.dat");
   }
 
   public void save() {
     try {
-      File targetTypesFile = getTargetTypesFile();
-      FileUtilRt.createParentDirs(targetTypesFile);
-      try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)))) {
+      Path targetTypesFile = getTargetTypesFile();
+      Files.createDirectories(targetTypesFile.getParent());
+      try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(targetTypesFile)))) {
         output.writeInt(myMaxTargetId.get());
         output.writeLong(myLastSuccessfulRebuildDuration);
       }
@@ -132,7 +134,11 @@ public final class BuildTargetsState {
   }
 
   public void clean() {
-    FileUtilRt.delete(myDataPaths.getTargetsDataRoot());
+    try {
+      FileUtilRt.deleteRecursively(myDataPaths.getTargetsDataRoot());
+    }
+    catch (IOException ignored) {
+    }
   }
 
   public JpsModel getModel() {

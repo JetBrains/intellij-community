@@ -1824,12 +1824,14 @@ f:org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 - getCause():java.io.IOException
 - initCause(java.lang.Throwable):java.lang.Throwable
 org.jetbrains.jps.builders.storage.BuildDataPaths
-- a:getDataStorageRoot():java.io.File
-- a:getTargetDataRoot(org.jetbrains.jps.builders.BuildTarget):java.io.File
+- a:getDataStorageDir():java.nio.file.Path
+- getDataStorageRoot():java.io.File
+- getTargetDataRoot(org.jetbrains.jps.builders.BuildTarget):java.io.File
 - a:getTargetDataRoot(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):java.nio.file.Path
 - a:getTargetDataRootDir(org.jetbrains.jps.builders.BuildTarget):java.nio.file.Path
-- a:getTargetTypeDataRoot(org.jetbrains.jps.builders.BuildTargetType):java.io.File
-- a:getTargetsDataRoot():java.io.File
+- getTargetTypeDataRoot(org.jetbrains.jps.builders.BuildTargetType):java.io.File
+- a:getTargetTypeDataRootDir(org.jetbrains.jps.builders.BuildTargetType):java.nio.file.Path
+- a:getTargetsDataRoot():java.nio.file.Path
 org.jetbrains.jps.builders.storage.SourceToOutputMapping
 - a:appendOutput(java.lang.String,java.lang.String):V
 - a:getOutputs(java.lang.String):java.util.Collection

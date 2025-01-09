@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.server.BuildManager;
@@ -26,9 +26,8 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
-
-import static com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.isCaseSensitiveFS;
 
 public final class JavaBackwardReferenceIndexReaderFactory implements CompilerReferenceReaderFactory<JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader> {
   public static final JavaBackwardReferenceIndexReaderFactory INSTANCE = new JavaBackwardReferenceIndexReaderFactory();
@@ -42,14 +41,13 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
 
   @Override
   public @Nullable BackwardReferenceReader create(Project project) {
-    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-
+    Path buildDir = BuildManager.getInstance().getProjectSystemDir(project);
     if (!CompilerReferenceIndex.exists(buildDir) || CompilerReferenceIndex.versionDiffers(buildDir, expectedIndexVersion())) {
       return null;
     }
 
     try {
-      return new BackwardReferenceReader(project, buildDir, isCaseSensitiveFS(project));
+      return new BackwardReferenceReader(project, buildDir, CompilerReferenceServiceBase.isCaseSensitiveFS(project));
     }
     catch (RuntimeException e) {
       LOG.error("An exception while initialization of compiler reference index.", e);
@@ -60,12 +58,12 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
   public static class BackwardReferenceReader extends CompilerReferenceReader<JavaCompilerBackwardReferenceIndex> {
     private final Project myProject;
 
-    protected BackwardReferenceReader(Project project, File buildDir) {
+    protected BackwardReferenceReader(Project project, Path buildDir) {
       super(buildDir, new JavaCompilerBackwardReferenceIndex(buildDir, new PathRelativizerService(project.getBasePath()), true));
       myProject = project;
     }
 
-    protected BackwardReferenceReader(Project project, File buildDir, boolean isCaseSensitiveFS) {
+    protected BackwardReferenceReader(Project project, Path buildDir, boolean isCaseSensitiveFS) {
       super(buildDir, new JavaCompilerBackwardReferenceIndex(buildDir, new PathRelativizerService(project.getBasePath(), isCaseSensitiveFS), true, isCaseSensitiveFS));
       myProject = project;
     }

@@ -84,7 +84,7 @@ public final class BuildDataManager {
          targetsState,
          relativizer,
          storageManager,
-         storageManager != null || ProjectStamps.PORTABLE_CACHES ? null : new ProjectStamps(dataPaths.getDataStorageRoot().toPath(), targetsState),
+         storageManager != null || ProjectStamps.PORTABLE_CACHES ? null : new ProjectStamps(dataPaths.getDataStorageDir(), targetsState),
          null);
 
 
@@ -114,7 +114,7 @@ public final class BuildDataManager {
     myDataPaths = dataPaths;
     myTargetsState = targetsState;
     myFileStampService = projectStamps;
-    Path dataStorageRoot = dataPaths.getDataStorageRoot().toPath();
+    Path dataStorageRoot = dataPaths.getDataStorageDir();
     try {
       if (storageManager == null) {
         newDataManager = null;
@@ -358,7 +358,7 @@ public final class BuildDataManager {
           }
         }
         finally {
-          Path mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot().toPath());
+          Path mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageDir());
           Mappings mappings = myMappings;
           if (mappings != null) {
             synchronized (mappings) {
@@ -547,11 +547,11 @@ public final class BuildDataManager {
   }
 
   private @NotNull Path getSourceToFormsRoot() {
-    return myDataPaths.getDataStorageRoot().toPath().resolve(SRC_TO_FORM_STORAGE);
+    return myDataPaths.getDataStorageDir().resolve(SRC_TO_FORM_STORAGE);
   }
 
   private @NotNull Path getOutputToSourceRegistryRoot() {
-    return myDataPaths.getDataStorageRoot().toPath().resolve(OUT_TARGET_STORAGE);
+    return myDataPaths.getDataStorageDir().resolve(OUT_TARGET_STORAGE);
   }
 
   public BuildDataPaths getDataPaths() {
@@ -613,7 +613,7 @@ public final class BuildDataManager {
           close();
         }
         finally {
-          asyncTaskCollector.accept(FileUtil.asyncDelete(myDataPaths.getTargetsDataRoot()));
+          asyncTaskCollector.accept(FileUtil.asyncDelete(myDataPaths.getTargetsDataRoot().toFile()));
         }
       }
 

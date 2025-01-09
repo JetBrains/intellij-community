@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +28,8 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -82,11 +84,11 @@ public final class GroovyBuilder extends ModuleLevelBuilder {
   @Override
   public void buildStarted(CompileContext context) {
     if (myForStubs) {
-      File stubRoot = getStubRoot(context);
-      if (stubRoot.exists() && !FileUtil.deleteWithRenaming(stubRoot)) {
+      Path stubRoot = getStubRoot(context);
+      if (Files.exists(stubRoot) && !FileUtil.deleteWithRenaming(stubRoot)) {
         context.processMessage(new CompilerMessage(
           myBuilderName, BuildMessage.Kind.ERROR,
-          GroovyJpsBundle.message("external.build.cannot.clean.path.0", stubRoot.getPath())
+          GroovyJpsBundle.message("external.build.cannot.clean.path.0", stubRoot.toString())
         ));
       }
     }
@@ -99,8 +101,8 @@ public final class GroovyBuilder extends ModuleLevelBuilder {
     STUB_TO_SRC.set(context, null);
   }
 
-  static File getStubRoot(CompileContext context) {
-    return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
+  static @NotNull Path getStubRoot(CompileContext context) {
+    return context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageDir().resolve("groovyStubs");
   }
 
   static @Nullable Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {

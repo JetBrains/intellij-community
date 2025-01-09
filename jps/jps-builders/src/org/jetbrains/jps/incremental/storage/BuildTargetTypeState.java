@@ -37,7 +37,7 @@ public final class BuildTargetTypeState {
 
     myTargetType = targetType;
     targetState = state;
-    myTargetsFile = state.getDataPaths().getTargetTypeDataRoot(targetType).toPath().resolve( "targets.dat");
+    myTargetsFile = state.getDataPaths().getTargetTypeDataRootDir(targetType).resolve( "targets.dat");
     configurations = new ConcurrentHashMap<>();
     myStaleTargetIds = new ArrayList<>();
     load();

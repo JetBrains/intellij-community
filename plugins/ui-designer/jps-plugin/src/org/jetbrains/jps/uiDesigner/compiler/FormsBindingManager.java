@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.openapi.util.Key;
@@ -33,6 +33,8 @@ import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -53,7 +55,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
 
   @Override
   public void buildStarted(CompileContext context) {
-    FORCE_FORMS_REBUILD_FLAG.set(context, getMarkerFile(context).exists());
+    FORCE_FORMS_REBUILD_FLAG.set(context, Files.exists(getMarkerFile(context)));
   }
 
   @Override
@@ -64,16 +66,22 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
 
   @Override
   public void buildFinished(CompileContext context) {
-    final boolean previousValue = FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE);
-    final JpsUiDesignerConfiguration config = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(context.getProjectDescriptor().getProject());
-    final boolean currentRebuildValue = config != null && !config.isInstrumentClasses();
-    if (previousValue != currentRebuildValue) {
-      final File marker = getMarkerFile(context);
-      if (currentRebuildValue) {
-        FileUtil.createIfDoesntExist(marker);
+    boolean previousValue = FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE);
+    JpsUiDesignerConfiguration config = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(context.getProjectDescriptor().getProject());
+    boolean currentRebuildValue = config != null && !config.isInstrumentClasses();
+    if (previousValue == currentRebuildValue) {
+      return;
+    }
+
+    Path marker = getMarkerFile(context);
+    if (currentRebuildValue) {
+      FileUtil.createIfDoesntExist(marker.toFile());
+    }
+    else {
+      try {
+        Files.deleteIfExists(marker);
       }
-      else {
-        FileUtil.delete(marker);
+      catch (IOException ignored) {
       }
     }
   }
@@ -83,8 +91,8 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
     return BUILDER_NAME;
   }
 
-  private static @NotNull File getMarkerFile(CompileContext context) {
-    return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "forms_rebuild_required");
+  private static @NotNull Path getMarkerFile(CompileContext context) {
+    return context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageDir().resolve("forms_rebuild_required");
   }
 
   @Override

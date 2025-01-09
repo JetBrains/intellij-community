@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.references;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -21,8 +21,8 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.junit.jupiter.api.Assertions;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 
 import static org.jetbrains.jps.backwardRefs.index.JavaCompilerIndices.BACK_USAGES;
@@ -46,7 +46,7 @@ public class SensitiveFsReferenceIndexTest extends ReferenceIndexTestBase {
 
     ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(new TestProjectBuilderLogger()));
     BuildDataManager manager = descriptor.dataManager;
-    File root = manager.getDataPaths().getDataStorageRoot();
+    Path root = manager.getDataPaths().getDataStorageDir();
     JavaCompilerBackwardReferenceIndex index = new JavaCompilerBackwardReferenceIndex(root,
                                                                                       new PathRelativizerService(myProject, true), true,
                                                                                       true);

@@ -15,6 +15,7 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -72,9 +73,9 @@ class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, 
     if (!myForStubs) return super.getGenerationOutputs(context, chunk, finalOutputs);
 
     Map<ModuleBuildTarget, String> generationOutputs = new HashMap<>();
-    File commonRoot = GroovyBuilder.getStubRoot(context);
+    Path commonRoot = GroovyBuilder.getStubRoot(context);
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      File targetRoot = new File(commonRoot, target.getModule().getName() + File.separator + target.getTargetType().getTypeId());
+      File targetRoot = commonRoot.resolve(target.getModule().getName() + File.separator + target.getTargetType().getTypeId()).toFile();
       if (targetRoot.exists() && !FileUtil.deleteWithRenaming(targetRoot)) {
         throw new IOException("External build cannot clean " + targetRoot.getPath());
       }

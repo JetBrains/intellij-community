@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.util.Key;
@@ -19,7 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescriptor, CheckResourcesTarget> {
+public final class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescriptor, CheckResourcesTarget> {
   public static final Key<Boolean> CHECKING_RESOURCES_REBUILD = Key.create("CHECKING_RESOURCES");
 
   public GroovyResourceChecker() {
@@ -37,9 +37,9 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
   }
 
   @Override
-  public void build(final @NotNull CheckResourcesTarget target,
+  public void build(@NotNull CheckResourcesTarget target,
                     @NotNull DirtyFilesHolder<GroovyResourceRootDescriptor, CheckResourcesTarget> holder,
-                    final @NotNull BuildOutputConsumer outputConsumer,
+                    @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) throws ProjectBuildException, IOException {
     if (context.getBuilderParameter(CHECKING_RESOURCES_REBUILD.toString()) == null) {
       return;
@@ -57,8 +57,7 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
     return new ModuleChunk(Collections.singleton(new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION)));
   }
 
-  private static class ResourceCheckingGroovycRunner extends JpsGroovycRunner<GroovyResourceRootDescriptor, CheckResourcesTarget> {
-
+  private static final class ResourceCheckingGroovycRunner extends JpsGroovycRunner<GroovyResourceRootDescriptor, CheckResourcesTarget> {
     private final CheckResourcesTarget myTarget;
 
     ResourceCheckingGroovycRunner(CheckResourcesTarget target) {
@@ -68,7 +67,7 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
 
     @Override
     protected Map<CheckResourcesTarget, String> getCanonicalOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
-      return Collections.singletonMap(myTarget, myTarget.getOutputRoot(context).getPath());
+      return Map.of(myTarget, myTarget.getOutputRoot(context).toString());
     }
 
     @Override

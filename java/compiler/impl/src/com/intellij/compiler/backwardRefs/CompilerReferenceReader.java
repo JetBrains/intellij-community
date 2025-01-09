@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -12,16 +12,27 @@ import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
 public abstract class CompilerReferenceReader<Index extends CompilerReferenceIndex<?>> {
   protected final Index myIndex;
-  private final File myBuildDir;
+  private final Path buildDir;
 
-  public CompilerReferenceReader(File buildDir, Index index) {
+  public CompilerReferenceReader(@NotNull Path buildDir, Index index) {
     myIndex = index;
-    myBuildDir = buildDir;
+    this.buildDir = buildDir;
+  }
+
+  /**
+   * @deprecated Use {@link #CompilerReferenceReader(Path, CompilerReferenceIndex)}
+   */
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Deprecated
+  public CompilerReferenceReader(@NotNull File buildDir, Index index) {
+    myIndex = index;
+    this.buildDir = buildDir.toPath();
   }
 
   public @NotNull NameEnumerator getNameEnumerator() {
@@ -31,7 +42,7 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
   public void close(boolean removeIndex) {
     myIndex.close();
     if (removeIndex) {
-      CompilerReferenceIndex.removeIndexFiles(myBuildDir);
+      CompilerReferenceIndex.removeIndexFiles(buildDir);
     }
   }
 

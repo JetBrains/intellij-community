@@ -73,7 +73,7 @@ public final class BuildRunner {
 
   public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull Path dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
-    BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot.toFile());
+    BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot);
     BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(jpsModel);
     ModuleExcludeIndex index = new ModuleExcludeIndexImpl(jpsModel);
     IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(jpsModel);

@@ -123,8 +123,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1802,6 +1801,10 @@ public final class BuildManager implements Disposable {
 
   public static @NotNull File getBuildLogDirectory() {
     return new File(PathManager.getLogPath(), "build-log");
+  }
+
+  public @NotNull Path getProjectSystemDir(@NotNull Project project) {
+    return getProjectSystemDirectory(project).toPath();
   }
 
   public @NotNull File getProjectSystemDirectory(@NotNull Project project) {
