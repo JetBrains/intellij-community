@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere
 
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.DurableRef

@@ -2,8 +2,8 @@
 package com.intellij.platform.searchEverywhere.impl
 
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.api.SeItem
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.DurableRef
 import fleet.kernel.change

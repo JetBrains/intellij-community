@@ -5,7 +5,12 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemPresentation
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeTextItemPresentation
+import com.intellij.platform.searchEverywhere.SeTextSearchParams
+import com.intellij.platform.searchEverywhere.api.SeItem
+import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow

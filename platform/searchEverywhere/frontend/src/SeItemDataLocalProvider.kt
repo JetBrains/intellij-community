@@ -2,6 +2,8 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.api.SeItemDataProvider
+import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull

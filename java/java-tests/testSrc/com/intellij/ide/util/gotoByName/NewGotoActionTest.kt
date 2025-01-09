@@ -6,8 +6,8 @@ package com.intellij.ide.util.gotoByName
 //import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemMock
 //import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereSessionHelperMock
 import com.intellij.platform.searchEverywhere.SeActionParams
-import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeTextSearchParams
+import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.mocks.SeItemsProviderMock
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking

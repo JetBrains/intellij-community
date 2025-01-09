@@ -2,8 +2,8 @@
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeTab
 import com.intellij.platform.searchEverywhere.SeTextSearchParams
+import com.intellij.platform.searchEverywhere.api.SeTab
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*

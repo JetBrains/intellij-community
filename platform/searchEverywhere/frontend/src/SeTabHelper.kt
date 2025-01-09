@@ -3,7 +3,12 @@ package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.api.SeItemDataProvider
+import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.dispatcher.SeDispatcher
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.*

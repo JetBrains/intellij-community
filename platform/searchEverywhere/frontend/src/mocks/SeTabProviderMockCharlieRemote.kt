@@ -4,8 +4,8 @@ package com.intellij.platform.searchEverywhere.frontend.mocks
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.intellij.platform.searchEverywhere.SeTab
-import com.intellij.platform.searchEverywhere.SeTabProvider
+import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.api.SeTabProvider
 import fleet.kernel.DurableRef
 import org.jetbrains.annotations.ApiStatus.Internal
 

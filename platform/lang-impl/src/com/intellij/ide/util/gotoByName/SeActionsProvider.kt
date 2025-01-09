@@ -4,7 +4,11 @@ package com.intellij.ide.util.gotoByName
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemPresentation
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeTextItemPresentation
+import com.intellij.platform.searchEverywhere.api.SeItem
+import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import org.jetbrains.annotations.ApiStatus

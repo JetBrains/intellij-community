@@ -5,7 +5,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.api.SeItemDataProvider
+import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Providers
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Session
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
