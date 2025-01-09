@@ -6853,6 +6853,11 @@ public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/typeCastExpression/castNullable.java");
         }
 
+        @TestMetadata("castNullable2.java")
+        public void testCastNullable2() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/typeCastExpression/castNullable2.java");
+        }
+
         @TestMetadata("charCasts.java")
         public void testCharCasts() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/typeCastExpression/charCasts.java");
