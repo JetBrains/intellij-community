@@ -356,6 +356,7 @@ class EditorCellView(
   }
 
   private fun updateCellActionsToolbarVisibility() {
+    input.cellActionsToolbar ?: return
     when (selected) {
       true -> {
         val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return

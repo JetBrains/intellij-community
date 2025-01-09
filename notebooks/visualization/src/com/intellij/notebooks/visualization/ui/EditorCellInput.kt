@@ -7,6 +7,7 @@ import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDraggableBar
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import java.awt.Rectangle
 
 class EditorCellInput(
@@ -31,7 +32,9 @@ class EditorCellInput(
 
   val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this, ::getFoldingBounds)
 
-  val cellActionsToolbar: EditorCellActionsToolbarManager = EditorCellActionsToolbarManager(editor)
+  val cellActionsToolbar: EditorCellActionsToolbarManager? =
+    if (Registry.`is`("jupyter.per.cell.management.actions.toolbar")) EditorCellActionsToolbarManager(editor)
+    else null
 
   var folded: Boolean = false
     private set
@@ -67,7 +70,7 @@ class EditorCellInput(
   override fun dispose() {
     super.dispose()
     Disposer.dispose(folding)
-    Disposer.dispose(cellActionsToolbar)
+    cellActionsToolbar?.let { Disposer.dispose(it) }
     Disposer.dispose(draggableBar)
   }
 
