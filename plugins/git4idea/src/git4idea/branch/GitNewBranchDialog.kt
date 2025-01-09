@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -15,7 +15,10 @@ import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toMutableProperty
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
@@ -88,11 +91,10 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
                                                   /*autoPopup*/ true,
                                                   /*forceAutoPopup*/ false,
                                                   /*showHint*/ false)
-    row {
+    row(GitBundle.message("new.branch.dialog.branch.name")) {
       cell(branchNameField)
         .bind({ c -> c.text }, { c, v -> c.text = v }, ::branchName.toMutableProperty())
         .align(AlignX.FILL)
-        .label(GitBundle.message("new.branch.dialog.branch.name"), LabelPosition.TOP)
         .focused()
         .applyToComponent {
           selectAll()
@@ -102,7 +104,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         .validationOnApply(validateBranchName(true, overwriteCheckbox))
         .validationOnInput(validateBranchName(false, overwriteCheckbox))
     }
-    row {
+    row("") { //align all cells to the right
       if (showCheckOutOption) {
         checkBox(GitBundle.message("new.branch.dialog.checkout.branch.checkbox"))
           .bindSelected(::checkout)
