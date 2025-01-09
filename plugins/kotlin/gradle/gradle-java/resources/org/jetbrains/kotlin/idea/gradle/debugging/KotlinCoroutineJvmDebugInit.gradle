@@ -17,10 +17,9 @@ interface Properties {
     public static final String disabledDebugJvmArgument = "-D$debugPropertyName=$debugPropertyValueOff"
 }
 
-def debugAllIsEnabled = Boolean.valueOf(System.getProperty("idea.gradle.debug.all"))
-logger.debug("idea.gradle.debug.all is {}", debugAllIsEnabled)
-
 GradleLifecycleUtil.afterProject(gradle) { Project project ->
+    def debugAllIsEnabled = Boolean.valueOf(System.getProperty("idea.gradle.debug.all"))
+    logger.debug("idea.gradle.debug.all is {}", debugAllIsEnabled)
     def tasks = debugAllIsEnabled ? project.tasks : GradleTasksUtil.getStartTasks(project)
     GradleCollectionUtil.configureEach(tasks) { Task task ->
         if (task instanceof Test || (task instanceof JavaExecSpec && task instanceof JavaForkOptions)) {

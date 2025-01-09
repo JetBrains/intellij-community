@@ -6,11 +6,10 @@ import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycle
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleTasksUtil
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil
 
-def debugAllIsEnabled = Boolean.valueOf(System.getProperty("idea.gradle.debug.all"))
-logger.debug("idea.gradle.debug.all is {}", debugAllIsEnabled)
-
 GradleLifecycleUtil.afterProject(gradle) { Project project ->
   def projectDirectory = project.projectDir.path
+  def debugAllIsEnabled = Boolean.valueOf(System.getProperty("idea.gradle.debug.all"))
+  logger.debug("idea.gradle.debug.all is {}", debugAllIsEnabled)
   def tasks = debugAllIsEnabled ? project.tasks : GradleTasksUtil.getStartTasks(project)
   GradleCollectionUtil.configureEach(tasks) { Task task ->
     if (task instanceof JavaForkOptions) {
