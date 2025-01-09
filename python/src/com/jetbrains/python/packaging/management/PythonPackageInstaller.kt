@@ -1,67 +1,79 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
+import com.intellij.execution.ExecutionException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.PythonPackageSpecificationBase
 import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
-import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
-class PythonPackagesInstallerAsync {
-
+class PythonPackagesInstaller {
   companion object {
+    @JvmStatic
     fun installPackages(
       project: Project,
       sdk: Sdk,
       requirements: List<PyRequirement>?,
       extraArgs: List<String>,
       indicator: ProgressIndicator,
-    ) {
-      val packageService = PyPackagingToolWindowService.getInstance(project)
+    ): ExecutionException? {
+      runBlockingCancellable {
+        val manager = PythonPackageManager.forSdk(project, sdk)
+        // FIXME: encapsulate into forSdk
+        manager.repositoryManager.refreshCashes()
 
-      packageService.serviceScope.launch(Dispatchers.IO) {
-        packageService.initForSdk(sdk)
-
-        if (requirements.isNullOrEmpty()) {
-          installWithoutRequirements(packageService, extraArgs, indicator)
+        return@runBlockingCancellable if (requirements.isNullOrEmpty()) {
+          installWithoutRequirements(manager, extraArgs, indicator)
         }
         else {
-          installWithRequirements(packageService, requirements, extraArgs, indicator)
+          installWithRequirements(manager, requirements, extraArgs, indicator)
         }
+      }.exceptionOrNull()?.let {
+        return ExecutionException(it)
       }
+
+      return null
     }
 
     private suspend fun installWithoutRequirements(
-      packageService: PyPackagingToolWindowService,
+      manager: PythonPackageManager,
       extraArgs: List<String>,
       indicator: ProgressIndicator,
-    ) {
+    ): Result<Unit> {
       indicator.text = PyBundle.message("python.packaging.installing.packages")
       indicator.isIndeterminate = true
 
+      // LAME: extra args seems to be package names - convert them
       val emptySpecification = PythonPackageSpecificationBase("", null, null, null)
-      packageService.installPackage(emptySpecification, extraArgs)
+      manager.installPackage(emptySpecification, extraArgs).getOrElse {
+        return Result.failure(it)
+      }
+
+      return Result.success(Unit)
     }
 
     private suspend fun installWithRequirements(
-      packageService: PyPackagingToolWindowService,
+      manager: PythonPackageManager,
       requirements: List<PyRequirement>,
       extraArgs: List<String>,
       indicator: ProgressIndicator,
-    ) {
+    ): Result<Unit> {
       requirements.forEachIndexed { index, requirement ->
         indicator.text = PyBundle.message("python.packaging.progress.text.installing.specific.package", requirement.presentableText)
         updateProgress(indicator, index, requirements.size)
 
-        val specification = createSpecificationForRequirement(requirement)
-        packageService.installPackage(specification, extraArgs)
+        // FIXME: pass version???
+        val specification = PythonSimplePackageSpecification(requirement.name, null, null)
+        manager.installPackage(specification, extraArgs).onFailure {
+          return Result.failure(it)
+        }
       }
+
+      return Result.success(Unit)
     }
 
     private fun updateProgress(indicator: ProgressIndicator, index: Int, total: Int) {
@@ -69,13 +81,6 @@ class PythonPackagesInstallerAsync {
       if (total > 0) {
         indicator.fraction = index.toDouble() / total
       }
-    }
-
-    private fun createSpecificationForRequirement(
-      requirement: PyRequirement,
-    ): PythonPackageSpecification {
-      val packageName = requirement.name
-      return PythonSimplePackageSpecification(packageName, null, null)
     }
   }
 }
