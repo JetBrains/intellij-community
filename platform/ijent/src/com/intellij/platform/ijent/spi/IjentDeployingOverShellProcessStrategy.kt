@@ -5,6 +5,7 @@ import com.intellij.execution.CommandLineUtil.posixQuote
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentUnavailableException
@@ -16,7 +17,14 @@ import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTime
+
+private val EP_NAME = ExtensionPointName<IjentDeploymentListener>("com.intellij.ijent.deploymentListener")
+interface IjentDeploymentListener {
+  fun shellInitialized(initializationTime: Duration)
+}
 
 abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : IjentDeployingStrategy.Posix {
   protected abstract val ijentLabel: String
@@ -35,11 +43,15 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
       val shellProcess = ShellProcessWrapper(IjentSessionMediator.create(scope, createShellProcess(), ijentLabel))
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
-        withTimeout(Registry.intValue("ijent.shell.initialization.timeout").milliseconds) {
-          write("set -ex")
-          ensureActive()
-          filterOutBanners()
+        val initializationTime = measureTime {
+          withTimeout(Registry.intValue("ijent.shell.initialization.timeout").milliseconds) {
+            write("set -ex")
+            ensureActive()
+            filterOutBanners()
+          }
         }
+
+        EP_NAME.forEachExtensionSafe { extension -> extension.shellInitialized(initializationTime) }
       })
     }
     context
