@@ -14,10 +14,10 @@ Get-ChildItem env:_INTELLIJ_FORCE_PREPEND_* | ForEach-Object {
   Set-Item -Path "env:\$Name" -Value ($_.Value + $CurValue.Value)
   Remove-Item "env:$FullName"
 }
-
-$Script = Get-Item "env:JEDITERM_SOURCE" -ErrorAction SilentlyContinue
-if ($Script -ne $null) {
-  Invoke-Expression $Script.Value
+# `JEDITERM_SOURCE` is executed in its own scope now. That means, it can only run code, and export env vars. It can't export PS variables.
+# It might be better to source it. See MSDN for the difference between "Call operator &"  and "Script scope and dot sourcing"
+if (($Env:JEDITERM_SOURCE -ne $null) -and (Test-Path $Env:JEDITERM_SOURCE)) {
+  & $Env:JEDITERM_SOURCE
   Remove-Item "env:JEDITERM_SOURCE"
 }
 
