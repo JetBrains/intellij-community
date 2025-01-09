@@ -247,6 +247,15 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
           result.remove("-parameters")
         }
       }
+
+
+      if (configData.forTests) {
+        val testData = collectTestCompilerArgs(it);
+        if (testData.isNotEmpty()) {
+          result.addAll(testData)
+          return result.toList()
+        }
+      }
       result.addAll(collectCompilerArgs(it))
     }
 
@@ -282,6 +291,37 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
       }
     }
     element.getChild("compilerArgument")?.textTrim?.let {
+      val text = getResolvedText(it)
+      if (text != null && !hasUnresolvedProperty(text)) {
+        result.add(text)
+      }
+    }
+    return result
+  }
+
+  private fun collectTestCompilerArgs(element: Element): List<String> {
+    val result = ArrayList<String>()
+    element.getChild("testCompilerArguments")?.let { arguments ->
+      val unresolvedArgs = mutableSetOf<String>()
+      val effectiveArguments = arguments.children.associate {
+        val key = it.name.run { if (startsWith("-")) this else "-$this" }
+        val value = getResolvedText(it)
+        if (value == null && hasUnresolvedProperty(it.textTrim)) {
+          unresolvedArgs += key
+        }
+        key to value
+      }
+      effectiveArguments.forEach { key, value ->
+        if (key.startsWith("-A") && value != null) {
+          result.add("$key=$value")
+        }
+        else if (key !in unresolvedArgs) {
+          result.add(key)
+          value?.let { result.add(it) }
+        }
+      }
+    }
+    element.getChild("testCompilerArgument")?.textTrim?.let {
       val text = getResolvedText(it)
       if (text != null && !hasUnresolvedProperty(text)) {
         result.add(text)

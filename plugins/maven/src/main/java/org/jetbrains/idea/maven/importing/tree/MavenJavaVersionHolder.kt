@@ -8,10 +8,11 @@ class MavenJavaVersionHolder(
   @JvmField val targetLevel: LanguageLevel?,
   @JvmField val testSourceLevel: LanguageLevel?,
   @JvmField val testTargetLevel: LanguageLevel?,
-  @JvmField val hasExecutionsForTests: Boolean
+  @JvmField val hasExecutionsForTests: Boolean,
+  @JvmField val hasTestCompilerArgs: Boolean,
 ) {
   fun needSeparateTestModule(): Boolean {
-    return hasExecutionsForTests || (testSourceLevel != null && testSourceLevel != sourceLevel)
+    return hasTestCompilerArgs || hasExecutionsForTests || (testSourceLevel != null && testSourceLevel != sourceLevel)
            || (testTargetLevel != null && testTargetLevel != targetLevel)
   }
 }

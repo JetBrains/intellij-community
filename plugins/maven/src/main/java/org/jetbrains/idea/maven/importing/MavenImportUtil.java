@@ -118,7 +118,24 @@ public final class MavenImportUtil {
     LanguageLevel targetVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, false);
     LanguageLevel targetTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, true);
     return new MavenJavaVersionHolder(sourceVersion, targetVersion, sourceTestVersion, targetTestVersion,
-                                      hasAnotherTestExecution(mavenProject));
+                                      hasAnotherTestExecution(mavenProject),
+                                      hasTestCompilerArgs(mavenProject));
+  }
+
+  private static boolean hasTestCompilerArgs(@NotNull MavenProject project) {
+    MavenPlugin plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
+    if (plugin == null) return false;
+    List<MavenPlugin.Execution> executions = plugin.getExecutions();
+    if (executions == null || executions.isEmpty()) {
+      return hasTestCompilerArgs(plugin.getConfigurationElement());
+    }
+
+    return ContainerUtil.exists(executions, e -> hasTestCompilerArgs(e.getConfigurationElement()));
+  }
+
+  private static boolean hasTestCompilerArgs(@Nullable Element config) {
+    return config != null && (config.getChild("testCompilerArgument") != null ||
+                              config.getChild("testCompilerArguments") != null);
   }
 
   private static boolean hasAnotherTestExecution(@NotNull MavenProject project) {

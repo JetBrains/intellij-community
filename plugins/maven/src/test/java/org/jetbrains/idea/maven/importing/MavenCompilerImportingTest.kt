@@ -1055,38 +1055,78 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                                     "-myArg", "-d", "path/with/braces_\${")
   }
 
-  // commenting the test as the errorProne module is not available to IJ community project
-  // TODO move the test to the errorProne module
-  //public void stestCompilerPluginErrorProneConfiguration() {
-  //  importProjectAsync("<groupId>test</groupId>" +
-  //                "<artifactId>project</artifactId>" +
-  //                "<version>1</version>" +
-  //
-  //                "<build>" +
-  //                "  <plugins>" +
-  //                "    <plugin>" +
-  //                "      <groupId>org.apache.maven.plugins</groupId>" +
-  //                "      <artifactId>maven-compiler-plugin</artifactId>" +
-  //                "      <configuration>" +
-  //                "        <compilerId>javac-with-errorprone</compilerId>" +
-  //                "        <compilerArgs>" +
-  //                "          <arg>-XepAllErrorsAsWarnings</arg>" +
-  //                "        </compilerArgs>" +
-  //                "      </configuration>" +
-  //                "    </plugin>" +
-  //                "  </plugins>" +
-  //                "</build>");
-  //
-  //  CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
-  //  assertEquals("error-prone", compilerConfiguration.getDefaultCompiler().getId());
-  //  assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")), "-XepAllErrorsAsWarnings");
-  //
-  //  importProjectAsync("<groupId>test</groupId>" +
-  //                "<artifactId>project</artifactId>" +
-  //                "<version>1</version>");
-  //
-  //  assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
-  //  assertEmpty(compilerConfiguration.getAdditionalOptions(getModule("project")));
-  //}
+
+  @Test
+  fun testCompilerArgumentsShouldBeSetForMainAndTest() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin>   
+             <groupId>org.apache.maven.plugins</groupId>  
+             <artifactId>maven-compiler-plugin</artifactId>      
+             <configuration>        
+               <compilerArguments>          
+                 <Averbose>true</Averbose>          
+                 <parameters></parameters>          
+                 <bootclasspath>rt.jar_path_here</bootclasspath>        
+               </compilerArguments>   
+               <testCompilerArguments>
+                  <parameters></parameters>
+               </testCompilerArguments>
+             </configuration>    
+          </plugin>
+        </plugins>
+      </build>""".trimIndent())
+
+    assertModules("project", "project.main", "project.test")
+
+    assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.main")),
+                                    "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here")
+    assertUnorderedElementsAreEqual(
+      ideCompilerConfiguration.getAdditionalOptions(getModule("project.test")),
+      "-parameters",
+    )
+  }
+
+  @Test
+  fun testCompilerArgumentsShouldBeTakeFromMainIfTestIsEmpty() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin>   
+             <groupId>org.apache.maven.plugins</groupId>  
+             <artifactId>maven-compiler-plugin</artifactId>      
+             <configuration>
+               <source>11</source>
+               <target>11</target>
+               <testSource>1.8</testSource>
+               <testTarget>1.8</testTarget>
+               <compilerArguments>          
+                 <Averbose>true</Averbose>          
+                 <parameters></parameters>          
+                 <bootclasspath>rt.jar_path_here</bootclasspath>        
+               </compilerArguments>   
+             </configuration>    
+          </plugin>
+        </plugins>
+      </build>""".trimIndent())
+
+    assertModules("project", "project.main", "project.test")
+
+    assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.main")),
+                                    "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here")
+
+    assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.test")),
+                                    "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here")
+
+  }
 
 }
