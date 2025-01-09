@@ -52,7 +52,7 @@ public final class JavaSdkUtil {
     }
   }
 
-  /// Returns the path for JUnit 3 jar, or the expected path to JUnit 3.8.1 location inside `.m2`.
+  /// Returns the path for JUnit 3 jar, or the expected path to JUnit 3.8.2 location inside `.m2`.
   /// @deprecated JUnit 3 is not included in the IDEA distribution anymore
   @Deprecated
   public static @NotNull String getJunit3JarPath() {
@@ -61,7 +61,7 @@ public final class JavaSdkUtil {
     }
     catch (Exception e) {
       //IDEA started from sources won't have JUnit3 library in classpath, so let's take it from Maven repository
-      return Path.of(SystemProperties.getUserHome(), ".m2/repository/junit/junit/3.8.1/junit-3.8.1.jar").toAbsolutePath().toString();
+      return Path.of(SystemProperties.getUserHome(), ".m2/repository/junit/junit/3.8.2/junit-3.8.2.jar").toAbsolutePath().toString();
     }
   }
 
