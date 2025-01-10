@@ -27,8 +27,6 @@ data class PoetryOutdatedVersion(
 
 
 class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
-  private val installedLines = listOf("Already installed", "Skipping", "Updating")
-
   @Volatile
   private var packages: List<PyPackage>? = null
 
@@ -47,13 +45,13 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
   override fun install(requirements: List<PyRequirement>?, extraArgs: List<String>) {
     val args = if (requirements.isNullOrEmpty()) {
       listOfNotNull(listOf("install"),
-        extraArgs)
+                    extraArgs)
         .flatten()
     }
     else {
       listOfNotNull(listOf("add"),
-        requirements.map { it.name },
-        extraArgs)
+                    requirements.map { it.name },
+                    extraArgs)
         .flatten()
     }
 
@@ -97,33 +95,27 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
 
   override fun getPackages() = packages
 
-  fun getOutdatedPackages() = outdatedPackages
-
   override fun refreshAndGetPackages(alwaysRefresh: Boolean): List<PyPackage> {
     if (alwaysRefresh || packages == null) {
-      packages = null
-      val outputInstallDryRun = try {
-          runPoetry(sdk, "install", "--dry-run", "--no-root")
-      }
-      catch (e: ExecutionException) {
+      val allPackages = runBlockingCancellable {
+        poetryListPackages(sdk)
+      }.getOrElse {
         packages = emptyList()
-        return packages ?: emptyList()
+        return emptyList()
       }
-      val allPackage = parsePoetryInstallDryRun(outputInstallDryRun.getOrThrow())
-      packages = allPackage.first
-      requirements = allPackage.second
 
-      val outputOutdatedPackages = try {
-          runPoetry(sdk, "show", "--outdated")
+      packages = allPackages.first
+      requirements = allPackages.second
+
+      runBlockingCancellable {
+        outdatedPackages = poetryShowOutdated(sdk).getOrElse {
+          emptyMap()
+        }
       }
-      catch (e: ExecutionException) {
-        outdatedPackages = emptyMap()
-      }
-      if (outputOutdatedPackages is String) {
-        outdatedPackages = parsePoetryShowOutdated(outputOutdatedPackages)
-      }
+
       ApplicationManager.getApplication().messageBus.syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
     }
+
     return packages ?: emptyList()
   }
 
@@ -143,43 +135,5 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
   override fun getDependents(pkg: PyPackage): Set<PyPackage> {
     // TODO: Parse the dependency information from `pipenv graph`
     return emptySet()
-  }
-
-  private fun getVersion(version: String): String {
-    return if (Regex("^[0-9]").containsMatchIn(version)) "==$version" else version
-  }
-
-  /**
-   * Parses the output of `poetry install --dry-run ` into a list of packages.
-   */
-  private fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequirement>> {
-    fun getNameAndVersion(line: String): Triple<String, String, String> {
-      return line.split(" ").let {
-        val installedVersion = it[5].replace(Regex("[():]"), "")
-        val requiredVersion = when {
-          it.size > 7 && it[6] == "->" -> it[7].replace(Regex("[():]"), "")
-          else -> installedVersion
-        }
-        Triple(it[4], installedVersion, requiredVersion)
-      }
-    }
-
-    val pyPackages = mutableListOf<PyPackage>()
-    val pyRequirements = mutableListOf<PyRequirement>()
-    input
-      .lineSequence()
-      .filter { listOf(")", "Already installed").any { lastWords -> it.endsWith(lastWords) } }
-      .forEach { line ->
-        getNameAndVersion(line).also {
-          if (installedLines.any { installedLine -> line.contains(installedLine) }) {
-            pyPackages.add(PyPackage(it.first, it.second, null, emptyList()))
-            this.parseRequirement(it.first + getVersion(it.third))?.let { pyRequirement -> pyRequirements.add(pyRequirement) }
-          }
-          else if (line.contains("Installing")) {
-            this.parseRequirement(it.first + getVersion(it.third))?.let { pyRequirement -> pyRequirements.add(pyRequirement) }
-          }
-        }
-      }
-    return Pair(pyPackages.distinct().toList(), pyRequirements.distinct().toList())
   }
 }

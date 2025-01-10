@@ -27,28 +27,22 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> = poetryUninstallPackage(sdk, pkg.name)
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    return poetryShowPackages(sdk)
-  }
+    val (installed, _) = poetryListPackages(sdk).getOrElse {
+      return Result.failure(it)
+    }
 
-  override suspend fun reloadPackages(): Result<List<PythonPackage>> {
-    updateOutdatedPackages()
-    return super.reloadPackages()
+    outdatedPackages = poetryShowOutdated(sdk).getOrElse {
+      emptyMap()
+    }
+
+    val packages = installed.map {
+      PythonPackage(it.name, it.version, false)
+    }
+
+    return Result.success(packages)
   }
 
   internal fun getOutdatedPackages(): Map<String, PythonOutdatedPackage> = outdatedPackages
-
-  /**
-   * Updates the list of outdated packages by running the Poetry command
-   * `poetry show --outdated`, parsing its output, and storing the results.
-   */
-  private fun updateOutdatedPackages() {
-    val outputOutdatedPackages = runPoetry(sdk, "show", "--outdated").getOrElse {
-      outdatedPackages = emptyMap()
-      return
-    }
-
-    outdatedPackages = parsePoetryShowOutdated(outputOutdatedPackages)
-  }
 
   private fun PythonPackageSpecification.getVersionForPoetry(): String = if (versionSpecs == null) name else "$name@$versionSpecs"
 }
