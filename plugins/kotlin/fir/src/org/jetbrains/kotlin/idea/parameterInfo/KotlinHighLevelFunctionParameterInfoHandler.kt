@@ -288,15 +288,15 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
             parameter.symbol.defaultValue?.let { defaultValue ->
                 append(" = ")
-                val representation = KotlinParameterInfoBase.getDefaultValueStringRepresentation(defaultValue)
+                val expressionValue = KotlinParameterInfoBase.getDefaultValueStringRepresentation(defaultValue)
                 if (defaultValue is KtNameReferenceExpression) {
                     val referencedName = defaultValue.getReferencedName()
-                    if (representation != referencedName) {
+                    if (expressionValue.isConstValue) {
                         append(referencedName)
                         append(" = ")
                     }
                 }
-                append(representation)
+                append(expressionValue.text)
             }
         }
     }

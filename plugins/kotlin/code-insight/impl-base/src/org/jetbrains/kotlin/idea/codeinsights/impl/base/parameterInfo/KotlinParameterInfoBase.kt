@@ -9,28 +9,37 @@ import org.jetbrains.kotlin.psi.*
 
 @ApiStatus.Internal
 object KotlinParameterInfoBase {
-    fun getDefaultValueStringRepresentation(defaultValue: KtExpression): String {
+    data class ExpressionValue(val text: String, val isConstValue: Boolean)
+
+    fun getDefaultValueStringRepresentation(defaultValue: KtExpression): ExpressionValue {
         var text = defaultValue.text
+        var isConstValue = false
+        var shouldBeTrimmed = true
 
         if (defaultValue is KtNameReferenceExpression) {
             val resolve = defaultValue.reference?.resolve()
             if (resolve is KtProperty && resolve.hasModifier(KtTokens.CONST_KEYWORD)) {
-                resolve.initializer?.text?.let { text = it }
+                resolve.initializer?.text?.let {
+                    text = it
+                    isConstValue = true
+                }
+            } else {
+                shouldBeTrimmed = false
             }
         }
 
-        if (text.length <= 32) {
-            return text
+        if (!shouldBeTrimmed || text.length <= 32) {
+            return ExpressionValue(text, isConstValue)
         }
 
         if (defaultValue is KtConstantExpression || defaultValue is KtStringTemplateExpression) {
             if (text.startsWith("\"")) {
-                return "${text.substring(0, 30)}$ellipsis\""
+                return ExpressionValue("${text.substring(0, 30)}$ellipsis\"", false)
             } else if (text.startsWith("\'")) {
-                return "${text.substring(0, 30)}$ellipsis\'"
+                return ExpressionValue("${text.substring(0, 30)}$ellipsis\'", false)
             }
         }
 
-        return text.substring(0, 31) + ellipsis
+        return ExpressionValue(text.substring(0, 31) + ellipsis, isConstValue)
     }
 }

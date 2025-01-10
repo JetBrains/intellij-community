@@ -90,18 +90,18 @@ internal class KotlinIdeDeclarationRenderer(
             override fun renderDefaultValue(analysisSession: KaSession, symbol: KaValueParameterSymbol, printer: PrettyPrinter) {
                 val defaultValue = with(analysisSession) { symbol.defaultValue }
                 if (defaultValue != null) {
-                    val text =
+                    val expressionValue =
                         KotlinParameterInfoBase.getDefaultValueStringRepresentation(defaultValue)
                     with(highlightingManager) {
                         val builder = StringBuilder()
                         if (defaultValue is KtNameReferenceExpression) {
                             val value = defaultValue.text
-                            if (value != text) {
+                            if (expressionValue.isConstValue) {
                                 builder.append(highlight(value) { asParameter })
                                 builder.append(highlight(" = ") { asOperationSign })
                             }
                         }
-                        builder.appendCodeSnippetHighlightedByLexer(text)
+                        builder.appendCodeSnippetHighlightedByLexer(expressionValue.text)
                         printer.append(builder)
                     }
                 }
@@ -546,7 +546,8 @@ internal class KotlinIdeDeclarationRenderer(
                                     val builder = StringBuilder()
                                     with(highlightingManager) {
                                         builder.append(highlight(" = ") { asOperationSign })
-                                        builder.appendCodeSnippetHighlightedByLexer(KotlinParameterInfoBase.getDefaultValueStringRepresentation(it))
+                                        val expressionValue = KotlinParameterInfoBase.getDefaultValueStringRepresentation(it)
+                                        builder.appendCodeSnippetHighlightedByLexer(expressionValue.text)
                                     }
                                     printer.append(builder)
                                 }
