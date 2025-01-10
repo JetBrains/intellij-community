@@ -84,6 +84,16 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                  "Movie = TypedDict('Movie', {'name': Optional[int], 'smth': type, 'smthElse': Any, 'year': <weak_warning descr=\"Value must be a type\">2</weak_warning>}, total=False)");
   }
 
+  public void testTypeHintInParenthesis() {
+    doTestByText(
+      """
+        class B(TypedDict):
+            a: (
+                int
+                | str
+            )""");
+  }
+
   public void testKeyTypes() {
     doTestByText("""
                    from typing import TypedDict, Any, Optional

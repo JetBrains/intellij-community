@@ -348,11 +348,7 @@ class PyTypedDictInspection : PyInspection() {
      * Checks that [expression] with [strType] name is a type
      */
     private fun checkValueIsAType(expression: PyExpression?, strType: String?) {
-      if (expression !is PyReferenceExpression &&
-          expression !is PySubscriptionExpression &&
-          expression !is PyNoneLiteralExpression &&
-          expression !is PyBinaryExpression &&
-          expression !is PyStringLiteralExpression || strType == null) {
+      if (expression !is PyExpression || strType == null) {
         registerProblem(expression, PyPsiBundle.message("INSP.typeddict.value.must.be.type"), ProblemHighlightType.WEAK_WARNING)
         return
       }
