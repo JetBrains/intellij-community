@@ -15,7 +15,13 @@ import java.nio.file.Path
  *
  * It also searches for poetry and stores it in [PropertiesComponent]
  */
-internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, PythonType.VanillaPython3>(PythonBinaryPath::class, PythonType.VanillaPython3, PythonBinary::class, lazy = false, "poetry") {
+internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, PythonType.VanillaPython3>(
+  annotation = PythonBinaryPath::class,
+  pythonType = PythonType.VanillaPython3,
+  envType = PythonBinary::class,
+  lazy = false,
+  additionalTags = arrayOf("poetry")
+) {
   private companion object {
     val checkedPoetries = mutableMapOf<Path, Unit>()
   }
