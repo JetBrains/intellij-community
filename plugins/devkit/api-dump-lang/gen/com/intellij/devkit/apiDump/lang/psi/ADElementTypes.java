@@ -18,6 +18,7 @@ public interface ADElementTypes {
   IElementType CLASS_HEADER = new ADElementType("CLASS_HEADER");
   IElementType COMPANION = new ADElementType("COMPANION");
   IElementType CONSTRUCTOR = new ADElementType("CONSTRUCTOR");
+  IElementType CONSTRUCTOR_REFERENCE = new ADElementType("CONSTRUCTOR_REFERENCE");
   IElementType EXPERIMENTAL = new ADElementType("EXPERIMENTAL");
   IElementType FIELD = new ADElementType("FIELD");
   IElementType FIELD_REFERENCE = new ADElementType("FIELD_REFERENCE");
@@ -61,6 +62,9 @@ public interface ADElementTypes {
       }
       else if (type == CONSTRUCTOR) {
         return new ADConstructorImplGen(type);
+      }
+      else if (type == CONSTRUCTOR_REFERENCE) {
+        return new ADConstructorReferenceImplGen(type);
       }
       else if (type == EXPERIMENTAL) {
         return new ADExperimentalImplGen(type);

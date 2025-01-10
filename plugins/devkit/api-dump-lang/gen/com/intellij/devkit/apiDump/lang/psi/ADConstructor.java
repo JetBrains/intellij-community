@@ -9,10 +9,13 @@ import com.intellij.psi.PsiElement;
 
 public interface ADConstructor extends ADMember {
 
+  @NotNull
+  ADConstructorReference getConstructorReference();
+
   @Nullable
   ADModifiers getModifiers();
 
-  @Nullable
+  @NotNull
   ADParameters getParameters();
 
   @Nullable

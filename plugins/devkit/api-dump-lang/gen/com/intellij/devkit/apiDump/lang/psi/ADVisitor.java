@@ -28,6 +28,10 @@ public class ADVisitor extends PsiElementVisitor {
     visitMember(o);
   }
 
+  public void visitConstructorReference(@NotNull ADConstructorReference o) {
+    visitPsiElement(o);
+  }
+
   public void visitExperimental(@NotNull ADExperimental o) {
     visitPsiElement(o);
   }

@@ -13,7 +13,7 @@ import static com.intellij.devkit.apiDump.lang.psi.ADElementTypes.*;
 import com.intellij.devkit.apiDump.lang.psi.*;
 import com.intellij.psi.tree.IElementType;
 
-public class ADMethodReferenceImplGen extends ADPsiElementImpl implements ADMethodReference {
+public class ADMethodReferenceImplGen extends ADMethodReferenceImpl implements ADMethodReference {
 
   public ADMethodReferenceImplGen(@NotNull IElementType type) {
     super(type);

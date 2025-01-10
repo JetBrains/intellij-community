@@ -13,7 +13,7 @@ import static com.intellij.devkit.apiDump.lang.psi.ADElementTypes.*;
 import com.intellij.devkit.apiDump.lang.psi.*;
 import com.intellij.psi.tree.IElementType;
 
-public class ADFieldReferenceImplGen extends ADPsiElementImpl implements ADFieldReference {
+public class ADFieldReferenceImplGen extends ADFieldReferenceImpl implements ADFieldReference {
 
   public ADFieldReferenceImplGen(@NotNull IElementType type) {
     super(type);

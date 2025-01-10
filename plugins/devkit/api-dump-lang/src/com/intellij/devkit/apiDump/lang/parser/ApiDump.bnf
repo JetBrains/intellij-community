@@ -44,9 +44,11 @@
 
 File ::= ClassDeclaration*
 
-ClassDeclaration ::= ClassHeader Member*
+ClassDeclaration ::= ClassHeader Member* {
+  methods = [ resolvePsiClass ]
+}
 
-Member ::= Method | Field | Constructor | Companion | SuperType
+Member ::= Method | Constructor | Field | Companion | SuperType
 
 ClassHeader ::= Modifiers? TypeReference
 
@@ -64,21 +66,43 @@ TypeReference ::= IDENTIFIER (DOT IDENTIFIER)* Array*
 Array ::= LBRACKET RBRACKET
 
 Method ::= MINUS Modifiers? MethodReference Parameters TypeAnnotation
+{
+  pin = 'Parameters'
+}
+
 MethodReference ::= IDENTIFIER
+{
+  mixin = 'com.intellij.devkit.apiDump.lang.psi.impl.ADMethodReferenceImpl'
+}
 
 Parameters ::= LPAREN Parameter? (COMMA Parameter)* RPAREN
-{ pin = 'LPAREN' }
+{
+  pin = 'LPAREN'
+}
 
 Parameter ::= TypeReference
 
 private TypeAnnotation ::= COLON TypeReference
-{ pin = 'COLON' }
+{
+  pin = 'COLON'
+}
 
 Field ::= MINUS Modifiers? FieldReference TypeAnnotation
-FieldReference ::= IDENTIFIER
 
-Constructor ::= MINUS Modifiers? LESS 'init' MORE Parameters TypeAnnotation
-{ pin = 'MORE' }
+FieldReference ::= IDENTIFIER
+{
+  mixin = 'com.intellij.devkit.apiDump.lang.psi.impl.ADFieldReferenceImpl'
+}
+
+Constructor ::= MINUS Modifiers? ConstructorReference Parameters TypeAnnotation
+{
+  pin = 'Parameters'
+}
+
+ConstructorReference ::= LESS 'init' MORE
+{
+  mixin = 'com.intellij.devkit.apiDump.lang.psi.impl.ADConstructorReferenceImpl'
+}
 
 SuperType ::= MINUS TypeReference
 

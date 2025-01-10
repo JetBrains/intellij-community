@@ -31,13 +31,19 @@ public class ADConstructorImplGen extends ADMemberImplGen implements ADConstruct
   }
 
   @Override
+  @NotNull
+  public ADConstructorReference getConstructorReference() {
+    return PsiTreeUtil.getChildOfType(this, ADConstructorReference.class);
+  }
+
+  @Override
   @Nullable
   public ADModifiers getModifiers() {
     return PsiTreeUtil.getChildOfType(this, ADModifiers.class);
   }
 
   @Override
-  @Nullable
+  @NotNull
   public ADParameters getParameters() {
     return PsiTreeUtil.getChildOfType(this, ADParameters.class);
   }

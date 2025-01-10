@@ -121,7 +121,7 @@ public class ADParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // MINUS Modifiers? LESS 'init' MORE Parameters TypeAnnotation
+  // MINUS Modifiers? ConstructorReference Parameters TypeAnnotation
   public static boolean Constructor(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Constructor")) return false;
     if (!nextTokenIs(b, MINUS)) return false;
@@ -129,12 +129,10 @@ public class ADParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, CONSTRUCTOR, null);
     r = consumeToken(b, MINUS);
     r = r && Constructor_1(b, l + 1);
-    r = r && consumeToken(b, LESS);
-    r = r && consumeToken(b, "init");
-    r = r && consumeToken(b, MORE);
-    p = r; // pin = MORE
-    r = r && report_error_(b, Parameters(b, l + 1));
-    r = p && TypeAnnotation(b, l + 1) && r;
+    r = r && ConstructorReference(b, l + 1);
+    r = r && Parameters(b, l + 1);
+    p = r; // pin = Parameters
+    r = r && TypeAnnotation(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -144,6 +142,20 @@ public class ADParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "Constructor_1")) return false;
     Modifiers(b, l + 1);
     return true;
+  }
+
+  /* ********************************************************** */
+  // LESS 'init' MORE
+  public static boolean ConstructorReference(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ConstructorReference")) return false;
+    if (!nextTokenIs(b, LESS)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LESS);
+    r = r && consumeToken(b, "init");
+    r = r && consumeToken(b, MORE);
+    exit_section_(b, m, CONSTRUCTOR_REFERENCE, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -205,15 +217,15 @@ public class ADParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // Method | Field | Constructor | Companion | SuperType
+  // Method | Constructor | Field | Companion | SuperType
   public static boolean Member(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Member")) return false;
     if (!nextTokenIs(b, MINUS)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, MEMBER, null);
     r = Method(b, l + 1);
-    if (!r) r = Field(b, l + 1);
     if (!r) r = Constructor(b, l + 1);
+    if (!r) r = Field(b, l + 1);
     if (!r) r = Companion(b, l + 1);
     if (!r) r = SuperType(b, l + 1);
     exit_section_(b, l, m, r, false, null);
@@ -225,15 +237,16 @@ public class ADParser implements PsiParser, LightPsiParser {
   public static boolean Method(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Method")) return false;
     if (!nextTokenIs(b, MINUS)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, METHOD, null);
     r = consumeToken(b, MINUS);
     r = r && Method_1(b, l + 1);
     r = r && MethodReference(b, l + 1);
     r = r && Parameters(b, l + 1);
+    p = r; // pin = Parameters
     r = r && TypeAnnotation(b, l + 1);
-    exit_section_(b, m, METHOD, r);
-    return r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // Modifiers?

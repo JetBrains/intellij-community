@@ -6,16 +6,7 @@ package com.intellij.devkit.apiDump.lang.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiClass;
 
-public interface ADClassDeclaration extends ADPsiElement {
-
-  @NotNull
-  ADClassHeader getClassHeader();
-
-  @NotNull
-  List<ADMember> getMemberList();
-
-  @Nullable PsiClass resolvePsiClass();
+public interface ADConstructorReference extends ADPsiElement {
 
 }
