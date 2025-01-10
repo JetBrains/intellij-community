@@ -35,7 +35,7 @@ import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesE
 import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
-import org.jetbrains.plugins.terminal.block.ui.getCharSize
+import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.ui.stickScrollBarToBottom
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.event.ComponentAdapter
@@ -151,13 +151,7 @@ internal class ReworkedTerminalView(
 
   override fun getTerminalSize(): TermSize? {
     val model = getCurOutputModel()
-    val contentSize = model.editor.scrollingModel.visibleArea.size
-    val charSize = model.editor.getCharSize()
-
-    return if (contentSize.width > 0 && contentSize.height > 0) {
-      TerminalUiUtils.calculateTerminalSize(contentSize, charSize)
-    }
-    else null
+    return model.editor.calculateTerminalSize()
   }
 
   override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> {

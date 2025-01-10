@@ -271,6 +271,16 @@ internal fun Editor.getCharSize(): Dimension2D {
   return Dimension2DDouble(width.toDouble(), lineHeight.toDouble())
 }
 
+fun Editor.calculateTerminalSize(): TermSize? {
+  val contentSize = scrollingModel.visibleArea.size
+  val charSize = getCharSize()
+
+  return if (contentSize.width > 0 && contentSize.height > 0) {
+    TerminalUiUtils.calculateTerminalSize(contentSize, charSize)
+  }
+  else null
+}
+
 private class Dimension2DDouble(private var width: Double, private var height: Double) : Dimension2D() {
   override fun getWidth(): Double = width
 
