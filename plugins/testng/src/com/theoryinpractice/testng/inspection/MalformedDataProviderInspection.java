@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
@@ -17,6 +17,7 @@ import com.theoryinpractice.testng.TestNGFramework;
 import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.DataProvider;
 
 import java.util.Properties;
@@ -40,7 +41,8 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
                 if (!(dataProviderMethod instanceof PsiMethod providerMethod)) {
                   final LocalQuickFix[] fixes;
                   if (isOnTheFly && providerClass != null) {
-                    fixes = new LocalQuickFix[] {createMethodFix(provider, providerClass, topLevelClass)};
+                    CreateMethodQuickFix fix = createMethodFix(provider, providerClass, topLevelClass);
+                    fixes = (fix != null) ? new LocalQuickFix[] {fix} : LocalQuickFix.EMPTY_ARRAY;
                   }
                   else {
                     fixes = LocalQuickFix.EMPTY_ARRAY;
@@ -64,9 +66,9 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
     };
   }
 
-  private static CreateMethodQuickFix createMethodFix(PsiAnnotationMemberValue provider,
-                                                      @NotNull PsiClass providerClass,
-                                                      PsiClass topLevelClass) {
+  private static @Nullable CreateMethodQuickFix createMethodFix(PsiAnnotationMemberValue provider,
+                                                                @NotNull PsiClass providerClass,
+                                                                PsiClass topLevelClass) {
     final String name = StringUtil.unquoteString(provider.getText());
 
     FileTemplateDescriptor templateDesc = new TestNGFramework().getParametersMethodFileTemplateDescriptor();
