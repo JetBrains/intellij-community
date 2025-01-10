@@ -68,6 +68,7 @@ import java.util.function.Consumer;
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
+import static com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter.CURRENT_BRANCH_BG;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 import static java.util.Collections.emptySet;
 
@@ -672,28 +673,36 @@ public class VcsLogGraphTable extends TableWithProgress
     }
 
     RowType rowType = model.getRowType(row);
-    VcsCommitStyle style = createStyle(rowType == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
-                                       baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+    VcsCommitStyle style;
+    if (rowType != null) {
+      style = createStyle(rowType == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
+                          baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
-    Integer commitId = model.getId(row);
-    if (commitId != null) {
-      VcsShortCommitDetails details = myLogData.getCommitMetadataCache().getCachedData(commitId);
-      if (details != null) {
-        int columnModelIndex = convertColumnIndexToModel(column);
-        List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {
-          try {
-            return highlighter.getStyle(commitId, details, columnModelIndex, selected);
-          }
-          catch (ProcessCanceledException e) {
-            return VcsCommitStyle.DEFAULT;
-          }
-          catch (Throwable t) {
-            LOG.error("Exception while getting style from highlighter " + highlighter, t);
-            return VcsCommitStyle.DEFAULT;
-          }
-        });
-        style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
+      Integer commitId = model.getId(row);
+      if (commitId != null) {
+        VcsShortCommitDetails details = myLogData.getCommitMetadataCache().getCachedData(commitId);
+        if (details != null) {
+          int columnModelIndex = convertColumnIndexToModel(column);
+          List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {
+            try {
+              return highlighter.getStyle(commitId, details, columnModelIndex, selected);
+            }
+            catch (ProcessCanceledException e) {
+              return VcsCommitStyle.DEFAULT;
+            }
+            catch (Throwable t) {
+              LOG.error("Exception while getting style from highlighter " + highlighter, t);
+              return VcsCommitStyle.DEFAULT;
+            }
+          });
+          style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
+        }
       }
+    }
+    else {
+      style = createStyle(baseStyle.getForeground(),
+                          selected ? baseStyle.getBackground() : CURRENT_BRANCH_BG,
+                          VcsLogHighlighter.TextStyle.BOLD);
     }
 
     if (!selected && hovered) {
