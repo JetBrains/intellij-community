@@ -201,7 +201,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
 
   @Synchronized
   fun showProblem(problem: MavenProjectProblem) = doIfImportInProcess {
-    hasErrors = true
+    hasErrors = hasErrors || problem.isError
     val group = if (problem.isError) SyncBundle.message("maven.sync.group.error") else SyncBundle.message("maven.sync.group.warning")
     val kind = if (problem.isError) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
     val position = problem.getFilePosition()
