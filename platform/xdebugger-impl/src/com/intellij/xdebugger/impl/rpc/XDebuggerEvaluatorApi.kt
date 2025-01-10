@@ -15,9 +15,10 @@ import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
+import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -72,9 +73,11 @@ sealed interface XValueComputeChildrenEvent {
     @Transient val link: XDebuggerTreeNodeHyperlink? = null,
   ) : XValueComputeChildrenEvent
 
-  // TODO[IJPL-160146]: support addNextChildren serialization
   @Serializable
-  data class TooManyChildren(val remaining: Int, @Transient val addNextChildren: Runnable? = null) : XValueComputeChildrenEvent
+  data class TooManyChildren(
+    val remaining: Int,
+    @Serializable(with = SendChannelSerializer::class) val addNextChildren: SendChannel<Unit>? = null
+  ) : XValueComputeChildrenEvent
 }
 
 @ApiStatus.Internal

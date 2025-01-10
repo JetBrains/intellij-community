@@ -90,10 +90,9 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
           is XValueComputeChildrenEvent.TooManyChildren -> {
             val addNextChildren = computeChildrenEvent.addNextChildren
             if (addNextChildren != null) {
-              node.tooManyChildren(computeChildrenEvent.remaining, addNextChildren)
+              node.tooManyChildren(computeChildrenEvent.remaining, Runnable { addNextChildren.trySend(Unit) })
             }
             else {
-              // TODO[IJPL-160146]: support addNextChildren serialization. Now it leads to weird behaviour in Remote Dev
               @Suppress("DEPRECATION")
               node.tooManyChildren(computeChildrenEvent.remaining)
             }
