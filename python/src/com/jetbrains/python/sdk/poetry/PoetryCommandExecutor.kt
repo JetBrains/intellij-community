@@ -15,7 +15,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.pathValidation.PlatformAndRoot
@@ -196,12 +200,76 @@ fun parsePoetryShow(input: String): List<PythonPackage> {
   val result = mutableListOf<PythonPackage>()
   input.split("\n").forEach { line ->
     if (line.isNotBlank()) {
-      val packageInfo = line.trim().split(" ").map { it.trim() }.filter { it.isNotBlank() && it != "(!)"}
+      val packageInfo = line.trim().split(" ").map { it.trim() }.filter { it.isNotBlank() && it != "(!)" }
       result.add(PythonPackage(packageInfo[0], packageInfo[1], false))
     }
   }
 
   return result
+}
+
+@Internal
+suspend fun poetryShowOutdated(sdk: Sdk): Result<Map<String, PythonOutdatedPackage>> {
+  val output = runPoetryWithSdk(sdk, "show", "--outdated").getOrElse {
+    return Result.failure(it)
+  }
+
+  return parsePoetryShowOutdated(output).let { Result.success(it) }
+}
+
+@Internal
+suspend fun poetryListPackages(sdk: Sdk): Result<Pair<List<PyPackage>, List<PyRequirement>>> {
+  // Just in case there were any changes to pyproject.toml
+  if (runPoetryWithSdk(sdk, "lock", "--check").isFailure) {
+    runPoetryWithSdk(sdk, "lock", "--no-update")
+  }
+
+  val output = runPoetryWithSdk(sdk, "install", "--dry-run", "--no-root").getOrElse {
+    return Result.failure(it)
+  }
+
+  return parsePoetryInstallDryRun(output).let {
+    Result.success(it)
+  }
+}
+
+@Internal
+fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequirement>> {
+  val installedLines = listOf("Already installed", "Skipping", "Updating")
+
+  fun getNameAndVersion(line: String): Triple<String, String, String> {
+    return line.split(" ").let {
+      val installedVersion = it[5].replace(Regex("[():]"), "")
+      val requiredVersion = when {
+        it.size > 7 && it[6] == "->" -> it[7].replace(Regex("[():]"), "")
+        else -> installedVersion
+      }
+      Triple(it[4], installedVersion, requiredVersion)
+    }
+  }
+
+  fun getVersion(version: String): String {
+    return if (Regex("^[0-9]").containsMatchIn(version)) "==$version" else version
+  }
+
+  val pyPackages = mutableListOf<PyPackage>()
+  val pyRequirements = mutableListOf<PyRequirement>()
+  input
+    .lineSequence()
+    .filter { listOf(")", "Already installed").any { lastWords -> it.endsWith(lastWords) } }
+    .forEach { line ->
+      getNameAndVersion(line).also {
+        if (installedLines.any { installedLine -> line.contains(installedLine) }) {
+          pyPackages.add(PyPackage(it.first, it.second, null, emptyList()))
+          PyRequirementParser.fromLine(it.first + getVersion(it.third))?.let { pyRequirement -> pyRequirements.add(pyRequirement) }
+        }
+        else if (line.contains("Installing")) {
+          PyRequirementParser.fromLine(it.first + getVersion(it.third))?.let { pyRequirement -> pyRequirements.add(pyRequirement) }
+        }
+      }
+    }
+
+  return Pair(pyPackages.distinct().toList(), pyRequirements.distinct().toList())
 }
 
 /**
