@@ -48,8 +48,6 @@ abstract class AbstractFloatingToolbarComponent(
     isReservePlaceAutoPopupIcon = false
     isOpaque = false
     layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
-
-    transparentComponent.hideComponent()
   }
 
   override fun addNotify() {

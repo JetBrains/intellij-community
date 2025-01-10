@@ -73,6 +73,10 @@ class TransparentComponentAnimator(
     animator.setVisibleImmediately(false)
   }
 
+  init {
+    component.hideComponent()
+  }
+
   companion object {
     private const val SHOWING_TIME_MS = 500
     private const val HIDING_TIME_MS = 1000
