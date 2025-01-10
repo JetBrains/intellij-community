@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderBaseImpl
 import java.net.URL
 
-internal class IdeBuiltInsVirtualFileProviderImpl : BuiltinsVirtualFileProviderBaseImpl() {
+class IdeBuiltInsVirtualFileProviderImpl : BuiltinsVirtualFileProviderBaseImpl() {
     override fun findVirtualFile(url: URL): VirtualFile? {
         return VfsUtil.findFileByURL(url)
     }
