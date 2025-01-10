@@ -3,19 +3,11 @@ package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
-import fleet.preferences.isFleetInternalDefaultValue
-import fleet.preferences.isFleetTestMode
 import it.unimi.dsi.fastutil.ints.IntList
 
-internal fun Mut.preventReadsFromLocal(): Mut = let { mut ->
-  if (isFleetInternalDefaultValue || isFleetTestMode) {
-    mut
-      .intersectingPartitions(IntList.of(SchemaPart, SharedPart, CommonPart))
-      .cachedQueryWithParts(IntList.of(SchemaPart, SharedPart, CommonPart))
-      .expandAndMutateWithParts(AllParts)
-  }
-  else mut
-}
+internal fun Mut.preventReadsFromLocal(): Mut = intersectingPartitions(IntList.of(SchemaPart, SharedPart, CommonPart))
+  .cachedQueryWithParts(IntList.of(SchemaPart, SharedPart, CommonPart))
+  .expandAndMutateWithParts(AllParts)
 
 internal fun Mut.preventRefsFromShared(): Mut =
   processingNovelty { novelty, _ ->
