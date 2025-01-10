@@ -267,7 +267,7 @@ internal fun Row.pythonInterpreterComboBox(
 }
 
 internal class PythonInterpreterComboBox(
-  val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
+  private val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
   val controller: PythonAddInterpreterModel,
   val onPathSelected: (String) -> Unit,
 ) : ComboBox<PythonSelectableInterpreter?>() {

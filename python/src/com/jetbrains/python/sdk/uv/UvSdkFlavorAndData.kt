@@ -7,25 +7,44 @@ import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jdom.Element
+import java.nio.file.Path
+import javax.swing.Icon
+import kotlin.io.path.pathString
 
 
 class UvSdkAdditionalData : PythonSdkAdditionalData {
-  constructor() : super(UvSdkFlavor)
-  constructor(data: PythonSdkAdditionalData) : super(data)
+  val uvWorkingDirectory: Path?
+  val usePip: Boolean
+
+  constructor(uvWorkingDirectory: Path? = null, usePip: Boolean = false) : super(UvSdkFlavor) {
+    this.uvWorkingDirectory = uvWorkingDirectory
+    this.usePip = usePip
+  }
+
+  constructor(data: PythonSdkAdditionalData, uvWorkingDirectory: Path? = null, usePip: Boolean = false) : super(data) {
+    this.uvWorkingDirectory = uvWorkingDirectory
+    this.usePip = usePip
+  }
 
   override fun save(element: Element) {
     super.save(element)
     element.setAttribute(IS_UV, "true")
+    element.setAttribute(UV_WORKING_DIR, uvWorkingDirectory?.pathString ?: "")
+    element.setAttribute(USE_PIP, usePip.toString())
   }
 
   companion object {
     private const val IS_UV = "IS_UV"
+    private const val UV_WORKING_DIR = "UV_WORKING_DIR"
+    private const val USE_PIP = "USE_PIP"
 
     @JvmStatic
     fun load(element: Element): UvSdkAdditionalData? {
       return when {
         element.getAttributeValue(IS_UV) == "true" -> {
-          UvSdkAdditionalData().apply {
+          val uvWorkingDirectory = if (element.getAttributeValue(UV_WORKING_DIR).isNullOrEmpty()) null else Path.of(element.getAttributeValue(UV_WORKING_DIR))
+          val usePip = element.getAttributeValue(USE_PIP)?.toBoolean() ?: false
+          UvSdkAdditionalData(uvWorkingDirectory, usePip).apply {
             load(element)
           }
         }
@@ -41,7 +60,7 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
 }
 
 object UvSdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
-  override fun getIcon() = UV_ICON
+  override fun getIcon(): Icon = UV_ICON
   override fun getFlavorDataClass(): Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 
   override fun isValidSdkPath(pathStr: String): Boolean {
