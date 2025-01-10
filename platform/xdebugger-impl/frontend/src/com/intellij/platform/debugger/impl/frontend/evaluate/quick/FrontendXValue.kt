@@ -44,7 +44,7 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
   }
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
-    node.childCoroutineScope("FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
+    node.childCoroutineScope(parentScope = cs, "FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
       XDebuggerEvaluatorApi.getInstance().computePresentation(xValueDto.id, place)?.collect { presentationEvent ->
         when (presentationEvent) {
           is XValuePresentationEvent.SetSimplePresentation -> {
@@ -54,7 +54,7 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
             node.setPresentation(presentationEvent.icon?.icon(), FrontendXValuePresentation(presentationEvent), presentationEvent.hasChildren)
           }
           is XValuePresentationEvent.SetFullValueEvaluator -> {
-            node.setFullValueEvaluator(FrontendXFullValueEvaluator(presentationEvent.fullValueEvaluatorDto))
+            node.setFullValueEvaluator(FrontendXFullValueEvaluator(cs, presentationEvent.fullValueEvaluatorDto))
           }
         }
       }
@@ -62,7 +62,7 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
   }
 
   override fun computeChildren(node: XCompositeNode) {
-    node.childCoroutineScope("FrontendXValue#computeChildren").launch(Dispatchers.EDT) {
+    node.childCoroutineScope(parentScope = cs, "FrontendXValue#computeChildren").launch(Dispatchers.EDT) {
       XDebuggerEvaluatorApi.getInstance().computeChildren(xValueDto.id)?.collect { computeChildrenEvent ->
         when (computeChildrenEvent) {
           is XValueComputeChildrenEvent.AddChildren -> {
@@ -173,11 +173,10 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
   }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
-internal fun Obsolescent.childCoroutineScope(name: String): CoroutineScope {
+internal fun Obsolescent.childCoroutineScope(parentScope: CoroutineScope, name: String): CoroutineScope {
   val obsolescent = this
-  val scope = GlobalScope.childScope(name)
-  scope.launch(context = Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
+  val scope = parentScope.childScope(name)
+  parentScope.launch(context = Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
     while (!obsolescent.isObsolete) {
       delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
     }

@@ -7,12 +7,13 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto
 import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorResult
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
-internal class FrontendXFullValueEvaluator(private val dto: XFullValueEvaluatorDto) : XFullValueEvaluator() {
+internal class FrontendXFullValueEvaluator(private val xValueCs: CoroutineScope, private val dto: XFullValueEvaluatorDto) : XFullValueEvaluator() {
   private val linkAttributes = dto.attributes?.let {
     LinkAttributes(it.tooltipText, it.shortcut?.let { shortcut -> Supplier { shortcut } }, it.linkIcon?.icon())
   }
@@ -48,7 +49,7 @@ internal class FrontendXFullValueEvaluator(private val dto: XFullValueEvaluatorD
   }
 
   override fun startEvaluation(callback: XFullValueEvaluationCallback) {
-    callback.childCoroutineScope("XFullValueEvaluationCallback").launch(Dispatchers.EDT) {
+    callback.childCoroutineScope(parentScope = xValueCs, "XFullValueEvaluationCallback").launch(Dispatchers.EDT) {
       val result = XDebuggerEvaluatorApi.getInstance().evaluateFullValue(dto.xFullValueEvaluatorId).await()
       when (result) {
         is XFullValueEvaluatorResult.Evaluated -> {
