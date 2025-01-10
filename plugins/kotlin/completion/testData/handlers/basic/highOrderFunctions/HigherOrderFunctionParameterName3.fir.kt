@@ -1,5 +1,4 @@
 // FIR_COMPARISON
-// IGNORE_K2
 
 fun foo() {
     emptyMap<String, Int>()

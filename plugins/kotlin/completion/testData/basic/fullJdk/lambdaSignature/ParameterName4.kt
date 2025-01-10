@@ -1,5 +1,4 @@
 // IGNORE_K1
-// IGNORE_K2
 
 fun foo() {
     emptyMap<String, Int>()
