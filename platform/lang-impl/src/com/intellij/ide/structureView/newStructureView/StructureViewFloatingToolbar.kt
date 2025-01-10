@@ -6,9 +6,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
-import com.intellij.openapi.observable.util.whenMouseMoved
-import com.intellij.openapi.ui.isComponentUnderMouse
-import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
@@ -25,13 +22,7 @@ internal class StructureViewFloatingToolbar(
   parentDisposable
 ) {
 
-  override val autoHideable: Boolean = false
-
   private var boundsWithoutScrolling: Rectangle? = null
-
-  override fun isComponentOnHold(): Boolean {
-    return isComponentUnderMouse() || isFocusAncestor()
-  }
 
   fun repaintOnYWithDy(y: Int, scrollingDy: Int) {
     boundsWithoutScrolling = Rectangle(0, y, minimumButtonSize.width, minimumButtonSize.height)
@@ -62,9 +53,7 @@ internal class StructureViewFloatingToolbar(
   }
 
   init {
-    ownerComponent.whenMouseMoved(parentDisposable) {
-      scheduleShow()
-    }
+    scheduleShow()
   }
 
   private class MyToolbarLayoutStrategy: ToolbarLayoutStrategy {
@@ -85,6 +74,5 @@ internal class StructureViewFloatingToolbar(
     override fun calcMinimumSize(toolbar: ActionToolbar): Dimension {
       return JBUI.emptySize()
     }
-
   }
 }

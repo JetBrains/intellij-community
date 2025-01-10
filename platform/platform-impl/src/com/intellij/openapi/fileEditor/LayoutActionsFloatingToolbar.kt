@@ -14,9 +14,4 @@ class LayoutActionsFloatingToolbar(
   actionGroup,
   parentComponent,
   parentDisposable
-) {
-
-  override val autoHideable: Boolean = false
-
-  override fun isComponentOnHold(): Boolean = true
-}
+)

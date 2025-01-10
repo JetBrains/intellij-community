@@ -27,6 +27,8 @@ class TransparentComponentAnimator(
 
   var hidingTime: Int by animator::hidingDuration
 
+  var autoHideable: Boolean = false
+
   private fun startTimerIfNeeded() {
     if (!disposable.isDisposed) {
       if (!clk.isRunning) {
@@ -43,7 +45,7 @@ class TransparentComponentAnimator(
 
   fun scheduleShow() {
     stopTimerIfNeeded()
-    val onCompletion = if (component.autoHideable) ::startTimerIfNeeded else null
+    val onCompletion = if (autoHideable) ::startTimerIfNeeded else null
     animator.setVisible(true, onCompletion) {
       component.showComponent()
     }

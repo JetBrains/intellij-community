@@ -55,35 +55,35 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     parentDisposable
   ) {
 
-    override val autoHideable: Boolean = provider.autoHideable
-
     override fun isComponentOnHold(): Boolean {
       return component.parent?.isComponentUnderMouse() == true ||
              component.parent?.isFocusAncestor() == true
     }
 
     init {
-      if (autoHideable) {
-        var ignoreMouseMotionRectangle: Rectangle? = null
-        editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
-          override fun mouseMoved(e: EditorMouseEvent) {
-            if (ignoreMouseMotionRectangle?.contains(e.mouseEvent.locationOnScreen) != true) {
-              ignoreMouseMotionRectangle = null
-            }
-            if (ignoreMouseMotionRectangle == null) {
-              scheduleShow()
-            }
+      autoHideable = provider.autoHideable
+    }
+
+    init {
+      var ignoreMouseMotionRectangle: Rectangle? = null
+      editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
+        override fun mouseMoved(e: EditorMouseEvent) {
+          if (ignoreMouseMotionRectangle?.contains(e.mouseEvent.locationOnScreen) != true) {
+            ignoreMouseMotionRectangle = null
           }
-        }, parentDisposable)
-        editor.contentComponent.whenKeyPressed(parentDisposable) {
-          if (it.keyCode == KeyEvent.VK_ESCAPE) {
-            if (isVisible) {
-              val location = Point()
-              SwingUtilities.convertPointToScreen(location, this)
-              ignoreMouseMotionRectangle = Rectangle(location, size)
-            }
-            hideImmediately()
+          if (autoHideable && ignoreMouseMotionRectangle == null) {
+            scheduleShow()
           }
+        }
+      }, parentDisposable)
+      editor.contentComponent.whenKeyPressed(parentDisposable) {
+        if (it.keyCode == KeyEvent.VK_ESCAPE) {
+          if (isVisible) {
+            val location = Point()
+            SwingUtilities.convertPointToScreen(location, this)
+            ignoreMouseMotionRectangle = Rectangle(location, size)
+          }
+          hideImmediately()
         }
       }
     }

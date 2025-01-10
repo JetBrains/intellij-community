@@ -37,9 +37,11 @@ abstract class AbstractFloatingToolbarComponent(
   @set:ApiStatus.Internal
   var hidingTime: Int by componentAnimator::hidingTime
 
-  protected abstract val autoHideable: Boolean
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var autoHideable: Boolean by componentAnimator::autoHideable
 
-  protected abstract fun isComponentOnHold(): Boolean
+  protected open fun isComponentOnHold(): Boolean = false
 
   init {
     targetComponent = ownerComponent
@@ -113,9 +115,6 @@ abstract class AbstractFloatingToolbarComponent(
     override fun setOpacity(opacity: Float) {
       this.opacity = opacity
     }
-
-    override val autoHideable: Boolean
-      get() = toolbar.autoHideable
 
     override fun isComponentOnHold(): Boolean = toolbar.isComponentOnHold()
 

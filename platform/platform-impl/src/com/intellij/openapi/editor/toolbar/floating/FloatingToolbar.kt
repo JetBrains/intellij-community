@@ -18,10 +18,12 @@ class FloatingToolbar(
   parentDisposable
 ) {
 
-  override val autoHideable: Boolean = true
-
   override fun isComponentOnHold(): Boolean {
     return isComponentUnderMouse() || isFocusAncestor()
+  }
+
+  init {
+    autoHideable = true
   }
 
   init {
