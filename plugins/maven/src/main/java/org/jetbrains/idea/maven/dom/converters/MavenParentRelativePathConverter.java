@@ -32,9 +32,13 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile> implements CustomReferenceConverter {
+
+  public static final String DEFAULT_PARENT_PATH = "../pom.xml";
+
   @Override
   public PsiFile fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
-    if (StringUtil.isEmptyOrSpaces(s)) return null;
+    String path = s == null ? DEFAULT_PARENT_PATH : s;
+    if (StringUtil.isEmptyOrSpaces(path)) return null;
 
     VirtualFile contextFile = context.getFile().getVirtualFile();
     if (contextFile == null) return null;
@@ -43,7 +47,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
     if (parent == null) {
       return null;
     }
-    VirtualFile f = parent.findFileByRelativePath(s);
+    VirtualFile f = parent.findFileByRelativePath(path);
     if (f == null) return null;
 
     if (f.isDirectory()) f = f.findChild(MavenConstants.POM_XML);
