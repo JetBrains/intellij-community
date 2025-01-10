@@ -2800,7 +2800,13 @@ public final class HighlightUtil {
         if (JavaFeature.STATEMENTS_BEFORE_SUPER.isSufficient(languageLevel) &&
             languageLevel != LanguageLevel.JDK_22_PREVIEW &&
             isOnSimpleAssignmentLeftHand(expression) &&
-            field.getContainingClass() == PsiTreeUtil.getParentOfType(expression, PsiClass.class, true)) {
+            field.getContainingClass() == PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiLambdaExpression.class)) {
+          if (field.hasInitializer()) {
+            String fieldName = PsiFormatUtil.formatVariable(
+              field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+            String description = JavaErrorBundle.message("assign.initialized.field.before.constructor.call", fieldName);
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
+          }
           return null;
         }
         resolvedName =
@@ -2933,7 +2939,7 @@ public final class HighlightUtil {
         if (isOnSimpleAssignmentLeftHand(parent) &&
             parent instanceof PsiReferenceExpression ref &&
             ref.resolve() instanceof PsiField field &&
-            field.getContainingClass() == PsiTreeUtil.getParentOfType(expression, PsiClass.class, true)) {
+            field.getContainingClass() == PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiLambdaExpression.class)) {
           return null;
         }
       }
