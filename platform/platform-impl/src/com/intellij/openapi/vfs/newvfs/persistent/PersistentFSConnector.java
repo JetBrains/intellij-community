@@ -181,6 +181,7 @@ final class PersistentFSConnector {
       return connection;
     }
     catch (Throwable e) { // IOException, IllegalArgumentException, AssertionError
+      //noinspection HardCodedStringLiteral
       String errorMessage = ExceptionUtil.getNonEmptyMessage(e, "<unrecognized>");
       LOG.warn("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + errorMessage);
       try {
