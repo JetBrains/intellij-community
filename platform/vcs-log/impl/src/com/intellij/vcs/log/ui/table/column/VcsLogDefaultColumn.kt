@@ -142,7 +142,8 @@ object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject", VcsLogBu
 
 }
 
-internal object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBundle.message("vcs.log.column.author")),
+@ApiStatus.Internal
+object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBundle.message("vcs.log.column.author")),
                          VcsLogMetadataColumn {
   override fun getValue(model: GraphTableModel, row: VcsLogTableIndex): String? = model.getCommitMetadata(row, true)?.let { getValue(model, it) }
   override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata): String = CommitPresentationUtil.getAuthorPresentation(commit)
@@ -152,7 +153,7 @@ internal object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBun
     return VcsLogStringCellRenderer(true)
   }
 
-  override fun getStubValue(model: GraphTableModel) = ""
+  override fun getStubValue(model: GraphTableModel): String = ""
 }
 
 internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.message("vcs.log.column.date")), VcsLogMetadataColumn {
