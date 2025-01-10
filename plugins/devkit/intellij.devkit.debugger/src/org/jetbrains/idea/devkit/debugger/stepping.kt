@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.DebuggerManagerListener
 import com.intellij.debugger.impl.DebuggerSession
@@ -125,6 +126,7 @@ private class SessionThreadsData() {
  * @see com.intellij.openapi.progress.Cancellation.isInNonCancelableSection
  */
 private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectReference? {
+  if (!suspendContext.debugProcess.isEvaluationPossible(suspendContext)) return null
   val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
   val cancellationClass = findClassOrNull(evaluationContext, CANCELLATION_FQN) as? ClassType ?: return null
   val method = DebuggerUtilsImpl.findMethod(cancellationClass,
@@ -134,7 +136,16 @@ private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectRef
                  logger<SteppingStartListener>().debug("Init method not found. Unsupported IJ platform version?")
                  return null
                }
-  return evaluationContext.debugProcess.invokeMethod(evaluationContext, cancellationClass, method, emptyList()) as? ObjectReference
+  try {
+    return evaluationContext.debugProcess.invokeMethod(evaluationContext, cancellationClass, method, emptyList()) as? ObjectReference
+  }
+  catch (e: EvaluateException) {
+    val targetException = e.exceptionFromTargetVM
+    if (targetException != null && DebuggerUtils.instanceOf(targetException.type(), "java.lang.StackOverflowError")) {
+      return null
+    }
+    throw e
+  }
 }
 
 private fun booleanValue(suspendContext: SuspendContextImpl, b: Boolean): BooleanValue = suspendContext.virtualMachineProxy.mirrorOf(b)
