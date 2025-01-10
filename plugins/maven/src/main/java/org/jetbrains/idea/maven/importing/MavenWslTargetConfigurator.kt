@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.execution.target.TargetEnvironmentsManager
@@ -14,7 +14,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.impl.utils.getEelApiBlocking
-import com.intellij.platform.eel.provider.asEelPathOrNull
+import com.intellij.platform.eel.provider.asEelPath
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -50,7 +50,7 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
     dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
     val mavenPath = eel.collectMavenDirectories().firstOrNull()?.let { MavenUtil.getMavenHomePath(it) }
     dataHolder.putUserData(MAVEN_HOME_DIR, mavenPath)
-    val targetMavenPath = mavenPath?.let { it.asEelPathOrNull()?.toString() }
+    val targetMavenPath = mavenPath?.let { it.asEelPath().toString() }
     dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath)
     val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
     dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion)

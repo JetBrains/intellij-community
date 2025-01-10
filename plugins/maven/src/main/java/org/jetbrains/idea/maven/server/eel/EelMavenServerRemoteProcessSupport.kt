@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.eel
 
 import com.intellij.execution.Executor
@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.asEelPathOrNull
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
@@ -145,7 +145,7 @@ private class EelMavenCmdState(
        * Params normalization should be performed automatically
        * @see [com.intellij.execution.eel.EelApiWithPathsNormalization]
        */
-      val exe = Path.of(cmd.exePath).asEelPathOrNull() ?: error("Cannot find exe for ${cmd.exePath}")
+      val exe = Path.of(cmd.exePath).asEelPath()
       val builder = EelExecApi.ExecuteProcessOptions.Builder(exe.toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)

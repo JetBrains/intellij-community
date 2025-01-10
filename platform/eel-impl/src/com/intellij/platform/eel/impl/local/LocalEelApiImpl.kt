@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.openapi.diagnostic.Logger
@@ -126,17 +126,11 @@ private fun doCreateTemporaryEntry(
     options.parentDirectory?.asNioPathOrNull()?.toFile()
     ?: run {
       val path = Path.of(FileUtilRt.getTempDirectory())
-      if (path.asEelPathOrNull() == null) {
-        return EelFsResultImpl.Error(Other(EelPath.parse(path.toString(), LocalEelDescriptor), "Can't map this path"))
-      }
       path.toFile()
     }
   val tempEntry = localCreator(dir, options.prefix, options.suffix.nullize(), options.deleteOnExit)
-  val tempDirectoryEel = tempEntry.toPath().asEelPathOrNull()
-  return if (tempDirectoryEel != null)
-    Ok(tempDirectoryEel)
-  else
-    EelFsResultImpl.Error(Other(EelPath.parse(tempEntry.toString(), LocalEelDescriptor), "Can't map this path"))
+  val tempDirectoryEel = tempEntry.toPath().asEelPath()
+  return Ok(tempDirectoryEel)
 }
 
 

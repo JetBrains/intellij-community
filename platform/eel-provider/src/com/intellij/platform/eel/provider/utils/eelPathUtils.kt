@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -76,11 +76,11 @@ object EelPathUtils {
 
   @JvmStatic
   fun renderAsEelPath(path: Path): String {
-    if (isPathLocal(path)) {
+    val eelPath = path.asEelPath()
+    if (eelPath.descriptor == LocalEelDescriptor) {
       return path.toString()
     }
     return runBlockingMaybeCancellable {
-      val eelPath = path.asEelPathOrNull() ?: return@runBlockingMaybeCancellable path.toString()
       eelPath.toString()
     }
   }
@@ -93,15 +93,14 @@ object EelPathUtils {
    */
   @JvmStatic
   fun getUriLocalToEel(path: Path): URI = runBlockingMaybeCancellable {
-    val eel = path.getEelApi()
-    val eelPath = path.asEelPathOrNull()
-    if (eelPath == null || eel is LocalEelApi) {
+    val eelPath = path.asEelPath()
+    if (eelPath.descriptor == LocalEelDescriptor) {
       // there is not mapping by Eel, hence the path may be considered local
       return@runBlockingMaybeCancellable path.toUri()
     }
     val root = eelPath.root.toString().replace('\\', '/')
     // see sun.nio.fs.WindowsUriSupport#toUri(java.lang.String, boolean, boolean)
-    val trailing = if (eel.platform is EelPlatform.Windows) "/" else ""
+    val trailing = if (eelPath.descriptor.operatingSystem == EelPath.OS.WINDOWS) "/" else ""
     URI("file", null, trailing + root + eelPath.parts.joinToString("/"), null, null)
   }
 
@@ -323,9 +322,9 @@ object EelPathUtils {
   }
 
   suspend fun maybeUploadPath(scope: CoroutineScope, path: Path, target: EelDescriptor): EelPath {
-    val originalPath = path.asEelPathOrNull()
+    val originalPath = path.asEelPath()
 
-    if (originalPath != null && originalPath.descriptor == target) {
+    if (originalPath.descriptor == target) {
       return originalPath
     }
 

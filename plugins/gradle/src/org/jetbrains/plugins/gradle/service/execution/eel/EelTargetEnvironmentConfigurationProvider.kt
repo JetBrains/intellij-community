@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution.eel
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -7,8 +7,8 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asEelPathOrNull
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.PathMapper
 import java.nio.file.Path
@@ -28,7 +28,7 @@ class EelTargetEnvironmentConfigurationProvider(val eel: EelApi) : TargetEnviron
 
     override fun canReplaceLocal(localPath: String): Boolean {
       val nio = Path.of(localPath)
-      return nio.asEelPathOrNull() != null
+      return nio.asEelPath().descriptor != LocalEelDescriptor
     }
 
     override fun convertToLocal(remotePath: String): String {

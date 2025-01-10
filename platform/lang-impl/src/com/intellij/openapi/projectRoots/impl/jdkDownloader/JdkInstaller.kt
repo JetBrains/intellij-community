@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.google.common.hash.Hashing
@@ -31,7 +31,6 @@ import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.platform.eel.impl.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asEelPathOrNull
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
@@ -129,7 +128,7 @@ class JdkInstaller : JdkInstallerBase() {
 
   private class EelForJdkInstallerImpl(override val eel: EelApi) : OsAbstractionForJdkInstaller.Eel {
     override fun getPath(path: Path): String =
-      path.asEelPathOrNull()?.toString() ?: error("Failed to map $path to WSL")
+      path.asEelPath().toString()
 
     override fun execute(command: List<String>, dir: String, timeout: Int): ProcessOutput = runBlockingCancellable {
       val builder = EelExecApi

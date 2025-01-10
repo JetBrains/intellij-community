@@ -47,9 +47,6 @@ fun EelPath.asNioPath(): Path {
          ?: throw IllegalArgumentException("Could not convert $this to nio.Path: the corresponding provider for $descriptor is not registered in ${EelNioBridgeService::class.simpleName}")
 }
 
-/**
- * Inverse of [asEelPathOrNull]
- */
 fun EelPath.asNioPathOrNull(): Path? {
   if (descriptor === LocalEelDescriptor) {
     return Path.of(toString())
@@ -67,20 +64,12 @@ fun EelPath.asNioPathOrNull(): Path? {
  */
 @Throws(IllegalArgumentException::class)
 fun Path.asEelPath(): EelPath {
-  return asEelPathOrNull()
-         ?: throw IllegalArgumentException("Could not convert $this to EelPath: the path does not belong to the default NIO FileSystem")
-}
-
-/**
- * Inverse of [asNioPathOrNull]
- */
-fun Path.asEelPathOrNull(): EelPath? {
   if (fileSystem != FileSystems.getDefault()) {
-    return null
+    return throw IllegalArgumentException("Could not convert $this to EelPath: the path does not belong to the default NIO FileSystem")
   }
   val service = ApplicationManager.getApplication().getService(EelNioBridgeService::class.java)
   val descriptor = service.tryGetEelDescriptor(this) ?: return EelPath.parse(toString(), LocalEelDescriptor)
-  val root = service.tryGetNioRoot(descriptor) ?: return null // since the descriptor is not null, the root should be as well
+  val root = service.tryGetNioRoot(descriptor) ?: error("unreachable") // since the descriptor is not null, the root should be as well
   val relative = root.relativize(this)
   if (descriptor.operatingSystem == EelPath.OS.UNIX) {
     return relative.fold(EelPath.parse("/", descriptor), { path, part -> path.resolve(part.toString()) })

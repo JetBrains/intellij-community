@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.build.*;
@@ -348,9 +348,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       var mavenDistribution = mavenCache.getMavenDistribution(myConfiguration.getRunnerParameters().getWorkingDirPath());
 
       var mavenHomePath = mavenDistribution.getMavenHome();
-      var effectiveMavenHome = StringUtil.notNullize(
-        Optional.ofNullable(EelNioBridgeServiceKt.asEelPathOrNull(mavenHomePath)).map(EelPath::toString).orElse(mavenHomePath.toString())
-      );
+      var effectiveMavenHome = EelNioBridgeServiceKt.asEelPath(mavenHomePath).toString();
 
       var mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());
 

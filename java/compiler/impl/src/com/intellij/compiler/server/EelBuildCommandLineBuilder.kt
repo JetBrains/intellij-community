@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server
 
 import com.intellij.codeInsight.navigation.LOG
@@ -14,7 +14,6 @@ import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asEelPathOrNull
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.forwardLocalServer
@@ -45,7 +44,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun addPathParameter(prefix: String, path: Path) {
-    commandLine.addParameter(prefix + path.asEelPathOrNull().toString())
+    commandLine.addParameter(prefix + path.asEelPath())
   }
 
   override fun addClasspathParameter(classpathInHost: List<String>, classpathInTarget: List<String>) {
@@ -59,8 +58,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun getWorkingDirectory(): String {
-    val path = workingDirectory.asEelPathOrNull()
-               ?: error("Working directory for a process should be computed by the provided Eel API")
+    val path = workingDirectory.asEelPath()
     return path.toString()
   }
 

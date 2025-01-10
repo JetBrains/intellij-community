@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.eel
 
 import com.intellij.execution.Platform
@@ -18,7 +18,6 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asEelPathOrNull
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
@@ -94,7 +93,7 @@ class EelTargetEnvironmentRequest(override val configuration: Configuration) : B
     override val asTargetConfig: TargetEnvironmentConfiguration = this
 
     override fun getTargetPathIfLocalPathIsOnTarget(probablyPathOnTarget: Path): FullPathOnTarget? {
-      return probablyPathOnTarget.asEelPathOrNull()?.toString()
+      return probablyPathOnTarget.asEelPath().takeIf { it.descriptor == eel.descriptor }?.toString()
     }
   }
 
@@ -190,6 +189,10 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     override val localRoot: Path,
     override val targetRoot: String,
   ) : UploadableVolume, DownloadableVolume {
+    init {
+      val x = 1
+    }
+
     private fun targetRootPath(): Path {
       return eel.fs.getPath(targetRoot).asNioPath()
     }
@@ -220,14 +223,20 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
         val remoteRoot = when (val targetRootPath = targetPathGetter()) {
           is TargetPath.Temporary -> {
-            localRootPath.asEelPathOrNull()?.toString() ?: runBlockingMaybeCancellable {
-              val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder()
+            val localEelPath = localRootPath.asEelPath()
+            if (localEelPath.descriptor == eel.descriptor) {
+              localEelPath.toString()
+            }
+            else {
+              runBlockingMaybeCancellable {
+                val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder()
 
-              targetRootPath.prefix?.let(options::prefix)
-              targetRootPath.parentDirectory?.let(eel.fs::getPath)?.let(options::parentDirectory)
-              options.deleteOnExit(true)
+                targetRootPath.prefix?.let(options::prefix)
+                targetRootPath.parentDirectory?.let(eel.fs::getPath)?.let(options::parentDirectory)
+                options.deleteOnExit(true)
 
-              eel.fs.createTemporaryDirectory(options.build()).getOrThrow().toString()
+                eel.fs.createTemporaryDirectory(options.build()).getOrThrow().toString()
+              }
             }
           }
           is TargetPath.Persistent -> targetRootPath.absolutePath
