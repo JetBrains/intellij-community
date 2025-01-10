@@ -1054,4 +1054,42 @@
   <item name='java.nio.file.Paths java.nio.file.Path get(java.net.URI) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult postVisitDirectory(T, java.io.IOException)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult postVisitDirectory(T, java.io.IOException) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult postVisitDirectory(T, java.io.IOException) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item
+    name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult preVisitDirectory(T, java.nio.file.attribute.BasicFileAttributes)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult preVisitDirectory(T, java.nio.file.attribute.BasicFileAttributes) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+  <item
+    name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult preVisitDirectory(T, java.nio.file.attribute.BasicFileAttributes) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFile(T, java.nio.file.attribute.BasicFileAttributes)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFile(T, java.nio.file.attribute.BasicFileAttributes) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFile(T, java.nio.file.attribute.BasicFileAttributes) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFileFailed(T, java.io.IOException)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFileFailed(T, java.io.IOException) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFileFailed(T, java.io.IOException) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>
