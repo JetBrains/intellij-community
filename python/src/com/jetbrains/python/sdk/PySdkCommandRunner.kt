@@ -34,7 +34,7 @@ internal suspend fun runCommandLine(commandLine: GeneralCommandLine): Result<Str
 
   return processOutput(
     commandOutput,
-    commandLine.commandLineString,
+    commandLine.exePath,
     commandLine.parametersList.list,
   )
 }
