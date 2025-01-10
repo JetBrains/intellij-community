@@ -788,6 +788,8 @@ public final class PsiTypesUtil {
    * @param typeName name of the type to test
    * @param level language level
    * @return true if a given name cannot be used as a type name at a given language level
+   * @see PsiUtil#isSoftKeyword(CharSequence, LanguageLevel) - this method is similar but some soft keywords still can be types 
+    * (e.g. 'when')
    */
   public static boolean isRestrictedIdentifier(@Nullable String typeName, @NotNull LanguageLevel level) {
     return PsiKeyword.VAR.equals(typeName) && JavaFeature.LVTI.isSufficient(level) ||
