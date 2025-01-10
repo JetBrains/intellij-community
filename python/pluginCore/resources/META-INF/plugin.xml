@@ -99,7 +99,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPostStartupActivity"/>
   </extensions>
 
-
   <projectListeners>
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
@@ -588,7 +587,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <notificationGroup id="Python interpreter installation" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.sdk.installation.notification.group"/>
 
-
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
@@ -651,6 +649,11 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.feedback.PythonJobStatisticsCollector"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.statistics.feedback.PythonFirstLaunchChecker"/>
+
+    <registryKey key="python.prebuilt.skeletons.minor.version.aware" defaultValue="false"
+                 description="When disabled stripes minor version to look for prebuilt skeletons"/>
+    <registryKey key="python.activate.virtualenv.on.run" defaultValue="true"
+                 description="Whether enabled activates virtualenv before script execution and passes environment to the process"/>
   </extensions>
 
   <extensionPoints>
