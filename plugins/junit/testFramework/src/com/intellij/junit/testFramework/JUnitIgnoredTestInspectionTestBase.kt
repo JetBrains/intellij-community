@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.JUnitIgnoredTestInspection
@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 
 abstract class JUnitIgnoredTestInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = JUnitIgnoredTestInspection()
+  override val inspection: JUnitIgnoredTestInspection = JUnitIgnoredTestInspection()
 
   protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
@@ -19,5 +19,5 @@ abstract class JUnitIgnoredTestInspectionTestBase : JvmInspectionTestBase() {
     }
   }
 
-  override fun getProjectDescriptor() = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
+  override fun getProjectDescriptor(): JUnitProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 }

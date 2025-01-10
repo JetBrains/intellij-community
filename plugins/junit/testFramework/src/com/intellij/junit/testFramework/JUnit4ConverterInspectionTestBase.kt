@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit.testFramework
 
 import com.intellij.execution.junit.codeInspection.JUnit4ConverterInspection
@@ -10,7 +10,8 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class JUnit4ConverterInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = JUnit4ConverterInspection()
+  override val inspection: JUnit4ConverterInspection = JUnit4ConverterInspection()
+
   override fun setUp() {
     super.setUp()
     enableWarnings()
