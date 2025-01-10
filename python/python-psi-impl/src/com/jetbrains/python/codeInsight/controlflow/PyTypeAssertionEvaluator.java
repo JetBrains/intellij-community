@@ -185,9 +185,14 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     assert !(type1 instanceof PyUnionType);
 
     if (!(type1 instanceof PyLiteralType) &&
-        type1 instanceof PyClassType classType &&
-        PyStdlibTypeProvider.isCustomEnum(classType.getPyClass(), context)) {
-      List<PyLiteralType> enumMembers = PyStdlibTypeProvider.getEnumMembers(classType.getPyClass(), context).toList();
+        type1 instanceof PyClassType classType1 &&
+        PyStdlibTypeProvider.isCustomEnum(classType1.getPyClass(), context)) {
+      if (ContainerUtil.exists(classType1.getPyClass().getAncestorClasses(context),
+                               cls -> PyNames.TYPE_ENUM_FLAG.equals(cls.getQualifiedName()))) {
+        // Do not expand enum classes that derive from enum.Flag
+        return null;
+      }
+      List<PyLiteralType> enumMembers = PyStdlibTypeProvider.getEnumMembers(classType1.getPyClass(), context).toList();
       List<PyType> filteredEnumMembers = ContainerUtil.filter(enumMembers, m -> !PyTypeChecker.match(type2, m, context));
       PyType type = enumMembers.size() == filteredEnumMembers.size() ? type1 : PyUnionType.union(filteredEnumMembers);
       return Ref.create(type);

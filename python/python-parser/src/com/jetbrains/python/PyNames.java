@@ -50,6 +50,7 @@ public final @NonNls class PyNames {
 
   public static final String TYPE_ENUM = "enum.Enum";
   public static final String TYPE_ENUM_META = "enum.EnumMeta";
+  public static final String TYPE_ENUM_FLAG = "enum.Flag";
   public static final String TYPE_ENUM_AUTO = "enum.auto";
   public static final String TYPE_ENUM_MEMBER = "enum.member";
   public static final String TYPE_ENUM_NONMEMBER = "enum.nonmember";

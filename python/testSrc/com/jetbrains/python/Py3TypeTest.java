@@ -1870,6 +1870,25 @@ public class Py3TypeTest extends PyTestCase {
         """);
   }
 
+  public void testFlagEnumNotExpanded() {
+    doTest(
+      "MyFlag",
+      """
+        from enum import Flag
+        
+        class MyFlag(Flag):
+            FLAG1 = 1
+            FLAG2 = 2
+        
+        def foo(f: MyFlag):
+            if f is MyFlag.FLAG1:
+                pass
+            else:
+                expr = f
+        """
+    );
+  }
+
   public void testUnionWithEnumMembers() {
     doTest(
       "Color",
