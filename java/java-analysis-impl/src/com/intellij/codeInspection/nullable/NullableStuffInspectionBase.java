@@ -923,6 +923,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   private static boolean isSuperNotAnnotated(NullableNotNullManager nullableManager, PsiParameter parameter, PsiParameter superParameter) {
     if (hasNullability(nullableManager, superParameter)) return false;
+    if (ContainerUtil.exists(getSuperAnnotationOwners(superParameter),
+                             superSuperParameter -> hasNullability(nullableManager, superSuperParameter))) {
+      return false;
+    }
     PsiType type = superParameter.getType();
     if (TypeUtils.isTypeParameter(type)) {
       PsiClass childClass = PsiUtil.getContainingClass(parameter);
