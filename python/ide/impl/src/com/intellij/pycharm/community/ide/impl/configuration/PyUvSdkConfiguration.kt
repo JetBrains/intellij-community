@@ -11,13 +11,10 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.uv.PY_PROJECT_TOML
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
-import java.io.FileNotFoundException
-import java.nio.file.Path
 
 class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   companion object {
@@ -54,12 +51,7 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override fun supportsHeadlessModel(): Boolean = true
 
   private suspend fun createUv(module: Module): Result<Sdk> {
-    val basePath = module.basePath?.let { Path.of(it) }
-    if (basePath == null) {
-      return Result.failure(FileNotFoundException("Can't find module base path"))
-    }
-
-    val sdk = setupUvSdkUnderProgress(module, basePath, ProjectJdkTable.getInstance().allJdks.toList(), null)
+    val sdk = setupUvSdkUnderProgress(ModuleOrProject.ModuleAndProject(module), ProjectJdkTable.getInstance().allJdks.toList(), null)
     sdk.onSuccess {
       SdkConfigurationUtil.addSdk(it)
     }

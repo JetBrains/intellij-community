@@ -33,7 +33,7 @@ class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterModel, privat
     }
 
     val python = homePath?.let { Path.of(it) }
-    return setupUvSdkUnderProgress(module, Path.of(projectPath), baseSdks, python)
+    return setupUvSdkUnderProgress(ModuleOrProject.ModuleAndProject(module), baseSdks, python)
   }
 
   override suspend fun detectExecutable() {

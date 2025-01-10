@@ -1,19 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.sdk.poetry.pyProjectToml
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddInterpreterModel, moduleOrProject: ModuleOrProject) : CustomExistingEnvironmentSelector("poetry", model, moduleOrProject) {
+internal class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddInterpreterModel, moduleOrProject: ModuleOrProject) : CustomExistingEnvironmentSelector("poetry", model, moduleOrProject) {
   override val executable: ObservableMutableProperty<String> = model.state.poetryExecutable
   override val interpreterType: InterpreterType = InterpreterType.POETRY
 
@@ -37,4 +40,6 @@ class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddInterpreter
 
     existingEnvironments.value = existingEnvs
   }
+
+  override suspend fun findModulePath(module: Module): Path? = pyProjectToml(module)?.toNioPathOrNull()?.parent
 }
