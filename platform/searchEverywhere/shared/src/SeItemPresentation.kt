@@ -4,7 +4,6 @@ package com.intellij.platform.searchEverywhere
 import com.intellij.platform.backend.presentation.TargetPresentation
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.Icon
 
 @ApiStatus.Experimental
 @Serializable
@@ -19,7 +18,8 @@ class SeTextItemPresentation(override val text: String): SeItemPresentation
 @ApiStatus.Internal
 @Serializable
 data class SeActionItemPresentation(
-  val icon: Icon? = null,
+  // TODO: There is a problem with serialization of Icon (CachedIconImage to be concrete)
+  //val icon: Icon? = null,
   override val text: String,
   val location: String? = null,
   val switcherState: Boolean? = null,

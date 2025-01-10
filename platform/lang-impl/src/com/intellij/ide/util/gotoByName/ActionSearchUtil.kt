@@ -3,7 +3,6 @@ package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.ApplyIntentionAction
 import com.intellij.ide.ui.RegistryTextOptionDescriptor
-import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
@@ -31,7 +30,6 @@ private const val SETTINGS_PENALTY = 100
 @ApiStatus.Internal
 object ActionPresentationProvider: (GotoActionModel.MatchedValue) -> SeItemPresentation {
   override fun invoke(matchedValue: GotoActionModel.MatchedValue): SeItemPresentation {
-    val showIcon = UISettings.getInstance().showIconsInMenus
     val value = matchedValue.value
     if (value is ActionWrapper) {
       var presentation = SeActionItemPresentation(text = "")
@@ -49,12 +47,12 @@ object ActionPresentationProvider: (GotoActionModel.MatchedValue) -> SeItemPrese
         presentation = presentation.run { copy(location = groupName) }
       }
 
-      if (showIcon) {
-        presentation = presentation.run { copy(icon = actionPresentation.icon) }
-        //if (isSelected && presentation.getSelectedIcon() != null) {
-        //  icon = presentation.getSelectedIcon();
-        //}
-      }
+      //if (UISettings.getInstance().showIconsInMenus) {
+      //  presentation = presentation.run { copy(icon = actionPresentation.icon) }
+      //  //if (isSelected && presentation.getSelectedIcon() != null) {
+      //  //  icon = presentation.getSelectedIcon();
+      //  //}
+      //}
 
       //if (anAction instanceof PromoAction promoAction) {
       //  customizePromoAction(promoAction, bg, eastBorder, groupFg, panel);

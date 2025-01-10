@@ -8,7 +8,9 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeFilesProviderFactory : SeItemsProviderFactory {
   override fun getItemsProvider(project: Project): SeItemsProvider {
     val legacyContributor = runBlockingCancellable {

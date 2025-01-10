@@ -1485,6 +1485,8 @@
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.TopHitSEContributor$Factory"/>
 
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.ide.actions.searcheverywhere.SeFilesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.ide.util.gotoByName.SeActionsProviderFactory"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.ide.util.gotoByName.SeActionsTabProvider"/>
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider"/>

@@ -4,8 +4,8 @@ package com.intellij.platform.searchEverywhere.frontend.vm
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeTextSearchParams
+import com.intellij.platform.searchEverywhere.api.SeFilterData
 import com.intellij.platform.searchEverywhere.api.SeTab
-import com.intellij.platform.searchEverywhere.api.SeTabFilterData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -21,7 +21,7 @@ class SeTabVm(
 ) {
   val searchResults: StateFlow<Flow<SeItemData>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
-  val filterEditor: ObservableOptionEditor<SeTabFilterData>? = tab.getFilterEditor()
+  val filterEditor: ObservableOptionEditor<SeFilterData>? = tab.getFilterEditor()
 
   private val _searchResults: MutableStateFlow<Flow<SeItemData>> = MutableStateFlow(emptyFlow())
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)

@@ -16,12 +16,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.isActive
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeFileItem(val legacyItem: ItemWithPresentation<*>) : SeItem {
   override fun weight(): Int = 0
   override fun presentation(): SeItemPresentation = SeTextItemPresentation(legacyItem.presentation.presentableText)
 }
 
+@Internal
 class SeFilesProvider(val project: Project, private val legacyContributor: SearchEverywhereAsyncContributor<Any?>): SeItemsProvider {
   override val id: String
     get() = "com.intellij.FileSearchEverywhereItemProvider"

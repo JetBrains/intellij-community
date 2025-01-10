@@ -6,6 +6,6 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
 @Serializable
-data class SeTabFilterData(
+data class SeFilterData(
   val map: Map<String, String>
 )

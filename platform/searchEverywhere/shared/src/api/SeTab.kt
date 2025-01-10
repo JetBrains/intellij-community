@@ -14,5 +14,5 @@ interface SeTab {
 
   fun getItems(params: SeParams): Flow<SeItemData>
 
-  fun getFilterEditor(): ObservableOptionEditor<SeTabFilterData>?
+  fun getFilterEditor(): ObservableOptionEditor<SeFilterData>?
 }

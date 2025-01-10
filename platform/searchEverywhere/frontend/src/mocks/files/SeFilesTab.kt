@@ -4,8 +4,8 @@ package com.intellij.platform.searchEverywhere.frontend.mocks.files
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.api.SeFilterData
 import com.intellij.platform.searchEverywhere.api.SeTab
-import com.intellij.platform.searchEverywhere.api.SeTabFilterData
 import com.intellij.platform.searchEverywhere.frontend.SeTabHelper
 import com.intellij.platform.searchEverywhere.mocks.SeFilesFilterData
 import com.intellij.ui.dsl.builder.panel
@@ -24,14 +24,14 @@ class SeFilesTab(val helper: SeTabHelper): SeTab {
   override fun getItems(params: SeParams): Flow<SeItemData> =
     helper.getItems(params)
 
-  override fun getFilterEditor(): ObservableOptionEditor<SeTabFilterData> = SeFilesFilterEditor()
+  override fun getFilterEditor(): ObservableOptionEditor<SeFilterData> = SeFilesFilterEditor()
 }
 
-class SeFilesFilterEditor : ObservableOptionEditor<SeTabFilterData> {
+class SeFilesFilterEditor : ObservableOptionEditor<SeFilterData> {
   private var current: SeFilesFilterData? = null
 
-  private val _resultFlow: MutableStateFlow<SeTabFilterData?> = MutableStateFlow(current?.toTabData())
-  override val resultFlow: StateFlow<SeTabFilterData?> = _resultFlow.asStateFlow()
+  private val _resultFlow: MutableStateFlow<SeFilterData?> = MutableStateFlow(current?.toFilterData())
+  override val resultFlow: StateFlow<SeFilterData?> = _resultFlow.asStateFlow()
 
   override fun getComponent(): JComponent {
     return panel {
@@ -42,14 +42,14 @@ class SeFilesFilterEditor : ObservableOptionEditor<SeTabFilterData> {
         checkBox.onChanged {
           if (current?.isProjectOnly != it.isSelected) {
             current = SeFilesFilterData(it.isSelected)
-            _resultFlow.value = current?.toTabData()
+            _resultFlow.value = current?.toFilterData()
           }
         }
       }
     }
   }
 
-  override fun result(): SeTabFilterData {
-    return resultFlow.value ?: SeTabFilterData(emptyMap())
+  override fun result(): SeFilterData {
+    return resultFlow.value ?: SeFilterData(emptyMap())
   }
 }
