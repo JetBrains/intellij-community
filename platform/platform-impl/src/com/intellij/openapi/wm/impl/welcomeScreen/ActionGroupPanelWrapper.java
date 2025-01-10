@@ -58,10 +58,11 @@ public final class ActionGroupPanelWrapper {
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         if (e == null) return EMPTY_ARRAY;
         AnAction[] children = super.getChildren(e);
+        String groupName = e.getPresentation().getText();
         for (int i = 0; i < children.length; i++) {
           if (children[i] instanceof ActionGroup g &&
               !e.getUpdateSession().presentation(g).isPopupGroup()) children[i] = new Wrapper(g);
-          else setParentGroupName(e.getPresentation().getText(), children[i]);
+          else if (groupName != null) setParentGroupName(groupName, children[i]);
         }
         return children;
       }
