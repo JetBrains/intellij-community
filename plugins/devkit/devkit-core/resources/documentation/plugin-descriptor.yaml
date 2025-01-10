@@ -610,9 +610,7 @@ elements:
                         #language=Markdown
                         description: |
                           The fully qualified name of the interface to be implemented for extending the plugin's functionality.<br/>
-                          Only one of the `interface` and [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) attributes can be specified.<br/>
-                          See [Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html) for more
-                          information.
+                          Only one of the `interface` and [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) attributes can be specified.
                     - attribute:
                         name: beanClass
                         requirement:
@@ -623,9 +621,14 @@ elements:
                         #language=Markdown
                         description: |
                           The fully qualified name of the extension point bean class providing additional information to the plugin.<br/>
-                          Only one of the [`interface`](#attribute:idea-plugin__extensionPoints__extensionPoint__interface) and `beanClass` attributes can be specified.<br/>
-                          See [Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html) for more
-                          information.
+                          The bean class specifies one or several properties annotated with the
+                          [`@Attribute`](%gh-ic%/platform/util/src/com/intellij/util/xmlb/annotations/Attribute.java){fqn="com.intellij.util.xmlb.annotations.Attribute"}
+                          annotation.
+                          Note that bean classes do not follow the JavaBean standard.
+                          Implement
+                          [`PluginAware`](%gh-ic%/platform/extensions/src/com/intellij/openapi/extensions/PluginAware.java){fqn="com.intellij.openapi.extensions.PluginAware"}
+                          to obtain information about the plugin providing the actual extension (see [Error Handling](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html#error-handling)).<br/>
+                          Only one of the [`interface`](#attribute:idea-plugin__extensionPoints__extensionPoint__interface) and `beanClass` attributes can be specified.
                     - attribute:
                         name: dynamic
                         requirement:
