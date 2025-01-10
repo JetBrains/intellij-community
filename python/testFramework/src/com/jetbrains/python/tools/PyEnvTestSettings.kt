@@ -57,7 +57,7 @@ data class PyEnvTestSettings(
       while (currentFile != null) {
         val pythonInterpretersFolder = currentFile.resolve(PATH_TO_TEST_ENV_PYTHON_INTERPRETERS)
         if (pythonInterpretersFolder.exists()) {
-          return pythonInterpretersFolder.listFiles()?.toList()?.filterNot { it.name.startsWith('.') } ?: emptyList()
+          return pythonInterpretersFolder.listFiles { it.isDirectory && !it.name.startsWith('.') }.toList()
         }
         currentFile = currentFile.parentFile
 
