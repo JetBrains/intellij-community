@@ -13,7 +13,7 @@ import java.util.function.Function
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
-class SeTabsCustomizationTest : LightJavaCodeInsightFixtureTestCase() {
+class SearchEverywhereTabsCustomizationTest : LightJavaCodeInsightFixtureTestCase() {
 
   private val contributors : List<SearchEverywhereContributor<*>> = listOf(
     dumb("c1", true),
