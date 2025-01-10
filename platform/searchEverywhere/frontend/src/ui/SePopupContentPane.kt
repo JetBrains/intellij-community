@@ -62,6 +62,14 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
         }
       }
     }
+
+    vm.coroutineScope.launch {
+      vm.currentTab.collectLatest {
+        withContext(Dispatchers.EDT) {
+          headerPane.setFilterComponent(it.filterEditor?.component)
+        }
+      }
+    }
   }
 
   private fun createListPane(resultList: JBList<*>): JScrollPane {

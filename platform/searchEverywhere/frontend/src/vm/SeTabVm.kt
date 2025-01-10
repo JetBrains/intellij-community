@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.vm
 
+import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeTextSearchParams
 import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.api.SeTabFilterData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -19,6 +21,7 @@ class SeTabVm(
 ) {
   val searchResults: StateFlow<Flow<SeItemData>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
+  val filterEditor: ObservableOptionEditor<SeTabFilterData>? = tab.getFilterEditor()
 
   private val _searchResults: MutableStateFlow<Flow<SeItemData>> = MutableStateFlow(emptyFlow())
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -28,8 +31,10 @@ class SeTabVm(
       isActiveFlow.collectLatest { isActive ->
         if (!isActive) return@collectLatest
 
-        searchPattern.mapLatest { searchPatternString ->
-          val params = SeTextSearchParams(searchPatternString)
+        combine(searchPattern, filterEditor?.resultFlow ?: flowOf(null)) { searchPattern, filterData ->
+          Pair(searchPattern, filterData)
+        }.mapLatest { (searchPattern, filterData) ->
+          val params = SeTextSearchParams(searchPattern, filterData)
           tab.getItems(params)
         }.collect {
           _searchResults.value = it

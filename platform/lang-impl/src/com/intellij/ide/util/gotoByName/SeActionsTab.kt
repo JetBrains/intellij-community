@@ -2,12 +2,14 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.api.SeTab
+import com.intellij.platform.searchEverywhere.api.SeTabFilterData
 import com.intellij.platform.searchEverywhere.frontend.SeTabHelper
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +24,7 @@ class SeActionsTab private constructor(private val helper: SeTabHelper): SeTab {
     get() = name
 
   override fun getItems(params: SeParams): Flow<SeItemData> = helper.getItems(params)
+  override fun getFilterEditor(): ObservableOptionEditor<SeTabFilterData>? = null
 
   companion object {
     suspend fun create(project: Project, sessionRef: DurableRef<SeSessionEntity>): SeActionsTab {

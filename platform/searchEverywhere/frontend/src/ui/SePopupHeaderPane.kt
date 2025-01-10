@@ -5,10 +5,11 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.tabbedPaneHeader
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.bindSelectedTabIn
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -16,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
@@ -27,6 +29,12 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
                         toolbar: JComponent? = null): NonOpaquePanel() {
   private lateinit var tabbedPane: JBTabbedPane
   private val panel: DialogPanel
+  private val tabFilterContainer: JPanel = object : JPanel() {
+    override fun getPreferredSize(): Dimension {
+      val dimension = components.firstOrNull()?.preferredSize ?: Dimension(0, 0)
+      return Dimension(dimension.width.coerceAtMost(MAX_FILTER_WIDTH), 0)
+    }
+  }.apply { layout = GridLayout() }
 
   init {
     background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
@@ -42,10 +50,11 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
           }
           .component
 
+        cell(tabFilterContainer).align(AlignY.FILL + AlignX.RIGHT).resizableColumn()
+
         if (toolbar != null) {
           toolbar.putClientProperty(ActionToolbarImpl.USE_BASELINE_KEY, true)
           cell(toolbar)
-            .resizableColumn()
             .align(AlignX.RIGHT)
             .customize(UnscaledGaps(left = 18))
         }
@@ -69,5 +78,24 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
     add(panel)
 
     tabbedPane.bindSelectedTabIn(selectedTabState, coroutineScope)
+  }
+
+  fun setFilterComponent(filterComponent: JComponent?) {
+    val oldCount = tabFilterContainer.componentCount
+
+    tabFilterContainer.removeAll()
+    if (filterComponent != null) {
+      RowsGridBuilder(tabFilterContainer)
+        .row(resizable = true).cell(filterComponent, verticalAlign = VerticalAlign.CENTER)
+    }
+
+    if (tabFilterContainer.componentCount + oldCount > 0) {
+      tabFilterContainer.revalidate()
+      tabFilterContainer.repaint()
+    }
+  }
+
+  companion object {
+    private const val MAX_FILTER_WIDTH = 100
   }
 }

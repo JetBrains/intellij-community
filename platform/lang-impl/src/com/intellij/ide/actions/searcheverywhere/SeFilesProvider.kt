@@ -11,6 +11,7 @@ import com.intellij.platform.searchEverywhere.SeTextItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchParams
 import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
+import com.intellij.platform.searchEverywhere.mocks.SeFilesFilterData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -26,7 +27,9 @@ class SeFilesProvider(val project: Project, private val legacyContributor: Searc
     get() = "com.intellij.FileSearchEverywhereItemProvider"
 
   override fun getItems(params: SeParams): Flow<SeItem> {
-    val text = (params as? SeTextSearchParams)?.text ?: return emptyFlow()
+    val textSearchParams = params as? SeTextSearchParams ?: return emptyFlow()
+    val text = textSearchParams.text
+    val filter = SeFilesFilterData.fromTabData(textSearchParams.filterData)
 
     return channelFlow {
       val collector = this
@@ -43,9 +46,5 @@ class SeFilesProvider(val project: Project, private val legacyContributor: Searc
         })
       }
     }
-  }
-
-  companion object {
-    const val ID = "com.intellij.FileSearchEverywhereItemProvider"
   }
 }

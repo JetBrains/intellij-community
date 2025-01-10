@@ -20,7 +20,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   @Suppress("unused")
   fun `mock test simple search`() {
     runBlocking {
-      val params = SeActionParams("apply patch", true)
+      val params = SeActionParams("apply patch", null, true)
 
       SeActionsProvider(project, null, null).getItems(params).collect {
         println(it.presentation().text)
@@ -31,7 +31,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   @Suppress("unused")
   fun `mock test mocked provider`() {
     runBlocking {
-      val params = SeTextSearchParams("it")
+      val params = SeTextSearchParams("it", null)
 
       defaultProvider.getItems(params).collect {
         println(it.presentation().text)
