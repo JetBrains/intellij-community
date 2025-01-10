@@ -16,6 +16,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem.Companion.openProjectAndLogRecent
+import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
@@ -74,6 +77,11 @@ open class ReopenProjectAction @JvmOverloads constructor(
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
     val project = e.project
+
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.title.project.initialization")) {
+      EelInitialization.runEelInitialization(myProjectPath)
+    }
+
     val file = Path.of(myProjectPath).normalize()
     if (Files.notExists(file)) {
       if (Messages.showDialog(project, IdeBundle

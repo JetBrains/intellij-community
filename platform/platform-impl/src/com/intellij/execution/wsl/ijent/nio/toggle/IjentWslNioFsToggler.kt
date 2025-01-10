@@ -2,11 +2,7 @@
 package com.intellij.execution.wsl.ijent.nio.toggle
 
 import com.intellij.diagnostic.VMOptions
-import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
-import com.intellij.execution.wsl.WslIjentAvailabilityService
-import com.intellij.execution.wsl.WslIjentManager
-import com.intellij.execution.wsl.WslPath
+import com.intellij.execution.wsl.*
 import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler.WslEelProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -15,18 +11,13 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelProvider
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -93,14 +84,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       return WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false)
     }
 
-    /**
-     * Starts the IJent if a project on WSL is opened.
-     *
-     * At the moment of writing this string,
-     * this class was just an optimization handler that speeds up sometimes the first request to the IJent.
-     * It was not necessary for running the IDE.
-     */
-    override suspend fun tryInitialize(project: Project) = tryInitializeEelOnWsl(project)
+    override suspend fun tryInitialize(path: String) = tryInitializeEelOnWsl(path)
   }
 
   private val strategy = run {
@@ -140,47 +124,41 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   }
 }
 
-private suspend fun tryInitializeEelOnWsl(project: Project) = coroutineScope {
-  if (project.isDefault) {
-    return@coroutineScope
+
+private suspend fun tryInitializeEelOnWsl(path: String) {
+  if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
+    return
   }
 
-  if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
-    return@coroutineScope
+  if (!WslPath.isWslUncPath(path)) {
+    return
   }
 
   val ijentWslNioFsToggler = IjentWslNioFsToggler.instanceAsync()
-  if (!ijentWslNioFsToggler.isAvailable) {
-    return@coroutineScope
-  }
 
-  val projectFile = project.projectFilePath
-  check(projectFile != null) { "Impossible: project is not default, but it does not have project file" }
+  coroutineScope {
+    launch {
+      ijentWslNioFsToggler.enableForAllWslDistributions()
+    }
 
-  if (!WslPath.isWslUncPath(projectFile)) {
-    return@coroutineScope
-  }
+    val allWslDistributions = async(Dispatchers.IO) {
+      serviceAsync<WslDistributionManager>().installedDistributions
+    }
 
-  launch {
-    ijentWslNioFsToggler.enableForAllWslDistributions()
-  }
+    val path = Path.of(path)
 
-  val allWslDistributions = async(Dispatchers.IO) {
-    serviceAsync<WslDistributionManager>().installedDistributions
-  }
-
-  val path = Path.of(projectFile)
-  for (distro in allWslDistributions.await()) {
-    val matches =
-      try {
-        distro.getWslPath(path) != null
-      }
-      catch (_: IllegalArgumentException) {
-        false
-      }
-    if (matches) {
-      launch {
-        serviceAsync<WslIjentManager>().getIjentApi(distro, project, false)
+    for (distro in allWslDistributions.await()) {
+      val matches =
+        try {
+          distro.getWslPath(path) != null
+        }
+        catch (_: IllegalArgumentException) {
+          false
+        }
+      if (matches) {
+        launch {
+          serviceAsync<WslIjentManager>().getIjentApi(distro, null, false)
+        }
       }
     }
   }

@@ -5,6 +5,7 @@ package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -14,6 +15,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.system.OS
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -25,11 +27,32 @@ suspend fun Path.getEelApi(): EelApi {
 }
 
 object EelInitialization {
-  suspend fun runEelInitialization(project: Project) {
+  private val logger = logger<EelInitialization>()
+
+  suspend fun runEelInitialization(path: String) {
     val eels = EelProvider.EP_NAME.extensionList
     eels.forEachConcurrent { eelProvider ->
-      eelProvider.tryInitialize(project)
+      try {
+        eelProvider.tryInitialize(path)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logger.error(e)
+      }
     }
+  }
+
+  suspend fun runEelInitialization(project: Project) {
+    if (project.isDefault) {
+      return
+    }
+
+    val projectFile = project.projectFilePath
+    check(projectFile != null) { "Impossible: project is not default, but it does not have project file" }
+
+    runEelInitialization(projectFile)
   }
 }
 
@@ -63,14 +86,15 @@ interface EelProvider {
   companion object {
     val EP_NAME: ExtensionPointName<EelProvider> = ExtensionPointName<EelProvider>("com.intellij.eelProvider")
   }
+
   /**
-   * Runs an initialization process for [EelApi] relevant to [project] during the process of its opening.
+   * Runs an initialization process for [EelApi] relevant to [path] during the process of its opening.
    *
    * This function runs **early**, so implementors need to be careful with performance.
    * This function is called for every opening [Project],
-   * so the implementation is expected to exit quickly if it decides that it is not responsible for [project].
+   * so the implementation is expected to exit quickly if it decides that it is not responsible for [path].
    */
-  suspend fun tryInitialize(project: Project)
+  suspend fun tryInitialize(path: String)
 }
 
 fun EelApi.systemOs(): OS {
