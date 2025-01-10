@@ -12,6 +12,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -349,9 +350,16 @@ class PyTypeHintsInspection : PyInspection() {
           registerProblem(target, PyPsiBundle.message("INSP.type.hints.type.alias.must.be.immediately.initialized"))
         }
       }
-      else if (parent is PyAssignmentStatement &&
-               PyTypingTypeProvider.isExplicitTypeAlias(parent, myTypeEvalContext) && !PyUtil.isTopLevel(parent)) {
-        registerProblem(target, PyPsiBundle.message("INSP.type.hints.type.alias.must.be.top.level.declaration"))
+      else if (parent is PyAssignmentStatement && PyTypingTypeProvider.isExplicitTypeAlias(parent, myTypeEvalContext)) {
+        val assignedValue = parent.assignedValue
+        if (assignedValue != null) {
+          if (!isValidTypeHint(assignedValue, myTypeEvalContext)) {
+            registerProblem(assignedValue, PyPsiBundle.message("INSP.type.hints.type.alias.invalid.assigned.value"))
+          }
+        }
+        if (!PyUtil.isTopLevel(parent)) {
+          registerProblem(target, PyPsiBundle.message("INSP.type.hints.type.alias.must.be.top.level.declaration"))
+        }
       }
     }
 
@@ -1484,5 +1492,57 @@ class PyTypeHintsInspection : PyInspection() {
         refExpr.replace(newRefExpr)
       }
     }
+
+    private val QUALIFIED_NAMES_WHITELIST: List<String> = listOf(PyTypingTypeProvider.ANY)
+
+    fun isValidTypeHint(expression: PyExpression, context: TypeEvalContext): Boolean {
+      return when (expression) {
+        is PyListLiteralExpression -> false
+        is PyCallExpression -> Ref.deref(PyTypingTypeProvider.getType(expression, context)) is PyTypeVarType
+        is PySubscriptionExpression -> expression.operand is PyReferenceExpression
+        is PyStringLiteralExpression -> stringLiteralIsCorrectTypeHint(expression, context)
+        is PyReferenceExpression -> referenceIsCorrectTypeHint(expression, context)
+        else -> PyTypingTypeProvider.getType(expression, context) != null
+      }
+    }
+
+    private fun stringLiteralIsCorrectTypeHint(stringLiteral: PyStringLiteralExpression, context: TypeEvalContext): Boolean {
+      val embeddedString = stringLiteral.firstChild as? PyPlainStringElement ?: return false // f-strings are not allowed
+      if (embeddedString.prefix.isNotEmpty()) return false // prefixed strings are not allowed
+      if (stringLiteral.stringElements.size > 1) return false
+      val expressionText = if (embeddedString.isTripleQuoted) {
+        "(${embeddedString.content.trimIndent()})"
+      }
+      else {
+        embeddedString.content
+      }
+      val embeddedExpression = PyUtil.createExpressionFromFragment(expressionText, stringLiteral) ?: return false
+      return checkRecursively(embeddedExpression, context)
+    }
+
+    private fun referenceIsCorrectTypeHint(referenceExpression: PyReferenceExpression, context: TypeEvalContext): Boolean {
+      val resolveContext = PyResolveContext.defaultContext(context)
+      val resolvedElement = PyResolveUtil.resolveDeclaration(referenceExpression.reference, resolveContext)
+      if (resolvedElement == null) return true // We cannot be sure, let it better be false-negative
+      return when (resolvedElement) {
+        is PyTargetExpression -> {
+          val assignedTypeAlias = PyTypingAliasStubType.getAssignedValueStubLike(resolvedElement)
+          if (assignedTypeAlias != null) {
+            checkRecursively(assignedTypeAlias, context)
+          }
+          else {
+            return PyTypingTypeProvider.resolveToQualifiedNames(referenceExpression, context)
+              .any { qualifiedName -> QUALIFIED_NAMES_WHITELIST.contains(qualifiedName) }
+                   || (resolvedElement.annotationValue != null && !resolvedElement.hasAssignedValue()) // Type declaration
+          }
+        }
+        is PyClass -> true
+        is PyFunction -> resolvedElement.decoratorList?.findDecorator(PyNames.PROPERTY) != null
+        else -> false
+      }
+    }
+
+    private fun checkRecursively(expression: PyExpression, context: TypeEvalContext): Boolean =
+      RecursionManager.doPreventingRecursion(expression, false) { isValidTypeHint(expression, context) } == true
   }
 }

@@ -2390,6 +2390,65 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-76820
+  public void testExplicitTypeAliasInvalidValues() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   
+                   var1 = 3
+                   
+                   def foo(): ...
+                   
+                   BadTypeAlias1: TA = <warning descr="Assigned value of type alias must be a correct type">eval(<warning descr="Generics should be specified through square brackets">"".join(<warning descr="Generics should be specified through square brackets">map(chr, [105, 110, 116])</warning>)</warning>)</warning>
+                   BadTypeAlias2: TA = <warning descr="Assigned value of type alias must be a correct type">[int, str]</warning>
+                   BadTypeAlias3: TA = <warning descr="Assigned value of type alias must be a correct type">((int, str),)</warning>
+                   BadTypeAlias4: TA = <warning descr="Assigned value of type alias must be a correct type">[int for i in <warning descr="Generics should be specified through square brackets">range(1)</warning>]</warning>
+                   BadTypeAlias5: TA = <warning descr="Assigned value of type alias must be a correct type">{"a": "b"}</warning>
+                   BadTypeAlias6: TA = <warning descr="Assigned value of type alias must be a correct type">(lambda: int)()</warning>
+                   BadTypeAlias7: TA = <warning descr="Assigned value of type alias must be a correct type">[int][0]</warning>
+                   BadTypeAlias8: TA = <warning descr="Assigned value of type alias must be a correct type">int if 1 < 3 else str</warning>
+                   BadTypeAlias9: TA = <warning descr="Assigned value of type alias must be a correct type">var1</warning>
+                   BadTypeAlias10: TA = <warning descr="Assigned value of type alias must be a correct type">True</warning>
+                   BadTypeAlias11: TA = <warning descr="Assigned value of type alias must be a correct type">1</warning>
+                   BadTypeAlias12: TA = <warning descr="Assigned value of type alias must be a correct type">list or set</warning>
+                   BadTypeAlias13: TA = <warning descr="Assigned value of type alias must be a correct type">f"{'int'}"</warning>
+                   BadTypeAlias14: TA = <warning descr="Assigned value of type alias must be a correct type">f"int"</warning>
+                   BadTypeAlias15: TA = <warning descr="Assigned value of type alias must be a correct type">u"int"</warning>
+                   BadTypeAlias16: TA = <warning descr="Assigned value of type alias must be a correct type">b"int"</warning>
+                   BadTypeAlias17: TA = <warning descr="Assigned value of type alias must be a correct type">"foo()"</warning>
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitTypeAliasValidValues() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   from typing import Any, Callable, Concatenate, Literal, ParamSpec, TypeVar, Union
+                   
+                   S = TypeVar("S")
+                   T = TypeVar("T")
+                   P = ParamSpec("P")
+                   R = TypeVar("R")
+                   
+                   GoodTypeAlias1: TA = Union[int, str]
+                   GoodTypeAlias2: TA = int | None
+                   GoodTypeAlias3: TA = list[GoodTypeAlias2]
+                   GoodTypeAlias4: TA = list[T]
+                   GoodTypeAlias5: TA = tuple[T, ...] | list[T]
+                   GoodTypeAlias6: TA = tuple[int, int, S, T]
+                   GoodTypeAlias7: TA = Callable[..., int]
+                   GoodTypeAlias8: TA = Callable[[int, T], T]
+                   GoodTypeAlias9: TA = Callable[Concatenate[int, P], R]
+                   GoodTypeAlias10: TA = Any
+                   GoodTypeAlias11: TA = GoodTypeAlias1 | GoodTypeAlias2 | list[GoodTypeAlias4[int]]
+                   GoodTypeAlias12: TA = Callable[P, None]
+                   GoodTypeAlias13: TA = "int | str"
+                   GoodTypeAlias14: TA = list["int | str"]
+                   GoodTypeAlias15: TA = Literal[3, 4, 5, None]
+                   GoodTypeAlias16: TA = "Callable[Concatenate[int, P], R]"
+                   """);
+  }
+
 
   @NotNull
   @Override
