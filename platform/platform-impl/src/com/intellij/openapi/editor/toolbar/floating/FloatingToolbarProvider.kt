@@ -25,12 +25,15 @@ interface FloatingToolbarProvider {
   fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {}
 
   companion object {
+
     val EP_NAME: ExtensionPointName<FloatingToolbarProvider> = ExtensionPointName.create("com.intellij.editorFloatingToolbarProvider")
 
+    @Deprecated("Use the [ExtensionPointName.findExtensionOrFail] function directly")
     inline fun <reified T : FloatingToolbarProvider> getProvider(): T {
       return EP_NAME.findExtensionOrFail(T::class.java)
     }
 
+    @Deprecated("Use the [ExtensionPointUtil.createExtensionDisposable] function directly")
     fun createExtensionDisposable(provider: FloatingToolbarProvider, parentDisposable: Disposable): Disposable {
       return EP_NAME.createExtensionDisposable(provider, parentDisposable)
     }

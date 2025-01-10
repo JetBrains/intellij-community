@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.observable.util.addComponent
 import com.intellij.openapi.observable.util.whenKeyPressed
 import com.intellij.openapi.ui.isComponentUnderMouse
@@ -37,7 +38,7 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
 
   private fun addFloatingToolbarComponent(editor: EditorImpl, provider: FloatingToolbarProvider) {
     if (provider.isApplicable(editor.dataContext)) {
-      val disposable = FloatingToolbarProvider.createExtensionDisposable(provider, editor.disposable)
+      val disposable = FloatingToolbarProvider.EP_NAME.createExtensionDisposable(provider, editor.disposable)
       val component = EditorFloatingToolbarComponent(editor, provider, disposable)
       addComponent(component, disposable)
       provider.register(editor.dataContext, component, disposable)
