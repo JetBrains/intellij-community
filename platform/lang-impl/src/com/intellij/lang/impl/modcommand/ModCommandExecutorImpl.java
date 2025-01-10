@@ -76,6 +76,7 @@ import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
@@ -540,7 +541,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
   private static class ActionContextPointer {
     private final @NotNull Project myProject;
-    private final @NotNull PsiFile myFile;
+    private final @NotNull VirtualFile myFile;
     private final @Nullable SmartPsiElementPointer<PsiElement> myElementPointer;
     private final @NotNull RangeMarker myOffsetMarker;
     private final @NotNull RangeMarker mySelectionMarker;
@@ -548,9 +549,9 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
     ActionContextPointer(@NotNull ActionContext context) {
       myProject = context.project();
-      myFile = context.file();
+      myFile = Objects.requireNonNull(context.file().getVirtualFile());
       myElementPointer = context.element() != null ? SmartPointerManager.createPointer(context.element()) : null;
-      Document document = myFile.getFileDocument();
+      Document document = context.file().getFileDocument();
       myOffsetMarker = document.createRangeMarker(context.offset(), context.offset());
       mySelectionMarker = document.createRangeMarker(context.selection());
     }
@@ -565,7 +566,9 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
     @Nullable ActionContext restore() {
       if (!isValid()) return null;
-      return new ActionContext(myProject, myFile, myOffsetMarker.getStartOffset(),
+      PsiFile file = PsiManager.getInstance(myProject).findFile(myFile);
+      if (file == null) return null;
+      return new ActionContext(myProject, file, myOffsetMarker.getStartOffset(),
                                mySelectionMarker.getTextRange(), myElementPointer != null ? myElementPointer.getElement() : null);
     }
 
