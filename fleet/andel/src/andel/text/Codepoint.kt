@@ -2,24 +2,53 @@
 package andel.text
 
 import kotlin.jvm.JvmInline
+import de.cketti.codepoints.CodePoints
 
 @JvmInline
 value class Codepoint(val codepoint: Int) {
-  val charCount: Int get() = Character.charCount(codepoint)
+  val charCount: Int get() = CodePoints.charCount(codepoint)
+
+  companion object {
+    fun isUnicodeIdentifierPart(codepoint: Int): Boolean {
+      // TODO multiplatform implementation?
+      return Character.isUnicodeIdentifierPart(codepoint)
+    }
+
+    fun isJavaIdentifierPart(codepoint: Int): Boolean {
+      // TODO multiplatform implementation?
+      return Character.isJavaIdentifierPart(codepoint)
+    }
+
+    /**
+     * @see Character.isISOControl
+     */
+    fun isISOControl(codePoint: Int): Boolean {
+      // copy of: Character.isISOControl(codePoint)
+      // Optimized form of:
+      //     (codePoint >= 0x00 && codePoint <= 0x1F) ||
+      //     (codePoint >= 0x7F && codePoint <= 0x9F);
+      return codePoint <= 0x9F &&
+             (codePoint >= 0x7F || codePoint.shr(5) == 0)
+    }
+
+    fun toString(codepoint: Int): String {
+      return CodePoints.toString(codepoint)
+    }
+  }
 }
 
-fun CharSequence.codepoints(offset: Int, direction: Direction): Iterator<Codepoint> =
+fun CharSequence.codepoints(offset: Int, direction: Direction = Direction.FORWARD): Iterator<Codepoint> =
   when (direction) {
     Direction.FORWARD -> iterator {
       var i = offset
       val len = length
       while (i < len) {
         val c1 = get(i++)
-        if (Character.isHighSurrogate(c1)) {
+        if (c1.isHighSurrogate()) {
           if (i < len) {
             val c2 = get(i++)
-            if (Character.isLowSurrogate(c2)) {
-              yield(Codepoint(Character.toCodePoint(c1, c2)))
+            if (c2.isLowSurrogate()) {
+              yield(Codepoint(CodePoints.toCodePoint(c1, c2)))
             }
           }
         }
@@ -32,11 +61,11 @@ fun CharSequence.codepoints(offset: Int, direction: Direction): Iterator<Codepoi
       var i = offset - 1
       while (i >= 0) {
         val c2 = get(i--)
-        if (Character.isLowSurrogate(c2)) {
+        if (c2.isLowSurrogate()) {
           if (i >= 0) {
             val c1 = get(i--)
-            if (Character.isHighSurrogate(c1)) {
-              yield(Codepoint(Character.toCodePoint(c1, c2)))
+            if (c1.isHighSurrogate()) {
+              yield(Codepoint(CodePoints.toCodePoint(c1, c2)))
             }
           }
         }

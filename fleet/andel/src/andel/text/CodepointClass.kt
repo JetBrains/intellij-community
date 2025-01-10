@@ -8,7 +8,11 @@ private val separatorCodes = BooleanArray(maxSeparatorCode + 1).apply {
 }
 
 enum class CodepointClass {
-  CARET, SEPARATOR, NEWLINE, SPACE, UNDERSCORE, UPPERCASE, LOWERCASE
+  CARET, SEPARATOR, NEWLINE, SPACE, UNDERSCORE, UPPERCASE, LOWERCASE;
+
+  fun isWhiteSpace(): Boolean {
+    return this == SPACE || this == NEWLINE
+  }
 }
 
 fun codepointClass(codepoint: Int): CodepointClass =
