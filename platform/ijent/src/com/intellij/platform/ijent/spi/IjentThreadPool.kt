@@ -59,7 +59,7 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
     override fun newThread(r: Runnable): Thread {
       val thread = object : Thread() {
         init {
-          name = "${IjentThreadPool::class.java.name}-${threadCounter.incrementAndGet()}"
+          name = "${IjentThreadPool::class.java.name}-${threadCounter.incrementAndGet()}-$IJENT_STATIC_THREAD_MARKER"
         }
 
         override fun run() {

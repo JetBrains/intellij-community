@@ -10,7 +10,6 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.awaitExit
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -126,7 +125,7 @@ class IjentSessionMediator private constructor(
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
-      GlobalScope.launch(blockingDispatcher + ijentProcessScope.coroutineNameAppended("stderr logger")) {
+      GlobalScope.launch(blockingDispatcher + ijentProcessScope.coroutineNameAppended("stderr logger ($IJENT_STATIC_THREAD_MARKER)")) {
         ijentProcessStderrLogger(process, ijentLabel, lastStderrMessages)
       }
 
