@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.wsl.*
@@ -86,15 +87,15 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution)
       addInitCommand("[ -e ${escapePath(dir)} ]")
       addInitCommand("echo ${prefixCutter.token} >&2")
     }
-    val process = distro.patchCommandLine(GeneralCommandLine("ls", "-A", dir), null, options).createProcess()
-    if (!process.waitFor(5, TimeUnit.SECONDS)) throw Exception("Process didn't finish: WSL frozen?")
-    if (process.exitValue() == 0) {
-      // Folder exists, lets check if empty
-      return process.inputStream.read() == -1
+    val process = CapturingProcessHandler(distro.patchCommandLine(GeneralCommandLine("ls", "-A", dir), null, options)).runProcess(5000, true)
+    if (process.isTimeout) throw Exception("Process didn't finish: WSL frozen?")
+    if (process.exitCode == 0) {
+      // Folder exists, let's check if empty
+      return process.stdout.isEmpty() //process.inputStream.read() == -1
     }
     else {
       // Folder doesn't exist
-      val error = prefixCutter.getAfterToken(process.errorStream.readAllBytes().decodeToString()).trim()
+      val error = prefixCutter.getAfterToken(process.stderr).trim()
       if (error.isEmpty()) return true // Doesn't exist, but still empty
       throw Exception("Error checking folder: $error")
     }
