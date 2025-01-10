@@ -9,9 +9,9 @@ import com.intellij.openapi.ui.isFocusAncestor
 import javax.swing.JComponent
 
 class FloatingToolbar(
-  private val ownerComponent: JComponent,
+  ownerComponent: JComponent,
   actionGroup: ActionGroup,
-  private val parentDisposable: Disposable
+  parentDisposable: Disposable,
 ) : AbstractFloatingToolbarComponent(actionGroup, parentDisposable) {
 
   override val autoHideable: Boolean = true
@@ -20,13 +20,13 @@ class FloatingToolbar(
     return isComponentUnderMouse() || isFocusAncestor()
   }
 
-  override fun installMouseMotionWatcher() {
-    ownerComponent.whenMouseMoved(parentDisposable) {
-      scheduleShow()
-    }
+  init {
+    init(ownerComponent)
   }
 
   init {
-    init(ownerComponent)
+    ownerComponent.whenMouseMoved(parentDisposable) {
+      scheduleShow()
+    }
   }
 }

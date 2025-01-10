@@ -18,6 +18,4 @@ class LayoutActionsFloatingToolbar : AbstractFloatingToolbarComponent {
   override val autoHideable: Boolean = false
 
   override fun isComponentOnHold(): Boolean = true
-
-  override fun installMouseMotionWatcher(): Unit = Unit
 }

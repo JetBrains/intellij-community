@@ -17,8 +17,8 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 
 internal class StructureViewFloatingToolbar(
-  private val ownerComponent: JComponent,
-  private val parentDisposable: Disposable,
+  ownerComponent: JComponent,
+  parentDisposable: Disposable,
 ) : AbstractFloatingToolbarComponent(
   DefaultActionGroup(MergeableActions((ActionManager.getInstance().getAction(ActionPlaces.STRUCTURE_VIEW_FLOATING_TOOLBAR) as ActionGroup))),
   parentDisposable
@@ -30,12 +30,6 @@ internal class StructureViewFloatingToolbar(
 
   override fun isComponentOnHold(): Boolean {
     return isComponentUnderMouse() || isFocusAncestor()
-  }
-
-  override fun installMouseMotionWatcher() {
-    ownerComponent.whenMouseMoved(parentDisposable) {
-      scheduleShow()
-    }
   }
 
   fun repaintOnYWithDy(y: Int, scrollingDy: Int) {
@@ -65,6 +59,12 @@ internal class StructureViewFloatingToolbar(
     backgroundAlpha = 1F
     border = BorderFactory.createEmptyBorder()
     layoutStrategy = MyToolbarLayoutStrategy()
+  }
+
+  init {
+    ownerComponent.whenMouseMoved(parentDisposable) {
+      scheduleShow()
+    }
   }
 
   private class MyToolbarLayoutStrategy: ToolbarLayoutStrategy {

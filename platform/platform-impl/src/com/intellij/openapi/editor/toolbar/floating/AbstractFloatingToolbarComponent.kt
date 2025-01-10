@@ -40,8 +40,6 @@ abstract class AbstractFloatingToolbarComponent(
 
   protected abstract fun isComponentOnHold(): Boolean
 
-  protected abstract fun installMouseMotionWatcher()
-
   protected fun init(targetComponent: JComponent) {
     setTargetComponent(targetComponent)
     minimumButtonSize = Dimension(22, 22)
@@ -51,8 +49,6 @@ abstract class AbstractFloatingToolbarComponent(
     layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
     transparentComponent.hideComponent()
-
-    installMouseMotionWatcher()
   }
 
   override fun addNotify() {
