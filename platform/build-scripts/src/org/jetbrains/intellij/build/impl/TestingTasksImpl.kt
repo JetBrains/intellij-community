@@ -589,11 +589,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
        * Make test inherit Maven dependency resolver settings
        * See [org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder]
        */
-
-      /**
-       * Make test inherit Maven dependency resolver settings
-       * See [org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder]
-       */
       if (key.startsWith("org.jetbrains.jps.incremental.dependencies.resolution.")) {
         systemProperties.putIfAbsent(key, value as String)
       }
