@@ -22,8 +22,8 @@ fun loadEnvTags(pythonEnv: Path): Set<String> {
   try {
     return tagsFile.readLines().toSet()
   }
-  catch (e: IOException) {
-    fileLogger().warn("Can't read $tagsFile", e)
+  catch (_: IOException) {
+    fileLogger().warn("Can't read $tagsFile")
     return emptySet()
   }
 }
