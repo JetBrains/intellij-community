@@ -47,6 +47,7 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.collections.set
 import kotlin.io.path.copyTo
 import kotlin.io.path.exists
 import kotlin.io.path.readLines
@@ -56,12 +57,6 @@ private val LOG = logger<GpgAgentConfigurator>()
 @Service(Service.Level.PROJECT)
 internal class GpgAgentConfigurator(private val project: Project, private val cs: CoroutineScope): Disposable {
   companion object {
-    const val GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY = "pinentry-program"
-    const val GPG_AGENT_DEFAULT_CACHE_TTL_CONF_KEY = "default-cache-ttl"
-    const val GPG_AGENT_DEFAULT_CACHE_TTL_CONF_VALUE = "1800"
-    const val GPG_AGENT_MAX_CACHE_TTL_CONF_KEY = "max-cache-ttl"
-    const val GPG_AGENT_MAX_CACHE_TTL_CONF_VALUE = "7200"
-
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean {
       return Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) &&
@@ -107,8 +102,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
 
   private fun isPinentryConfigured(gpgAgentPaths: GpgAgentPaths): Boolean {
     val pinentryConfigured = gpgAgentPaths.gpgPinentryAppLauncher.exists()
-                             && readConfig(gpgAgentPaths.gpgAgentConf)
-                               ?.content[GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY] == gpgAgentPaths.gpgPinentryAppLauncherConfigPath
+                             && readConfig(gpgAgentPaths.gpgAgentConf)?.pinentryProgram == gpgAgentPaths.gpgPinentryAppLauncherConfigPath
     return pinentryConfigured
   }
 
@@ -140,7 +134,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     var needBackup = gpgAgentConf.exists()
     if (!needBackup) {
       LOG.debug("Cannot locate $gpgAgentConf, creating new")
-      writeAgentConfig(gpgAgentPaths, GpgAgentConfig(gpgAgentConf, emptyMap()))
+      writeAgentConfig(gpgAgentPaths, GpgAgentConfig(gpgAgentPaths))
       restartAgent(executable)
       needBackup = false
     }
@@ -152,7 +146,8 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     }
 
     if (needBackup && backupExistingConfig(gpgAgentPaths, config)) {
-      writeAgentConfig(gpgAgentPaths, config)
+      val configToSave = config.copyAndSetDefaults(gpgAgentPaths.gpgPinentryAppLauncherConfigPath)
+      writeAgentConfig(gpgAgentPaths, configToSave)
       restartAgent(executable)
     }
 
@@ -186,7 +181,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   }
 
   private fun emitUpdateLauncherEvent() {
-    updateLauncherQueue.queue(Update.create(GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY) {
+    updateLauncherQueue.queue(Update.create("pinentry") {
       updateExistingPinentryLauncher()
     })
   }
@@ -205,7 +200,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   private fun generatePinentryLauncher(executable: GitExecutable, gpgAgentPaths: GpgAgentPaths) {
     val gpgAgentConfBackup = gpgAgentPaths.gpgAgentConfBackup
     val pinentryFallback = when {
-      gpgAgentConfBackup.exists() -> readConfig(gpgAgentConfBackup)?.content[GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY]
+      gpgAgentConfBackup.exists() -> readConfig(gpgAgentConfBackup)?.pinentryProgram
       else -> null
     }
     if (pinentryFallback.isNullOrBlank()) {
@@ -218,7 +213,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
 
   private fun backupExistingConfig(gpgAgentPaths: GpgAgentPaths, config: GpgAgentConfig): Boolean {
     val pinentryAppLauncherConfigPath = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
-    if (config.content[GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY] == pinentryAppLauncherConfigPath) {
+    if (config.pinentryProgram == pinentryAppLauncherConfigPath) {
       return false
     }
     val gpgAgentConf = gpgAgentPaths.gpgAgentConf
@@ -234,22 +229,13 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   }
 
   private fun writeAgentConfig(gpgAgentPaths: GpgAgentPaths, config: GpgAgentConfig) {
-    val pinentryAppLauncherConfigPath = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
-    val (configPath, configContent) = config
-    val configToSave = configContent.toMutableMap()
-    configToSave.put(GPG_AGENT_DEFAULT_CACHE_TTL_CONF_KEY, GPG_AGENT_DEFAULT_CACHE_TTL_CONF_VALUE)
-    configToSave.put(GPG_AGENT_MAX_CACHE_TTL_CONF_KEY, GPG_AGENT_MAX_CACHE_TTL_CONF_VALUE)
-    configToSave.put(GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY, pinentryAppLauncherConfigPath)
-
     val notificator = project.service<GpgAgentConfigurationNotificator>()
     try {
-      FileUtil.writeToFile(configPath.toFile(),
-                           configToSave.map { (key, value) -> "$key $value".trimEnd() }.joinToString(separator = "\n"))
-
+      config.writeToFile()
       notificator.notifyConfigurationSuccessful(gpgAgentPaths)
     }
     catch (e: IOException) {
-      LOG.warn("Cannot change config $configPath", e)
+      LOG.warn("Cannot change config ${config.path}", e)
       notificator.notifyConfigurationFailed(e)
       deleteBackup(gpgAgentPaths)
     }
@@ -432,7 +418,41 @@ internal data class GpgAgentPaths(
   val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
 }
 
-private data class GpgAgentConfig(val path: Path, val content: Map<String, String>)
+internal data class GpgAgentConfig(val path: Path, val content: Map<String, String>) {
+  val pinentryProgram: String? get() = content[PINENTRY_PROGRAM]
+
+  constructor(gpgAgentPaths: GpgAgentPaths) : this(gpgAgentPaths.gpgAgentConf, buildMap {
+    setDefaults(this)
+    this[PINENTRY_PROGRAM] = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
+  })
+
+  fun copyAndSetDefaults(pinentryPath: String): GpgAgentConfig {
+    val contentCopy = content.toMutableMap()
+    setDefaults(contentCopy)
+    contentCopy[PINENTRY_PROGRAM] = pinentryPath
+    return GpgAgentConfig(path, contentCopy)
+  }
+
+  @Throws(IOException::class)
+  fun writeToFile() {
+    FileUtil.writeToFile(path.toFile(),
+                         content.map { (key, value) -> "$key $value".trimEnd() }.joinToString(separator = "\n"))
+  }
+
+  companion object {
+    const val PINENTRY_PROGRAM = "pinentry-program"
+    const val DEFAULT_CACHE_TTL = "default-cache-ttl"
+    const val MAX_CACHE_TTL = "max-cache-ttl"
+
+    const val DEFAULT_CACHE_TTL_CONF_VALUE = "1800"
+    const val MAX_CACHE_TTL_CONF_VALUE = "7200"
+
+    private fun setDefaults(content: MutableMap<String, String>) {
+      content[DEFAULT_CACHE_TTL] = DEFAULT_CACHE_TTL_CONF_VALUE
+      content[MAX_CACHE_TTL] = MAX_CACHE_TTL_CONF_VALUE
+    }
+  }
+}
 
 private class GpgAgentConfiguratorStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {

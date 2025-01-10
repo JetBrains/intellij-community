@@ -10,11 +10,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.util.io.createDirectories
-import git4idea.commit.signing.GpgAgentConfigurator.Companion.GPG_AGENT_DEFAULT_CACHE_TTL_CONF_KEY
-import git4idea.commit.signing.GpgAgentConfigurator.Companion.GPG_AGENT_DEFAULT_CACHE_TTL_CONF_VALUE
-import git4idea.commit.signing.GpgAgentConfigurator.Companion.GPG_AGENT_MAX_CACHE_TTL_CONF_KEY
-import git4idea.commit.signing.GpgAgentConfigurator.Companion.GPG_AGENT_MAX_CACHE_TTL_CONF_VALUE
-import git4idea.commit.signing.GpgAgentConfigurator.Companion.GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_HOME_DIR
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.PINENTRY_LAUNCHER_FILE_NAME
 import git4idea.config.GitExecutableManager
@@ -54,11 +49,11 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
     val pathLocator = TestGpgPathLocator()
     val paths = pathLocator.resolvePaths()!!
-    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY /usr/local/bin/pinentry")
+    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "${GpgAgentConfig.PINENTRY_PROGRAM} /usr/local/bin/pinentry")
     project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
     val generatedConfig = paths.gpgAgentConf.readLines()
     assertTrue(generatedConfig.size == 3)
-    assertTrue(generatedConfig[0] == "$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY ${paths.gpgPinentryAppLauncherConfigPath}")
+    assertTrue(generatedConfig[0] == "${GpgAgentConfig.PINENTRY_PROGRAM} ${paths.gpgPinentryAppLauncherConfigPath}")
 
     requestPasswordAndAssert(paths)
   }
@@ -69,9 +64,9 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val pathLocator = TestGpgPathLocator()
     val paths = pathLocator.resolvePaths()!!
     val allowLoopbackPinentryConfig = "allow-loopback-pinentry"
-    val defaultCacheTtlConfig = "$GPG_AGENT_DEFAULT_CACHE_TTL_CONF_KEY $GPG_AGENT_DEFAULT_CACHE_TTL_CONF_VALUE"
-    val maxCacheTtlConfig = "$GPG_AGENT_MAX_CACHE_TTL_CONF_KEY $GPG_AGENT_MAX_CACHE_TTL_CONF_VALUE"
-    val pinentryConfig = "$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY ${paths.gpgPinentryAppLauncherConfigPath}"
+    val defaultCacheTtlConfig = "${GpgAgentConfig.DEFAULT_CACHE_TTL} ${GpgAgentConfig.DEFAULT_CACHE_TTL_CONF_VALUE}"
+    val maxCacheTtlConfig = "${GpgAgentConfig.MAX_CACHE_TTL} ${GpgAgentConfig.MAX_CACHE_TTL_CONF_VALUE}"
+    val pinentryConfig = "${GpgAgentConfig.PINENTRY_PROGRAM} ${paths.gpgPinentryAppLauncherConfigPath}"
 
     FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "$allowLoopbackPinentryConfig\n$defaultCacheTtlConfig\n$maxCacheTtlConfig")
     project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
@@ -92,7 +87,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     FileUtil.delete(paths.gpgAgentConf.toFile())
     FileUtil.delete(paths.gpgAgentConfBackup.toFile())
 
-    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY /usr/local/bin/pinentry")
+    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "${GpgAgentConfig.PINENTRY_PROGRAM} /usr/local/bin/pinentry")
     project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
     scriptContent = FileUtil.loadFile(paths.gpgPinentryAppLauncher.toFile())
     assertScriptContentStructure(scriptContent)
