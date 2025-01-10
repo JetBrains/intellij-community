@@ -7964,9 +7964,19 @@ Fa:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - javax.swing.JPanel
 - <init>(com.intellij.openapi.actionSystem.ActionGroup,javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - addNotify():V
+- getAutoHideable():Z
+- getBackgroundAlpha():F
+- getHidingTime():I
+- getRetentionTime():I
+- getShowingTime():I
 - hideImmediately():V
 - scheduleHide():V
 - scheduleShow():V
+- setAutoHideable(Z):V
+- setBackgroundAlpha(F):V
+- setHidingTime(I):V
+- setRetentionTime(I):V
+- setShowingTime(I):V
 a:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 - sf:Companion:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider$Companion
@@ -7982,9 +7992,19 @@ f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbar
 - com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - <init>(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V
 com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
+- a:getAutoHideable():Z
+- a:getBackgroundAlpha():F
+- a:getHidingTime():I
+- a:getRetentionTime():I
+- a:getShowingTime():I
 - a:hideImmediately():V
 - a:scheduleHide():V
 - a:scheduleShow():V
+- a:setAutoHideable(Z):V
+- a:setBackgroundAlpha(F):V
+- a:setHidingTime(I):V
+- a:setRetentionTime(I):V
+- a:setShowingTime(I):V
 com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 - sf:Companion:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$Companion
 - a:getActionGroup():com.intellij.openapi.actionSystem.ActionGroup

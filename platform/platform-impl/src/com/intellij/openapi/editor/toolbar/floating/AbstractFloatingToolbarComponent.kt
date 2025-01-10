@@ -26,20 +26,15 @@ abstract class AbstractFloatingToolbarComponent(
   private val transparentComponent = ToolbarTransparentComponent()
   private val componentAnimator = TransparentComponentAnimator(transparentComponent, parentDisposable)
 
-  @ApiStatus.Internal
-  var backgroundAlpha: Float = BACKGROUND_ALPHA
+  override var backgroundAlpha: Float = BACKGROUND_ALPHA
 
-  @get:ApiStatus.Internal
-  @set:ApiStatus.Internal
-  var showingTime: Int by componentAnimator::showingTime
+  override var showingTime: Int by componentAnimator::showingTime
 
-  @get:ApiStatus.Internal
-  @set:ApiStatus.Internal
-  var hidingTime: Int by componentAnimator::hidingTime
+  override var hidingTime: Int by componentAnimator::hidingTime
 
-  @get:ApiStatus.Internal
-  @set:ApiStatus.Internal
-  var autoHideable: Boolean by componentAnimator::autoHideable
+  override var retentionTime: Int by componentAnimator::retentionTime
+
+  override var autoHideable: Boolean by componentAnimator::autoHideable
 
   protected open fun isComponentOnHold(): Boolean = false
 

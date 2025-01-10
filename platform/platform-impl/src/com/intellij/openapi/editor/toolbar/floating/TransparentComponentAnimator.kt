@@ -27,6 +27,8 @@ class TransparentComponentAnimator(
 
   var hidingTime: Int by animator::hidingDuration
 
+  var retentionTime: Int by clk::initialDelay
+
   var autoHideable: Boolean = false
 
   private fun startTimerIfNeeded() {
@@ -73,7 +75,7 @@ class TransparentComponentAnimator(
   }
 
   init {
-    clk.isRepeats = true
+    clk.isRepeats = false
     disposable.whenDisposed {
       stopTimerIfNeeded()
     }
