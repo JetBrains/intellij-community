@@ -264,12 +264,10 @@ internal fun Row.pythonInterpreterComboBox(
     }
   }
   return cell
-
-
 }
 
-class PythonInterpreterComboBox(
-  val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
+internal class PythonInterpreterComboBox(
+  private val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
   val controller: PythonAddInterpreterModel,
   val onPathSelected: (String) -> Unit,
 ) : ComboBox<PythonSelectableInterpreter?>() {

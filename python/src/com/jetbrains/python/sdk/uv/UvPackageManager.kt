@@ -22,7 +22,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, val uv: UvLowLevel) 
   var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> {
-    uv.installPackage(specification, options).getOrElse {
+    uv.installPackage(specification, options, (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.usePip ?: false).getOrElse {
       return Result.failure(it)
     }
 
@@ -31,7 +31,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, val uv: UvLowLevel) 
   }
 
   override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> {
-    uv.installPackage(specification, emptyList()).getOrElse {
+    uv.installPackage(specification, emptyList(), (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.usePip ?: false).getOrElse {
       return Result.failure(it)
     }
 
@@ -40,7 +40,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, val uv: UvLowLevel) 
   }
 
   override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> {
-    uv.uninstallPackage(pkg).getOrElse {
+    uv.uninstallPackage(pkg, (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.usePip ?: false).getOrElse {
       return Result.failure(it)
     }
 
@@ -64,7 +64,8 @@ class UvPackageManagerProvider : PythonPackageManagerProvider {
       return null
     }
 
-    val uv = createUvLowLevel(Path.of(project.basePath!!), createUvCli())
+    val uvWorkingDirectory = (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory ?: Path.of(project.basePath!!)
+    val uv = createUvLowLevel(uvWorkingDirectory, createUvCli())
     return UvPackageManager(project, sdk, uv)
   }
 }

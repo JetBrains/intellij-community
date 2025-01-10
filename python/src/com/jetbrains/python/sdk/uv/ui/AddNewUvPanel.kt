@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.uv.ui
 
 import com.intellij.application.options.ModuleListCellRenderer
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
@@ -25,6 +24,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
@@ -161,7 +161,7 @@ class PyAddNewUvPanel(
       setUvExecutable(it)
     }
     val sdk = runBlockingCancellable {
-      setupUvSdkUnderProgress(module, Path.of(path), existingSdks, Path.of(python))
+      setupUvSdkUnderProgress(ModuleOrProject.ModuleAndProject(module), existingSdks, Path.of(python))
     }
 
     sdk.onSuccess {
