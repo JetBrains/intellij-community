@@ -4,6 +4,7 @@ package com.intellij.ui.mac
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomisedActionGroup
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
@@ -108,6 +109,9 @@ internal object MacFullScreenControlsManager {
   private fun isEmptyGroup(group: ActionGroup): Boolean {
     if (group is DefaultActionGroup) {
       return group.childActionsOrStubs.isEmpty()
+    }
+    if (group is CustomisedActionGroup) {
+      return group.getDefaultChildrenOrStubs().isEmpty()
     }
     return group.getChildren(null).isEmpty()
   }
