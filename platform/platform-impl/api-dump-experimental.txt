@@ -105,6 +105,7 @@ f:com.intellij.openapi.actionSystem.ActionGroupUtil
 - sf:FIT_CONTENT_WIDTH:com.intellij.openapi.editor.ComponentInlayAlignment
 - sf:FIT_VIEWPORT_WIDTH:com.intellij.openapi.editor.ComponentInlayAlignment
 - sf:FIT_VIEWPORT_X_SPAN:com.intellij.openapi.editor.ComponentInlayAlignment
+- sf:OVERLAY_FILL:com.intellij.openapi.editor.ComponentInlayAlignment
 - sf:OVERLAY_RIGHT:com.intellij.openapi.editor.ComponentInlayAlignment
 - sf:STRETCH_TO_CONTENT_WIDTH:com.intellij.openapi.editor.ComponentInlayAlignment
 - s:getEntries():kotlin.enums.EnumEntries

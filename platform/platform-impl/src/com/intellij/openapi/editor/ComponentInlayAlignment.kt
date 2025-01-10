@@ -33,5 +33,6 @@ enum class ComponentInlayAlignment {
    * Please note that this is experimental and can be deleted in the future
    */
   @ApiStatus.Internal
-  INLINE_COMPONENT
+  INLINE_COMPONENT,
+  OVERLAY_FILL
 }

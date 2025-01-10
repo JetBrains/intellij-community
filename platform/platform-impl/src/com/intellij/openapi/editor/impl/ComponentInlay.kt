@@ -40,7 +40,7 @@ internal object ComponentInlayManager {
     renderer: ComponentInlayRenderer<T>,
   ): Inlay<ComponentInlayRenderer<T>>? {
     val inlay = when (renderer.alignment) {
-      ComponentInlayAlignment.OVERLAY_RIGHT -> {
+      ComponentInlayAlignment.OVERLAY_RIGHT, ComponentInlayAlignment.OVERLAY_FILL-> {
         editor.inlayModel.addAfterLineEndElement(offset, properties, renderer)
       }
       ComponentInlayAlignment.INLINE_COMPONENT -> {
@@ -271,6 +271,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
             // x in inlay bounds contains left gap of content, which we do not need
             ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN -> contentXInViewport
             ComponentInlayAlignment.OVERLAY_RIGHT -> calcXBoundForOverlay(componentBounds.width)
+            ComponentInlayAlignment.OVERLAY_FILL -> 0
             ComponentInlayAlignment.INLINE_COMPONENT -> editor.offsetToXY(inlay.offset).x
             else -> 0
           }
@@ -281,11 +282,15 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
           if (alignment == ComponentInlayAlignment.INLINE_COMPONENT) {
             componentBounds.y = componentBounds.y + editor.lineHeight / 2 - componentBounds.height / 2
           }
+          
+          if (alignment == ComponentInlayAlignment.OVERLAY_FILL) {
+            componentBounds.height = component.preferredSize.height
+          }
 
           if (alignment == ComponentInlayAlignment.STRETCH_TO_CONTENT_WIDTH || alignment == ComponentInlayAlignment.FIT_CONTENT_WIDTH) {
             componentBounds.width = bounds.width
           }
-          else if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_WIDTH || alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN) {
+          else if (alignment == ComponentInlayAlignment.FIT_VIEWPORT_WIDTH || alignment == ComponentInlayAlignment.FIT_VIEWPORT_X_SPAN || alignment == ComponentInlayAlignment.OVERLAY_FILL) {
             componentBounds.width = max(component.minimumSize.width, viewportWidth - viewportReservedWidth)
           }
 
@@ -304,7 +309,7 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
 
   private fun layoutOverlayInlays() {
     for (inlay in inlays) {
-      if (inlay.renderer.alignment != ComponentInlayAlignment.OVERLAY_RIGHT)
+      if (inlay.renderer.alignment != ComponentInlayAlignment.OVERLAY_RIGHT && inlay.renderer.alignment != ComponentInlayAlignment.OVERLAY_FILL)
         continue
 
       val componentBounds = inlay.bounds ?: continue
