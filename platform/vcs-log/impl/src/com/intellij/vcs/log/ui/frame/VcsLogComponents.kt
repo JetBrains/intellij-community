@@ -48,13 +48,28 @@ object VcsLogComponents {
     parentDisposable: Disposable,
   ): VcsLogGraphTable {
     val graphTableModel = GraphTableModel(logData, { logUi.requestMore(EmptyRunnable.INSTANCE) }, logUi.properties)
-    return VcsLogMainGraphTable(logUi.id, graphTableModel, logUi.properties, colorManager,
-                                { logUi.refresher.onRefresh() },
+    return createTable(logUi.id, graphTableModel, logUi.properties, colorManager, { logUi.refresher.onRefresh() }, filterUi,
+                       { commitHash: String -> logUi.jumpToHash(commitHash, false, true) },
+                       parentDisposable)
+  }
+
+  fun createTable(
+    logId: String,
+    tableModel: GraphTableModel,
+    uiProperties: VcsLogUiProperties,
+    colorManager: VcsLogColorManager,
+    refresher: () -> Unit,
+    filterUi: VcsLogFilterUiEx,
+    commitByHashNavigator: (commitHash: String) -> Unit,
+    parentDisposable: Disposable,
+  ): VcsLogGraphTable {
+    return VcsLogMainGraphTable(logId, tableModel, uiProperties, colorManager,
+                                refresher,
                                 filterUi,
-                                { commitHash: String -> logUi.jumpToHash(commitHash, false, true) },
+                                commitByHashNavigator,
                                 parentDisposable
     ).apply {
-      val vcsDisplayName = VcsLogUtil.getVcsDisplayName(logData.project, logData.logProviders.values)
+      val vcsDisplayName = VcsLogUtil.getVcsDisplayName(tableModel.logData.project, tableModel.logData.logProviders.values)
       accessibleContext.accessibleName = VcsLogBundle.message("vcs.log.table.accessible.name", vcsDisplayName)
       resetDefaultFocusTraversalKeys()
     }.also {
