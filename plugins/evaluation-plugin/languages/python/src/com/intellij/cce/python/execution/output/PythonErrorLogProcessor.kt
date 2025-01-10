@@ -1,10 +1,14 @@
 package com.intellij.cce.python.execution.output
 
-class PythonErrorLogProcessor(val errorLog: String) {
+import com.intellij.cce.execution.output.ProcessExecutionLog
+
+class PythonErrorLogProcessor(val executionLog: ProcessExecutionLog) {
 
   fun getTestExecutionSuccessRate(): Double {
     val testsRunRegex = Regex("""Ran (\d+) tests?""")
     val testErrorOrFailureRegex = Regex("""(ERROR|FAIL): (.+?)\n""")
+
+    val errorLog = executionLog.out + executionLog.error
 
     // Extract the total number of tests run
     val testsRun = testsRunRegex.find(errorLog)?.groupValues?.get(1)?.toIntOrNull() ?: 0

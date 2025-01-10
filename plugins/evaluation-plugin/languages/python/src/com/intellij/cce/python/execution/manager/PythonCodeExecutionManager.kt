@@ -75,7 +75,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     try {
       val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", runFile.path.toString(), testName, target), sdk)
       // Collect Test Success Ratio, different testing frameworks outputs information about tests into different streams
-      val successRatio = PythonErrorLogProcessor(executionLog.out + executionLog.error).getTestExecutionSuccessRate()
+      val successRatio = PythonErrorLogProcessor(executionLog).getTestExecutionSuccessRate()
       collectedInfo.put(AIA_EXECUTION_SUCCESS_RATIO, successRatio)
       // Collect Coverage
       val coverageProcessor = PythonTestCoverageProcessor(coverageFilePath)
