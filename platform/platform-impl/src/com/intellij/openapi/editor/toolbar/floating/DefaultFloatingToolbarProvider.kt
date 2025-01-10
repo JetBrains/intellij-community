@@ -2,15 +2,11 @@
 package com.intellij.openapi.editor.toolbar.floating
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 
 @ApiStatus.Internal
 class DefaultFloatingToolbarProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
 
-  override val autoHideable: Boolean = true
-
   companion object {
-    @NonNls
-    const val ACTION_GROUP: String = "EditorContextBarMenu"
+    private const val ACTION_GROUP: String = "EditorContextBarMenu"
   }
 }

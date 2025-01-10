@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
@@ -175,7 +174,15 @@ private val logger = logger<HotSwapFloatingToolbarProvider>()
 
 @ApiStatus.Internal
 internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
-  override val autoHideable: Boolean get() = false
+
+  override val backgroundAlpha: Float = BACKGROUND_ALPHA
+
+  override val showingTime: Int = SHOWING_TIME_MS
+
+  override val hidingTime: Int = HIDING_TIME_MS
+
+  override val autoHideable: Boolean = false
+
   private val hotSwapAction by lazy { HotSwapWithRebuildAction() }
 
   override val actionGroup: ActionGroup by lazy {
@@ -193,11 +200,6 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
 
-    if (component is AbstractFloatingToolbarComponent) {
-      component.backgroundAlpha = 0.9f
-      component.showingTime = SHOWING_TIME_MS
-      component.hidingTime = HIDING_TIME_MS
-    }
     if (component is JComponent) {
       component.installPopupMenu()
     }
@@ -253,6 +255,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   }
 
   companion object {
+    private const val BACKGROUND_ALPHA = 0.9f
     private const val SHOWING_TIME_MS = 500
     private const val HIDING_TIME_MS = 500
   }

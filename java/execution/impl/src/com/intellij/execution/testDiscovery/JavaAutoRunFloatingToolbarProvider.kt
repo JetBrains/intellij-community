@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
@@ -30,7 +29,11 @@ import javax.swing.JPanel
  */
 @ApiStatus.Internal
 class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
+
+  override val backgroundAlpha: Float = 0.9f
+
   override val autoHideable: Boolean = false
+
   override val actionGroup: ActionGroup
     get() = DefaultActionGroup(DisableAutoTestAction()).apply {
       add(HideAction())
@@ -42,10 +45,6 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
   }
 
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
-    if (component is AbstractFloatingToolbarComponent) {
-      component.backgroundAlpha = 0.9f
-    }
-
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
     val autoRunManager = JavaAutoRunManager.getInstance(project)
 

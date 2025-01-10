@@ -91,8 +91,8 @@ class TransparentComponentAnimator(
   }
 
   companion object {
-    private const val SHOWING_TIME_MS = 500
-    private const val HIDING_TIME_MS = 1000
-    private const val RETENTION_TIME_MS = 1500
+    const val SHOWING_TIME_MS = 500
+    const val HIDING_TIME_MS = 1000
+    const val RETENTION_TIME_MS = 1500
   }
 }

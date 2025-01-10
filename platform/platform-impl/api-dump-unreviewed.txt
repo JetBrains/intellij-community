@@ -8008,15 +8008,24 @@ com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 - sf:Companion:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$Companion
 - a:getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
-- a:getAutoHideable():Z
+- getAutoHideable():Z
+- getBackgroundAlpha():F
+- getHidingTime():I
 - getPriority():I
+- getRetentionTime():I
+- getShowingTime():I
 - isApplicable(com.intellij.openapi.actionSystem.DataContext):Z
 - register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$Companion
 - f:createExtensionDisposable(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.Disposable):com.intellij.openapi.Disposable
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultImpls
+- s:getAutoHideable(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider):Z
+- s:getBackgroundAlpha(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider):F
+- s:getHidingTime(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider):I
 - s:getPriority(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider):I
+- s:getRetentionTime(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider):I
+- s:getShowingTime(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider):I
 - s:isApplicable(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext):Z
 - s:register(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarUtilKt

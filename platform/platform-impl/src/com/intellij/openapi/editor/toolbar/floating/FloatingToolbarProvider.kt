@@ -1,9 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.toolbar.floating
 
+import com.intellij.codeInsight.daemon.impl.HintRenderer.Companion.BACKGROUND_ALPHA
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.toolbar.floating.TransparentComponentAnimator.Companion.HIDING_TIME_MS
+import com.intellij.openapi.editor.toolbar.floating.TransparentComponentAnimator.Companion.RETENTION_TIME_MS
+import com.intellij.openapi.editor.toolbar.floating.TransparentComponentAnimator.Companion.SHOWING_TIME_MS
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.createExtensionDisposable
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +20,20 @@ interface FloatingToolbarProvider {
   val priority: Int
     get() = 0
 
+  val backgroundAlpha: Float
+    get() = BACKGROUND_ALPHA
+
+  val showingTime: Int
+    get() = SHOWING_TIME_MS
+
+  val hidingTime: Int
+    get() = HIDING_TIME_MS
+
+  val retentionTime: Int
+    get() = RETENTION_TIME_MS
+
   val autoHideable: Boolean
+    get() = true
 
   val actionGroup: ActionGroup
 

@@ -61,6 +61,10 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     }
 
     init {
+      backgroundAlpha = provider.backgroundAlpha
+      showingTime = provider.showingTime
+      hidingTime = provider.hidingTime
+      retentionTime = provider.retentionTime
       autoHideable = provider.autoHideable
     }
 
