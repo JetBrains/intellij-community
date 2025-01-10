@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete.impl
 
-import java.util.Collections
+import fleet.util.toUnmodifiableSet
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 
@@ -110,7 +110,11 @@ internal open class AdaptiveSet<T> : MutableSet<T> {
 
   override fun iterator(): MutableIterator<T> {
     val i = when (state) {
-      EMPTY_STATE -> Collections.emptyIterator()
+      EMPTY_STATE -> object : MutableIterator<T> {
+        override fun hasNext(): Boolean = false
+        override fun next(): T = throw NoSuchElementException()
+        override fun remove() = throw IllegalStateException()
+      }
       ONE_STATE -> listOf(subs as T).iterator()
       LIST_STATE -> (subs as ArrayList<T>).iterator()
       SET_STATE -> (subs as HashSet<T>).iterator()
@@ -263,11 +267,10 @@ internal class AdaptiveMap<K, V> : MutableMap<K, V> {
 
   override val keys: MutableSet<K>
     get() =
-      Collections.unmodifiableSet(
-        when (state) {
-          SET_STATE -> (f1 as HashMap<K, V>).keys
-          else -> buildSet { forEach { k, v -> add(k) } }
-        })
+      when (state) {
+        SET_STATE -> (f1 as HashMap<K, V>).keys
+        else -> buildSet { forEach { k, v -> add(k) } }
+      }.toUnmodifiableSet()
 
   override val size: Int
     get() = when (state) {
