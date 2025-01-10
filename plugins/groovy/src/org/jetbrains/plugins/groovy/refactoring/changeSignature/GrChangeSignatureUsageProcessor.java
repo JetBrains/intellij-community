@@ -110,7 +110,7 @@ public final class GrChangeSignatureUsageProcessor implements ChangeSignatureUsa
 
   @Override
   public boolean shouldPreviewUsages(ChangeInfo changeInfo, UsageInfo[] usages) {
-    if (!StringUtil.isJavaIdentifier(changeInfo.getNewName())) return true;
+    if (changeInfo instanceof JavaChangeInfo && !StringUtil.isJavaIdentifier(changeInfo.getNewName())) return true;
 
     for (UsageInfo usage : usages) {
       if (usage instanceof GrMethodCallUsageInfo) {
