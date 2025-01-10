@@ -33,10 +33,6 @@
                         dynamic="true"/>
     </extensionPoints>
 
-    <dependencies>
-      <plugin id="org.jetbrains.plugins.yaml"/>
-    </dependencies>
-
     <content>
       <module name="intellij.dotenv.kotlin"/>
       <module name="intellij.dotenv.python"/>
