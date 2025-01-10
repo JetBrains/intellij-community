@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
@@ -78,7 +77,6 @@ import javax.swing.plaf.TabbedPaneUI
 import javax.swing.text.View
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.ParagraphView
-import kotlin.collections.set
 import kotlin.coroutines.coroutineContext
 
 @Internal
@@ -173,7 +171,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   companion object {
     @JvmStatic
-    fun isMultiTabs(): Boolean = Registry.`is`("plugins.show.multi.tabs", true)
+    @Deprecated("Always true")
+    fun isMultiTabs(): Boolean = true
 
     @JvmStatic
     fun createDescriptionComponent(imageViewHandler: Consumer<in View>?): JEditorPane {
