@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -377,12 +377,12 @@ public class FileChooserDescriptor implements Cloneable {
   @ApiStatus.Internal
   public final @Nullable VirtualFile getFileToSelect(@NotNull VirtualFile file) {
     if (isFileSelectable(file)) {
-      if (file.isDirectory() || myChooseFiles) {
-        return file;
-      }
-      if (myChooseJarContents) {
+      if (!file.isDirectory() && myChooseJarContents && isArchive(file)) {
         var path = file.getPath();
         return JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
+      }
+      if (file.isDirectory() || myChooseFiles) {
+        return file;
       }
     }
     return null;
