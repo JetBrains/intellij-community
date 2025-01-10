@@ -53,7 +53,7 @@ open class GraphTableModel @ApiStatus.Internal constructor(
     return getValueAt(rowIndex, getColumn(columnIndex)) as Any
   }
 
-  fun <T> getValueAt(rowIndex: VcsLogTableIndex, column: VcsLogColumn<T>): T {
+  open fun <T> getValueAt(rowIndex: VcsLogTableIndex, column: VcsLogColumn<T>): T {
     if (rowIndex >= rowCount - 1 && VcsLogUtil.canRequestMore(visiblePack)) {
       requestMore.run()
     }
@@ -88,7 +88,7 @@ open class GraphTableModel @ApiStatus.Internal constructor(
     return visiblePack.getRootAtHead(head)
   }
 
-  fun getPrintElements(row: VcsLogTableIndex): Collection<PrintElement> {
+  open fun getPrintElements(row: VcsLogTableIndex): Collection<PrintElement> {
     return if (VisiblePack.NO_GRAPH_INFORMATION.get(visiblePack, false)) emptyList()
     else getGraphRowInfo(row)?.printElements.orEmpty()
   }

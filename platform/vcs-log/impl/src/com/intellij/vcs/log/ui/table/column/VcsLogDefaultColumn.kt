@@ -35,10 +35,11 @@ import javax.swing.table.TableCellRenderer
 
 internal fun getDefaultDynamicColumns() = listOf<VcsLogDefaultColumn<*>>(Author, Hash, Date)
 
-internal sealed class VcsLogDefaultColumn<T>(
+@ApiStatus.Internal
+sealed class VcsLogDefaultColumn<T>(
   @NonNls override val id: String,
   override val localizedName: @Nls String,
-  override val isDynamic: Boolean = true
+  override val isDynamic: Boolean = true,
 ) : VcsLogColumn<T> {
   /**
    * @return stable name (to identify column in statistics)
@@ -76,13 +77,14 @@ internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", fa
   override fun getStubValue(model: GraphTableModel): FilePath = VcsUtil.getFilePath(model.logData.roots.first())
 }
 
-internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject", VcsLogBundle.message("vcs.log.column.subject"), false),
-                         VcsLogMetadataColumn {
+@ApiStatus.Internal
+object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject", VcsLogBundle.message("vcs.log.column.subject"), false),
+                VcsLogMetadataColumn {
   override fun getValue(model: GraphTableModel, row: VcsLogTableIndex): GraphCommitCell? {
     val printElements = model.getPrintElements(row)
     val metadata = model.getCommitMetadata(row, true) ?: return null
     val commitId = metadata.getKnownCommitId()
-    return GraphCommitCell(
+    return GraphCommitCell.RealCommit(
       commitId,
       getValue(model, metadata),
       model.getRefsAtRow(row),
@@ -135,7 +137,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
   }
 
   override fun getStubValue(model: GraphTableModel): GraphCommitCell {
-    return GraphCommitCell(null, "", emptyList(), emptyList(), emptyList(), true)
+    return GraphCommitCell.RealCommit(null, "", emptyList(), emptyList(), emptyList(), true)
   }
 
 }

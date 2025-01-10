@@ -1110,13 +1110,13 @@ Fc:com.intellij.vcs.log.ui.table.GraphTableModel
 - f:getDataProvider():com.intellij.vcs.log.VcsLogDataProvider
 - f:getId(I):java.lang.Integer
 - f:getLogData():com.intellij.vcs.log.data.VcsLogData
-- f:getPrintElements(I):java.util.Collection
+- getPrintElements(I):java.util.Collection
 - f:getRefsAtRow(I):java.util.List
 - f:getRootAtRow(I):com.intellij.openapi.vfs.VirtualFile
 - getRowCount():I
 - f:getRowType(I):com.intellij.vcs.log.graph.RowType
 - f:getValueAt(I,I):java.lang.Object
-- f:getValueAt(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):java.lang.Object
+- getValueAt(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):java.lang.Object
 - f:getVisiblePack():com.intellij.vcs.log.visible.VisiblePack
 - f:setVisiblePack(com.intellij.vcs.log.visible.VisiblePack):V
 com.intellij.vcs.log.ui.table.VcsLogCellController

@@ -5,19 +5,23 @@ import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
-import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleColoredRenderer
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TableCellState
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.paint.GraphCellPainter
-import com.intellij.vcs.log.paint.PaintParameters
 import com.intellij.vcs.log.ui.table.GraphCommitCellController
 import com.intellij.vcs.log.ui.table.VcsLogCellController
 import com.intellij.vcs.log.ui.table.VcsLogCellRenderer
@@ -39,15 +43,16 @@ import kotlin.math.min
 class GraphCommitCellRenderer(
   private val logData: VcsLogData,
   painter: GraphCellPainter,
-  private val graphTable: VcsLogGraphTable
+  private val graphTable: VcsLogGraphTable,
 ) : TypeSafeTableCellRenderer<GraphCommitCell>(), VcsLogCellRenderer {
-  private val component: MyComponent
-  private val templateComponent: MyComponent
+  private val component: RealCommitRendererComponent
+  private val templateComponent: RealCommitRendererComponent
+  private val wipComponent = WipCommitRendererComponent(graphTable, painter)
 
   init {
     val iconCache = LabelIconCache()
-    component = MyComponent(logData, painter, graphTable, iconCache)
-    templateComponent = MyComponent(logData, painter, graphTable, iconCache)
+    component = RealCommitRendererComponent(logData, painter, graphTable, iconCache)
+    templateComponent = RealCommitRendererComponent(logData, painter, graphTable, iconCache)
   }
 
   override fun getTableCellRendererComponentImpl(
@@ -56,14 +61,23 @@ class GraphCommitCellRenderer(
     isSelected: Boolean,
     hasFocus: Boolean,
     row: Int,
-    column: Int
-  ): SimpleColoredComponent {
-    component.customize(value, isSelected, hasFocus, row, column)
-    return component
+    column: Int,
+  ): Component {
+    return when (value) {
+      is GraphCommitCell.RealCommit -> {
+        component.apply { customize(value, isSelected, hasFocus, row, column) }
+      }
+      is GraphCommitCell.NewCommit -> {
+        wipComponent.apply { customize(value, isSelected, hasFocus, row, column) }
+      }
+    }
   }
 
   private fun getTooltip(value: Any, point: Point, row: Int): JComponent? {
     val cell = getValue(value)
+    if (cell !is GraphCommitCell.RealCommit) {
+      return null
+    }
     val refs = cell.refsToThisCommit
     val bookmarks = cell.bookmarksToThisCommit
     if (refs.isEmpty() && bookmarks.isEmpty()) return null
@@ -85,6 +99,9 @@ class GraphCommitCellRenderer(
 
   private fun getTooltipXCoordinate(row: Int): Int {
     val cell = getValue(graphTable.model.getValueAt(row, Commit))
+    if (cell !is GraphCommitCell.RealCommit) {
+      return columnWidth / 2
+    }
     if (cell.refsToThisCommit.isEmpty() && cell.bookmarksToThisCommit.isEmpty()) return columnWidth / 2
 
     prepareTemplateComponent(row, cell)
@@ -95,7 +112,7 @@ class GraphCommitCellRenderer(
     return columnWidth - referencesWidth / 2
   }
 
-  private fun prepareTemplateComponent(row: Int, cell: GraphCommitCell) {
+  private fun prepareTemplateComponent(row: Int, cell: GraphCommitCell.RealCommit) {
     templateComponent.customize(cell, graphTable.isRowSelected(row), graphTable.hasFocus(),
                                 row, getInstance().getModelIndex(Commit))
   }
@@ -133,11 +150,11 @@ class GraphCommitCellRenderer(
     }
   }
 
-  private class MyComponent(
+  private class RealCommitRendererComponent(
     data: VcsLogData,
     val painter: GraphCellPainter,
     private val table: VcsLogGraphTable,
-    iconCache: LabelIconCache
+    iconCache: LabelIconCache,
   ) : SimpleColoredRenderer() {
     private val issueLinkRenderer: IssueLinkRenderer = IssueLinkRenderer(data.project, this)
     private val vcsLinksRenderer: VcsLinksRenderer = VcsLinksRenderer(data.project, this)
@@ -178,14 +195,14 @@ class GraphCommitCellRenderer(
       painter.paint(g2d, printElements)
     }
 
-    fun customize(cell: GraphCommitCell, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+    fun customize(cell: GraphCommitCell.RealCommit, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
       clear()
       setPaintFocusBorder(false)
       acquireState(table, isSelected, hasFocus, row, column)
       cellState.updateRenderer(this)
 
       printElements = cell.printElements
-      graphWidth = getGraphWidth(table, printElements)
+      graphWidth = GraphCommitCellUtil.getGraphWidth(table, printElements)
 
       val style = table.applyHighlighters(this, row, column, hasFocus, isSelected)
 
@@ -219,7 +236,7 @@ class GraphCommitCellRenderer(
       }
     }
 
-    private fun appendText(cell: GraphCommitCell, style: SimpleTextAttributes, isSelected: Boolean, renderLinks: Boolean) {
+    private fun appendText(cell: GraphCommitCell.RealCommit, style: SimpleTextAttributes, isSelected: Boolean, renderLinks: Boolean) {
       val cellText = StringUtil.replace(cell.text, "\t", " ").trim { it <= ' ' }
       val commitId = cell.commitId
 
@@ -292,22 +309,48 @@ class GraphCommitCellRenderer(
 
     companion object {
       private const val DISPLAYED_MESSAGE_PART = 80
-      private fun getGraphWidth(table: VcsLogGraphTable, printElements: Collection<PrintElement>): Int {
-        if (printElements.isEmpty()) return 0
+    }
+  }
 
-        var maxIndex = 0.0
-        for (printElement in printElements) {
-          maxIndex = max(maxIndex, printElement.positionInCurrentRow.toDouble())
-          if (printElement is EdgePrintElement) {
-            maxIndex = max(maxIndex,
-                           (printElement.positionInCurrentRow + printElement.positionInOtherRow) / 2.0)
-          }
-        }
-        maxIndex++
-        maxIndex = max(maxIndex, min(MAX_GRAPH_WIDTH.toDouble(), table.visibleGraph.recommendedWidth.toDouble()))
+  private class WipCommitRendererComponent(
+    private val graphTable: VcsLogGraphTable,
+    private val painter: GraphCellPainter,
+  ) : JComponent() {
+    private var printElements: Collection<PrintElement> = emptyList()
 
-        return (maxIndex * PaintParameters.getElementWidth(table.rowHeight)).toInt()
-      }
+    private val commitTextField = JBTextField("").apply {
+      emptyText.text = VcsLogBundle.message("vcs.log.wip.label")
+      foreground = UIUtil.getContextHelpForeground()
+    }
+
+    init {
+      add(commitTextField)
+    }
+
+    fun customize(value: GraphCommitCell.NewCommit, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+      commitTextField.text = value.text
+      printElements = value.printElements
+      graphTable.applyHighlighters(this, row, column, hasFocus, isSelected)
+    }
+
+    override fun paintComponent(g: Graphics) {
+      val g2d = g as Graphics2D
+      painter.paint(g2d, printElements)
+    }
+
+    override fun doLayout() {
+      positionTextField()
+    }
+
+    private fun positionTextField() {
+      val graphWidth = GraphCommitCellUtil.getGraphWidth(graphTable, printElements)
+      val leftHorizontalBorder = maxOf(DEFAULT_HORIZONTAL_BORDER, graphWidth)
+      commitTextField.setBounds(leftHorizontalBorder, VERTICAL_BORDER, bounds.width - leftHorizontalBorder - DEFAULT_HORIZONTAL_BORDER, bounds.height - 2 * VERTICAL_BORDER)
+    }
+
+    companion object {
+      const val DEFAULT_HORIZONTAL_BORDER = 4
+      const val VERTICAL_BORDER = 2
     }
   }
 
@@ -323,8 +366,6 @@ class GraphCommitCellRenderer(
   }
 
   companion object {
-    private const val MAX_GRAPH_WIDTH = 6
-
     @JvmStatic
     val labelFont: Font
       get() = StartupUiUtil.labelFont

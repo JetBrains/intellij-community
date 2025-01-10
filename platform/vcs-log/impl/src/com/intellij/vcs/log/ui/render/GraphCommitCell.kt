@@ -9,13 +9,23 @@ import com.intellij.vcs.log.ui.VcsBookmarkRef
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class GraphCommitCell(
-  val commitId: CommitId?,
-  @NlsSafe val text: String,
-  val refsToThisCommit: Collection<VcsRef>,
-  val bookmarksToThisCommit: Collection<VcsBookmarkRef>,
-  val printElements: Collection<PrintElement>,
-  val isLoading: Boolean,
-) {
-  override fun toString(): String = text
+sealed interface GraphCommitCell {
+  val text: @NlsSafe String
+  val printElements: Collection<PrintElement>
+
+  class RealCommit(
+    val commitId: CommitId?,
+    override val text: @NlsSafe String,
+    val refsToThisCommit: Collection<VcsRef>,
+    val bookmarksToThisCommit: Collection<VcsBookmarkRef>,
+    override val printElements: Collection<PrintElement>,
+    val isLoading: Boolean,
+  ) : GraphCommitCell {
+    override fun toString(): String = text
+  }
+
+  class NewCommit(
+    override val text: @NlsSafe String,
+    override val printElements: Collection<PrintElement>,
+  ) : GraphCommitCell
 }
