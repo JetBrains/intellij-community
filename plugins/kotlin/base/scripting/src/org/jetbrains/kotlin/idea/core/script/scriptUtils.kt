@@ -8,7 +8,13 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
 import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource
@@ -17,19 +23,49 @@ import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import kotlin.script.experimental.api.ScriptDiagnostic
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
+
+@ApiStatus.Internal
+fun MutableEntityStorage.getDefinitionLibraryEntity(
+    definition: ScriptDefinition, project: Project, entitySource: KotlinScriptEntitySource
+): LibraryEntity? {
+    val libraryId = LibraryId(".${definition.fileExtension} definition dependencies", LibraryTableId.ProjectLibraryTableId)
+    val entity = libraryId.resolve(this)
+    if (entity != null) {
+        return entity
+    }
+
+    val classes =
+        toVfsRoots(definition.compilationConfiguration[ScriptCompilationConfiguration.dependencies].toClassPathOrEmpty()).sortedBy { it.name }
+
+    val sources =
+        toVfsRoots(definition.compilationConfiguration[ScriptCompilationConfiguration.ide.dependenciesSources].toClassPathOrEmpty()).sortedBy { it.name }
+
+    if (classes.isEmpty() && sources.isEmpty()) {
+        return null
+    }
+
+    val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+
+    val classRoots = classes.map {
+        LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.COMPILED)
+    }
+
+    val sourceRoots = sources.map {
+        LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.SOURCES)
+    }
+
+    return addEntity(
+        LibraryEntity(libraryId.name, libraryId.tableId, classRoots + sourceRoots, entitySource)
+    )
+}
 
 inline fun <reified T : ScriptConfigurationsSource<*>> Project.scriptConfigurationsSourceOfType(): T? =
-    SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(this)
-        .filterIsInstance<T>()
-        .firstOrNull()
-        .safeAs<T>()
+    SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(this).filterIsInstance<T>().firstOrNull().safeAs<T>()
 
 inline fun <reified T : ScriptDefinitionsSource> Project.scriptDefinitionsSourceOfType(): T? =
-    SCRIPT_DEFINITIONS_SOURCES.getExtensions(this)
-        .filterIsInstance<T>()
-        .firstOrNull()
-        .safeAs<T>()
+    SCRIPT_DEFINITIONS_SOURCES.getExtensions(this).filterIsInstance<T>().firstOrNull().safeAs<T>()
 
 val SCRIPT_DEFINITIONS_SOURCES: ProjectExtensionPointName<ScriptDefinitionsSource> =
     ProjectExtensionPointName("org.jetbrains.kotlin.scriptDefinitionsSource")
@@ -39,8 +75,7 @@ val SCRIPT_CONFIGURATIONS_SOURCES: ProjectExtensionPointName<ScriptConfiguration
 
 @set: org.jetbrains.annotations.TestOnly
 var Application.isScriptChangesNotifierDisabled by NotNullableUserDataProperty(
-    Key.create("SCRIPT_CHANGES_NOTIFIER_DISABLED"),
-    true
+    Key.create("SCRIPT_CHANGES_NOTIFIER_DISABLED"), true
 )
 
 internal val logger = Logger.getInstance("#org.jetbrains.kotlin.idea.script")
@@ -82,9 +117,8 @@ fun logScriptingConfigurationErrors(file: VirtualFile, snapshot: ScriptConfigura
     }
 }
 
-fun getAllDefinitions(project: Project): List<ScriptDefinition> =
-    if (KotlinPluginModeProvider.isK2Mode()) {
-        K2ScriptDefinitionProvider.getInstance(project).getAllDefinitions().toList()
-    } else {
-        ScriptDefinitionsManager.getInstance(project).allDefinitions
-    }
+fun getAllDefinitions(project: Project): List<ScriptDefinition> = if (KotlinPluginModeProvider.isK2Mode()) {
+    K2ScriptDefinitionProvider.getInstance(project).getAllDefinitions().toList()
+} else {
+    ScriptDefinitionsManager.getInstance(project).allDefinitions
+}

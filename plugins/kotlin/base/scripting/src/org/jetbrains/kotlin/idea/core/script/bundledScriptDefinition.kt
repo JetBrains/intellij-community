@@ -45,6 +45,7 @@ val Project.defaultDefinition: ScriptDefinition
                 dependencies(JvmDependency(scriptClassPath))
                 displayName("Default Kotlin Script")
                 hostConfiguration(defaultJvmScriptingHostConfiguration)
+                ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
             }
         )
 

@@ -1,45 +1,43 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptDiagnostic
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
-import kotlin.script.experimental.api.hostConfiguration
+import java.io.File
+import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.withTransformedResolvers
+import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSource {
+    val classPath: List<File> = listOf(
+        KotlinArtifacts.kotlinMainKts,
+        KotlinArtifacts.kotlinScriptRuntime,
+        KotlinArtifacts.kotlinStdlib,
+        KotlinArtifacts.kotlinReflect
+    )
+
     override val definitions: Sequence<ScriptDefinition>
         get() {
-            val baseHostConfiguration = defaultJvmScriptingHostConfiguration
-            val classPath = listOf(
-                KotlinArtifacts.kotlinMainKts,
-                KotlinArtifacts.kotlinScriptRuntime,
-                KotlinArtifacts.kotlinStdlib,
-                KotlinArtifacts.kotlinReflect
-            )
-
             val discoveredDefinitions = ScriptDefinitionsFromClasspathDiscoverySource(
-                classPath,
-                baseHostConfiguration,
-                ::loggingReporter
+                classPath, defaultJvmScriptingHostConfiguration, ::loggingReporter
             ).definitions
 
-            return discoveredDefinitions.map {
+            return discoveredDefinitions.map { definition ->
+                val compilationConfiguration = definition.compilationConfiguration.withTransformedResolvers {
+                    ReportingExternalDependenciesResolver(it, DependencyResolutionService.getInstance(project))
+                }.with {
+                    ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
+                }
+
                 ScriptDefinition.FromConfigurations(
-                    it.compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
-                        ?: baseHostConfiguration,
-                    it.compilationConfiguration.withTransformedResolvers { resolver ->
-                        ReportingExternalDependenciesResolver(resolver, DependencyResolutionService.getInstance(project))
-                    },
-                    it.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default
+                    compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration] ?: defaultJvmScriptingHostConfiguration,
+                    compilationConfiguration,
+                    definition.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default
                 ).apply {
                     order = Int.MIN_VALUE
                 }

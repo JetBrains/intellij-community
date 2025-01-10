@@ -7,15 +7,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -59,8 +61,7 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
             val scriptSource = VirtualFileScriptSource(it.virtualFile)
             val definition = findScriptDefinition(project, scriptSource)
 
-            val providedConfiguration = sdk?.homePath
-                ?.let {
+            val providedConfiguration = sdk?.homePath?.let {
                     definition.compilationConfiguration.with {
                         jvm.jdkHome(File(it))
                     }
@@ -77,8 +78,7 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
 
         val scriptConfigurations = ScriptConfigurations(
             configurations,
-            sdks = sdk?.homePath?.let<@NonNls String, Map<Path, Sdk>> { mapOf(Path.of(it) to sdk) } ?: emptyMap()
-        )
+            sdks = sdk?.homePath?.let<@NonNls String, Map<Path, Sdk>> { mapOf(Path.of(it) to sdk) } ?: emptyMap())
 
         data.getAndAccumulate(scriptConfigurations) { left, right -> left + right }
     }
@@ -88,12 +88,47 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
             project, data.get()
         ) { KotlinBundledScriptModuleEntitySource(it) }
 
-        project.workspaceModel.update("Updating MainKts Kotlin Scripts modules") {
+        project.workspaceModel.update("updating .kts modules") {
             it.replaceBySource(
-                { source -> source is KotlinBundledScriptModuleEntitySource },
-                updatedStorage
+                { source -> source is KotlinBundledScriptModuleEntitySource }, updatedStorage
             )
         }
+    }
+
+    private fun getUpdatedStorage(
+        project: Project,
+        configurationsData: ScriptConfigurations,
+        entitySourceSupplier: (virtualFileUrl: VirtualFileUrl) -> KotlinScriptEntitySource,
+    ): MutableEntityStorage {
+        val updatedStorage = MutableEntityStorage.create()
+        val projectPath = project.basePath?.let { Path.of(it) } ?: return updatedStorage
+
+        for (scriptFile in configurationsData.configurations.keys) {
+            val basePath = projectPath.toFile()
+            val file = Path.of(scriptFile.path).toFile()
+            val relativeLocation = FileUtil.getRelativePath(basePath, file) ?: continue
+
+            val definition = findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
+
+            val definitionScriptModuleName = "$KOTLIN_SCRIPTS_MODULE_NAME.${definition.name}"
+            val locationName = relativeLocation.replace(VfsUtilCore.VFS_SEPARATOR_CHAR, ':')
+            val moduleName = "$definitionScriptModuleName.$locationName"
+
+            val sdkDependency = configurationsData.sdks.values.firstOrNull()?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
+
+            val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+            val source = entitySourceSupplier(scriptFile.toVirtualFileUrl(virtualFileManager))
+
+            val definitionDependency = updatedStorage.getDefinitionLibraryEntity(definition, project, KotlinBundledScriptModuleEntitySource(null))?.let {
+                LibraryDependency(it.symbolicId, false, DependencyScope.COMPILE)
+            }
+
+            val allDependencies = listOfNotNull(sdkDependency, definitionDependency)
+
+            updatedStorage.addEntity(ModuleEntity(moduleName, allDependencies, source))
+        }
+
+        return updatedStorage
     }
 
     open class KotlinBundledScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl?) :
