@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -17,20 +16,14 @@ import javax.swing.JComponent
 private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D))
 
 @ApiStatus.NonExtendable
-abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToolbarComponent, Disposable.Default {
-  private val _parentDisposable: Disposable?
-  private val parentDisposable: Disposable
-    get() = _parentDisposable ?: this
+abstract class AbstractFloatingToolbarComponent(
+  actionGroup: ActionGroup,
+  parentDisposable: Disposable,
+) : ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true),
+    FloatingToolbarComponent {
 
   private val transparentComponent = ToolbarTransparentComponent()
   private val componentAnimator = TransparentComponentAnimator(transparentComponent, parentDisposable)
-
-  constructor(
-    actionGroup: ActionGroup,
-    parentDisposable: Disposable
-  ) : super(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true) {
-    this._parentDisposable = parentDisposable
-  }
 
   @ApiStatus.Internal
   var backgroundAlpha: Float = BACKGROUND_ALPHA
@@ -60,10 +53,6 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     transparentComponent.hideComponent()
 
     installMouseMotionWatcher()
-
-    if (_parentDisposable != null) {
-      Disposer.register(_parentDisposable, this)
-    }
   }
 
   override fun addNotify() {
