@@ -24,6 +24,7 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
@@ -796,12 +797,16 @@ private suspend fun findFileCandidatesWithBackgroundProcess(
         project, KotlinDebuggerCoreBundle.message("progress.title.kt.file.search"),
         cancellable = false
     ) {
-        val files = readAction {
-            FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable {
-                val files = DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
-                if (files.isNotEmpty()) return@ThrowableComputable files
-                DebuggerUtils.tryFindFileByClassNameAndFileName(project, className, sourceName, scopes)
-            })
+        val files = try {
+            readAction {
+                FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, ThrowableComputable {
+                    val files = DebuggerUtils.findSourceFilesForClass(project, scopes, className, sourceName)
+                    if (files.isNotEmpty()) return@ThrowableComputable files
+                    DebuggerUtils.tryFindFileByClassNameAndFileName(project, className, sourceName, scopes)
+                })
+            }
+        } catch (_: IndexNotReadyException) {
+            emptyList()
         }
         if (files.isNotEmpty()) return@withBackgroundProgress files
 
