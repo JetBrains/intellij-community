@@ -7,10 +7,12 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrategy<ChangesViewTreeStateStrategy.MyState> {
+@ApiStatus.Internal
+public class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrategy<ChangesViewTreeStateStrategy.MyState> {
   @Override
   public @NotNull MyState saveState(@NotNull ChangesTree tree) {
     ChangesBrowserNode<?> oldRoot = tree.getRoot();

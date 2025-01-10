@@ -8,14 +8,12 @@ import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import java.util.*
 
@@ -23,7 +21,8 @@ private fun Collection<Change>.toPartialAwareSet() =
   CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
     .also { it.addAll(this) }
 
-internal class ChangesViewCommitWorkflowHandler(
+@ApiStatus.Internal
+class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
@@ -242,7 +241,7 @@ internal class ChangesViewCommitWorkflowHandler(
     }
   }
 
-  private fun isToggleMode(): Boolean {
+  protected open fun isToggleMode(): Boolean {
     val commitMode = CommitModeManager.getInstance(project).getCurrentCommitMode()
     return commitMode is CommitMode.NonModalCommitMode && commitMode.isToggleMode
   }
