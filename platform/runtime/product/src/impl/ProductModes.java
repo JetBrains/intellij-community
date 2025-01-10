@@ -19,7 +19,7 @@ final class ProductModes {
    */
   public static @NotNull RuntimeModuleId getIncompatibleRootModule(@NotNull ProductMode mode) {
     switch (mode) {
-      case FRONTEND: return RuntimeModuleId.module("intellij.platform.monolith");
+      case FRONTEND: return RuntimeModuleId.module("intellij.platform.backend");
       
       case MONOLITH: return RuntimeModuleId.module("intellij.platform.frontend.split");
 
