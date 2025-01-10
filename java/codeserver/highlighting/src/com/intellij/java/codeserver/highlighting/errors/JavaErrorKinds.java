@@ -261,6 +261,20 @@ public final class JavaErrorKinds {
   public static final Simple<PsiClass> RECORD_NO_HEADER = error(PsiClass.class, "record.no.header")
     .withAnchor(PsiClass::getNameIdentifier);
   public static final Simple<PsiRecordHeader> RECORD_HEADER_REGULAR_CLASS = error("record.header.regular.class");
+  public static final Simple<PsiClassInitializer> RECORD_INSTANCE_INITIALIZER = error("record.instance.initializer");
+  public static final Simple<PsiField> RECORD_INSTANCE_FIELD = error("record.instance.field");
+
+  public static final Simple<PsiClassInitializer> INTERFACE_CLASS_INITIALIZER = error("interface.class.initializer");
+  public static final Simple<PsiMethod> INTERFACE_CONSTRUCTOR = error("interface.constructor");
+
+  public static final Parameterized<PsiJavaFile, PsiImplicitClass> CLASS_IMPLICIT_NO_MAIN_METHOD = 
+    error(PsiJavaFile.class, "class.implicit.no.main.method")
+      .withHighlightType(psi -> JavaErrorHighlightType.FILE_LEVEL_ERROR).parameterized();
+  public static final Parameterized<PsiJavaFile, PsiImplicitClass> CLASS_IMPLICIT_INVALID_FILE_NAME = 
+    error(PsiJavaFile.class, "class.implicit.invalid.file.name")
+      .withHighlightType(psi -> JavaErrorHighlightType.FILE_LEVEL_ERROR).parameterized();
+  public static final Simple<PsiClassInitializer> CLASS_IMPLICIT_INITIALIZER = error("class.implicit.initializer");
+  public static final Simple<PsiPackageStatement> CLASS_IMPLICIT_PACKAGE = error("class.implicit.package.statement");
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {
     return new Simple<>(key);

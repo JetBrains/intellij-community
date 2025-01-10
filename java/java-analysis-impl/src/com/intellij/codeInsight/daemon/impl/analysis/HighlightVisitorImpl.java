@@ -253,14 +253,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitJavaFile(@NotNull PsiJavaFile file) {
-    super.visitJavaFile(file);
-    if (!hasErrorResults()) add(HighlightImplicitClassUtil.checkImplicitClassHasMainMethod(file));
-    if (!hasErrorResults()) add(HighlightImplicitClassUtil.checkImplicitClassFileIsValidIdentifier(file));
-    if (!hasErrorResults()) add(HighlightImplicitClassUtil.checkDuplicateClasses(file));
-  }
-
-  @Override
   public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
     super.visitArrayInitializerExpression(expression);
     if (!hasErrorResults()) add(HighlightUtil.checkArrayInitializerApplicable(expression));
@@ -429,14 +421,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
     super.visitClassInitializer(initializer);
-    if (!hasErrorResults()) add(HighlightClassUtil.checkImplicitClassMember(initializer, myLanguageLevel, myFile));
-    if (!hasErrorResults()) add(HighlightClassUtil.checkIllegalInstanceMemberInRecord(initializer));
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkInitializerCompleteNormally(initializer));
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(initializer.getBody()));
-    if (!hasErrorResults()) {
-      add(HighlightClassUtil.checkThingNotAllowedInInterface(initializer, initializer.getContainingClass()));
-    }
-    if (!hasErrorResults()) add(HighlightImplicitClassUtil.checkInitializersInImplicitClass(initializer));
   }
 
   @Override
@@ -591,7 +577,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitField(@NotNull PsiField field) {
     super.visitField(field);
-    if (!hasErrorResults()) add(HighlightClassUtil.checkIllegalInstanceMemberInRecord(field));
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkFinalFieldInitialized(field));
   }
 
@@ -623,9 +608,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
     if (parent instanceof PsiVariable variable) {
-      if (variable instanceof PsiField field) {
-        add(HighlightClassUtil.checkImplicitClassMember(field, myLanguageLevel, myFile));
-      }
       add(HighlightUtil.checkVariableAlreadyDefined(variable));
       if (variable.isUnnamed()) {
         HighlightInfo.Builder notAvailable = checkFeature(variable, JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);
@@ -634,11 +616,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         } else {
           add(HighlightUtil.checkUnnamedVariableDeclaration(variable));
         }
-      }
-
-      if (variable.getInitializer() == null) {
-        PsiElement child = variable.getLastChild();
-        if (child instanceof PsiErrorElement && child.getPrevSibling() == identifier) return;
       }
     }
     else if (parent instanceof PsiClass aClass) {
@@ -659,7 +636,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     else if (parent instanceof PsiMethod method) {
-      add(HighlightClassUtil.checkImplicitClassMember(method, myLanguageLevel, myFile));
       if (method.isConstructor()) {
         HighlightInfo.Builder info = HighlightMethodUtil.checkConstructorName(method);
         if (info != null) {
@@ -859,11 +835,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(HighlightMethodUtil.checkConstructorHandleSuperClassExceptions(method));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkRecordAccessorDeclaration(method));
     if (!hasErrorResults()) HighlightMethodUtil.checkRecordConstructorDeclaration(method, myErrorSink);
-
-    PsiClass aClass = method.getContainingClass();
-    if (!hasErrorResults() && method.isConstructor()) {
-      add(HighlightClassUtil.checkThingNotAllowedInInterface(method, aClass));
-    }
   }
 
   @Override
@@ -977,7 +948,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults()) add(ModuleHighlightUtil.checkPackageStatement(statement, myFile, myJavaModule));
     }
-    if (!hasErrorResults()) add(HighlightImplicitClassUtil.checkPackageNotAllowedInImplicitClass(statement, myFile));
   }
 
   @Override

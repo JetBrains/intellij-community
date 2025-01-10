@@ -2,8 +2,8 @@
 
 
 interface A {
-    <error descr="Not allowed in interface">A();</error>
-    <error descr="Not allowed in interface">static {}</error>
-    <error descr="Not allowed in interface">{}</error>
+    <error descr="Constructor is not allowed in interface">A();</error>
+    <error descr="Class initializer is not allowed in interface">static {}</error>
+    <error descr="Class initializer is not allowed in interface">{}</error>
 }
 

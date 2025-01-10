@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationToPackageInfoFileFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveMembersIntoClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -17,6 +18,7 @@ import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -68,11 +70,13 @@ final class JavaErrorFixProvider {
     JavaFixProvider<PsiElement, Object> genericRemover = error -> myFactory.createDeleteFix(error.psi());
     for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_MEMBER_THROWS_NOT_ALLOWED, ANNOTATION_ATTRIBUTE_DUPLICATE,
                                             ANNOTATION_NOT_ALLOWED_EXTENDS, RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION,
-                                            RECORD_HEADER_REGULAR_CLASS)) {
+                                            RECORD_HEADER_REGULAR_CLASS, INTERFACE_CLASS_INITIALIZER, INTERFACE_CONSTRUCTOR,
+                                            CLASS_IMPLICIT_INITIALIZER, CLASS_IMPLICIT_PACKAGE)) {
       fix(kind, genericRemover);
     }
 
     createClassFixes();
+    createRecordFixes();
     createAnnotationFixes();
     createReceiverParameterFixes();
   }
@@ -152,7 +156,6 @@ final class JavaErrorFixProvider {
       }
       return registrar;
     });
-    fix(RECORD_NO_HEADER, error -> myFactory.createAddEmptyRecordHeaderFix(error.psi()));
     fix(CLASS_SEALED_INCOMPLETE_PERMITS, error -> myFactory.createFillPermitsListFix(requireNonNull(error.psi().getNameIdentifier())));
     multi(CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS_CAN_BE_FINAL, error -> List.of(
       addModifierFix(error.psi(), PsiModifier.FINAL),
@@ -161,6 +164,23 @@ final class JavaErrorFixProvider {
     multi(CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS, error -> List.of(
       addModifierFix(error.psi(), PsiModifier.SEALED),
       addModifierFix(error.psi(), PsiModifier.NON_SEALED)));
+    fix(CLASS_IMPLICIT_NO_MAIN_METHOD, error -> myFactory.createAddMainMethodFix(error.context()));
+    fix(UNSUPPORTED_FEATURE, error -> {
+      if (error.context() != JavaFeature.IMPLICIT_CLASSES) return null;
+      PsiMember member = PsiTreeUtil.getNonStrictParentOfType(error.psi(), PsiMember.class);
+      if (member == null || member instanceof PsiClass) return null;
+      if (!(member.getContainingClass() instanceof PsiImplicitClass implicitClass)) return null;
+      boolean hasClassToRelocate = PsiTreeUtil.findChildOfType(implicitClass, PsiClass.class) != null;
+      return hasClassToRelocate ? new MoveMembersIntoClassFix(implicitClass) : null;
+    });
+    fix(INTERFACE_CONSTRUCTOR, error -> myFactory.createConvertInterfaceToClassFix(requireNonNull(error.psi().getContainingClass())));
+    fix(INTERFACE_CLASS_INITIALIZER, error -> myFactory.createConvertInterfaceToClassFix(requireNonNull(error.psi().getContainingClass())));
+  }
+  
+  private void createRecordFixes() {
+    fix(RECORD_NO_HEADER, error -> myFactory.createAddEmptyRecordHeaderFix(error.psi()));
+    fix(RECORD_INSTANCE_FIELD, error -> addModifierFix(error.psi(), PsiModifier.STATIC));
+    fix(RECORD_INSTANCE_INITIALIZER, error -> addModifierFix(error.psi(), PsiModifier.STATIC));
   }
 
   private void createReceiverParameterFixes() {

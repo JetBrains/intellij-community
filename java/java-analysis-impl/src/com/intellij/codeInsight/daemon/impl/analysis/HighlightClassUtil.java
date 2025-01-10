@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.quickfix.MoveMembersIntoClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -15,15 +14,10 @@ import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.ChangeModifierRequest;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
@@ -36,7 +30,6 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -46,36 +39,6 @@ import java.util.function.Consumer;
  * Generates HighlightInfoType.ERROR-only HighlightInfos at PsiClass level.
  */
 public final class HighlightClassUtil {
-
-  static @Nullable HighlightInfo.Builder checkDuplicateClasses(@NotNull PsiClass aClass, @NotNull PsiClass @NotNull[] classes) {
-    PsiManager manager = aClass.getManager();
-    Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
-    if (module == null) return null;
-    ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
-    if (virtualFile == null) return null;
-    boolean isTestSourceRoot = fileIndex.isInTestSourceContent(virtualFile);
-    String dupFileName = null;
-    PsiClass dupClass = null;
-    for (PsiClass dupClassCandidate : classes) {
-      // do not use equals
-      if (dupClassCandidate != aClass) {
-        VirtualFile file = dupClassCandidate.getContainingFile().getVirtualFile();
-        if (file != null && manager.isInProject(dupClassCandidate) && fileIndex.isInTestSourceContent(file) == isTestSourceRoot) {
-          dupClass = dupClassCandidate;
-          dupFileName = FileUtil.toSystemDependentName(file.getPath());
-          break;
-        }
-      }
-    }
-    if (dupFileName == null) return null;
-    HighlightInfo.Builder info = createInfoAndRegisterRenameFix(aClass, dupFileName, "duplicate.class.in.other.file");
-    IntentionAction action = QuickFixFactory.getInstance().createNavigateToDuplicateElementFix(dupClass);
-    if (info != null) {
-      info.registerFix(action, null, null, null, null);
-    }
-    return info;
-  }
 
   static HighlightInfo.Builder checkClassRestrictedKeyword(@NotNull LanguageLevel level, @NotNull PsiIdentifier identifier) {
     String className = identifier.getText();
@@ -99,36 +62,6 @@ public final class HighlightClassUtil {
            PsiKeyword.RECORD.equals(typeName) && JavaFeature.RECORDS.isSufficient(level) ||
            (PsiKeyword.SEALED.equals(typeName) || PsiKeyword.PERMITS.equals(typeName)) && JavaFeature.SEALED_CLASSES.isSufficient(level) ||
            PsiKeyword.VALUE.equals(typeName) && JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(level);
-  }
-
-  private static @Nullable HighlightInfo.Builder createInfoAndRegisterRenameFix(@NotNull PsiClass aClass,
-                                                                                @NotNull String name,
-                                                                                @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {
-    String message = JavaErrorBundle.message(key, name);
-    PsiIdentifier identifier = aClass.getNameIdentifier();
-    HighlightInfo.Builder info;
-    if (aClass instanceof PsiImplicitClass) {
-      info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(aClass)
-        .fileLevelAnnotation()
-        .description(message);
-      IntentionAction action = QuickFixFactory.getInstance().createRenameFix(aClass);
-      if (action != null) {
-        info.registerFix(action, null, null, null, null);
-      }
-    }
-    else {
-      if (identifier == null) return null;
-      TextRange textRange = identifier.getTextRange();
-      info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(textRange)
-        .descriptionAndTooltip(message);
-      IntentionAction action = QuickFixFactory.getInstance().createRenameFix(identifier);
-      if (action != null) {
-        info.registerFix(action, null, null, null, null);
-      }
-    }
-    return info;
   }
 
   private static HighlightInfo.Builder checkStaticFieldDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
@@ -471,17 +404,6 @@ public final class HighlightClassUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkThingNotAllowedInInterface(@NotNull PsiElement element, @Nullable PsiClass aClass) {
-    if (aClass == null || !aClass.isInterface()) return null;
-    String description = JavaErrorBundle.message("not.allowed.in.interface");
-    HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-    IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(element);
-    info.registerFix(action1, null, null, null, null);
-    IntentionAction action = QuickFixFactory.getInstance().createConvertInterfaceToClassFix(aClass);
-    info.registerFix(action, null, null, null, null);
-    return info;
-  }
-
   static HighlightInfo.Builder checkQualifiedNew(@NotNull PsiNewExpression expression, @Nullable PsiType type, @Nullable PsiClass aClass) {
     PsiExpression qualifier = expression.getQualifier();
     if (qualifier == null) return null;
@@ -640,21 +562,6 @@ public final class HighlightClassUtil {
         builder.registerFix(action, null, null, null, null);
       }
       return builder;
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkIllegalInstanceMemberInRecord(@NotNull PsiMember member) {
-    if (!member.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiClass aClass = member.getContainingClass();
-      if (aClass != null && aClass.isRecord()) {
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(member)
-          .descriptionAndTooltip(JavaErrorBundle.message(member instanceof PsiClassInitializer ?
-                                                         "record.instance.initializer" : "record.instance.field"));
-        IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(member, PsiModifier.STATIC, true, false);
-        info.registerFix(action, null, null, null, null);
-        return info;
-      }
     }
     return null;
   }
@@ -914,32 +821,5 @@ public final class HighlightClassUtil {
       }
     }
     return null;
-  }
-
-  static HighlightInfo.Builder checkImplicitClassMember(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel,
-                                                        @NotNull PsiFile psiFile) {
-    if (!(member.getContainingClass() instanceof PsiImplicitClass implicitClass)) {
-      return null;
-    }
-
-    PsiElement anchor = member;
-    if (member instanceof PsiNameIdentifierOwner owner) {
-      PsiElement nameIdentifier = owner.getNameIdentifier();
-      if (nameIdentifier != null) {
-        anchor = nameIdentifier;
-      }
-    }
-    HighlightInfo.Builder builder = HighlightUtil.checkFeature(anchor, JavaFeature.IMPLICIT_CLASSES, languageLevel, psiFile);
-    if (builder == null) return null;
-
-    if (!(member instanceof PsiClass)) {
-      boolean hasClassToRelocate = PsiTreeUtil.findChildOfType(implicitClass, PsiClass.class) != null;
-      if (hasClassToRelocate) {
-        MoveMembersIntoClassFix fix = new MoveMembersIntoClassFix(implicitClass);
-        builder.registerFix(fix, null, null, null, null);
-      }
-    }
-
-    return builder;
   }
 }

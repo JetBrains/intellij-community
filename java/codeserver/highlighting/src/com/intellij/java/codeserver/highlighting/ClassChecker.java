@@ -241,7 +241,22 @@ final class ClassChecker {
     checkDuplicateClasses(aClass, classes);
   }
 
-  void checkDuplicateClasses(@NotNull PsiClass aClass, @NotNull PsiClass @NotNull[] classes) {
+  void checkDuplicateClassesWithImplicit(@NotNull PsiJavaFile file) {
+    if (!myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASSES)) return;
+    PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
+    if (implicitClass == null) return;
+
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
+    if (module == null) return;
+
+    GlobalSearchScope scope = GlobalSearchScope.moduleScope(module).intersectWith(implicitClass.getResolveScope());
+    String qualifiedName = implicitClass.getQualifiedName();
+    if (qualifiedName == null) return;
+    PsiClass[] classes = JavaPsiFacade.getInstance(implicitClass.getProject()).findClasses(qualifiedName, scope);
+    checkDuplicateClasses(implicitClass, classes);
+  }
+
+  private void checkDuplicateClasses(@NotNull PsiClass aClass, @NotNull PsiClass @NotNull [] classes) {
     PsiManager manager = aClass.getManager();
     Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
     if (module == null) return;
@@ -377,6 +392,69 @@ final class ClassChecker {
                                               ? JavaErrorKinds.CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS_CAN_BE_FINAL
                                               : JavaErrorKinds.CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS;
       myVisitor.report(errorKind.create(aClass));
+    }
+  }
+
+  void checkImplicitClassWellFormed(@NotNull PsiJavaFile file) {
+    if (!myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASSES)) return;
+    PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
+    if (implicitClass == null) return;
+    String name = implicitClass.getQualifiedName();
+    if (!PsiNameHelper.getInstance(file.getProject()).isIdentifier(name)) {
+      myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_INVALID_FILE_NAME.create(file, implicitClass));
+      return;
+    }
+    PsiMethod[] methods = implicitClass.getMethods();
+    boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method));
+    if (!hasMainMethod) {
+      myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_NO_MAIN_METHOD.create(file, implicitClass));
+    }
+  }
+
+  void checkImplicitClassMember(@NotNull PsiMember member) {
+    if (!(member.getContainingClass() instanceof PsiImplicitClass)) return;
+
+    PsiElement anchor = member;
+    if (member instanceof PsiNameIdentifierOwner owner) {
+      PsiElement nameIdentifier = owner.getNameIdentifier();
+      if (nameIdentifier != null) {
+        anchor = nameIdentifier;
+      }
+    }
+    myVisitor.checkFeature(anchor, JavaFeature.IMPLICIT_CLASSES);
+  }
+
+  void checkIllegalInstanceMemberInRecord(@NotNull PsiMember member) {
+    if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass aClass = member.getContainingClass();
+      if (aClass != null && aClass.isRecord()) {
+        var error = member instanceof PsiClassInitializer initializer ?
+                    JavaErrorKinds.RECORD_INSTANCE_INITIALIZER.create(initializer) :
+                    JavaErrorKinds.RECORD_INSTANCE_FIELD.create((PsiField)member);
+        myVisitor.report(error);
+      }
+    }
+  }
+
+  void checkThingNotAllowedInInterface(@NotNull PsiMember member) {
+    PsiClass aClass = member.getContainingClass();
+    if (aClass == null || !aClass.isInterface()) return;
+    if (member instanceof PsiMethod method && method.isConstructor()) {
+      myVisitor.report(JavaErrorKinds.INTERFACE_CONSTRUCTOR.create(method));
+    } else if (member instanceof PsiClassInitializer initializer) {
+      myVisitor.report(JavaErrorKinds.INTERFACE_CLASS_INITIALIZER.create(initializer));
+    }
+  }
+
+  void checkInitializersInImplicitClass(@NotNull PsiClassInitializer initializer) {
+    if (initializer.getContainingClass() instanceof PsiImplicitClass && myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASSES)) {
+      myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_INITIALIZER.create(initializer));
+    }
+  }
+
+  void checkPackageNotAllowedInImplicitClass(@NotNull PsiPackageStatement statement) {
+    if (myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASSES) && JavaImplicitClassUtil.isFileWithImplicitClass(myVisitor.file())) {
+      myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_PACKAGE.create(statement));
     }
   }
 

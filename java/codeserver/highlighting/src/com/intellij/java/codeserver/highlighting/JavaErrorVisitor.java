@@ -76,7 +76,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitPackageStatement(@NotNull PsiPackageStatement statement) {
     super.visitPackageStatement(statement);
-    myAnnotationChecker.checkPackageAnnotationContainingFile(statement);
+    if (!hasErrorResults()) myAnnotationChecker.checkPackageAnnotationContainingFile(statement);
+    if (!hasErrorResults()) myClassChecker.checkPackageNotAllowedInImplicitClass(statement);
   }
 
   @Override
@@ -159,6 +160,41 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         //myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
       }
       if (!hasErrorResults()) myClassChecker.checkCyclicInheritance(aClass);
+    }
+  }
+
+  @Override
+  public void visitJavaFile(@NotNull PsiJavaFile file) {
+    super.visitJavaFile(file);
+    if (!hasErrorResults()) myClassChecker.checkImplicitClassWellFormed(file);
+    if (!hasErrorResults()) myClassChecker.checkDuplicateClassesWithImplicit(file);
+  }
+
+  @Override
+  public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
+    super.visitClassInitializer(initializer);
+    if (!hasErrorResults()) myClassChecker.checkImplicitClassMember(initializer);
+    if (!hasErrorResults()) myClassChecker.checkIllegalInstanceMemberInRecord(initializer);
+    if (!hasErrorResults()) myClassChecker.checkThingNotAllowedInInterface(initializer);
+    if (!hasErrorResults()) myClassChecker.checkInitializersInImplicitClass(initializer);
+  }
+
+  @Override
+  public void visitField(@NotNull PsiField field) {
+    super.visitField(field);
+    if (!hasErrorResults()) myClassChecker.checkIllegalInstanceMemberInRecord(field);
+  }
+
+  @Override
+  public void visitIdentifier(@NotNull PsiIdentifier identifier) {
+    PsiElement parent = identifier.getParent();
+    if (parent instanceof PsiVariable variable) {
+      if (variable instanceof PsiField field) {
+        myClassChecker.checkImplicitClassMember(field);
+      }
+    }
+    else if (parent instanceof PsiMethod method) {
+      myClassChecker.checkImplicitClassMember(method);
     }
   }
 
@@ -251,6 +287,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (!hasErrorResults() && aClass != null) {
       myMethodChecker.checkDuplicateMethod(aClass, method);
+    }
+    if (!hasErrorResults() && method.isConstructor()) {
+      myClassChecker.checkThingNotAllowedInInterface(method);
     }
   }
 
