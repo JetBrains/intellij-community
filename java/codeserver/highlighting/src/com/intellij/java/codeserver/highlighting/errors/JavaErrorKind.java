@@ -141,7 +141,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *               as an anchor for a given Psi object.
      * @return a new Simple instance with the updated anchor function.
      */
-    public Simple<Psi> withAnchor(@NotNull Function<? super Psi, ? extends PsiElement> anchor) {
+    Simple<Psi> withAnchor(@NotNull Function<? super Psi, ? extends PsiElement> anchor) {
       return new Simple<>(myKey, myDescription, anchor, myRange, myHighlightType, myValidator);
     }
 
@@ -152,7 +152,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *              The range is relative to anchor returned from {@link #anchor(PsiElement, Void)}
      * @return a new Simple instance with the updated range function.
      */
-    public Simple<Psi> withRange(@NotNull Function<? super Psi, ? extends TextRange> range) {
+    Simple<Psi> withRange(@NotNull Function<? super Psi, ? extends TextRange> range) {
       return new Simple<>(myKey, myDescription, myAnchor, range, myHighlightType, myValidator);
     }
 
@@ -162,7 +162,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      * @param type a function that determines the {@link JavaErrorHighlightType} for a given Psi object.
      * @return a new Simple instance with the updated highlight type function.
      */
-    public Simple<Psi> withHighlightType(@NotNull Function<? super Psi, JavaErrorHighlightType> type) {
+    Simple<Psi> withHighlightType(@NotNull Function<? super Psi, JavaErrorHighlightType> type) {
       return new Simple<>(myKey, myDescription, myAnchor, myRange, type, myValidator);
     }
 
@@ -173,7 +173,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *                  and potentially throws an {@link IllegalArgumentException} if validation fails.
      * @return a new Simple instance with the updated validator function.
      */
-    public Simple<Psi> withValidator(@NotNull Consumer<? super Psi> validator) {
+    Simple<Psi> withValidator(@NotNull Consumer<? super Psi> validator) {
       return new Simple<>(myKey, myDescription, myAnchor, myRange, myHighlightType, validator);
     }
 
@@ -184,7 +184,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *                    based on the provided Psi object.
      * @return a new Simple instance with the updated description function.
      */
-    public Simple<Psi> withDescription(@NotNull Function<? super Psi, ? extends HtmlChunk> description) {
+    Simple<Psi> withDescription(@NotNull Function<? super Psi, ? extends HtmlChunk> description) {
       return new Simple<>(myKey, description, myAnchor, myRange, myHighlightType, myValidator);
     }
 
@@ -194,11 +194,11 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      * @param description a Function that computes a description based on the given Psi and Context.
      * @return a new Simple instance with the specified description function.
      */
-    public Simple<Psi> withRawDescription(@NotNull Function<? super Psi, @Nls String> description) {
+    Simple<Psi> withRawDescription(@NotNull Function<? super Psi, @Nls String> description) {
       return withDescription(psi -> HtmlChunk.raw(description.apply(psi)));
     }
 
-    public <Context> Parameterized<Psi, Context> withContext() {
+    <Context> Parameterized<Psi, Context> parameterized() {
       return new Parameterized<>(myKey, (psi, ctx) -> myDescription.apply(psi),
                                  (psi, ctx) -> myAnchor.apply(psi),
                                  (psi, ctx) -> myRange.apply(psi),
@@ -301,7 +301,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      * @param anchor a BiFunction that computes an anchor based on the given Psi and Context
      * @return a new Parameterized instance with the specified anchor function
      */
-    public Parameterized<Psi, Context> withAnchor(@NotNull BiFunction<? super Psi, ? super Context, ? extends PsiElement> anchor) {
+    Parameterized<Psi, Context> withAnchor(@NotNull BiFunction<? super Psi, ? super Context, ? extends PsiElement> anchor) {
       return new Parameterized<>(myKey, myDescription, anchor, myRange, myHighlightType, myValidator);
     }
 
@@ -312,7 +312,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *              The range is relative to anchor returned from {@link #anchor(PsiElement, Object)}
      * @return a new Parameterized instance with the updated range function.
      */
-    public Parameterized<Psi, Context> withRange(@NotNull BiFunction<? super Psi, ? super Context, ? extends TextRange> range) {
+    Parameterized<Psi, Context> withRange(@NotNull BiFunction<? super Psi, ? super Context, ? extends TextRange> range) {
       return new Parameterized<>(myKey, myDescription, myAnchor, range, myHighlightType, myValidator);
     }
 
@@ -323,7 +323,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *                  and potentially throws {@link IllegalArgumentException} if validation fails.
      * @return a new Parameterized instance with the specified validator function.
      */
-    public Parameterized<Psi, Context> withValidator(@NotNull BiConsumer<? super Psi, ? super Context> validator) {
+    Parameterized<Psi, Context> withValidator(@NotNull BiConsumer<? super Psi, ? super Context> validator) {
       return new Parameterized<>(myKey, myDescription, myAnchor, myRange, myHighlightType, validator);
     }
 
@@ -333,7 +333,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      * @param description a BiFunction that computes a description based on the given Psi and Context.
      * @return a new Parameterized instance with the specified description function.
      */
-    public Parameterized<Psi, Context> withDescription(@NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> description) {
+    Parameterized<Psi, Context> withDescription(@NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> description) {
       return new Parameterized<>(myKey, description, myAnchor, myRange, myHighlightType, myValidator);
     }
 
@@ -344,7 +344,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *                    based on the given Psi and Context.
      * @return a new Parameterized instance with the specified raw description function.
      */
-    public Parameterized<Psi, Context> withRawDescription(@NotNull BiFunction<? super Psi, ? super Context, @Nls String> description) {
+    Parameterized<Psi, Context> withRawDescription(@NotNull BiFunction<? super Psi, ? super Context, @Nls String> description) {
       return withDescription((psi, context) -> HtmlChunk.raw(description.apply(psi, context)));
     }
 

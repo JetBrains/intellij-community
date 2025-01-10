@@ -66,7 +66,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiMethod, PsiMethod> ANNOTATION_MEMBER_CLASH =
     error(PsiMethod.class, "annotation.member.clash")
       .withAnchor(curMethod -> requireNonNull(curMethod.getNameIdentifier()))
-      .<PsiMethod>withContext()
+      .<PsiMethod>parameterized()
       .withRawDescription((curMethod, clashMethod) -> {
         PsiClass containingClass = requireNonNull(clashMethod.getContainingClass());
         return message("annotation.member.clash", formatMethod(clashMethod), formatClass(containingClass));
@@ -94,7 +94,7 @@ public final class JavaErrorKinds {
     error(PsiNameValuePair.class, "annotation.attribute.unknown.method")
       .withAnchor(pair -> requireNonNull(pair.getReference()).getElement())
       .withHighlightType(pair -> pair.getName() == null ? JavaErrorHighlightType.ERROR : JavaErrorHighlightType.WRONG_REF)
-      .<String>withContext()
+      .<String>parameterized()
       .withRawDescription((pair, methodName) -> message("annotation.attribute.unknown.method", methodName));
   // Can be anchored on @FunctionalInterface annotation or at call site
   public static final Parameterized<PsiElement, PsiClass> LAMBDA_NOT_FUNCTIONAL_INTERFACE =
@@ -110,7 +110,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiAnnotation, PsiClass> LAMBDA_FUNCTIONAL_INTERFACE_SEALED =
     parameterized("lambda.sealed.functional.interface");
   public static final Parameterized<PsiAnnotation, @NotNull List<PsiAnnotation.@NotNull TargetType>> ANNOTATION_NOT_APPLICABLE =
-    error(PsiAnnotation.class, "annotation.not.applicable").<@NotNull List<PsiAnnotation.@NotNull TargetType>>withContext()
+    error(PsiAnnotation.class, "annotation.not.applicable").<@NotNull List<PsiAnnotation.@NotNull TargetType>>parameterized()
       .withValidator((annotation, types) -> {
         if (types.isEmpty()) {
           throw new IllegalArgumentException("types must not be empty");
@@ -124,7 +124,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiAnnotation, @NotNull List<String>> ANNOTATION_MISSING_ATTRIBUTE =
     error(PsiAnnotation.class, "annotation.missing.attribute")
       .withAnchor(annotation -> annotation.getNameReferenceElement())
-      .<@NotNull List<String>>withContext()
+      .<@NotNull List<String>>parameterized()
       .withRawDescription((annotation, attributeNames) -> message(
           "annotation.missing.attribute", attributeNames.stream().map(attr -> "'" + attr + "'").collect(Collectors.joining(", "))));
   public static final Simple<PsiAnnotation> ANNOTATION_CONTAINER_WRONG_PLACE =
@@ -149,7 +149,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiAnnotation, String> ANNOTATION_DUPLICATE_EXPLAINED =
     error(PsiAnnotation.class, "annotation.duplicate.explained")
       .withAnchor(annotation -> requireNonNull(annotation.getNameReferenceElement()))
-      .<String>withContext()
+      .<String>parameterized()
       .withRawDescription((annotation, message) -> message("annotation.duplicate.explained", message));
   public static final Parameterized<PsiAnnotationMemberValue, String> ANNOTATION_MALFORMED_REPEATABLE_EXPLAINED =
     parameterized(PsiAnnotationMemberValue.class, String.class, "annotation.malformed.repeatable.explained")
@@ -177,16 +177,16 @@ public final class JavaErrorKinds {
     error(PsiReceiverParameter.class, "receiver.wrong.position").withAnchor(PsiReceiverParameter::getIdentifier);
   public static final Parameterized<PsiReceiverParameter, PsiType> RECEIVER_TYPE_MISMATCH =
     error(PsiReceiverParameter.class, "receiver.type.mismatch")
-      .withAnchor(parameter -> requireNonNullElse(parameter.getTypeElement(), parameter)).withContext();
+      .withAnchor(parameter -> requireNonNullElse(parameter.getTypeElement(), parameter)).parameterized();
   public static final Parameterized<PsiReceiverParameter, @Nullable String> RECEIVER_NAME_MISMATCH =
-    error(PsiReceiverParameter.class, "receiver.name.mismatch").withAnchor(PsiReceiverParameter::getIdentifier).withContext();
+    error(PsiReceiverParameter.class, "receiver.name.mismatch").withAnchor(PsiReceiverParameter::getIdentifier).parameterized();
   // PsiMember = PsiClass | PsiEnumConstant
   public static final Parameterized<PsiMember, PsiMethod> CLASS_NO_ABSTRACT_METHOD =
     error(PsiMember.class, "class.must.implement.method")
       .withRange(member ->
                    member instanceof PsiEnumConstant enumConstant ? enumConstant.getNameIdentifier().getTextRangeInParent() :
                    member instanceof PsiClass aClass ? JavaErrorFormatUtil.getClassDeclarationTextRange(aClass) : null)
-      .<PsiMethod>withContext()
+      .<PsiMethod>parameterized()
       .withRawDescription((member, abstractMethod) -> {
         PsiClass aClass = member instanceof PsiEnumConstant enumConstant ?
                           requireNonNullElse(enumConstant.getInitializingClass(), member.getContainingClass()) : (PsiClass)member;
@@ -210,12 +210,12 @@ public final class JavaErrorKinds {
       .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
       .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
       .withRawDescription(cls -> message("class.duplicate", cls.getName()))
-      .withContext();
+      .parameterized();
   public static final Parameterized<PsiClass, PsiClass> CLASS_DUPLICATE_IN_OTHER_FILE =
     error(PsiClass.class, "class.duplicate")
       .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
       .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
-      .<PsiClass>withContext()
+      .<PsiClass>parameterized()
       .withRawDescription((cls, dupCls) -> message("class.duplicate.in.other.file",
                                                    FileUtil.toSystemDependentName(dupCls.getContainingFile().getVirtualFile().getPath())));
   public static final Simple<PsiClass> CLASS_CLASHES_WITH_PACKAGE =
@@ -229,7 +229,7 @@ public final class JavaErrorKinds {
       .withRawDescription(cls -> message("class.wrong.filename", cls.getName()));
   public static final Parameterized<PsiClass, PsiClass> CLASS_CYCLIC_INHERITANCE =
     error(PsiClass.class, "class.cyclic.inheritance")
-      .withRange(JavaErrorFormatUtil::getClassDeclarationTextRange).<PsiClass>withContext()
+      .withRange(JavaErrorFormatUtil::getClassDeclarationTextRange).<PsiClass>parameterized()
       .withRawDescription((aClass, circularClass) -> message("class.cyclic.inheritance", formatClass(circularClass)));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_DUPLICATE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.duplicate")
