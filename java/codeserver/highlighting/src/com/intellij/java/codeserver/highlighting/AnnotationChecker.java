@@ -597,19 +597,20 @@ final class AnnotationChecker {
     if (annotationClass == null) return;
     PsiReference ref = pair.getReference();
     if (ref == null) return;
-    PsiMethod method = (PsiMethod)ref.resolve();
-    if (method == null) {
+    PsiElement target = ref.resolve();
+    if (target == null) {
       myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD.create(pair, ref.getCanonicalText()));
+      return;
     }
-    else if (method instanceof PsiAnnotationMethod annotationMethod) {
-      PsiAnnotationMemberValue value = pair.getValue();
-      if (value != null) {
-        PsiType expectedType = Objects.requireNonNull(method.getReturnType());
-        checkMemberValueType(value, expectedType, annotationMethod);
-      }
-
-      checkDuplicateAttribute(pair);
+    if (!(target instanceof PsiAnnotationMethod annotationMethod)) {
+      throw new IllegalStateException("Unexpected: should resolve to annotation method; got " + target.getClass());
     }
+    PsiAnnotationMemberValue value = pair.getValue();
+    if (value != null) {
+      PsiType expectedType = Objects.requireNonNull(annotationMethod.getReturnType());
+      checkMemberValueType(value, expectedType, annotationMethod);
+    }
+    checkDuplicateAttribute(pair);
   }
 
   private void checkDuplicateAttribute(@NotNull PsiNameValuePair pair) {
