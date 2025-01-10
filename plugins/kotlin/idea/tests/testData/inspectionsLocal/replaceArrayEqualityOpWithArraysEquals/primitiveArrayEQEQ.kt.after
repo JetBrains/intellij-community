@@ -6,6 +6,3 @@ fun foo() {
     if (a.contentEquals(b)) {
     }
 }
-
-// KT-73352
-// IGNORE_K2
