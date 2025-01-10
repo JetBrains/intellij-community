@@ -21,6 +21,7 @@ internal class StructureViewFloatingToolbar(
   parentDisposable: Disposable,
 ) : AbstractFloatingToolbarComponent(
   DefaultActionGroup(MergeableActions((ActionManager.getInstance().getAction(ActionPlaces.STRUCTURE_VIEW_FLOATING_TOOLBAR) as ActionGroup))),
+  ownerComponent,
   parentDisposable
 ) {
 
@@ -51,7 +52,6 @@ internal class StructureViewFloatingToolbar(
   }
 
   init {
-    init(ownerComponent)
     val oneDimension = UIUtil.getTreeFont().size + UIUtil.getTreeRightChildIndent()
     minimumButtonSize = Dimension(oneDimension, oneDimension)
     showingTime = 150

@@ -7962,7 +7962,7 @@ Fa:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - com.intellij.ui.switcher.QuickActionProvider
 - javax.swing.JPanel
-- <init>(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.actionSystem.ActionGroup,javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - addNotify():V
 - hideImmediately():V
 - scheduleHide():V

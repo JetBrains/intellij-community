@@ -18,6 +18,7 @@ private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBCol
 @ApiStatus.NonExtendable
 abstract class AbstractFloatingToolbarComponent(
   actionGroup: ActionGroup,
+  ownerComponent: JComponent,
   parentDisposable: Disposable,
 ) : ActionToolbarImpl(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true),
     FloatingToolbarComponent {
@@ -40,8 +41,8 @@ abstract class AbstractFloatingToolbarComponent(
 
   protected abstract fun isComponentOnHold(): Boolean
 
-  protected fun init(targetComponent: JComponent) {
-    setTargetComponent(targetComponent)
+  init {
+    targetComponent = ownerComponent
     minimumButtonSize = Dimension(22, 22)
     setSkipWindowAdjustments(true)
     isReservePlaceAutoPopupIcon = false

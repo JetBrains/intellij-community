@@ -47,8 +47,12 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
   private class EditorFloatingToolbarComponent(
     editor: EditorImpl,
     provider: FloatingToolbarProvider,
-    parentDisposable: Disposable
-  ) : AbstractFloatingToolbarComponent(provider.actionGroup, parentDisposable) {
+    parentDisposable: Disposable,
+  ) : AbstractFloatingToolbarComponent(
+    provider.actionGroup,
+    editor.contentComponent,
+    parentDisposable
+  ) {
 
     override val autoHideable: Boolean = provider.autoHideable
 
@@ -57,7 +61,7 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
              component.parent?.isFocusAncestor() == true
     }
 
-    private fun installMouseMotionWatcher(editor: EditorImpl, parentDisposable: Disposable) {
+    init {
       if (autoHideable) {
         var ignoreMouseMotionRectangle: Rectangle? = null
         editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
@@ -81,11 +85,6 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
           }
         }
       }
-    }
-
-    init {
-      init(editor.contentComponent)
-      installMouseMotionWatcher(editor, parentDisposable)
     }
   }
 }

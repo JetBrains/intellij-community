@@ -6,14 +6,15 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 import javax.swing.JComponent
 
-class LayoutActionsFloatingToolbar : AbstractFloatingToolbarComponent {
-  constructor(
-    parentComponent: JComponent,
-    actionGroup: ActionGroup,
-    parentDisposable: Disposable
-  ) : super(actionGroup, parentDisposable) {
-    init(parentComponent)
-  }
+class LayoutActionsFloatingToolbar(
+  parentComponent: JComponent,
+  actionGroup: ActionGroup,
+  parentDisposable: Disposable,
+) : AbstractFloatingToolbarComponent(
+  actionGroup,
+  parentComponent,
+  parentDisposable
+) {
 
   override val autoHideable: Boolean = false
 

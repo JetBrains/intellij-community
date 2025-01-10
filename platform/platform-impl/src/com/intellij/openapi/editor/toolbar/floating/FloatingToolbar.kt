@@ -12,16 +12,16 @@ class FloatingToolbar(
   ownerComponent: JComponent,
   actionGroup: ActionGroup,
   parentDisposable: Disposable,
-) : AbstractFloatingToolbarComponent(actionGroup, parentDisposable) {
+) : AbstractFloatingToolbarComponent(
+  actionGroup,
+  ownerComponent,
+  parentDisposable
+) {
 
   override val autoHideable: Boolean = true
 
   override fun isComponentOnHold(): Boolean {
     return isComponentUnderMouse() || isFocusAncestor()
-  }
-
-  init {
-    init(ownerComponent)
   }
 
   init {
