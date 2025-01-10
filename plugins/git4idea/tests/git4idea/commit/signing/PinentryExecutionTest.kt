@@ -15,8 +15,6 @@ import git4idea.commit.signing.GpgAgentConfigurator.Companion.GPG_AGENT_DEFAULT_
 import git4idea.commit.signing.GpgAgentConfigurator.Companion.GPG_AGENT_MAX_CACHE_TTL_CONF_KEY
 import git4idea.commit.signing.GpgAgentConfigurator.Companion.GPG_AGENT_MAX_CACHE_TTL_CONF_VALUE
 import git4idea.commit.signing.GpgAgentConfigurator.Companion.GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY
-import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_BACKUP_FILE_NAME
-import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_FILE_NAME
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_HOME_DIR
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.PINENTRY_LAUNCHER_FILE_NAME
 import git4idea.config.GitExecutableManager
@@ -181,14 +179,9 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   private inner class TestGpgPathLocator : GpgAgentPathsLocator {
     override fun resolvePaths(): GpgAgentPaths? {
       val gpgAgentHome = projectNioRoot.resolve(GPG_HOME_DIR).createDirectories()
-      val gpgAgentConf = gpgAgentHome.resolve(GPG_AGENT_CONF_FILE_NAME)
-      val gpgAgentConfBackup = gpgAgentHome.resolve(GPG_AGENT_CONF_BACKUP_FILE_NAME)
       val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
-
-      return GpgAgentPaths(gpgAgentHome, gpgAgentConf, gpgAgentConfBackup,
-                           gpgPinentryAppLauncher, gpgPinentryAppLauncher.toAbsolutePath().toString())
+      return GpgAgentPaths(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())
     }
-
   }
 
   companion object {

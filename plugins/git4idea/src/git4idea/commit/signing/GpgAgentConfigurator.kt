@@ -307,12 +307,9 @@ private class MacAndUnixGpgAgentPathsLocator : GpgAgentPathsLocator {
   override fun resolvePaths(): GpgAgentPaths? {
     try {
       val gpgAgentHome = Paths.get(SystemProperties.getUserHome(), GPG_HOME_DIR)
-      val gpgAgentConf = gpgAgentHome.resolve(GPG_AGENT_CONF_FILE_NAME)
-      val gpgAgentConfBackup = gpgAgentHome.resolve(GPG_AGENT_CONF_BACKUP_FILE_NAME)
       val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
 
-      return GpgAgentPaths(gpgAgentHome, gpgAgentConf, gpgAgentConfBackup,
-                           gpgPinentryAppLauncher, gpgPinentryAppLauncher.toAbsolutePath().toString())
+      return GpgAgentPaths(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())
     }
     catch (e: InvalidPathException) {
       LOG.warn("Cannot resolve path", e)
@@ -336,12 +333,9 @@ private class WslGpgAgentPathsLocator(private val executable: GitExecutable.Wsl)
   override fun resolvePaths(): GpgAgentPaths? {
     try {
       val gpgAgentHome = getWindowsAccessibleGpgHome(executable) ?: return null
-      val gpgAgentConf = gpgAgentHome.resolve(GPG_AGENT_CONF_FILE_NAME)
-      val gpgAgentConfBackup = gpgAgentHome.resolve(GPG_AGENT_CONF_BACKUP_FILE_NAME)
-      val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
-      val pathToPinentryAppInWsl = (getPathInWslUserHome(executable) ?: return null) + "/$GPG_HOME_DIR/$PINENTRY_LAUNCHER_FILE_NAME"
-      return GpgAgentPaths(gpgAgentHome, gpgAgentConf, gpgAgentConfBackup, gpgPinentryAppLauncher,
-                           pathToPinentryAppInWsl)
+      val wslUserHome = getPathInWslUserHome(executable) ?: return null
+      val pathToPinentryAppInWsl = "$wslUserHome/$GPG_HOME_DIR/$PINENTRY_LAUNCHER_FILE_NAME"
+      return GpgAgentPaths(gpgAgentHome, pathToPinentryAppInWsl)
     }
     catch (e: InvalidPathException) {
       LOG.warn("Cannot resolve path", e)
@@ -427,11 +421,13 @@ internal class PinentryShellScriptLauncherGenerator(override val executable: Git
 
 internal data class GpgAgentPaths(
   val gpgAgentHome: Path,
-  val gpgAgentConf: Path,
-  val gpgAgentConfBackup: Path,
-  val gpgPinentryAppLauncher: Path,
   val gpgPinentryAppLauncherConfigPath: String,
-)
+) {
+  val gpgAgentConf = gpgAgentHome.resolve(GPG_AGENT_CONF_FILE_NAME)
+  val gpgAgentConfBackup = gpgAgentHome.resolve(GPG_AGENT_CONF_BACKUP_FILE_NAME)
+  val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
+}
+
 private data class GpgAgentConfig(val path: Path, val content: Map<String, String>)
 
 private class GpgAgentConfiguratorStartupActivity : ProjectActivity {
