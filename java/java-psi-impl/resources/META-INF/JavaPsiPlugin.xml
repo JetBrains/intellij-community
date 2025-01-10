@@ -156,6 +156,13 @@
                  description="JLS 18.5.2: if R 0 is a parameterized type, G&lt;A1, ..., An&gt;, and one of A1, ..., An is a wildcard, then, for fresh inference variables B1, ..., Bn ... Javac creates fresh variables only for i: Ai is a wildcard"/>
     <registryKey key="JDK8042508.bug.fixed" defaultValue="false"
                  description="Disable check for type variable until javac bug is fixed" />
+
+    <registryKey key="uast.evaluator.depth.limit" defaultValue="15"
+                 description="Maximal allowed depth for UAST TreeBasedEvaluator visitor"/>
+    <registryKey key="uast.evaluator.loop.iteration.limit" defaultValue="20"
+                 description="Maximal allowed iteration count for loop evaluation in the UAST TreeBasedEvaluator visitor"/>
+    <registryKey key="uast.references.by.usage" defaultValue="true"
+                 description="Enables UAST reference contributors that search for usages of variables in the opened file"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
