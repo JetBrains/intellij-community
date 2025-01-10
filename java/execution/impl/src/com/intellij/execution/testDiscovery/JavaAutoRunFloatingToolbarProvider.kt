@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.application
 import com.intellij.util.ui.GridBag
+import org.jetbrains.annotations.ApiStatus
 import java.awt.GridBagLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -27,6 +28,7 @@ import javax.swing.JPanel
 /**
  * Shows a floating toolbar when tests run automatically.
  */
+@ApiStatus.Internal
 class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
   override val autoHideable: Boolean = false
   override val actionGroup: ActionGroup

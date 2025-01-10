@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.createExtensionDisposable
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.OverrideOnly
 @JvmDefaultWithCompatibility
 interface FloatingToolbarProvider {
   @get:ApiStatus.ScheduledForRemoval

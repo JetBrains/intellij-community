@@ -7975,13 +7975,6 @@ a:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 - register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 - register(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider$Companion
-f:com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider
-- com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
-- sf:ACTION_GROUP:java.lang.String
-- sf:Companion:com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider$Companion
-- <init>():V
-- getAutoHideable():Z
-f:com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider$Companion
 f:com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar
 - javax.swing.JPanel
 - <init>(com.intellij.openapi.editor.impl.EditorImpl):V

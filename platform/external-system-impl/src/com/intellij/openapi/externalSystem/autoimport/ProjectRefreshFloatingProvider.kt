@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 internal class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
   override val autoHideable = false
 
