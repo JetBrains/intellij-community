@@ -14,29 +14,18 @@ class TransparentComponentAnimator(
   parentDisposable: Disposable,
 ) {
 
+  private val disposable = Disposer.newCheckedDisposable(parentDisposable)
+
+  private val clk = TimerUtil.createNamedTimer("CLK", RETENTION_TIME_MS)
+
   private val animator = ShowHideAnimator { progress ->
     component.setOpacity(progress.toFloat())
     component.repaintComponent()
-  }.apply {
-    Disposer.register(parentDisposable, disposable)
-    hidingDelay = 0
-    showingDelay = 0
-    hidingDuration = HIDING_TIME_MS
-    showingDuration = SHOWING_TIME_MS
-  }
-  private val disposable = Disposer.newCheckedDisposable(parentDisposable)
-  private val clk = TimerUtil.createNamedTimer("CLK", RETENTION_TIME_MS).apply {
-    isRepeats = true
-    disposable.whenDisposed { stopTimerIfNeeded() }
-    addActionListener {
-      if (!component.isComponentOnHold()) {
-        scheduleHide()
-      }
-    }
   }
 
-  internal var showingTime: Int by animator::showingDuration
-  internal var hidingTime: Int by animator::hidingDuration
+  var showingTime: Int by animator::showingDuration
+
+  var hidingTime: Int by animator::hidingDuration
 
   private fun startTimerIfNeeded() {
     if (!disposable.isDisposed) {
@@ -71,6 +60,26 @@ class TransparentComponentAnimator(
     stopTimerIfNeeded()
     component.hideComponent()
     animator.setVisibleImmediately(false)
+  }
+
+  init {
+    Disposer.register(parentDisposable, animator.disposable)
+    animator.hidingDelay = 0
+    animator.showingDelay = 0
+    animator.hidingDuration = HIDING_TIME_MS
+    animator.showingDuration = SHOWING_TIME_MS
+  }
+
+  init {
+    clk.isRepeats = true
+    disposable.whenDisposed {
+      stopTimerIfNeeded()
+    }
+    clk.addActionListener {
+      if (!component.isComponentOnHold()) {
+        scheduleHide()
+      }
+    }
   }
 
   init {
