@@ -374,6 +374,8 @@ com.intellij.ui.dsl.builder.Cell
 - com.intellij.ui.dsl.builder.CellBase
 - *a:validationInfo(kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.Cell
 f:com.intellij.ui.dsl.builder.ComboBoxKt
+- *sf:whenItemChangedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *bs:whenItemChangedFromUi$default(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - *sf:whenItemSelectedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - *bs:whenItemSelectedFromUi$default(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 f:com.intellij.ui.dsl.builder.ExtensionsKt

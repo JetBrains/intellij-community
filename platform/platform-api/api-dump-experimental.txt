@@ -165,6 +165,8 @@ com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - *:createFileEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 - *bs:createFileEditor$suspendImpl(com.intellij.openapi.fileEditor.AsyncFileEditorProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.observable.util.ListenerUiUtil
+- *sf:whenItemChangedFromUi(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- *bs:whenItemChangedFromUi$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - *sf:whenItemSelectedFromUi(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - *bs:whenItemSelectedFromUi$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - *sf:whenStateChangedFromUi(javax.swing.JCheckBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V

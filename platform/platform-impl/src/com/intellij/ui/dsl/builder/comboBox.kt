@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
@@ -9,6 +9,7 @@ import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequ
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComboBox
 import kotlin.reflect.KMutableProperty0
+import com.intellij.openapi.observable.util.whenItemChangedFromUi as whenItemChangedFromUiImpl
 import com.intellij.openapi.observable.util.whenItemSelectedFromUi as whenItemSelectedFromUiImpl
 
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: MutableProperty<T?>): Cell<C> {
@@ -55,4 +56,9 @@ fun <T, C : ComboBox<T>> C.columns(columns: Int): C = apply {
 @ApiStatus.Experimental
 fun <T, C : JComboBox<T>> Cell<C>.whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit): Cell<C> {
   return applyToComponent { whenItemSelectedFromUiImpl(parentDisposable, listener) }
+}
+
+@ApiStatus.Experimental
+fun <T, C : JComboBox<T>> Cell<C>.whenItemChangedFromUi(parentDisposable: Disposable? = null, listener: (T?) -> Unit): Cell<C> {
+  return applyToComponent { whenItemChangedFromUiImpl(parentDisposable, listener) }
 }
