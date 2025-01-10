@@ -56,7 +56,7 @@ internal abstract class PythonEnvExtensionBase<ENV : Any, PYTHON_TYPE : PythonTy
       pythonType.getTestEnvironment(*additionalTags).getOrElse {
         // Logging due to IDEA-356206
         LOG.warn(it)
-        val message = "Couldn't find python to run test against ($pythonType , $additionalTags)"
+        val message = "Couldn't find python to run test against ($pythonType , ${additionalTags.toList()})"
         if (System.getProperty("pycharm.env.tests.fail.if.no.python") != null) {
           throw AssertionError(message, it)
         }
