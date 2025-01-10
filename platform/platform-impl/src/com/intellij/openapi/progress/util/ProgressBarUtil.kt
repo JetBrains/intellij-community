@@ -5,6 +5,6 @@ object ProgressBarUtil {
   const val STATUS_KEY: String = "ProgressBar.status"
 
   const val PASSED_VALUE: String = "passed"
-  const val WARNING_VALUE: String = "value"
+  const val WARNING_VALUE: String = "warning"
   const val FAILED_VALUE: String = "failed"
 }
