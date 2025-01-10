@@ -97,13 +97,19 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   }
 
   @RequiresBackgroundThread
-  fun isConfigured(project: Project): Boolean {
+  fun canBeConfigured(project: Project): Boolean {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
+    if (!isEnabled(project, executable)) return false
     val gpgAgentPaths = createPathLocator(executable).resolvePaths() ?: return false
 
-    return gpgAgentPaths.gpgPinentryAppLauncher.exists()
-           && readConfig(gpgAgentPaths.gpgAgentConf)
-             ?.content[GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY] == gpgAgentPaths.gpgPinentryAppLauncherConfigPath
+    return !isPinentryConfigured(gpgAgentPaths)
+  }
+
+  private fun isPinentryConfigured(gpgAgentPaths: GpgAgentPaths): Boolean {
+    val pinentryConfigured = gpgAgentPaths.gpgPinentryAppLauncher.exists()
+                             && readConfig(gpgAgentPaths.gpgAgentConf)
+                               ?.content[GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY] == gpgAgentPaths.gpgPinentryAppLauncherConfigPath
+    return pinentryConfigured
   }
 
   fun configure() {
@@ -187,13 +193,11 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
 
   private fun updateExistingPinentryLauncher() {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
-    if (isEnabled(project, executable) && isConfigured(project)) {
-      val gpgAgentPaths = createPathLocator(executable).resolvePaths()
+    val gpgAgentPaths = createPathLocator(executable).resolvePaths() ?: return
 
-      if (gpgAgentPaths != null) {
-        //always regenerate the launcher to be up to date (e.g., java.home could be changed between versions)
-        generatePinentryLauncher(executable, gpgAgentPaths)
-      }
+    if (isEnabled(project, executable) && isPinentryConfigured(gpgAgentPaths)) {
+      //always regenerate the launcher to be up to date (e.g., java.home could be changed between versions)
+      generatePinentryLauncher(executable, gpgAgentPaths)
     }
   }
 

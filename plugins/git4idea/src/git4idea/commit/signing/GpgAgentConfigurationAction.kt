@@ -13,9 +13,7 @@ internal class GpgAgentConfigurationAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null
-                                         && GpgAgentConfigurator.isEnabled(project, GitExecutableManager.getInstance().getExecutable(project))
-                                         && !project.service<GpgAgentConfigurator>().isConfigured(project)
+    e.presentation.isEnabledAndVisible = project != null && project.service<GpgAgentConfigurator>().canBeConfigured(project)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

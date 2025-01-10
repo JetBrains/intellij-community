@@ -33,10 +33,7 @@ internal class GpgAgentConfigurationNotificator(private val project: Project) {
   @RequiresBackgroundThread
   fun proposeCustomPinentryAgentConfiguration(isSuggestion: Boolean) {
     if (!isEnabled()) return
-
-    val executable = GitExecutableManager.getInstance().getExecutable(project)
-    if (!GpgAgentConfigurator.isEnabled(project, executable)) return
-    if (project.service<GpgAgentConfigurator>().isConfigured(project)) return
+    if (!project.service<GpgAgentConfigurator>().canBeConfigured(project)) return
 
     val displayId = if (isSuggestion) GPG_AGENT_CONFIGURATION_PROPOSE else GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION
     GpgAgentConfiguratorNotification(displayId,
