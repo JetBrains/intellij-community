@@ -442,7 +442,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
           it.minus(patternPrefixes)
         else it
       }
-      .minOf { if (it.isBlank()) end else toMatch.indexOf(it, searchStart).let { ind -> if (ind < 0) end else start + ind } }
+      .minOf { if (it.isEmpty()) end else toMatch.indexOf(it, searchStart).let { ind -> if (ind < 0) end else start + ind } }
       .coerceAtLeast(start + searchStart)
   }
 

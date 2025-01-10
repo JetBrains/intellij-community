@@ -1,0 +1,39 @@
+{
+  "$schema": "../../web-types-gen/resources/web-types.json",
+  "name": "css-class-list",
+  "version": "1.0",
+  "contributions": {
+    "css": {
+      "classes": [
+        {
+          "name": "foo"
+        },
+        {
+          "name": "bar"
+        }
+      ],
+      "class-list": [
+        {
+          "name": "CSS class list",
+          "pattern": {
+            "items": "/css/classes",
+            "template": [
+              "#item",
+              {
+                "items": "/css/classes",
+                "required": false,
+                "repeat": true,
+                "unique": true,
+                "template": [
+                  " ",
+                  "#...",
+                  "#item"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

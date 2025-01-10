@@ -309,6 +309,29 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/my-EleMeNt/attributes/", customElementsManifests = listOf("basic"))
   }
 
+  fun testCssClassListSingleClass1() {
+    doTest("css/class-list/foo", 0, null, "css-class-list")
+  }
+
+  fun testCssClassListSingleClass2() {
+    doTest("css/class-list/foo", 1, null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses1() {
+    doTest("css/class-list/foo bar", 1, null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses2() {
+    doTest("css/class-list/foo bar", 4, null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses3() {
+    doTest("css/class-list/foa bar", 4, null, "css-class-list")
+  }
+  fun testCssClassListMultipleClasses4() {
+    doTest("css/class-list/foo bar", 3, null, "css-class-list")
+  }
+
   private fun doTest(path: String, position: Int, framework: String?, vararg webTypes: String) {
     doTest(path, position, framework, webTypes = webTypes.toList())
   }

@@ -372,6 +372,18 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
     doTest("html/elements/my-EleMeNt/attributes/disabled", customElementsManifests = listOf("basic"))
   }
 
+  fun testCssClassListSingleClass() {
+    doTest("css/class-list/foo", null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses1() {
+    doTest("css/class-list/foo bar", null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses2() {
+    doTest("css/class-list/foo-bar bar foo foo", null, "css-class-list")
+  }
+
   fun testNestedPattern1() {
     webSymbolsQueryExecutorFactory.addScope(
       object : WebSymbolsScope {
