@@ -1,8 +1,12 @@
+- name: lib/modules/intellij.toml.json.jar
+  contentModules:
+  - name: intellij.toml.json
+- name: lib/toml-frontend.jar
+  modules:
+  - name: intellij.toml.core
+    reason: <- intellij.toml
 - name: lib/toml.jar
   modules:
   - name: intellij.toml
-  - name: intellij.toml.core
-    reason: <- intellij.toml
   contentModules:
-  - name: intellij.toml.json
   - name: intellij.toml.grazie

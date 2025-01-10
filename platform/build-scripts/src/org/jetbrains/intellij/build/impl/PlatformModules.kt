@@ -576,7 +576,8 @@ private fun embedAndCollectProductModules(file: Path, xIncludePathResolver: XInc
   return collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
 }
 
-fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, layout: PluginLayout?, context: BuildContext) {
+suspend fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, layout: PluginLayout?, context: BuildContext) {
+  val frontendModuleFilter = context.getFrontendModuleFilter()
   resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
   for (moduleElement in xml.getChildren("content").asSequence().flatMap { it.getChildren("module") }) {
     val moduleName = moduleElement.getAttributeValue("name") ?: continue
@@ -585,7 +586,7 @@ fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, 
     val jpsModuleName = moduleName.substringBeforeLast('/')
     val descriptor = getModuleDescriptor(moduleName = moduleName, jpsModuleName = jpsModuleName, xIncludePathResolver = xIncludePathResolver, context = context)
     if (jpsModuleName == moduleName &&
-        (context as BuildContextImpl).jarPackagerDependencyHelper.isPluginModulePackedIntoSeparateJar(context.findRequiredModule(jpsModuleName.removeSuffix("._test")), layout)) {
+        (context as BuildContextImpl).jarPackagerDependencyHelper.isPluginModulePackedIntoSeparateJar(context.findRequiredModule(jpsModuleName.removeSuffix("._test")), layout, frontendModuleFilter)) {
       descriptor.setAttribute("separate-jar", "true")
     }
     moduleElement.setContent(CDATA(JDOMUtil.write(descriptor)))

@@ -230,8 +230,9 @@ class BuildContextImpl internal constructor(
   private val _frontendModuleFilter = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("JetBrains client module filter"), start = CoroutineStart.LAZY) {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
-      val productModules = getOriginalModuleRepository().loadProductModules(rootModule, ProductMode.FRONTEND)
-      FrontendModuleFilterImpl(productModules = productModules)
+      val moduleRepository = getOriginalModuleRepository()
+      val productModules = moduleRepository.loadProductModules(rootModule, ProductMode.FRONTEND)
+      FrontendModuleFilterImpl(moduleRepository.repository, productModules)
     }
     else {
       EmptyFrontendModuleFilter

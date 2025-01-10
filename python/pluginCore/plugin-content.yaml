@@ -1,3 +1,9 @@
+- name: lib/modules/intellij.python.community.services.internal.impl.jar
+  contentModules:
+  - name: intellij.python.community.services.internal.impl
+- name: lib/modules/intellij.python.community.services.shared.jar
+  contentModules:
+  - name: intellij.python.community.services.shared
 - name: lib/python-ce.jar
   projectLibraries:
   - name: XmlRPC
@@ -49,8 +55,6 @@
   - name: intellij.python.ml.features
   - name: intellij.python.terminal
   - name: intellij.python.community.services.systemPython
-  - name: intellij.python.community.services.shared
-  - name: intellij.python.community.services.internal.impl
 - name: lib/python-common.jar
   modules:
   - name: intellij.python.parser

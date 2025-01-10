@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.*
 
@@ -16,6 +15,7 @@ internal suspend fun inferModuleSources(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ) {
+  val frontendModuleFilter = context.getFrontendModuleFilter()
   // for now, check only direct dependencies of the main plugin module
   val childPrefix = "${layout.mainModule.removeSuffix(".plugin")}."
   for (name in helper.getModuleDependencies(layout.mainModule)) {
@@ -27,7 +27,7 @@ internal suspend fun inferModuleSources(
       continue
     }
 
-    val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
+    val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getDefaultJarName(name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
     if (isIncludedIntoAnotherPlugin(platformLayout = platformLayout, moduleItem = moduleItem, context = context, layout = layout, moduleName = name)) {
       continue
     }
@@ -46,7 +46,7 @@ internal suspend fun inferModuleSources(
         continue
       }
 
-      val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
+      val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getDefaultJarName(name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
       addedModules.add(name)
       jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
     }
@@ -61,6 +61,7 @@ internal suspend fun computeModuleSourcesByContent(
   jarPackager: JarPackager,
   searchableOptionSet: SearchableOptionSetDescriptor?
 ) {
+  val frontendModuleFilter = context.getFrontendModuleFilter()
   for ((moduleName, loadingRule) in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule), jarPackager.moduleOutputPatcher)) {
     // CWM plugin is overcomplicated without any valid reason - it must be refactored
     if (moduleName == "intellij.driver.backend.split" || !addedModules.add(moduleName)) {
@@ -69,8 +70,8 @@ internal suspend fun computeModuleSourcesByContent(
 
     val module = context.findRequiredModule(moduleName)
     val descriptor = readXmlAsModel(findFileInModuleSources(module, "$moduleName.xml") ?: error("$moduleName.xml not found in module $moduleName sources"))
-    val useSeparateJar = (descriptor.getAttributeValue("package") == null ||
-                          helper.isPluginModulePackedIntoSeparateJar(module, layout)) && loadingRule != "embedded"
+    val useSeparateJar = (descriptor.getAttributeValue("package") == null || 
+                          helper.isPluginModulePackedIntoSeparateJar(module, layout, frontendModuleFilter)) && loadingRule != "embedded"
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,
@@ -81,6 +82,15 @@ internal suspend fun computeModuleSourcesByContent(
       layout = layout,
       searchableOptionSet = searchableOptionSet,
     )
+  }
+}
+
+private fun PluginLayout.getDefaultJarName(moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
+  return if (moduleName != VERIFIER_MODULE && !frontendModuleFilter.isModuleCompatibleWithFrontend(mainModule) && frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)) {
+    getMainJarName().removeSuffix(".jar") + "-frontend.jar"
+  }
+  else {
+    getMainJarName()
   }
 }
 
