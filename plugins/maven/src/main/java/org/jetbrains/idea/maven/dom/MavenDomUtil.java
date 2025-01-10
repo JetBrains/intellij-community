@@ -478,4 +478,8 @@ public final class MavenDomUtil {
     }
     return distribution.getVersion();
   }
+
+  public static boolean isAtLeastMaven4(VirtualFile file, Project project) {
+    return StringUtil.compareVersionNumbers(getMavenVersion(file, project), "4") >= 0;
+  }
 }
