@@ -101,7 +101,7 @@ public class VcsLogGraphTable extends TableWithProgress
   private final @NotNull VcsLogColorManager myColorManager;
 
   private final @NotNull BaseStyleProvider myBaseStyleProvider;
-  private final @NotNull GraphCommitCellRenderer myGraphCommitCellRenderer;
+  private final @Nullable GraphCommitCellRenderer myGraphCommitCellRenderer;
   private final @NotNull MyMouseAdapter myMouseAdapter;
 
   // BasicTableUI.viewIndexForColumn uses reference equality, so we should not change TableColumn during DnD.
@@ -771,7 +771,12 @@ public class VcsLogGraphTable extends TableWithProgress
 
   @Override
   public int getRowHeight() {
-    return myGraphCommitCellRenderer.getPreferredHeight();
+    if (myGraphCommitCellRenderer == null) {
+      return super.getRowHeight();
+    }
+    else {
+      return myGraphCommitCellRenderer.getPreferredHeight();
+    }
   }
 
   @Override
