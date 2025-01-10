@@ -215,7 +215,7 @@ internal class NavBarItemComponent(
   private fun effectiveIcon(presentation: NavBarItemPresentationData): Icon? {
     return when {
       ExperimentalUI.isNewUI() && presentation.isModuleContentRoot -> AllIcons.Nodes.Module8x8
-      Registry.`is`("navBar.show.icons") || vm.isLast || presentation.hasContainingFile -> presentation.icon
+      vm.isLast || presentation.hasContainingFile -> presentation.icon
       else -> null
     }
   }
