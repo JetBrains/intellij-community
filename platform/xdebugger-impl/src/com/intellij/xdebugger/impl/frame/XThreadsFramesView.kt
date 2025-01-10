@@ -242,7 +242,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
           val newSelectedItemIndex = threads.model.items.indexOfFirst { it.stack == currentExecutionStack }
           if (newSelectedItemIndex != -1) {
             threads.selectedIndex = newSelectedItemIndex
-            myFramesManager.refresh()
+            myFramesManager.refresh(session)
             selectedStack = threads.selectedValue?.stack
           }
         }
@@ -256,7 +256,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       }
 
       if (event == SessionEvent.SETTINGS_CHANGED) {
-        myFramesManager.refresh()
+        myFramesManager.refresh(session)
       }
     }
   }
@@ -274,8 +274,8 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
   }
 
   private fun XExecutionStack.setActive(session: XDebugSession) {
-    myFramesManager.setActive(this)
-    val currentFrame = myFramesManager.tryGetCurrentFrame(this) ?: return
+    myFramesManager.setActive(this, session)
+    val currentFrame = myFramesManager.tryGetCurrentFrame(this, session) ?: return
 
     session.setCurrentStackFrame(this, currentFrame)
   }
@@ -402,30 +402,32 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     }
   }
 
-  private class FramesManager(private val myFramesList: XDebuggerFramesList, private val disposable: Disposable) {
+  private class FramesManager(
+    private val myFramesList: XDebuggerFramesList,
+    private val disposable: Disposable) {
     private val myMap = mutableMapOf<StackInfo, FramesContainer>()
     private val myActiveStackDisposables = SequentialDisposables(disposable)
     private var myActiveStack: XExecutionStack? = null
 
-    private fun XExecutionStack.getContainer(): FramesContainer {
-      return myMap.getOrPut(StackInfo.from(this)) {
+    private fun XExecutionStack.getContainer(session: XDebugSession): FramesContainer {
+      return myMap.getOrPut(StackInfo.from(this, session)) {
         FramesContainer(disposable, myFramesList, this)
       }
     }
 
-    fun setActive(stack: XExecutionStack) {
+    fun setActive(stack: XExecutionStack, session: XDebugSession) {
       val disposable = myActiveStackDisposables.next()
       myActiveStack = stack
-      stack.getContainer().setActive(disposable)
+      stack.getContainer(session).setActive(disposable)
     }
 
-    fun tryGetCurrentFrame(stack: XExecutionStack): XStackFrame? {
-      return stack.getContainer().currentFrame
+    fun tryGetCurrentFrame(stack: XExecutionStack, session: XDebugSession): XStackFrame? {
+      return stack.getContainer(session).currentFrame
     }
 
-    fun refresh() {
+    fun refresh(session: XDebugSession) {
       myMap.clear()
-      setActive(myActiveStack ?: return)
+      setActive(myActiveStack ?: return, session)
     }
   }
 
@@ -438,15 +440,16 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     private var isStarted = false
 
     companion object {
-      private val loading = listOf(StackInfo.loading)
+      private val loading = listOf(StackInfo.LOADING)
     }
 
     fun start(suspendContext: XSuspendContext) {
       UIUtil.invokeLaterIfNeeded {
         if (isStarted) return@invokeLaterIfNeeded
+        val session = getSession(myThreadsList) ?: return@invokeLaterIfNeeded
 
         if (myActiveStack != null) {
-          myThreadsList.model.replaceAll(listOf(StackInfo.from(myActiveStack), StackInfo.loading))
+          myThreadsList.model.replaceAll(listOf(StackInfo.from(myActiveStack, session), StackInfo.LOADING))
         } else {
           myThreadsList.model.replaceAll(loading)
         }
@@ -459,20 +462,22 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
     override fun errorOccurred(errorMessage: String) {
       invokeIfNeeded {
+        val session = getSession(myThreadsList) ?: return@invokeIfNeeded
         val model = myThreadsList.model
         // remove loading
         model.remove(model.size - 1)
-        model.add(listOf(StackInfo.error(errorMessage)))
+        model.add(listOf(StackInfo.error(errorMessage, session)))
         isProcessed = true
       }
     }
 
     override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
       invokeIfNeeded {
+        val session = getSession(myThreadsList) ?: return@invokeIfNeeded
         val model = myThreadsList.model
         val insertIndex = model.size - 1
 
-        val threads = getThreadsList(executionStacks)
+        val threads = getThreadsList(executionStacks, session)
         if (threads.any()) {
           model.addAll(insertIndex, threads)
         }
@@ -491,12 +496,12 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       addExecutionStack(mutableListOf(executionStack), last)
     }
 
-    private fun getThreadsList(executionStacks: List<XExecutionStack>): List<StackInfo> {
+    private fun getThreadsList(executionStacks: List<XExecutionStack>, session: XDebugSession): List<StackInfo> {
       var sequence = executionStacks.asSequence()
       if (myActiveStack != null) {
         sequence = sequence.filter { it != myActiveStack }
       }
-      return sequence.map { StackInfo.from(it) }.toList()
+      return sequence.map { StackInfo.from(it, session) }.toList()
     }
 
     private fun invokeIfNeeded(action: () -> Unit) {

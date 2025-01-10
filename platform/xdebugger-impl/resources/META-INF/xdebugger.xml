@@ -111,6 +111,8 @@
 
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.frame.XDebuggerExecutionStackDescriptionService" />
+
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
     <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.debugger.messages"/>
     <notificationGroup id="HotSwap Messages" displayType="BALLOON" bundle="messages.XDebuggerBundle" key="notification.group.debugger.hotswap.messages" isLogByDefault="false"/>
