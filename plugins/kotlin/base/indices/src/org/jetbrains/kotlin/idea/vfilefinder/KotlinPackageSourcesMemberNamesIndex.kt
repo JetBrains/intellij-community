@@ -14,7 +14,7 @@ import java.io.DataOutput
 
 private const val KOTLIN_DOT_FILE_EXTENSION = ".${KotlinFileType.EXTENSION}"
 
-class KotlinPackageSourcesMemberNamesIndex internal constructor() : FileBasedIndexExtension<String, Collection<String>>() {
+class KotlinPackageSourcesMemberNamesIndex () : FileBasedIndexExtension<String, Collection<String>>() {
     companion object {
         val NAME: ID<String, Collection<String>> = ID.create(KotlinPackageSourcesMemberNamesIndex::class.java.simpleName)
     }
