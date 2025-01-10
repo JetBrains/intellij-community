@@ -286,7 +286,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean containerAccessRestricted() {
-      return getVisibilityLevel(getContainerVisibility()) < getVisibilityLevel(myPast.getContainerVisibility());
+      return accessRestricted(getContainerVisibility(), myPast.getContainerVisibility());
     }
 
     public boolean extraChanged() {
@@ -341,7 +341,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean accessRestricted() {
-      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+      return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
     }
 
     public boolean argsBecameNotNull() {
@@ -405,7 +405,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean accessRestricted() {
-      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+      return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
     }
 
     public boolean underlyingTypeChanged() {
@@ -432,7 +432,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean accessRestricted() {
-      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+      return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
     }
 
     public boolean argsBecameNotNull() {
@@ -496,15 +496,15 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean accessRestricted() {
-      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+      return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
     }
 
     public boolean getterAccessRestricted() {
-      return getVisibilityLevel(getGetterVisibility(now)) < getVisibilityLevel(getGetterVisibility(past));
+      return KotlinMeta.accessRestricted(getGetterVisibility(now), getGetterVisibility(past));
     }
 
     public boolean setterAccessRestricted() {
-      return getVisibilityLevel(getSetterVisibility(now)) < getVisibilityLevel(getSetterVisibility(past));
+      return KotlinMeta.accessRestricted(getSetterVisibility(now), getSetterVisibility(past));
     }
 
     public boolean customAccessorAdded() {
@@ -528,6 +528,14 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       KmPropertyAccessorAttributes setter = prop.getSetter();
       return setter != null && Attributes.isNotDefault(setter);
     }
+  }
+
+  public static boolean accessRestricted(Visibility now, Visibility past) {
+    if (getVisibilityLevel(now) < getVisibilityLevel(past)) {
+      return true;
+    }
+    // special case for incomparable visibility levels: the other way around can be seen as access restriction too
+    return past == Visibility.PROTECTED && now == Visibility.INTERNAL;
   }
 
   private static final Map<Visibility, Integer> VISIBILITY_LEVEL = Map.of(
