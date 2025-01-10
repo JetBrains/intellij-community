@@ -580,11 +580,13 @@ elements:
                         #language=Markdown
                         description: |
                           The extension point name that should be unique in the scope of the plugin, e.g., `myExtension`.
-                          The fully qualified name of the extension point is built at runtime by prepending the value of the `name` attribute
-                          with the plugin [`<id>`](#element:idea-plugin__id) + `.` prefix.
-                          Only one of the `name` and [`qualifiedName`](#attribute:idea-plugin__extensionPoints__extensionPoint__qualifiedName) attributes can be specified.<br/>
+                          The fully qualified name of the extension point is built at runtime by prepending the value of the `name`
+                          attribute with the plugin [`<id>`](#element:idea-plugin__id) + `.` prefix.<br/>
                           Example: when the `name` is `myExtension` and plugin ID is `com.example.myplugin`, the fully qualified name of
-                          the EP will be `com.example.myplugin.myExtension`.
+                          the EP will be `com.example.myplugin.myExtension`.<br/>
+                          Only one of the `name` and
+                          [`qualifiedName`](#attribute:idea-plugin__extensionPoints__extensionPoint__qualifiedName) attributes can be
+                          specified.
                     - attribute:
                         name: qualifiedName
                         requirement:
@@ -596,7 +598,7 @@ elements:
                         description: |
                           The fully qualified name of the extension point.
                           It should be unique between different plugins, and it is recommended to include a plugin ID to guarantee uniqueness,
-                          e.g., `com.example.myplugin.myExtension`.
+                          e.g., `com.example.myplugin.myExtension`.<br/>
                           Only one of the [`name`](#attribute:idea-plugin__extensionPoints__extensionPoint__name) and `qualifiedName` attributes can be specified.
                     - attribute:
                         name: interface
@@ -607,8 +609,8 @@ elements:
                               `interface` or [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) is **required**
                         #language=Markdown
                         description: |
-                          The fully qualified name of the interface to be implemented for extending the plugin's functionality.
-                          Only one of the `interface` and [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) attributes can be specified.
+                          The fully qualified name of the interface to be implemented for extending the plugin's functionality.<br/>
+                          Only one of the `interface` and [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) attributes can be specified.<br/>
                           See [Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html) for more
                           information.
                     - attribute:
@@ -620,8 +622,8 @@ elements:
                               [`interface`](#attribute:idea-plugin__extensionPoints__extensionPoint__interface) or `beanClass` is **required**
                         #language=Markdown
                         description: |
-                          The fully qualified name of the extension point bean class providing additional information to the plugin.
-                          Only one of the [`interface`](#attribute:idea-plugin__extensionPoints__extensionPoint__interface) and `beanClass` attributes can be specified.
+                          The fully qualified name of the extension point bean class providing additional information to the plugin.<br/>
+                          Only one of the [`interface`](#attribute:idea-plugin__extensionPoints__extensionPoint__interface) and `beanClass` attributes can be specified.<br/>
                           See [Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html) for more
                           information.
                     - attribute:
@@ -670,7 +672,7 @@ elements:
                               #language=Markdown
                               description: |
                                 The name of the tag holding the fully qualified name of the class which parent type will be limited
-                                by the type provided in the [`implements`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__implements) attribute.
+                                by the type provided in the [`implements`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__implements) attribute.<br/>
                                 Only one of the `tag` and [`attribute`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__attribute) attributes can be specified.
                           - attribute:
                               name: attribute
@@ -682,7 +684,7 @@ elements:
                               #language=Markdown
                               description: |
                                 The name of the attribute holding the fully qualified name of the class which parent type will be limited
-                                by the type provided in the [`implements`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__implements) attribute.
+                                by the type provided in the [`implements`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__implements) attribute.<br/>
                                 Only one of the [`tag`](#attribute:idea-plugin__extensionPoints__extensionPoint__with__tag) and `attribute` attributes can be specified.
                           - attribute:
                               name: implements
