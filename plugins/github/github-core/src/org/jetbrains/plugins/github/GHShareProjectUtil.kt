@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
+import com.intellij.configurationStore.saveSettings
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -17,6 +19,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.mapSmartSet
 import com.intellij.vcsUtil.VcsFileUtil
@@ -71,6 +74,10 @@ object GHShareProjectUtil {
                            root: VirtualFile,
                            projectName: @NlsSafe String) {
     FileDocumentManager.getInstance().saveAllDocuments()
+    runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
+      saveSettings(project)
+    }
+
     val possibleRemotes = gitRepository
       ?.let(project.service<GHHostedRepositoriesManager>()::findKnownRepositories)
       ?.map { it.remote.url }.orEmpty()
