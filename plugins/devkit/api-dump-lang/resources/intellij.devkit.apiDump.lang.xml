@@ -14,6 +14,8 @@
               fieldName="INSTANCE"/>
 
     <lang.parserDefinition language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.ADParserDefinition"/>
+
+    <methodReferencesSearch implementation="com.intellij.devkit.apiDump.lang.search.ADConstructorReferenceSearcher"/>
   </extensions>
 
 </idea-plugin>
