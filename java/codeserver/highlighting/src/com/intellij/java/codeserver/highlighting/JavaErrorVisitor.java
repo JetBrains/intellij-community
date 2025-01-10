@@ -55,6 +55,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     return myFile;
   }
 
+  @NotNull LanguageLevel languageLevel() {
+    return myLanguageLevel;
+  }
+
   @Contract(pure = true)
   boolean hasErrorResults() {
     return myHasError;
@@ -191,6 +195,14 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (parent instanceof PsiVariable variable) {
       if (variable instanceof PsiField field) {
         myClassChecker.checkImplicitClassMember(field);
+      }
+    }
+    else if (parent instanceof PsiClass aClass) {
+      if (aClass.isAnnotationType()) {
+        checkFeature(identifier, JavaFeature.ANNOTATIONS);
+      }
+      if (!hasErrorResults()) {
+        myClassChecker.checkClassRestrictedKeyword(identifier);
       }
     }
     else if (parent instanceof PsiMethod method) {

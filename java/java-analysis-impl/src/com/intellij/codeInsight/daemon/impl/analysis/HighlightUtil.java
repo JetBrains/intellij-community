@@ -502,7 +502,7 @@ public final class HighlightUtil {
                                                           @NotNull PsiClass resolved,
                                                           @NotNull LanguageLevel languageLevel) {
     String name = resolved.getName();
-    if (HighlightClassUtil.isRestrictedIdentifier(name, languageLevel)) {
+    if (PsiTypesUtil.isRestrictedIdentifier(name, languageLevel)) {
       String message = JavaErrorBundle.message("restricted.identifier.reference", name);
       PsiElement range = ObjectUtils.notNull(ref.getReferenceNameElement(), ref);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(range);

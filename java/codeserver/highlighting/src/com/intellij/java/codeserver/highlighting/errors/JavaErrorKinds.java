@@ -275,6 +275,9 @@ public final class JavaErrorKinds {
       .withHighlightType(psi -> JavaErrorHighlightType.FILE_LEVEL_ERROR).parameterized();
   public static final Simple<PsiClassInitializer> CLASS_IMPLICIT_INITIALIZER = error("class.implicit.initializer");
   public static final Simple<PsiPackageStatement> CLASS_IMPLICIT_PACKAGE = error("class.implicit.package.statement");
+  
+  public static final Simple<PsiIdentifier> IDENTIFIER_RESTRICTED = error(PsiIdentifier.class, "identifier.restricted")
+    .withRawDescription(psi -> message("identifier.restricted", psi.getText()));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {
     return new Simple<>(key);

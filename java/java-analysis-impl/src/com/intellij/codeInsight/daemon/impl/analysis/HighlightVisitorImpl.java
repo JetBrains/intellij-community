@@ -619,14 +619,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     else if (parent instanceof PsiClass aClass) {
-      if (aClass.isAnnotationType()) {
-        add(checkFeature(identifier, JavaFeature.ANNOTATIONS));
-      }
-
       add(HighlightClassUtil.checkClassAlreadyImported(aClass, identifier));
-      if (!hasErrorResults()) {
-        add(HighlightClassUtil.checkClassRestrictedKeyword(myLanguageLevel, identifier));
-      }
       if (!hasErrorResults() && JavaFeature.EXTENSION_METHODS.isSufficient(myLanguageLevel)) {
         add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
       }

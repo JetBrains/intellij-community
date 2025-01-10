@@ -3,7 +3,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -15,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
@@ -70,7 +70,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
           return JavaErrorBundle.message("create.class.action.this.not.valid.java.qualified.name");
         }
         String shortName = StringUtil.getShortName(inputString);
-        if (HighlightClassUtil.isRestrictedIdentifier(shortName, level)) {
+        if (PsiTypesUtil.isRestrictedIdentifier(shortName, level)) {
           return JavaErrorBundle.message("restricted.identifier", shortName);
         }
         return null;

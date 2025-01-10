@@ -458,6 +458,13 @@ final class ClassChecker {
     }
   }
 
+  void checkClassRestrictedKeyword(@NotNull PsiIdentifier identifier) {
+    String className = identifier.getText();
+    if (PsiTypesUtil.isRestrictedIdentifier(className, myVisitor.languageLevel())) {
+      myVisitor.report(JavaErrorKinds.IDENTIFIER_RESTRICTED.create(identifier));
+    }
+  }
+
   private static @Unmodifiable @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
     PsiReferenceList permitsList = psiClass.getPermitsList();
     if (permitsList == null) return Collections.emptyMap();

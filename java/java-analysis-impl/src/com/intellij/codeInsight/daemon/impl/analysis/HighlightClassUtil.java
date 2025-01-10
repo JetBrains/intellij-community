@@ -40,28 +40,12 @@ import java.util.function.Consumer;
  */
 public final class HighlightClassUtil {
 
-  static HighlightInfo.Builder checkClassRestrictedKeyword(@NotNull LanguageLevel level, @NotNull PsiIdentifier identifier) {
-    String className = identifier.getText();
-    if (isRestrictedIdentifier(className, level)) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .descriptionAndTooltip(JavaErrorBundle.message("restricted.identifier", className))
-        .range(identifier)
-        ;
-    }
-    return null;
-  }
-
   /**
-   * @param typeName name of the type to test
-   * @param level language level
-   * @return true if given name cannot be used as a type name at given language level
+   * @deprecated use {@link PsiTypesUtil#isRestrictedIdentifier(String, LanguageLevel)}
    */
+  @Deprecated
   public static boolean isRestrictedIdentifier(@Nullable String typeName, @NotNull LanguageLevel level) {
-    return PsiKeyword.VAR.equals(typeName) && JavaFeature.LVTI.isSufficient(level) ||
-           PsiKeyword.YIELD.equals(typeName) && JavaFeature.SWITCH_EXPRESSION.isSufficient(level) ||
-           PsiKeyword.RECORD.equals(typeName) && JavaFeature.RECORDS.isSufficient(level) ||
-           (PsiKeyword.SEALED.equals(typeName) || PsiKeyword.PERMITS.equals(typeName)) && JavaFeature.SEALED_CLASSES.isSufficient(level) ||
-           PsiKeyword.VALUE.equals(typeName) && JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(level);
+    return PsiTypesUtil.isRestrictedIdentifier(typeName, level);
   }
 
   private static HighlightInfo.Builder checkStaticFieldDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
