@@ -70,12 +70,30 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
                                                             ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
                                                              AllIcons.ObjectBrowser.Sorted,
-                                                             properties, TestConsoleProperties.SORT_ALPHABETICALLY));
+                                                             properties, TestConsoleProperties.SORT_ALPHABETICALLY) {
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        super.setSelected(e, state);
+        if (state) {
+          TestConsoleProperties.SORT_BY_DURATION.primSet(properties, false);
+          TestConsoleProperties.SORT_BY_DECLARATION_ORDER.primSet(properties, false);
+        }
+      }
+    });
 
     sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.by.declaration.order.action.name"),
                                                             ExecutionBundle.message("junit.runing.info.sort.by.declaration.order.action.description"),
                                                             AllIcons.ObjectBrowser.SortByType,
-                                                            properties, TestConsoleProperties.SORT_BY_DECLARATION_ORDER));
+                                                            properties, TestConsoleProperties.SORT_BY_DECLARATION_ORDER) {
+      @Override
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
+        super.setSelected(e, state);
+        if (state) {
+          TestConsoleProperties.SORT_ALPHABETICALLY.primSet(properties, false);
+          TestConsoleProperties.SORT_BY_DURATION.primSet(properties, false);
+        }
+      }
+    });
 
     final ToggleModelAction sortByStatistics = new SortByDurationAction(properties);
     myActions.add(sortByStatistics);
@@ -275,6 +293,15 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     @Override
     public void setModel(TestFrameworkRunningModel model) {
       myModel = model;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      super.setSelected(e, state);
+      if (state) {
+        TestConsoleProperties.SORT_BY_DECLARATION_ORDER.primSet(myModel.getProperties(), false);
+        TestConsoleProperties.SORT_ALPHABETICALLY.primSet(myModel.getProperties(), false);
+      }
     }
   }
 }
