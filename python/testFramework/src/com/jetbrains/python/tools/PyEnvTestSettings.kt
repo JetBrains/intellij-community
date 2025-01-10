@@ -45,7 +45,7 @@ data class PyEnvTestSettings(
   fun reportConfiguration() = (PyTestEnvVars.getEnvValues() + listOf(toString())).joinToString("\n")
 
   companion object {
-    // If you decided to change the path, make sure to update it in `/Users/ilia.zakoulov/projects/intellij/community/python/setup-test-environment/build.gradle.kts
+    // If you decided to change the path, make sure to update it in community/python/setup-test-environment/build.gradle.kts
     private const val PATH_TO_TEST_ENV_PYTHON_INTERPRETERS = "community/python/setup-test-environment/build/pythons"
 
     /**
