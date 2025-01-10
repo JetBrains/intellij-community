@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
 import static java.util.Objects.requireNonNull;
@@ -60,7 +59,7 @@ final class JavaErrorFixProvider {
 
   @FunctionalInterface
   private interface JavaFixesProvider<Psi extends PsiElement, Context> {
-    @NotNull List<@NotNull CommonIntentionAction> provide(@NotNull JavaCompilationError<? extends Psi, ? extends Context> error);
+    @NotNull List<? extends @NotNull CommonIntentionAction> provide(@NotNull JavaCompilationError<? extends Psi, ? extends Context> error);
   }
 
   private final Map<JavaErrorKind<?, ?>, List<JavaFixesProvider<?, ?>>> myFixes = new HashMap<>();
@@ -110,7 +109,7 @@ final class JavaErrorFixProvider {
         return StreamEx.of(JvmModifier.PROTECTED, JvmModifier.PUBLIC)
           .flatCollection(modifier ->
           JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(modifier, true)))
-          .collect(Collectors.toUnmodifiableList());
+          .toList();
       }
     });
     fix(CLASS_REFERENCE_LIST_DUPLICATE,
@@ -237,12 +236,11 @@ final class JavaErrorFixProvider {
     fix(ANNOTATION_NOT_ALLOWED_STATIC, error -> new MoveAnnotationOnStaticMemberQualifyingTypeFix(error.psi()));
     fix(ANNOTATION_MISSING_ATTRIBUTE, error -> myFactory.createAddMissingRequiredAnnotationParametersFix(
       error.psi(), PsiMethod.EMPTY_ARRAY, error.context()));
-    multi(ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING,
-          error -> List.copyOf(myFactory.createAddAnnotationAttributeNameFixes(error.psi())));
+    multi(ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING, error -> myFactory.createAddAnnotationAttributeNameFixes(error.psi()));
     multi(ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD, error -> {
       PsiNameValuePair pair = error.psi();
       if (pair.getName() != null) return List.of();
-      return List.copyOf(myFactory.createAddAnnotationAttributeNameFixes(pair));
+      return myFactory.createAddAnnotationAttributeNameFixes(pair);
     });
     fix(ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD, error -> myFactory.createCreateAnnotationMethodFromUsageFix(error.psi()));
     fix(ANNOTATION_ATTRIBUTE_DUPLICATE, error -> myFactory.createMergeDuplicateAttributesFix(error.psi()));
