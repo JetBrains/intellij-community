@@ -10,12 +10,13 @@ import com.intellij.driver.sdk.ui.remote.Window
 interface WindowManager {
   fun getIdeFrame(project: Project): IdeFrame?
   fun findVisibleFrame(): IdeFrame?
+  fun getMostRecentFocusedWindow(): IdeFrame?
 }
 
 @Remote("com.intellij.openapi.wm.IdeFrame")
 interface IdeFrame {
   fun getStatusBar(): StatusBar?
-
+  fun getProject(): Project?
   fun getComponent(): Component?
 }
 
@@ -33,6 +34,10 @@ interface StatusBar {
 
 fun Driver.getIdeFrame(project: Project): IdeFrame? {
   return service<WindowManager>().getIdeFrame(project)
+}
+
+fun Driver.guessOpenedProject(): Project? {
+  return service<WindowManager>().getMostRecentFocusedWindow()?.getProject()
 }
 
 fun Driver.hasVisibleWindow(): Boolean {
