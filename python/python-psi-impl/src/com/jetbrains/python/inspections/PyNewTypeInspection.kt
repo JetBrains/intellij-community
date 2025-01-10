@@ -7,19 +7,13 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyCollectionType
-import com.jetbrains.python.psi.types.PyLiteralType
-import com.jetbrains.python.psi.types.PyTypeVarType
-import com.jetbrains.python.psi.types.PyTypedDictType
-import com.jetbrains.python.psi.types.PyTypingNewType
+import com.jetbrains.python.psi.types.*
 
 class PyNewTypeInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -54,9 +48,6 @@ class PyNewTypeInspection : PyInspection() {
             }
             else if (type is PyTypedDictType) {
               registerProblem(typeExpr, PyPsiBundle.message("INSP.NAME.new.type.new.type.cannot.be.used.with", "TypedDict"))
-            }
-            else if (isProtocol(type, myTypeEvalContext)) {
-              registerProblem(typeExpr, PyPsiBundle.message("INSP.NAME.new.type.new.type.cannot.be.used.with.protocol.classes"))
             }
           }
         }

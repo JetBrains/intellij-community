@@ -38,6 +38,7 @@ private val inspections
     //PyInitNewSignatureInspection(), // False negative constructors_consistency.py
     PyNewStyleGenericSyntaxInspection(),
     PyNewTypeInspection(),
+    PyProtocolInspection(),
     PyTypedDictInspection(),
     PyTypeCheckerInspection(),
     PyTypeHintsInspection(),
