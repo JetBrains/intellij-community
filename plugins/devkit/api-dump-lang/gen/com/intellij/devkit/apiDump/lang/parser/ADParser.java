@@ -98,14 +98,13 @@ public class ADParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // MINUS Modifiers? 'Companion' COLON TypeReference
+  // MemberStart 'Companion' COLON TypeReference
   public static boolean Companion(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Companion")) return false;
     if (!nextTokenIs(b, MINUS)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, MINUS);
-    r = r && Companion_1(b, l + 1);
+    r = MemberStart(b, l + 1);
     r = r && consumeToken(b, "Companion");
     r = r && consumeToken(b, COLON);
     r = r && TypeReference(b, l + 1);
@@ -113,35 +112,20 @@ public class ADParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // Modifiers?
-  private static boolean Companion_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "Companion_1")) return false;
-    Modifiers(b, l + 1);
-    return true;
-  }
-
   /* ********************************************************** */
-  // MINUS Modifiers? ConstructorReference Parameters TypeAnnotation
+  // MemberStart ConstructorReference Parameters TypeAnnotation
   public static boolean Constructor(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Constructor")) return false;
     if (!nextTokenIs(b, MINUS)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, CONSTRUCTOR, null);
-    r = consumeToken(b, MINUS);
-    r = r && Constructor_1(b, l + 1);
+    r = MemberStart(b, l + 1);
     r = r && ConstructorReference(b, l + 1);
     r = r && Parameters(b, l + 1);
     p = r; // pin = Parameters
     r = r && TypeAnnotation(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  // Modifiers?
-  private static boolean Constructor_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "Constructor_1")) return false;
-    Modifiers(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */
@@ -171,25 +155,17 @@ public class ADParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // MINUS Modifiers? FieldReference TypeAnnotation
+  // MemberStart FieldReference TypeAnnotation
   public static boolean Field(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Field")) return false;
     if (!nextTokenIs(b, MINUS)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, MINUS);
-    r = r && Field_1(b, l + 1);
+    r = MemberStart(b, l + 1);
     r = r && FieldReference(b, l + 1);
     r = r && TypeAnnotation(b, l + 1);
     exit_section_(b, m, FIELD, r);
     return r;
-  }
-
-  // Modifiers?
-  private static boolean Field_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "Field_1")) return false;
-    Modifiers(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */
@@ -233,27 +209,91 @@ public class ADParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // MINUS Modifiers? MethodReference Parameters TypeAnnotation
+  // MINUS (Modifiers &(IDENTIFIER (LPAREN | COLON) | LESS))?
+  static boolean MemberStart(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "MemberStart")) return false;
+    if (!nextTokenIs(b, MINUS)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, MINUS);
+    r = r && MemberStart_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (Modifiers &(IDENTIFIER (LPAREN | COLON) | LESS))?
+  private static boolean MemberStart_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "MemberStart_1")) return false;
+    MemberStart_1_0(b, l + 1);
+    return true;
+  }
+
+  // Modifiers &(IDENTIFIER (LPAREN | COLON) | LESS)
+  private static boolean MemberStart_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "MemberStart_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = Modifiers(b, l + 1);
+    r = r && MemberStart_1_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // &(IDENTIFIER (LPAREN | COLON) | LESS)
+  private static boolean MemberStart_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "MemberStart_1_0_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = MemberStart_1_0_1_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // IDENTIFIER (LPAREN | COLON) | LESS
+  private static boolean MemberStart_1_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "MemberStart_1_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = MemberStart_1_0_1_0_0(b, l + 1);
+    if (!r) r = consumeToken(b, LESS);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // IDENTIFIER (LPAREN | COLON)
+  private static boolean MemberStart_1_0_1_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "MemberStart_1_0_1_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, IDENTIFIER);
+    r = r && MemberStart_1_0_1_0_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // LPAREN | COLON
+  private static boolean MemberStart_1_0_1_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "MemberStart_1_0_1_0_0_1")) return false;
+    boolean r;
+    r = consumeToken(b, LPAREN);
+    if (!r) r = consumeToken(b, COLON);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // MemberStart MethodReference Parameters TypeAnnotation
   public static boolean Method(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Method")) return false;
     if (!nextTokenIs(b, MINUS)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, METHOD, null);
-    r = consumeToken(b, MINUS);
-    r = r && Method_1(b, l + 1);
+    r = MemberStart(b, l + 1);
     r = r && MethodReference(b, l + 1);
     r = r && Parameters(b, l + 1);
     p = r; // pin = Parameters
     r = r && TypeAnnotation(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
-  }
-
-  // Modifiers?
-  private static boolean Method_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "Method_1")) return false;
-    Modifiers(b, l + 1);
-    return true;
   }
 
   /* ********************************************************** */
@@ -281,28 +321,49 @@ public class ADParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // Experimental? Modifier? COLON
+  // &(ASTERISK | IDENTIFIER | AT) Experimental? Modifier? COLON
   public static boolean Modifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Modifiers")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, MODIFIERS, "<modifiers>");
     r = Modifiers_0(b, l + 1);
     r = r && Modifiers_1(b, l + 1);
+    r = r && Modifiers_2(b, l + 1);
     r = r && consumeToken(b, COLON);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // Experimental?
+  // &(ASTERISK | IDENTIFIER | AT)
   private static boolean Modifiers_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "Modifiers_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _AND_);
+    r = Modifiers_0_0(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // ASTERISK | IDENTIFIER | AT
+  private static boolean Modifiers_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "Modifiers_0_0")) return false;
+    boolean r;
+    r = consumeToken(b, ASTERISK);
+    if (!r) r = consumeToken(b, IDENTIFIER);
+    if (!r) r = consumeToken(b, AT);
+    return r;
+  }
+
+  // Experimental?
+  private static boolean Modifiers_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "Modifiers_1")) return false;
     Experimental(b, l + 1);
     return true;
   }
 
   // Modifier?
-  private static boolean Modifiers_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "Modifiers_1")) return false;
+  private static boolean Modifiers_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "Modifiers_2")) return false;
     Modifier(b, l + 1);
     return true;
   }

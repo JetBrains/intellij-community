@@ -52,7 +52,7 @@ Member ::= Method | Constructor | Field | Companion | SuperType
 
 ClassHeader ::= Modifiers? TypeReference
 
-Modifiers ::= Experimental? Modifier? COLON
+Modifiers ::= &(ASTERISK | IDENTIFIER | AT) Experimental? Modifier? COLON
 
 Experimental ::= ASTERISK
 
@@ -65,7 +65,9 @@ TypeReference ::= IDENTIFIER (DOT IDENTIFIER)* Array*
 
 Array ::= LBRACKET RBRACKET
 
-Method ::= MINUS Modifiers? MethodReference Parameters TypeAnnotation
+private MemberStart ::= MINUS (Modifiers &(IDENTIFIER (LPAREN | COLON) | LESS))?
+
+Method ::= MemberStart MethodReference Parameters TypeAnnotation
 {
   pin = 'Parameters'
 }
@@ -87,14 +89,14 @@ private TypeAnnotation ::= COLON TypeReference
   pin = 'COLON'
 }
 
-Field ::= MINUS Modifiers? FieldReference TypeAnnotation
+Field ::= MemberStart FieldReference TypeAnnotation
 
 FieldReference ::= IDENTIFIER
 {
   mixin = 'com.intellij.devkit.apiDump.lang.psi.impl.ADFieldReferenceImpl'
 }
 
-Constructor ::= MINUS Modifiers? ConstructorReference Parameters TypeAnnotation
+Constructor ::= MemberStart ConstructorReference Parameters TypeAnnotation
 {
   pin = 'Parameters'
 }
@@ -106,4 +108,4 @@ ConstructorReference ::= LESS 'init' MORE
 
 SuperType ::= MINUS TypeReference
 
-Companion ::= MINUS Modifiers? 'Companion' COLON TypeReference
+Companion ::= MemberStart 'Companion' COLON TypeReference
