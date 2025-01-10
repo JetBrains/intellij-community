@@ -40,6 +40,7 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
       val disposable = FloatingToolbarProvider.createExtensionDisposable(provider, editor.disposable)
       val component = EditorFloatingToolbarComponent(editor, provider, disposable)
       addComponent(component, disposable)
+      provider.register(editor.dataContext, component, disposable)
     }
   }
 
@@ -85,7 +86,6 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     init {
       init(editor.contentComponent)
       installMouseMotionWatcher(editor, parentDisposable)
-      provider.register(editor.dataContext, this, parentDisposable)
     }
   }
 }
