@@ -19,7 +19,9 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.replaceService
+import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleProjectConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -115,5 +117,10 @@ abstract class GradleProjectSdkResolverTestCase : GradleImportingTestCase() {
     createBuildFile {
       withJavaPlugin()
     }
+  }
+
+  fun createDaemonJvmPropertiesFile(sdk: Sdk) {
+    val version = JavaVersion.tryParse(sdk.versionString!!)
+    VfsTestUtil.createFile(projectRoot, "gradle/gradle-daemon-jvm.properties", "toolchainVersion=$version")
   }
 }

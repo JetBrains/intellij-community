@@ -5,7 +5,6 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -31,7 +30,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 import javax.swing.JComponent
 
-private val LOG = logger<JdkDownloader>()
+private val LOG = logger<JdkDownload>()
 
 internal val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = DataKey.create("jdk-downloader-extension")
 
@@ -53,7 +52,7 @@ data class JdkInstallRequestInfo(override val item: JdkItem,
 }
 
 @Internal
-class JdkDownloader : SdkDownload, JdkDownloaderBase {
+class JdkDownload : SdkDownload {
   override fun supportsDownload(sdkTypeId: SdkTypeId): Boolean {
     if (!Registry.`is`("jdk.downloader")) return false
     if (ApplicationManager.getApplication().isUnitTestMode) return false
@@ -70,8 +69,10 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     sdkCreatedCallback: Consumer<in SdkDownloadTask>,
   ) {
     if (project?.isDisposed == true) return
-    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, null, project, sdkFilter) ?: return
-    prepareDownloadTask(project, jdkItem, jdkHome, sdkCreatedCallback)
+    val selectJdkButtonText = ProjectBundle.message("dialog.button.download.jdk")
+    val (jdkItem, jdkHome) = selectJdkAndPath(project, sdkTypeId, parentComponent, null, sdkFilter, selectJdkButtonText) ?: return
+    val jdkTask = prepareDownloadTask(project, jdkItem, jdkHome) ?: return
+    sdkCreatedCallback.accept(jdkTask)
   }
 
   override fun pickSdk(
@@ -83,7 +84,9 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     val dataContext = DataManager.getInstance().getDataContext(parentComponent)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     if (project?.isDisposed == true) return null
-    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, dataContext, project, null, ProjectBundle.message("dialog.button.select.jdk")) ?: return null
+    val extension = dataContext.getData(JDK_DOWNLOADER_EXT)
+    val selectJdkButtonText = ProjectBundle.message("dialog.button.select.jdk")
+    val (jdkItem, jdkHome) = selectJdkAndPath(project, sdkTypeId, parentComponent, extension, null, selectJdkButtonText) ?: return null
     return JdkDownloadTask(jdkItem, JdkInstallRequestInfo(jdkItem, jdkHome), project)
   }
 
@@ -97,18 +100,11 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     val dataContext = DataManager.getInstance().getDataContext(parentComponent)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     if (project?.isDisposed == true) return
-    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, dataContext, project, null) ?: return
-    prepareDownloadTask(project, jdkItem, jdkHome, sdkCreatedCallback)
-  }
-
-  private fun pickJdkItem(sdkTypeId: SdkTypeId,
-                          parentComponent: JComponent?,
-                          dataContext: DataContext?,
-                          project: Project?,
-                          sdkFilter: Predicate<Any>?,
-                          okActionText: @NlsContexts.Button String = ProjectBundle.message("dialog.button.download.jdk")): Pair<JdkItem, Path>? {
-    val extension = dataContext?.getData(JDK_DOWNLOADER_EXT)
-    return selectJdkAndPath(project, sdkTypeId, parentComponent, extension, sdkFilter, okActionText)
+    val extension = dataContext.getData(JDK_DOWNLOADER_EXT)
+    val selectJdkButtonText = ProjectBundle.message("dialog.button.download.jdk")
+    val (jdkItem, jdkHome) = selectJdkAndPath(project, sdkTypeId, parentComponent, extension, null, selectJdkButtonText) ?: return
+    val jdkTask = prepareDownloadTask(project, jdkItem, jdkHome) ?: return
+    sdkCreatedCallback.accept(jdkTask)
   }
 
   private fun selectJdkAndPath(
@@ -163,8 +159,7 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     project: Project?,
     jdkItem: JdkItem,
     jdkHome: Path,
-    sdkCreatedCallback: Consumer<in SdkDownloadTask>
-  ) {
+  ): JdkDownloadTask? {
     /// prepare the JDK to be installed (e.g. create home dir, write marker file)
     val request = try {
       computeInBackground(project, ProjectBundle.message("progress.title.preparing.jdk")) {
@@ -177,10 +172,10 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
                                ProjectBundle.message("error.message.text.jdk.install.failed", jdkHome),
                                ProjectBundle.message("error.message.title.download.jdk")
       )
-      return
+      return null
     }
 
-    sdkCreatedCallback.accept(JdkDownloaderBase.newDownloadTask(jdkItem, request, project))
+    return JdkDownloadTask(jdkItem, request, project)
   }
 
   private inline fun <T : Any?> computeInBackground(project: Project?,
@@ -212,15 +207,6 @@ internal fun selectJdkAndPath(
   if (project?.isDisposed == true) return null
 
   return JdkDownloadDialog(project, parentComponent, sdkTypeId, mergedModel, okActionText, text).selectJdkAndPath()
-}
-
-@Internal
-interface JdkDownloaderBase {
-  companion object {
-    fun newDownloadTask(item: JdkItem, request: JdkInstallRequest, project: Project?): SdkDownloadTask {
-      return JdkDownloadTask(item, request, project)
-    }
-  }
 }
 
 @Internal

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -116,6 +117,7 @@ internal class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
     if (manager !is GradleManager) return
     for (projectSettings in settings) {
       if (projectSettings !is GradleProjectSettings) continue
+      if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) continue
       val statusFuture = Util.updateGradleJvm(project, projectSettings)
       statusFuture.thenAccept {
         if (it.updated && it.sdkName != null) notifyGradleJvmChangeInfo(project, projectSettings, it.sdkName, it.sdk)

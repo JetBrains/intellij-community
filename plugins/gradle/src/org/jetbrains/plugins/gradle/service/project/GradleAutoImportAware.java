@@ -19,6 +19,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
+import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFileKt;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -163,6 +164,15 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
         files.add(new File(externalProjectPath, "gradle/wrapper/gradle-wrapper.properties"));
       }
       return files;
+    }
+  }
+
+  public static final class GradleDaemonJvmPropertiesCollector implements GradleAutoReloadSettingsCollector {
+    @NotNull
+    @Override
+    public List<File> collectSettingsFiles(@NotNull Project project, @NotNull GradleProjectSettings projectSettings) {
+      String externalProjectPath = projectSettings.getExternalProjectPath();
+      return List.of(new File(externalProjectPath, "gradle/" + GradleDaemonJvmPropertiesFileKt.GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME));
     }
   }
 

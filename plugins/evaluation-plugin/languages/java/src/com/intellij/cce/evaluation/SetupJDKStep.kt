@@ -32,6 +32,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.GradleWarmupConfigurator
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.io.File
@@ -148,6 +149,7 @@ private fun forceUseProjectJdkForImporter(project: Project, projectDir: VirtualF
       println("Found ${allGradleSettings.size} Gradle project settings linked to the project.")
 
       for (settings in allGradleSettings) {
+        if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(settings)) continue
         settings.gradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK
       }
     }

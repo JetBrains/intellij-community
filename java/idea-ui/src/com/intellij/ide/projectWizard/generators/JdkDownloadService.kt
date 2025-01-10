@@ -2,129 +2,82 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadUtil
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
-import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class JdkDownloadService(private val project: Project, private val coroutineScope: CoroutineScope) {
+
   @RequiresEdt
   fun setupInstallableSdk(downloadTask: SdkDownloadTask): Sdk {
-    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
-    val sdk = AtomicReference<Sdk>()
-
-    model.createIncompleteSdk(JavaSdkImpl.getInstance(), downloadTask) {
-      sdk.set(it)
-      ApplicationManager.getApplication().runWriteAction {
-        ProjectJdkTable.getInstance().addJdk(it)
-      }
+    return application.runWriteAction<Sdk> {
+      JdkDownloadUtil.createDownloadSdkInternal(JavaSdk.getInstance(), downloadTask)
     }
-
-    return sdk.get()
   }
 
   fun downloadSdk(sdk: Sdk) {
-    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
-
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
-        model.downloadSdk(sdk)
+        JdkDownloadUtil.downloadSdk(sdk)
       }
     }
   }
 
-  private fun scheduleSetupInstallableSdk(project: Project,
-                                          downloadTask: SdkDownloadTask,
-                                          sdkDownloadedFuture: CompletableFuture<Boolean>,
-                                          setSdk: (Sdk?) -> Unit) {
-    val sdkReference = AtomicReference<Sdk?>()
-    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
-    coroutineScope.launch(Dispatchers.EDT) {
-      writeAction {
-        model.setupInstallableSdk(JavaSdkImpl.getInstance(), downloadTask) { sdk ->
-          ProjectJdkTable.getInstance().addJdk(sdk)
-          setSdk(sdk)
-          sdkReference.set(sdk)
-        }
-      }
-      val tracker = SdkDownloadTracker.getInstance()
-      val sdk = sdkReference.get()
-      if (null != sdk) {
-        val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
-          sdkDownloadedFuture.complete(it)
-        }
-        if (!registered) {
-          sdkDownloadedFuture.complete(false)
-        }
-      }
-      else {
-        sdkDownloadedFuture.complete(false)
-      }
-    }
-  }
-
-  private fun doScheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, module: Module?, isCreatingNewProject: Boolean): CompletableFuture<Boolean> {
-    val setSdk: (Sdk?) -> Unit = { sdk ->
-      if (isCreatingNewProject) {
-        ProjectRootManager.getInstance(project).projectSdk = sdk
-      }
-      else {
-        ModuleRootManager.getInstance(module!!).modifiableModel.apply {
-          this.sdk = sdk
-        }.commit()
-      }
-    }
-    val jdkDownloader = (SdkDownload.EP_NAME.findFirstSafe { it is JdkDownloader } as? JdkDownloader)
-                        ?: return CompletableFuture.completedFuture(false)
-
-    val sdkDownloadedFuture = CompletableFuture<Boolean>()
-
-    coroutineScope.launch(Dispatchers.EDT) {
+  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onJdkCreated: suspend (Sdk) -> Unit = {}): CompletableFuture<Boolean> {
+    return coroutineScope.async {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.suggestedSdkName)) {
-        val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.request.installDir.toString())
-        if (selectedFile != null) {
-          jdkDownloader.prepareDownloadTask(project, sdkDownloadTask.jdkItem, selectedFile) { downloadTask ->
-            scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, setSdk)
-          }
-        } else {
-          Messages.showErrorDialog(project, JavaUiBundle.message("jdk.download.error.message", error), JavaUiBundle.message("jdk.download.error.title"))
-        }
-      }
-    }
 
-    return sdkDownloadedFuture
+        val downloadTask = JdkDownloadUtil.createDownloadTask(project, sdkDownloadTask.jdkItem, sdkDownloadTask.request.installDir)
+                           ?: return@withBackgroundProgress false
+
+        val sdk = JdkDownloadUtil.createDownloadSdk(JavaSdk.getInstance(), downloadTask)
+
+        onJdkCreated(sdk)
+
+        JdkDownloadUtil.downloadSdk(sdk)
+      }
+    }.asCompletableFuture()
   }
 
   fun scheduleDownloadJdkForNewProject(sdkDownloadTask: JdkDownloadTask): CompletableFuture<Boolean> {
-    return doScheduleDownloadJdk(sdkDownloadTask, null, true)
+    return scheduleDownloadJdk(sdkDownloadTask) {
+      writeAction {
+        ProjectRootManager.getInstance(project).projectSdk = it
+      }
+    }
   }
 
-  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, module: Module, isCreatingNewProject: Boolean) {
-    doScheduleDownloadJdk(sdkDownloadTask, module, isCreatingNewProject)
+  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, module: Module, isCreatingNewProject: Boolean): CompletableFuture<Boolean> {
+    return if (isCreatingNewProject) {
+      scheduleDownloadJdkForNewProject(sdkDownloadTask)
+    }
+    else {
+      scheduleDownloadJdk(sdkDownloadTask, module)
+    }
+  }
+
+  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, module: Module): CompletableFuture<Boolean> {
+    return scheduleDownloadJdk(sdkDownloadTask) { sdk ->
+      ModuleRootModificationUtil.setModuleSdk(module, sdk)
+    }
   }
 }
