@@ -66,7 +66,7 @@ internal class ToolbarFrameHeader(
   private var toolbar: MainToolbar? = null
   private val toolbarPlaceholder = createToolbarPlaceholder()
   private val headerContent = createHeaderContent()
-  private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope(), frame) { !isCompactHeader }
+  private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope("ExpandableMenu"), frame) { !isCompactHeader }
   private val toolbarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame).apply {
     isOpaque = false
   }
@@ -271,7 +271,7 @@ internal class ToolbarFrameHeader(
     val newToolbar = withContext(Dispatchers.EDT) {
       toolbar?.removeComponentListener(contentResizeListener)
       toolbarPlaceholder.removeAll()
-      MainToolbar(coroutineScope = coroutineScope.childScope(), frame = frame, isFullScreen = isFullScreen)
+      MainToolbar(coroutineScope = coroutineScope.childScope("MainToolbar"), frame = frame, isFullScreen = isFullScreen)
     }
     newToolbar.init(customTitleBar)
     withContext(Dispatchers.EDT) {
