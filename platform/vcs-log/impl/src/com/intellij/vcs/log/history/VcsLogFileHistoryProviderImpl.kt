@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRow
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToGraphRow
 import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.MainVcsLogUi
@@ -175,7 +175,7 @@ private fun selectRowWhenOpen(logManager: VcsLogManager, hash: Hash?, root: Virt
     ui.jumpToNearestCommit(logManager.dataManager.storage, hash, root, true)
   }
   else if (firstTime) {
-    ui.jumpToRow(0, true, true)
+    ui.jumpToGraphRow(0, true, true)
   }
 }
 

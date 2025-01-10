@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.LinkDescriptor
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.visible.VisiblePack
+import com.intellij.vcs.log.ui.table.GraphTableModel
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -23,7 +23,7 @@ interface CommitLinksProvider {
    *
    * E.g., in the Git VCS it could be "fixup!", "squash!" and "amend!" prefixes in the commit message subject.
    */
-  fun resolveLinks(logId: String, logData: VcsLogData, visiblePack: VisiblePack,
+  fun resolveLinks(logId: String, logData: VcsLogData, model: GraphTableModel,
                    startRow: Int, endRow: Int)
 
   companion object {

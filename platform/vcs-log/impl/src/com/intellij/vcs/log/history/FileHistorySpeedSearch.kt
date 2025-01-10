@@ -23,7 +23,8 @@ internal class FileHistorySpeedSearch(project: Project, index: VcsLogIndex, stor
 
   override fun getCommitMetadata(row: Int): VcsCommitMetadata? {
     val commits = visiblePack.getUserData(COMMIT_METADATA) ?: return super.getCommitMetadata(row)
-    return commits.get(getCommitId(row)) ?: return super.getCommitMetadata(row)
+    val commitId = getCommitId(row) ?: return null
+    return commits.get(commitId) ?: return super.getCommitMetadata(row)
   }
 
   companion object {

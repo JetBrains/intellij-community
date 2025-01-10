@@ -4,14 +4,14 @@ package com.intellij.vcs.log
 import java.util.function.Consumer
 
 /**
- * Commit selection in the Vcs Log table.
+ * Selection of commits in the Vcs Log Graph.
  *
  * @see VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION
  */
 interface VcsLogCommitSelection {
 
   /**
-   * Selected rows.
+   * Rows in [com.intellij.vcs.log.graph.VisibleGraph]
    */
   val rows: IntArray
 

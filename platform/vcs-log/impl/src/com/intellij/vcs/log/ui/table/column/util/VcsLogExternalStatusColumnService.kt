@@ -17,6 +17,7 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import com.intellij.vcs.log.ui.table.column.isVisible
+import com.intellij.vcs.log.ui.table.getCommitId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.onClosed

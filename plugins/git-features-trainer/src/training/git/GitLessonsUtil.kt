@@ -64,7 +64,7 @@ object GitLessonsUtil {
         else false
       }
       triggerUI().component { ui: VcsLogGraphTable ->
-        ui.jumpToRow(0, true)
+        ui.jumpToGraphRow(0, true)
         ui.selectionModel.clearSelection()
         true
       }

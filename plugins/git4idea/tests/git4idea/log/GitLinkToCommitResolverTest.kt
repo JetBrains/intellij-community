@@ -10,6 +10,7 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.VcsLogRefresherTest.LogRefresherTestHelper
 import com.intellij.vcs.log.graph.PermanentGraph
+import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.table.links.NavigateToCommit
@@ -113,7 +114,7 @@ class GitLinkToCommitResolverTest : GitSingleRepoTest() {
   }
 
   private fun GitLinkToCommitResolver.resolveLinks(commitId: CommitId, commitMessage: @NlsSafe String) {
-    resolveLinks(logData, visiblePack, commitId, commitMessage, Registry.intValue("vcs.log.render.commit.links.process.chunk"))
+    resolveLinks(logData, visiblePack.visibleGraph as VisibleGraphImpl, commitId, commitMessage, Registry.intValue("vcs.log.render.commit.links.process.chunk"))
   }
 
   private fun refreshVisibleGraph() {

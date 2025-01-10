@@ -19,10 +19,10 @@ import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.isAncestor
+import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.links.CommitLinksProvider
 import com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener
 import com.intellij.vcs.log.ui.table.links.NavigateToCommit
-import com.intellij.vcs.log.visible.VisiblePack
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -32,9 +32,9 @@ internal class GitCommitLinkProvider(private val project: Project) : CommitLinks
     return project.service<GitLinkToCommitResolver>().getLinks(commitId)
   }
 
-  override fun resolveLinks(logId: String, logData: VcsLogData, visiblePack: VisiblePack,
+  override fun resolveLinks(logId: String, logData: VcsLogData, model: GraphTableModel,
                             startRow: Int, endRow: Int) {
-    project.service<GitLinkToCommitResolver>().submitResolveLinks(logId, logData, visiblePack,
+    project.service<GitLinkToCommitResolver>().submitResolveLinks(logId, logData, model,
                                                                   startRow, endRow)
   }
 }
@@ -65,11 +65,11 @@ internal class GitLinkToCommitResolver(private val project: Project) {
   internal fun submitResolveLinks(
     logId: String,
     logData: VcsLogData,
-    visiblePack: VisiblePack,
+    model: GraphTableModel,
     startRow: Int,
     endRow: Int
   ) {
-    if (visiblePack.visibleGraph !is VisibleGraphImpl) return
+    val visibleGraph = model.visiblePack.visibleGraph as? VisibleGraphImpl ?: return
 
     val startFrom = max(0, startRow)
     val end = max(0, endRow)
@@ -78,13 +78,11 @@ internal class GitLinkToCommitResolver(private val project: Project) {
     val processingCount = max(abs(Registry.intValue("vcs.log.render.commit.links.process.chunk")), rowRange.count())
     if (processingCount < 2) return
 
-    val visibleGraph = visiblePack.visibleGraph
-
     resolveQueue.queue(Update.create(logId) {
       for (i in rowRange) {
-        val commitId = visibleGraph.getRowInfo(i).commit
-        val commit = logData.commitMetadataCache.getCachedData(commitId) ?: continue
-        resolveLinks(logData, visiblePack, commit.getCommitId(), commit.subject, processingCount)
+        val commitIndex = model.getId(i) ?: continue
+        val commit = logData.commitMetadataCache.getCachedData(commitIndex) ?: continue
+        resolveLinks(logData, visibleGraph, commit.getCommitId(), commit.subject, processingCount)
       }
       updateQueue.queue(Update.create(logId) {
         project.messageBus.syncPublisher(CommitLinksResolveListener.TOPIC).onLinksResolved(logId)
@@ -95,12 +93,10 @@ internal class GitLinkToCommitResolver(private val project: Project) {
   @RequiresBackgroundThread
   internal fun resolveLinks(
     logData: VcsLogData,
-    visiblePack: VisiblePack,
+    visibleGraph: VisibleGraphImpl<Int>,
     commitId: CommitId, commitMessage: String,
     processingCount: Int
   ) {
-    if (visiblePack.visibleGraph !is VisibleGraphImpl) return
-
     val cachedPrefixes = getCachedOrEmpty(commitId)
     if (cachedPrefixes.isNotEmpty()) {
       return
@@ -119,7 +115,7 @@ internal class GitLinkToCommitResolver(private val project: Project) {
       if (prefix.isNotBlank()) {
         val prefixRange = TextRange.from(prefixOffset, prefix.length)
 
-        val targetHash = resolveHash(logData, visiblePack, commitId, rest, processingCount)
+        val targetHash = resolveHash(logData, visibleGraph, commitId, rest, processingCount)
         if (targetHash != null) {
           existingPrefixes.add(PrefixTarget(prefixRange, targetHash))
         }
@@ -139,17 +135,16 @@ internal class GitLinkToCommitResolver(private val project: Project) {
 
   private fun resolveHash(
     logData: VcsLogData,
-    visiblePack: VisiblePack,
+    visibleGraph: VisibleGraphImpl<Int>,
     commitId: CommitId, commitMessage: String,
     processingCount: Int
   ): String? {
     val sourceCommitId = logData.getCommitIndex(commitId.hash, commitId.root)
-    val visibleGraph = visiblePack.visibleGraph as VisibleGraphImpl
     val sourceCommitNodeIndex = visibleGraph.getVisibleRowIndex(sourceCommitId) ?: return null
     val liteLinearGraph = LinearGraphUtils.asLiteLinearGraph(visibleGraph.linearGraph)
 
     var foundData: VcsCommitMetadata? = null
-    iterateCommits(logData, visiblePack, sourceCommitNodeIndex, processingCount) { currentData ->
+    iterateCommits(logData, visibleGraph, sourceCommitNodeIndex, processingCount) { currentData ->
       val currentNodeId = visibleGraph.getVisibleRowIndex(currentData.getCommitIndex(logData))
       if (currentNodeId != null && currentData.subject == commitMessage
           && liteLinearGraph.isAncestor(currentNodeId, sourceCommitNodeIndex)
@@ -164,12 +159,12 @@ internal class GitLinkToCommitResolver(private val project: Project) {
   }
 
   private fun iterateCommits(
-    logData: VcsLogData, visiblePack: VisiblePack,
+    logData: VcsLogData,
+    visibleGraph: VisibleGraphImpl<Int>,
     startFromCommitIndex: Int,
     commitsCount: Int,
     consumer: (VcsCommitMetadata) -> Boolean
   ) {
-    val visibleGraph = visiblePack.visibleGraph as VisibleGraphImpl
     val linearGraph = visibleGraph.linearGraph
 
     val walkDepth = min(commitsCount, visibleGraph.visibleCommitCount)

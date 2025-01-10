@@ -16,7 +16,7 @@ internal abstract class VcsLogTableCommitSelectionListener(
     lastEvent = event
     ApplicationManager.getApplication().invokeLater(Runnable {
       val model = graphTable.model
-      val commitIds = graphTable.selectedRows.map(model::getId)
+      val commitIds = graphTable.selectedRows.asSequence().map(model::getId).filterNotNull().toList()
       handleSelection(commitIds)
     }, Condition { o: Any? -> lastEvent !== event })
   }

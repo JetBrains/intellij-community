@@ -33,7 +33,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
-import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
@@ -64,8 +63,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -188,7 +187,7 @@ public class VcsLogGraphTable extends TableWithProgress
     CommitLinksProvider linksProvider = CommitLinksProvider.getServiceOrNull(getLogData().getProject());
     if (linksProvider != null) {
       Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
-      linksProvider.resolveLinks(getId(), myLogData, visiblePack, visibleRows.first, visibleRows.second);
+      linksProvider.resolveLinks(getId(), myLogData, getModel(), visibleRows.first, visibleRows.second);
     }
   }
 
@@ -550,7 +549,8 @@ public class VcsLogGraphTable extends TableWithProgress
     return myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES) && myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES);
   }
 
-  public void jumpToRow(int rowIndex, boolean focus) {
+  public void jumpToGraphRow(int graphRow, boolean focus) {
+    int rowIndex = getModel().fromGraphToTableRow(graphRow);
     if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
       setRowSelectionInterval(rowIndex, rowIndex);
@@ -572,8 +572,10 @@ public class VcsLogGraphTable extends TableWithProgress
       sink.set(VcsDataKeys.VCS, myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getSupportedVcs());
     }
     if (selectedRows.length == 1) {
-      sink.set(VcsLogDataKeys.VCS_LOG_BRANCHES, getModel().getBranchesAtRow(selectedRows[0]));
-      sink.set(VcsLogDataKeys.VCS_LOG_REFS, getModel().getRefsAtRow(selectedRows[0]));
+      List<VcsRef> refsAtRow = getModel().getRefsAtRow(selectedRows[0]);
+      List<VcsRef> branchesAtRow = ContainerUtil.filter(refsAtRow, ref -> ref.getType().isBranch());
+      sink.set(VcsLogDataKeys.VCS_LOG_BRANCHES, branchesAtRow);
+      sink.set(VcsLogDataKeys.VCS_LOG_REFS, refsAtRow);
     }
     if (selectedRows.length != 0) {
       StringBuilder sb = new StringBuilder();
@@ -662,33 +664,35 @@ public class VcsLogGraphTable extends TableWithProgress
   VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected, boolean hovered) {
     VcsCommitStyle baseStyle = getBaseStyle(row, column, hasFocus, selected);
 
-    VisibleGraph<Integer> visibleGraph = getVisibleGraph();
-    if (row < 0 || row >= visibleGraph.getVisibleCommitCount()) {
-      LOG.error("Visible graph has " + visibleGraph.getVisibleCommitCount() + " commits, yet we want row " + row);
+    GraphTableModel model = getModel();
+    if (row < 0 || row >= model.getRowCount()) {
+      LOG.error("Visible graph has " + model.getRowCount() + " commits, yet we want row " + row);
       return baseStyle;
     }
 
-    RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
-    VcsCommitStyle style = createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
+    RowType rowType = model.getRowType(row);
+    VcsCommitStyle style = createStyle(rowType == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
                                        baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
-    int commitId = rowInfo.getCommit();
-    VcsShortCommitDetails details = myLogData.getCommitMetadataCache().getCachedData(commitId);
-    if (details != null) {
-      int columnModelIndex = convertColumnIndexToModel(column);
-      List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {
-        try {
-          return highlighter.getStyle(commitId, details, columnModelIndex, selected);
-        }
-        catch (ProcessCanceledException e) {
-          return VcsCommitStyle.DEFAULT;
-        }
-        catch (Throwable t) {
-          LOG.error("Exception while getting style from highlighter " + highlighter, t);
-          return VcsCommitStyle.DEFAULT;
-        }
-      });
-      style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
+    Integer commitId = model.getId(row);
+    if (commitId != null) {
+      VcsShortCommitDetails details = myLogData.getCommitMetadataCache().getCachedData(commitId);
+      if (details != null) {
+        int columnModelIndex = convertColumnIndexToModel(column);
+        List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {
+          try {
+            return highlighter.getStyle(commitId, details, columnModelIndex, selected);
+          }
+          catch (ProcessCanceledException e) {
+            return VcsCommitStyle.DEFAULT;
+          }
+          catch (Throwable t) {
+            LOG.error("Exception while getting style from highlighter " + highlighter, t);
+            return VcsCommitStyle.DEFAULT;
+          }
+        });
+        style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
+      }
     }
 
     if (!selected && hovered) {

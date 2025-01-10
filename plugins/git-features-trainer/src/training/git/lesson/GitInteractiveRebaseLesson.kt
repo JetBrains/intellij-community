@@ -100,7 +100,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         ideFrame {
           val table: VcsLogGraphTable = findComponentWithTimeout(defaultTimeout)
           val row = invokeAndWaitIfNeeded {
-            (0 until table.rowCount).find { table.model.getCommitMetadata(it).id == commitHashToHighlight }
+            (0 until table.rowCount).find { table.model.getCommitMetadata(it)?.id == commitHashToHighlight }
           } ?: error("Failed to find commit with hash: $commitHashToHighlight")
           JTableFixture(robot, table).click(TableCell.row(row).column(1), MouseButton.RIGHT_BUTTON)
         }

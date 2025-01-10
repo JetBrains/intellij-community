@@ -16,7 +16,6 @@ import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 import com.intellij.vcs.log.ui.frame.MainFrame
-import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import git4idea.i18n.GitBundle
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
@@ -146,8 +145,8 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
         }
       }
       triggerUI().component l@{ ui: VcsLogGraphTable ->
-        val model = ui.model as? GraphTableModel ?: return@l false
-        model.rowCount > 0 && model.getCommitMetadata(0).fullMessage.contains(textToFind)
+        val model = ui.model
+        model.rowCount > 0 && model.getCommitMetadata(0)?.fullMessage?.contains(textToFind) ?: false
       }
       showWarningIfGitWindowClosed()
       test {

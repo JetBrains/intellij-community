@@ -551,12 +551,12 @@ f:com.intellij.vcs.log.impl.VcsLogNavigationUtil
 - sf:jumpToBranch(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):V
 - sf:jumpToCommit(com.intellij.vcs.log.ui.VcsLogUiEx,I,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToCommit(com.intellij.vcs.log.ui.VcsLogUiEx,com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile,Z,Z):com.google.common.util.concurrent.ListenableFuture
+- sf:jumpToGraphRow(com.intellij.vcs.log.ui.VcsLogUiEx,I,Z,Z):V
 - sf:jumpToHash(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToRefOrHash(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToRevisionAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath):java.util.concurrent.CompletableFuture
 - sf:jumpToRevisionAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath,Z):java.util.concurrent.CompletableFuture
 - bs:jumpToRevisionAsync$default(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath,I,java.lang.Object):java.util.concurrent.CompletableFuture
-- sf:jumpToRow(com.intellij.vcs.log.ui.VcsLogUiEx,I,Z,Z):V
 - f:waitForRefresh(com.intellij.vcs.log.impl.VcsLogManager,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 - com.intellij.openapi.components.PersistentStateComponent
@@ -1148,26 +1148,25 @@ c:com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener
 f:com.intellij.vcs.log.ui.table.GraphTableModel
 - javax.swing.table.AbstractTableModel
 - com.intellij.vcs.log.ui.table.VcsLogCommitListModel
-- <init>(com.intellij.vcs.log.data.VcsLogData,java.lang.Runnable,com.intellij.vcs.log.impl.VcsLogUiProperties):V
-- createSelection(I[]):com.intellij.vcs.log.VcsLogCommitSelection
-- getBranchesAtRow(I):java.util.List
+- f:createSelection(I[]):com.intellij.vcs.log.VcsLogCommitSelection
+- f:fromGraphToTableRow(I):I
 - getColumnCount():I
 - getColumnName(I):java.lang.String
-- getCommitId(I):com.intellij.vcs.log.CommitId
-- getCommitMetadata(I):com.intellij.vcs.log.VcsCommitMetadata
-- getCommitMetadata(I,Z):com.intellij.vcs.log.VcsCommitMetadata
+- f:getCommitMetadata(I):com.intellij.vcs.log.VcsCommitMetadata
+- f:getCommitMetadata(I,Z):com.intellij.vcs.log.VcsCommitMetadata
+- bs:getCommitMetadata$default(com.intellij.vcs.log.ui.table.GraphTableModel,I,Z,I,java.lang.Object):com.intellij.vcs.log.VcsCommitMetadata
 - getDataProvider():com.intellij.vcs.log.VcsLogDataProvider
-- getFullDetails(I):com.intellij.vcs.log.VcsFullCommitDetails
-- getId(I):I
-- getLogData():com.intellij.vcs.log.data.VcsLogData
-- getProperties():com.intellij.vcs.log.impl.VcsLogUiProperties
-- getRefsAtRow(I):java.util.List
-- getRootAtRow(I):com.intellij.openapi.vfs.VirtualFile
+- getId(I):java.lang.Integer
+- f:getLogData():com.intellij.vcs.log.data.VcsLogData
+- f:getPrintElements(I):java.util.Collection
+- f:getRefsAtRow(I):java.util.List
+- f:getRootAtRow(I):com.intellij.openapi.vfs.VirtualFile
 - getRowCount():I
-- getRowInfo(I):com.intellij.vcs.log.graph.RowInfo
+- f:getRowType(I):com.intellij.vcs.log.graph.RowType
 - getValueAt(I,I):java.lang.Object
-- getValueAt(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):java.lang.Object
-- getVisiblePack():com.intellij.vcs.log.visible.VisiblePack
+- f:getValueAt(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):java.lang.Object
+- f:getVisiblePack():com.intellij.vcs.log.visible.VisiblePack
+- f:setVisiblePack(com.intellij.vcs.log.visible.VisiblePack):V
 com.intellij.vcs.log.ui.table.VcsLogCellController
 - a:performMouseClick(I,java.awt.event.MouseEvent):java.awt.Cursor
 - a:performMouseMove(I,java.awt.event.MouseEvent):com.intellij.vcs.log.ui.table.VcsLogCellController$MouseMoveResult
@@ -1246,7 +1245,7 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - isCopyEnabled(com.intellij.openapi.actionSystem.DataContext):Z
 - isCopyVisible(com.intellij.openapi.actionSystem.DataContext):Z
 - isResizingColumns():Z
-- jumpToRow(I,Z):V
+- jumpToGraphRow(I,Z):V
 - onColumnDataChanged(com.intellij.vcs.log.ui.table.column.VcsLogColumn):V
 - onColumnOrderSettingChanged():V
 - p:paintFooter(java.awt.Graphics,I,I,I,I):V
@@ -1429,7 +1428,7 @@ c:com.intellij.vcs.log.visible.VisiblePack
 - getFilters():com.intellij.vcs.log.VcsLogFilterCollection
 - getLogProviders():java.util.Map
 - getRefs():com.intellij.vcs.log.VcsLogRefs
-- getRoot(I):com.intellij.openapi.vfs.VirtualFile
+- getRootAtHead(I):com.intellij.openapi.vfs.VirtualFile
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - getVisibleGraph():com.intellij.vcs.log.graph.VisibleGraph
 - isEmpty():Z

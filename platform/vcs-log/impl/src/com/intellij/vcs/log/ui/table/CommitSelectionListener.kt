@@ -48,7 +48,7 @@ abstract class CommitSelectionListener<T : VcsCommitMetadata?> protected constru
       lastRequest = indicator
 
       val model = graphTable.model
-      val commitIds = toLoad.map(model::getId)
+      val commitIds = toLoad.asSequence().map(model::getId).filterNotNull().toList()
       commitDetailsGetter.loadCommitsData(commitIds, Consumer { detailsList: List<T> ->
         if (lastRequest === indicator && !indicator.isCanceled) {
           if (toLoad.size != detailsList.size) {
