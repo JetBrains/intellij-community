@@ -2,7 +2,6 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -14,6 +13,7 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Notifies targets about changes in their sources made by other builders
@@ -52,8 +52,8 @@ final class ChainedTargetsBuildListener implements BuildListener {
     final BuildFSState state = myContext.getProjectDescriptor().fsState;
     final BuildRootIndex rootsIndex = myContext.getProjectDescriptor().getBuildRootIndex();
     for (String path : event.getFilePaths()) {
-      final File file = new File(FileUtilRt.toSystemDependentName(path));
-      for (BuildRootDescriptor descriptor : rootsIndex.findAllParentDescriptors(file, myContext)) {
+      Path file = Path.of(path);
+      for (BuildRootDescriptor descriptor : rootsIndex.findAllParentDescriptors(file.toFile(), myContext)) {
         state.registerDeleted(myContext, descriptor.getTarget(), file);
       }
     }

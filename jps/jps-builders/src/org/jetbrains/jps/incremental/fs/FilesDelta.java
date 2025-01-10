@@ -2,13 +2,13 @@
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FileCollectionFactory;
+import com.intellij.util.containers.PathHashStrategy;
 import com.intellij.util.io.IOUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -18,23 +18,26 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+@SuppressWarnings("LoggingSimilarMessage")
 @ApiStatus.Internal
 public final class FilesDelta {
   private static final Logger LOG = Logger.getInstance(FilesDelta.class);
-  private final ReentrantLock myDataLock = new ReentrantLock();
+  private final ReentrantLock dataLock = new ReentrantLock();
 
-  private final Set<String> myDeletedPaths = CollectionFactory.createFilePathLinkedSet();
-  private final Map<BuildRootDescriptor, Set<File>> filesToRecompile = new LinkedHashMap<>();
+  private final Set<String> deletedPaths = CollectionFactory.createFilePathLinkedSet();
+  private final Map<BuildRootDescriptor, Set<Path>> filesToRecompile = new LinkedHashMap<>();
 
   public void lockData(){
-    myDataLock.lock();
+    dataLock.lock();
   }
 
   public void unlockData(){
-    myDataLock.unlock();
+    dataLock.unlock();
   }
 
   public FilesDelta() {
@@ -49,8 +52,8 @@ public final class FilesDelta {
   private void addAll(FilesDelta other) {
     other.lockData();
     try {
-      myDeletedPaths.addAll(other.myDeletedPaths);
-      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : other.filesToRecompile.entrySet()) {
+      deletedPaths.addAll(other.deletedPaths);
+      for (Map.Entry<BuildRootDescriptor, Set<Path>> entry : other.filesToRecompile.entrySet()) {
         _addToRecompiled(entry.getKey(), entry.getValue());
       }
     }
@@ -62,17 +65,17 @@ public final class FilesDelta {
   public void save(DataOutput out) throws IOException {
     lockData();
     try {
-      out.writeInt(myDeletedPaths.size());
-      for (String path : myDeletedPaths) {
+      out.writeInt(deletedPaths.size());
+      for (String path : deletedPaths) {
         IOUtil.writeString(path, out);
       }
       out.writeInt(filesToRecompile.size());
-      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
+      for (Map.Entry<BuildRootDescriptor, Set<Path>> entry : filesToRecompile.entrySet()) {
         IOUtil.writeString(entry.getKey().getRootId(), out);
-        final Set<File> files = entry.getValue();
+        Set<Path> files = entry.getValue();
         out.writeInt(files.size());
-        for (File file : files) {
-          IOUtil.writeString(FileUtil.toSystemIndependentName(file.getPath()), out);
+        for (Path file : files) {
+          IOUtil.writeString(FileUtilRt.toSystemIndependentName(file.toString()), out);
         }
       }
     }
@@ -81,36 +84,37 @@ public final class FilesDelta {
     }
   }
 
-  public void load(DataInput in, @NotNull BuildTarget<?> target, BuildRootIndex buildRootIndex) throws IOException {
+  public void load(@NotNull DataInput in, @NotNull BuildTarget<?> target, @NotNull BuildRootIndex buildRootIndex) throws IOException {
     lockData();
     try {
-      myDeletedPaths.clear();
+      deletedPaths.clear();
       int deletedCount = in.readInt();
       while (deletedCount-- > 0) {
-        myDeletedPaths.add(IOUtil.readString(in));
+        deletedPaths.add(IOUtil.readString(in));
       }
       filesToRecompile.clear();
       int recompileCount = in.readInt();
       while (recompileCount-- > 0) {
         String rootId = IOUtil.readString(in);
-        BuildRootDescriptor descriptor = target.findRootDescriptor(rootId, buildRootIndex);
-        Set<File> files;
-        if (descriptor != null) {
+        BuildRootDescriptor descriptor = target.findRootDescriptor(Objects.requireNonNull(rootId), buildRootIndex);
+        Set<Path> files;
+        if (descriptor == null) {
+          LOG.debug("Cannot find root by " + rootId + ", delta will be skipped");
+          files = new ObjectLinkedOpenCustomHashSet<>(PathHashStrategy.INSTANCE);
+        }
+        else {
           files = filesToRecompile.get(descriptor);
           if (files == null) {
-            files = FileCollectionFactory.createCanonicalFileLinkedSet();
+            files = new ObjectLinkedOpenCustomHashSet<>(PathHashStrategy.INSTANCE);
             filesToRecompile.put(descriptor, files);
           }
         }
-        else {
-          LOG.debug("Cannot find root by " + rootId + ", delta will be skipped");
-          files = FileCollectionFactory.createCanonicalFileLinkedSet();
-        }
+
         int filesCount = in.readInt();
         while (filesCount-- > 0) {
-          final File file = new File(IOUtil.readString(in));
+          Path file = Path.of(Objects.requireNonNull(IOUtil.readString(in)));
           if (Utils.IS_TEST_MODE) {
-            LOG.info("Loaded " + file.getPath());
+            LOG.info("Loaded " + file);
           }
           files.add(file);
         }
@@ -121,7 +125,7 @@ public final class FilesDelta {
     }
   }
 
-  public static void skip(DataInput in) throws IOException {
+  public static void skip(@NotNull DataInput in) throws IOException {
     int deletedCount = in.readInt();
     while (deletedCount-- > 0) {
       IOUtil.readString(in);
@@ -139,11 +143,11 @@ public final class FilesDelta {
   public boolean hasChanges() {
     lockData();
     try {
-      if (!myDeletedPaths.isEmpty()) {
+      if (!deletedPaths.isEmpty()) {
         return true;
       }
-      if(!filesToRecompile.isEmpty()) {
-        for (Set<File> files : filesToRecompile.values()) {
+      if (!filesToRecompile.isEmpty()) {
+        for (Set<Path> files : filesToRecompile.values()) {
           if (!files.isEmpty()) {
             return true;
           }
@@ -157,14 +161,14 @@ public final class FilesDelta {
   }
 
 
-  public boolean markRecompile(@NotNull BuildRootDescriptor root, @NotNull File file) {
+  public boolean markRecompile(@NotNull BuildRootDescriptor root, @NotNull Path file) {
     lockData();
     try {
       boolean added = _addToRecompiled(root, file);
       if (added) {
         // optimization
-        if (!myDeletedPaths.isEmpty()) {
-          myDeletedPaths.remove(FileUtil.toCanonicalPath(file.getPath()));
+        if (!deletedPaths.isEmpty()) {
+          deletedPaths.remove(file.toAbsolutePath().normalize().toString());
         }
       }
       return added;
@@ -174,53 +178,54 @@ public final class FilesDelta {
     }
   }
 
-  public boolean markRecompileIfNotDeleted(BuildRootDescriptor root, File file) {
+  public boolean markRecompileIfNotDeleted(@NotNull BuildRootDescriptor root, @NotNull Path file) {
     lockData();
     try {
       String path = null;
-      final boolean isMarkedDeleted = !myDeletedPaths.isEmpty() && myDeletedPaths.contains(path = FileUtil.toCanonicalPath(file.getPath()));
-      if (!isMarkedDeleted) {
-        if (!file.exists()) {
-          // incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
-          if (path == null) {
-            path = FileUtil.toCanonicalPath(file.getPath());
-          }
-          if (Utils.IS_TEST_MODE) {
-            LOG.info("Marking deleted: " + path);
-          }
-          myDeletedPaths.add(path);
-          return false;
-        }
-        _addToRecompiled(root, file);
-        return true;
+      boolean isMarkedDeleted = !deletedPaths.isEmpty() && deletedPaths.contains(path = file.toAbsolutePath().normalize().toString());
+      if (isMarkedDeleted) {
+        return false;
       }
-      return false;
+
+      if (Files.notExists(file)) {
+        // incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
+        if (path == null) {
+          path = file.toAbsolutePath().normalize().toString();
+        }
+        if (Utils.IS_TEST_MODE) {
+          LOG.info("Marking deleted: " + path);
+        }
+        deletedPaths.add(path);
+        return false;
+      }
+      _addToRecompiled(root, file);
+      return true;
     }
     finally {
       unlockData();
     }
   }
 
-  private boolean _addToRecompiled(@NotNull BuildRootDescriptor root, @NotNull File file) {
+  private boolean _addToRecompiled(@NotNull BuildRootDescriptor root, @NotNull Path file) {
     if (Utils.IS_TEST_MODE) {
-      LOG.info("Marking dirty: " + file.getPath());
+      LOG.info("Marking dirty: " + file);
     }
-    return _addToRecompiled(root, List.of(file));
+    return filesToRecompile.computeIfAbsent(root, __ -> FileCollectionFactory.createCanonicalPathSet()).add(file);
   }
 
-  private boolean _addToRecompiled(@NotNull BuildRootDescriptor root, @NotNull Collection<? extends File> filesToAdd) {
-    return filesToRecompile.computeIfAbsent(root, __ -> FileCollectionFactory.createCanonicalFileLinkedSet()).addAll(filesToAdd);
+  private void _addToRecompiled(@NotNull BuildRootDescriptor root, @NotNull Collection<Path> filesToAdd) {
+    filesToRecompile.computeIfAbsent(root, __ -> FileCollectionFactory.createCanonicalPathSet()).addAll(filesToAdd);
   }
 
-  public void addDeleted(File file) {
-    final String path = FileUtil.toCanonicalPath(file.getPath());
+  public void addDeleted(@NotNull Path file) {
+    String path = file.toAbsolutePath().normalize().toString();
     lockData();
     try {
       // ensure the file is not marked to recompilation anymore
-      for (Set<File> files : filesToRecompile.values()) {
+      for (Set<Path> files : filesToRecompile.values()) {
         files.remove(file);
       }
-      myDeletedPaths.add(path);
+      deletedPaths.add(path);
       if (Utils.IS_TEST_MODE) {
         LOG.info("Marking deleted: " + path);
       }
@@ -233,7 +238,7 @@ public final class FilesDelta {
   public void clearDeletedPaths() {
     lockData();
     try {
-      myDeletedPaths.clear();
+      deletedPaths.clear();
     }
     finally {
       unlockData();
@@ -243,15 +248,15 @@ public final class FilesDelta {
   public @NotNull Set<String> getAndClearDeletedPaths() {
     lockData();
     try {
-      if (myDeletedPaths.isEmpty()) {
+      if (deletedPaths.isEmpty()) {
         return Set.of();
       }
 
       try {
-        return CollectionFactory.createFilePathLinkedSet(myDeletedPaths);
+        return CollectionFactory.createFilePathLinkedSet(deletedPaths);
       }
       finally {
-        myDeletedPaths.clear();
+        deletedPaths.clear();
       }
     }
     finally {
@@ -259,20 +264,39 @@ public final class FilesDelta {
     }
   }
 
-  public @NotNull Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile() {
-    LOG.assertTrue(myDataLock.isHeldByCurrentThread(), "FilesDelta data must be locked by querying thread");
+  /**
+   * @deprecated Use {@link #getSourceMapToRecompile()}
+   */
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Deprecated
+  public @NotNull @Unmodifiable Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile() {
+    LOG.assertTrue(dataLock.isHeldByCurrentThread(), "FilesDelta data must be locked by querying thread");
+    Map<BuildRootDescriptor, Set<File>> map = new LinkedHashMap<>(filesToRecompile.size());
+    for (Map.Entry<BuildRootDescriptor, Set<Path>> entry : filesToRecompile.entrySet()) {
+      Set<Path> value = entry.getValue();
+      Set<File> set = new LinkedHashSet<>(value.size());
+      for (Path path : value) {
+        set.add(path.toFile());
+      }
+      map.put(entry.getKey(), set);
+    }
+    return map;
+  }
+
+  public @NotNull @UnmodifiableView Map<BuildRootDescriptor, Set<Path>> getSourceMapToRecompile() {
+    LOG.assertTrue(dataLock.isHeldByCurrentThread(), "FilesDelta data must be locked by querying thread");
     return filesToRecompile;
   }
 
-  public @NotNull Collection<Set<File>> getSourceSetsToRecompile() {
-    LOG.assertTrue(myDataLock.isHeldByCurrentThread(), "FilesDelta data must be locked by querying thread");
+  public @NotNull @UnmodifiableView Collection<Set<Path>> getSourceSetsToRecompile() {
+    LOG.assertTrue(dataLock.isHeldByCurrentThread(), "FilesDelta data must be locked by querying thread");
     return filesToRecompile.values();
   }
 
-  public boolean isMarkedRecompile(BuildRootDescriptor rd, File file) {
+  public boolean isMarkedRecompile(@NotNull BuildRootDescriptor rootDescriptor, @NotNull Path file) {
     lockData();
     try {
-      final Set<File> files = filesToRecompile.get(rd);
+      Set<Path> files = filesToRecompile.get(rootDescriptor);
       return files != null && files.contains(file);
     }
     finally {
@@ -280,7 +304,7 @@ public final class FilesDelta {
     }
   }
 
-  public @Nullable Set<File> clearRecompile(BuildRootDescriptor root) {
+  public @Nullable Set<Path> clearRecompile(@NotNull BuildRootDescriptor root) {
     lockData();
     try {
       return filesToRecompile.remove(root);
@@ -290,6 +314,8 @@ public final class FilesDelta {
     }
   }
 
+  // used by Bazel
+  @SuppressWarnings("unused")
   public void clearRecompile(@NotNull List<BuildRootDescriptor> roots) {
     lockData();
     try {

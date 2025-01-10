@@ -169,9 +169,9 @@ public final class GroovyBuilder extends ModuleLevelBuilder {
       if (stubToSrc != null) {
         for (String groovy : Iterators.filter(Iterators.map(out.getSourceFiles(), file -> stubToSrc.get(FileUtil.toSystemIndependentName(file.getPath()))), Iterators.notNullFilter())) {
           try {
-            final File groovyFile = new File(groovy);
+            Path groovyFile = Path.of(groovy);
             if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
-              FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
+              FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile.toFile());
               FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
             }
           }

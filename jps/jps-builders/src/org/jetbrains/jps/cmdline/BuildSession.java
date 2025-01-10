@@ -517,7 +517,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           StampsStorage<?> stampStorage = dataManager.getFileStampStorage(descriptor.getTarget());
           Object currentUpToDateStamp = stampStorage == null? null : stampStorage.getCurrentStampIfUpToDate(file, descriptor.getTarget(), null);
           if (currentUpToDateStamp == null) {
-            projectDescriptor.fsState.markDirty(null, file.toFile(), descriptor, stampStorage, saveEventStamp);
+            projectDescriptor.fsState.markDirty(null, file, descriptor, stampStorage, saveEventStamp);
           }
           else if (LOG.isDebugEnabled()) {
             LOG.debug(descriptor.getTarget() + ": Path considered up-to-date: " + file + "; stamp= " + currentUpToDateStamp);

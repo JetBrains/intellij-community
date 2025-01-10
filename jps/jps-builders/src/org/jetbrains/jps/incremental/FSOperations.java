@@ -44,13 +44,12 @@ public final class FSOperations {
   /**
    * @return true if file is marked as "dirty" in the specified compilation round
    */
-  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
-    if (rd != null) {
-      final ProjectDescriptor pd = context.getProjectDescriptor();
-      return pd.fsState.isMarkedForRecompilation(context, round, rd, file);
+  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, Path file) {
+    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file.toFile());
+    if (rootDescriptor == null) {
+      return false;
     }
-    return false;
+    return context.getProjectDescriptor().fsState.isMarkedForRecompilation(context, round, rootDescriptor, file);
   }
 
   /**
@@ -77,8 +76,10 @@ public final class FSOperations {
     }
   }
 
-  public static void markDirtyIfNotDeleted(CompileContext context, final CompilationRound round, final File file) throws IOException {
-    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
+  public static void markDirtyIfNotDeleted(@NotNull CompileContext context,
+                                           @NotNull CompilationRound round,
+                                           @NotNull Path file) throws IOException {
+    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file.toFile());
     if (rootDescriptor != null) {
       ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
       projectDescriptor.fsState.markDirtyIfNotDeleted(context,
@@ -119,15 +120,16 @@ public final class FSOperations {
       private final Map<T, Map<R, Set<File>>> dirtyFiles = new HashMap<>();
 
       @Override
-      public DirtyFilesHolderBuilder<R, T> markDirtyFile(T target, File file) throws IOException {
+      public DirtyFilesHolderBuilder<R, T> markDirtyFile(T target, @NotNull File file) throws IOException {
         ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
         R rootDescriptor = projectDescriptor.getBuildRootIndex().findParentDescriptor(file, List.of(target.getTargetType()), context);
         if (rootDescriptor == null) {
           return this;
         }
 
-        if (projectDescriptor.fsState.markDirtyIfNotDeleted(context, round, file, rootDescriptor, projectDescriptor.dataManager.getFileStampStorage(target)) ||
-            projectDescriptor.fsState.isMarkedForRecompilation(context, round, rootDescriptor, file)) {
+        Path nioPath = file.toPath();
+        if (projectDescriptor.fsState.markDirtyIfNotDeleted(context, round, nioPath, rootDescriptor, projectDescriptor.dataManager.getFileStampStorage(target)) ||
+            projectDescriptor.fsState.isMarkedForRecompilation(context, round, rootDescriptor, nioPath)) {
           Map<R, Set<File>> targetFiles = dirtyFiles.get(target);
           if (targetFiles == null) {
             targetFiles = new HashMap<>();

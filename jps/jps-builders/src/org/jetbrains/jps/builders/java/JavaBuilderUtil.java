@@ -325,7 +325,7 @@ public final class JavaBuilderUtil {
                   }
                 }
                 else {
-                  FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
+                  FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file.toPath());
                 }
               }
 
@@ -493,7 +493,7 @@ public final class JavaBuilderUtil {
             }
           }
           else {
-            FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
+            FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file.toPath());
           }
         }
 
@@ -574,9 +574,9 @@ public final class JavaBuilderUtil {
     };
   }
 
-  private static void removeFilesAcceptedByFilter(@NotNull Set<? extends File> files, @Nullable FileFilter filter) {
+  private static void removeFilesAcceptedByFilter(@NotNull Set<File> files, @Nullable FileFilter filter) {
     if (filter != null) {
-      for (final Iterator<? extends File> it = files.iterator(); it.hasNext();) {
+      for (Iterator<File> it = files.iterator(); it.hasNext();) {
         if (filter.accept(it.next())) {
           it.remove();
         }
@@ -600,7 +600,7 @@ public final class JavaBuilderUtil {
 
   private static @NotNull @Unmodifiable List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(
     CompileContext context,
-    Collection<? extends File> affected,
+    Collection<File> affected,
     ModulesBasedFileFilter moduleBasedFilter
   ) {
     if (affected.isEmpty()) {
@@ -621,7 +621,7 @@ public final class JavaBuilderUtil {
     return getOrCreate(context, dataKey, FileCollectionFactory::createCanonicalFileSet);
   }
 
-  private static @NotNull <T> T getOrCreate(CompileContext context, final Key<T> dataKey, Supplier<T> factory) {
+  private static @NotNull <T> T getOrCreate(CompileContext context, Key<T> dataKey, Supplier<T> factory) {
     T value = dataKey.get(context, null);
     if (value == null) {
       dataKey.set(context, value = factory.get());
@@ -629,11 +629,13 @@ public final class JavaBuilderUtil {
     return value;
   }
 
-  private static Set<String> getRemovedPaths(ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
+  private static @NotNull Set<String> getRemovedPaths(ModuleChunk chunk,
+                                                      DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
     if (!dirtyFilesHolder.hasRemovedFiles()) {
-      return Collections.emptySet();
+      return Set.of();
     }
-    final Set<String> removed = CollectionFactory.createFilePathSet();
+
+    Set<String> removed = CollectionFactory.createFilePathSet();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       removed.addAll(dirtyFilesHolder.getRemovedFiles(target));
     }

@@ -75,6 +75,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.jps.builders.java.JavaBuilderUtil.isDepGraphEnabled;
 
+@SuppressWarnings("BoundedWildcard")
 @ApiStatus.Internal
 public final class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
@@ -177,8 +178,8 @@ public final class IncProjectBuilder {
               final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
               delta.lockData();
               try {
-                for (Set<File> files : delta.getSourceSetsToRecompile()) {
-                  for (File file : files) {
+                for (Set<Path> files : delta.getSourceSetsToRecompile()) {
+                  for (Path file : files) {
                     if (scope.isAffected(target, file)) {
                       notifier.signalHasChanges();
                       return;
@@ -605,6 +606,7 @@ public final class IncProjectBuilder {
       return runModuleLevelBuilders(wrapWithModuleInfoAppender(context, mbt), new ModuleChunk(mbt), buildProgress);
     }
 
+    //noinspection unchecked
     completeRecompiledSourcesSet(context, (Collection<? extends BuildTarget<BuildRootDescriptor>>)targets);
 
     // In general the set of files corresponding to changed source file may be different
@@ -1405,7 +1407,7 @@ public final class IncProjectBuilder {
           if (!affectedSources.contains(src)) {
             for (String out : cursor.getOutputPaths()) {
               if (affectedOutputs.contains(out)) {
-                FSOperations.markDirtyIfNotDeleted(context, CompilationRound.CURRENT, new File(src));
+                FSOperations.markDirtyIfNotDeleted(context, CompilationRound.CURRENT, Path.of(src));
                 break;
               }
             }

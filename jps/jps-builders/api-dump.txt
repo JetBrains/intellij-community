@@ -2180,14 +2180,14 @@ f:org.jetbrains.jps.incremental.FSOperations
 - s:createDirtyFilesHolderBuilder(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound):org.jetbrains.jps.incremental.FSOperations$DirtyFilesHolderBuilder
 - s:isMarkedDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.ModuleChunk):Z
 - s:isMarkedDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget):Z
-- s:isMarkedDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File):Z
+- s:isMarkedDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.nio.file.Path):Z
 - s:lastModified(java.io.File):J
 - s:markDeleted(org.jetbrains.jps.incremental.CompileContext,java.io.File):V
 - s:markDirty(org.jetbrains.jps.incremental.CompileContext,java.io.File):V
 - s:markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File):V
 - s:markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.ModuleChunk,java.io.FileFilter):V
 - s:markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.incremental.ModuleBuildTarget,java.io.FileFilter):V
-- s:markDirtyIfNotDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File):V
+- s:markDirtyIfNotDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.nio.file.Path):V
 - s:markDirtyRecursively(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.ModuleChunk):V
 - s:markDirtyRecursively(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.ModuleChunk,java.io.FileFilter):V
 - s:processFilesToRecompile(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.ModuleChunk,org.jetbrains.jps.builders.FileProcessor):V
@@ -2426,16 +2426,17 @@ f:org.jetbrains.jps.incremental.fs.BuildFSState
 - hasUnprocessedChanges(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget):Z
 - hasWorkToDo(org.jetbrains.jps.builders.BuildTarget):Z
 - isInitialScanPerformed(org.jetbrains.jps.builders.BuildTarget):Z
-- isMarkedForRecompilation(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.builders.BuildRootDescriptor,java.io.File):Z
+- isMarkedForRecompilation(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,org.jetbrains.jps.builders.BuildRootDescriptor,java.nio.file.Path):Z
 - load(java.io.DataInputStream,org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.builders.BuildRootIndex):V
 - markAllUpToDate(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,J):Z
 - markDirty(org.jetbrains.jps.incremental.CompileContext,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
+- markDirty(org.jetbrains.jps.incremental.CompileContext,java.nio.file.Path,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
 - markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
 - markDirty(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.nio.file.Path,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage,Z):Z
-- markDirtyIfNotDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.io.File,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage):Z
+- markDirtyIfNotDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.incremental.fs.CompilationRound,java.nio.file.Path,org.jetbrains.jps.builders.BuildRootDescriptor,org.jetbrains.jps.incremental.storage.StampsStorage):Z
 - markInitialScanPerformed(org.jetbrains.jps.builders.BuildTarget):V
 - processFilesToRecompile(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.builders.FileProcessor):Z
-- registerDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,java.io.File):V
+- registerDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,java.nio.file.Path):V
 - registerDeleted(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,java.nio.file.Path,org.jetbrains.jps.incremental.storage.StampsStorage):V
 - save(java.io.DataOutput):V
 e:org.jetbrains.jps.incremental.fs.CompilationRound
