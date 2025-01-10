@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.ArrayUtilRt;
@@ -69,6 +69,11 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
       }
       return Arrays.asList(result);
     }
+  }
+
+  @Override
+  public @Nullable Collection<@NotNull String> getOutputs(@NotNull Path file) throws IOException {
+    return getOutputs(file.toString());
   }
 
   public String @Nullable [] getOutputArray(@NotNull String keyPath) throws IOException {

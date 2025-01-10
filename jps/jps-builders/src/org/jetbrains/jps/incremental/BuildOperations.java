@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.FileCollectionFactory;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -47,7 +48,9 @@ public final class BuildOperations {
     }
     else {
       boolean isTargetDirty = false;
-      if (context.getScope().isBuildForced(target) || (isTargetDirty = configuration.isTargetDirty(context.getProjectDescriptor())) || (!projectDescriptor.getBuildRootIndex().getTargetRoots(target, context).isEmpty() && configuration.outputRootWasDeleted(context))) {
+      if (context.getScope().isBuildForced(target) ||
+          (isTargetDirty = configuration.isTargetDirty(context.getProjectDescriptor())) ||
+          (!projectDescriptor.getBuildRootIndex().getTargetRoots(target, context).isEmpty() && configuration.outputRootWasDeleted(context))) {
         if (isTargetDirty) {
           configuration.logDiagnostics(context);
         }
@@ -67,19 +70,20 @@ public final class BuildOperations {
     }
   }
 
-  private static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
+  @ApiStatus.Internal
+  public static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(target);
-    Set<File> currentFiles = FileCollectionFactory.createCanonicalFileSet();
+    Set<Path> currentFiles = FileCollectionFactory.createCanonicalPathSet();
     FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampStorage, forceMarkDirty, currentFiles, null);
 
     // handle deleted paths
     final BuildFSState fsState = projectDescriptor.fsState;
     final SourceToOutputMapping sourceToOutputMap = projectDescriptor.dataManager.getSourceToOutputMap(target);
-    for (final Iterator<String> it = sourceToOutputMap.getSourcesIterator(); it.hasNext(); ) {
-      final String path = it.next();
+    for (Iterator<String> it = sourceToOutputMap.getSourcesIterator(); it.hasNext(); ) {
+      String path = it.next();
       // can check if the file exists
-      final File file = new File(path);
+      Path file = Path.of(path);
       if (!currentFiles.contains(file)) {
         fsState.registerDeleted(context, target, file, stampStorage);
       }

@@ -51,9 +51,13 @@ open class ExperimentalOneToManyPathMapping(
 ) : OneToManyPathMapping {
   fun getKey(path: String): LongArray = stringTo128BitHash(relativizer.toRelative(path, keyKind))
 
-  @Suppress("ReplaceGetOrSet")
-  final override fun getOutputs(path: String): List<String>? {
-    val key = getKey(path)
+  fun getKey(file: Path): LongArray = stringTo128BitHash(relativizer.toRelative(file, keyKind))
+
+  final override fun getOutputs(path: String): List<String>? = doGetValuesByRawKey(getKey(path))
+
+  final override fun getOutputs(file: Path): List<String>? = doGetValuesByRawKey(getKey(file))
+
+  private fun doGetValuesByRawKey(key: LongArray): List<String>? {
     val list = mapHandle.map.get(key) ?: return null
     return Array<String>(list.size - valueOffset) { relativizer.toAbsolute(list.get(it + valueOffset), valueKind) }.asList()
   }
@@ -75,14 +79,12 @@ open class ExperimentalOneToManyPathMapping(
   }
 
   override fun setOutputs(path: String, outPaths: List<String>) {
-    val relativeSourcePath = relativizer.toRelative(path, keyKind)
-    val key = stringTo128BitHash(relativeSourcePath)
-    val normalizeOutputPaths = normalizeOutputPaths(outPaths, null)
-    if (normalizeOutputPaths == null) {
-      mapHandle.map.remove(key)
+    val normalizedOutputPaths = normalizeOutputPaths(outPaths, null)
+    if (normalizedOutputPaths == null) {
+      mapHandle.map.remove(getKey(path))
     }
     else {
-      mapHandle.map.put(key, normalizeOutputPaths)
+      mapHandle.map.put(getKey(path), normalizedOutputPaths)
     }
   }
 

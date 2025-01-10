@@ -164,6 +164,11 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
+  public @NotNull Path getFile() {
+    return rootFile;
+  }
+
+  @Override
   public final @NotNull ModuleBuildTarget getTarget() {
     return target;
   }

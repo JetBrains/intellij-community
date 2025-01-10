@@ -256,7 +256,7 @@ public final class BuildTargetSourcesState implements BuildListener {
                               @NotNull LongArrayList hash,
                               @NotNull HashStream64 hashToReuse) {
     try {
-      Path rootFile = rootDescriptor.getRootFile().toPath();
+      Path rootFile = rootDescriptor.getFile();
       if (Files.notExists(rootFile) || rootFile.toAbsolutePath().startsWith(outputFolderPath)) {
         return;
       }
@@ -272,7 +272,7 @@ public final class BuildTargetSourcesState implements BuildListener {
 
           @Override
           public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
-            if (!buildRootIndex.isFileAccepted(path.toFile(), rootDescriptor)) {
+            if (!buildRootIndex.isFileAccepted(path, rootDescriptor)) {
               return FileVisitResult.CONTINUE;
             }
             getFileHash(path, rootFile, hash, hashToReuse, stampStorage);

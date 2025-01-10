@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public final class ProjectStamps implements StorageOwner{
+public final class ProjectStamps implements StorageOwner {
   public static final String PORTABLE_CACHES_PROPERTY = "org.jetbrains.jps.portable.caches";
   public static final boolean PORTABLE_CACHES = Boolean.getBoolean(PORTABLE_CACHES_PROPERTY);
 
@@ -29,7 +29,7 @@ public final class ProjectStamps implements StorageOwner{
   @SuppressWarnings("unused")
   @Deprecated
   @ApiStatus.Internal
-  public ProjectStamps(File dataStorageRoot, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
+  public ProjectStamps(@NotNull File dataStorageRoot, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
     this(dataStorageRoot.toPath(), targetsState.impl);
   }
 

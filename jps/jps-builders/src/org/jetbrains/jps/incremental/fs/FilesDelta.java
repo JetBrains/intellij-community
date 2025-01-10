@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +27,7 @@ public final class FilesDelta {
   private final ReentrantLock myDataLock = new ReentrantLock();
 
   private final Set<String> myDeletedPaths = CollectionFactory.createFilePathLinkedSet();
-  private final Map<BuildRootDescriptor, Set<File>> myFilesToRecompile = new LinkedHashMap<>();
+  private final Map<BuildRootDescriptor, Set<File>> filesToRecompile = new LinkedHashMap<>();
 
   public void lockData(){
     myDataLock.lock();
@@ -50,7 +50,7 @@ public final class FilesDelta {
     other.lockData();
     try {
       myDeletedPaths.addAll(other.myDeletedPaths);
-      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : other.myFilesToRecompile.entrySet()) {
+      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : other.filesToRecompile.entrySet()) {
         _addToRecompiled(entry.getKey(), entry.getValue());
       }
     }
@@ -66,8 +66,8 @@ public final class FilesDelta {
       for (String path : myDeletedPaths) {
         IOUtil.writeString(path, out);
       }
-      out.writeInt(myFilesToRecompile.size());
-      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : myFilesToRecompile.entrySet()) {
+      out.writeInt(filesToRecompile.size());
+      for (Map.Entry<BuildRootDescriptor, Set<File>> entry : filesToRecompile.entrySet()) {
         IOUtil.writeString(entry.getKey().getRootId(), out);
         final Set<File> files = entry.getValue();
         out.writeInt(files.size());
@@ -89,17 +89,17 @@ public final class FilesDelta {
       while (deletedCount-- > 0) {
         myDeletedPaths.add(IOUtil.readString(in));
       }
-      myFilesToRecompile.clear();
+      filesToRecompile.clear();
       int recompileCount = in.readInt();
       while (recompileCount-- > 0) {
         String rootId = IOUtil.readString(in);
         BuildRootDescriptor descriptor = target.findRootDescriptor(rootId, buildRootIndex);
         Set<File> files;
         if (descriptor != null) {
-          files = myFilesToRecompile.get(descriptor);
+          files = filesToRecompile.get(descriptor);
           if (files == null) {
             files = FileCollectionFactory.createCanonicalFileLinkedSet();
-            myFilesToRecompile.put(descriptor, files);
+            filesToRecompile.put(descriptor, files);
           }
         }
         else {
@@ -142,8 +142,8 @@ public final class FilesDelta {
       if (!myDeletedPaths.isEmpty()) {
         return true;
       }
-      if(!myFilesToRecompile.isEmpty()) {
-        for (Set<File> files : myFilesToRecompile.values()) {
+      if(!filesToRecompile.isEmpty()) {
+        for (Set<File> files : filesToRecompile.values()) {
           if (!files.isEmpty()) {
             return true;
           }
@@ -157,12 +157,13 @@ public final class FilesDelta {
   }
 
 
-  public boolean markRecompile(BuildRootDescriptor root, File file) {
+  public boolean markRecompile(@NotNull BuildRootDescriptor root, @NotNull File file) {
     lockData();
     try {
-      final boolean added = _addToRecompiled(root, file);
+      boolean added = _addToRecompiled(root, file);
       if (added) {
-        if (!myDeletedPaths.isEmpty()) { // optimization
+        // optimization
+        if (!myDeletedPaths.isEmpty()) {
           myDeletedPaths.remove(FileUtil.toCanonicalPath(file.getPath()));
         }
       }
@@ -200,20 +201,15 @@ public final class FilesDelta {
     }
   }
 
-  private boolean _addToRecompiled(BuildRootDescriptor root, File file) {
+  private boolean _addToRecompiled(@NotNull BuildRootDescriptor root, @NotNull File file) {
     if (Utils.IS_TEST_MODE) {
       LOG.info("Marking dirty: " + file.getPath());
     }
-    return _addToRecompiled(root, Collections.singleton(file));
+    return _addToRecompiled(root, List.of(file));
   }
 
-  private boolean _addToRecompiled(BuildRootDescriptor root, Collection<? extends File> filesToAdd) {
-    Set<File> files = myFilesToRecompile.get(root);
-    if (files == null) {
-      files = FileCollectionFactory.createCanonicalFileLinkedSet();
-      myFilesToRecompile.put(root, files);
-    }
-    return files.addAll(filesToAdd);
+  private boolean _addToRecompiled(@NotNull BuildRootDescriptor root, @NotNull Collection<? extends File> filesToAdd) {
+    return filesToRecompile.computeIfAbsent(root, __ -> FileCollectionFactory.createCanonicalFileLinkedSet()).addAll(filesToAdd);
   }
 
   public void addDeleted(File file) {
@@ -221,7 +217,7 @@ public final class FilesDelta {
     lockData();
     try {
       // ensure the file is not marked to recompilation anymore
-      for (Set<File> files : myFilesToRecompile.values()) {
+      for (Set<File> files : filesToRecompile.values()) {
         files.remove(file);
       }
       myDeletedPaths.add(path);
@@ -265,13 +261,18 @@ public final class FilesDelta {
 
   public @NotNull Map<BuildRootDescriptor, Set<File>> getSourcesToRecompile() {
     LOG.assertTrue(myDataLock.isHeldByCurrentThread(), "FilesDelta data must be locked by querying thread");
-    return myFilesToRecompile;
+    return filesToRecompile;
+  }
+
+  public @NotNull Collection<Set<File>> getSourceSetsToRecompile() {
+    LOG.assertTrue(myDataLock.isHeldByCurrentThread(), "FilesDelta data must be locked by querying thread");
+    return filesToRecompile.values();
   }
 
   public boolean isMarkedRecompile(BuildRootDescriptor rd, File file) {
     lockData();
     try {
-      final Set<File> files = myFilesToRecompile.get(rd);
+      final Set<File> files = filesToRecompile.get(rd);
       return files != null && files.contains(file);
     }
     finally {
@@ -282,7 +283,19 @@ public final class FilesDelta {
   public @Nullable Set<File> clearRecompile(BuildRootDescriptor root) {
     lockData();
     try {
-      return myFilesToRecompile.remove(root);
+      return filesToRecompile.remove(root);
+    }
+    finally {
+      unlockData();
+    }
+  }
+
+  public void clearRecompile(@NotNull List<BuildRootDescriptor> roots) {
+    lockData();
+    try {
+      for (BuildRootDescriptor root : roots) {
+        filesToRecompile.remove(root);
+      }
     }
     finally {
       unlockData();

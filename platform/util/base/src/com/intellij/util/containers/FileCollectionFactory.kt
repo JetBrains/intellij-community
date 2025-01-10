@@ -77,7 +77,8 @@ object FileHashStrategy : Hash.Strategy<File>, Serializable {
   override fun equals(a: File?, b: File?): Boolean = FileUtilRt.pathsEqual(a?.path, b?.path)
 }
 
-private object PathHashStrategy : Hash.Strategy<Path>, Serializable {
+@Internal
+object PathHashStrategy : Hash.Strategy<Path>, Serializable {
   override fun hashCode(o: Path?): Int = FileUtilRt.pathHashCode(o?.toString())
 
   override fun equals(a: Path?, b: Path?): Boolean = FileUtilRt.pathsEqual(a?.toString(), b?.toString())

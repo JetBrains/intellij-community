@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl.logging;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.function.Function;
 
 public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
   @Override
@@ -45,11 +33,22 @@ public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
 
   @Override
   public void logCompiledFiles(Collection<File> files, String builderId, final String description) throws IOException {
+    logCompiled(files, description, file -> {
+      try {
+        return FileUtilRt.toSystemIndependentName(file.getCanonicalPath());
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
+  }
+
+  private <T> void logCompiled(@NotNull Collection<T> files, String description, @NotNull Function<T, String> toString) {
     logLine(description);
-    final String[] buffer = new String[files.size()];
+    String[] buffer = new String[files.size()];
     int i = 0;
-    for (final File f : files) {
-      buffer[i++] = FileUtil.toSystemIndependentName(f.getCanonicalPath());
+    for (T file : files) {
+      buffer[i++] = toString.apply(file);
     }
     Arrays.sort(buffer);
     for (final String s : buffer) {
@@ -59,12 +58,17 @@ public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
   }
 
   @Override
-  public void logCompiledPaths(Collection<String> paths, String builderId, String description) throws IOException {
-    List<File> files = new ArrayList<>(paths.size());
-    for (String path : paths) {
-      files.add(new File(path));
-    }
-    logCompiledFiles(files, builderId, description);
+  public void logCompiled(@NotNull Collection<Path> files, String builderId, final String description) {
+    logCompiled(files, description, file -> {
+      return FileUtilRt.toSystemIndependentName(file.toAbsolutePath().normalize().toString());
+    });
+  }
+
+  @Override
+  public void logCompiledPaths(@NotNull Collection<String> paths, String builderId, String description) {
+    logCompiled(paths, description, file -> {
+      return FileUtilRt.toSystemIndependentName(Path.of(file).toAbsolutePath().normalize().toString());
+    });
   }
 
   protected abstract void logLine(@NonNls String message);

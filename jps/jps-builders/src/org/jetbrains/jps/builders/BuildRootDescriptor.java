@@ -2,12 +2,12 @@
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.io.FileFilters;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -23,6 +23,11 @@ public abstract class BuildRootDescriptor {
    * Returns the directory of the source root.
    */
   public abstract @NotNull File getRootFile();
+
+  @ApiStatus.Experimental
+  public @NotNull Path getFile() {
+    return getRootFile().toPath();
+  }
 
   /**
    * Returns the target to which this source root belongs.
@@ -40,7 +45,7 @@ public abstract class BuildRootDescriptor {
    * @return the set of excluded directories under this root.
    */
   public @NotNull Set<Path> getExcludedRoots() {
-    return Collections.emptySet();
+    return Set.of();
   }
 
   /**

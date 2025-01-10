@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -23,6 +24,7 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 
 @ApiStatus.Internal
@@ -63,9 +65,10 @@ public final class FileBasedArtifactRootDescriptor extends ArtifactRootDescripto
     if (!file.exists()) return;
     String targetPath;
     if (!FileUtil.filesEqual(file, getRootFile())) {
-      final String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(getRootFile().getPath()), filePath, '/');
+      Path rootFile = getFile();
+      String relativePath = FileUtil.getRelativePath(FileUtilRt.toSystemIndependentName(rootFile.toString()), filePath, '/');
       if (relativePath == null || relativePath.startsWith("..")) {
-        throw new ProjectBuildException(new AssertionError(filePath + " is not under " + getRootFile().getPath()));
+        throw new ProjectBuildException(new AssertionError(filePath + " is not under " + rootFile));
       }
       targetPath = JpsArtifactPathUtil.appendToPath(outputPath, relativePath);
     }

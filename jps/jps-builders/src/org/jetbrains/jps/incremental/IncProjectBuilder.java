@@ -177,7 +177,7 @@ public final class IncProjectBuilder {
               final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
               delta.lockData();
               try {
-                for (Set<File> files : delta.getSourcesToRecompile().values()) {
+                for (Set<File> files : delta.getSourceSetsToRecompile()) {
                   for (File file : files) {
                     if (scope.isAffected(target, file)) {
                       notifier.signalHasChanges();
@@ -1609,8 +1609,8 @@ public final class IncProjectBuilder {
     }
     finally {
       buildProgress.onTargetChunkFinished(chunk, context);
-      for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().clearTempRoots(context)) {
-        context.getProjectDescriptor().fsState.clearRecompile(rd);
+      for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().clearTempRoots(context)) {
+        projectDescriptor.fsState.clearRecompile(descriptor);
       }
       try {
         // restore deleted paths that were not processed by 'integrate'
@@ -1621,7 +1621,7 @@ public final class IncProjectBuilder {
             final Collection<String> paths = entry.getValue();
             if (paths != null) {
               for (String path : paths) {
-                fsState.registerDeleted(context, target, new File(path), null);
+                fsState.registerDeleted(context, target, Path.of(path), null);
               }
             }
           }

@@ -50,5 +50,5 @@ public interface BuildRootIndex {
 
   boolean isDirectoryAccepted(@NotNull Path dir, @NotNull BuildRootDescriptor descriptor);
 
-  boolean isFileAccepted(@NotNull File file, @NotNull BuildRootDescriptor descriptor);
+  boolean isFileAccepted(@NotNull Path file, @NotNull BuildRootDescriptor descriptor);
 }

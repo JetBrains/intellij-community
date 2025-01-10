@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -477,11 +477,11 @@ final class BuildSession implements Runnable, CanceledStatus {
     final BuildRootIndex buildRootIndex = projectDescriptor.getBuildRootIndex();
     BuildDataManager dataManager = projectDescriptor.dataManager;
     for (String deleted : event.getDeletedPathsList()) {
-      final File file = new File(deleted);
-      Collection<BuildRootDescriptor> descriptor = buildRootIndex.findAllParentDescriptors(file, null, null);
+      Path file = Path.of(deleted);
+      Collection<BuildRootDescriptor> descriptor = buildRootIndex.findAllParentDescriptors(file.toFile(), null, null);
       if (!descriptor.isEmpty()) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Applying deleted path from fs event: " + file.getPath());
+          LOG.debug("Applying deleted path from fs event: " + file);
         }
         for (BuildRootDescriptor rootDescriptor : descriptor) {
           StampsStorage<?> stampStorage = dataManager.getFileStampStorage(rootDescriptor.getTarget());
@@ -489,7 +489,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
       else if (LOG.isDebugEnabled()) {
-        LOG.debug("Skipping deleted path: " + file.getPath());
+        LOG.debug("Skipping deleted path: " + file);
       }
     }
 
