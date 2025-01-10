@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeActionsInitiatorAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

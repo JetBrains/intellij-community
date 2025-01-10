@@ -14,6 +14,7 @@ class SeItemEntity(override val eid: EID) : Entity {
   val item: SeItem?
     get() = this[Item] as? SeItem
 
+  @ApiStatus.Internal
   companion object : EntityType<SeItemEntity>(SeItemEntity::class.java.name, "com.intellij", {
     SeItemEntity(it)
   }) {

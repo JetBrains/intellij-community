@@ -181,6 +181,9 @@ f:com.intellij.openapi.observable.util.PropertyOperationUtil
 - *sf:backwardFilter(com.intellij.openapi.observable.properties.ObservableMutableProperty,kotlin.jvm.functions.Function1):com.intellij.openapi.observable.properties.ObservableMutableProperty
 *:com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 - a:getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
+*:com.intellij.openapi.options.ObservableOptionEditor
+- com.intellij.openapi.options.OptionEditor
+- a:getResultFlow():kotlinx.coroutines.flow.StateFlow
 *:com.intellij.openapi.options.OptionEditor
 - a:getComponent():javax.swing.JComponent
 - a:result():java.lang.Object

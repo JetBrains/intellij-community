@@ -414,6 +414,9 @@ f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.components.ValidationType
 - s:values():com.intellij.ui.dsl.builder.components.ValidationType[]
+f:com.intellij.util.SwingBindingsKt
+- *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
+- *sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
 *f:com.intellij.util.ui.RestartDialogImpl
 - *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V

@@ -8,7 +8,9 @@ import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class SeActionsProviderFactory: SeItemsProviderFactory {
   override fun getItemsProvider(project: Project): SeItemsProvider {
     // TODO: This is unacceptable here, rewrite ActionsContributor

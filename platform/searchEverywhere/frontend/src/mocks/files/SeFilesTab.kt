@@ -27,6 +27,7 @@ class SeFilesTab(val helper: SeTabHelper): SeTab {
   override fun getFilterEditor(): ObservableOptionEditor<SeFilterData> = SeFilesFilterEditor()
 }
 
+@Internal
 class SeFilesFilterEditor : ObservableOptionEditor<SeFilterData> {
   private var current: SeFilesFilterData? = null
 

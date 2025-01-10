@@ -10,5 +10,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 @Serializable
 class SeSessionEntity(override val eid: EID) : Entity {
+  @Internal
   companion object : EntityType<SeSessionEntity>(SeSessionEntity::class, ::SeSessionEntity)
 }

@@ -3,8 +3,10 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.Processor
+import org.jetbrains.annotations.ApiStatus.Internal
 
 interface WeightedSearchEverywhereContributor<I : Any> : SearchEverywhereContributor<I>, SearchEverywhereAsyncContributor<I> {
+  @get:Internal
   override val synchronousContributor: SearchEverywhereContributor<I>
     get() = this
 

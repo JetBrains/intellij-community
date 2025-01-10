@@ -16772,6 +16772,7 @@ f:com.intellij.util.ScrambledInputStream
 - read(B[],I,I):I
 - reset():V
 - skip(J):J
+f:com.intellij.util.SwingBindingsKt
 f:com.intellij.util.UriUtilKt
 - sf:changeQuery(java.net.URI,java.net.URI,java.lang.String):java.net.URI
 - sf:fromRawParts(java.net.URI,java.lang.String,Z,java.lang.String,java.lang.String,java.lang.String,I,java.lang.String,java.lang.String,java.lang.String,java.lang.String):java.net.URI

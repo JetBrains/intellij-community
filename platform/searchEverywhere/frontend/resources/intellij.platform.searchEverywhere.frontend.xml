@@ -6,7 +6,8 @@
   <actions>
     <action id="SearchEverywhereActionsInitiatorAction"
             class="com.intellij.platform.searchEverywhere.frontend.actions.SeActionsInitiatorAction"
-            text="Search Actions in SE 2.0"/>
+            text="Search Actions in SE 2.0"
+            internal="true"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

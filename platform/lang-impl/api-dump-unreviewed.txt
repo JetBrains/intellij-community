@@ -7994,8 +7994,7 @@ a:com.intellij.ide.actions.BigPopupUI
 - p:updateViewType(com.intellij.ide.actions.BigPopupUI$ViewType):V
 pc:com.intellij.ide.actions.BigPopupUI$SearchField
 - com.intellij.ui.components.fields.ExtendableTextField
-- <init>():V
-- getPreferredSize():java.awt.Dimension
+- p:<init>():V
 e:com.intellij.ide.actions.BigPopupUI$ViewType
 - java.lang.Enum
 - sf:FULL:com.intellij.ide.actions.BigPopupUI$ViewType

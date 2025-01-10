@@ -12,6 +12,7 @@ class SeBackendItemDataProvidersHolderEntity(override val eid: EID) : Entity {
   val providers: Map<SeProviderId, SeItemDataProvider>
     get() = this[Providers]
 
+  @Internal
   companion object : EntityType<SeBackendItemDataProvidersHolderEntity>(SeBackendItemDataProvidersHolderEntity::class.java.name, "com.intellij", {
     SeBackendItemDataProvidersHolderEntity(it)
   }) {

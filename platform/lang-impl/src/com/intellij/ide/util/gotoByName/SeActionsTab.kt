@@ -28,6 +28,7 @@ class SeActionsTab(private val helper: SeTabHelper): SeTab {
   override fun getFilterEditor(): ObservableOptionEditor<SeFilterData> = SeActionsFilterEditor()
 }
 
+@ApiStatus.Internal
 class SeActionsFilterEditor : ObservableOptionEditor<SeFilterData> {
   private var current: SeActionsFilterData? = null
 
