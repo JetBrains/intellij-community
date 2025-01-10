@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.scale.JBUIScale
@@ -328,6 +329,27 @@ internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> 
   return result!!
 }
 
+private val TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY = Key.create<Unit>("TERMINAL_EDITOR_SIZE_CHANGING_ACTION")
+
+/**
+ * Indicates that action that may modify scroll offset or editor size is in progress.
+ * It should be used only to indicate internal programmatic actions that are not explicitly caused by the user interaction.
+ * For example, terminal output text update, or adding inlays to create insets between command blocks.
+ */
+internal var Editor.isTerminalOutputScrollChangingActionInProgress: Boolean
+  get() = getUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY) != null
+  private set(value) = putUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY, if (value) Unit else null)
+
+internal inline fun <T> Editor.doTerminalOutputScrollChangingAction(action: () -> T): T {
+  isTerminalOutputScrollChangingActionInProgress = true
+  try {
+    return action()
+  }
+  finally {
+    isTerminalOutputScrollChangingActionInProgress = false
+  }
+}
+
 /**
  * Scroll to bottom if we were at the bottom before executing the [action]
  */
@@ -345,16 +367,22 @@ internal inline fun <T> Editor.doWithScrollingAware(action: () -> T): T {
 }
 
 @RequiresEdt
-internal fun Editor.scrollToBottom() {
-  val scrollingModel = scrollingModel
-  // disable animation to perform scrolling atomically
+internal inline fun <T> Editor.doWithoutScrollingAnimation(action: () -> T): T {
   scrollingModel.disableAnimation()
-  try {
-    val visibleArea = scrollingModel.visibleArea
-    scrollingModel.scrollVertically(contentComponent.height - visibleArea.height)
+  return try {
+    action()
   }
   finally {
     scrollingModel.enableAnimation()
+  }
+}
+
+@RequiresEdt
+internal fun Editor.scrollToBottom() {
+  // disable animation to perform scrolling atomically
+  doWithoutScrollingAnimation {
+    val visibleArea = scrollingModel.visibleArea
+    scrollingModel.scrollVertically(contentComponent.height - visibleArea.height)
   }
 }
 

@@ -11,7 +11,6 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
-import org.jetbrains.plugins.terminal.block.ui.scrollToBottom
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -34,6 +33,7 @@ internal open class TerminalEventsHandlerImpl(
   private val encodingManager: TerminalKeyEncodingManager,
   private val terminalSessionFuture: CompletableFuture<TerminalSession>,
   private val settings: JBTerminalSystemSettingsProviderBase,
+  private val scrollingModel: TerminalOutputScrollingModel?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
@@ -46,7 +46,8 @@ internal open class TerminalEventsHandlerImpl(
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
     }
-    outputModel.editor.scrollToBottom()
+
+    scrollingModel?.scrollToCursor()
 
     if (ignoreNextKeyTypedEvent) {
       e.consume()

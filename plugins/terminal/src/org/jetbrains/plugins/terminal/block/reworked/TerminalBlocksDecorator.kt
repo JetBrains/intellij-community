@@ -13,10 +13,7 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.block.ui.BlockSeparatorRenderer
-import org.jetbrains.plugins.terminal.block.ui.TerminalPromptLeftAreaRenderer
-import org.jetbrains.plugins.terminal.block.ui.TerminalPromptSeparatorRenderer
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi
+import org.jetbrains.plugins.terminal.block.ui.*
 
 internal class TerminalBlocksDecorator(
   private val outputModel: TerminalOutputModel,
@@ -32,22 +29,28 @@ internal class TerminalBlocksDecorator(
   init {
     coroutineScope.launch(Dispatchers.EDT) {
       blocksModel.events.collect { event ->
-        val block = event.block
-        when (event) {
-          is TerminalBlockStartedEvent -> {
-            decorations[block.id] = createPromptDecoration(block)
-          }
-          is TerminalBlockFinishedEvent -> {
-            val decoration = decorations[block.id] ?: error("Decoration not found for block $block")
-            disposeDecoration(decoration)
-            decorations[block.id] = createFinishedBlockDecoration(block)
-          }
-          is TerminalBlockRemovedEvent -> {
-            val decoration = decorations[block.id] ?: error("Decoration not found for block $block")
-            disposeDecoration(decoration)
-            decorations.remove(block.id)
-          }
+        editor.doTerminalOutputScrollChangingAction {
+          handleBlocksModelEvent(event)
         }
+      }
+    }
+  }
+
+  private fun handleBlocksModelEvent(event: TerminalBlocksModelEvent) {
+    val block = event.block
+    when (event) {
+      is TerminalBlockStartedEvent -> {
+        decorations[block.id] = createPromptDecoration(block)
+      }
+      is TerminalBlockFinishedEvent -> {
+        val decoration = decorations[block.id] ?: error("Decoration not found for block $block")
+        disposeDecoration(decoration)
+        decorations[block.id] = createFinishedBlockDecoration(block)
+      }
+      is TerminalBlockRemovedEvent -> {
+        val decoration = decorations[block.id] ?: error("Decoration not found for block $block")
+        disposeDecoration(decoration)
+        decorations.remove(block.id)
       }
     }
   }

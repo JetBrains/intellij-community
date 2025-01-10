@@ -16,7 +16,7 @@ import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
-import org.jetbrains.plugins.terminal.block.ui.doWithScrollingAware
+import org.jetbrains.plugins.terminal.block.ui.doTerminalOutputScrollChangingAction
 
 /**
  * [maxOutputLength] limits the length of the editor document. Zero means unlimited length.
@@ -53,7 +53,7 @@ internal class TerminalOutputModelImpl(
 
   override fun updateContent(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
     CommandProcessor.getInstance().runUndoTransparentAction {
-      editor.doWithScrollingAware {
+      editor.doTerminalOutputScrollChangingAction {
         contentUpdateInProgress = true
         try {
           // If absolute line index is far in the past - in the already trimmed part of the output,

@@ -36,7 +36,6 @@ import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSessio
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
-import org.jetbrains.plugins.terminal.block.ui.stickScrollBarToBottom
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -98,7 +97,8 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalSessionFuture,
-      coroutineScope.childScope("TerminalOutputModel")
+      coroutineScope.childScope("TerminalOutputModel"),
+      withVerticalScroll = true
     )
 
     alternateBufferModel = createOutputModel(
@@ -108,7 +108,8 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalSessionFuture,
-      coroutineScope.childScope("TerminalAlternateBufferModel")
+      coroutineScope.childScope("TerminalAlternateBufferModel"),
+      withVerticalScroll = false
     )
 
     val blocksModel = TerminalBlocksModelImpl(outputModel)
@@ -199,12 +200,18 @@ internal class ReworkedTerminalView(
     encodingManager: TerminalKeyEncodingManager,
     terminalSessionFuture: CompletableFuture<TerminalSession>,
     coroutineScope: CoroutineScope,
+    withVerticalScroll: Boolean,
   ): TerminalOutputModel {
     val model = TerminalOutputModelImpl(editor, maxOutputLength)
 
     TerminalCursorPainter.install(model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
 
-    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, model, encodingManager, terminalSessionFuture, settings)
+    val scrollingModel = if (withVerticalScroll) {
+      TerminalOutputScrollingModelImpl(model, coroutineScope.childScope("TerminalOutputScrollingModel"))
+    }
+    else null
+
+    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, model, encodingManager, terminalSessionFuture, settings, scrollingModel)
     val parentDisposable = coroutineScope.asDisposable()
     setupKeyEventDispatcher(model.editor, eventsHandler, parentDisposable)
     setupMouseListener(model.editor, sessionModel, settings, eventsHandler, parentDisposable)
@@ -217,7 +224,6 @@ internal class ReworkedTerminalView(
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
-    stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
 
     Disposer.register(parentDisposable) {
       EditorFactory.getInstance().releaseEditor(editor)
