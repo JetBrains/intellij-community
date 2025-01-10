@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -362,9 +361,12 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     throw new TimeoutException();
   }
 
+  /**
+   * @deprecated Always false
+   */
+  @Deprecated
   public static boolean areParameterTemplatesEnabledOnCompletion() {
-    return Registry.is("java.completion.argument.live.template") &&
-           !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
+    return false;
   }
 
   public static @NotNull ParameterInfoControllerBase createParameterInfoController(@NotNull Project project,

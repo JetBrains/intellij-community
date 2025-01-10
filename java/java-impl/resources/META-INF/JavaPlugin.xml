@@ -2787,6 +2787,14 @@
     <registryKey key="java.completion.command.enabled" defaultValue="false"
                  description="Enable experimental support command completion" restartRequired="true"/>
 
+    <registryKey key="java.completion.argument.live.template" defaultValue="false"
+                 description="When completing a method call, start a live template with all arguments"/>
+    <registryKey key="java.completion.argument.live.template.completion" defaultValue="false"
+                 description="If java.completion.argument.live.template is enabled, show completion for method arguments immediately"/>
+    <registryKey key="java.completion.show.constructors" defaultValue="false"
+                 description="Show separate constructors when completing constructor call, instead of a single class name"/>
+    <registryKey key="java.javadoc.use.templates" defaultValue="true"
+                 description="Use code templates to generate JavaDoc stubs"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

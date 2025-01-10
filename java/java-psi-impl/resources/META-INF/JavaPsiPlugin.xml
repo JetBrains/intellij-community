@@ -147,6 +147,15 @@
     <registryKey key="java.empty.enum.constructor.ref" defaultValue="true"
                  description="Make enum constructor reference have empty range at the end of the enum field identifier"/>
     <lang.dumb.mode.supported language="JAVA" implementationClass="com.intellij.lang.java.JavaLanguageDumbAware"/>
+
+    <registryKey key="java.correct.class.type.by.place.resolve.scope" defaultValue="true"
+                 description="When resolving Java references, use the resolve scope of the currently processed source file"/>
+    <registryKey key="javac.unchecked.subtyping.during.incorporation" defaultValue="true"
+                 description="Javac performs unchecked subtyping during incorporation, accepting code which is rejected by the spec and by the eclipse compiler"/>
+    <registryKey key="javac.fresh.variables.for.captured.wildcards.only" defaultValue="true"
+                 description="JLS 18.5.2: if R 0 is a parameterized type, G&lt;A1, ..., An&gt;, and one of A1, ..., An is a wildcard, then, for fresh inference variables B1, ..., Bn ... Javac creates fresh variables only for i: Ai is a wildcard"/>
+    <registryKey key="JDK8042508.bug.fixed" defaultValue="false"
+                 description="Disable check for type variable until javac bug is fixed" />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

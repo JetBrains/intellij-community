@@ -318,10 +318,15 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return template;
   }
 
+  public static boolean areParameterTemplatesEnabledOnCompletion() {
+    return Registry.is("java.completion.argument.live.template") &&
+           !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
+  }
+
   public static boolean startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
     if (method.getParameterList().isEmpty() ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
-        !ParameterInfoControllerBase.areParameterTemplatesEnabledOnCompletion()) {
+        !areParameterTemplatesEnabledOnCompletion()) {
       return false;
     }
 
