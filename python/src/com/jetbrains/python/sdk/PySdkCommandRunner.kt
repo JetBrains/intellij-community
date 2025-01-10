@@ -34,7 +34,7 @@ internal fun runCommandLine(commandLine: GeneralCommandLine): Result<String> {
 
   return processOutput(
     commandOutput,
-    commandLine.commandLineString,
+    commandLine.exePath,
     emptyList()
   )
 }
