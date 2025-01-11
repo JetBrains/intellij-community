@@ -51,6 +51,7 @@ public final class BuildDataManager {
   private static final String SRC_TO_OUTPUT_FILE_NAME = "data";
 
   private final @NotNull ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>();
+  // not used for a new single-db storage
   private final @NotNull ConcurrentMap<BuildTarget<?>, SourceToOutputMappingWrapper> buildTargetToSourceToOutputMapping = new ConcurrentHashMap<>();
   private final @Nullable ExperimentalBuildDataManager newDataManager;
 
@@ -312,12 +313,13 @@ public final class BuildDataManager {
         }
       }
       finally {
-        SourceToOutputMappingWrapper sourceToOutput = buildTargetToSourceToOutputMapping.remove(target);
-        if (sourceToOutput != null && sourceToOutput.myDelegate != null) {
-          sourceToOutput.myDelegate.close();
+        if (newDataManager == null) {
+          SourceToOutputMappingWrapper sourceToOutput = buildTargetToSourceToOutputMapping.remove(target);
+          if (sourceToOutput != null && sourceToOutput.myDelegate != null) {
+            sourceToOutput.myDelegate.close();
+          }
         }
-
-        if (newDataManager != null) {
+        else {
           newDataManager.closeTargetMaps(target);
         }
       }
@@ -348,9 +350,11 @@ public final class BuildDataManager {
 
     try {
       allTargetStorages(asyncTaskCollector).clean();
-      buildTargetToSourceToOutputMapping.clear();
       myTargetStorages.clear();
-      if (newDataManager != null) {
+      if (newDataManager == null) {
+        buildTargetToSourceToOutputMapping.clear();
+      }
+      else {
         newDataManager.removeAllMaps();
       }
     }
@@ -541,8 +545,13 @@ public final class BuildDataManager {
     Tracer.Span flush = Tracer.start("closeSourceToOutputStorages");
 
     IOOperation.execAll(IOException.class, Iterators.map(targets, target -> {
-      SourceToOutputMappingWrapper wrapper = buildTargetToSourceToOutputMapping.remove(target);
-      return IOOperation.adapt(wrapper != null ? wrapper.myDelegate : null, StorageOwner::close);
+      if (newDataManager == null) {
+        SourceToOutputMappingWrapper wrapper = buildTargetToSourceToOutputMapping.remove(target);
+        return IOOperation.adapt(wrapper == null ? null : wrapper.myDelegate, StorageOwner::close);
+      }
+      else {
+        return () -> newDataManager.closeTargetMaps(target);
+      }
     }));
 
     flush.complete();

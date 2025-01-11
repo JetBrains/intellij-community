@@ -14,6 +14,14 @@ internal class ExperimentalBuildDataManager(
 ) {
   private val targetToMapManager = ConcurrentHashMap<BuildTarget<*>, PerTargetMapManager>()
 
+  private val typeAwareRelativizer = relativizer.typeAwareRelativizer ?: object : PathTypeAwareRelativizer {
+    override fun toRelative(path: String, type: RelativePathType) = relativizer.toRelative(path)
+
+    override fun toRelative(path: Path, type: RelativePathType) = relativizer.toRelative(path)
+
+    override fun toAbsolute(path: String, type: RelativePathType) = relativizer.toFull(path)
+  }
+
   /**
    * A map not scoped to a target is problematic because we cannot transfer built target bytecode with JPS build data.
    * Normally, a source file in a module isn't expected to compile into multiple output directories.
@@ -34,13 +42,6 @@ internal class ExperimentalBuildDataManager(
 
   private fun getPerTargetMapManager(target: BuildTarget<*>): PerTargetMapManager {
     return targetToMapManager.computeIfAbsent(target) {
-      val typeAwareRelativizer = relativizer.typeAwareRelativizer ?: object : PathTypeAwareRelativizer {
-        override fun toRelative(path: String, type: RelativePathType) = relativizer.toRelative(path)
-
-        override fun toRelative(path: Path, type: RelativePathType) = relativizer.toRelative(path)
-
-        override fun toAbsolute(path: String, type: RelativePathType) = relativizer.toFull(path)
-      }
       PerTargetMapManager(
         storageManager = storageManager,
         relativizer = typeAwareRelativizer,
