@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.XmlDomBundle
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
+import com.intellij.util.xml.highlighting.DomElementProblemDescriptor
 import com.intellij.util.xml.highlighting.DomElementsInspection
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.model.MavenDomParent
@@ -36,7 +37,7 @@ abstract class MavenParentMissedCoordinatesInspection : DomElementsInspection<Ma
     parent: MavenDomParent,
     tagName: String,
     tagValue: String = "",
-  ) = holder.createProblem(
+  ): DomElementProblemDescriptor? = holder.createProblem(
     parent,
     HighlightSeverity.ERROR,
     XmlDomBundle.message("dom.inspections.child.tag.0.should.be.defined", tagName),

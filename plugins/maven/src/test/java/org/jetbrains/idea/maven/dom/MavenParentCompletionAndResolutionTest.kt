@@ -22,6 +22,7 @@ import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedGroupIdArtefactIdInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
@@ -476,6 +477,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
   fun testHighlightingAbsentGroupId() = runBlocking {
     fixture.enableInspections(LoggingLocalInspectionTool())
+    fixture.enableInspections(MavenParentMissedGroupIdArtefactIdInspection::class.java)
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -502,8 +504,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testHighlightingAbsentArtifactIdMaven4() = runBlocking {
-    assumeMaven4()
+  fun testHighlightingAbsentArtifactId() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -514,6 +515,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
+    fixture.enableInspections(MavenParentMissedGroupIdArtefactIdInspection::class.java)
     checkHighlighting()
   }
 

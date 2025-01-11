@@ -207,6 +207,10 @@
                      key="inspection.missed.parent.version"
                      groupKey="inspection.group" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection"/>
+    <localInspection language="XML" shortName="MavenParentMissedGroupIdArtefactIdInspection" bundle="messages.MavenDomBundle"
+                     key="inspection.missed.parent.groupIdArtifactId"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenParentMissedGroupIdArtefactIdInspection"/>
     <localInspection language="XML" shortName="MavenDuplicatePluginInspection" bundle="messages.MavenDomBundle"
                      key="inspection.duplicate.plugin.declaration"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
