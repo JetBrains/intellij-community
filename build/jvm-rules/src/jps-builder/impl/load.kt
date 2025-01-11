@@ -71,9 +71,9 @@ private class BazelBuildTargetIndex(moduleTarget: ModuleBuildTarget) : BuildTarg
   override fun isDummy(target: BuildTarget<*>) = false
 
   @Suppress("OVERRIDE_DEPRECATION", "removal")
-  override fun getDependenciesRecursively(target: BuildTarget<*>, context: CompileContext): Set<BuildTarget<*>> = emptySet()
+  override fun getDependenciesRecursively(target: BuildTarget<*>, context: CompileContext): Set<BuildTarget<*>> = java.util.Set.of()
 
-  override fun getDependencies(target: BuildTarget<*>, context: CompileContext): Collection<BuildTarget<*>> = emptyList()
+  override fun getDependencies(target: BuildTarget<*>, context: CompileContext): Collection<BuildTarget<*>> = java.util.List.of()
 
   override fun getModuleBasedTargets(module: JpsModule, selector: ModuleTargetSelector): List<ModuleBuildTarget> = targets
 

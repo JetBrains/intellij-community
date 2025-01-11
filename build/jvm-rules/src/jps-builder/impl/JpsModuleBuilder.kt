@@ -1,11 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "UnstableApiUsage", "ReplaceGetOrSet", "HardCodedStringLiteral")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "UnstableApiUsage", "ReplaceGetOrSet", "HardCodedStringLiteral", "RemoveRedundantQualifierName")
 
 package org.jetbrains.bazel.jvm.jps.impl
 
-import com.intellij.openapi.util.text.Formats
 import com.intellij.tracing.Tracer
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.FileHashStrategy
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
@@ -14,16 +12,13 @@ import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.FileProcessor
-import org.jetbrains.jps.builders.ModuleBasedTarget
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl
 import org.jetbrains.jps.builders.impl.BuildTargetChunk
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
-import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.*
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.OutputConsumer
 import org.jetbrains.jps.incremental.fs.CompilationRound
@@ -61,10 +56,10 @@ internal class JpsProjectBuilder(
   private val elapsedTimeNanosByBuilder = ConcurrentHashMap<Builder, AtomicLong>()
   private val numberOfSourcesProcessedByBuilder = ConcurrentHashMap<Builder, AtomicInteger>()
 
-  suspend fun build(context: CompileContextImpl) {
+  fun build(context: CompileContextImpl, moduleTarget: BazelModuleBuildTarget) {
     try {
       val buildSpan = Tracer.start("IncProjectBuilder.runBuild")
-      runBuild(context)
+      runBuild(context, moduleTarget = moduleTarget)
       buildSpan.complete()
     }
     catch (e: StopBuildException) {
@@ -90,7 +85,7 @@ internal class JpsProjectBuilder(
     }
   }
 
-  private suspend fun runBuild(context: CompileContextImpl) {
+  private fun runBuild(context: CompileContextImpl, moduleTarget: BazelModuleBuildTarget) {
     context.setDone(0.0f)
 
     context.addBuildListener(ChainedTargetsBuildListener(context))
@@ -131,21 +126,28 @@ internal class JpsProjectBuilder(
     }
     allModuleLevelBuildersBuildStartedSpan.complete()
 
+    val projectDescriptor = context.projectDescriptor
     var buildProgress: BuildProgress? = null
     try {
-      val projectDescriptor = context.projectDescriptor
       val sortedTargetChunks = projectDescriptor.buildTargetIndex.getSortedTargetChunks(context)
       buildProgress = BuildProgress(
         projectDescriptor.dataManager,
         projectDescriptor.buildTargetIndex,
         sortedTargetChunks,
-        Predicate { isBuildChunkAffected(scope = context.scope, chunk = it) }
+        Predicate { context.scope.isAffected(moduleTarget) }
       )
 
       require(builderRegistry.beforeTasks.isEmpty())
 
       val checkingSourcesSpan = Tracer.start("Building targets")
-      BuildTaskLauncher(context = context, buildProgress = buildProgress, builder = this).buildInParallel()
+      // We don't call closeSourceToOutputStorages as we only built a single target and close the database after the build.
+      // (In any case, for the new storage, it only involves removing the cached map with no actual IO close operation or using MVStore API)
+      val isAffectedSpan = Tracer.start("isAffected")
+      val affected = context.scope.isAffected(moduleTarget)
+      isAffectedSpan.complete()
+      if (affected) {
+        buildTargetChunk(context = context, buildProgress = buildProgress, moduleTarget = moduleTarget)
+      }
       checkingSourcesSpan.complete()
 
       require(builderRegistry.afterTasks.isEmpty())
@@ -155,7 +157,7 @@ internal class JpsProjectBuilder(
       if (buildProgress != null) {
         buildProgress.updateExpectedAverageTime()
         if (isCleanBuild && !Utils.errorsDetected(context) && !context.cancelStatus.isCanceled) {
-          context.projectDescriptor.dataManager.targetStateManager.setLastSuccessfulRebuildDuration(buildProgress.absoluteBuildTime)
+          projectDescriptor.dataManager.targetStateManager.setLastSuccessfulRebuildDuration(buildProgress.absoluteBuildTime)
         }
       }
 
@@ -177,59 +179,13 @@ internal class JpsProjectBuilder(
       .forEach { buildMessage: BuilderStatisticsMessage? -> context.processMessage(buildMessage) }
   }
 
-  private fun runBuildersForChunk(context: CompileContext, chunk: BuildTargetChunk, buildProgress: BuildProgress): Boolean {
-    val targets: Set<BuildTarget<*>> = chunk.targets
-    if (targets.size > 1) {
-      val moduleTargets = LinkedHashSet<ModuleBuildTarget>()
-      for (target in targets) {
-        if (target is ModuleBuildTarget) {
-          moduleTargets.add(target)
-        }
-        else {
-          val targetsString = targets.joinToString(separator = ", ") { it.presentableName }
-          val message = "Cannot build \"${target.presentableName}\" because it is included into a circular dependency ($targetsString))"
-          context.processMessage(CompilerMessage("", BuildMessage.Kind.ERROR, message))
-          return false
-        }
-      }
-
-      return runModuleLevelBuilders(ModuleInfoAwareCompileContextCopy(context, moduleTargets), ModuleChunk(moduleTargets), buildProgress)
-    }
-
-    val target = targets.iterator().next()
-    if (target is ModuleBuildTarget) {
-      @Suppress("RemoveRedundantQualifierName")
-      val mbt = java.util.Set.of(target)
-      return runModuleLevelBuilders(ModuleInfoAwareCompileContextCopy(context, mbt), ModuleChunk(mbt), buildProgress)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    completeRecompiledSourcesSet(context, targets as Collection<BuildTarget<BuildRootDescriptor>>)
-
-    /*
-    In general, the set of files corresponding to changed source file may be different
-    Need this, for example, to keep up with case changes in file names  for case-insensitive OSes:
-    deleting the output before copying is the only way to ensure the case of the output file's name is exactly the same as source file's case
-    */
-    cleanOldOutputs(context, target)
-
-    val builders = BuilderRegistry.getInstance().targetBuilders
-    var builderCount = 0
-    for (builder in builders) {
-      buildTarget(target, context, builder)
-      builderCount++
-      buildProgress.updateProgress(target, (builderCount.toDouble()) / builders.size, context)
-    }
-    return true
-  }
-
-  private fun processDeletedPaths(context: CompileContext, targets: Set<BuildTarget<*>>): Boolean {
+  private fun processDeletedPaths(context: CompileContext, target: ModuleBuildTarget): Boolean {
     var doneSomething = false
     // cleanup outputs
     val targetToRemovedSources = HashMap<BuildTarget<*>, MutableCollection<String>>()
 
     val dirsToDelete = HashSet<Path>()
-    for (target in targets) {
+    for (target in arrayOf(target)) {
       val deletedPaths = context.projectDescriptor.fsState.getAndClearDeletedPaths(target)
       if (deletedPaths.isEmpty()) {
         continue
@@ -242,7 +198,6 @@ internal class JpsProjectBuilder(
 
       val dataManager = context.projectDescriptor.dataManager
       val buildTargetId = dataManager.targetStateManager.getBuildTargetId(target)
-      val shouldPruneEmptyDirs = target is ModuleBasedTarget<*>
       val sourceToOutputStorage = dataManager.getSourceToOutputMap(target)
       val logger = context.loggingManager.projectBuilderLogger
       // actually delete outputs associated with removed paths
@@ -253,7 +208,7 @@ internal class JpsProjectBuilder(
           val deletedOutputPaths = ArrayList<String>()
           val outputToSourceRegistry = dataManager.outputToTargetMapping
           for (output in outputToSourceRegistry.removeTargetAndGetSafeToDeleteOutputs(outputs, buildTargetId, sourceToOutputStorage)) {
-            val deleted = BuildOperations.deleteRecursivelyAndCollectDeleted(Path.of(output), deletedOutputPaths, if (shouldPruneEmptyDirs) dirsToDelete else null)
+            val deleted = BuildOperations.deleteRecursivelyAndCollectDeleted(Path.of(output), deletedOutputPaths, dirsToDelete)
             if (deleted) {
               doneSomething = true
             }
@@ -266,19 +221,17 @@ internal class JpsProjectBuilder(
           }
         }
 
-        if (target is ModuleBuildTarget) {
-          // check if the deleted source was associated with a form
-          val sourceToFormMap = dataManager.getSourceToFormMap(target)
-          val boundForms = sourceToFormMap.getOutputs(deletedSource)
-          if (boundForms != null) {
-            for (formPath in boundForms) {
-              val formFile = Path.of(formPath)
-              if (Files.exists(formFile)) {
-                FSOperations.markDirty(context, CompilationRound.CURRENT, formFile.toFile())
-              }
+        // check if the deleted source was associated with a form
+        val sourceToFormMap = dataManager.getSourceToFormMap(target)
+        val boundForms = sourceToFormMap.getOutputs(deletedSource)
+        if (boundForms != null) {
+          for (formPath in boundForms) {
+            val formFile = Path.of(formPath)
+            if (Files.exists(formFile)) {
+              FSOperations.markDirty(context, CompilationRound.CURRENT, formFile.toFile())
             }
-            sourceToFormMap.remove(deletedSource)
           }
+          sourceToFormMap.remove(deletedSource)
         }
       }
     }
@@ -303,32 +256,16 @@ internal class JpsProjectBuilder(
     return doneSomething
   }
 
-  private fun <R : BuildRootDescriptor, T : BuildTarget<R>> buildTarget(target: T, context: CompileContext, builder: TargetBuilder<*, *>) {
-    if (builder.getTargetTypes().contains(target.getTargetType())) {
-      val holder = object : DirtyFilesHolderBase<R, T>(context) {
-        override fun processDirtyFiles(processor: FileProcessor<R, T>) {
-          context.projectDescriptor.fsState.processFilesToRecompile(context, target, processor)
-        }
-      }
-      val outputConsumer = BuildOutputConsumerImpl(target, context)
-      val start = System.nanoTime()
-      @Suppress("UNCHECKED_CAST")
-      (builder as TargetBuilder<R, T>).build(target, holder, outputConsumer, context)
-      storeBuilderStatistics(builder, System.nanoTime() - start, outputConsumer.numberOfProcessedSources)
-      outputConsumer.fireFileGeneratedEvent()
-      context.checkCanceled()
-    }
-  }
-
   // return true if changed something, false otherwise
-  private fun runModuleLevelBuilders(context: CompileContext, chunk: ModuleChunk, buildProgress: BuildProgress): Boolean {
+  private fun runModuleLevelBuilders(context: CompileContext, moduleTarget: BazelModuleBuildTarget, buildProgress: BuildProgress): Boolean {
+    val chunk = ModuleChunk(setOf(moduleTarget))
     for (category in BuilderCategory.entries) {
       for (builder in builderRegistry.getBuilders(category)) {
         builder.chunkBuildStarted(context, chunk)
       }
     }
 
-    completeRecompiledSourcesSet(context, chunk.targets)
+    completeRecompiledSourcesSet(context, moduleTarget)
 
     var doneSomething = false
     var rebuildFromScratchRequested = false
@@ -382,7 +319,7 @@ internal class JpsProjectBuilder(
             try {
               for (builder in builders) {
                 outputConsumer.setCurrentBuilderName(builder.presentableName)
-                processDeletedPaths(context, chunk.targets)
+                processDeletedPaths(context, moduleTarget)
                 val start = System.nanoTime()
                 val processedSourcesBefore = outputConsumer.getNumberOfProcessedSources()
                 val buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer)
@@ -486,26 +423,26 @@ internal class JpsProjectBuilder(
     }
   }
 
-  internal fun buildTargetChunk(context: CompileContext, chunk: BuildTargetChunk, buildProgress: BuildProgress) {
-    val buildSpan = Tracer.start { "Building ${chunk.presentableName}" }
+  private fun buildTargetChunk(context: CompileContext, buildProgress: BuildProgress, moduleTarget: BazelModuleBuildTarget) {
+    val buildSpan = Tracer.start { "Building ${moduleTarget.presentableName}" }
     val fsState = context.projectDescriptor.fsState
     var doneSomething: Boolean
+    val targets = java.util.Set.of<BuildTarget<*>>(moduleTarget)
     try {
-      context.setCompilationStartStamp(chunk.targets, System.currentTimeMillis())
+      context.setCompilationStartStamp(targets, System.currentTimeMillis())
 
-      sendBuildingTargetMessages(chunk.targets, BuildingTargetProgressMessage.Event.STARTED)
+      sendBuildingTargetMessages(targets, BuildingTargetProgressMessage.Event.STARTED)
       Utils.ERRORS_DETECTED_KEY.set(context, false)
 
-      for (target in chunk.targets) {
-        ensureFsStateInitialized(context = context, target = target)
-      }
+      ensureFsStateInitialized(context = context, target = moduleTarget)
 
-      doneSomething = processDeletedPaths(context, chunk.targets)
+      doneSomething = processDeletedPaths(context, moduleTarget)
 
-      fsState.beforeChunkBuildStart(context, chunk)
+      val chunk = BuildTargetChunk(targets)
+      fsState.beforeChunkBuildStart(context, targets)
 
-      val runBuildersSpan = Tracer.start { "runBuilders " + chunk.presentableName }
-      doneSomething = doneSomething or runBuildersForChunk(context, chunk, buildProgress)
+      val runBuildersSpan = Tracer.start { "runBuilders " + moduleTarget.presentableName }
+      doneSomething = doneSomething or runModuleLevelBuilders(context, moduleTarget, buildProgress)
       runBuildersSpan.complete()
 
       fsState.clearContextRoundData(context)
@@ -523,31 +460,28 @@ internal class JpsProjectBuilder(
     }
     catch (e: Throwable) {
       val message = StringBuilder()
-      message.append(chunk.presentableName).append(": ").append(e.javaClass.getName())
+      message.append(moduleTarget.presentableName).append(": ").append(e.javaClass.getName())
       e.message?.let {
         message.append(": ").append(it)
       }
       throw ProjectBuildException(message.toString(), e)
     }
     finally {
-      buildProgress.onTargetChunkFinished(chunk, context)
+      buildProgress.onTargetChunkFinished(targets, context)
       try {
         // restore deleted paths that were not processed by 'integrate'
         val map = Utils.REMOVED_SOURCES_KEY.get(context)
         if (map != null) {
           for (entry in map.entries) {
-            val paths = entry.value
-            if (paths != null) {
-              for (path in paths) {
-                fsState.registerDeleted(context, entry.key, Path.of(path), null)
-              }
+            for (path in entry.value) {
+              fsState.registerDeleted(context, entry.key, Path.of(path), null)
             }
           }
         }
       }
       finally {
         Utils.REMOVED_SOURCES_KEY.set(context, null)
-        sendBuildingTargetMessages(chunk.targets, BuildingTargetProgressMessage.Event.FINISHED)
+        sendBuildingTargetMessages(targets, BuildingTargetProgressMessage.Event.FINISHED)
         buildSpan.complete()
       }
     }
@@ -670,27 +604,6 @@ private class ChainedTargetsBuildListener(private val context: CompileContextImp
   }
 }
 
-private fun calculateEstimatedBuildTime(
-  projectDescriptor: ProjectDescriptor,
-  target: ModuleBuildTarget,
-  messageHandler: ConsoleMessageHandler,
-): Long {
-  // compute estimated times for dirty targets
-  var affectedTargets = 0
-  val avgTimeToBuild = projectDescriptor.dataManager.targetStateManager.getAverageBuildTime(target.targetType)
-  val estimatedBuildTime = if (avgTimeToBuild > 0) {
-    affectedTargets = 1
-    // 1. in general case, this time should include dependency analysis and cache update times
-    // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
-    avgTimeToBuild
-  }
-  else {
-    0L
-  }
-  messageHandler.info("Affected build targets count: $affectedTargets")
-  return estimatedBuildTime
-}
-
 internal fun reportRebuiltModules(context: CompileContextImpl) {
   val modules = BuildTargetConfiguration.MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.get(context)
   if (modules.isNullOrEmpty()) {
@@ -714,71 +627,48 @@ private fun isTargetOutputCleared(context: CompileContext, target: BuildTarget<*
   }
 }
 
-private class ModuleInfoAwareCompileContextCopy(
-  private val context: CompileContext,
-  private val moduleTargets: Collection<ModuleBuildTarget>,
-) : CompileContext by context {
-  override fun processMessage(message: BuildMessage) {
-    if (message is CompilerMessage) {
-      for (target in moduleTargets) {
-        message.addModuleName(target.module.name)
-      }
-    }
-    context.processMessage(message)
-  }
-
-  @Suppress("OVERRIDE_DEPRECATION")
-  override fun isProjectRebuild() = false
-
-  override fun isCanceled(): Boolean = context.isCanceled
-}
-
 /**
  * if an output file is generated from multiple sources, make sure all of them are added for recompilation
  */
 @Suppress("SpellCheckingInspection")
-private fun <T : BuildTarget<R>, R : BuildRootDescriptor> completeRecompiledSourcesSet(context: CompileContext, targets: Collection<T>) {
+private fun completeRecompiledSourcesSet(context: CompileContext, moduleBuildTarget: BazelModuleBuildTarget) {
   val scope = context.scope
-  for (target in targets) {
-    if (scope.isBuildForced(target)) {
-      // assuming build is either forced for all targets in a chunk or for none of them
-      return
-    }
+  if (scope.isBuildForced(moduleBuildTarget)) {
+    // assuming build is either forced for all targets in a chunk or for none of them
+    return
   }
 
   val projectDescriptor = context.projectDescriptor
-  val affectedOutputs = CollectionFactory.createFilePathSet()
-  val affectedSources = CollectionFactory.createFilePathSet()
+  val affectedOutputs = HashSet<String>()
+  val affectedSources = HashSet<String>()
 
   val mappings = ArrayList<SourceToOutputMapping>()
-  for (target in targets) {
-    projectDescriptor.fsState.processFilesToRecompile(context, target, object : FileProcessor<R, T> {
-      private var srcToOut: SourceToOutputMapping? = null
+  projectDescriptor.fsState.processFilesToRecompile(context, moduleBuildTarget, object : FileProcessor<JavaSourceRootDescriptor, BazelModuleBuildTarget> {
+    private var srcToOut: SourceToOutputMapping? = null
 
-      override fun apply(target: T, file: File, root: R): Boolean {
-        val src = file.invariantSeparatorsPath
-        if (!affectedSources.add(src)) {
-          return true
-        }
-
-        // lazy init
-        var srcToOut = this.srcToOut
-        if (srcToOut == null) {
-          srcToOut = projectDescriptor.dataManager.getSourceToOutputMap(target)
-          mappings.add(srcToOut)
-          this.srcToOut = srcToOut
-        }
-
-        val outs = srcToOut.getOutputs(src) ?: return true
-        // Temporary hack for KTIJ-197
-        // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behavior.
-        // Now it does. It isn't yet obvious whether it is right or wrong behavior. Let's leave old behavior for a
-        // while for safety and keeping kotlin incremental JPS tests green
-        outs.filterTo(affectedOutputs) { "kotlin_module" != it.substringAfterLast('.') }
+    override fun apply(target: BazelModuleBuildTarget, file: File, root: JavaSourceRootDescriptor): Boolean {
+      val src = file.invariantSeparatorsPath
+      if (!affectedSources.add(src)) {
         return true
       }
-    })
-  }
+
+      // lazy init
+      var srcToOut = this.srcToOut
+      if (srcToOut == null) {
+        srcToOut = projectDescriptor.dataManager.getSourceToOutputMap(target)
+        mappings.add(srcToOut)
+        this.srcToOut = srcToOut
+      }
+
+      val outs = srcToOut.getOutputs(src) ?: return true
+      // Temporary hack for KTIJ-197
+      // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behavior.
+      // Now it does. It isn't yet obvious whether it is right or wrong behavior. Let's leave old behavior for a
+      // while for safety and keeping kotlin incremental JPS tests green
+      outs.filterTo(affectedOutputs) { "kotlin_module" != it.substringAfterLast('.') }
+      return true
+    }
+  })
 
   if (affectedOutputs.isEmpty()) {
     return
@@ -797,16 +687,6 @@ private fun <T : BuildTarget<R>, R : BuildRootDescriptor> completeRecompiledSour
         }
       }
     }
-  }
-}
-
-private fun <T : BuildRootDescriptor?> cleanOldOutputs(context: CompileContext, target: BuildTarget<T>) {
-  if (!context.scope.isBuildForced(target)) {
-    BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, object : DirtyFilesHolderBase<T, BuildTarget<T>>(context) {
-      override fun processDirtyFiles(processor: FileProcessor<T, BuildTarget<T>>) {
-        context.projectDescriptor.fsState.processFilesToRecompile(context, target, processor)
-      }
-    })
   }
 }
 
@@ -832,51 +712,3 @@ private fun saveInstrumentedClasses(outputConsumer: ChunkBuildOutputConsumerImpl
     }
   }
 }
-
-internal fun checkRebuildRequired(
-  scope: CompileScope,
-  projectDescriptor: ProjectDescriptor,
-  moduleTarget: ModuleBuildTarget,
-  isDebugEnabled: Boolean,
-  messageHandler: ConsoleMessageHandler,
-): Boolean {
-  val targetStateManager = projectDescriptor.dataManager.targetStateManager
-  val timeThreshold = targetStateManager.getLastSuccessfulRebuildDuration() * 95 / 100 // 95% of last registered clean rebuild time
-  if (timeThreshold <= 0) {
-    if (isDebugEnabled) {
-      messageHandler.debug("Rebuild heuristic: no stats available")
-    }
-    return false
-  }
-
-  // check that this is a whole-project incremental build
-  // checking only JavaModuleBuildTargetType because these target types directly correspond to project modules
-  val type = JavaModuleBuildTargetType.PRODUCTION
-  if (!scope.isAllTargetsOfTypeAffected(type)) {
-    if (isDebugEnabled) {
-      messageHandler.debug("Rebuild heuristic: skipping the check because some targets are excluded from compilation scope," +
-        " e.g. targets of type ${type.typeId}")
-    }
-    return false
-  }
-
-  // compute estimated times for dirty targets
-  val estimatedWorkTime = calculateEstimatedBuildTime(projectDescriptor, moduleTarget, messageHandler)
-  if (isDebugEnabled) {
-    messageHandler.debug("Rebuild heuristic: estimated build time / timeThreshold : $estimatedWorkTime / $timeThreshold")
-  }
-
-  if (estimatedWorkTime < timeThreshold) {
-    return false
-  }
-
-  val message = """
-    Too many files require recompilation, forcing full rebuild.
-     * Estimated build duration (linear): ${Formats.formatDuration(estimatedWorkTime)}
-     * Last successful rebuild duration (linear): ${Formats.formatDuration(targetStateManager.getLastSuccessfulRebuildDuration())}
-     * Rebuild heuristic time threshold: ${Formats.formatDuration(timeThreshold)}
-  """.trimIndent()
-  messageHandler.info(message)
-  return true
-}
-

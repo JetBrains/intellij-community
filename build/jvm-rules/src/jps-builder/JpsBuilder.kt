@@ -5,7 +5,6 @@ package org.jetbrains.bazel.jvm.jps
 
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.tracing.Tracer
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
@@ -23,20 +22,14 @@ import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.*
-import org.jetbrains.jps.incremental.relativizer.PathRelativizer
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.ExperimentalSourceToOutputMapping
-import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
-import org.jetbrains.jps.incremental.storage.RelativePathType
 import org.jetbrains.jps.incremental.storage.StorageManager
 import org.jetbrains.kotlin.config.IncrementalCompilation
-import java.io.File
 import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Set
 import kotlin.coroutines.coroutineContext
-import kotlin.io.path.invariantSeparatorsPathString
 
 // Please note: for performance reasons, we do not set `jps.new.storage.compact.on.close` to true.
 // As a result, the database file on disk may grow to some extent.
@@ -145,22 +138,6 @@ internal suspend fun buildUsingJps(
     try {
       val projectDescriptor = storageInitializer.createProjectDescriptor(messageHandler, jpsModel, moduleTarget, relativizer)
       try {
-        if (storageInitializer.isCheckRebuildRequired) {
-          val rebuildRequiredSpan = Tracer.start("JpsProjectBuilder.checkRebuildRequired")
-          val isRebuildRequired = checkRebuildRequired(
-            scope = compileScope,
-            projectDescriptor = projectDescriptor,
-            moduleTarget = moduleTarget,
-            isDebugEnabled = isDebugEnabled,
-            messageHandler = messageHandler,
-          )
-          rebuildRequiredSpan.complete()
-
-          if (isRebuildRequired) {
-            return false
-          }
-        }
-
         val coroutineContext = coroutineContext
         val context = CompileContextImpl(
           compileScope,
@@ -175,7 +152,7 @@ internal suspend fun buildUsingJps(
           builderRegistry = BuilderRegistry.getInstance(),
           messageHandler = messageHandler,
           isCleanBuild = storageInitializer.isCleanBuild,
-        ).build(context)
+        ).build(context, moduleTarget)
         postBuild(
           messageHandler = messageHandler,
           moduleTarget = moduleTarget,

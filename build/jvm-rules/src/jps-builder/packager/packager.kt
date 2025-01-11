@@ -67,7 +67,7 @@ suspend fun packageToJar(
       }
 
       if (classesToBeDeleted.isNotEmpty()) {
-        messageHandler.out.appendLine("Classes to be deleted: ${classesToBeDeleted.size}")
+        messageHandler.debug("Non-abi classes to be deleted: ${classesToBeDeleted.size}")
       }
     }
   }
