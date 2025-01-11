@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.notebook.editor.BackedVirtualFile;
@@ -300,6 +300,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return new FilesScope(project, files, null);
   }
 
+  /**
+   * @see PsiSearchScopeUtil#restrictScopeTo(SearchScope, FileType...)
+   */
   @Contract(pure = true)
   public static @NotNull GlobalSearchScope getScopeRestrictedByFileTypes(@NotNull GlobalSearchScope scope, FileType @NotNull ... fileTypes) {
     if (scope == EMPTY_SCOPE) {
