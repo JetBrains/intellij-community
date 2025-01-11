@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jdom.Document
@@ -63,6 +63,7 @@ fun main(args: Array<String>) {
     processRoot(communityRoot, isCommunity = true)
     updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
     updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
+    updateCoopRunConfiguration(monorepoRoot, communityRoot)
 }
 
 private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>, resolverSettings: JpsResolverSettings) {
@@ -109,6 +110,20 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
 
     communityModulesFile.writeText(newCommunityModulesXmlContent.render(addXmlDeclaration = true))
 }
+
+private fun updateCoopRunConfiguration(monorepoRoot: File?, communityRoot: File) {
+    val runConfigurationFilePath = ".idea/runConfigurations/Kotlin_Coop__Publish_compiler_for_ide_JARs.xml"
+    val runConfiguration = communityRoot.resolve(runConfigurationFilePath)
+    val originalText = runConfiguration.readText()
+    val resultText = originalText.replace(bootstrapVersionRegex) { matchResult ->
+        "${matchResult.groupValues[1]}$BOOTSTRAP_VERSION${matchResult.groupValues[4]}"
+    }
+
+    runConfiguration.writeText(resultText)
+    monorepoRoot?.resolve(runConfigurationFilePath)?.writeText(resultText)
+}
+
+private val bootstrapVersionRegex = Regex("(-P(deployVersion|build\\.number)=)(.+?)([ \"])")
 
 /**
  * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion]
