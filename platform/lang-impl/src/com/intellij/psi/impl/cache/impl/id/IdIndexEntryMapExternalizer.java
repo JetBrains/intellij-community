@@ -65,6 +65,9 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
 
       IntSet idHashes = scopeMaskToHashes.get(scopeMask);
       int hashesCount = idHashes.size();
+      if (hashesCount == 0) {
+        throw new IllegalStateException("hashesCount(scope: " + scopeMask + ")(=" + hashesCount + ") must be > 0");
+      }
 
       int[] buffer = intsArrayPool.getBuffer(hashesCount);
       idHashes.toArray(buffer);
@@ -75,6 +78,10 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
   @Override
   public @NotNull Map<IdIndexEntry, Integer> read(@NotNull DataInput in) throws IOException {
     int entriesCount = DataInputOutputUtil.readINT(in);
+    if (entriesCount < 0) {
+      throw new IOException("entriesCount: " + entriesCount + " must be >=0");
+    }
+
     if (entriesCount == 0) {
       return Collections.emptyMap();
     }
@@ -85,6 +92,9 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
 
       //copied from IdIndexEntriesExternalizer
       int hashesCount = DataInputOutputUtil.readINT(in);
+      if (hashesCount <= 0) {
+        throw new IOException("hashesCount: " + hashesCount + " must be >0");
+      }
       int prev = 0;
       while (hashesCount-- > 0) {
         final int hash = (int)(DataInputOutputUtil.readLONG(in) + prev);
