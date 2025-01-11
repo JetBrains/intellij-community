@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.util.indexing.InputMapExternalizer;
@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -28,20 +30,29 @@ class IdEntryMapExternalizerTest {
 
 
   @Test
-  void emptyMapSerializesIdenticallyByBothExternalizers() throws IOException {
+  void emptyMapSerializesIdentically_ByBothExternalizers() throws IOException {
     IdEntryToScopeMapImpl emptyMap = new IdEntryToScopeMapImpl();
 
     externalizersAreEquivalent(emptyMap, defaultMapExternalizer, optimizedMapExternalizer);
   }
 
   @Test
-  void generatedMapsSerializeIdenticallyByBothExternalizers() throws IOException {
+  void generatedMapsSerializeIdentically_ByBothExternalizers() throws IOException {
     IdEntryToScopeMapImpl[] generatedMaps = generateMaps().toArray(IdEntryToScopeMapImpl[]::new);
-    for (final IdEntryToScopeMapImpl generatedMap : generatedMaps) {
+    for (IdEntryToScopeMapImpl generatedMap : generatedMaps) {
       externalizersAreEquivalent(generatedMap, defaultMapExternalizer, optimizedMapExternalizer);
     }
   }
 
+  @Test
+  void generatedMapsSerializeIdentically_ByBothExternalizers_evenWithDefaultMapImplementation() throws IOException {
+    IdEntryToScopeMapImpl[] generatedMaps = generateMaps().toArray(IdEntryToScopeMapImpl[]::new);
+    for (IdEntryToScopeMapImpl generatedMap : generatedMaps) {
+      //copy specialized IdEntryToScopeMapImpl to default Map impl: test fallback path
+      Map<IdIndexEntry, Integer> defaultMapImpl = Map.copyOf(generatedMap);
+      externalizersAreEquivalent(defaultMapImpl, defaultMapExternalizer, optimizedMapExternalizer);
+    }
+  }
 
   private static Stream<IdEntryToScopeMapImpl> generateMaps() {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();

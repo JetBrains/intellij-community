@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
@@ -39,9 +39,9 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
   public void save(@NotNull DataOutput out,
                    @NotNull Map<IdIndexEntry, Integer> entries) throws IOException {
     int size = entries.size();
-    DataInputOutputUtil.writeINT(out, size);
-
-    if (size == 0) {
+    
+    if (size == 0) {//fast path:
+      DataInputOutputUtil.writeINT(out, size);
       return;
     }
 
@@ -50,6 +50,7 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
       return;
     }
 
+    DataInputOutputUtil.writeINT(out, size);
 
     Int2ObjectMap<IntSet> scopeMaskToHashes = new Int2ObjectOpenHashMap<>(8);
     idToScopeMap.forEach((idHash, scopeMask) -> {
