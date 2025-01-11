@@ -7,10 +7,11 @@ import kotlinx.coroutines.Deferred
 interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
   val ready : Deferred<Unit>
 
-  suspend fun continueAllThreads(exceptEventThread: Boolean, silent : Boolean)
+  suspend fun continueAllThreads(exceptThreads: Set<Long>, silent : Boolean)
   suspend fun continueHighDebuggerServiceThreads()
 
   fun pauseMixedModeSession(stopEventThreadId: Long)
   suspend fun startMixedStepInto(steppingThreadId: Long, ctx: XSuspendContext): Int
   suspend fun removeTempBreakpoint(brId: Int)
+  fun lowToHighTransitionDuringLastStepHappened() : Boolean
 }
