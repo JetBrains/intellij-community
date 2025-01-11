@@ -1060,7 +1060,7 @@ public final class IncProjectBuilder {
             buildChunkIfAffected(context, context.getScope(), chunk, buildProgress);
           }
           finally {
-            dataManager.closeSourceToOutputStorages(chunk);
+            dataManager.closeSourceToOutputStorages(chunk.getTargets());
             flushCommand.run();
           }
         }
@@ -1263,7 +1263,7 @@ public final class IncProjectBuilder {
               }
             }
             finally {
-              projectDescriptor.dataManager.closeSourceToOutputStorages(task.getChunk());
+              projectDescriptor.dataManager.closeSourceToOutputStorages(task.getChunk().getTargets());
               myFlushCommand.run();
             }
           }
@@ -1584,7 +1584,7 @@ public final class IncProjectBuilder {
 
       doneSomething = processDeletedPaths(context, chunk.getTargets());
 
-      fsState.beforeChunkBuildStart(context, chunk);
+      fsState.beforeChunkBuildStart(context, chunk.getTargets());
 
       Tracer.DelayedSpan runBuildersSpan = Tracer.start(() -> "runBuilders " + chunk.getPresentableName());
       doneSomething |= runBuildersForChunk(context, chunk, buildProgress);
@@ -1610,7 +1610,7 @@ public final class IncProjectBuilder {
       throw new ProjectBuildException(message.toString(), e);
     }
     finally {
-      buildProgress.onTargetChunkFinished(chunk, context);
+      buildProgress.onTargetChunkFinished(chunk.getTargets(), context);
       for (BuildRootDescriptor descriptor : projectDescriptor.getBuildRootIndex().clearTempRoots(context)) {
         projectDescriptor.fsState.clearRecompile(descriptor);
       }

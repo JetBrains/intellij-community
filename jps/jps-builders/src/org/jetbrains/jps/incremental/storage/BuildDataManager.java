@@ -13,7 +13,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.JpsBuildBundle;
-import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.storage.BuildTargetStorages;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
@@ -537,12 +536,13 @@ public final class BuildDataManager {
     }
   }
 
-  public void closeSourceToOutputStorages(@NotNull BuildTargetChunk chunk) throws IOException {
+  @ApiStatus.Internal
+  public void closeSourceToOutputStorages(@NotNull Collection<? extends BuildTarget<?>> targets) throws IOException {
     Tracer.Span flush = Tracer.start("closeSourceToOutputStorages");
 
-    IOOperation.execAll(IOException.class, Iterators.map(chunk.getTargets(), target -> {
+    IOOperation.execAll(IOException.class, Iterators.map(targets, target -> {
       SourceToOutputMappingWrapper wrapper = buildTargetToSourceToOutputMapping.remove(target);
-      return IOOperation.adapt(wrapper != null? wrapper.myDelegate : null, StorageOwner::close);
+      return IOOperation.adapt(wrapper != null ? wrapper.myDelegate : null, StorageOwner::close);
     }));
 
     flush.complete();

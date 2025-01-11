@@ -6,6 +6,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.FreezeDetector;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
@@ -129,10 +131,11 @@ public final class BuildProgress {
     notifyAboutTotalProgress(context);
   }
 
-  public synchronized void onTargetChunkFinished(BuildTargetChunk chunk, CompileContext context) {
+  @ApiStatus.Internal
+  public synchronized void onTargetChunkFinished(@NotNull Collection<? extends BuildTarget<?>> targets, CompileContext context) {
     boolean successful = !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled();
-    long nonDummyTargetsCount = chunk.getTargets().stream().filter(it -> !targetIndex.isDummy(it)).count();
-    for (BuildTarget<?> target : chunk.getTargets()) {
+    long nonDummyTargetsCount = targets.stream().filter(it -> !targetIndex.isDummy(it)).count();
+    for (BuildTarget<?> target : targets) {
       currentProgress.remove(target);
       if (!targetIndex.isDummy(target)) {
         BuildTargetType<?> targetType = target.getTargetType();

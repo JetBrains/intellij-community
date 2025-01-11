@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.*;
-import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.JpsModel;
@@ -31,7 +30,7 @@ import java.util.*;
 public final class BuildFSState {
   public static final int VERSION = 3;
   private static final Logger LOG = Logger.getInstance(BuildFSState.class);
-  private static final Key<Set<? extends BuildTarget<?>>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_targets_");
+  private static final Key<Collection<? extends BuildTarget<?>>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_targets_");
   private static final Key<FilesDelta> NEXT_ROUND_DELTA_KEY = Key.create("_next_round_delta_");
   private static final Key<FilesDelta> CURRENT_ROUND_DELTA_KEY = Key.create("_current_round_delta_");
 
@@ -343,11 +342,14 @@ public final class BuildFSState {
   }
 
   public void clearContextChunk(@Nullable CompileContext context) {
-    setContextTargets(context, null);
+    if (context != null) {
+      CONTEXT_TARGETS_KEY.set(context, null);
+    }
   }
 
-  public void beforeChunkBuildStart(@NotNull CompileContext context, BuildTargetChunk chunk) {
-    setContextTargets(context, chunk.getTargets());
+  @ApiStatus.Internal
+  public void beforeChunkBuildStart(@NotNull CompileContext context, @NotNull Set<? extends BuildTarget<?>> targets) {
+    CONTEXT_TARGETS_KEY.set(context, targets);
   }
 
   public void beforeNextRoundStart(@NotNull CompileContext context, ModuleChunk chunk) {
@@ -446,12 +448,6 @@ public final class BuildFSState {
     }
     finally {
       delta.unlockData();
-    }
-  }
-
-  private static void setContextTargets(@Nullable CompileContext context, @Nullable Set<? extends BuildTarget<?>> targets) {
-    if (context != null) {
-      CONTEXT_TARGETS_KEY.set(context, targets);
     }
   }
 

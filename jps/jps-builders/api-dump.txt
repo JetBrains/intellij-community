@@ -2414,7 +2414,6 @@ f:org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver$Project
 f:org.jetbrains.jps.incremental.fs.BuildFSState
 - sf:VERSION:I
 - <init>(Z):V
-- beforeChunkBuildStart(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.impl.BuildTargetChunk):V
 - beforeNextRoundStart(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.ModuleChunk):V
 - clearAll():V
 - clearContextChunk(org.jetbrains.jps.incremental.CompileContext):V
@@ -2507,7 +2506,6 @@ e:org.jetbrains.jps.incremental.messages.BuildMessage$Kind
 f:org.jetbrains.jps.incremental.messages.BuildProgress
 - <init>(org.jetbrains.jps.incremental.storage.BuildDataManager,org.jetbrains.jps.builders.BuildTargetIndex,java.util.List,java.util.function.Predicate):V
 - getAbsoluteBuildTime():J
-- onTargetChunkFinished(org.jetbrains.jps.builders.impl.BuildTargetChunk,org.jetbrains.jps.incremental.CompileContext):V
 - updateExpectedAverageTime():V
 - updateProgress(org.jetbrains.jps.builders.BuildTarget,D,org.jetbrains.jps.incremental.CompileContext):V
 f:org.jetbrains.jps.incremental.messages.BuilderStatisticsMessage
@@ -2619,7 +2617,6 @@ f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - cleanStaleTarget(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):V
 - cleanTargetStorages(org.jetbrains.jps.builders.BuildTarget):V
 - close():V
-- closeSourceToOutputStorages(org.jetbrains.jps.builders.impl.BuildTargetChunk):V
 - createDependencyGraph(java.nio.file.Path,Z):V
 - flush(Z):V
 - getDataPaths():org.jetbrains.jps.builders.storage.BuildDataPaths
