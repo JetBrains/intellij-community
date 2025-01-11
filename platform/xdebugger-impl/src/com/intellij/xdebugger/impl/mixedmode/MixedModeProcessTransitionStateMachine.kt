@@ -76,6 +76,7 @@ class MixedModeProcessTransitionStateMachine(
 
   private var suspendContextCoroutine: CoroutineScope = coroutineScope.childScope("suspendContextCoroutine", supervisor = true)
   suspend fun onPositionReached(suspendContext: XSuspendContext): XSuspendContext? {
+    // TODO: we should read state only from executor thread
     val currentState = state
     val isHighSuspendContext = !isLowSuspendContext(suspendContext)
     if (isHighSuspendContext) {
@@ -420,11 +421,11 @@ class MixedModeProcessTransitionStateMachine(
     }
   }
 
-  fun get(): State = state
 
   fun throwTransitionIsNotImplemented(event: Event) {
-    TODO("Transition from ${get()::class.simpleName} by event ${event::class.simpleName} is not implemented")
+    TODO("Transition from ${state::class.simpleName} by event ${event::class.simpleName} is not implemented")
   }
 
+  // TODO race can be here since state is written only from the executor (the race should not cause anything serious)
   fun isMixedModeHighProcessReady(): Boolean = state !is OnlyLowStarted
 }
