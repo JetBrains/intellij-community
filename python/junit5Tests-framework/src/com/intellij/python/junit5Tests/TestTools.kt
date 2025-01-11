@@ -23,7 +23,7 @@ val randomBinary: PythonBinary = Path(
 /**
  * Fails if [this] is not [Result.Failure]
  */
-internal fun Result<*, *>.assertFail() {
+fun Result<*, *>.assertFail() {
   when (this) {
     is Result.Failure -> Assertions.assertNotNull(this.error, "No error")
     is Result.Success -> Assertions.fail("Unexpected success: ${this.result}")
