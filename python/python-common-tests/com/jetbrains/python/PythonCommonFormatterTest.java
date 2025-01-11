@@ -610,10 +610,6 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   //DS-5427
   public void testMagicPathEmptyCells() { doTest(false, "formatter/jupyter/", ".ipynb"); }
 
-  //DS-5427
-  public void testMagicPathComment() { doTest(false, "formatter/jupyter/", ".ipynb"); }
-
-
   /**
    * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
    * is possible for Python sources.
