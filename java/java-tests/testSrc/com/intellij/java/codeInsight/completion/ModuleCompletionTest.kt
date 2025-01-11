@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionType
@@ -19,9 +19,9 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile(JarFile.MANIFEST_NAME, "Manifest-Version: 1.0\nAutomatic-Module-Name: all.fours\n", M4)
   }
 
-  fun testFileHeader() = variants("<caret>", "module", "open")
-  fun testFileHeaderAfterComment() = variants("/** a comment */\n<caret>", "module", "open")
-  fun testFileHeaderAfterImport() = variants("import java.lang.Deprecated;\n<caret>", "module", "open")
+  fun testFileHeader() = variants("<caret>", "import", "module", "open")
+  fun testFileHeaderAfterComment() = variants("/** a comment */\n<caret>", "import", "module", "open")
+  fun testFileHeaderAfterImport() = variants("import java.lang.Deprecated;\n<caret>", "import", "module", "open")
   fun testFileHeaderAfterAnnotation() = variants("@Deprecated <caret>", "module", "open")
   fun testFileHeaderAfterOpen() = complete("open <caret>", "open module <caret>")
   fun testFileHeaderAfterModule() = variants("module M { }\n<caret>")
