@@ -3,11 +3,11 @@ package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.util.indexing.InputMapExternalizer;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
@@ -53,6 +53,7 @@ class IdEntryMapExternalizerTest {
       externalizersAreEquivalent(defaultMapImpl, defaultMapExternalizer, optimizedMapExternalizer);
     }
   }
+  // ================================================ infra ================================================================ //
 
   private static Stream<IdEntryToScopeMapImpl> generateMaps() {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
@@ -72,9 +73,9 @@ class IdEntryMapExternalizerTest {
   private static <T> void externalizersAreEquivalent(@NotNull T valueToTest,
                                                      @NotNull DataExternalizer<T> defaultExternalizer,
                                                      @NotNull DataExternalizer<T> optimizedExternalizer) throws IOException {
-    {
-      T valueReadBack = deserializeFromArray(
-        serializeToArray(valueToTest, defaultExternalizer),
+    { //value -(defaultSerializer)-> byte[] -(defaultDeserializer)-> value
+      T valueReadBack = deserializeFromBytes(
+        serializeToBytes(valueToTest, defaultExternalizer),
         defaultExternalizer
       );
 
@@ -82,9 +83,9 @@ class IdEntryMapExternalizerTest {
                  valueReadBack,
                  equalTo(valueToTest));
     }
-    {
-      T valueReadBack = deserializeFromArray(
-        serializeToArray(valueToTest, optimizedExternalizer),
+    { //value -(optimizedSerializer)-> byte[] -(optimizedDeserializer)-> value
+      T valueReadBack = deserializeFromBytes(
+        serializeToBytes(valueToTest, optimizedExternalizer),
         optimizedExternalizer
       );
 
@@ -93,9 +94,9 @@ class IdEntryMapExternalizerTest {
                  equalTo(valueToTest));
     }
 
-    {
-      T valueReadBack = deserializeFromArray(
-        serializeToArray(valueToTest, defaultExternalizer),
+    { //value -(defaultSerializer)-> byte[] -(optimizedDeserializer)-> value
+      T valueReadBack = deserializeFromBytes(
+        serializeToBytes(valueToTest, defaultExternalizer),
         optimizedExternalizer
       );
 
@@ -104,9 +105,9 @@ class IdEntryMapExternalizerTest {
                  equalTo(valueToTest));
     }
 
-    {
-      T valueReadBack = deserializeFromArray(
-        serializeToArray(valueToTest, optimizedExternalizer),
+    { //value -(optimizedSerializer)-> byte[] -(defaultDeserializer)-> value
+      T valueReadBack = deserializeFromBytes(
+        serializeToBytes(valueToTest, optimizedExternalizer),
         defaultExternalizer
       );
 
@@ -117,12 +118,20 @@ class IdEntryMapExternalizerTest {
   }
 
 
-  private static <T> T deserializeFromArray(byte[] array,
+  private static <T> T deserializeFromBytes(byte[] bytes,
                                             @NotNull DataExternalizer<T> externalizer) throws IOException {
-    return externalizer.read(new DataInputStream(new ByteArrayInputStream(array)));
+    try (DataInputStream stream = new DataInputStream(new ByteArrayInputStream(bytes))) {
+      T value = externalizer.read(stream);
+      if (stream.available() > 0) {
+        throw new IllegalStateException(
+          "stream is not read fully: " + stream.available() + " bytes left out of " + bytes.length
+          + " [" + IOUtil.toHexString(bytes) + "]");
+      }
+      return value;
+    }
   }
 
-  private static <T> byte @NotNull [] serializeToArray(@NotNull T value,
+  private static <T> byte @NotNull [] serializeToBytes(@NotNull T value,
                                                        @NotNull DataExternalizer<T> externalizer) throws IOException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try (DataOutputStream output = new DataOutputStream(bos)) {

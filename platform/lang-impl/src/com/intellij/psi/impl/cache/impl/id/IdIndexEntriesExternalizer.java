@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
@@ -19,7 +19,7 @@ final class IdIndexEntriesExternalizer implements DataExternalizer<Collection<Id
   @Override
   public void save(@NotNull DataOutput out, @NotNull Collection<IdIndexEntry> value) throws IOException {
     int size = value.size();
-    final int[] values = spareBufferLocal.getBuffer(size);
+    int[] values = spareBufferLocal.getBuffer(size);
     int ptr = 0;
     for (IdIndexEntry ie : value) {
       values[ptr++] = ie.getWordHashCode();
@@ -27,6 +27,7 @@ final class IdIndexEntriesExternalizer implements DataExternalizer<Collection<Id
     save(out, values, size);
   }
 
+  /** BEWARE: idHashes is _modified_ (sorted) during the method call */
   static void save(@NotNull DataOutput out,
                    int[] idHashes,
                    int size) throws IOException {

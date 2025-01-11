@@ -52,6 +52,10 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
 
     DataInputOutputUtil.writeINT(out, size);
 
+    //Store Map[IdHash -> ScopeMask] as inverted Map[ScopeMask -> List[IdHashes]] because sorted List[IdHashes] could
+    // be stored with diff-compression, which is significant space reduction especially with long lists
+    // (resulting binary format is fully compatible with that default InputMapExternalizer produces)
+
     Int2ObjectMap<IntSet> scopeMaskToHashes = new Int2ObjectOpenHashMap<>(8);
     idToScopeMap.forEach((idHash, scopeMask) -> {
       scopeMaskToHashes.computeIfAbsent(scopeMask, __ -> new IntOpenHashSet()).add(idHash);
@@ -97,7 +101,7 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
       }
       int prev = 0;
       while (hashesCount-- > 0) {
-        final int hash = (int)(DataInputOutputUtil.readLONG(in) + prev);
+        int hash = (int)(DataInputOutputUtil.readLONG(in) + prev);
         map.updateMask(hash, occurenceMask);
         prev = hash;
       }
