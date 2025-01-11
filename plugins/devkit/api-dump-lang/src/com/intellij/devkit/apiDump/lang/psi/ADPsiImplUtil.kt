@@ -13,8 +13,5 @@ internal fun ADClassDeclaration.resolvePsiClass(): PsiClass? {
 }
 
 internal fun <Psi : ADPsiElement> Psi.updateText(newElementName: String): Psi {
-  val node = node
-  node.removeChild(node.firstChildNode)
-  node.addLeaf(ADElementTypes.IDENTIFIER, newElementName, null)
   return this
 }
