@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet
 import com.intellij.psi.tree.IElementType
@@ -26,8 +27,20 @@ internal abstract class ADTypeReferenceImpl(type: IElementType) : ADPsiElementIm
   }
 }
 
-class ReferenceSet(ref: ADTypeReference) : JavaClassReferenceSet(ref.text, ref, 0, true, JavaClassReferenceProvider()) {
+private class ReferenceSet(ref: ADTypeReference) : JavaClassReferenceSet(ref.text, ref, 0, true, JavaClassReferenceProvider()) {
   override fun isAllowDollarInNames(): Boolean = true
+
+  override fun createReference(referenceIndex: Int, referenceText: String, textRange: TextRange, staticImport: Boolean): JavaClassReference =
+    NonCompletableReference(this, textRange, referenceIndex, referenceText, staticImport)
+}
+
+private class NonCompletableReference(
+  referenceSet: JavaClassReferenceSet,
+  range: TextRange,
+  index: Int,
+  text: String, staticImport: Boolean,
+) : JavaClassReference(referenceSet, range, index, text, staticImport) {
+  override fun getVariants(): Array<out Any?> = emptyArray()
 }
 
 private val refKey = Key.create<JavaClassReferenceSet>("JavaClassReferenceSetKey")
