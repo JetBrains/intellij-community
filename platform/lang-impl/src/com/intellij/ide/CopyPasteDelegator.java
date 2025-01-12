@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide;
 
@@ -39,7 +39,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
   }
 
   protected PsiElement @NotNull [] getSelectedElements(@NotNull DataContext dataContext) {
-    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
+    return ObjectUtils.notNull(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
   }
 
   private static PsiElement @NotNull [] validate(PsiElement @Nullable [] selectedElements) {

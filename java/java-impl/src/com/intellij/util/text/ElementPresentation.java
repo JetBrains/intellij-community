@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.core.JavaPsiBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nls;
@@ -241,9 +242,11 @@ public abstract class ElementPresentation {
   }
 
   private static class ForMethod extends ElementPresentation {
-    private static final int FQ_OPTIONS = PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME | PsiFormatUtil.SHOW_NAME |
-                                          PsiFormatUtil.SHOW_PARAMETERS;
-    private static final int NAME_OPTIONS = PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS;
+    private static final int FQ_OPTIONS = PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                          PsiFormatUtilBase.SHOW_FQ_NAME | PsiFormatUtilBase.SHOW_NAME |
+                                          PsiFormatUtilBase.SHOW_PARAMETERS;
+    private static final int NAME_OPTIONS = PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME |
+                                            PsiFormatUtilBase.SHOW_PARAMETERS;
     private final PsiMethod myPsiMethod;
 
     ForMethod(PsiMethod psiMethod) {
@@ -253,12 +256,12 @@ public abstract class ElementPresentation {
 
     @Override
     public @NlsSafe String getQualifiedName() {
-      return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, FQ_OPTIONS, PsiFormatUtil.SHOW_TYPE);
+      return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, FQ_OPTIONS, PsiFormatUtilBase.SHOW_TYPE);
     }
 
     @Override
     public @NlsSafe String getName() {
-      return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, NAME_OPTIONS, PsiFormatUtil.SHOW_TYPE);
+      return PsiFormatUtil.formatMethod(myPsiMethod, PsiSubstitutor.EMPTY, NAME_OPTIONS, PsiFormatUtilBase.SHOW_TYPE);
     }
 
     @Override

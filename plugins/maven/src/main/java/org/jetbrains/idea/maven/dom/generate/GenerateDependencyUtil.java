@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.generate;
 
 import com.intellij.codeInsight.generation.ClassMember;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -52,7 +53,7 @@ public final class GenerateDependencyUtil {
     chooser.setCopyJavadocVisible(false);
     chooser.show();
 
-    if (chooser.getExitCode() == MemberChooser.OK_EXIT_CODE) {
+    if (chooser.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       final MavenDomProjectModelMember[] members = chooser.getSelectedElements(new MavenDomProjectModelMember[0]);
       if (members != null) {
         dependencies.addAll(ContainerUtil.mapNotNull(members, mavenDomProjectModelMember -> mavenDomProjectModelMember.getDependency()));

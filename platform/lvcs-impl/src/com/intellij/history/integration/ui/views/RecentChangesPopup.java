@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui.views;
 
@@ -56,8 +56,8 @@ public final class RecentChangesPopup {
 
   private static final class RecentChangesListCellRenderer implements ListCellRenderer<RecentChange> {
     private final JPanel myPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, UIUtil.DEFAULT_HGAP, 2));
-    private final JLabel myActionLabel = new JLabel("", JLabel.LEFT);
-    private final JLabel myDateLabel = new JLabel("", JLabel.LEFT);
+    private final JLabel myActionLabel = new JLabel("", SwingConstants.LEFT);
+    private final JLabel myDateLabel = new JLabel("", SwingConstants.LEFT);
     private final JPanel mySpacePanel = new JPanel();
 
     RecentChangesListCellRenderer() {

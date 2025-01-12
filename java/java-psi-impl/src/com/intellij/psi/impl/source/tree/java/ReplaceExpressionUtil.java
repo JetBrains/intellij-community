@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -117,13 +117,13 @@ public final class ReplaceExpressionUtil {
       else if (opType == JavaTokenType.LT || opType == JavaTokenType.GT || opType == JavaTokenType.LE || opType == JavaTokenType.GE) {
         return 8;
       }
-      else if (ExpressionParser.SHIFT_OPS.contains(opType)) {
+      else if (BasicExpressionParser.SHIFT_OPS.contains(opType)) {
         return 9;
       }
-      else if (ExpressionParser.ADDITIVE_OPS.contains(opType)) {
+      else if (BasicExpressionParser.ADDITIVE_OPS.contains(opType)) {
         return 10;
       }
-      else if (ExpressionParser.MULTIPLICATIVE_OPS.contains(opType)) {
+      else if (BasicExpressionParser.MULTIPLICATIVE_OPS.contains(opType)) {
         return 11;
       }
       return 8;

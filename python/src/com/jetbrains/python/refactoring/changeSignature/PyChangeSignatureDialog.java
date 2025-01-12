@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.lang.LanguageNamesValidation;
@@ -37,7 +37,11 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +130,7 @@ public class PyChangeSignatureDialog extends
       final PyParameterTableModelItem info = parameters.get(index);
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
-      final boolean isMarkerParameter = name.equals(PySlashParameter.TEXT) || name.equals(PySingleStarParameter.TEXT);
+      final boolean isMarkerParameter = name.equals(PyAstSlashParameter.TEXT) || name.equals(PyAstSingleStarParameter.TEXT);
       if (!isMarkerParameter) {
         final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
         if (parameterNames.contains(nameWithoutStars)) {
@@ -135,7 +139,7 @@ public class PyChangeSignatureDialog extends
         parameterNames.add(nameWithoutStars);
       }
 
-      if (name.equals(PySingleStarParameter.TEXT)) {
+      if (name.equals(PyAstSingleStarParameter.TEXT)) {
         if (hadSingleStar) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
         }
@@ -144,7 +148,7 @@ public class PyChangeSignatureDialog extends
           return PyPsiBundle.message("ANN.named.parameters.after.star");
         }
       }
-      else if (name.equals(PySlashParameter.TEXT)) {
+      else if (name.equals(PyAstSlashParameter.TEXT)) {
         if (hadSlash) {
           return PyPsiBundle.message("ANN.multiple.slash");
         }
@@ -159,7 +163,7 @@ public class PyChangeSignatureDialog extends
           return PyPsiBundle.message("ANN.named.parameters.before.slash");
         }
       }
-      else if (name.startsWith(PySingleStarParameter.TEXT) && !name.startsWith("**")) {
+      else if (name.startsWith(PyAstSingleStarParameter.TEXT) && !name.startsWith("**")) {
         if (hadKeywordContainer) {
           return PyPsiBundle.message("ANN.starred.param.after.kwparam");
         }

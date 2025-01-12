@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.SystemProperties;
@@ -24,7 +24,7 @@ public final class PersistentEnumeratorCache {
       final Integer cachedId = ourEnumerationCache.get(sharedKey(value, owner));
       if (cachedId != null) return cachedId.intValue();
     }
-    return DataEnumeratorEx.NULL_ID;
+    return DataEnumerator.NULL_ID;
   }
 
   private static class CacheKey implements ShareableKey {

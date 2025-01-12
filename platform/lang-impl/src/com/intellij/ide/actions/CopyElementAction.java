@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -103,7 +103,7 @@ public final class CopyElementAction extends AnAction implements DumbAware {
   }
 
   private static void updateForToolWindow(DataContext dataContext, Presentation presentation) {
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     Ref<@NlsActions.ActionText String> actionName = new Ref<>();
     presentation.setEnabled(elements != null && CopyHandler.canCopy(elements, actionName));
     if (!actionName.isNull()) {

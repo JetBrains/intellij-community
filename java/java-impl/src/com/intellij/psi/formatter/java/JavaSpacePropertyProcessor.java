@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -6,7 +6,7 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1110,13 +1110,13 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       else if (i == JavaTokenType.GT || i == JavaTokenType.LT || i == JavaTokenType.GE || i == JavaTokenType.LE) {
         createSpaceInCode(mySettings.SPACE_AROUND_RELATIONAL_OPERATORS);
       }
-      else if (ExpressionParser.ADDITIVE_OPS.contains(i)) {
+      else if (BasicExpressionParser.ADDITIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
       }
-      else if (ExpressionParser.MULTIPLICATIVE_OPS.contains(i)) {
+      else if (BasicExpressionParser.MULTIPLICATIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
       }
-      else if (ExpressionParser.SHIFT_OPS.contains(i)) {
+      else if (BasicExpressionParser.SHIFT_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_SHIFT_OPERATORS);
       }
       else {

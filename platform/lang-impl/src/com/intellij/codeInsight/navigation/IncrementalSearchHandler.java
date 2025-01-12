@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
@@ -176,7 +177,7 @@ public final class IncrementalSearchHandler {
     int y = - hint.getComponent().getPreferredSize().height;
     Point p = SwingUtilities.convertPoint(component,x,y,component.getRootPane().getLayeredPane());
 
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.HIDE_BY_TEXT_CHANGE, 0, false, new HintHint(editor, p).setAwtTooltip(false));
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_TEXT_CHANGE, 0, false, new HintHint(editor, p).setAwtTooltip(false));
 
     PerHintSearchData hintData = new PerHintSearchData(project, label2);
     hintData.searchStart = editor.getCaretModel().getOffset();

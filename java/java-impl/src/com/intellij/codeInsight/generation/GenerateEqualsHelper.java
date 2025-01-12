@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -266,7 +266,7 @@ public class GenerateEqualsHelper implements Runnable {
       if (className != null) {
         PsiClass usedClass = JavaPsiFacade.getInstance(myClass.getProject()).findClass(className, myClass.getResolveScope());
         if (usedClass == null || PsiUtil.getLanguageLevel(myClass).isLessThan(PsiUtil.getLanguageLevel(usedClass))) {
-          manager.setDefaultTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
+          manager.setDefaultTemplate(EqualsHashCodeTemplatesManagerBase.INTELLI_J_DEFAULT);
         }
       }
       run();

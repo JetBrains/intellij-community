@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -146,7 +145,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
       final TextAttributes textAttributes = EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes();
       final Color color = getScrollmarkColor(textAttributes);
       highlighter.addOccurrenceHighlight(e, range.getStartOffset(), range.getEndOffset(), textAttributes,
-                                         HighlightManagerImpl.HIDE_BY_ESCAPE, highlighters, color);
+                                         HighlightManager.HIDE_BY_ESCAPE, highlighters, color);
     }
 
     highlighter.addOccurrenceHighlights(e, new PsiElement[]{((XsltVariable)variable).getNameIdentifier()},

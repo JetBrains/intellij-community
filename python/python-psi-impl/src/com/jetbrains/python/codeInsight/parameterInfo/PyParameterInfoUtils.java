@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -97,7 +99,7 @@ public final class PyParameterInfoUtils {
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
           hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
-          ParameterDescription parameterDescription = new ParameterDescription(PySlashParameter.TEXT, "", last);
+          ParameterDescription parameterDescription = new ParameterDescription(PyAstSlashParameter.TEXT, "", last);
           parameterDescriptions.add(parameterDescription);
         }
 
@@ -105,7 +107,7 @@ public final class PyParameterInfoUtils {
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
           hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
-          ParameterDescription parameterDescription = new ParameterDescription(PySingleStarParameter.TEXT, "", last);
+          ParameterDescription parameterDescription = new ParameterDescription(PyAstSingleStarParameter.TEXT, "", last);
           parameterDescriptions.add(parameterDescription);
         }
 

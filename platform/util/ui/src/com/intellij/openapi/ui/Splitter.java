@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -742,7 +742,7 @@ public class Splitter extends JPanel implements Splittable {
       myResizeEnabled = true;
       mySwitchOrientationEnabled = false;
       setFocusable(false);
-      enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
+      enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
       //setOpaque(false);
       setOrientation(myVerticalSplit);
     }

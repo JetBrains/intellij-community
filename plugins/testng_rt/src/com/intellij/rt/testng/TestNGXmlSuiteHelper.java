@@ -1,7 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.testng;
 
-import org.testng.xml.*;
+import org.testng.xml.XmlClass;
+import org.testng.xml.XmlInclude;
+import org.testng.xml.XmlSuite;
+import org.testng.xml.XmlTest;
+import org.testng.xml.internal.Parser;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -72,7 +76,7 @@ public final class TestNGXmlSuiteHelper {
       String target = "https://testng.org/" + Parser.TESTNG_DTD;
       int dtdIdx = toXml.indexOf(target);
       if (dtdIdx > 0) {
-        toXml = toXml.substring(0, dtdIdx) + Parser.TESTNG_DTD_URL + toXml.substring(dtdIdx + target.length());
+        toXml = toXml.substring(0, dtdIdx) + org.testng.xml.internal.Parser.TESTNG_DTD_URL + toXml.substring(dtdIdx + target.length());
       }
     }
     writeToFile(logger, xmlFile, toXml);

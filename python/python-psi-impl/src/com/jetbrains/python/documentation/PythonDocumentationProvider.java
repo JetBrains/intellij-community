@@ -15,6 +15,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.*;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -248,11 +250,11 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         }
       }
       else if (parameter.getParameter() instanceof PySlashParameter) {
-        paramName = PySlashParameter.TEXT;
+        paramName = PyAstSlashParameter.TEXT;
         showType = false;
       }
       else if (parameter.getParameter() instanceof PySingleStarParameter) {
-        paramName = PySingleStarParameter.TEXT;
+        paramName = PyAstSingleStarParameter.TEXT;
         showType = false;
       }
       else {

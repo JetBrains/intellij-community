@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -171,7 +171,7 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
           }
         }
       }
-      else if (ExpressionParser.SHIFT_OPS.contains(tokenType)) {
+      else if (BasicExpressionParser.SHIFT_OPS.contains(tokenType)) {
         final PsiExpression firstOperand = polyadicExpression.getOperands()[0];
         if (!PsiTreeUtil.isAncestor(firstOperand, expression, false)) {
           return true;

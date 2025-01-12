@@ -17,6 +17,8 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.ast.impl.ParamHelperCore;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCallableParameter;
@@ -108,13 +110,13 @@ public final class ParamHelper {
 
         @Override
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
-          result.append(PySlashParameter.TEXT);
+          result.append(PyAstSlashParameter.TEXT);
           if (!last) result.append(", ");
         }
 
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          result.append(PySingleStarParameter.TEXT);
+          result.append(PyAstSingleStarParameter.TEXT);
           if (!last) result.append(", ");
         }
 
@@ -158,7 +160,7 @@ public final class ParamHelper {
   }
 
   public static boolean couldHaveDefaultValue(@NotNull String parameterName) {
-    return !parameterName.startsWith("*") && !parameterName.equals(PySlashParameter.TEXT);
+    return !parameterName.startsWith("*") && !parameterName.equals(PyAstSlashParameter.TEXT);
   }
 
   public static boolean isSelfArgsKwargsCallable(@Nullable PsiElement element, @NotNull TypeEvalContext context) {

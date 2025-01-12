@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -353,11 +353,11 @@ public final class BegTabbedPaneUI extends MetalTabbedPaneUI {
 
     SwingUtilities.layoutCompoundLabel(tabPane,
                                        metrics, title, icon,
-                                       SwingUtilities.CENTER,
+                                       SwingConstants.CENTER,
                                        // left align title on LEFT/RIGHT placed tab
-                                       tabPlacement == RIGHT || tabPlacement == LEFT ? SwingUtilities.LEFT : SwingUtilities.CENTER,
-                                       SwingUtilities.CENTER,
-                                       SwingUtilities.TRAILING,
+                                       tabPlacement == RIGHT || tabPlacement == LEFT ? SwingConstants.LEFT : SwingConstants.CENTER,
+                                       SwingConstants.CENTER,
+                                       SwingConstants.TRAILING,
                                        tabRect,
                                        iconRect,
                                        textRect,

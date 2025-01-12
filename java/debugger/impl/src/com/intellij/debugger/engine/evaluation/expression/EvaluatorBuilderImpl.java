@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -20,7 +20,7 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -626,7 +626,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
       }
       // unary numeric promotion if applicable
-      else if (ExpressionParser.SHIFT_OPS.contains(operation)) {
+      else if (BasicExpressionParser.SHIFT_OPS.contains(operation)) {
         lResult = handleUnaryNumericPromotion(lType, lResult);
         rResult = handleUnaryNumericPromotion(rType, rResult);
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -76,7 +76,8 @@ public class LockDialog extends OptionsDialog {
 
     myLockTextArea = new JTextArea(7, 25);
     JScrollPane scrollPane =
-      ScrollPaneFactory.createScrollPane(myLockTextArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      ScrollPaneFactory.createScrollPane(myLockTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setMinimumSize(scrollPane.getPreferredSize());
     panel.add(scrollPane, gc);
     commentLabel.setLabelFor(myLockTextArea);

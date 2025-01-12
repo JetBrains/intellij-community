@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.google.common.base.Predicate;
@@ -2399,7 +2399,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void setCaptionIconPosition(boolean left) {
     if (myCaption instanceof TitlePanel titlePanel) {
-      titlePanel.setHorizontalTextPosition(left ? SwingUtilities.RIGHT : SwingUtilities.LEFT);
+      titlePanel.setHorizontalTextPosition(left ? SwingConstants.RIGHT : SwingConstants.LEFT);
     }
   }
 

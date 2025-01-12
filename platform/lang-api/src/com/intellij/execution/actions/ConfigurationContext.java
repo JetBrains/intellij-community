@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -148,7 +148,7 @@ public class ConfigurationContext {
   private static boolean isMultipleSelection(@NotNull DataContext dataContext) {
     Location<?> location = Location.DATA_KEY.getData(dataContext);
     Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     return location != null && locations != null && locations.length > 1 ||
            elements != null && elements.length > 1 ||
@@ -349,7 +349,7 @@ public class ConfigurationContext {
       }
     }
     if (element == null) {
-      final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      final PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       element = elements != null && elements.length > 0 ? elements[0] : null;
     }
     if (element == null) {
