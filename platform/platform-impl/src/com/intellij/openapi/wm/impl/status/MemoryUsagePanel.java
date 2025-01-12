@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.diagnostic.PlatformMemoryUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
@@ -13,6 +14,7 @@ import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.io.DirectByteBufferAllocator;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -102,6 +104,10 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
         public boolean onClick(@NotNull MouseEvent event, int clickCount) {
           //noinspection CallToSystemGC
           System.gc();
+          StorageLockContext.forceDirectMemoryCache();
+          DirectByteBufferAllocator.ALLOCATOR.releaseCachedBuffers();
+          PlatformMemoryUtil.getInstance().trimLinuxNativeHeap();
+
           updateState();
           return true;
         }

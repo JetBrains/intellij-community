@@ -47,6 +47,15 @@ abstract class PlatformMemoryUtil {
 
   protected abstract fun getCurrentProcessMemoryStatsInner(): MemoryStats?
 
+  /**
+   * Releases unused memory from the native allocator (`malloc`/`free`) back to the operating system.
+   * It's a no-op on an OS other than Linux.
+   *
+   * Equivalent to executing `jcmd <pid> System.trim_native_heap`.
+   * See https://bugs.openjdk.org/browse/JDK-8293114
+   */
+  open fun trimLinuxNativeHeap() {}
+
   @ApiStatus.Internal
   class MemoryStats(
     /**
@@ -112,6 +121,7 @@ abstract class PlatformMemoryUtil {
       DummyMemoryUtil()
     }
 
+    @JvmStatic
     fun getInstance(): PlatformMemoryUtil = INSTANCE
   }
 }
@@ -126,6 +136,8 @@ private class DummyMemoryUtil : PlatformMemoryUtil() {
 
 
 private class LinuxMemoryUtil : PlatformMemoryUtil() {
+  private val libc: LibC = Native.load("c", LibC::class.java)
+
   override fun getCurrentProcessMemoryStatsInner(): MemoryStats? {
     val statusFile = Path.of("/proc/self/status")
     if (!statusFile.exists()) {
@@ -162,6 +174,24 @@ private class LinuxMemoryUtil : PlatformMemoryUtil() {
       ramPlusSwapMinusFileMappings = rssAnon + swap,
       fileMappingsRam = rssFile,
     )
+  }
+
+  override fun trimLinuxNativeHeap() {
+    try {
+      // See https://github.com/openjdk/jdk/blob/3145278847428ad3a855a3e2c605b77f74ebe113/src/hotspot/os/linux/os_linux.cpp#L5484
+      libc.malloc_trim(0)
+    } catch (e: UnsatisfiedLinkError) {
+      // Possibly not a glibc?
+      LOG.error("Failed to trim native heap", e)
+    }
+  }
+
+  @Suppress("FunctionName")
+  interface LibC : Library {
+    /**
+     * See https://man7.org/linux/man-pages/man3/malloc_trim.3.html
+     */
+    fun malloc_trim(pad: Long): Boolean
   }
 
   private companion object {

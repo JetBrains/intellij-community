@@ -185,6 +185,15 @@ public final class DirectByteBufferAllocator {
     return allocate(() -> ByteBuffer.allocateDirect(size));
   }
 
+  public void releaseCachedBuffers() {
+    for (ArrayBlockingQueue<ByteBuffer> queue : buffersPool.values()) {
+      ByteBuffer buffer;
+      while ((buffer = queue.poll()) != null) {
+        releaseBufferWithoutCaching(buffer);
+      }
+    }
+  }
+
   public Statistics getStatistics() {
     return new Statistics(
       hits.get(), misses.get(),
