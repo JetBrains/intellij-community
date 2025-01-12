@@ -312,6 +312,7 @@ com.intellij.openapi.vcs.PluginVcsMappingListener
 - a:directoryMappingChanged():V
 com.intellij.openapi.vcs.ProcessEventListener
 - java.util.EventListener
+- processStarted():V
 - processTerminated(I):V
 - startFailed(java.lang.Throwable):V
 a:com.intellij.openapi.vcs.ProjectLevelVcsManager

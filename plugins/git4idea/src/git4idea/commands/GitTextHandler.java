@@ -80,6 +80,7 @@ public abstract class GitTextHandler extends GitHandler {
         return null;
       }
       myHandler = createProcess(myCommandLine);
+      listeners().processStarted();
       return myHandler.getProcess();
     }
   }

@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -357,9 +358,6 @@ public abstract class GitImplBase implements Git {
 
     Project project = handler.project();
     if (project != null && !project.isDefault()) {
-      String workingDir = stringifyWorkingDir(project.getBasePath(), handler.getWorkingDirectory());
-      GitVcsConsoleWriter.getInstance(project).showCommandLine(String.format("[%s] %s", workingDir, handler.printableCommandLine()));
-
       handler.addLineListener(new GitCommandOutputLogger(project, handler));
     }
   }
@@ -374,6 +372,13 @@ public abstract class GitImplBase implements Git {
       myHandler = handler;
       myVcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
       myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+    }
+
+    @Override
+    public void processStarted() {
+      Path workingDir = myHandler.getWorkingDirectory().toPath();
+      String commandLine = String.format("[%s] %s", workingDir, myHandler.printableCommandLine());
+      myVcsConsoleWriter.showCommandLine(commandLine);
     }
 
     @Override
