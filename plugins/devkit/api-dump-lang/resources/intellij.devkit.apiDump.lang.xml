@@ -16,6 +16,9 @@
     <lang.parserDefinition language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.ADParserDefinition"/>
 
     <methodReferencesSearch implementation="com.intellij.devkit.apiDump.lang.search.ADConstructorReferenceSearcher"/>
+
+    <lang.elementManipulator forClass="com.intellij.devkit.apiDump.lang.psi.impl.ADTypeReferenceImplGen"
+                             implementationClass="com.intellij.devkit.apiDump.lang.reference.ADTypeReferenceManipulator"/>
   </extensions>
 
 </idea-plugin>
