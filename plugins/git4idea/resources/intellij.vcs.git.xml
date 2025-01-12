@@ -821,6 +821,8 @@
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
     <backgroundPostStartupActivity implementation="git4idea.commit.signing.GpgAgentConfiguratorStartupActivity"/>
 
+    <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
+                    serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
 
