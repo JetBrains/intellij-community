@@ -655,6 +655,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/infixCall2.before.Main.kt");
             }
 
+            @TestMetadata("infixCallK1.before.Main.kt")
+            public void testInfixCallK1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/infixCallK1.before.Main.kt");
+            }
+
             @TestMetadata("invokeExtension.test")
             public void testInvokeExtension() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtension.test");

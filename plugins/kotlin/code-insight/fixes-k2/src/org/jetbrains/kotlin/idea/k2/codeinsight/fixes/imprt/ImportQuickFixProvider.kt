@@ -200,7 +200,9 @@ object ImportQuickFixProvider {
         this is KaJavaFieldSymbol -> ImportFixHelper.ImportKind.PROPERTY
 
         this is KaNamedFunctionSymbol && isOperator -> ImportFixHelper.ImportKind.OPERATOR
+        this is KaNamedFunctionSymbol && isExtension && isInfix -> ImportFixHelper.ImportKind.INFIX_EXTENSION_FUNCTION
         this is KaNamedFunctionSymbol && isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
+        this is KaNamedFunctionSymbol && isInfix -> ImportFixHelper.ImportKind.INFIX_FUNCTION
         this is KaNamedFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
 
         this is KaNamedClassSymbol && classKind.isObject -> ImportFixHelper.ImportKind.OBJECT

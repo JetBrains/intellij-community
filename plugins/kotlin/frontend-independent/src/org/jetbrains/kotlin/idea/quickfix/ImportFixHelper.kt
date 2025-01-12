@@ -28,9 +28,11 @@ object ImportFixHelper {
         FUNCTION("text.function.0"),
         EXTENSION_PROPERTY("text.extension.property.0"),
         EXTENSION_FUNCTION("text.extension.function.0"),
+        INFIX_FUNCTION("text.infix.function.0"),
+        INFIX_EXTENSION_FUNCTION("text.infix.extension.function.0"),
         OPERATOR("text.operator.0");
 
-        fun toText(number: Int) = KotlinBundle.message(key, if (number == 1) 1 else 2)
+        fun toText(number: Int): String = KotlinBundle.message(key, if (number == 1) 1 else 2)
     }
 
     class ImportInfo<T : Comparable<T>>(val kind: ImportKind, val name: String, val priority: T)

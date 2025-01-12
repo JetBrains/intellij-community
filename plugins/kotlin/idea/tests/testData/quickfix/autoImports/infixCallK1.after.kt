@@ -1,6 +1,6 @@
-// "Import infix extension function 'H.foo'" "true"
+// "Import extension function 'H.foo'" "true"
 // ERROR: Unresolved reference: foo
-// IGNORE_K1
+/* IGNORE_K2 */
 package h
 
 import util.foo
