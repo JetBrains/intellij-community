@@ -158,12 +158,12 @@ public final class DirectByteBufferAllocator {
   }
 
   public void release(@NotNull ByteBuffer buffer) {
-    int capacity = buffer.capacity();
     if (useBuffersCache()) {
       // We allow totalSizeOfBuffersInCache to become slightly more than the limit due to race. It is
       // a tradeoff: we have >1 condition to satisfy (totalSizeOfBuffersInCache and POOL_CAPACITY_PER_BUFFER_SIZE),
       // and satisfying them both atomically requires too much effort -- better give a slack to one of them.
       if (totalSizeOfBuffersInCache.get() < maxBuffersToCacheInBytes) {
+        int capacity = buffer.capacity();
         if (buffersPool.computeIfAbsent(capacity, __ -> new ArrayBlockingQueue<>(POOL_CAPACITY_PER_BUFFER_SIZE)).offer(buffer)) {
           totalSizeOfBuffersInCache.addAndGet(capacity);
           reclaimed.incrementAndGet();
@@ -172,7 +172,11 @@ public final class DirectByteBufferAllocator {
       }
     }
 
-    totalSizeOfBuffersAllocated.addAndGet(-capacity);
+    releaseBufferWithoutCaching(buffer);
+  }
+
+  private void releaseBufferWithoutCaching(@NotNull ByteBuffer buffer) {
+    totalSizeOfBuffersAllocated.addAndGet(-buffer.capacity());
     ByteBufferUtil.cleanBuffer(buffer);
     disposed.incrementAndGet();
   }
