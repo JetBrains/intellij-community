@@ -62,7 +62,6 @@ jvm_library(
     "//platform/boot",
     "//platform/util/text-matching",
     "//java/java-impl-refactorings:impl-refactorings",
-    "//platform/smart-update",
     "//platform/platform-impl:ide-impl",
     "//platform/backend/workspace",
     "//platform/ide-core-impl",

@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.python.ml.features` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ml-features",
+  module_name = "intellij.python.ml.features",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/statistics",
+    "//platform/ml-impl",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//python:python-community-impl",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "//platform/ml-api:ml",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "@lib//:jetbrains-ml-models-python-imports-ranking-model",
+  ]
+)
+### auto-generated section `build intellij.python.ml.features` end

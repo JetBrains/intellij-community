@@ -1327,13 +1327,6 @@ java_import(
 )
 
 java_library(
-  name = "ec4j-core-provided",
-  exports = [":ec4j-core"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
   name = "equalsverifier",
   exports = [
     ":equalsverifier-3_16_1_http_import",
@@ -2321,8 +2314,8 @@ java_import(
 
 java_import(
   name = "java-debugger-impl-sa-jdwp",
-  jars = ["@sa-jdwp-1_22_http//file"],
-  srcjar = "@sa-jdwp-1_22-sources_http//file",
+  jars = ["@sa-jdwp-1_24_http//file"],
+  srcjar = "@sa-jdwp-1_24-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2507,15 +2500,15 @@ java_import(
 
 kt_jvm_import(
   name = "jediterm-core",
-  jar = "@jediterm-core-3_47_http//file",
-  srcjar = "@jediterm-core-3_47-sources_http//file",
+  jar = "@jediterm-core-3_48_http//file",
+  srcjar = "@jediterm-core-3_48-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "jediterm-ui",
-  jar = "@jediterm-ui-3_47_http//file",
-  srcjar = "@jediterm-ui-3_47-sources_http//file",
+  jar = "@jediterm-ui-3_48_http//file",
+  srcjar = "@jediterm-ui-3_48-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2680,17 +2673,30 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_import(
-  name = "jetbrains-mlapi-extension",
-  jar = "@extension-34_http//file",
-  srcjar = "@extension-34-sources_http//file",
+java_import(
+  name = "jetbrains-ml-models-python-imports-ranking-model",
+  jars = ["@python-imports-ranking-model-lilac-coua_http//file"],
+  srcjar = "@python-imports-ranking-model-lilac-coua-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "jetbrains-mlapi-catboost-shadow-need-slf4j",
+  jars = ["@catboost-shadow-need-slf4j-1_2_5_http//file"],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "jetbrains-mlapi-usage",
-  jar = "@usage-34_http//file",
-  srcjar = "@usage-34-sources_http//file",
+  name = "jetbrains-mlapi-ml-building-blocks",
+  jar = "@ml-building-blocks-58_http//file",
+  srcjar = "@ml-building-blocks-58-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "jetbrains-mlapi-ml-feature-api",
+  jar = "@ml-feature-api-58_http//file",
+  srcjar = "@ml-feature-api-58-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3458,15 +3464,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-allopen-compiler-plugin",
-  jar = "@allopen-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@allopen-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@allopen-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@allopen-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-analysis-api",
-  jar = "@analysis-api-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@analysis-api-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@analysis-api-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@analysis-api-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3479,8 +3485,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-fe10",
-  jar = "@analysis-api-fe10-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@analysis-api-fe10-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@analysis-api-fe10-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@analysis-api-fe10-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3493,8 +3499,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-impl-base",
-  jar = "@analysis-api-impl-base-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@analysis-api-impl-base-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@analysis-api-impl-base-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@analysis-api-impl-base-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3507,15 +3513,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-impl-base-tests",
-  jar = "@analysis-api-impl-base-tests-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@analysis-api-impl-base-tests-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@analysis-api-impl-base-tests-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@analysis-api-impl-base-tests-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-k2",
-  jar = "@analysis-api-k2-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@analysis-api-k2-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@analysis-api-k2-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@analysis-api-k2-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3528,15 +3534,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-k2-tests",
-  jar = "@analysis-api-k2-tests-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@analysis-api-k2-tests-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@analysis-api-k2-tests-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@analysis-api-k2-tests-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-platform-interface",
-  jar = "@analysis-api-platform-interface-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@analysis-api-platform-interface-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@analysis-api-platform-interface-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@analysis-api-platform-interface-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3549,8 +3555,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-android-extensions-compiler-plugin",
-  jar = "@android-extensions-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@android-extensions-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@android-extensions-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@android-extensions-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3563,15 +3569,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-assignment-compiler-plugin",
-  jar = "@assignment-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@assignment-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@assignment-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@assignment-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-compose-compiler-plugin",
-  jar = "@compose-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@compose-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@compose-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@compose-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3584,29 +3590,29 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-incremental-compilation-impl-tests",
-  jar = "@incremental-compilation-impl-tests-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@incremental-compilation-impl-tests-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@incremental-compilation-impl-tests-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@incremental-compilation-impl-tests-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-js-plain-objects-compiler-plugin",
-  jar = "@js-plain-objects-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@js-plain-objects-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@js-plain-objects-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@js-plain-objects-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-kotlin-build-common-tests",
-  jar = "@kotlin-build-common-tests-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-build-common-tests-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-build-common-tests-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-build-common-tests-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-cli",
-  jar = "@kotlin-compiler-cli-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-compiler-cli-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-compiler-cli-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-compiler-cli-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3619,8 +3625,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-common",
-  jar = "@kotlin-compiler-common-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-compiler-common-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-compiler-common-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-compiler-common-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3633,8 +3639,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-fe10",
-  jar = "@kotlin-compiler-fe10-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-compiler-fe10-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-compiler-fe10-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-compiler-fe10-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3647,8 +3653,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-fir",
-  jar = "@kotlin-compiler-fir-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-compiler-fir-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-compiler-fir-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-compiler-fir-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3661,8 +3667,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-ir",
-  jar = "@kotlin-compiler-ir-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-compiler-ir-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-compiler-ir-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-compiler-ir-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3675,8 +3681,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-tests",
-  jar = "@kotlin-compiler-tests-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-compiler-tests-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-compiler-tests-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-compiler-tests-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3696,8 +3702,8 @@ java_import(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-gradle-statistics",
-  jar = "@kotlin-gradle-statistics-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-gradle-statistics-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-gradle-statistics-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-gradle-statistics-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3710,8 +3716,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-jps-common",
-  jar = "@kotlin-jps-common-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-jps-common-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-jps-common-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-jps-common-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3738,8 +3744,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests",
-  jar = "@kotlin-jps-plugin-classpath-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-jps-plugin-classpath-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-jps-plugin-classpath-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-jps-plugin-classpath-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3752,15 +3758,15 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-script-runtime",
-  jar = "@kotlin-script-runtime-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-script-runtime-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-script-runtime-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-script-runtime-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-kotlin-scripting-common",
-  jar = "@kotlin-scripting-common-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-scripting-common-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-scripting-common-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-scripting-common-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3773,8 +3779,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-scripting-compiler-impl",
-  jar = "@kotlin-scripting-compiler-impl-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-scripting-compiler-impl-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-scripting-compiler-impl-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-scripting-compiler-impl-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3787,15 +3793,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-scripting-dependencies",
-  jar = "@kotlin-scripting-dependencies-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-scripting-dependencies-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-scripting-dependencies-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-scripting-dependencies-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-kotlin-scripting-jvm",
-  jar = "@kotlin-scripting-jvm-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlin-scripting-jvm-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlin-scripting-jvm-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlin-scripting-jvm-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3808,8 +3814,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlinx-serialization-compiler-plugin",
-  jar = "@kotlinx-serialization-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@kotlinx-serialization-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@kotlinx-serialization-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@kotlinx-serialization-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3822,8 +3828,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-lombok-compiler-plugin",
-  jar = "@lombok-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@lombok-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@lombok-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@lombok-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3836,22 +3842,22 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-low-level-api-fir",
-  jar = "@low-level-api-fir-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@low-level-api-fir-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@low-level-api-fir-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@low-level-api-fir-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-noarg-compiler-plugin",
-  jar = "@noarg-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@noarg-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@noarg-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@noarg-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-parcelize-compiler-plugin",
-  jar = "@parcelize-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@parcelize-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@parcelize-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@parcelize-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3864,22 +3870,22 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-sam-with-receiver-compiler-plugin",
-  jar = "@sam-with-receiver-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@sam-with-receiver-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@sam-with-receiver-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@sam-with-receiver-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-scripting-compiler-plugin",
-  jar = "@scripting-compiler-plugin-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@scripting-compiler-plugin-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@scripting-compiler-plugin-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@scripting-compiler-plugin-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-symbol-light-classes",
-  jar = "@symbol-light-classes-for-ide-2_1_20-dev-7017_http//file",
-  srcjar = "@symbol-light-classes-for-ide-2_1_20-dev-7017-sources_http//file",
+  jar = "@symbol-light-classes-for-ide-2_1_20-dev-8206_http//file",
+  srcjar = "@symbol-light-classes-for-ide-2_1_20-dev-8206-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7500,6 +7506,62 @@ java_import(
 )
 
 java_library(
+  name = "platform-build_scripts-code_optimizer-proguard",
+  exports = [
+    ":proguard-base-7_5_0_http_import",
+    ":proguard-core-9_1_4_http_import",
+    ":kotlin-metadata-jvm-2_0_0_http_import",
+    ":annotations-24_0_0_http_import",
+    ":log4j-api-2_19_0_http_import",
+    ":log4j-core-2_19_0_http_import",
+    ":json-20231013_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "proguard-base-7_5_0_http_import",
+  jar = "@proguard-base-7_5_0_http//file",
+  srcjar = "@proguard-base-7_5_0-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "proguard-core-9_1_4_http_import",
+  jar = "@proguard-core-9_1_4_http//file",
+  srcjar = "@proguard-core-9_1_4-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-metadata-jvm-2_0_0_http_import",
+  jar = "@kotlin-metadata-jvm-2_0_0_http//file",
+  srcjar = "@kotlin-metadata-jvm-2_0_0-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "annotations-24_0_0_http_import",
+  jar = "@annotations-24_0_0_http//file",
+  srcjar = "@annotations-24_0_0-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "log4j-api-2_19_0_http_import",
+  jar = "@log4j-api-2_19_0_http//file",
+  srcjar = "@log4j-api-2_19_0-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "log4j-core-2_19_0_http_import",
+  jar = "@log4j-core-2_19_0_http//file",
+  srcjar = "@log4j-core-2_19_0-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "json-20231013_http_import",
+  jar = "@json-20231013_http//file",
+  srcjar = "@json-20231013-sources_http//file"
+)
+
+java_library(
   name = "platform-build_scripts-jetbrains-apple-notary-api-kotlin-client",
   exports = [
     ":apple-notary-api-kotlin-client-1_0_5_http_import",
@@ -9055,41 +9117,6 @@ kt_jvm_import(
   jar = "@poko-compiler-plugin-0_18_0_http//file",
   srcjar = "@poko-compiler-plugin-0_18_0-sources_http//file",
   visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "proguard",
-  exports = [
-    ":proguard-base-7_6_1_http_import",
-    ":proguard-core-9_1_7_http_import",
-    ":log4j-api-2_24_2_http_import",
-    ":log4j-core-2_24_2_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "proguard-base-7_6_1_http_import",
-  jar = "@proguard-base-7_6_1_http//file",
-  srcjar = "@proguard-base-7_6_1-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "proguard-core-9_1_7_http_import",
-  jar = "@proguard-core-9_1_7_http//file",
-  srcjar = "@proguard-core-9_1_7-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "log4j-api-2_24_2_http_import",
-  jar = "@log4j-api-2_24_2_http//file",
-  srcjar = "@log4j-api-2_24_2-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "log4j-core-2_24_2_http_import",
-  jar = "@log4j-core-2_24_2_http//file",
-  srcjar = "@log4j-core-2_24_2-sources_http//file"
 )
 
 java_import(

@@ -34,6 +34,8 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:jna",
     "@lib//:hamcrest",
+    "//wintools",
+    "//wintools:wintools_test_lib",
   ],
   runtime_deps = [
     "//python:pycharm-community",

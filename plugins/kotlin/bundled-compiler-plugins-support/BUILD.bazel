@@ -13,7 +13,6 @@ jvm_library(
     "//platform/lang-api:lang",
     "@lib//:kotlinc-allopen-compiler-plugin",
     "@lib//:kotlinc-compose-compiler-plugin",
-    "@lib//:poko-compiler-plugin",
     "@lib//:kotlinc-sam-with-receiver-compiler-plugin",
     "@lib//:kotlinc-noarg-compiler-plugin",
     "@lib//:kotlinc-lombok-compiler-plugin",

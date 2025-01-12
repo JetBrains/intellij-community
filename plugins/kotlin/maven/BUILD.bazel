@@ -29,6 +29,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
     "//plugins/kotlin/base/statistics:kotlin-base-statistics",
+    "//plugins/kotlin/code-insight/descriptions:kotlin-code-insight-descriptions",
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/migration",

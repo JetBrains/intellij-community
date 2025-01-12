@@ -14,6 +14,7 @@ java_library(
   exports = ["@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop"],
   runtime_deps = [
     ":compose-foundation-desktop_resources",
+    "//libraries/skiko",
     "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop",
   ]
 )

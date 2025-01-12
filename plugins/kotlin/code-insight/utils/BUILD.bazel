@@ -31,6 +31,7 @@ jvm_library(
     "//platform/editor-ui-api:editor",
     "//java/java-psi-api:psi",
     "@lib//:kotlinc-analysis-api-impl-base",
+    "//platform/core-ui",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.utils` end

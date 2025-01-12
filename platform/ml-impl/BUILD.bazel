@@ -15,7 +15,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ngram-slp",
-    "//platform/ide-core-impl",
     "//platform/util",
     "//platform/util-ex",
     "//platform/core-api:core",
@@ -29,9 +28,14 @@ jvm_library(
     "//platform/ml-api:ml",
     "//platform/statistics",
     "@lib//:kotlin-reflect",
-    "@lib//:jetbrains-mlapi-usage",
+    "@lib//:jetbrains-mlapi-ml-building-blocks",
+    "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
+    "//platform/ide-core-impl",
   ],
-  exports = ["@lib//:jetbrains-mlapi-usage"],
+  exports = [
+    "@lib//:jetbrains-mlapi-ml-building-blocks",
+    "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
+  ],
   runtime_deps = [":ml-impl_resources"]
 )
 
@@ -43,7 +47,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ngram-slp",
-    "//platform/ide-core-impl",
     "//platform/util",
     "//platform/util-ex",
     "//platform/core-api:core",
@@ -62,7 +65,9 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "@lib//:kotlin-reflect",
-    "@lib//:jetbrains-mlapi-usage",
+    "@lib//:jetbrains-mlapi-ml-building-blocks",
+    "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [":ml-impl_resources"]
 )

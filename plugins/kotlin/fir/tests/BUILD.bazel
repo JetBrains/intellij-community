@@ -71,6 +71,7 @@ jvm_library(
     "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-base-fir-analysis-api-platform",
     "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-base-fir-analysis-api-platform_test_lib",
     "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-api-platform",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
   ]
 )
 

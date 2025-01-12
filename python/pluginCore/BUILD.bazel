@@ -15,6 +15,8 @@ java_library(
     ":community-plugin_resources",
     "//platform/lang-api:lang",
     "//python/intellij.python.community.communityOnly:community-communityOnly",
+    "//python/services/system-python:python-community-services-systemPython",
+    "//python/services/shared:python-community-services-shared",
   ]
 )
 ### auto-generated section `build intellij.python.community.plugin` end

@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:pty4j",
     "//platform/ide-core",
     "//platform/eel-provider",
+    "//platform/core-nio-fs",
   ]
 )
 ### auto-generated section `build intellij.platform.eel.impl` end

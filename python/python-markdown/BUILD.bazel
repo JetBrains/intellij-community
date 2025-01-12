@@ -31,7 +31,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/markdown/core:markdown",
     "//platform/lang-impl",
-    "//plugins/markdown/plugin",
+    "//plugins/markdown/plugin:plugin-main",
     "//python/python-psi-impl:psi-impl",
     "//python/python-psi-api:psi",
     "//python:python-community-tests_test_lib",

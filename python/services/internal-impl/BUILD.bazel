@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.python.community.services.internal.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "python-community-services-internal-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "python-community-services-internal-impl",
+  module_name = "intellij.python.community.services.internal.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/python-parser:parser",
+    "//python/services/shared:python-community-services-shared",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//python/python-sdk:sdk",
+  ],
+  runtime_deps = [":python-community-services-internal-impl_resources"]
+)
+
+jvm_library(
+  name = "python-community-services-internal-impl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":python-community-services-internal-impl"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//python/python-parser:parser",
+    "//python/services/shared:python-community-services-shared",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "@lib//:jetbrains-annotations",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:junit5",
+    "@lib//:hamcrest",
+    "@lib//:kotlinx-coroutines-core",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+  ],
+  runtime_deps = [":python-community-services-internal-impl_resources"]
+)
+
+jvm_test(
+  name = "python-community-services-internal-impl_test",
+  runtime_deps = [":python-community-services-internal-impl_test_lib"]
+)
+### auto-generated section `build intellij.python.community.services.internal.impl` end

@@ -83,7 +83,7 @@ java_library(
     "//plugins/settings-repository:settingsRepository",
     "//plugins/properties",
     "//plugins/markdown/core:markdown",
-    "//plugins/markdown/plugin",
+    "//plugins/markdown/plugin:plugin-main",
     "//plugins/configuration-script:configurationScript",
     "//plugins/completion-ml-ranking:completionMlRanking",
     "//plugins/stats-collector:statsCollector",
@@ -107,6 +107,7 @@ java_library(
     "//plugins/evaluation-plugin/languages/python:evaluationPlugin-languages-python",
     "//platform/new-ui-onboarding:ide-newUiOnboarding",
     "//plugins/github/community:vcs-github-community",
+    "//python/intellij.python.ml.features:ml-features",
   ]
 )
 ### auto-generated section `build intellij.pycharm.community.main` end
@@ -241,6 +242,7 @@ jvm_library(
     "//platform/feedback",
     "@lib//:kotlinx-datetime-jvm",
     "//platform/platform-impl/remote:ide-remote",
+    "//platform/ml-tools",
     "//platform/platform-impl/ui:ide-ui",
     "@lib//:jackson-module-kotlin",
     "@lib//:ap-validation",

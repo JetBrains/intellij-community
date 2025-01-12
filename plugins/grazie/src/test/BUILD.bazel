@@ -30,7 +30,7 @@ jvm_library(
     "//plugins/grazie/java",
     "//platform/vcs-api:vcs",
     "//plugins/markdown/core:markdown",
-    "//plugins/markdown/plugin",
+    "//plugins/markdown/plugin:plugin-main",
     "@lib//:kotlinx-coroutines-core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

@@ -19,6 +19,7 @@ jvm_library(
     "//fleet/preferences",
     "//fleet/util/os:fleet-util-os",
     "@lib//:slf4j-api",
+    "@lib//:kotlinx-datetime-jvm",
   ],
   exports = [
     "//fleet/util/logging/api:fleet-util-logging-api",

@@ -1,8 +1,8 @@
-### auto-generated section `build intellij.devkit.plugin.noKotlin` start
+### auto-generated section `build intellij.devkit.plugin.main.noKotlin` start
 load("@rules_java//java:defs.bzl", "java_library")
 
 java_library(
-  name = "devkit-plugin-noKotlin",
+  name = "devkit-plugin-main-noKotlin",
   visibility = ["//visibility:public"],
   runtime_deps = [
     "//plugins/devkit/intellij.devkit:devkit",
@@ -18,6 +18,8 @@ java_library(
     "//plugins/devkit/jps-plugin:jps",
     "//plugins/devkit/runtimeModuleRepository/jps:devkit-runtimeModuleRepository-jps",
     "//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
+    "//plugins/devkit/api-dump:apiDump",
+    "//plugins/devkit/api-dump-lang:apiDump-lang",
   ]
 )
-### auto-generated section `build intellij.devkit.plugin.noKotlin` end
+### auto-generated section `build intellij.devkit.plugin.main.noKotlin` end

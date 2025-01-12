@@ -1,8 +1,8 @@
-### auto-generated section `build intellij.markdown.plugin` start
+### auto-generated section `build intellij.markdown.plugin.main` start
 load("@rules_java//java:defs.bzl", "java_library")
 
 java_library(
-  name = "plugin",
+  name = "plugin-main",
   visibility = ["//visibility:public"],
   runtime_deps = [
     "//plugins/markdown/fenceInjection",
@@ -16,4 +16,4 @@ java_library(
     "//plugins/markdown/compose:compose-preview",
   ]
 )
-### auto-generated section `build intellij.markdown.plugin` end
+### auto-generated section `build intellij.markdown.plugin.main` end
