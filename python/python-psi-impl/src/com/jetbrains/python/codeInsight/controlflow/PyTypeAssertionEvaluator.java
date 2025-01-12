@@ -259,7 +259,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                              @Nullable PyExpression typeElement) {
     final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
       @Override
-      public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+      public Ref<PyType> getType(TypeEvalContext context) {
         return createAssertionType(context.getType(target),
                                    transformTypeFromAssertion(suggestedType.apply(context), transformToDefinition, context, typeElement),
                                    positive,
