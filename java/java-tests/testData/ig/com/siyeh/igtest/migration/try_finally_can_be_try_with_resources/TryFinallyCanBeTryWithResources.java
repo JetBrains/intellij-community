@@ -120,3 +120,61 @@ class NonResourceBeforeTry {
     return res.toString();
   }
 }
+
+class AutoCloseableResourceInitializedInFinally {
+  interface MyAutoCloseable extends AutoCloseable {
+    @Override
+    void close();
+  }
+
+  native MyAutoCloseable create();
+
+  private void simple() {
+    try {
+      System.out.println(1);
+    } finally {
+      MyAutoCloseable closeable = create();
+      closeable.close();
+    }
+  }
+
+  private void IfStatement() {
+    try {
+      System.out.println(1);
+    } finally {
+      MyAutoCloseable closeable = create();
+      if (closeable != null) {
+        closeable.close();
+      }
+    }
+  }
+
+  private void finallyInsideFinallySimple() {
+    try {
+      System.out.println(1);
+    }
+    finally {
+      MyAutoCloseable closeable = create();
+      <warning descr="'try' can use automatic resource management">try</warning> {
+        System.out.println(1);
+      } finally{
+        closeable.close();
+      }
+    }
+  }
+
+  private void finallyInsideFinallyIfStatement() {
+    try {
+      System.out.println(1);
+    }
+    finally {
+      MyAutoCloseable closeable = create();
+      <warning descr="'try' can use automatic resource management">try</warning> {
+      } finally{
+        if (closeable != null) {
+          closeable.close();
+        }
+      }
+    }
+  }
+}

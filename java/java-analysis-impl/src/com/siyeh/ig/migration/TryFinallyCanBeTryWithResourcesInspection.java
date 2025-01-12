@@ -246,7 +246,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       Set<PsiVariable> collectedVariables = new HashSet<>();
       for (int i = 0, length = finallyStatements.length; i < length; i++) {
         PsiStatement statement = finallyStatements[i];
-        closedVariableStatementIndices.set(i, findAutoCloseableVariables(statement, collectedVariables));
+        closedVariableStatementIndices.set(i, findAutoCloseableVariables(finallyBlock, statement, collectedVariables));
       }
       if (collectedVariables.isEmpty()) return null;
       if (resourceVariablesUsedInFinally(finallyStatements, closedVariableStatementIndices, collectedVariables)) return null;
@@ -403,7 +403,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     return visitor.variableIsUsed();
   }
 
-  private static boolean findAutoClosableVariableWithoutTry(PsiStatement statement, Set<? super PsiVariable> variables) {
+  private static boolean findAutoClosableVariableWithoutTry(@NotNull PsiCodeBlock finallyBlock, PsiStatement statement, Set<? super PsiVariable> variables) {
     if (statement instanceof PsiIfStatement ifStatement) {
       if (ifStatement.getElseBranch() != null) return false;
       final PsiExpression condition = ifStatement.getCondition();
@@ -413,7 +413,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       if (rhs == null) return false;
-      final PsiElement variable;
+      final PsiLocalVariable variable;
       if (PsiTypes.nullType().equals(rhs.getType())) {
         variable = ExpressionUtils.resolveLocalVariable(lhs);
       }
@@ -427,11 +427,11 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       final PsiStatement thenBranch = ifStatement.getThenBranch();
       final PsiVariable resourceVariable;
       if (thenBranch instanceof PsiExpressionStatement) {
-        resourceVariable = findAutoCloseableVariable(thenBranch);
+        resourceVariable = findAutoCloseableVariable(finallyBlock, thenBranch);
       }
       else if (thenBranch instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        resourceVariable = findAutoCloseableVariable(ControlFlowUtils.getOnlyStatementInBlock(codeBlock));
+        resourceVariable = findAutoCloseableVariable(finallyBlock, ControlFlowUtils.getOnlyStatementInBlock(codeBlock));
       }
       else {
         return false;
@@ -453,6 +453,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
         if (!(target instanceof PsiLocalVariable || target instanceof PsiParameter) || target instanceof PsiResourceVariable) return false;
         PsiVariable variable = (PsiVariable)target;
         if (!isAutoCloseable(variable)) return false;
+        if (variable instanceof PsiLocalVariable && PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true) == finallyBlock) return false;
         variables.add(variable);
         return true;
       }
@@ -463,9 +464,9 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     return false;
   }
 
-  private static @Nullable PsiVariable findAutoCloseableVariable(PsiStatement statement) {
+  private static @Nullable PsiVariable findAutoCloseableVariable(PsiCodeBlock finallyBlock, PsiStatement statement) {
     Set<PsiVariable> variables = new HashSet<>(1);
-    if (!findAutoCloseableVariables(statement, variables)) return null;
+    if (!findAutoCloseableVariables(finallyBlock, statement, variables)) return null;
     if (variables.isEmpty()) {
       return null;
     }
@@ -474,8 +475,8 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     }
   }
 
-  private static boolean findAutoCloseableVariables(PsiStatement statement, Set<? super PsiVariable> variables) {
-    if (findAutoClosableVariableWithoutTry(statement, variables)) return true;
+  private static boolean findAutoCloseableVariables(@NotNull PsiCodeBlock finallyBlock, PsiStatement statement, Set<? super PsiVariable> variables) {
+    if (findAutoClosableVariableWithoutTry(finallyBlock, statement, variables)) return true;
     if (statement instanceof PsiTryStatement tryStatement) {
       if (tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) return true;
       PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
@@ -486,7 +487,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       if (tryBlock == null) return true;
       PsiStatement[] tryStatements = tryBlock.getStatements();
       for (PsiStatement tryStmt : tryStatements) {
-        if (!findAutoClosableVariableWithoutTry(tryStmt, variables)) {
+        if (!findAutoClosableVariableWithoutTry(finallyBlock, tryStmt, variables)) {
           return false;
         }
       }
