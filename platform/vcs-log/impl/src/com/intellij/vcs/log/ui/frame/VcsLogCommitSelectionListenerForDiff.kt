@@ -1,76 +1,60 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.ui.frame;
+package com.intellij.vcs.log.ui.frame
 
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.data.CommitDetailsGetter;
-import com.intellij.vcs.log.ui.table.CommitSelectionListener;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
-import java.util.List;
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.util.ui.StatusText
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.data.CommitDetailsGetter
+import com.intellij.vcs.log.ui.table.CommitSelectionListener
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import com.intellij.vcs.log.util.VcsLogUtil
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public class VcsLogCommitSelectionListenerForDiff extends CommitSelectionListener<VcsFullCommitDetails> {
-  private final @NotNull JBLoadingPanel myChangesLoadingPane;
-  private final @NotNull VcsLogChangesBrowser myChangesBrowser;
-
-  public VcsLogCommitSelectionListenerForDiff(
-    @NotNull JBLoadingPanel changesLoadingPane,
-    @NotNull VcsLogChangesBrowser changesBrowser,
-    @NotNull VcsLogGraphTable graphTable,
-    @NotNull CommitDetailsGetter commitDetailsGetter
-  ) {
-    super(graphTable, commitDetailsGetter);
-    myChangesLoadingPane = changesLoadingPane;
-    myChangesBrowser = changesBrowser;
+open class VcsLogCommitSelectionListenerForDiff(
+  private val changesLoadingPane: JBLoadingPanel,
+  private val changesBrowser: VcsLogChangesBrowser,
+  graphTable: VcsLogGraphTable,
+  commitDetailsGetter: CommitDetailsGetter
+) : CommitSelectionListener<VcsFullCommitDetails>(graphTable, commitDetailsGetter) {
+  override fun onEmptySelection() {
+    changesBrowser.setSelectedDetails(emptyList())
   }
 
-  @Override
-  protected void onEmptySelection() {
-    myChangesBrowser.setSelectedDetails(Collections.emptyList());
-  }
-
-  @Override
-  protected void onDetailsLoaded(@NotNull List<? extends VcsFullCommitDetails> detailsList) {
-    int maxSize = VcsLogUtil.getMaxSize(detailsList);
+  override fun onDetailsLoaded(detailsList: List<VcsFullCommitDetails>) {
+    val maxSize = VcsLogUtil.getMaxSize(detailsList)
     if (maxSize > VcsLogUtil.getShownChangesLimit()) {
-      String sizeText = VcsLogUtil.getSizeText(maxSize);
-      myChangesBrowser.setEmptyWithText(statusText -> {
-        statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", detailsList.size(), sizeText));
+      val sizeText = VcsLogUtil.getSizeText(maxSize)
+      changesBrowser.setEmptyWithText { statusText: StatusText ->
+        statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", detailsList.size, sizeText))
         statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.changes.too.many.show.anyway.status.action"),
-                                       SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                       e -> myChangesBrowser.setSelectedDetails(detailsList));
-      });
+                                       SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+        ) { changesBrowser.setSelectedDetails(detailsList) }
+      }
     }
     else {
-      myChangesBrowser.setSelectedDetails(detailsList);
+      changesBrowser.setSelectedDetails(detailsList)
     }
   }
 
-  @Override
-  protected int @NotNull [] onSelection(int @NotNull [] selection) {
-    myChangesBrowser.setEmpty();
-    return selection;
+  override fun onSelection(selection: IntArray): IntArray {
+    changesBrowser.setEmpty()
+    return selection
   }
 
-  @Override
-  protected void onLoadingStarted() {
-    myChangesLoadingPane.startLoading();
+  override fun onLoadingStarted() {
+    changesLoadingPane.startLoading()
   }
 
-  @Override
-  protected void onLoadingStopped() {
-    myChangesLoadingPane.stopLoading();
+  override fun onLoadingStopped() {
+    changesLoadingPane.stopLoading()
   }
 
-  @Override
-  protected void onError(@NotNull Throwable error) {
-    myChangesBrowser.setEmptyWithText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.changes.status")));
+  override fun onError(error: Throwable) {
+    changesBrowser.setEmptyWithText { statusText: StatusText ->
+      statusText.setText(VcsLogBundle.message("vcs.log.error.loading.changes.status"))
+    }
   }
 }
