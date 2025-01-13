@@ -92,10 +92,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
     title = dialogTitle
     setOKButtonText(operation.text)
     init()
-
-    if (branchName.isNotEmpty()) {
-      initValidation()
-    }
   }
 
   fun showAndGetOptions(): GitNewBranchOptions? {
