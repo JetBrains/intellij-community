@@ -44,7 +44,7 @@ class SimpleRunMarkerCommandProvider : CommandProvider {
     isNonWritten: Boolean,
   ): List<CompletionCommand> {
     return runBlockingCancellable {
-      var (currentElement, collectedActions) = collectActions(psiFile, offset, project)
+      val (currentElement, collectedActions) = collectActions(psiFile, offset, project)
       @Suppress("SENSELESS_COMPARISON")
       if (currentElement == null) return@runBlockingCancellable emptyList()
       val filter = Predicate { action: IntentionAction? ->
@@ -103,9 +103,12 @@ private fun collectActions(
   val runLineMarkerProvider = RunLineMarkerProvider()
   var currentElement = psiFile.findElementAt(offset)
   val dumbService = DumbService.getInstance(project)
-  var collectedActions = mutableListOf<AnAction>()
+  val collectedActions = mutableListOf<AnAction>()
+  val document = psiFile.fileDocument
+  val lineNumber = document.getLineNumber(offset)
   while (currentElement != null) {
     for (child in currentElement.children) {
+      if (document.getLineNumber(child.textRange.startOffset) != lineNumber) continue
       val lineMarkerInfo = runLineMarkerProvider.getLineMarkerInfo(child)
       if (lineMarkerInfo is MergeableLineMarkerInfo) {
         val r = lineMarkerInfo.createGutterRenderer()
@@ -134,7 +137,7 @@ private class RunMarkerCompletionCommand(
     get() = ""
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-    var (_, collectedActions) = collectActions(psiFile, offsetElement, psiFile.project)
+    val (_, collectedActions) = collectActions(psiFile, offsetElement, psiFile.project)
     val cachedIntentions = CachedIntentions(psiFile.project, psiFile, editor)
     val intentionsInfo = ShowIntentionsPass.IntentionsInfo()
     intentionsInfo.guttersToShow.addAll(collectedActions)
