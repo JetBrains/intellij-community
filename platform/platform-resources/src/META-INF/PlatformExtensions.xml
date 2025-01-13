@@ -1256,6 +1256,7 @@
     <registryKey key="jdk.downloader.reuse.downloading" defaultValue="true"
                  description="Allow to reuse currently downloading with the JDK Downloader JDK instead of downloading it again"/>
     <registryKey key="jdk.auto.run.configurations" defaultValue="true" description="Tries to find an SDK for a run configuration"/>
+    <registryKey key="jdk.downloader.show.other.arch" defaultValue="false" description="Show download options for JDKs targeting a different architecture"/>
     <registryKey key="sdk.download.consent" defaultValue="false" description="Prompts before downloading SDKs if false"/>
 
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>

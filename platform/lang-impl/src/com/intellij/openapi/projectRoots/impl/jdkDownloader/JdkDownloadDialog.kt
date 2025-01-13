@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.DocumentAdapter
@@ -141,6 +142,7 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
 
   val groups =  allItems
     .filter { itemFilter.invoke(it) }
+    .filter { Registry.`is`("jdk.downloader.show.other.arch", false) || CpuArch.fromString(it.arch) == CpuArch.CURRENT }
     .groupBy { it.versionGroupId() }
     .mapValues { (jdkVersion, groupItems) ->
       val majorVersion = groupItems.first().jdkMajorVersion
