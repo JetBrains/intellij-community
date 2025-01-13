@@ -35,7 +35,7 @@ class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
         return element.project.analysisCompletedHandler?.getBindingContext() ?: BindingContext.EMPTY
     }
 
-    override fun isJvmElement(psiElement: PsiElement): Boolean = true
+    override fun isJvmOrCommonElement(psiElement: PsiElement): Boolean = true
 
     override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings {
         return element.project.analysisCompletedHandler?.getLanguageVersionSettings() ?: LanguageVersionSettingsImpl.DEFAULT

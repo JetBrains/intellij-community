@@ -55,7 +55,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
 
-    fun isJvmElement(psiElement: PsiElement): Boolean
+    fun isJvmOrCommonElement(psiElement: PsiElement): Boolean
 
     override val languagePlugin: UastLanguagePlugin
         get() = kotlinUastPlugin

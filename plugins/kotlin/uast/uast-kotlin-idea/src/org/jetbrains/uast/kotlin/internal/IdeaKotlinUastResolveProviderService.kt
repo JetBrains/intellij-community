@@ -37,7 +37,7 @@ private class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderSe
     override fun getBindingContextIfAny(element: KtElement): BindingContext? =
         element.actionUnderSafeAnalyzeBlock({ getBindingContext(element) }, { null })
 
-  override fun isJvmElement(psiElement: PsiElement): Boolean = psiElement.isJvmElement
+    override fun isJvmOrCommonElement(psiElement: PsiElement): Boolean = psiElement.isJvmOrCommonElement
 
     override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings = element.languageVersionSettings
 
