@@ -445,7 +445,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
         PsiVariable variable = (PsiVariable)target;
         if (!isAutoCloseable(variable)) return false;
         if (isInDifferentAnonymousClassOrLambda(referenceExpression, variable)) return false;
-        if (variable instanceof PsiLocalVariable && PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true) == finallyBlock) return false;
+        if (isAutoCloseableDeclaredInFinallyBlock(variable, finallyBlock)) return false;
         variables.add(variable);
         return true;
       }
@@ -454,6 +454,10 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       }
     }
     return false;
+  }
+
+  private static boolean isAutoCloseableDeclaredInFinallyBlock(@Nullable PsiVariable variable, @NotNull PsiCodeBlock block) {
+    return variable instanceof PsiLocalVariable && PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true) == block;
   }
 
   private static boolean isInDifferentAnonymousClassOrLambda(@NotNull PsiElement referenceExpression,
