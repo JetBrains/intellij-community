@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +18,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -29,6 +32,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -210,7 +214,9 @@ public final class ExternalSystemJdkUtil {
       return false;
     }
     try {
-      return JdkUtil.checkForJdk(homePath) && JdkUtil.checkForJre(homePath);
+      Path path = Path.of(homePath);
+      EelDescriptor descriptor = EelProviderUtil.getEelDescriptor(path);
+      return JdkUtil.checkForJdk(path, descriptor.getOperatingSystem() == EelPath.OS.WINDOWS) && JdkUtil.checkForJre(homePath);
     }
     catch (InvalidPathException exception) {
       return false;
