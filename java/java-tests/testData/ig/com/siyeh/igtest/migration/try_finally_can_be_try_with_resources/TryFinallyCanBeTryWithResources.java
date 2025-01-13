@@ -178,3 +178,107 @@ class AutoCloseableResourceInitializedInFinally {
     }
   }
 }
+
+class AutoCloseableResourceInLambdaOrAnonymousClass {
+  interface MyAutoCloseable extends AutoCloseable {
+    @Override
+    void close();
+  }
+
+  native MyAutoCloseable create();
+
+  private void anonymousClassDifferentPlace() throws Exception  {
+    MyAutoCloseable closeable = create();
+    MyAutoCloseable closeable2 = new MyAutoCloseable() {
+      @Override
+      public void close() {
+        try {
+          System.out.println(1);
+        } finally {
+          closeable.close();
+        }
+      }
+    };
+  }
+
+  private MyAutoCloseable getDelegate(MyAutoCloseable orig) {
+    MyAutoCloseable result = null;
+    MyAutoCloseable another = create();
+    try {
+      result = new MyAutoCloseable() {
+        @Override
+        public void close() {
+          try {
+            orig.close();
+          } finally {
+            another.close();
+          }
+        }
+      };
+      return result;
+    } catch (Throwable e) {
+      another.close();
+    }
+    return null;
+  }
+
+  private void anonymousClassExternalDeclaration()  throws Exception  {
+    MyAutoCloseable closeable2 = new MyAutoCloseable() {
+      @Override
+      public void close() {
+        MyAutoCloseable closeable = create();
+        <warning descr="'try' can use automatic resource management">try</warning> {
+          System.out.println(1);
+        } finally {
+          closeable.close();
+        }
+      }
+    };
+  }
+
+  private void anonymousClassSamePlaceDeclaration() throws Exception {
+    MyAutoCloseable closeable2 = new MyAutoCloseable() {
+      @Override
+      public void close() {
+        MyAutoCloseable closeable = create();
+        <warning descr="'try' can use automatic resource management">try</warning> {
+          System.out.println(1);
+        } finally {
+          closeable.close();
+        }
+      }
+    };
+  }
+
+  private void lambdaFunctionExternalUsageDeclaration() {
+    AutoCloseable closeable = create();
+    Runnable r = () -> {
+      try {
+        System.out.println(1);
+      }
+      finally {
+        try {
+          closeable.close();
+        }
+        catch (Exception e) {
+        }
+      }
+    };
+  }
+
+  private void lambdaFunctionSamePlaceDeclaration() {
+    Runnable r = () -> {
+      AutoCloseable closeable = create();
+      <warning descr="'try' can use automatic resource management">try</warning> {
+        System.out.println(1);
+      }
+      finally {
+        try {
+          closeable.close();
+        }
+        catch (Exception e) {
+        }
+      }
+    };
+  }
+}
