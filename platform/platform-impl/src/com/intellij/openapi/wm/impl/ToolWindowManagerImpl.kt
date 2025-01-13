@@ -267,6 +267,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           return
         }
 
+        // Not focused, but just requested focus, don't hide.
+        // This is important when switching from one sliding tool window to another:
+        // in this case, the editor temporarily gets focus, which may cause the newly shown tool window
+        // to hide before it's even shown.
+        if (activeEntry.toolWindow.isAboutToReceiveFocus) {
+          return
+        }
+
         // let's check that tool window actually loses focus
         if (getToolWindowIdForComponent(focusedComponent) != toolWindowId) {
           // a toolwindow lost focus

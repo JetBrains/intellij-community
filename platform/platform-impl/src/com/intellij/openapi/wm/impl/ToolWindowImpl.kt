@@ -883,10 +883,23 @@ internal class ToolWindowImpl(
     }
   }
 
+  internal var isAboutToReceiveFocus: Boolean = false
+
   fun requestFocusInToolWindow() {
+    // Requesting focus may invoke a whole chain of focus changes.
+    // For example, when activating an undocked tool window,
+    // the previously active tool window may become hidden,
+    // which in turn will temporarily bring focus to the editor,
+    // which can cause the newly shown tool window to hide itself immediately.
+    // To guard ourselves against this mess, we temporarily prohibit hiding of this tool window
+    // by setting this flag until all events (including focus changes) are processed.
+    isAboutToReceiveFocus = true
     focusTask.resetStartTime()
     focusAlarm.cancel()
     focusTask.run()
+    SwingUtilities.invokeLater {
+      isAboutToReceiveFocus = false
+    }
   }
 }
 
