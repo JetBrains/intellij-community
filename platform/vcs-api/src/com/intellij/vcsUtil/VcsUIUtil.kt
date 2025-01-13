@@ -2,7 +2,7 @@
 package com.intellij.vcsUtil
 
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.popupAboveComponent
+import com.intellij.openapi.ui.popup.PopupShowOptions
 import java.awt.Component
 
 fun JBPopup.showAbove(component: Component): Unit = VcsUIUtil.showPopupAbove(this, component, null)
@@ -13,7 +13,7 @@ object VcsUIUtil {
   }
 
   fun showPopupAbove(popup: JBPopup, component: Component, minHeight: Int?) {
-    popup.show(popupAboveComponent(component)
+    popup.show(PopupShowOptions.aboveComponent(component)
                  .withPopupComponentUnscaledGap(4)
                  .withMinimumHeight(minHeight))
   }

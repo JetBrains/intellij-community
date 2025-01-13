@@ -9,16 +9,19 @@ import java.awt.Point
 sealed interface PopupShowOptions {
   fun withPopupComponentUnscaledGap(popupComponentGap: Int?): PopupShowOptions
   fun withMinimumHeight(minimumHeight: Int?): PopupShowOptions
-}
 
-fun popupAboveComponent(
-  component: Component,
-): PopupShowOptions {
-  return PopupShowOptionsBuilder()
-    .withComponentPoint(AnchoredPoint(AnchoredPoint.Anchor.TOP_LEFT, component))
-    .withRelativePosition(PopupRelativePosition.TOP)
-    .withDefaultPopupAnchor(AnchoredPoint.Anchor.BOTTOM_LEFT)
-    .withDefaultPopupComponentUnscaledGap(4)
+  companion object {
+    @JvmStatic
+    fun aboveComponent(
+      component: Component,
+    ): PopupShowOptions {
+      return PopupShowOptionsBuilder()
+        .withComponentPoint(AnchoredPoint(AnchoredPoint.Anchor.TOP_LEFT, component))
+        .withRelativePosition(PopupRelativePosition.TOP)
+        .withDefaultPopupAnchor(AnchoredPoint.Anchor.BOTTOM_LEFT)
+        .withDefaultPopupComponentUnscaledGap(4)
+    }
+  }
 }
 
 @ApiStatus.Internal

@@ -2075,10 +2075,12 @@ c:com.intellij.openapi.ui.popup.ListSeparator
 - getIcon():javax.swing.Icon
 - getText():java.lang.String
 com.intellij.openapi.ui.popup.PopupShowOptions
+- sf:Companion:com.intellij.openapi.ui.popup.PopupShowOptions$Companion
+- s:aboveComponent(java.awt.Component):com.intellij.openapi.ui.popup.PopupShowOptions
 - a:withMinimumHeight(java.lang.Integer):com.intellij.openapi.ui.popup.PopupShowOptions
 - a:withPopupComponentUnscaledGap(java.lang.Integer):com.intellij.openapi.ui.popup.PopupShowOptions
-f:com.intellij.openapi.ui.popup.PopupShowOptionsKt
-- sf:popupAboveComponent(java.awt.Component):com.intellij.openapi.ui.popup.PopupShowOptions
+f:com.intellij.openapi.ui.popup.PopupShowOptions$Companion
+- f:aboveComponent(java.awt.Component):com.intellij.openapi.ui.popup.PopupShowOptions
 com.intellij.openapi.util.Expirable
 - a:isExpired():Z
 com.intellij.openapi.util.ExpirableRunnable
