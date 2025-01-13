@@ -33,7 +33,7 @@ import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
 @Suppress("SpellCheckingInspection")
-internal class DevKitApplicationPatcher : RunConfigurationExtension() {
+private class DevKitApplicationPatcher : RunConfigurationExtension() {
   override fun <T : RunConfigurationBase<*>> updateJavaParameters(
     configuration: T,
     javaParameters: JavaParameters,

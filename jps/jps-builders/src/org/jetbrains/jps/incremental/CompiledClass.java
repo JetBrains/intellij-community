@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -13,6 +12,7 @@ import org.jetbrains.jps.builders.BuildTarget;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class CompiledClass extends UserDataHolderBase{
   private static final Logger LOG = Logger.getInstance(CompiledClass.class);
 
   private final @NotNull File myOutputFile;
-  private final @NotNull Collection<File> mySourceFiles;
+  private final @NotNull Collection<File> sourceFiles;
   private final @Nullable String myClassName;
   private @NotNull BinaryContent myContent;
 
@@ -40,10 +40,10 @@ public class CompiledClass extends UserDataHolderBase{
    */
   public CompiledClass(@NotNull File outputFile, @NotNull Collection<File> sourceFiles, @Nullable String className, @NotNull BinaryContent content) {
     myOutputFile = outputFile;
-    mySourceFiles = sourceFiles;
+    this.sourceFiles = sourceFiles;
     myClassName = className;
     myContent = content;
-    LOG.assertTrue(!mySourceFiles.isEmpty());
+    LOG.assertTrue(!this.sourceFiles.isEmpty());
   }
 
   public CompiledClass(@NotNull File outputFile, @NotNull File sourceFile, @Nullable String className, @NotNull BinaryContent content) {
@@ -60,11 +60,19 @@ public class CompiledClass extends UserDataHolderBase{
   }
 
   public @NotNull Collection<File> getSourceFiles() {
-    return mySourceFiles;
+    return sourceFiles;
   }
 
   public @Unmodifiable @NotNull List<String> getSourceFilesPaths() {
-    return ContainerUtil.map(mySourceFiles, file -> file.getPath());
+    if (sourceFiles.isEmpty()) {
+      return List.of();
+    }
+
+    List<String> result = new ArrayList<>(sourceFiles.size());
+    for (File t : sourceFiles) {
+      result.add(t.getPath());
+    }
+    return result;
   }
 
   public @Nullable String getClassName() {
@@ -108,7 +116,7 @@ public class CompiledClass extends UserDataHolderBase{
   public String toString() {
     return "CompiledClass{" +
            "myOutputFile=" + myOutputFile +
-           ", mySourceFiles=" + mySourceFiles +
+           ", mySourceFiles=" + sourceFiles +
            ", myIsDirty=" + myIsDirty +
            '}';
   }
