@@ -75,8 +75,9 @@ class GotoActionLesson(private val sample: LessonSample,
       }
 
       val showLineNumbersName = ActionsBundle.message("action.EditorGutterToggleGlobalLineNumbers.text")
-      task(LearnBundle.message("show.line.number.prefix.to.show.first")) {
-        text(LessonsBundle.message("goto.action.show.line.numbers.request", strong(it), strong(showLineNumbersName)))
+      task {
+        val prefix = LearnBundle.message("show.line.number.prefix.to.show.first")
+        text(LessonsBundle.message("goto.action.show.line.numbers.request", strong(prefix), strong(showLineNumbersName)))
         triggerAndBorderHighlight().listItem { item ->
           val matchedValue = item as? GotoActionModel.MatchedValue
           val actionWrapper = matchedValue?.value as? GotoActionModel.ActionWrapper
@@ -86,7 +87,7 @@ class GotoActionLesson(private val sample: LessonSample,
         restoreState { !checkInsideSearchEverywhere() }
         test {
           waitComponent(SearchEverywhereUI::class.java)
-          type(it)
+          type(prefix)
         }
       }
 

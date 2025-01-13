@@ -43,10 +43,11 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
     }
 
     if (!adaptToNotNativeLocalization) {
-      task(ActionsBundle.message("action.IntroduceParameter.text").dropMnemonic()) {
-        text(LessonsBundle.message("refactoring.menu.introduce.parameter.eng", strong(it)))
+      task {
+        val introduceParameterText = ActionsBundle.message("action.IntroduceParameter.text").dropMnemonic()
+        text(LessonsBundle.message("refactoring.menu.introduce.parameter.eng", strong(introduceParameterText)))
         triggerUI().component { ui: JList<*> ->
-          ui.model.size > 0 && ui.model.getElementAt(0).isToStringContains(it)
+          ui.model.size > 0 && ui.model.getElementAt(0).isToStringContains(introduceParameterText)
         }
         restoreByUi(restoreId = showPopupTaskId, delayMillis = defaultRestoreDelay)
         test {

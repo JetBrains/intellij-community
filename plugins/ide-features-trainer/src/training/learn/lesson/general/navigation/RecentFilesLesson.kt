@@ -83,18 +83,19 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       test { actions(it) }
     }
 
-    task("rfd") {
-      text(LessonsBundle.message("recent.files.search.typing", code(it)))
+    task {
+      val prefixes = "rfd"
+      text(LessonsBundle.message("recent.files.search.typing", code(prefixes)))
       triggerUI().component { ui: ExtendableTextField ->
         ui.javaClass.name.contains("SpeedSearchBase\$SearchField")
       }
-      stateCheck { checkRecentFilesSearch(it) }
+      stateCheck { checkRecentFilesSearch(prefixes) }
       restoreByUi()
       test {
         ideFrame {
           waitComponent(Switcher.SwitcherPanel::class.java)
         }
-        type(it)
+        type(prefixes)
       }
     }
 
@@ -151,16 +152,16 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       test { actions(it) }
     }
 
-    task(stringForRecentFilesSearch) {
-      text(LessonsBundle.message("recent.files.locations.search.typing", code(it)))
-      stateCheck { checkRecentLocationsSearch(it) }
+    task {
+      text(LessonsBundle.message("recent.files.locations.search.typing", code(stringForRecentFilesSearch)))
+      stateCheck { checkRecentLocationsSearch(stringForRecentFilesSearch) }
       triggerUI().component { _: SearchTextField -> true } // needed in next task to restore if search field closed
       restoreByUi()
       test {
         ideFrame {
           waitComponent(JBList::class.java)
         }
-        type(it)
+        type(stringForRecentFilesSearch)
       }
     }
 
