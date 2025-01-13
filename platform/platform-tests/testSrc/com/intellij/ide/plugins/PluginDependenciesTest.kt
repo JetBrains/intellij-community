@@ -19,23 +19,23 @@ internal class PluginDependenciesTest {
   private val pluginDirPath get() = rootPath.resolve("plugin")
 
   @Test
-  fun classLoader() {
+  fun `simple depends tag`() {
     PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
     PluginBuilder().noDepends().id("bar").build(pluginDirPath.resolve("bar"))
-    checkClassLoader()
+    assertFooHasPluginDependencyOnBar()
   }
 
   @Test
-  fun `classLoader - optional dependency`() {
+  fun `simple depends tag with optional attribute`() {
     writeDescriptor("foo", """
     <idea-plugin>
       <id>foo</id>
-      <depends optional="true" config-file="stream-debugger.xml">bar</depends>
+      <depends optional="true" config-file="optional-part.xml">bar</depends>
       <vendor>JetBrains</vendor>
     </idea-plugin>
     """)
 
-    pluginDirPath.resolve("foo/META-INF/stream-debugger.xml").write("""
+    pluginDirPath.resolve("foo/META-INF/optional-part.xml").write("""
      <idea-plugin>
       <actions>
       </actions>
@@ -49,12 +49,11 @@ internal class PluginDependenciesTest {
     </idea-plugin>
     """)
 
-    checkClassLoader()
+    assertFooHasPluginDependencyOnBar()
   }
 
-  private fun checkClassLoader() {
-    val list = PluginSetTestBuilder(pluginDirPath)
-      .build()
+  private fun assertFooHasPluginDependencyOnBar() {
+    val list = buildPluginSet()
       .enabledPlugins
     assertThat(list).hasSize(2)
 
@@ -77,7 +76,7 @@ internal class PluginDependenciesTest {
       .id("sample.plugin")
       .module("required.module", PluginBuilder().packagePrefix("required").dependency("unknown"), loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginDirPath.resolve("sample-plugin"))
-    val result = PluginSetTestBuilder(pluginDirPath).build()
+    val result = buildPluginSet()
     assertThat(result.enabledPlugins).isEmpty()
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).isNotEmpty
@@ -94,7 +93,7 @@ internal class PluginDependenciesTest {
       .module("required.module", PluginBuilder().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED, separateJar = true)
       .module("optional.module", PluginBuilder().packagePrefix("optional"))
       .build(samplePluginDir)
-    val result = PluginSetTestBuilder(pluginDirPath).build()
+    val result = buildPluginSet()
     assertThat(result.enabledPlugins).hasSize(1)
     val mainClassLoader = result.enabledPlugins.single().pluginClassLoader
     val embeddedModuleClassLoader = result.findEnabledModule("embedded.module")!!.pluginClassLoader
@@ -117,7 +116,7 @@ internal class PluginDependenciesTest {
       .id("sample.plugin")
       .module("embedded.module", PluginBuilder(), loadingRule = ModuleLoadingRule.EMBEDDED)
       .build(samplePluginDir)
-    val result = PluginSetTestBuilder(pluginDirPath).build()
+    val result = buildPluginSet()
     assertThat(result.enabledPlugins).hasSize(1)
     val mainClassLoader = result.enabledPlugins.single().pluginClassLoader
     val embeddedModuleClassLoader = result.findEnabledModule("embedded.module")!!.pluginClassLoader
@@ -135,7 +134,7 @@ internal class PluginDependenciesTest {
       .id("sample.plugin")
       .module("embedded.module", PluginBuilder().packagePrefix("embedded").pluginDependency("dep"), loadingRule = ModuleLoadingRule.EMBEDDED)
       .build(pluginDirPath.resolve("sample-plugin"))
-    val result = PluginSetTestBuilder(pluginDirPath).build()
+    val result = buildPluginSet()
     assertThat(result.enabledPlugins).hasSize(2)
     val depPluginDescriptor = result.findEnabledPlugin(PluginId.getId("dep"))!!
     val mainClassLoader = result.findEnabledPlugin(PluginId.getId("sample.plugin"))!!.pluginClassLoader
@@ -150,7 +149,7 @@ internal class PluginDependenciesTest {
       .id("sample.plugin")
       .module("dep", PluginBuilder(), separateJar = true)
       .build(pluginDir)
-    val result = PluginSetTestBuilder(pluginDirPath).build()
+    val result = buildPluginSet()
     assertThat(result.enabledPlugins).hasSize(1)
     assertThat(result.getEnabledModules()).hasSize(2)
     val depModuleDescriptor = result.findEnabledModule("dep")!!
@@ -220,4 +219,6 @@ internal class PluginDependenciesTest {
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)
       .write(data.trimIndent())
   }
+
+  private fun buildPluginSet() = PluginSetTestBuilder(pluginDirPath).build()
 }
