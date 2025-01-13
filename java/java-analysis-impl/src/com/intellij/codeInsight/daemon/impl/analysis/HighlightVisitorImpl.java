@@ -1452,9 +1452,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (list.getFirstChild() == null) return;
     PsiElement parent = list.getParent();
     if (!(parent instanceof PsiTypeParameter)) {
-      if (!hasErrorResults()) add(HighlightClassUtil.checkExtendsAllowed(list));
-      if (!hasErrorResults()) add(HighlightClassUtil.checkImplementsAllowed(list));
-      if (!hasErrorResults()) add(HighlightClassUtil.checkClassExtendsOnlyOneClass(list));
       if (!hasErrorResults()) HighlightClassUtil.checkPermitsList(list, myErrorSink);
       if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericCannotExtendException(list));
     }

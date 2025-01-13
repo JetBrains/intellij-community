@@ -512,6 +512,57 @@ final class ClassChecker {
     myVisitor.checkFeature(keyword, JavaFeature.INNER_STATICS);
   }
 
+  void checkExtendsAllowed(@NotNull PsiReferenceList list) {
+    if (list.getParent() instanceof PsiClass aClass && list.equals(aClass.getExtendsList())) {
+      if (aClass.isRecord()) {
+        myVisitor.report(JavaErrorKinds.RECORD_EXTENDS.create(list));
+      }
+      else if (aClass.isEnum()) {
+        myVisitor.report(JavaErrorKinds.ENUM_EXTENDS.create(list));
+      }
+    }
+  }
+
+  void checkImplementsAllowed(@NotNull PsiReferenceList list) {
+    if (list.getParent() instanceof PsiClass aClass && aClass.isInterface()) {
+      boolean isImplements = list.equals(aClass.getImplementsList());
+      if (isImplements) {
+        myVisitor.report(JavaErrorKinds.INTERFACE_IMPLEMENTS.create(list));
+      }
+    }
+  }
+
+  void checkClassExtendsOnlyOneClass(@NotNull PsiReferenceList list) {
+    if (!(list.getParent() instanceof PsiClass aClass)) return;
+    PsiClassType[] referencedTypes = list.getReferencedTypes();
+    if (!aClass.isInterface() && referencedTypes.length > 1 && aClass.getExtendsList() == list) {
+      myVisitor.report(JavaErrorKinds.CLASS_CANNOT_EXTEND_MULTIPLE_CLASSES.create(list));
+    }
+  }
+
+  void checkPermitsList(@NotNull PsiReferenceList list) {
+    PsiElement parent = list.getParent();
+    if (!(parent instanceof PsiClass aClass) || !list.equals(aClass.getPermitsList())) return;
+    myVisitor.checkFeature(list, JavaFeature.SEALED_CLASSES);
+    if (myVisitor.hasErrorResults()) return;
+    PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
+    if (nameIdentifier == null) return;
+    if (aClass.isEnum() || aClass.isRecord() || aClass.isAnnotationType()) {
+      JavaErrorKind.Simple<PsiReferenceList> description;
+      if (aClass.isEnum()) description = JavaErrorKinds.ENUM_PERMITS;
+      else if (aClass.isRecord()) description = JavaErrorKinds.RECORD_PERMITS;
+      else description = JavaErrorKinds.ANNOTATION_PERMITS;
+      myVisitor.report(description.create(list));
+      return;
+    }
+    if (!aClass.hasModifierProperty(PsiModifier.SEALED)) {
+      myVisitor.report(JavaErrorKinds.CLASS_SEALED_PERMITS_ON_NON_SEALED.create(aClass));
+      return;
+    }
+
+    // TODO: module graph
+  }
+
   private static @Unmodifiable @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
     PsiReferenceList permitsList = psiClass.getPermitsList();
     if (permitsList == null) return Collections.emptyMap();

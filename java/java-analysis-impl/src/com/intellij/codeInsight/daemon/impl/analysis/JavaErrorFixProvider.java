@@ -70,10 +70,11 @@ final class JavaErrorFixProvider {
     for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_MEMBER_THROWS_NOT_ALLOWED, ANNOTATION_ATTRIBUTE_DUPLICATE,
                                             ANNOTATION_NOT_ALLOWED_EXTENDS, RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION,
                                             RECORD_HEADER_REGULAR_CLASS, INTERFACE_CLASS_INITIALIZER, INTERFACE_CONSTRUCTOR,
-                                            CLASS_IMPLICIT_INITIALIZER, CLASS_IMPLICIT_PACKAGE)) {
+                                            CLASS_IMPLICIT_INITIALIZER, CLASS_IMPLICIT_PACKAGE,
+                                            RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, ANNOTATION_PERMITS)) {
       fix(kind, genericRemover);
     }
-
+    
     createClassFixes();
     createRecordFixes();
     createAnnotationFixes();
@@ -188,6 +189,14 @@ final class JavaErrorFixProvider {
     });
     fix(INTERFACE_CONSTRUCTOR, error -> myFactory.createConvertInterfaceToClassFix(requireNonNull(error.psi().getContainingClass())));
     fix(INTERFACE_CLASS_INITIALIZER, error -> myFactory.createConvertInterfaceToClassFix(requireNonNull(error.psi().getContainingClass())));
+    fix(INTERFACE_IMPLEMENTS, error -> {
+      PsiClassType[] referencedTypes = error.psi().getReferencedTypes();
+      if (referencedTypes.length > 0 && error.psi().getParent() instanceof PsiClass aClass) {
+        return myFactory.createChangeExtendsToImplementsFix(aClass, referencedTypes[0]);
+      }
+      return null;
+    });
+    fix(CLASS_SEALED_PERMITS_ON_NON_SEALED, error -> addModifierFix(error.psi(), PsiModifier.SEALED));
   }
   
   private void createRecordFixes() {

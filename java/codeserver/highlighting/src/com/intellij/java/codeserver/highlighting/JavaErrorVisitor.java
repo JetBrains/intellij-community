@@ -279,6 +279,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     PsiElement parent = list.getParent();
     if (!(parent instanceof PsiTypeParameter)) {
       myAnnotationChecker.checkAnnotationDeclaration(parent, list);
+      if (!hasErrorResults()) myClassChecker.checkExtendsAllowed(list);
+      if (!hasErrorResults()) myClassChecker.checkImplementsAllowed(list);
+      if (!hasErrorResults()) myClassChecker.checkClassExtendsOnlyOneClass(list);
+      if (!hasErrorResults()) myClassChecker.checkPermitsList(list);
     }
   }
 

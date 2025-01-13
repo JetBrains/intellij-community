@@ -20,7 +20,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -58,39 +57,6 @@ public final class HighlightClassUtil {
         result.registerFix(action, null, null, null, null);
       }
     }
-  }
-
-  static HighlightInfo.Builder checkExtendsAllowed(@NotNull PsiReferenceList list) {
-    if (list.getParent() instanceof PsiClass aClass && (aClass.isEnum() || aClass.isRecord())) {
-      boolean isExtends = list.equals(aClass.getExtendsList());
-      if (isExtends) {
-        String description = JavaErrorBundle.message(aClass.isRecord() ? "record.extends" : "extends.after.enum");
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list.getFirstChild()).descriptionAndTooltip(description);
-        IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
-        info.registerFix(action, null, null, null, null);
-        return info;
-      }
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkImplementsAllowed(@NotNull PsiReferenceList list) {
-    if (list.getParent() instanceof PsiClass aClass && aClass.isInterface()) {
-      boolean isImplements = list.equals(aClass.getImplementsList());
-      if (isImplements) {
-        String description = JavaErrorBundle.message("implements.after.interface");
-        HighlightInfo.Builder result =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list.getFirstChild()).descriptionAndTooltip(description);
-        PsiClassType[] referencedTypes = list.getReferencedTypes();
-        if (referencedTypes.length > 0) {
-          IntentionAction action = QuickFixFactory.getInstance().createChangeExtendsToImplementsFix(aClass, referencedTypes[0]);
-          result.registerFix(action, null, null, null, null);
-        }
-        return result;
-      }
-    }
-    return null;
   }
 
   static HighlightInfo.Builder checkExtendsClassAndImplementsInterface(@NotNull PsiReferenceList referenceList,
@@ -256,21 +222,6 @@ public final class HighlightClassUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(description);
       }
     }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkClassExtendsOnlyOneClass(@NotNull PsiReferenceList list) {
-    PsiClassType[] referencedTypes = list.getReferencedTypes();
-    PsiElement parent = list.getParent();
-    if (!(parent instanceof PsiClass aClass)) return null;
-
-    if (!aClass.isInterface()
-        && referencedTypes.length > 1
-        && aClass.getExtendsList() == list) {
-      String description = JavaErrorBundle.message("class.cannot.extend.multiple.classes");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
-    }
-
     return null;
   }
 
@@ -558,36 +509,6 @@ public final class HighlightClassUtil {
     if (!(parent instanceof PsiClass aClass) || !list.equals(aClass.getPermitsList())) {
       return;
     }
-    HighlightInfo.Builder feature = HighlightUtil.checkFeature(list.getFirstChild(), JavaFeature.SEALED_CLASSES,
-                                                               PsiUtil.getLanguageLevel(list), list.getContainingFile());
-    if (feature != null) {
-      errorSink.accept(feature);
-      return;
-    }
-    PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
-    if (nameIdentifier == null) return;
-    if (aClass.isEnum() || aClass.isRecord() || aClass.isAnnotationType()) {
-      String description;
-      if (aClass.isEnum()) description = JavaErrorBundle.message("permits.after.enum");
-      else if (aClass.isRecord()) description = JavaErrorBundle.message("record.permits");
-      else description = JavaErrorBundle.message("annotation.type.permits");
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(list.getFirstChild())
-        .descriptionAndTooltip(description);
-      IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
-      builder.registerFix(action, null, null, null, null);
-      errorSink.accept(builder);
-      return;
-    }
-    if (!aClass.hasModifierProperty(PsiModifier.SEALED)) {
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(list.getFirstChild())
-        .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause", aClass.getName()));
-      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.SEALED, true, false);
-      builder.registerFix(action, null, null, null, null);
-      errorSink.accept(builder);
-    }
-
     PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
     for (PsiJavaCodeReferenceElement permitted : list.getReferenceElements()) {

@@ -96,6 +96,9 @@ public final class JavaErrorKinds {
       .withHighlightType(pair -> pair.getName() == null ? JavaErrorHighlightType.ERROR : JavaErrorHighlightType.WRONG_REF)
       .<String>parameterized()
       .withRawDescription((pair, methodName) -> message("annotation.attribute.unknown.method", methodName));
+  public static final Simple<PsiReferenceList> ANNOTATION_PERMITS = error(PsiReferenceList.class, "annotation.permits")
+    .withAnchor(PsiReferenceList::getFirstChild);
+
   // Can be anchored on @FunctionalInterface annotation or at call site
   public static final Parameterized<PsiElement, PsiClass> LAMBDA_NOT_FUNCTIONAL_INTERFACE =
     parameterized(PsiElement.class, PsiClass.class, "lambda.not.a.functional.interface")
@@ -244,6 +247,8 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_NO_ENCLOSING_INSTANCE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.no.enclosing.instance")
       .withRawDescription((ref, target) -> message("class.reference.list.no.enclosing.instance", formatClass(target)));
+  public static final Simple<PsiReferenceList> CLASS_CANNOT_EXTEND_MULTIPLE_CLASSES =
+    error("class.cannot.extend.multiple.classes");
   public static final Simple<PsiClass> CLASS_SEALED_NO_INHERITORS =
     error(PsiClass.class, "class.sealed.no.inheritors").withAnchor(PsiClass::getNameIdentifier);
   public static final Simple<PsiClass> CLASS_SEALED_INCOMPLETE_PERMITS =
@@ -252,6 +257,10 @@ public final class JavaErrorKinds {
     error(PsiClass.class, "class.sealed.inheritor.expected.modifiers.can.be.final").withAnchor(PsiClass::getNameIdentifier);
   public static final Simple<PsiClass> CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS =
     error(PsiClass.class, "class.sealed.inheritor.expected.modifiers").withAnchor(PsiClass::getNameIdentifier);
+  public static final Simple<PsiClass> CLASS_SEALED_PERMITS_ON_NON_SEALED =
+    error(PsiClass.class, "class.sealed.permits.on.non.sealed")
+      .withAnchor(cls -> requireNonNull(cls.getPermitsList()).getFirstChild())
+      .withRawDescription(cls -> message("class.sealed.permits.on.non.sealed", cls.getName()));
   
   public static final Simple<PsiExpression> INSTANTIATION_ENUM = error("instantiation.enum");
   public static final Parameterized<PsiExpression, PsiClass> INSTANTIATION_ABSTRACT = 
@@ -263,9 +272,20 @@ public final class JavaErrorKinds {
   public static final Simple<PsiRecordHeader> RECORD_HEADER_REGULAR_CLASS = error("record.header.regular.class");
   public static final Simple<PsiClassInitializer> RECORD_INSTANCE_INITIALIZER = error("record.instance.initializer");
   public static final Simple<PsiField> RECORD_INSTANCE_FIELD = error("record.instance.field");
+  public static final Simple<PsiReferenceList> RECORD_EXTENDS = error(PsiReferenceList.class, "record.extends")
+    .withAnchor(PsiReferenceList::getFirstChild);
+  public static final Simple<PsiReferenceList> RECORD_PERMITS = error(PsiReferenceList.class, "record.permits")
+    .withAnchor(PsiReferenceList::getFirstChild);
+
+  public static final Simple<PsiReferenceList> ENUM_EXTENDS = error(PsiReferenceList.class, "enum.extends")
+    .withAnchor(PsiReferenceList::getFirstChild);
+  public static final Simple<PsiReferenceList> ENUM_PERMITS = error(PsiReferenceList.class, "enum.permits")
+    .withAnchor(PsiReferenceList::getFirstChild);
 
   public static final Simple<PsiClassInitializer> INTERFACE_CLASS_INITIALIZER = error("interface.class.initializer");
   public static final Simple<PsiMethod> INTERFACE_CONSTRUCTOR = error("interface.constructor");
+  public static final Simple<PsiReferenceList> INTERFACE_IMPLEMENTS = error(PsiReferenceList.class, "interface.implements")
+    .withAnchor(PsiReferenceList::getFirstChild);
 
   public static final Parameterized<PsiJavaFile, PsiImplicitClass> CLASS_IMPLICIT_NO_MAIN_METHOD = 
     error(PsiJavaFile.class, "class.implicit.no.main.method")
