@@ -20,6 +20,8 @@ internal class ExperimentalBuildDataManager(
     override fun toRelative(path: Path, type: RelativePathType) = relativizer.toRelative(path)
 
     override fun toAbsolute(path: String, type: RelativePathType) = relativizer.toFull(path)
+
+    override fun toAbsoluteFile(path: String, type: RelativePathType): Path = Path.of(relativizer.toFull(path))
   }
 
   /**

@@ -12,7 +12,7 @@ interface OneToManyPathMapping {
   fun getOutputs(path: String): Collection<String>?
 
   @Throws(IOException::class)
-  fun getOutputs(file: Path): Collection<String>?
+  fun getOutputs(file: Path): Collection<Path>?
 
   @Throws(IOException::class)
   fun setOutputs(path: String, outPaths: List<String>)

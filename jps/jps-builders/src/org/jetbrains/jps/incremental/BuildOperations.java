@@ -80,10 +80,8 @@ public final class BuildOperations {
     // handle deleted paths
     final BuildFSState fsState = projectDescriptor.fsState;
     final SourceToOutputMapping sourceToOutputMap = projectDescriptor.dataManager.getSourceToOutputMap(target);
-    for (Iterator<String> it = sourceToOutputMap.getSourcesIterator(); it.hasNext(); ) {
-      String path = it.next();
-      // can check if the file exists
-      Path file = Path.of(path);
+    for (Iterator<Path> it = sourceToOutputMap.getSourceFileIterator(); it.hasNext(); ) {
+      Path file = it.next();
       if (!currentFiles.contains(file)) {
         fsState.registerDeleted(context, target, file, stampStorage);
       }
@@ -183,7 +181,7 @@ public final class BuildOperations {
             targetId = idsCache.getInt(target);
           }
 
-          Collection<String> outputs = srcToOut.getOutputs(file.getPath());
+          Collection<Path> outputs = srcToOut.getOutputs(file.toPath());
           List<String> failedToDeleteOutputs = new ArrayList<>();
           if (outputs == null) {
             return true;
@@ -191,11 +189,10 @@ public final class BuildOperations {
 
           boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
           List<String> deletedForThisSource = new ArrayList<>(outputs.size());
-          for (String output : outputs) {
-            Path outputFile = Path.of(output);
+          for (Path outputFile : outputs) {
             boolean deletedSuccessfully = deleteRecursivelyAndCollectDeleted(outputFile, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
             if (!deletedSuccessfully && Files.exists(outputFile)) {
-              failedToDeleteOutputs.add(output);
+              failedToDeleteOutputs.add(outputFile.toString());
             }
           }
 

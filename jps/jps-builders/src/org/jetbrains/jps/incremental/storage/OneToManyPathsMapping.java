@@ -60,7 +60,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
       return null;
     }
     else if (collection.isEmpty()) {
-      return Collections.emptyList();
+      return List.of();
     }
     else {
       String[] result = new String[collection.size()];
@@ -72,8 +72,21 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   }
 
   @Override
-  public @Nullable Collection<@NotNull String> getOutputs(@NotNull Path file) throws IOException {
-    return getOutputs(file.toString());
+  public @Nullable Collection<@NotNull Path> getOutputs(@NotNull Path keyFile) throws IOException {
+    List<String> collection = (List<String>)super.getState(relativizer.toRelative(keyFile));
+    if (collection == null) {
+      return null;
+    }
+    else if (collection.isEmpty()) {
+      return List.of();
+    }
+    else {
+      Path[] result = new Path[collection.size()];
+      for (int i = 0, size = collection.size(); i < size; i++) {
+        result[i] = relativizer.toAbsoluteFile(collection.get(i));
+      }
+      return Arrays.asList(result);
+    }
   }
 
   public String @Nullable [] getOutputArray(@NotNull String keyPath) throws IOException {
@@ -171,19 +184,21 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   }
 
   private final class SourceToOutputMappingCursorImpl implements SourceToOutputMappingCursor {
-    private final Iterator<String> mySourceIterator;
+    private final Iterator<String> sourceIterator;
     private String sourcePath;
 
-    private SourceToOutputMappingCursorImpl(Iterator<String> sourceIterator) { mySourceIterator = sourceIterator; }
+    private SourceToOutputMappingCursorImpl(@NotNull Iterator<String> sourceIterator) {
+      this.sourceIterator = sourceIterator;
+    }
 
     @Override
     public boolean hasNext() {
-      return mySourceIterator.hasNext();
+      return sourceIterator.hasNext();
     }
 
     @Override
     public @NotNull String next() {
-      sourcePath = mySourceIterator.next();
+      sourcePath = sourceIterator.next();
       return sourcePath;
     }
 

@@ -39,7 +39,7 @@ class StorageManager(@JvmField val file: Path)  {
     storeValue.value
   }
 
-  fun <K : Any, V : Any> openMap(name: String, keyType: DataType<K>, valueType: DataType<V>): MapHandle<K, V> {
+  fun <K : Any, V : Any> openMap(name: String, keyType: DataType<K>, valueType: DataType<V>): MVMap<K, V> {
     LOG.debug { "Open map $name" }
 
     val mapBuilder = MVMap.Builder<K, V>()
@@ -48,42 +48,39 @@ class StorageManager(@JvmField val file: Path)  {
     return openMap(name, mapBuilder)
   }
 
-  fun <K : Any, V : Any> openMap(name: String, mapBuilder: MVMap.Builder<K, V>): MapHandle<K, V> {
-    return MapHandle(openOrResetMap(
+  fun <K : Any, V : Any> openMap(name: String, mapBuilder: MVMap.Builder<K, V>): MVMap<K, V> {
+    return openOrResetMap(
       store = storeValue.value,
       name = name,
       mapBuilder = mapBuilder,
       logger = { m, e, isWarn -> LOG.warn(m, e) },
-    ))
+    )
   }
 
   /** Only if error occurred */
   fun forceClose() {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Force closing storage $file", Throwable())
-    }
-
-    storeValue.valueIfInitialized?.let {
-      storeValue.drop()
+    storeValue.drop()?.let {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Force closing storage $file", Throwable())
+      }
       it.closeImmediately()
     }
   }
 
   fun close() {
+    val store = storeValue.drop() ?: return
+
     if (LOG.isDebugEnabled) {
       LOG.debug("Closing storage $file", Throwable())
     }
 
-    storeValue.valueIfInitialized?.let {
-      storeValue.drop()
-      val isCompactOnClose = System.getProperty("jps.new.storage.compact.on.close", "false").toBoolean()
-      it.close()
-      if (isCompactOnClose && Files.exists(file)) {
-        val time = measureTime {
-          MVStoreTool.compact(file.toString(), false)
-        }
-        LOG.info("Compacted storage in $time")
+    val isCompactOnClose = System.getProperty("jps.new.storage.compact.on.close", "false").toBoolean()
+    store.close()
+    if (isCompactOnClose && Files.exists(file)) {
+      val time = measureTime {
+        MVStoreTool.compact(file.toString(), false)
       }
+      LOG.info("Compacted storage in $time")
     }
   }
 
@@ -120,9 +117,6 @@ class StorageManager(@JvmField val file: Path)  {
 
   fun getMapName(targetId: String, targetTypeId: String, suffix: String): String = "$targetId|$targetTypeId|$suffix"
 }
-
-@ApiStatus.Internal
-class MapHandle<K : Any, V: Any> internal constructor(@JvmField val map: MVMap<K, V>)
 
 private fun <K : Any, V: Any> openOrResetMap(
   store: MVStore,

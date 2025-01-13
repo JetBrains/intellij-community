@@ -6,10 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.tracing.Tracer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.JpsBuildBundle;
@@ -702,8 +699,18 @@ public final class BuildDataManager {
     }
 
     @Override
-    public @Nullable Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
-      return myDelegate.getOutputs(srcPath);
+    public @Nullable Collection<String> getOutputs(@NotNull String sourcePath) throws IOException {
+      return myDelegate.getOutputs(sourcePath);
+    }
+
+    @Override
+    public @Nullable @Unmodifiable Collection<@NotNull Path> getOutputs(@NotNull Path sourceFile) throws IOException {
+      return myDelegate.getOutputs(sourceFile);
+    }
+
+    @Override
+    public @NotNull Iterator<@NotNull Path> getSourceFileIterator() throws IOException {
+      return myDelegate.getSourceFileIterator();
     }
 
     @Override

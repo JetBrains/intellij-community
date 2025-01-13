@@ -2585,6 +2585,7 @@ f:org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 - <init>(org.jetbrains.jps.model.JpsProject):V
 - <init>(org.jetbrains.jps.model.JpsProject,java.lang.Boolean):V
 - reportUnhandledPaths():V
+- toAbsoluteFile(java.lang.String):java.nio.file.Path
 - toFull(java.lang.String):java.lang.String
 - toRelative(java.lang.String):java.lang.String
 - toRelative(java.nio.file.Path):java.lang.String

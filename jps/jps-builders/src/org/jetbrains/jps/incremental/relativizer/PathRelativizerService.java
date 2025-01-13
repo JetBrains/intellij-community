@@ -118,6 +118,18 @@ public final class PathRelativizerService {
     return systemIndependentPath;
   }
 
+  public @NotNull Path toAbsoluteFile(@NotNull String path) {
+    String systemIndependentPath = FileUtilRt.toSystemIndependentName(path);
+    String fullPath;
+    for (PathRelativizer relativizer : relativizers) {
+      fullPath = relativizer.toAbsolutePath(systemIndependentPath);
+      if (fullPath != null) {
+        return Path.of(fullPath);
+      }
+    }
+    return Path.of(systemIndependentPath);
+  }
+
   public void reportUnhandledPaths() {
     if (LOG.isDebugEnabled()) {
       StringBuilder logBuilder = new StringBuilder();

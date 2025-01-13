@@ -179,13 +179,12 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
       for (Map.Entry<File, ModuleBuildTarget> entry : filesToCompile.entrySet()) {
         File srcFile = entry.getKey();
         ModuleBuildTarget target = entry.getValue();
-        Collection<String> boundForms = dataManager.getSourceToFormMap(target).getOutputs(srcFile.getPath());
+        Collection<Path> boundForms = dataManager.getSourceToFormMap(target).getOutputs(srcFile.toPath());
         if (boundForms == null) {
           continue;
         }
 
-        for (String formPath : boundForms) {
-          Path formFile = Path.of(formPath);
+        for (Path formFile : boundForms) {
           if (!excludes.isExcluded(formFile.toFile()) && Files.exists(formFile)) {
             FormBindings.addBinding(srcFile.toPath(), formFile, srcToForms);
             holderBuilder.markDirtyFile(target, formFile);

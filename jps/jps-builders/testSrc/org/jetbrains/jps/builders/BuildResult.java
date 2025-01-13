@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -20,7 +20,12 @@ import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 import static org.junit.Assert.*;
 
@@ -40,7 +45,7 @@ public final class BuildResult implements MessageHandler {
   void storeMappingsDump(ProjectDescriptor pd) throws IOException {
     final ByteArrayOutputStream dump = new ByteArrayOutputStream();
 
-    try (PrintStream stream = new PrintStream(dump)) {
+    try (PrintStream stream = new PrintStream(dump, false, StandardCharsets.UTF_8)) {
       Mappings mappings = pd.dataManager.getMappings();
       if (mappings != null) {
         mappings.toStream(stream);
@@ -52,35 +57,39 @@ public final class BuildResult implements MessageHandler {
     myMappingsDump = dump.toString();
   }
 
-  private static void dumpSourceToOutputMappings(ProjectDescriptor pd, PrintStream stream) throws IOException {
-    List<BuildTarget<?>> targets = new ArrayList<>(pd.getBuildTargetIndex().getAllTargets());
+  @SuppressWarnings("SSBasedInspection")
+  private static void dumpSourceToOutputMappings(@NotNull ProjectDescriptor projectDescriptor, @NotNull PrintStream stream) throws IOException {
+    List<BuildTarget<?>> targets = new ArrayList<>(projectDescriptor.getBuildTargetIndex().getAllTargets());
     targets.sort((o1, o2) -> {
       return StringUtil.comparePairs(o1.getTargetType().getTypeId(), o1.getId(), o2.getTargetType().getTypeId(), o2.getId(), false);
     });
-    final Int2ObjectMap<BuildTarget<?>> id2Target = new Int2ObjectOpenHashMap<>();
+
+    Int2ObjectMap<BuildTarget<?>> idToTarget = new Int2ObjectOpenHashMap<>();
     for (BuildTarget<?> target : targets) {
-      id2Target.put(pd.dataManager.getTargetStateManager().getBuildTargetId(target), target);
+      idToTarget.put(projectDescriptor.dataManager.getTargetStateManager().getBuildTargetId(target), target);
     }
-    Int2ObjectMap<String> hashCodeToOutputPath=new Int2ObjectOpenHashMap<>();
+
+    Int2ObjectMap<Path> hashCodeToOutputPath = new Int2ObjectOpenHashMap<>();
     for (BuildTarget<?> target : targets) {
       stream.println("Begin Of SourceToOutput (target " + getTargetIdWithTypeId(target) + ")");
-      SourceToOutputMapping map = pd.dataManager.getSourceToOutputMap(target);
-      List<String> sourceList = new ObjectArrayList<>(map.getSourcesIterator());
+      SourceToOutputMapping map = projectDescriptor.dataManager.getSourceToOutputMap(target);
+      List<Path> sourceList = new ObjectArrayList<>(map.getSourceFileIterator());
       sourceList.sort(null);
-      for (String source : sourceList) {
-        List<String> outputs = new ArrayList<>(Objects.requireNonNullElse(map.getOutputs(source), Collections.emptyList()));
+      for (Path source : sourceList) {
+        List<Path> outputs = new ArrayList<>(Objects.requireNonNullElse(map.getOutputs(source), List.of()));
         outputs.sort(null);
-        for (String output : outputs) {
-          hashCodeToOutputPath.put(FileUtil.pathHashCode(output), output);
+        for (Path output : outputs) {
+          hashCodeToOutputPath.put(FileUtilRt.pathHashCode(output.toString()), output);
         }
-        String sourceToCompare = SystemInfo.isFileSystemCaseSensitive ? source : source.toLowerCase(Locale.US);
-        stream.println(" " + sourceToCompare + " -> " + StringUtil.join(outputs, ","));
+        String sourceToCompare = SystemInfoRt.isFileSystemCaseSensitive ? source.toString() : source.toString().toLowerCase(Locale.US);
+        stream.println(" " + FileUtilRt.toSystemIndependentName(sourceToCompare) +
+                       " -> " +
+                       outputs.stream().map(it -> FileUtilRt.toSystemIndependentName(it.toString())).toList());
       }
       stream.println("End Of SourceToOutput (target " + getTargetIdWithTypeId(target) + ")");
     }
 
-
-    OutputToTargetRegistry registry = (OutputToTargetRegistry)pd.dataManager.getOutputToTargetMapping();
+    OutputToTargetRegistry registry = (OutputToTargetRegistry)projectDescriptor.dataManager.getOutputToTargetMapping();
     List<Integer> keys = registry.getAllKeys();
     if (keys.size() > 1) {
       keys.sort(null);
@@ -94,7 +103,7 @@ public final class BuildResult implements MessageHandler {
 
       List<String> targetsNames = new ArrayList<>();
       targetsIds.forEach(value -> {
-        BuildTarget<?> target = id2Target.get(value);
+        BuildTarget<?> target = idToTarget.get(value);
         targetsNames.add(target != null ? getTargetIdWithTypeId(target) : "<unknown " + value + ">");
       });
       targetsNames.sort(null);

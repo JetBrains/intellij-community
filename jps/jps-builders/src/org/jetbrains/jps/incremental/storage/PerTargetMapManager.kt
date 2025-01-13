@@ -43,7 +43,7 @@ internal class PerTargetMapManager(
 
   val sourceToForm: ExperimentalOneToManyPathMapping by lazy {
     ExperimentalOneToManyPathMapping(
-      mapHandle = storageManager.openMap(
+      map = storageManager.openMap(
         name = storageManager.getMapName(targetId = target.id, targetTypeId = target.targetType.typeId, suffix = "source-to-form-v1"),
         keyType = LongPairKeyDataType,
         valueType = StringListDataType,

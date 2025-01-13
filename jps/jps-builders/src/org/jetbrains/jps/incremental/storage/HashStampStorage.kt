@@ -4,6 +4,7 @@
 package org.jetbrains.jps.incremental.storage
 
 import org.h2.mvstore.DataUtils.readVarLong
+import org.h2.mvstore.MVMap
 import org.h2.mvstore.WriteBuffer
 import org.h2.mvstore.type.DataType
 import org.jetbrains.annotations.ApiStatus
@@ -19,7 +20,7 @@ import java.nio.file.attribute.BasicFileAttributes
 
 @ApiStatus.Internal
 class HashStampStorage private constructor(
-  private val mapHandle: MapHandle<LongArray, HashStamp>,
+  private val map: MVMap<LongArray, HashStamp>,
   private val relativizer: PathTypeAwareRelativizer,
 ) : StampsStorage<HashStamp> {
   companion object {
@@ -32,7 +33,7 @@ class HashStampStorage private constructor(
     ): HashStampStorage {
       val mapName = storageManager.getMapName(targetId = targetId, targetTypeId = targetTypeId, suffix = "file-hash-and-mtime-v1")
       return HashStampStorage(
-        mapHandle = storageManager.openMap(mapName, LongPairKeyDataType, HashStampStorageValueType),
+        map = storageManager.openMap(mapName, LongPairKeyDataType, HashStampStorageValueType),
         relativizer = relativizer,
       )
     }
@@ -41,21 +42,21 @@ class HashStampStorage private constructor(
   override fun getStorageRoot(): Path? = null
 
   override fun updateStamp(file: Path, buildTarget: BuildTarget<*>?, currentFileTimestamp: Long) {
-    mapHandle.map.put(createKey(file), HashStamp(hash = FileHashUtil.getFileHash(file), timestamp = currentFileTimestamp))
+    map.put(createKey(file), HashStamp(hash = FileHashUtil.getFileHash(file), timestamp = currentFileTimestamp))
   }
 
   private fun createKey(file: Path): LongArray = stringTo128BitHash(relativizer.toRelative(file, RelativePathType.SOURCE))
 
   override fun removeStamp(file: Path, target: BuildTarget<*>?) {
-    mapHandle.map.remove(createKey(file))
+    map.remove(createKey(file))
   }
 
   fun getStoredFileStamp(file: Path): HashStamp? {
-    return mapHandle.map.get(createKey(file))
+    return map.get(createKey(file))
   }
 
   override fun getCurrentStampIfUpToDate(file: Path, target: BuildTarget<*>?, attrs: BasicFileAttributes?): HashStamp? {
-    return mapHandle.map.get(createKey(file))?.takeIf {
+    return map.get(createKey(file))?.takeIf {
       val timestamp = if (attrs == null || !attrs.isRegularFile) FSOperations.lastModified(file) else attrs.lastModifiedTime().toMillis()
       timestamp == it.timestamp || it.hash == FileHashUtil.getFileHash(file)
     }

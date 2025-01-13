@@ -14,7 +14,7 @@ import org.jetbrains.jps.incremental.storage.dataTypes.stringTo128BitHash
 class ExperimentalOutputToTargetMapping(
   storageManager: StorageManager,
 ) : OutputToTargetMapping {
-  private val mapHandle = storageManager.openMap("out-to-target-v1", LongPairKeyDataType, LongListKeyDataType)
+  private val map = storageManager.openMap("out-to-target-v1", LongPairKeyDataType, LongListKeyDataType)
 
   override fun removeTargetAndGetSafeToDeleteOutputs(
     outputPaths: Collection<String>,
@@ -33,7 +33,7 @@ class ExperimentalOutputToTargetMapping(
     val result = ArrayList<String>(size)
     for (outPath in outputPaths) {
       val key = stringTo128BitHash(relativizer.toRelative(outPath, RelativePathType.OUTPUT))
-      mapHandle.map.operate(key, null, decisionMaker)
+      map.operate(key, null, decisionMaker)
       if (!decisionMaker.outStillUsed) {
         result.add(outPath)
       }
@@ -47,28 +47,27 @@ class ExperimentalOutputToTargetMapping(
     val decisionMaker = LongListRemoveItemDecisionMaker(srcToOut.targetHashId)
     for (outPath in outputPaths) {
       val key = stringTo128BitHash(relativizer.toRelative(outPath, RelativePathType.OUTPUT))
-      mapHandle.map.operate(key, null, decisionMaker)
+      map.operate(key, null, decisionMaker)
     }
   }
 
   fun addMappings(normalizeOutputPaths: Array<String>, targetHashId: Long) {
     val decisionMaker = LongListAddItemDecisionMaker(targetHashId)
     for (outPath in normalizeOutputPaths) {
-      mapHandle.map.operate(stringTo128BitHash(outPath), null, decisionMaker)
+      map.operate(stringTo128BitHash(outPath), null, decisionMaker)
     }
   }
 
   fun addMapping(normalizeOutputPath: String, targetHashId: Long) {
     val decisionMaker = LongListAddItemDecisionMaker(targetHashId)
-    mapHandle.map.operate(stringTo128BitHash(normalizeOutputPath), null, decisionMaker)
+    map.operate(stringTo128BitHash(normalizeOutputPath), null, decisionMaker)
   }
 
   fun removeTarget(targetId: String, targetTypeId: String) {
-    val map = mapHandle.map
     val iterator = map.cursor(null)
     val decisionMaker = LongListRemoveItemDecisionMaker(targetToHash(targetId, targetTypeId))
     while (iterator.hasNext()) {
-      mapHandle.map.operate(iterator.next(), null, decisionMaker)
+      map.operate(iterator.next(), null, decisionMaker)
     }
   }
 }

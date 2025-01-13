@@ -1,77 +1,69 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jps.incremental.storage;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jps.incremental.storage
 
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.List;
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.builders.storage.SourceToOutputMapping
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import java.io.IOException
+import java.nio.file.Path
 
 @ApiStatus.Internal
-public final class SourceToOutputMappingImpl implements SourceToOutputMapping, StorageOwner {
-  private final OneToManyPathsMapping myMapping;
+class SourceToOutputMappingImpl @Throws(IOException::class) constructor(
+  storePath: Path,
+  relativizer: PathRelativizerService,
+) : SourceToOutputMapping, StorageOwner {
+  private val mapping = OneToManyPathsMapping(storePath, relativizer)
 
-  public SourceToOutputMappingImpl(@NotNull Path storePath, @NotNull PathRelativizerService relativizer) throws IOException {
-    myMapping = new OneToManyPathsMapping(storePath, relativizer);
+  override fun setOutputs(srcPath: String, outputs: List<String>) {
+    mapping.setOutputs(srcPath, outputs)
   }
 
-  @Override
-  public void setOutputs(@NotNull String srcPath, @NotNull List<String> outputs) throws IOException {
-    myMapping.setOutputs(srcPath, outputs);
+  override fun setOutput(srcPath: String, outputPath: String) {
+    mapping.setOutput(srcPath, outputPath)
   }
 
-  @Override
-  public void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-    myMapping.setOutput(srcPath, outputPath);
+  override fun appendOutput(srcPath: String, outputPath: String) {
+    mapping.appendData(srcPath, outputPath)
   }
 
-  @Override
-  public void appendOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-    myMapping.appendData(srcPath, outputPath);
+  @Throws(IOException::class)
+  override fun remove(srcPath: String) {
+    mapping.remove(srcPath)
   }
 
-  @Override
-  public void remove(@NotNull String srcPath) throws IOException {
-    myMapping.remove(srcPath);
+  @Throws(IOException::class)
+  override fun removeOutput(srcPath: String, outputPath: String) {
+    mapping.removeData(srcPath, outputPath)
   }
 
-  @Override
-  public void removeOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-    myMapping.removeData(srcPath, outputPath);
+  @Throws(IOException::class)
+  override fun getOutputs(srcPath: String): List<String>? = mapping.getOutputs(srcPath)
+
+  @Throws(IOException::class)
+  override fun getOutputs(sourceFile: Path): Collection<Path>? = mapping.getOutputs(sourceFile)
+
+  @Throws(IOException::class)
+  override fun getSourcesIterator(): Iterator<String> = mapping.keysIterator
+
+  @Throws(IOException::class)
+  override fun getSourceFileIterator(): Iterator<Path> {
+    return mapping.keysIterator.asSequence().map { Path.of(it) }.iterator()
   }
 
-  @Override
-  public @Nullable List<String> getOutputs(@NotNull String srcPath) throws IOException {
-    return myMapping.getOutputs(srcPath);
+  @Throws(IOException::class)
+  override fun cursor(): SourceToOutputMappingCursor {
+    return mapping.cursor()
   }
 
-  @Override
-  public @NotNull Iterator<String> getSourcesIterator() throws IOException {
-    return myMapping.getKeysIterator();
+  override fun flush(memoryCachesOnly: Boolean) {
+    mapping.flush(memoryCachesOnly)
   }
 
-  @Override
-  public @NotNull SourceToOutputMappingCursor cursor() throws IOException {
-    return myMapping.cursor();
+  override fun close() {
+    mapping.close()
   }
 
-  @Override
-  public void flush(boolean memoryCachesOnly) {
-    myMapping.flush(memoryCachesOnly);
-  }
-
-  @Override
-  public void close() throws IOException {
-    myMapping.close();
-  }
-
-  @Override
-  public void clean() throws IOException {
-    myMapping.clean();
+  override fun clean() {
+    mapping.clean()
   }
 }
