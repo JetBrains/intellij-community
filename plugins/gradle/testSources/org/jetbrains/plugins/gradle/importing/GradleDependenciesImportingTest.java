@@ -2211,13 +2211,19 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                                             todir: new File(gradle.gradleUserHomeDir, '/caches/ij_test_repo/test')
                                }
                            }
+                           
+                           interface FileSystemOperationsInjector {
+                               @Inject FileSystemOperations getFileSystemOperations()
+                           }
+                           
                            task removeALibFromGradleUserHome(type: DefaultTask) {
+                               def injector = project.objects.newInstance(FileSystemOperationsInjector)
                                doLast {
                                  def attemptsLeft = 10;
                                  while (attemptsLeft > 0) {
                                    attemptsLeft--;
                                    try {
-                                     project.delete {
+                                     injector.fileSystemOperations.delete {
                                        delete new File(gradle.gradleUserHomeDir, '/caches/ij_test_repo/test')
                                        followSymlinks = true
                                      }
