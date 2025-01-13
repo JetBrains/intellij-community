@@ -12,10 +12,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.seconds
 
-class OpenProjectView(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+class OpenProjectViewCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: String = CMD_PREFIX + "openProjectView"
-    private val LOG = logger<OpenProjectView>()
+    private val LOG = logger<OpenProjectViewCommand>()
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
