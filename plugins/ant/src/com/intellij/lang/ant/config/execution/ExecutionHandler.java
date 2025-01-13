@@ -97,7 +97,6 @@ public final class ExecutionHandler {
     CompletableFuture<ProcessHandler> future = new CompletableFuture<>();
 
     MessageView.getInstance(project).runWhenInitialized(() -> {
-      final TargetEnvironmentRequest request;
       final SimpleJavaParameters javaParameters;
       final AntBuildListenerWrapper listenerWrapper = new AntBuildListenerWrapper(buildFile, antBuildListener);
       try {
@@ -112,13 +111,6 @@ public final class ExecutionHandler {
 
         javaParameters = builder.getCommandLine();
 
-        final var configuration = JavaCommandLineState.checkCreateNonLocalConfiguration(javaParameters.getJdk());
-        if (configuration != null) {
-          request = new EelTargetEnvironmentRequest(configuration);
-        }
-        else {
-          request = new LocalTargetEnvironmentRequest();
-        }
 
         final AntBuildMessageView messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
         project.getMessageBus().syncPublisher(AntExecutionListener.TOPIC).beforeExecution(new AntBeforeExecutionEvent(buildFile, messageView));
@@ -132,6 +124,16 @@ public final class ExecutionHandler {
 
           @Override
           public void run(final @NotNull ProgressIndicator indicator) {
+            final TargetEnvironmentRequest request;
+
+            final var configuration = JavaCommandLineState.checkCreateNonLocalConfiguration(javaParameters.getJdk());
+            if (configuration != null) {
+              request = new EelTargetEnvironmentRequest(configuration);
+            }
+            else {
+              request = new LocalTargetEnvironmentRequest();
+            }
+
             try {
               TargetedCommandLineBuilder builder = javaParameters.toCommandLine(request);
               TargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
