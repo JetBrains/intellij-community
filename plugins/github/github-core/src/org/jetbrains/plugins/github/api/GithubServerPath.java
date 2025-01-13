@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 @Tag("server")
 public final class GithubServerPath implements ServerPath {
   public static final String DEFAULT_HOST = "github.com";
+  public static final String DATA_RESIDENCY_HOST = "ghe.com";
   public static final GithubServerPath DEFAULT_SERVER = new GithubServerPath(DEFAULT_HOST);
   private static final String API_PREFIX = "api.";
   private static final String API_SUFFIX = "/api";
@@ -31,7 +32,7 @@ public final class GithubServerPath implements ServerPath {
   private static final String GRAPHQL_SUFFIX = "/graphql";
 
   @Attribute("useHttp") private final @Nullable Boolean myUseHttp;
-  @Attribute("host") private final @NotNull String myHost;
+  @Attribute("host") private final @NotNull @NonNls String myHost;
   @Attribute("port") private final @Nullable Integer myPort;
   @Attribute("suffix") private final @Nullable String mySuffix;
 
@@ -121,9 +122,10 @@ public final class GithubServerPath implements ServerPath {
     }
   }
 
+  // see: https://docs.github.com/en/enterprise-cloud@latest/admin/data-residency/about-github-enterprise-cloud-with-data-residency#api-access
   public @NotNull String toApiUrl() {
     StringBuilder builder = new StringBuilder(getSchemaUrlPart());
-    if (isGithubDotCom()) {
+    if (isGithubDotCom() || isGheDataResidency()) {
       builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix));
     }
     else {
@@ -133,9 +135,10 @@ public final class GithubServerPath implements ServerPath {
     return builder.toString();
   }
 
+  // see: https://docs.github.com/en/enterprise-cloud@latest/admin/data-residency/about-github-enterprise-cloud-with-data-residency#api-access
   public @NotNull String toGraphQLUrl() {
     StringBuilder builder = new StringBuilder(getSchemaUrlPart());
-    if (isGithubDotCom()) {
+    if (isGithubDotCom() || isGheDataResidency()) {
       builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(GRAPHQL_SUFFIX);
     }
     else {
@@ -158,6 +161,11 @@ public final class GithubServerPath implements ServerPath {
 
   public boolean isGithubDotCom() {
     return myHost.equalsIgnoreCase(DEFAULT_HOST);
+  }
+
+  // see: https://docs.github.com/en/enterprise-cloud@latest/admin/data-residency/about-github-enterprise-cloud-with-data-residency
+  public boolean isGheDataResidency() {
+    return myHost.toLowerCase().endsWith(DATA_RESIDENCY_HOST);
   }
 
   @Override
