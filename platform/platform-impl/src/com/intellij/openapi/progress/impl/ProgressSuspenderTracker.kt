@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -8,12 +9,12 @@ import com.intellij.util.application
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-internal class ProgressSuspenderTracker : ProgressSuspender.SuspenderListener {
+internal class ProgressSuspenderTracker : ProgressSuspender.SuspenderListener, Disposable {
   private val suspenderTrackers = ConcurrentHashMap<ProgressSuspender, SuspenderListener>()
   private val indicatorTrackers = ConcurrentHashMap<ProgressIndicator, IndicatorListener>()
 
   init {
-    application.messageBus.connect().subscribe(ProgressSuspender.TOPIC, this)
+    application.messageBus.connect(this).subscribe(ProgressSuspender.TOPIC, this)
   }
 
   fun startTracking(progressSuspender: ProgressSuspender, listener: SuspenderListener) {
@@ -46,6 +47,11 @@ internal class ProgressSuspenderTracker : ProgressSuspender.SuspenderListener {
     val listener = indicatorTrackers[progressIndicator] ?: return
     stopTracking(suspender)
     listener.suspenderRemoved()
+  }
+
+  override fun dispose() {
+    suspenderTrackers.clear()
+    indicatorTrackers.clear()
   }
 
   companion object {
