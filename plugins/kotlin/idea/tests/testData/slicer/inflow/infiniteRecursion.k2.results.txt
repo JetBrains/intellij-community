@@ -5,3 +5,5 @@
 8 				[LAMBDA IN] firstLambda = <bold>{ x -> secondLambda?.invoke(x) ?: 42 }</bold> (in nestedInfiniteRecursion())
 8 					firstLambda = <bold>{ x -> secondLambda?.invoke(x) ?: 42 }</bold> (in nestedInfiniteRecursion())
 8 						firstLambda = { x -> <bold>secondLambda?.invoke(x) ?: 42</bold> } (in nestedInfiniteRecursion())
+8 							firstLambda = { x -> <bold>secondLambda?.invoke(x)</bold> ?: 42 } (in nestedInfiniteRecursion())
+8 							firstLambda = { x -> secondLambda?.invoke(x) ?: <bold>42</bold> } (in nestedInfiniteRecursion())

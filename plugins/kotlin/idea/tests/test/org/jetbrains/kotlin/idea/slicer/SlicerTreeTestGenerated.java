@@ -123,6 +123,11 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
             runTest("testData/slicer/inflow/doubleLambdaResult.kt");
         }
 
+        @TestMetadata("elvis.kt")
+        public void testElvis() throws Exception {
+            runTest("testData/slicer/inflow/elvis.kt");
+        }
+
         @TestMetadata("emptyFun.kt")
         public void testEmptyFun() throws Exception {
             runTest("testData/slicer/inflow/emptyFun.kt");

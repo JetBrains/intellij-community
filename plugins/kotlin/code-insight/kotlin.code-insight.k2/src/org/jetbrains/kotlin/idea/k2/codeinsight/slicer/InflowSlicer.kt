@@ -288,6 +288,14 @@ class InflowSlicer(
                 expression.`else`?.let(::processBodyResults)
             }
 
+            is KtBinaryExpression -> {
+                val elementType = expression.operationReference.getReferencedNameElementType()
+                if (elementType == KtTokens.ELVIS) {
+                    expression.left?.let(::processBodyResults)
+                    expression.right?.let(::processBodyResults)
+                }
+            }
+
             is KtWhenExpression -> {
                 expression.entries.forEach { entry ->
                     entry.expression?.let(::processBodyResults)

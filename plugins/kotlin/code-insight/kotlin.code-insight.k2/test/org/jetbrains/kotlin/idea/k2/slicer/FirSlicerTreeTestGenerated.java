@@ -123,6 +123,11 @@ public abstract class FirSlicerTreeTestGenerated extends AbstractFirSlicerTreeTe
             runTest("../../idea/tests/testData/slicer/inflow/doubleLambdaResult.kt");
         }
 
+        @TestMetadata("elvis.kt")
+        public void testElvis() throws Exception {
+            runTest("../../idea/tests/testData/slicer/inflow/elvis.kt");
+        }
+
         @TestMetadata("emptyFun.kt")
         public void testEmptyFun() throws Exception {
             runTest("../../idea/tests/testData/slicer/inflow/emptyFun.kt");
