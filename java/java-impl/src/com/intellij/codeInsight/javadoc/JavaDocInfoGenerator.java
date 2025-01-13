@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.CommonBundle;
@@ -2628,7 +2628,9 @@ public class JavaDocInfoGenerator {
       buffer.append("<p>");
       PsiElement[] dataElements = tag.getDataElements();
       if (dataElements.length == 0) continue;
-      PsiElement grandChild = dataElements[0].getFirstChild().getFirstChild();
+      PsiElement child = dataElements[0].getFirstChild();
+      if (child == null) continue;
+      PsiElement grandChild = child.getFirstChild();
       if (!(grandChild instanceof PsiJavaCodeReferenceElement reference)) continue;
       if (reference.resolve() instanceof PsiClass target) {
         generateLink(buffer, target);
