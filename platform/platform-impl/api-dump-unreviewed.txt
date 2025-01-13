@@ -4103,9 +4103,9 @@ f:com.intellij.ide.startup.ServiceNotReadyException
 - <init>(java.lang.String):V
 f:com.intellij.ide.startup.StartupActionScriptManager
 - sf:ACTION_SCRIPT_FILE:java.lang.String
-- sf:STARTUP_WIZARD_MODE:java.lang.String
 - s:addActionCommand(com.intellij.ide.startup.StartupActionScriptManager$ActionCommand):V
 - s:addActionCommands(java.util.List):V
+- s:addActionCommandsToBeginning(java.util.List):V
 com.intellij.ide.startup.StartupActionScriptManager$ActionCommand
 - a:execute():V
 f:com.intellij.ide.startup.StartupActionScriptManager$CopyCommand

@@ -175,7 +175,7 @@ public final class PluginDownloader {
 
     IdeaPluginDescriptor descriptor = null;
 
-    if (!Boolean.getBoolean(StartupActionScriptManager.STARTUP_WIZARD_MODE) && PluginManagerCore.isPluginInstalled(myPluginId)) {
+    if (PluginManagerCore.isPluginInstalled(myPluginId)) {
       descriptor = PluginManagerCore.getPlugin(myPluginId);
       LOG.assertTrue(descriptor != null);
 
