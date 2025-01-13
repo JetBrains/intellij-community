@@ -1988,6 +1988,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myIndexableFilesFilterHolder.findProjectForFile(fileId);
   }
 
+  public List<Project> findProjectsForFileId(int fileId) {
+    return myIndexableFilesFilterHolder.findProjectsForFile(fileId);
+  }
+
   private @NotNull List<Project> ensureFileBelongsToIndexableFilter(int fileId, @NotNull VirtualFile file) {
     return myIndexableFilesFilterHolder.ensureFileIdPresent(fileId, () -> getContainingProjects(file));
   }
