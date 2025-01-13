@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.fixture
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.testFramework.junit5.eel.impl.checkMultiRoutingFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.currentOs
 import com.intellij.platform.testFramework.junit5.eel.impl.eelInitializer
 import com.intellij.platform.testFramework.junit5.eel.impl.eelTempDirectoryFixture
@@ -40,7 +39,6 @@ interface IsolatedFileSystem {
  */
 @TestOnly
 fun eelFixture(os: EelPath.OS = currentOs): TestFixture<IsolatedFileSystem> {
-  //checkMultiRoutingFileSystem()
   return testFixture("eel-test-fixture", eelInitializer(os))
 }
 
