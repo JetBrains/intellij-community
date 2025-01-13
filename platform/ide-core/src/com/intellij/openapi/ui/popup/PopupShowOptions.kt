@@ -6,11 +6,34 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Point
 
+/**
+ * A set of options to determine where and how a popup should be shown.
+ *
+ * An instance is created using one of the static builders, currently only [aboveComponent].
+ * The created options may then be modified using interface methods.
+ */
 sealed interface PopupShowOptions {
+  /**
+   * The gap between the popup and the component.
+   *
+   * Currently only supported for [aboveComponent].
+   * The gap must be in unscaled pixels.
+   */
   fun withPopupComponentUnscaledGap(popupComponentGap: Int?): PopupShowOptions
+
+  /**
+   * The minimum popup height.
+   *
+   * Currently only supported for [aboveComponent].
+   * The popup itself must also support height changing (e.g., by showing a vertical scrollbar).
+   */
   fun withMinimumHeight(minimumHeight: Int?): PopupShowOptions
 
   companion object {
+
+    /**
+     * Creates popup options to show the popup above a specific component.
+     */
     @JvmStatic
     fun aboveComponent(
       component: Component,
