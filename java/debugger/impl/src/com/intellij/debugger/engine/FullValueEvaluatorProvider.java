@@ -10,9 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface FullValueEvaluatorProvider {
+  @ApiStatus.OverrideOnly
   @Nullable
   XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext, @NotNull ValueDescriptorImpl valueDescriptor);
 
+  @ApiStatus.OverrideOnly
   @ApiStatus.Experimental
   default @Nullable XFullValueEvaluator getFullValueEvaluator(
     @NotNull XValueNode node,
