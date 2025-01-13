@@ -5,7 +5,7 @@ import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
 import org.jetbrains.tools.model.updater.impl.*
 
 private const val ktGroup = "org.jetbrains.kotlin"
-internal const val BOOTSTRAP_VERSION = "2.1.255-dev-255"
+internal const val BOOTSTRAP_VERSION = "2.2.255-dev-255"
 
 // see .idea/jarRepositories.xml
 private val KOTLIN_IDE_DEPS_REPOSITORY = JpsRemoteRepository(
