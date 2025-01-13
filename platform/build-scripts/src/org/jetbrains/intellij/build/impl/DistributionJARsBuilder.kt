@@ -19,6 +19,7 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
@@ -41,10 +42,12 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.copyToRecursively
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.listDirectoryEntries
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -472,12 +475,12 @@ internal suspend fun buildNonBundledPlugins(
     if (prepareCustomPluginRepository) {
       val list = pluginSpecs.sortedBy { it.pluginZip }
       if (list.isNotEmpty()) {
-        generatePluginRepositoryMetaFile(list, context.nonBundledPlugins, context)
+        generatePluginRepositoryMetaFile(list, context.nonBundledPlugins, context.buildNumber)
       }
 
       val pluginsToBePublished = list.filter { it.pluginZip.startsWith(context.nonBundledPluginsToBePublished) }
       if (pluginsToBePublished.isNotEmpty()) {
-        generatePluginRepositoryMetaFile(pluginsToBePublished, context.nonBundledPluginsToBePublished, context)
+        generatePluginRepositoryMetaFile(pluginsToBePublished, context.nonBundledPluginsToBePublished, context.buildNumber)
       }
     }
 
@@ -713,7 +716,8 @@ const val PLUGIN_CLASSPATH: String = "$PLUGINS_DIRECTORY/plugin-classpath.txt"
 
 private val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = compareBy { it.mainModule }
 
-internal class PluginRepositorySpec(@JvmField val pluginZip: Path, @JvmField val pluginXml: ByteArray /* content of plugin.xml */)
+@VisibleForTesting
+class PluginRepositorySpec(@JvmField val pluginZip: Path, @JvmField val pluginXml: ByteArray /* content of plugin.xml */)
 
 fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout: ProductModulesLayout): MutableSet<PluginLayout> {
   if (modules.isEmpty()) {
