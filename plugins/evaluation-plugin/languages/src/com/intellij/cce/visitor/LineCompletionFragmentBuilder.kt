@@ -18,6 +18,8 @@ class LineCompletionFragmentBuilder(
       ?.map { it.createVisitor(featureName, completionGolfMode) }
     if (knownVisitors != null) return knownVisitors
     if (fallbackToDefaultIfNotFound) return listOf(LineCompletionAllEvaluationVisitor.Default(featureName, language))
-    throw IllegalStateException("No known visitors found for $language and $featureName")
+
+    val registeredLanguages = LineCompletionVisitorFactory.EP_NAME.extensionList.map { it.language.displayName }
+    throw IllegalStateException("No known visitors found for $language and $featureName. Registered languages: $registeredLanguages")
   }
 }
