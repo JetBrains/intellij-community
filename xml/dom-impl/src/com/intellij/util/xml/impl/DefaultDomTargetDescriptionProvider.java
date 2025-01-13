@@ -1,32 +1,21 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
+import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomDescriptionProvider;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.usageView.UsageViewLongNameLocation;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
-import com.intellij.usageView.UsageViewLongNameLocation;
-import com.intellij.util.xml.*;
-import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.ElementPresentation;
+import com.intellij.util.xml.ElementPresentationTemplate;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultDomTargetDescriptionProvider extends PomDescriptionProvider {
+final class DefaultDomTargetDescriptionProvider extends PomDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location) {
     if (!(element instanceof DomTarget target)) return null;

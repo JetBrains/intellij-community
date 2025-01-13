@@ -3267,10 +3267,6 @@ f:com.intellij.codeInsight.generation.OverrideMethodsHandler
 - <init>():V
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - startInWriteAction():Z
-f:com.intellij.codeInsight.generation.actions.AutoIndentLinesAction
-- com.intellij.codeInsight.actions.BaseCodeInsightAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
 c:com.intellij.codeInsight.generation.actions.CommentByLineCommentAction
 - com.intellij.codeInsight.actions.MultiCaretCodeInsightAction
 - com.intellij.ide.lightEdit.LightEditCompatible

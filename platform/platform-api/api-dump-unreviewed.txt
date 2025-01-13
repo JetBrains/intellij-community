@@ -748,12 +748,6 @@ com.intellij.ide.actions.exclusion.ExclusionHandler
 - a:isNodeExcluded(java.lang.Object):Z
 - a:isNodeExclusionAvailable(java.lang.Object):Z
 - a:onDone(Z):V
-f:com.intellij.ide.actions.exclusion.IncludeTreeNodeAction
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 e:com.intellij.ide.browsers.BrowserFamily
 - java.lang.Enum
 - com.intellij.openapi.util.Iconable

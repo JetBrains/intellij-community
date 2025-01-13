@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.embedding
 
 import com.intellij.lexer.BaseHtmlLexer
@@ -101,13 +101,16 @@ abstract class HtmlAttributeEmbeddedContentProvider(lexer: BaseHtmlLexer)
 
   override fun hasState(): Boolean = myTagNameRead || myWithinTag || myTagName != null || myAttributeName != null || embedment
 
-  override fun getState(): Any? =
-    if (hasState())
-      AttributeState(myTagNameRead, myWithinTag, myTagName, myAttributeName, embedment)
-    else
-      null
+  override fun getState(): Any? {
+    return if (hasState()) AttributeState(myTagNameRead, myWithinTag, myTagName, myAttributeName, embedment) else null
+  }
 
-  open class AttributeState(val tagNameRead: Boolean, val withinTag: Boolean, val tagName: CharSequence?,
-                            val attributeName: CharSequence?, embedment: Boolean) : BaseState(embedment)
+  open class AttributeState(
+    val tagNameRead: Boolean,
+    val withinTag: Boolean,
+    val tagName: CharSequence?,
+    val attributeName: CharSequence?,
+    embedment: Boolean,
+  ) : BaseState(embedment)
 
 }

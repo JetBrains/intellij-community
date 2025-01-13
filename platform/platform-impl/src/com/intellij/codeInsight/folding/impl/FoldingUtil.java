@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.Editor;
@@ -14,14 +13,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class FoldingUtil {
-  private FoldingUtil() {}
+  private FoldingUtil() { }
 
   public static @Nullable FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     FoldRegion region = editor.getFoldingModel().getFoldRegion(startOffset, endOffset);
     return region != null && region.isValid() ? region : null;
   }
 
-  public static @Nullable FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line){
+  public static @Nullable FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line) {
     if (line < 0 || line >= editor.getDocument().getLineCount()) {
       return null;
     }
@@ -39,7 +38,7 @@ public final class FoldingUtil {
     return result;
   }
 
-  public static FoldRegion[] getFoldRegionsAtOffset(Editor editor, int offset){
+  public static FoldRegion[] getFoldRegionsAtOffset(Editor editor, int offset) {
     List<FoldRegion> list = new ArrayList<>();
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : allRegions) {
@@ -59,12 +58,11 @@ public final class FoldingUtil {
   }
 
   public static boolean isHighlighterFolded(@NotNull Editor editor, @NotNull RangeHighlighter highlighter) {
-    int startOffset = highlighter instanceof RangeHighlighterEx ?
-                      ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset() :
-                      highlighter.getStartOffset();
-    int endOffset = highlighter instanceof RangeHighlighterEx ?
-                    ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset() :
-                    highlighter.getEndOffset();
+    int startOffset = highlighter instanceof RangeHighlighterEx
+                      ? ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset()
+                      : highlighter.getStartOffset();
+    int endOffset =
+      highlighter instanceof RangeHighlighterEx ? ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset() : highlighter.getEndOffset();
     return isTextRangeFolded(editor, new TextRange(startOffset, endOffset));
   }
 
@@ -74,7 +72,7 @@ public final class FoldingUtil {
   }
 
   /**
-   * Iterates fold regions tree in a depth-first order (pre-order)
+   * Iterates fold region tree in a depth-first order (pre-order)
    */
   public static Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
@@ -119,6 +117,4 @@ public final class FoldingUtil {
       }
     };
   }
-
-
 }

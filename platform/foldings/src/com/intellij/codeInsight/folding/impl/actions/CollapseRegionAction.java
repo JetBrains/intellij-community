@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl.actions;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -9,12 +8,10 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public final class CollapseRegionAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
+final class CollapseRegionAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public CollapseRegionAction() {
     super(new BaseFoldingHandler() {
       @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 final class CollapseRegionRecursivelyAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
-  public CollapseRegionRecursivelyAction() {
+  CollapseRegionRecursivelyAction() {
     super(new BaseFoldingHandler() {
       @Override
       public void doExecute(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
