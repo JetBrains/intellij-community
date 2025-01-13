@@ -703,7 +703,9 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       PsiStatement statement = result[i];
       if (statement instanceof PsiReturnStatement returnStatement) {
         PsiExpression returnValue = returnStatement.getReturnValue();
-        if (returnValue == null || !returnValue.isValid() || PsiTreeUtil.hasErrorElements(returnValue) || returnValue.getType() == null) {
+        if (returnValue == null || !returnValue.isValid() || PsiTreeUtil.hasErrorElements(returnValue) ||
+            //skip PsiCall not to resolve and get exceptions
+            (!(returnValue instanceof PsiCall) && returnValue.getType() == null)) {
           return null;
         }
         result[i] = createYieldStatement(returnValue);
