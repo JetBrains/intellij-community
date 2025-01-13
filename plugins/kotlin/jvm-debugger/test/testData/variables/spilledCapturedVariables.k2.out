@@ -1,0 +1,33 @@
+LineBreakpoint created at spilledCapturedVariables.kt:16
+LineBreakpoint created at spilledCapturedVariables.kt:19
+LineBreakpoint created at spilledCapturedVariables.kt:22
+Run Java
+Connected to the target VM
+spilledCapturedVariables.kt:16
+CoroutinePreflightFrame invokeSuspend (spilledCapturedVariables.kt:16)
+    JavaValue[local] this (@A): spilledCapturedVariables.A = spilledCapturedVariables.A@hashCode
+    JavaValue[local] x: int = 1 (spilledCapturedVariables.kt:10)
+    JavaValue[local] y: int = 1 (spilledCapturedVariables.kt:12)
+    JavaValue[local] z: int = 1 (spilledCapturedVariables.kt:14)
+spilledCapturedVariables.kt:19
+CoroutinePreflightFrame invokeSuspend (spilledCapturedVariables.kt:19)
+    JavaValue[continuation] this_: A@uniqueID = spilledCapturedVariables.A@hashCode
+    JavaValue[continuation] $i$f$foo = 0
+    JavaValue[continuation] x = 1
+    JavaValue[continuation] $i$f$inlineBlock = 0
+    JavaValue[continuation] $i$a$-inlineBlock-A$foo$2 = 0
+    JavaValue[continuation] y = 1
+    JavaValue[continuation] $i$a$-inlineBlock-A$foo$2$1 = 0
+    JavaValue[continuation] z = 1
+spilledCapturedVariables.kt:22
+CoroutinePreflightFrame invokeSuspend (spilledCapturedVariables.kt:22)
+    JavaValue[local] this (@A): spilledCapturedVariables.A = spilledCapturedVariables.A@hashCode
+    JavaValue[local] x: int = 1 (spilledCapturedVariables.kt:10)
+    JavaValue[continuation] this_: A@uniqueID = spilledCapturedVariables.A@hashCode
+    JavaValue[continuation] $i$f$foo = 0
+    JavaValue[continuation] $i$f$inlineBlock = 0
+    JavaValue[continuation] $i$a$-inlineBlock-A$foo$2 = 0
+    JavaValue[continuation] y = 1
+Disconnected from the target VM
+
+Process finished with exit code 0
