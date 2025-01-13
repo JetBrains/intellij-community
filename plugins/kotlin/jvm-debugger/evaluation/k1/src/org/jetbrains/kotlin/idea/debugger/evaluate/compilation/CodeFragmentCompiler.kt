@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.MemberScopeImpl
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
+import org.jetbrains.kotlin.scripting.compiler.plugin.extensions.ScriptLoweringExtension
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
@@ -88,6 +90,10 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         )
 
         try {
+            if (filesToCompile.any { it.isScript() }) {
+                IrGenerationExtension.registerExtension(project, ScriptLoweringExtension())
+            }
+
             codegenFactory.convertAndGenerate(filesToCompile, generationState, bindingContext)
             return fragmentCompilerBackend.extractResult(parameterInfo, generationState)
         } catch (e: ProcessCanceledException) {
