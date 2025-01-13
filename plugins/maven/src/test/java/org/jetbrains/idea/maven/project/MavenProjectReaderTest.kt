@@ -23,7 +23,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
 import kotlin.io.path.pathString
 
 class MavenProjectReaderTest : MavenProjectReaderTestCase() {
@@ -317,6 +316,32 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     assertEquals("test", id.groupId)
     assertEquals("Unknown", id.artifactId)
     assertEquals("1", id.version)
+  }
+
+  fun testTakingVersionFromParentAutomaticallyDisabledInMaven3() = runBlocking {
+    //assumeMaven3()
+    createProjectPom("""
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                       </parent>
+                       """.trimIndent())
+    val subprojectPom = createModulePom("sub/subproject", """
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <relativePath>../../pom.xml</relativePath>
+                       </parent>
+                       """.trimIndent())
+
+    val id = readProject(subprojectPom).mavenId
+
+    assertEquals("test", id.groupId)
+    assertEquals("Unknown", id.artifactId)
+    assertEquals("Unknown", id.version)
+    // TODO add a similar testcase for Maven 4: the version must be found in the parent POM using <relativePath>
+    //assertEquals("1", id.version)
   }
 
   fun testCustomSettings() = runBlocking {
