@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.codeInsight.inline.completion.InlineCompletion;
 import com.intellij.execution.ui.UIExperiment;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -235,6 +236,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
                 }
               }
             });
+            XDebugSessionImpl session = getSession();
+            if (session != null) {
+              InlineCompletion.INSTANCE.install(editor, session.getCoroutineScope());
+            }
           }
         };
       final JComponent editorComponent = myEvaluateComboBox.getEditorComponent();
