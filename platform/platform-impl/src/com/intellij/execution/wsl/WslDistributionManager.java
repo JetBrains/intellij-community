@@ -1,26 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
-import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Alarm;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.WinReg;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 public abstract class WslDistributionManager implements Disposable {
@@ -36,6 +38,10 @@ public abstract class WslDistributionManager implements Disposable {
   private final Map<String, WSLDistribution> myMsIdToDistributionCache = CollectionFactory.createConcurrentWeakCaseInsensitiveMap();
   private final List<@NotNull BiConsumer<@NotNull Set<@NotNull WSLDistribution>, @NotNull Set<@NotNull WSLDistribution>>>
     myWslDistributionsChangeListeners = new CopyOnWriteArrayList<>();
+
+  private final LazyInitializer.LazyValue<WSLDistributionWatcher> myDistributionWatcher = LazyInitializer.create(() -> {
+    return new WSLDistributionWatcher(this);
+  });
 
   @Override
   public void dispose() {
@@ -67,7 +73,7 @@ public abstract class WslDistributionManager implements Disposable {
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
     if (!isAvailable()) return List.of();
     CachedDistributions cachedDistributions = myInstalledDistributions;
-    if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
+    if (cachedDistributions != null && cachedDistributions.isUpToDate(false)) {
       return cachedDistributions.myInstalledDistributions;
     }
 
@@ -116,7 +122,7 @@ public abstract class WslDistributionManager implements Disposable {
   public @NotNull CompletableFuture<List<WSLDistribution>> getInstalledDistributionsFuture() {
     if (!isAvailable()) return CompletableFuture.completedFuture(List.of());
     CachedDistributions cachedDistributions = myInstalledDistributions;
-    if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
+    if (cachedDistributions != null && cachedDistributions.isUpToDate(true)) {
       return CompletableFuture.completedFuture(cachedDistributions.myInstalledDistributions);
     }
     return CompletableFuture.supplyAsync(this::getInstalledDistributions, AppExecutorUtil.getAppExecutorService());
@@ -201,7 +207,7 @@ public abstract class WslDistributionManager implements Disposable {
   public abstract @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions()
     throws IOException, IllegalStateException;
 
-  private static final class CachedDistributions {
+  private final class CachedDistributions {
     private final @NotNull List<WSLDistribution> myInstalledDistributions;
     private final long myExternalChangesCount;
 
@@ -210,12 +216,56 @@ public abstract class WslDistributionManager implements Disposable {
       myExternalChangesCount = getCurrentExternalChangesCount();
     }
 
-    public boolean isUpToDate() {
+    public boolean isUpToDate(boolean immediateCheck) {
+      if (immediateCheck) {
+        myDistributionWatcher.get().updateDistroInfo();
+      }
+      else {
+        myDistributionWatcher.get().scheduleUpdate();
+      }
       return getCurrentExternalChangesCount() == myExternalChangesCount;
     }
 
-    private static long getCurrentExternalChangesCount() {
-      return SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
+    private long getCurrentExternalChangesCount() {
+      return myDistributionWatcher.get().getModificationCount();
     }
+  }
+
+  /**
+   * Tracks installed WSL distributions via Windows Registry.
+   */
+  private static class WSLDistributionWatcher extends SimpleModificationTracker {
+    private final Set<String> myCurrentGuids = new HashSet<>();
+    private final Object LOCK = new Object();
+
+    private final AtomicBoolean myIsActiveRequest = new AtomicBoolean();
+    private final @NotNull Disposable myDisposable;
+
+    private WSLDistributionWatcher(@NotNull Disposable parentDisposable) {
+      myDisposable = parentDisposable;
+      updateDistroInfo();
+    }
+
+    public void scheduleUpdate() {
+      if (myIsActiveRequest.compareAndSet(false, true)) {
+        Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+        alarm.addRequest(() -> {
+          updateDistroInfo();
+          myIsActiveRequest.set(false);
+        }, 500L);
+      }
+    }
+
+    public void updateDistroInfo() {
+      Set<String> guids = Set.of(Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss"));
+      synchronized (LOCK) {
+        if (!myCurrentGuids.equals(guids)) {
+          incModificationCount();
+          myCurrentGuids.clear();
+          myCurrentGuids.addAll(guids);
+        }
+      }
+    }
+
   }
 }
