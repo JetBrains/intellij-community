@@ -8,13 +8,14 @@ class PythonErrorLogProcessor(val executionLog: ProcessExecutionLog) {
     val testsRunRegex = Regex("""Ran (\d+) tests?""")
     val testErrorOrFailureRegex = Regex("""(ERROR|FAIL): (.+?)\n""")
 
-    val errorLog = executionLog.out + executionLog.error
+    // To extract correct information from different testing frameworks (e.g., pytest), we pare both log and err
+    val logOutputString = executionLog.out + executionLog.error
 
     // Extract the total number of tests run
-    val testsRun = testsRunRegex.find(errorLog)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+    val testsRun = testsRunRegex.find(logOutputString)?.groupValues?.get(1)?.toIntOrNull() ?: 0
 
     // Count unique tests with errors
-    val failedTestCases = testErrorOrFailureRegex.findAll(errorLog).map { it.groupValues[2] }.distinct().count()
+    val failedTestCases = testErrorOrFailureRegex.findAll(logOutputString).map { it.groupValues[2] }.distinct().count()
 
     // Calculate the success ratio
     return if (testsRun > 0) {
