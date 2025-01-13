@@ -215,9 +215,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (aClass.isAnnotationType()) {
         checkFeature(identifier, JavaFeature.ANNOTATIONS);
       }
-      if (!hasErrorResults()) {
-        myClassChecker.checkClassRestrictedKeyword(identifier);
-      }
+      if (!hasErrorResults()) myClassChecker.checkClassAlreadyImported(aClass);
+      if (!hasErrorResults()) myClassChecker.checkClassRestrictedKeyword(identifier);
     }
     else if (parent instanceof PsiMethod method) {
       myClassChecker.checkImplicitClassMember(method);

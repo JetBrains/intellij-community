@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
@@ -664,6 +665,23 @@ final class ClassChecker {
       PsiElement refQualifier = reference.getQualifier();
       if (refQualifier != null) {
         myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE.create(refQualifier));
+      }
+    }
+  }
+
+  void checkClassAlreadyImported(@NotNull PsiClass aClass) {
+    PsiFile file = aClass.getContainingFile();
+    if (!(file instanceof PsiJavaFile javaFile)) return;
+    // check only top-level classes conflicts
+    if (aClass.getParent() != javaFile) return;
+    PsiImportList importList = javaFile.getImportList();
+    if (importList == null) return;
+    PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
+    for (PsiImportStatementBase importStatement : importStatements) {
+      if (importStatement.isOnDemand()) continue;
+      PsiElement resolved = importStatement.resolve();
+      if (resolved instanceof PsiClass psiClass && !resolved.equals(aClass) && Comparing.equal(aClass.getName(), psiClass.getName(), true)) {
+        myVisitor.report(JavaErrorKinds.CLASS_ALREADY_IMPORTED.create(aClass));
       }
     }
   }

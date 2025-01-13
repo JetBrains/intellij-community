@@ -10,7 +10,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -143,25 +142,6 @@ public final class HighlightClassUtil {
     info.registerFix(action, null, null, null, null);
 
     return info;
-  }
-
-  static HighlightInfo.Builder checkClassAlreadyImported(@NotNull PsiClass aClass, @NotNull PsiElement elementToHighlight) {
-    PsiFile file = aClass.getContainingFile();
-    if (!(file instanceof PsiJavaFile javaFile)) return null;
-    // check only top-level classes conflicts
-    if (aClass.getParent() != javaFile) return null;
-    PsiImportList importList = javaFile.getImportList();
-    if (importList == null) return null;
-    PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
-    for (PsiImportStatementBase importStatement : importStatements) {
-      if (importStatement.isOnDemand()) continue;
-      PsiElement resolved = importStatement.resolve();
-      if (resolved instanceof PsiClass psiClass && !resolved.equals(aClass) && Comparing.equal(aClass.getName(), psiClass.getName(), true)) {
-        String description = JavaErrorBundle.message("class.already.imported", HighlightUtil.formatClass(aClass, false));
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(description);
-      }
-    }
-    return null;
   }
 
   static HighlightInfo.Builder checkCreateInnerClassFromStaticContext(@NotNull PsiNewExpression expression, @NotNull PsiType type, @NotNull PsiClass aClass) {

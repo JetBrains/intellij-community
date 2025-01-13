@@ -208,6 +208,9 @@ public final class JavaErrorKinds {
         return message(messageKey, referenceName, formatMethod(abstractMethod),
                        formatClass(requireNonNull(abstractMethod.getContainingClass()), false));
       });
+  public static final Simple<PsiClass> CLASS_ALREADY_IMPORTED =
+    error(PsiClass.class, "class.already.imported").withAnchor(PsiClass::getNameIdentifier)
+      .withRawDescription(cls -> message("class.already.imported", formatClass(cls, false)));
   public static final Parameterized<PsiClass, PsiClass> CLASS_DUPLICATE =
     error(PsiClass.class, "class.duplicate")
       .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
