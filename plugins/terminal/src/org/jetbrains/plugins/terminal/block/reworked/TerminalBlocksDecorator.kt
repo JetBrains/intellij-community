@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.ui.*
+import kotlin.math.max
 
 internal class TerminalBlocksDecorator(
   private val outputModel: TerminalOutputModel,
@@ -56,13 +57,16 @@ internal class TerminalBlocksDecorator(
   }
 
   private fun createPromptDecoration(block: TerminalOutputBlock): BlockDecoration {
-    val topInlay = createTopInlay(block)
-    val bottomInlay = createBottomInlay(block, isFinishedBlock = false)
+    val startOffset = block.startOffset
+    val endOffset = block.endOffset
 
-    val bgHighlighter = createBackgroundHighlighter(block)
+    val topInlay = createTopInlay(block)
+    val bottomInlay = createBottomInlay(endOffset)
+
+    val bgHighlighter = createBackgroundHighlighter(startOffset, endOffset)
     bgHighlighter.isGreedyToRight = true
 
-    val cornersHighlighter = createCornersHighlighter(block).also {
+    val cornersHighlighter = createCornersHighlighter(startOffset, endOffset).also {
       it.isGreedyToRight = true
       it.customRenderer = TerminalPromptSeparatorRenderer()
       it.lineMarkerRenderer = TerminalPromptLeftAreaRenderer()
@@ -72,10 +76,16 @@ internal class TerminalBlocksDecorator(
   }
 
   private fun createFinishedBlockDecoration(block: TerminalOutputBlock): BlockDecoration {
+    val startOffset = block.startOffset
+    // End offset of the finished block is located after the line break.
+    // But we need to place the end inlay before the line break and limit the height of the highlighters to the block content.
+    // So adjust the offset by 1.
+    val endOffset = max(0, block.endOffset - 1)
+
     val topInlay = createTopInlay(block)
-    val bottomInlay = createBottomInlay(block, isFinishedBlock = true)
-    val bgHighlighter = createBackgroundHighlighter(block)
-    val cornersHighlighter = createCornersHighlighter(block)
+    val bottomInlay = createBottomInlay(endOffset)
+    val bgHighlighter = createBackgroundHighlighter(startOffset, endOffset)
+    val cornersHighlighter = createCornersHighlighter(startOffset, endOffset)
     cornersHighlighter.customRenderer = BlockSeparatorRenderer()
 
     return BlockDecoration(block.id, bgHighlighter, cornersHighlighter, topInlay, bottomInlay)
@@ -97,28 +107,25 @@ internal class TerminalBlocksDecorator(
     return editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
   }
 
-  private fun createBottomInlay(block: TerminalOutputBlock, isFinishedBlock: Boolean): Inlay<*> {
+  private fun createBottomInlay(offset: Int): Inlay<*> {
     val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset)
-    // End offset of the finished block is located after the line break, but we need to place the inlay on the line break offset.
-    // So adjust the offset by 1 in this case.
-    val offsetDelta = if (isFinishedBlock) 1 else 0
-    return editor.inlayModel.addBlockElement(block.endOffset - offsetDelta, true, false, 0, bottomRenderer)!!
+    return editor.inlayModel.addBlockElement(offset, true, false, 0, bottomRenderer)!!
   }
 
-  private fun createBackgroundHighlighter(block: TerminalOutputBlock): RangeHighlighter {
+  private fun createBackgroundHighlighter(startOffset: Int, endOffset: Int): RangeHighlighter {
     return editor.markupModel.addRangeHighlighter(
-      block.startOffset,
-      block.endOffset,
+      startOffset,
+      endOffset,
       HighlighterLayer.LAST,  // the order doesn't matter because there is only a custom renderer with its own order
       null,
       HighlighterTargetArea.LINES_IN_RANGE
     )
   }
 
-  private fun createCornersHighlighter(block: TerminalOutputBlock): RangeHighlighter {
+  private fun createCornersHighlighter(startOffset: Int, endOffset: Int): RangeHighlighter {
     return editor.markupModel.addRangeHighlighter(
-      block.startOffset,
-      block.endOffset,
+      startOffset,
+      endOffset,
       HighlighterLayer.FIRST - 100,  // the line marker should be painted first, because it is painting the block background
       null,
       HighlighterTargetArea.LINES_IN_RANGE
