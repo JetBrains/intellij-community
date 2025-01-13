@@ -172,7 +172,7 @@ def test_display_data_html_float_values(mocker, setup_np_array_with_floats):
     # Mock the HTML and display functions
     mock_display = mocker.patch('IPython.display.display')
 
-    actual = numpy_tables_helpers.display_data_html(np_array, 0, 3)
+    numpy_tables_helpers.display_data_html(np_array, 0, 3)
 
     called_args, called_kwargs = mock_display.call_args
     displayed_html = called_args[0]
@@ -192,7 +192,7 @@ def test_display_data_html_none_values(mocker, setup_np_array_with_nones):
     # Mock the HTML and display functions
     mock_display = mocker.patch('IPython.display.display')
 
-    actual = numpy_tables_helpers.display_data_html(np_array, 0, 3)
+    numpy_tables_helpers.display_data_html(np_array, 0, 3)
 
     called_args, called_kwargs = mock_display.call_args
     displayed_html = called_args[0]
@@ -205,14 +205,14 @@ def test_display_data_html_none_values(mocker, setup_np_array_with_nones):
     )
 
 
-#15 TODO: fix wrong float formatting
+#15 TODO: fix formatting issues
 # def test_display_data_csv_float_values(mocker, setup_np_array_with_floats):
 #     np_array = setup_np_array_with_floats
 #
 #     # Mock the CSV and display functions
 #     mock_print = mocker.patch('builtins.print')
 #
-#     actual = numpy_tables_helpers.display_data_csv(np_array, 0, 3)
+#     numpy_tables_helpers.display_data_csv(np_array, 0, 3)
 #
 #     called_args, called_kwargs = mock_print.call_args
 #     displayed_csv = called_args[0]
@@ -232,7 +232,7 @@ def test_display_data_csv_none_values(mocker, setup_np_array_with_nones):
     # Mock the CSV and display functions
     mock_print = mocker.patch('builtins.print')
 
-    actual = numpy_tables_helpers.display_data_csv(np_array, 0, 3)
+    numpy_tables_helpers.display_data_csv(np_array, 0, 3)
 
     called_args, called_kwargs = mock_print.call_args
     displayed_csv = called_args[0]

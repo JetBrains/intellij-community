@@ -129,24 +129,24 @@ class _NpTable:
         html.append('<thead>\n'
                     '<tr style="text-align: right;">\n'
                     '<th></th>\n')
-        html += self._collect_cols_names_html()
+        html += self.__collect_cols_names_html()
         html.append('</tr>\n'
                     '</thead>\n')
 
         # tbody
-        html += self._collect_values_html(None)
+        html += self.__collect_values_html(None)
 
         html.append('</table>\n')
 
         return "".join(html)
 
-    def _collect_cols_names_html(self):
+    def __collect_cols_names_html(self):
         if self.type == ONE_DIM:
             return ['<th>0</th>\n']
 
         return ['<th>{}</th>\n'.format(i) for i in range(len(self.array[0]))]
 
-    def _collect_values_html(self, max_cols):
+    def __collect_values_html(self, max_cols):
         html = ['<tbody>\n']
         rows = self.array.shape[0]
         for row_num in range(rows):
@@ -185,12 +185,12 @@ class _NpTable:
 
         np.savetxt(csv_stream, self.array, delimiter=CSV_FORMAT_SEPARATOR, fmt=float_format)
         csv_string = csv_stream.getvalue()
-        csv_rows_with_index = self._insert_index_at_rows_begging_csv(csv_string)
+        csv_rows_with_index = self.__insert_index_at_rows_begging_csv(csv_string)
 
-        col_names = self._collect_col_names_csv()
+        col_names = self.__collect_col_names_csv()
         return col_names + "\n" + csv_rows_with_index
 
-    def _insert_index_at_rows_begging_csv(self, csv_string):
+    def __insert_index_at_rows_begging_csv(self, csv_string):
         # type: (str) -> str
         csv_rows = csv_string.split('\n')
         csv_rows_with_index = []
@@ -198,7 +198,7 @@ class _NpTable:
             csv_rows_with_index.append(str(row_index) + CSV_FORMAT_SEPARATOR + csv_rows[row_index])
         return "\n".join(csv_rows_with_index)
 
-    def _collect_col_names_csv(self):
+    def __collect_col_names_csv(self):
         if self.type == ONE_DIM:
             return '{}0'.format(CSV_FORMAT_SEPARATOR)
 
@@ -219,7 +219,7 @@ class _NpTable:
 
         cols, orders = sort_keys
         if 0 in cols:
-            return self._sort_by_index(True in orders)
+            return self.__sort_by_index(True in orders)
 
         if self.type == ONE_DIM:
             extended = np.column_stack((self.indexes, self.array))
@@ -239,7 +239,7 @@ class _NpTable:
         self.array = extended[:, 1:]
         return self
 
-    def _sort_by_index(self, order):
+    def __sort_by_index(self, order):
         if order:
             return self
         self.array = self.array[::-1]
