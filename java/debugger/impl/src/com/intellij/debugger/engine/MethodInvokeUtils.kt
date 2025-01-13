@@ -19,7 +19,9 @@ import com.intellij.rt.debugger.MethodInvoker
 import com.intellij.util.BitUtil.isSet
 import com.sun.jdi.*
 import com.sun.jdi.ObjectReference.INVOKE_NONVIRTUAL
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object MethodInvokeUtils {
   fun getHelperExceptionStackTrace(evaluationContext: EvaluationContextImpl, e: Exception): String? {
     if (e !is EvaluateException) return null
