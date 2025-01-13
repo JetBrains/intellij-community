@@ -46,7 +46,15 @@ public final class TextMateLexer {
   @Deprecated
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
                        int lineLimit) {
-    this(languageDescriptor, new JoniRegexFactory(), lineLimit, false);
+    this(languageDescriptor, lineLimit, false);
+  }
+
+  /**
+   * @deprecated pass regex factory to a constructor
+   */
+  @Deprecated
+  public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit, boolean stripWhitespaces) {
+    this(languageDescriptor, new JoniRegexFactory(), lineLimit, stripWhitespaces);
   }
 
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
