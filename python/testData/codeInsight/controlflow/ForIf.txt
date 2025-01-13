@@ -1,13 +1,15 @@
 0(1) element: null
 1(2) element: PyForStatement
-2(3,12) READ ACCESS: lines
+2(3,14) READ ACCESS: lines
 3(4) element: PyTargetExpression: line
 4(5) WRITE ACCESS: line
 5(6) element: PyIfStatement
-6(7,8) READ ACCESS: line
-7(3,12) element: null. Condition: line == '@':false
-8(9) element: null. Condition: line == '@':true
-9(10) element: PyStatementList
-10(11) element: PyAssignmentStatement
-11(3,12) WRITE ACCESS: head
-12() element: null
+6(7,9) READ ACCESS: line
+7(8) element: null. Condition: line == '@':false
+8(3,14) ASSERTTYPE ACCESS: line
+9(10) element: null. Condition: line == '@':true
+10(11) ASSERTTYPE ACCESS: line
+11(12) element: PyStatementList
+12(13) element: PyAssignmentStatement
+13(3,14) WRITE ACCESS: head
+14() element: null

@@ -7,6 +7,7 @@ import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -68,7 +69,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
         }
         else -> {
           val type = if (inferLiteralTypes) {
-            toLiteralType(value, context, false)
+            getLiteralType(value, context)
           }
           else {
             null
@@ -157,6 +158,10 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
              PyEvaluator.evaluateNoResolve(actual.expression, Any::class.java)
     }
 
+    @ApiStatus.Internal
+    @JvmStatic
+    fun getLiteralType(expression: PyExpression, context: TypeEvalContext): PyType? = toLiteralType(expression, context, false)
+
     /**
      * If [expected] type is `typing.Literal[...]`,
      * then tries to infer `typing.Literal[...]` for [expression],
@@ -178,11 +183,17 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
              type is PyCollectionType && type.elementTypes.any { containsLiteral(it) }
     }
 
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isNone(expression: PyExpression): Boolean {
+      return expression is PyNoneLiteralExpression && !expression.isEllipsis ||
+             expression is PyReferenceExpression &&
+             expression.name == PyNames.NONE &&
+             LanguageLevel.forElement(expression).isPython2
+    }
+
     private fun toLiteralType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {
-      if (expression is PyNoneLiteralExpression && !expression.isEllipsis ||
-          expression is PyReferenceExpression &&
-          expression.name == PyNames.NONE &&
-          LanguageLevel.forElement(expression).isPython2) return PyNoneType.INSTANCE
+      if (isNone(expression)) return PyNoneType.INSTANCE
 
       if (index && (expression is PyReferenceExpression || expression is PySubscriptionExpression)) {
         val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context))

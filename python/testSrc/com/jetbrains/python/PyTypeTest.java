@@ -465,6 +465,16 @@ public class PyTypeTest extends PyTestCase {
              expr = a""");
   }
 
+  public void testIfNotEqOperator() {
+    doTest("Literal[\"ab\"]",
+           """
+             from typing import Literal
+             def foo(v: Literal["abba", "ab"]):
+                 if (v <> "abba"):
+                     expr = v
+             """);
+  }
+
   // PY-4279
   public void testFieldReassignment() {
     doTest("C1",

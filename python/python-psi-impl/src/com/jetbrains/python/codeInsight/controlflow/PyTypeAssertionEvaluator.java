@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyNames;
@@ -74,62 +75,64 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
-    if (node.isOperator(PyNames.AND) || node.isOperator(PyNames.OR)) return;
+    final PyExpression lhs = PyPsiUtils.flattenParens(node.getLeftExpression());
+    final PyExpression rhs = PyPsiUtils.flattenParens(node.getRightExpression());
+    if (lhs == null || rhs == null) return;
 
-    final PyExpression lhs = node.getLeftExpression();
-    final PyExpression rhs = node.getRightExpression();
-
-    boolean isOperator = node.isOperator(PyNames.IS);
-    boolean isNotOperator = node.isOperator("isnot");
-    if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression ||
-        lhs instanceof PyReferenceExpression && rhs instanceof PyNoneLiteralExpression ||
-        lhs instanceof PyNoneLiteralExpression && rhs instanceof PyReferenceExpression) {
-      final boolean leftIsNone = lhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(lhs.getName());
-      final boolean rightIsNone = rhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(rhs.getName());
-
-      if (leftIsNone ^ rightIsNone) {
-        final PyReferenceExpression target = (PyReferenceExpression)(rightIsNone ? lhs : rhs);
-
-        if (isOperator) {
-          pushAssertion(target, myPositive, false, context -> PyNoneType.INSTANCE, null);
-          return;
-        }
-
-        if (isNotOperator) {
-          pushAssertion(target, !myPositive, false, context -> PyNoneType.INSTANCE, null);
-          return;
-        }
-      }
+    PyElementType operator = node.getOperator();
+    boolean isOrEqualsOperator = node.isOperator(PyNames.IS) || PyTokenTypes.EQEQ.equals(operator);
+    if (isOrEqualsOperator || node.isOperator("isnot") || PyTokenTypes.NE.equals(operator) || PyTokenTypes.NE_OLD.equals(operator)) {
+      setPositive(isOrEqualsOperator, () -> processIsOrEquals(lhs, rhs));
     }
+  }
 
-    final Object leftValue = PyEvaluator.evaluateNoResolve(lhs, Object.class);
-    final Object rightValue = PyEvaluator.evaluateNoResolve(rhs, Object.class);
+  private void processIsOrEquals(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
+    final Boolean leftValue = PyEvaluator.evaluateNoResolve(lhs, Boolean.class);
+    final Boolean rightValue = PyEvaluator.evaluateNoResolve(rhs, Boolean.class);
 
-    if (leftValue instanceof Boolean && rightValue instanceof Boolean) {
+    if (leftValue != null && rightValue != null) {
+      return;
+    }
+    if (leftValue != null) {
+      setPositive(leftValue, () -> rhs.accept(this));
+      return;
+    }
+    if (rightValue != null) {
+      setPositive(rightValue, () -> lhs.accept(this));
       return;
     }
 
-    if (isOperator && (leftValue == Boolean.FALSE || rightValue == Boolean.FALSE) ||
-        isNotOperator && (leftValue == Boolean.TRUE || rightValue == Boolean.TRUE)) {
-      myPositive = !myPositive;
-      super.visitPyBinaryExpression(node);
-      myPositive = !myPositive;
-      return;
+    if (PyLiteralType.isNone(lhs)) {
+      pushAssertion(rhs, lhs);
     }
-
-    if (isOperator || isNotOperator) {
-      if (lhs instanceof PyReferenceExpression target && rhs instanceof PyReferenceExpression) {
-        pushAssertion(target, isOperator == myPositive, false, context -> {
-          PyType rhsType = context.getType(rhs);
-          boolean isEnumMember = rhsType instanceof PyLiteralType literalType &&
-                                 PyStdlibTypeProvider.isCustomEnum(literalType.getPyClass(), context);
-          return isEnumMember ? rhsType : null;
-        }, null);
-        return;
-      }
+    else {
+      pushAssertion(lhs, rhs);
     }
+  }
 
-    super.visitPyBinaryExpression(node);
+  private void pushAssertion(@NotNull PyExpression target, @NotNull PyExpression bound) {
+    if (target instanceof PyReferenceExpression targetRefExpr) {
+      pushAssertion(targetRefExpr, myPositive, false, context -> {
+        final PyType literalType = PyLiteralType.getLiteralType(bound, context);
+        if (literalType != null) {
+          return literalType;
+        }
+        return ObjectUtils.tryCast(context.getType(bound), PyLiteralType.class);
+      }, null);
+    }
+  }
+
+  private void setPositive(boolean positive, @NotNull Runnable runnable) {
+    boolean oldPositive = myPositive;
+    if (!positive) {
+      myPositive = !myPositive;
+    }
+    try {
+      runnable.run();
+    }
+    finally {
+      myPositive = oldPositive;
+    }
   }
 
   @ApiStatus.Internal

@@ -3,31 +3,35 @@
 2(3) WRITE ACCESS: var
 3(4) element: PyIfStatement
 4(5) READ ACCESS: a
-5(6,7) READ ACCESS: b
-6(11) element: null. Condition: a == b:false
-7(8) element: null. Condition: a == b:true
-8(9) element: PyStatementList
-9(10) element: PyAssignmentStatement
-10(30) WRITE ACCESS: var
-11(12) READ ACCESS: aa
-12(13,14) READ ACCESS: bb
-13(27) element: null. Condition: aa == bb:false
-14(15) element: null. Condition: aa == bb:true
-15(16) element: PyStatementList
-16(17) element: PyAssignmentStatement
-17(18) READ ACCESS: same_changet_expression
-18(19) WRITE ACCESS: bbb
-19(20) element: PyIfStatement
-20(21,22) READ ACCESS: bbb
-21(30) element: null. Condition: bbb:false
-22(23) element: null. Condition: bbb:true
-23(24) ASSERTTYPE ACCESS: bbb
-24(25) element: PyStatementList
-25(26) element: PyAssignmentStatement
-26(30) WRITE ACCESS: var
-27(28) element: PyStatementList
-28(29) element: PyAssignmentStatement
-29(30) WRITE ACCESS: var
-30(31) element: PyReturnStatement
-31(32) READ ACCESS: var
-32() element: null
+5(6,8) READ ACCESS: b
+6(7) element: null. Condition: a == b:false
+7(13) ASSERTTYPE ACCESS: a
+8(9) element: null. Condition: a == b:true
+9(10) ASSERTTYPE ACCESS: a
+10(11) element: PyStatementList
+11(12) element: PyAssignmentStatement
+12(34) WRITE ACCESS: var
+13(14) READ ACCESS: aa
+14(15,17) READ ACCESS: bb
+15(16) element: null. Condition: aa == bb:false
+16(31) ASSERTTYPE ACCESS: aa
+17(18) element: null. Condition: aa == bb:true
+18(19) ASSERTTYPE ACCESS: aa
+19(20) element: PyStatementList
+20(21) element: PyAssignmentStatement
+21(22) READ ACCESS: same_changet_expression
+22(23) WRITE ACCESS: bbb
+23(24) element: PyIfStatement
+24(25,26) READ ACCESS: bbb
+25(34) element: null. Condition: bbb:false
+26(27) element: null. Condition: bbb:true
+27(28) ASSERTTYPE ACCESS: bbb
+28(29) element: PyStatementList
+29(30) element: PyAssignmentStatement
+30(34) WRITE ACCESS: var
+31(32) element: PyStatementList
+32(33) element: PyAssignmentStatement
+33(34) WRITE ACCESS: var
+34(35) element: PyReturnStatement
+35(36) READ ACCESS: var
+36() element: null

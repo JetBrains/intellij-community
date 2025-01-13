@@ -590,6 +590,31 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  public void testLiteralTypeNarrowing() {
+    doTest("Literal[\"abba\"]",
+           """
+             from typing import Literal
+             def foo(v: str):
+                 if (v == "abba"):
+                     expr = v
+             """);
+    doTest("Literal[\"ab\"]",
+           """
+             from typing import Literal
+             def foo(v: Literal["abba", "ab"]):
+                 if (v != "abba"):
+                     expr = v
+             """);
+    doTest("Literal[\"abc\"]",
+           """
+             from typing import Literal
+             abc: Literal["abc"] = "abc"
+             def foo(v: str):
+                 if (v == abc):
+                     expr = v
+             """);
+  }
+
   // PY-21083
   public void testFloatFromhex() {
     doTest("float",
