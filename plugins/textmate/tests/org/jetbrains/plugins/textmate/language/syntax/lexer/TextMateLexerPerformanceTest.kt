@@ -12,6 +12,7 @@ import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
 import org.jetbrains.plugins.textmate.loadBundle
+import org.jetbrains.plugins.textmate.regex.CachingRegexFactory
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -27,8 +28,11 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
     val text = StringUtil.convertLineSeparators(FileUtil.loadFile(myFile, StandardCharsets.UTF_8))
 
     Benchmark.newBenchmark("bench") {
+      val regexFactory = CachingRegexFactory(JoniRegexFactory())
+      val weigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
+      val syntaxMatcher = TextMateCachingSyntaxMatcher(TextMateSyntaxMatcherImpl(regexFactory, weigher))
       val lexer = TextMateHighlightingLexer(TextMateLanguageDescriptor(scopeName, syntaxTable.getSyntax(scopeName)),
-                                            TextMateCachingSyntaxMatcher(TextMateSyntaxMatcherImpl(JoniRegexFactory(), TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl()))),
+                                            syntaxMatcher,
                                             -1)
       lexer.start(text)
       while (lexer.tokenType != null) {

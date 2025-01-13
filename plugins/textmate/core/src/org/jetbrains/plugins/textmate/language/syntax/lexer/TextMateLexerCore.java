@@ -11,18 +11,15 @@ import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateCapture;
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.regex.MatchData;
 import org.jetbrains.plugins.textmate.regex.RegexUtil;
 import org.jetbrains.plugins.textmate.regex.TextMateRange;
 import org.jetbrains.plugins.textmate.regex.TextMateString;
-import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 
 import java.util.*;
 
-public final class TextMateLexer {
+public final class TextMateLexerCore {
   /**
    * Count of `lastSuccessState` that can be occurred again without offset changing.
    * If `lastSuccessStateOccursCount` reaches {@code MAX_LOOPS_COUNT}
@@ -44,30 +41,10 @@ public final class TextMateLexer {
   private final boolean myStripWhitespaces;
   private final TextMateLexerState myLanguageInitialState;
 
-  /**
-   * @deprecated syntax matcher to a constructor
-   */
-  @Deprecated
-  public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
-                       int lineLimit) {
-    this(languageDescriptor, lineLimit, false);
-  }
-
-  /**
-   * @deprecated syntax matcher to a constructor
-   */
-  @Deprecated
-  public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit, boolean stripWhitespaces) {
-    this(languageDescriptor,
-         new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(new JoniRegexFactory(), new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl()))),
-         lineLimit,
-         stripWhitespaces);
-  }
-
-  public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
-                       @NotNull TextMateSyntaxMatcher syntaxMatcher,
-                       int lineLimit,
-                       boolean stripWhitespaces) {
+  public TextMateLexerCore(@NotNull TextMateLanguageDescriptor languageDescriptor,
+                           @NotNull TextMateSyntaxMatcher syntaxMatcher,
+                           int lineLimit,
+                           boolean stripWhitespaces) {
     myLanguageScopeName = languageDescriptor.getScopeName();
     myLanguageInitialState = TextMateLexerState.notMatched(languageDescriptor.getRootSyntaxNode());
     mySyntaxMatcher = syntaxMatcher;
@@ -88,15 +65,7 @@ public final class TextMateLexer {
     return myCurrentOffset;
   }
 
-  /**
-   * @deprecated pass checkCancelledCallback
-   */
-  @Deprecated
-  public void advanceLine(@NotNull Queue<Token> output) {
-    advanceLine(output, null);
-  }
-
-  public void advanceLine(@NotNull Queue<Token> output, @Nullable Runnable checkCancelledCallback) {
+  public List<Token> advanceLine(@Nullable Runnable checkCancelledCallback) {
     int startLineOffset = myCurrentOffset;
     int endLineOffset = startLineOffset;
     while (endLineOffset < myText.length()) {
@@ -107,6 +76,7 @@ public final class TextMateLexer {
       endLineOffset++;
     }
 
+    List<Token> output = new ArrayList<>();
     CharSequence lineCharSequence = myText.subSequence(startLineOffset, endLineOffset);
     if (myLineLimit >= 0 && lineCharSequence.length() > myLineLimit) {
       myStates = parseLine(lineCharSequence.subSequence(0, myLineLimit), output, myStates, startLineOffset, 0, 0, checkCancelledCallback);
@@ -115,10 +85,11 @@ public final class TextMateLexer {
     else {
       myStates = parseLine(lineCharSequence, output, myStates, startLineOffset, 0, 0, checkCancelledCallback);
     }
+    return output;
   }
 
   private PersistentList<TextMateLexerState> parseLine(@NotNull CharSequence line,
-                                                       @NotNull Queue<Token> output,
+                                                       @NotNull List<Token> output,
                                                        @NotNull PersistentList<TextMateLexerState> states,
                                                        int lineStartOffset,
                                                        int linePosition,
@@ -270,7 +241,7 @@ public final class TextMateLexer {
     return false;
   }
 
-  private boolean parseCaptures(@NotNull Queue<Token> output,
+  private boolean parseCaptures(@NotNull List<Token> output,
                                 Constants.CaptureKey captureKey,
                                 SyntaxNodeDescriptor rule,
                                 MatchData matchData,
@@ -344,7 +315,7 @@ public final class TextMateLexer {
     return true;
   }
 
-  private void openScopeSelector(@NotNull Queue<Token> output, @Nullable CharSequence name, int position) {
+  private void openScopeSelector(@NotNull List<Token> output, @Nullable CharSequence name, int position) {
     addToken(output, position);
     int indexOfSpace = name != null ? StringsKt.indexOf(name, ' ', 0, false) : -1;
     int prevIndexOfSpace = 0;
@@ -359,7 +330,7 @@ public final class TextMateLexer {
     myNestedScope.add(count + 1);
   }
 
-  private void closeScopeSelector(@NotNull Queue<Token> output, int position) {
+  private void closeScopeSelector(@NotNull List<Token> output, int position) {
     CharSequence lastOpenedName = myCurrentScope.getScopeName();
     if (lastOpenedName != null && !lastOpenedName.isEmpty()) {
       addToken(output, position);
@@ -374,7 +345,7 @@ public final class TextMateLexer {
   }
 
 
-  private void addToken(@NotNull Queue<Token> output, int position) {
+  private void addToken(@NotNull List<Token> output, int position) {
     position = Math.min(position, myText.length());
     if (position > myCurrentOffset) {
       boolean newState = myCurrentScope.getParent() == null;
@@ -384,7 +355,7 @@ public final class TextMateLexer {
       }
 
       if (wsStart < myCurrentOffset) {
-        output.offer(new Token(TextMateScope.WHITESPACE, wsStart, myCurrentOffset, newState));
+        output.add(new Token(TextMateScope.WHITESPACE, wsStart, myCurrentOffset, newState));
         newState = false;
       }
 
@@ -394,11 +365,11 @@ public final class TextMateLexer {
       }
 
       if (myCurrentOffset < wsEnd) {
-        output.offer(new Token(myCurrentScope, myCurrentOffset, wsEnd, newState));
+        output.add(new Token(myCurrentScope, myCurrentOffset, wsEnd, newState));
       }
 
       if (wsEnd < position) {
-        output.offer(new Token(TextMateScope.WHITESPACE, wsEnd, position, newState));
+        output.add(new Token(TextMateScope.WHITESPACE, wsEnd, position, newState));
       }
 
       myCurrentOffset = position;

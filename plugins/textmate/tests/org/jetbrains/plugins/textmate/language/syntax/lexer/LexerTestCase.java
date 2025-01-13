@@ -15,6 +15,8 @@ import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
+import org.jetbrains.plugins.textmate.regex.CachingRegexFactory;
+import org.jetbrains.plugins.textmate.regex.RegexFactory;
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,8 +80,11 @@ abstract public class LexerTestCase extends UsefulTestCase {
 
     StringBuilder output = new StringBuilder();
     String text = sourceData.replaceAll("$(\\n+)", "");
+    RegexFactory regexFactory = new CachingRegexFactory(new JoniRegexFactory());
+    TextMateSelectorCachingWeigher weigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
+    TextMateCachingSyntaxMatcher syntaxMatcher = new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexFactory, weigher));
     Lexer lexer = new TextMateHighlightingLexer(new TextMateLanguageDescriptor(myRootScope, mySyntaxTable.getSyntax(myRootScope)),
-                                                new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(new JoniRegexFactory(), new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl()))),
+                                                syntaxMatcher,
                                                 -1);
     lexer.start(text);
     while (lexer.getTokenType() != null) {

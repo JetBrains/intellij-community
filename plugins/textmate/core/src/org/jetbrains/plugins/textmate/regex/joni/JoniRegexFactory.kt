@@ -1,9 +1,5 @@
 package org.jetbrains.plugins.textmate.regex.joni
 
-import com.github.benmanes.caffeine.cache.Cache
-import com.github.benmanes.caffeine.cache.Caffeine
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asExecutor
 import org.jcodings.specific.UTF8Encoding
 import org.jetbrains.plugins.textmate.regex.RegexFacade
 import org.jetbrains.plugins.textmate.regex.RegexFactory
@@ -15,33 +11,23 @@ import org.joni.exception.JOniException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.TimeUnit
 
 class JoniRegexFactory : RegexFactory {
   companion object {
-    private val REGEX_CACHE: Cache<String, JoniRegexFacade> = Caffeine.newBuilder()
-      .maximumSize(100_000)
-      .expireAfterAccess(1, TimeUnit.MINUTES)
-      .executor(Dispatchers.Default.asExecutor())
-      .build()
-
     private val FAILED_REGEX: Regex = Regex("^$", UTF8Encoding.INSTANCE)
     private val LOGGER: Logger = LoggerFactory.getLogger(JoniRegexFactory::class.java)
-
   }
 
   override fun regex(regexString: String): RegexFacade {
-    return REGEX_CACHE.get(regexString) { s ->
-      val bytes = regexString.toByteArray(StandardCharsets.UTF_8)
-      val regex = try {
-        Regex(bytes, 0, bytes.size, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE, WarnCallback.NONE)
-      }
-      catch (e: JOniException) {
-        LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", regexString, e::class.java.getName(), e.message)
-        FAILED_REGEX
-      }
-      JoniRegexFacade(regex, regexString.contains("\\G"))
+    val bytes = regexString.toByteArray(StandardCharsets.UTF_8)
+    val regex = try {
+      Regex(bytes, 0, bytes.size, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE, WarnCallback.NONE)
     }
+    catch (e: JOniException) {
+      LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", regexString, e::class.java.getName(), e.message)
+      FAILED_REGEX
+    }
+    return JoniRegexFacade(regex, regexString.contains("\\G"))
   }
 
   override fun string(string: CharSequence): TextMateString {

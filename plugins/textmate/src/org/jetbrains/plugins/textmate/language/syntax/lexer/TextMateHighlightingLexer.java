@@ -11,14 +11,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
+import org.jetbrains.plugins.textmate.regex.CachingRegexFactory;
+import org.jetbrains.plugins.textmate.regex.RegexFactory;
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class TextMateHighlightingLexer extends LexerBase {
-  private final TextMateLexer myLexer;
-  private final Queue<TextMateLexer.Token> currentLineTokens = new LinkedList<>();
+  private final TextMateLexerCore myLexer;
+  private final Queue<TextMateLexerCore.Token> currentLineTokens = new LinkedList<>();
 
   private CharSequence myBuffer;
   private int myEndOffset;
@@ -34,13 +36,16 @@ public class TextMateHighlightingLexer extends LexerBase {
    */
   public TextMateHighlightingLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
                                    int lineLimit) {
-    myLexer = new TextMateLexer(languageDescriptor, new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(new JoniRegexFactory(), new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl()))), lineLimit, false);
+    RegexFactory regexFactory = new CachingRegexFactory(new JoniRegexFactory());
+    TextMateSelectorCachingWeigher weigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
+    TextMateCachingSyntaxMatcher syntaxMatcher = new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexFactory, weigher));
+    myLexer = new TextMateLexerCore(languageDescriptor, syntaxMatcher, lineLimit, false);
   }
   
   public TextMateHighlightingLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
                                    @NotNull TextMateSyntaxMatcher syntaxMatcher,
                                    int lineLimit) {
-    myLexer = new TextMateLexer(languageDescriptor, syntaxMatcher, lineLimit, false);
+    myLexer = new TextMateLexerCore(languageDescriptor, syntaxMatcher, lineLimit, false);
   }
 
   @Override
@@ -94,12 +99,12 @@ public class TextMateHighlightingLexer extends LexerBase {
     if (currentLineTokens.isEmpty()) {
       Application app = ApplicationManager.getApplication();
       Runnable checkCancelledCallback = app == null || app.isUnitTestMode() ? null : () -> ProgressManager.checkCanceled();
-      myLexer.advanceLine(currentLineTokens, checkCancelledCallback);
+      currentLineTokens.addAll(myLexer.advanceLine(checkCancelledCallback));
     }
     updateState(currentLineTokens.poll(), myLexer.getCurrentOffset());
   }
 
-  protected void updateState(@Nullable TextMateLexer.Token token, int fallbackOffset) {
+  protected void updateState(@Nullable TextMateLexerCore.Token token, int fallbackOffset) {
     if (token != null) {
       myTokenType = token.scope == TextMateScope.WHITESPACE ? TokenType.WHITE_SPACE : new TextMateElementType(token.scope);
       myTokenStart = token.startOffset;

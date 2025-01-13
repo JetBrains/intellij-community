@@ -1,12 +1,11 @@
 package org.jetbrains.plugins.textmate.regex;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class RegexFacadeTest {
+public abstract class RegexFacadeTest {
   @Test
   public void matching() {
     RegexFacade regex = regex("[0-9]+");
@@ -61,7 +60,5 @@ public class RegexFacadeTest {
     assertEquals("мир", string.substring(range.start, range.end));
   }
 
-  private static @NotNull RegexFacade regex(String s) {
-    return new JoniRegexFactory().regex(s);
-  }
+  protected abstract @NotNull RegexFacade regex(@NotNull String s);
 }
