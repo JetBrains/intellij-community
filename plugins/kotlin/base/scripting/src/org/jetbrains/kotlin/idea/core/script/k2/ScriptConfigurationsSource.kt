@@ -18,30 +18,27 @@ import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.script.experimental.api.ResultWithDiagnostics
+
+typealias ScriptConfiguration = ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>
 
 open class BaseScriptModel(
     open val virtualFile: VirtualFile
 )
 
-class ScriptConfigurations(
-    val configurations: Map<VirtualFile, ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>> = mapOf(),
-    val sdks: Map<Path, Sdk> = mutableMapOf(),
-) {
-    operator fun plus(other: ScriptConfigurations): ScriptConfigurations = ScriptConfigurations(
-        configurations + other.configurations, sdks + other.sdks
-    )
-}
+data class ScriptConfigurationWithSdk(
+    val scriptConfiguration: ScriptConfiguration,
+    val sdk: Sdk?,
+)
 
 abstract class ScriptConfigurationsSource<T : BaseScriptModel>(open val project: Project) {
-    val data = AtomicReference(ScriptConfigurations())
+    val data: AtomicReference<Map<VirtualFile, ScriptConfigurationWithSdk>> = AtomicReference(emptyMap())
 
     abstract fun getScriptDefinitionsSource(): ScriptDefinitionsSource?
 
-    open fun getConfiguration(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? =
-        data.get().configurations[virtualFile]
+    open fun getConfigurationWithSdk(virtualFile: VirtualFile): ScriptConfigurationWithSdk? =
+        data.get()[virtualFile]
 
     protected abstract suspend fun updateConfigurations(scripts: Iterable<T>)
 

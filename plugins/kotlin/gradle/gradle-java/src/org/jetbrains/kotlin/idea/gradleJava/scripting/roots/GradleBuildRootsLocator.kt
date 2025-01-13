@@ -94,6 +94,7 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
                     is Legacy -> NotificationKind.standaloneLegacy
                     else -> NotificationKind.standalone
                 }
+
                 nearest == null -> NotificationKind.outsideAnything
                 importing -> NotificationKind.dontCare
                 else -> when (nearest) {
@@ -101,6 +102,7 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
                         null -> NotificationKind.legacyOutside
                         else -> NotificationKind.legacy
                     }
+
                     is New -> NotificationKind.wasNotImportedAfterCreation
                     is Imported -> when {
                         wasImportedAndNotEvaluated -> NotificationKind.notEvaluatedInLastImport
@@ -116,7 +118,8 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
             get() {
                 if (KotlinPluginModeProvider.isK2Mode()) {
                     val virtualFile = StandardFileSystems.local()?.refreshAndFindFileByPath(filePath) ?: return false
-                    return ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)?.getScriptConfigurationResult(virtualFile)?.valueOrNull() != null
+                    return ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)
+                        ?.getConfigurationWithSdk(virtualFile)?.scriptConfiguration?.valueOrNull() != null
                 }
                 return script != null
             }
@@ -153,8 +156,8 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
         }
 
         // stand-alone scripts
-        roots.getStandaloneScriptRoot(filePath)?.let { 
-            return ScriptUnderRoot(filePath, it, standalone = true) 
+        roots.getStandaloneScriptRoot(filePath)?.let {
+            return ScriptUnderRoot(filePath, it, standalone = true)
         }
 
         if (filePath.endsWith("/build.gradle.kts") ||

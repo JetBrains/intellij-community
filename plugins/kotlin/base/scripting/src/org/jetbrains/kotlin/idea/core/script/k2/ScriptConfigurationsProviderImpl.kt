@@ -20,14 +20,13 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.script.experimental.api.valueOrNull
 
 private class ScriptDependenciesData(
     val classes: Set<VirtualFile> = mutableSetOf(),
     val sources: Set<VirtualFile> = mutableSetOf(),
-    val sdks: Map<Path, Sdk> = mutableMapOf(),
+    val sdks: Set<Sdk> = mutableSetOf(),
 )
 
 class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsProvider(project), ScriptDependencyAware {
@@ -43,76 +42,62 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
 
         val allScriptsSources = mutableSetOf<VirtualFile>()
         val allScriptClasses = mutableSetOf<VirtualFile>()
-        val allScriptsSdks = mutableMapOf<Path, Sdk>()
+        val allScriptsSdks = mutableSetOf<Sdk>()
 
         val sourceByDefinition = mutableMapOf<String, ScriptConfigurationsSource<*>>()
 
         configurationSources.forEach { source ->
             val data = source.data.get()
-            val configurations = data.configurations.values.mapNotNull { it.valueOrNull() }
+            val configurations = data.values.mapNotNull { it.scriptConfiguration.valueOrNull() }
+            val sdks = data.values.mapNotNull { it.sdk }
 
             configurations.forEach {
                 allScriptsSources.addAll(toVfsRoots(it.dependenciesSources))
                 allScriptClasses.addAll(toVfsRoots(it.dependenciesClassPath))
             }
 
-            allScriptsSdks.putAll(data.sdks)
+            allScriptsSdks.addAll(sdks)
 
             val definitions = source.getScriptDefinitionsSource()?.definitions
             definitions?.forEach { sourceByDefinition.put(it.definitionId, source) }
         }
 
         dependenciesSourceByDefinition.set(sourceByDefinition)
-        allDependencies.set(ScriptDependenciesData(allScriptClasses, allScriptsSources))
+        allDependencies.set(ScriptDependenciesData(allScriptClasses, allScriptsSources, allScriptsSdks))
     }
 
-    override fun getAllScriptDependenciesSources(): Collection<VirtualFile> =
-        allDependencies.get()?.sources ?: emptyList()
+    override fun getAllScriptDependenciesSources(): Collection<VirtualFile> = allDependencies.get()?.sources ?: emptyList()
 
-    override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> =
-        allDependencies.get().classes
+    override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> = allDependencies.get().classes
 
-    override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope =
-        with(allDependencies.get()) {
-            compose(classes.toList() + getSdkClasses())
-        }
+    override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope = with(allDependencies.get()) {
+        compose(classes.toList() + getSdkClasses())
+    }
 
-    override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope =
-        with(allDependencies.get()) {
-            compose(sources.toList() + getSdkSources())
-        }
+    override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope = with(allDependencies.get()) {
+        compose(sources.toList() + getSdkSources())
+    }
 
     override fun getScriptDependenciesClassFilesScope(virtualFile: VirtualFile): GlobalSearchScope {
-        val data = getConfigurationsSourceData(virtualFile) ?: return GlobalSearchScope.EMPTY_SCOPE
-
-        val configurationWrapper = data.configurations[virtualFile]?.valueOrNull()
-            ?: return GlobalSearchScope.EMPTY_SCOPE
+        val (configuration, sdk) = getConfigurationWithSdk(virtualFile) ?: return GlobalSearchScope.EMPTY_SCOPE
+        val configurationWrapper = configuration.valueOrNull() ?: return GlobalSearchScope.EMPTY_SCOPE
 
         val roots = toVfsRoots(configurationWrapper.dependenciesClassPath)
 
-        val sdk = configurationWrapper.javaHome?.let { data.sdks[it.toPath()] }
         val sdkClasses = sdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.toList() ?: emptyList<VirtualFile>()
 
         return compose(roots + sdkClasses)
     }
 
     override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> {
-        val dependencies =
-            getConfigurationsSourceData(virtualFile)?.configurations[virtualFile]?.valueOrNull()?.dependenciesClassPath
-                ?: return emptyList()
+        val dependencies = getConfigurationWithSdk(virtualFile)?.scriptConfiguration?.valueOrNull()?.dependenciesClassPath ?: return emptyList()
         return toVfsRoots(dependencies)
     }
 
-    override fun getFirstScriptsSdk(): Sdk? =
-        getProjectSdk() ?: allDependencies.get().sdks.values.firstOrNull()
+    override fun getFirstScriptsSdk(): Sdk? = getProjectSdk() ?: allDependencies.get().sdks.firstOrNull()
 
-    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? {
-        val data = getConfigurationsSourceData(virtualFile)
-
-        val configurationWrapper = data?.configurations[virtualFile]?.valueOrNull()
-        return configurationWrapper?.javaHome?.let { data.sdks[it.toPath()] }
-            ?: ProjectJdkTable.getInstance().allJdks.find { it.canBeUsedForScript() }
-    }
+    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? =
+        getConfigurationWithSdk(virtualFile)?.sdk ?: ProjectJdkTable.getInstance().allJdks.find { it.canBeUsedForScript() }
 
     private fun getProjectSdk(): Sdk? {
         return ProjectRootManager.getInstance(project).projectSdk?.takeIf { it.canBeUsedForScript() }
@@ -126,24 +111,22 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
     private fun Sdk.canBeUsedForScript() = sdkType is JavaSdkType && hasValidClassPathRoots()
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? =
-        getScriptConfigurationResult(file.alwaysVirtualFile)
+        getConfigurationWithSdk(file.alwaysVirtualFile)?.scriptConfiguration
 
-    fun getScriptConfigurationResult(virtualFile: VirtualFile): ScriptCompilationConfigurationResult? =
-        getConfigurationsSource(virtualFile)?.getConfiguration(virtualFile)
+    fun getConfigurationWithSdk(virtualFile: VirtualFile): ScriptConfigurationWithSdk? =
+        resolveSource(virtualFile)?.getConfigurationWithSdk(virtualFile)
 
-    fun getConfigurationsSource(virtualFile: VirtualFile): ScriptConfigurationsSource<*>? {
+    fun resolveSource(virtualFile: VirtualFile): ScriptConfigurationsSource<*>? {
         val definition = virtualFile.findScriptDefinition(project)
-        return dependenciesSourceByDefinition.get()[definition?.definitionId] ?: project.scriptConfigurationsSourceOfType<DependentScriptConfigurationsSource>()
+        return dependenciesSourceByDefinition.get()[definition?.definitionId]
+            ?: project.scriptConfigurationsSourceOfType<DependentScriptConfigurationsSource>()
     }
 
-    private fun getConfigurationsSourceData(virtualFile: VirtualFile): ScriptConfigurations? =
-        getConfigurationsSource(virtualFile)?.data?.get()
-
     private fun ScriptDependenciesData.getSdkSources(): List<VirtualFile> =
-        sdks.flatMap { it.value.rootProvider.getFiles(OrderRootType.SOURCES).toList() }
+        sdks.flatMap { it.rootProvider.getFiles(OrderRootType.SOURCES).toList() }
 
     private fun ScriptDependenciesData.getSdkClasses(): List<VirtualFile> =
-        sdks.flatMap { it.value.rootProvider.getFiles(OrderRootType.CLASSES).toList() }
+        sdks.flatMap { it.rootProvider.getFiles(OrderRootType.CLASSES).toList() }
 
     private val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
 
@@ -155,4 +138,3 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
             project.serviceIfCreated<ScriptConfigurationsProvider>() as? ScriptConfigurationsProviderImpl
     }
 }
-

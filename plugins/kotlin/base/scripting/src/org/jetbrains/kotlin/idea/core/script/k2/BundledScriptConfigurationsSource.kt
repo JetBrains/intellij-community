@@ -5,7 +5,6 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -17,11 +16,9 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
@@ -38,10 +35,10 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
     override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
         project.scriptDefinitionsSourceOfType<BundledScriptDefinitionSource>()
 
-    override fun getConfiguration(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? {
-        val current = data.get().configurations[virtualFile]
+    override fun getConfigurationWithSdk(virtualFile: VirtualFile): ScriptConfigurationWithSdk? {
+        val current = data.get()[virtualFile]
 
-        if (current is ResultWithDiagnostics.Success) {
+        if (current?.scriptConfiguration is ResultWithDiagnostics.Success) {
             return current
         }
 
@@ -51,7 +48,7 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
             updateDependenciesAndCreateModules(setOf(BaseScriptModel(virtualFile)))
         }
 
-        return data.get().configurations[virtualFile]
+        return data.get()[virtualFile]
     }
 
     override suspend fun updateConfigurations(scripts: Iterable<BaseScriptModel>) {
@@ -62,25 +59,21 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
             val definition = findScriptDefinition(project, scriptSource)
 
             val providedConfiguration = sdk?.homePath?.let {
-                    definition.compilationConfiguration.with {
-                        jvm.jdkHome(File(it))
-                    }
+                definition.compilationConfiguration.with {
+                    jvm.jdkHome(File(it))
                 }
+            }
 
-            it.virtualFile to smartReadAction(project) {
+            val result = smartReadAction(project) {
                 refineScriptCompilationConfiguration(scriptSource, definition, project, providedConfiguration)
             }
+
+            project.service<ScriptReportSink>().attachReports(it.virtualFile, result.reports)
+
+            it.virtualFile to ScriptConfigurationWithSdk(result, sdk)
         }
 
-        configurations.forEach { (script, result) ->
-            project.service<ScriptReportSink>().attachReports(script, result.reports)
-        }
-
-        val scriptConfigurations = ScriptConfigurations(
-            configurations,
-            sdks = sdk?.homePath?.let<@NonNls String, Map<Path, Sdk>> { mapOf(Path.of(it) to sdk) } ?: emptyMap())
-
-        data.getAndAccumulate(scriptConfigurations) { left, right -> left + right }
+        data.getAndAccumulate(configurations) { left, right -> left + right }
     }
 
     override suspend fun updateModules(storage: MutableEntityStorage?) {
@@ -97,13 +90,13 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
 
     private fun getUpdatedStorage(
         project: Project,
-        configurationsData: ScriptConfigurations,
+        configurationsData: Map<VirtualFile, ScriptConfigurationWithSdk>,
         entitySourceSupplier: (virtualFileUrl: VirtualFileUrl) -> KotlinScriptEntitySource,
     ): MutableEntityStorage {
         val updatedStorage = MutableEntityStorage.create()
         val projectPath = project.basePath?.let { Path.of(it) } ?: return updatedStorage
 
-        for (scriptFile in configurationsData.configurations.keys) {
+        for ((scriptFile, configurationWithSdk) in configurationsData) {
             val basePath = projectPath.toFile()
             val file = Path.of(scriptFile.path).toFile()
             val relativeLocation = FileUtil.getRelativePath(basePath, file) ?: continue
@@ -114,14 +107,15 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
             val locationName = relativeLocation.replace(VfsUtilCore.VFS_SEPARATOR_CHAR, ':')
             val moduleName = "$definitionScriptModuleName.$locationName"
 
-            val sdkDependency = configurationsData.sdks.values.firstOrNull()?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
+            val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
             val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
             val source = entitySourceSupplier(scriptFile.toVirtualFileUrl(virtualFileManager))
 
-            val definitionDependency = updatedStorage.getDefinitionLibraryEntity(definition, project, KotlinBundledScriptModuleEntitySource(null))?.let {
-                LibraryDependency(it.symbolicId, false, DependencyScope.COMPILE)
-            }
+            val definitionDependency =
+                updatedStorage.getDefinitionLibraryEntity(definition, project, KotlinBundledScriptModuleEntitySource(null))?.let {
+                    LibraryDependency(it.symbolicId, false, DependencyScope.COMPILE)
+                }
 
             val allDependencies = listOfNotNull(sdkDependency, definitionDependency)
 

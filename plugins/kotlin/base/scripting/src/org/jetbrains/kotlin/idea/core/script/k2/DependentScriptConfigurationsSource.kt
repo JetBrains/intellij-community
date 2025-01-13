@@ -55,9 +55,9 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
         }
     }
 
-    override fun getConfiguration(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? {
+    override fun getConfigurationWithSdk(virtualFile: VirtualFile): ScriptConfigurationWithSdk? {
         loadPersistedConfigurations
-        val current = data.get().configurations[virtualFile]
+        val current = data.get()[virtualFile]
 
         if (current != null) return current
 
@@ -66,7 +66,7 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
                 handleNoDependencies(virtualFile)
             }
 
-            return data.get().configurations[virtualFile]
+            return data.get()[virtualFile]
         }
 
         return null
@@ -79,8 +79,8 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
 
         val projectSdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
 
-        val scriptConfigurations = ScriptConfigurations(mapOf(script to result), sdks = projectSdk?.homePath?.let { mapOf(Path.of(it) to projectSdk) } ?: emptyMap())
-        data.getAndAccumulate(scriptConfigurations) { left, right -> left + right }
+        val entry = mapOf(script to ScriptConfigurationWithSdk(result, projectSdk))
+        data.getAndAccumulate(entry) { left, right -> left + right }
 
         ScriptConfigurationsProviderImpl.getInstance(project).notifySourceUpdated()
 
@@ -107,13 +107,13 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
         project.scriptDefinitionsSourceOfType<MainKtsScriptDefinitionSource>()
 
     override suspend fun updateConfigurations(scripts: Iterable<BaseScriptModel>) {
-        val projectSdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
+        val sdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
 
         val configurations = scripts.associate {
             val scriptSource = VirtualFileScriptSource(it.virtualFile)
             val definition = findScriptDefinition(project, scriptSource)
 
-            val javaHome = projectSdk?.homePath
+            val javaHome = sdk?.homePath
 
             val providedConfiguration = javaHome?.let {
                 definition.compilationConfiguration.with {
@@ -121,25 +121,23 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
                 }
             }
 
-            it.virtualFile to smartReadAction(project) {
+
+            val result = smartReadAction(project) {
                 refineScriptCompilationConfiguration(scriptSource, definition, project, providedConfiguration)
             }
+
+            project.service<ScriptReportSink>().attachReports(it.virtualFile, result.reports)
+
+            it.virtualFile to ScriptConfigurationWithSdk(result, sdk)
         }
 
-        configurations.forEach { (script, result) ->
-            project.service<ScriptReportSink>().attachReports(script, result.reports)
-        }
-
-        val scriptConfigurations =
-            ScriptConfigurations(configurations, sdks = projectSdk?.homePath?.let { mapOf(Path.of(it) to projectSdk) } ?: emptyMap())
-
-        data.getAndAccumulate(scriptConfigurations) { left, right -> left + right }
-        updatePersistentState()
+        data.getAndAccumulate(configurations) { left, right -> left + right }
+        updatePersistentState(configurations)
     }
 
-    private fun updatePersistentState() {
-        val loadedScripts = data.get().configurations.filter {
-            it.value is ResultWithDiagnostics.Success
+    private fun updatePersistentState(configurations: Map<VirtualFile, ScriptConfigurationWithSdk>) {
+        val loadedScripts = configurations.filterValues {
+            it.scriptConfiguration is ResultWithDiagnostics.Success
         }.map {
             it.key.url
         }
@@ -166,14 +164,14 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
 
     private fun getUpdatedStorage(
         project: Project,
-        configurationsData: ScriptConfigurations,
+        configurationsData: Map<VirtualFile, ScriptConfigurationWithSdk>,
         entitySourceSupplier: (virtualFileUrl: VirtualFileUrl) -> KotlinScriptEntitySource,
     ): MutableEntityStorage {
         val updatedStorage = MutableEntityStorage.create()
         val projectPath = project.basePath?.let { Path.of(it) } ?: return updatedStorage
 
-        for ((scriptFile, configurationWrapper) in configurationsData.configurations) {
-            val configuration = configurationWrapper.valueOrNull() ?: continue
+        for ((scriptFile, configurationWithSdk) in configurationsData) {
+            val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
 
             val basePath = projectPath.toFile()
             val file = Path.of(scriptFile.path).toFile()
@@ -185,8 +183,7 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
             val locationName = relativeLocation.replace(VfsUtilCore.VFS_SEPARATOR_CHAR, ':')
             val moduleName = "$definitionScriptModuleName.$locationName"
 
-            val sdkDependency = configurationsData.sdks.values.firstOrNull()
-                ?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
+            val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
             val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
             val source = entitySourceSupplier(scriptFile.toVirtualFileUrl(virtualFileManager))

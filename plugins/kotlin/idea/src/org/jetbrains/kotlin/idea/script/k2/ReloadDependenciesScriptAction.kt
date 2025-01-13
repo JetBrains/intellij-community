@@ -60,7 +60,7 @@ internal class ReloadDependenciesScriptAction : AnAction() {
         val file = getKotlinScriptFile(editor) ?: return false
 
         val configSource =
-            ScriptConfigurationsProvider.getInstance(project).safeAs<ScriptConfigurationsProviderImpl>()?.getConfigurationsSource(file)
+            ScriptConfigurationsProvider.getInstance(project).safeAs<ScriptConfigurationsProviderImpl>()?.resolveSource(file)
         if (configSource !is DependentScriptConfigurationsSource) {
             return false
         }
