@@ -2,9 +2,10 @@
 package git4idea.ui.branch.dashboard
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,6 +13,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SideBorder
+import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
@@ -25,6 +27,7 @@ import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRefOrHash
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.ui.frame.MainFrame
@@ -117,8 +120,15 @@ internal class BranchesVcsLogUi(
                                                           selectionHandler,
                                                           mainFrame.toolbar
     )
-    val toolbar = ActionManager.getInstance()
-      .createActionToolbar("Git.Log.Branches", BranchesDashboardTreeComponent.createActionGroup(), false).apply {
+    val actionManager = ActionManager.getInstance()
+    val actions = DefaultActionGroup().apply {
+      val hideBranchesAction = actionManager.getAction("Git.Log.Hide.Branches")
+      add(hideBranchesAction)
+      add(Separator())
+      add(BranchesDashboardTreeComponent.createActionGroup())
+    }
+    val toolbar = actionManager
+      .createActionToolbar("Git.Log.Branches", actions, false).apply {
         setTargetComponent(treePanel)
       }
 
@@ -165,6 +175,16 @@ internal class BranchesVcsLogUi(
             add(mainFrame.graphTable)
             add(mainFrame.changesBrowser.preferredFocusedComponent)
             add(filterUi.textFilterComponent.focusedComponent)
+          }
+        }
+      }.let { panel ->
+        UiDataProvider.wrapComponent(panel) { sink ->
+          sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = properties
+          sink[QuickActionProvider.KEY] = object : QuickActionProvider {
+            override fun getName(): @NlsActions.ActionText String? = null
+            override fun getComponent(): JComponent = panel
+            override fun isCycleRoot(): Boolean = true
+            override fun getActions(originalProvider: Boolean): List<AnAction> = listOf(actions)
           }
         }
       }

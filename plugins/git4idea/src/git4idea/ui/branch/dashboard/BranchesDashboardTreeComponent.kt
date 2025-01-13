@@ -9,7 +9,6 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.IdeBorderFactory.createBorder
@@ -17,7 +16,6 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -93,12 +91,6 @@ internal object BranchesDashboardTreeComponent {
         UiDataProvider.wrapComponent(it) { sink ->
           uiController.uiDataSnapshot(sink)
           sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
-          sink[QuickActionProvider.KEY] = object : QuickActionProvider {
-            override fun getName(): @NlsActions.ActionText String? = null
-            override fun getComponent(): JComponent = tree
-            override fun isCycleRoot(): Boolean = true
-            override fun getActions(originalProvider: Boolean): List<AnAction> = listOf(createActionGroup())
-          }
         }
       }
       .also {
@@ -124,12 +116,9 @@ internal object BranchesDashboardTreeComponent {
     val updateSelectedAction = UpdateSelectedBranchAction()
     val expandAllAction = actionManager.getAction(IdeActions.ACTION_EXPAND_ALL)
     val collapseAllAction = actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL)
-    val hideBranchesAction = actionManager.getAction("Git.Log.Hide.Branches")
     val settings = actionManager.getAction("Git.Log.Branches.Settings")
 
     val group = DefaultActionGroup()
-    group.add(hideBranchesAction)
-    group.add(Separator())
     group.add(newBranchAction)
     group.add(updateSelectedAction)
     group.add(deleteAction)
