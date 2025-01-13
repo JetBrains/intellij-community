@@ -652,30 +652,26 @@ f:com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.xdebugger.impl.frame.StackInfo
 - sf:Companion:com.intellij.xdebugger.impl.frame.StackInfo$Companion
-- f:component1():com.intellij.xdebugger.impl.frame.StackInfo$StackKind
-- f:component2():com.intellij.xdebugger.frame.XExecutionStack
-- f:component3():java.lang.String
-- f:copy(com.intellij.xdebugger.impl.frame.StackInfo$StackKind,com.intellij.xdebugger.frame.XExecutionStack,java.lang.String):com.intellij.xdebugger.impl.frame.StackInfo
-- bs:copy$default(com.intellij.xdebugger.impl.frame.StackInfo,com.intellij.xdebugger.impl.frame.StackInfo$StackKind,com.intellij.xdebugger.frame.XExecutionStack,java.lang.String,I,java.lang.Object):com.intellij.xdebugger.impl.frame.StackInfo
+- f:component1():java.lang.String
+- f:component2():javax.swing.Icon
+- f:component3():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
+- f:component4():com.intellij.xdebugger.frame.XExecutionStack
+- f:component5():com.intellij.xdebugger.XDebugSession
+- f:copy(java.lang.String,javax.swing.Icon,com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo,com.intellij.xdebugger.frame.XExecutionStack,com.intellij.xdebugger.XDebugSession):com.intellij.xdebugger.impl.frame.StackInfo
+- bs:copy$default(com.intellij.xdebugger.impl.frame.StackInfo,java.lang.String,javax.swing.Icon,com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo,com.intellij.xdebugger.frame.XExecutionStack,com.intellij.xdebugger.XDebugSession,I,java.lang.Object):com.intellij.xdebugger.impl.frame.StackInfo
 - equals(java.lang.Object):Z
-- f:getAdditionalDisplayInfo():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
-- f:getError():java.lang.String
-- f:getKind():com.intellij.xdebugger.impl.frame.StackInfo$StackKind
+- f:getAdditionalDisplayText():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
+- f:getDescription():java.lang.String
+- f:getDisplayText():java.lang.String
+- f:getIcon():javax.swing.Icon
+- f:getSession():com.intellij.xdebugger.XDebugSession
 - f:getStack():com.intellij.xdebugger.frame.XExecutionStack
-- f:getText():java.lang.String
 - hashCode():I
+- f:supportsDescription():Z
 f:com.intellij.xdebugger.impl.frame.StackInfo$Companion
-- f:error(java.lang.String):com.intellij.xdebugger.impl.frame.StackInfo
-- f:from(com.intellij.xdebugger.frame.XExecutionStack):com.intellij.xdebugger.impl.frame.StackInfo
-- f:getLoading():com.intellij.xdebugger.impl.frame.StackInfo
-e:com.intellij.xdebugger.impl.frame.StackInfo$StackKind
-- java.lang.Enum
-- sf:Error:com.intellij.xdebugger.impl.frame.StackInfo$StackKind
-- sf:ExecutionStack:com.intellij.xdebugger.impl.frame.StackInfo$StackKind
-- sf:Loading:com.intellij.xdebugger.impl.frame.StackInfo$StackKind
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.xdebugger.impl.frame.StackInfo$StackKind
-- s:values():com.intellij.xdebugger.impl.frame.StackInfo$StackKind[]
+- f:error(java.lang.String,com.intellij.xdebugger.XDebugSession):com.intellij.xdebugger.impl.frame.StackInfo
+- f:from(com.intellij.xdebugger.frame.XExecutionStack,com.intellij.xdebugger.XDebugSession):com.intellij.xdebugger.impl.frame.StackInfo
+- f:getLOADING():com.intellij.xdebugger.impl.frame.StackInfo
 a:com.intellij.xdebugger.impl.frame.XDebugView
 - com.intellij.openapi.Disposable
 - <init>():V

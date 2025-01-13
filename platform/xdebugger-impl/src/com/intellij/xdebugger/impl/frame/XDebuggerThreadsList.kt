@@ -18,7 +18,6 @@ import com.intellij.xdebugger.frame.XExecutionStack.AdditionalDisplayInfo
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.UnknownNullability
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -37,7 +36,7 @@ class XDebuggerThreadsList(
    * Use [com.intellij.xdebugger.frame.XExecutionStack.SELECTED_STACKS] data key to get a set of selected stacks from the data context.
    */
   @ApiStatus.Obsolete
-  public var stackUnderMouse: StackInfo? = null
+  var stackUnderMouse: StackInfo? = null
     private set
 
   val elementCount: Int
@@ -162,12 +161,13 @@ class XDebuggerThreadsList(
 
 private val logger = Logger.getInstance(StackInfo::class.java)
 
-data class StackInfo private constructor(
+data class StackInfo internal constructor(
   @Nls val displayText: String,
   val icon: Icon?,
   @Nls val additionalDisplayText: AdditionalDisplayInfo?,
   val stack: XExecutionStack?,
-  val session: XDebugSession?) {
+  val session: XDebugSession?,
+) {
 
   companion object {
     fun from(executionStack: XExecutionStack, session: XDebugSession): StackInfo = StackInfo(executionStack.displayName, executionStack.icon, executionStack.additionalDisplayInfo, executionStack, session)
@@ -176,6 +176,7 @@ data class StackInfo private constructor(
     val LOADING: StackInfo = StackInfo(XDebuggerBundle.message("stack.frame.loading.text"), null, null, null, null)
   }
 
+  @Volatile
   @Nls
   private var description: String? = null
 
@@ -191,18 +192,20 @@ data class StackInfo private constructor(
     if (session == null || stack == null) {
       return ""
     }
-    @Nls val loadingText = IdeBundle.message ("progress.text.loading")
+    @Nls val loadingText = IdeBundle.message("progress.text.loading")
     description = loadingText
+    @Suppress("SSBasedInspection")
     session.project.service<XDebuggerExecutionStackDescriptionService>().getExecutionStackDescription(stack, session).asCompletableFuture().whenCompleteAsync { result: String?, exception: Throwable? ->
       if (exception != null) {
         logger.error(exception)
       }
       if (result != null) {
+        @Suppress("HardCodedStringLiteral")
         description = result
       }
     }
     return loadingText
   }
 
-  fun supportsDescription(): Boolean = session?.project?.service<XDebuggerExecutionStackDescriptionService>()?.isAvailable() ?: false
+  fun supportsDescription(): Boolean = session?.project?.service<XDebuggerExecutionStackDescriptionService>()?.isAvailable() == true
 }
