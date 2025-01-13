@@ -110,6 +110,7 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
 
   @Override
   public @NotNull String getUnresolvedMessagePattern() {
-    return DevKitBundle.message("plugin.xml.action.cannot.resolve", myId);
+    return myIsAction == ThreeState.NO ? DevKitBundle.message("plugin.xml.action.group.cannot.resolve", myId) :
+           DevKitBundle.message("plugin.xml.action.cannot.resolve", myId);
   }
 }
