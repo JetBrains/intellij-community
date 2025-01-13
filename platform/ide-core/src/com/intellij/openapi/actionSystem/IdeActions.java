@@ -225,17 +225,6 @@ public interface IdeActions {
 
   String GROUP_SCOPE_VIEW_POPUP = "ScopeViewPopupMenu";
 
-  String GROUP_J2EE_VIEW_POPUP = "J2EEViewPopupMenu";
-  String GROUP_EJB_TRANSACTION_ATTRIBUTES_VIEW_POPUP = "EjbTransactionAttributesViewPopupMenu";
-  String GROUP_EJB_ENVIRONMENT_ENTRIES_VIEW_POPUP = "EjbEnvironmentEntriesViewPopupMenu";
-  String GROUP_EJB_REFERENCES_VIEW_POPUP = "EjbReferencesViewPopupMenu";
-  String GROUP_SECURITY_ROLES_VIEW_POPUP = "SecurityRolesViewPopupMenu";
-  String GROUP_PARAMETERS_VIEW_POPUP = "ParametersViewPopupMenu";
-  String GROUP_SERVLET_MAPPING_VIEW_POPUP = "ServletMappingViewPopupMenu";
-  String GROUP_EJB_RESOURCE_REFERENCES_VIEW_POPUP = "EjbResourceReferencesViewPopupMenu";
-  String GROUP_EJB_RESOURCE_ENVIRONMENT_REFERENCES_VIEW_POPUP = "EjbResourceEnvironmentReferencesViewPopupMenu";
-  String GROUP_ADD_SUPPORT = "AddSupportGroup";
-  
   String GROUP_STRUCTURE_VIEW_POPUP = "StructureViewPopupMenu";
   String GROUP_TYPE_HIERARCHY_POPUP = "TypeHierarchyPopupMenu";
   String GROUP_METHOD_HIERARCHY_POPUP = "MethodHierarchyPopupMenu";
