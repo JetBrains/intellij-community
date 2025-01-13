@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.util.SmartList;
@@ -23,15 +23,9 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   private final JvmNodeReferenceID myId;
   private final String outFilePath;
   private final Iterable<Usage> myUsages;
-  private final @NotNull Iterable<JvmMetadata<?, ?>> myMetadata;
+  private final Iterable<JvmMetadata<?, ?>> myMetadata;
 
-  public JVMClassNode(JVMFlags flags,
-                      String signature,
-                      String name,
-                      String outFilePath,
-                      @NotNull Iterable<ElementAnnotation> annotations,
-                      @NotNull Iterable<Usage> usages,
-                      @NotNull Iterable<JvmMetadata<?, ?>> metadata) {
+  public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<ElementAnnotation> annotations, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata<?, ?>> metadata) {
     super(flags, signature, name, annotations);
     myId = new JvmNodeReferenceID(name);
     this.outFilePath = outFilePath;
@@ -90,7 +84,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     return myUsages;
   }
 
-  public @NotNull Iterable<JvmMetadata<?, ?>> getMetadata() {
+  public Iterable<JvmMetadata<?, ?>> getMetadata() {
     return myMetadata;
   }
 

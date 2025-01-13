@@ -37,26 +37,23 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
   @Override
   public boolean processAddedClass(DifferentiateContext context, JvmClass addedClass, Utils future, Utils present) {
-    if (addedClass.isPrivate()) {
-      return true;
-    }
-
-    KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(addedClass);
-    //noinspection ALL
-    if (container == null || container instanceof KmClass) {
-      // calls to newly added class' constructors may shadow calls to functions named similarly
-      debug("Affecting lookup usages for added class ", addedClass.getName());
-      affectClassLookupUsages(context, addedClass);
-    }
-    else {
-      debug("Affecting lookup usages for top-level functions and properties in a newly added file ", addedClass.getName());
-      String scopeName = KJvmUtils.getKotlinName(addedClass);
-      for (String symbolName : unique(flat(
-        map(filter(container.getFunctions(), f -> !KJvmUtils.isPrivate(f)), KmFunction::getName),
-        map(filter(container.getProperties(), p -> !KJvmUtils.isPrivate(p)), KmProperty::getName)
-      ))) {
-        context.affectUsage(new LookupNameUsage(scopeName, symbolName));
-        debug("Affect ", "lookup '" + symbolName + "'", " usage owned by node '", addedClass.getName(), "'");
+    if (!addedClass.isPrivate()) {
+      KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(addedClass);
+      if (container == null || container instanceof KmClass) {
+        // calls to newly added class' constructors may shadow calls to functions named similarly
+        debug("Affecting lookup usages for added class ", addedClass.getName());
+        affectClassLookupUsages(context, addedClass);
+      }
+      else {
+        debug("Affecting lookup usages for top-level functions and properties in a newly added file ", addedClass.getName());
+        String scopeName = KJvmUtils.getKotlinName(addedClass);
+        for (String symbolName : unique(flat(
+          map(filter(container.getFunctions(), f -> !KJvmUtils.isPrivate(f)), KmFunction::getName),
+          map(filter(container.getProperties(), p -> !KJvmUtils.isPrivate(p)), KmProperty::getName)
+        ))) {
+          context.affectUsage(new LookupNameUsage(scopeName, symbolName));
+          debug("Affect ", "lookup '" + symbolName + "'", " usage owned by node '", addedClass.getName(), "'");
+        }
       }
     }
 
@@ -513,26 +510,23 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
     return !iterator.hasNext();
   }
 
-  private void affectClassLookupUsages(DifferentiateContext context, JvmClass aClass) {
-    KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(aClass);
-    //noinspection ALL
+  private void affectClassLookupUsages(DifferentiateContext context, JvmClass cls) {
+    String scope;
+    String name;
+    KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(cls);
     if (container != null && !(container instanceof KmClass)) {
       return;
     }
-
-    String scope;
-    String name;
-    String ktName = container == null ? null : KJvmUtils.getKotlinNameByContainer(aClass, container);
-    if (ktName == null) {
-      // not a kotlin-compiled class or a synthetic kotlin class
-      scope = aClass.isInnerClass() ? aClass.getOuterFqName().replace('$', '/') : aClass.getPackageName();
-      name = aClass.getShortName();
-    }
-    else {
+    String ktName = container != null? KJvmUtils.getKotlinName(cls) : null;
+    if (ktName != null) {
       scope = JvmClass.getPackageName(ktName);
-      name = scope.isEmpty() ? ktName : ktName.substring(scope.length() + 1);
+      name = scope.isEmpty()? ktName : ktName.substring(scope.length() + 1);
     }
-    affectUsages(context, "lookup '" + name + "'", asIterable(new JvmNodeReferenceID(scope)), id -> new LookupNameUsage(id, name), null);
+    else { // not a kotlin-compiled class or a synthetic kotlin class
+      scope = cls.isInnerClass()? cls.getOuterFqName().replace('$', '/') : cls.getPackageName();
+      name = cls.getShortName();
+    }
+    affectUsages(context, "lookup '" + name + "'" , asIterable(new JvmNodeReferenceID(scope)), id -> new LookupNameUsage(id, name), null);
   }
 
   private void affectMemberLookupUsages(DifferentiateContext context, JvmClass cls, String name, Utils utils) {
@@ -581,11 +575,11 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
   private static @Nullable JvmMethod getJvmMethod(JvmClass cls, JvmMethodSignature sig) {
     return sig != null? find(cls.getMethods(), m -> Objects.equals(m.getName(), sig.getName()) && Objects.equals(m.getDescriptor(), sig.getDescriptor())) : null;
   }
-
   private static Iterable<JvmMethod> withJvmOverloads(JvmClass cls, JvmMethod method) {
     return unique(flat(
       asIterable(method),
       filter(cls.getMethods(), m -> Objects.equals(m.getName(), method.getName()) && Objects.equals(m.getType(), method.getType()) && find(m.getAnnotations(), a -> JVM_OVERLOADS_ANNOTATION.equals(a.getAnnotationClass())) != null)
     ));
   }
+
 }

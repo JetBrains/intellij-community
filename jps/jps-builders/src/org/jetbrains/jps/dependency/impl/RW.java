@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.DataInput;
@@ -35,11 +34,12 @@ public final class RW {
     return readCollection(in, reader, new SmartList<T>());
   }
 
-  public static @NotNull <T, C extends Collection<? super T>> C readCollection(DataInput in, Reader<? extends T> reader, C acc) throws IOException {
+  public static <T, C extends Collection<? super T>> C readCollection(DataInput in, Reader<? extends T> reader, C acc) throws IOException {
     int size = in.readInt();
     while (size-- > 0) {
       acc.add(reader.read());
     }
     return acc;
   }
+
 }

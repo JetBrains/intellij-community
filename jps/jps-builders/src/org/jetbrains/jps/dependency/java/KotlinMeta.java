@@ -177,19 +177,17 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
   }
 
   public @Nullable KmDeclarationContainer getDeclarationContainer() {
-    KotlinClassMetadata classMetadata = getClassMetadata();
-    if (classMetadata instanceof KotlinClassMetadata.Class) {
-      return ((KotlinClassMetadata.Class)classMetadata).getKmClass();
+    KotlinClassMetadata clsMeta = getClassMetadata();
+    if (clsMeta instanceof KotlinClassMetadata.Class) {
+      return ((KotlinClassMetadata.Class)clsMeta).getKmClass();
     }
-    else if (classMetadata instanceof KotlinClassMetadata.FileFacade) {
-      return ((KotlinClassMetadata.FileFacade)classMetadata).getKmPackage();
+    if (clsMeta instanceof KotlinClassMetadata.FileFacade) {
+      return ((KotlinClassMetadata.FileFacade)clsMeta).getKmPackage();
     }
-    else if (classMetadata instanceof KotlinClassMetadata.MultiFileClassPart) {
-      return ((KotlinClassMetadata.MultiFileClassPart)classMetadata).getKmPackage();
+    if (clsMeta instanceof KotlinClassMetadata.MultiFileClassPart) {
+      return ((KotlinClassMetadata.MultiFileClassPart)clsMeta).getKmPackage();
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   private static boolean kmTypeProjectionEquals(KmTypeProjection p1, KmTypeProjection p2) {

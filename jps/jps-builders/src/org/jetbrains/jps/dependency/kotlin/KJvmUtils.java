@@ -10,8 +10,9 @@ import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 
+import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.Objects;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
@@ -29,21 +30,16 @@ final class KJvmUtils {
 
   static Iterable<KmFunction> allKmFunctions(Node<?, ?> node) {
     KotlinMeta meta = getKotlinMeta(node);
-    return meta == null ? List.of() : meta.getKmFunctions();
+    return meta != null? meta.getKmFunctions() : Collections.emptyList();
   }
 
   static Iterable<KmProperty> allKmProperties(Node<?, ?> node) {
     KotlinMeta meta = getKotlinMeta(node);
-    return meta == null ? List.of() : meta.getKmProperties();
+    return meta != null? meta.getKmProperties() : Collections.emptyList();
   }
 
   static @Nullable String getKotlinName(JvmNodeReferenceID cls, Utils utils) {
-    for (String o : map(utils.getNodes(cls, JvmClass.class), c -> getKotlinName(c))) {
-      if (o != null) {
-        return o;
-      }
-    }
-    return null;
+    return find(map(utils.getNodes(cls, JvmClass.class), c -> getKotlinName(c)), Objects::nonNull);
   }
 
   static @Nullable String getKotlinName(JvmClass cls) {
@@ -55,18 +51,6 @@ final class KJvmUtils {
       return ((KmClass)container).getName().replace('.', '/');
     }
     return null;
-  }
-
-  static @Nullable String getKotlinNameByContainer(JvmClass aClass, KmDeclarationContainer container) {
-    if (container instanceof KmPackage) {
-      return aClass.getPackageName();
-    }
-    else if (container instanceof KmClass) {
-      return ((KmClass)container).getName().replace('.', '/');
-    }
-    else {
-      return null;
-    }
   }
 
   static String getMethodKotlinName(JvmClass cls, JvmMethod method) {
@@ -92,17 +76,12 @@ final class KJvmUtils {
   }
 
   static boolean isDeclaresDefaultValue(KmFunction f) {
-    for (KmValueParameter o : f.getValueParameters()) {
-      if (Attributes.getDeclaresDefaultValue(o)) {
-        return true;
-      }
-    }
-    return false;
+    return find(f.getValueParameters(), Attributes::getDeclaresDefaultValue) != null;
   }
 
-  static @Nullable KmDeclarationContainer getDeclarationContainer(Node<?, ?> node) {
+  static KmDeclarationContainer getDeclarationContainer(Node<?, ?> node) {
     KotlinMeta meta = getKotlinMeta(node);
-    return meta == null ? null : meta.getDeclarationContainer();
+    return meta != null? meta.getDeclarationContainer() : null;
   }
 
   static boolean isKotlinNode(Node<?, ?> node) {
@@ -110,15 +89,7 @@ final class KJvmUtils {
   }
 
   static @Nullable KotlinMeta getKotlinMeta(Node<?, ?> node) {
-    if (!(node instanceof JVMClassNode)) {
-      return null;
-    }
-    for (JvmMetadata<?, ?> o : ((JVMClassNode<?, ?>)node).getMetadata()) {
-      if (o instanceof KotlinMeta) {
-        return (KotlinMeta)o;
-      }
-    }
-    return null;
+    return node instanceof JVMClassNode? (KotlinMeta)find(((JVMClassNode<?, ?>)node).getMetadata(), mt -> mt instanceof KotlinMeta) : null;
   }
 
   static boolean isPrivate(KmProperty prop) {
@@ -139,7 +110,7 @@ final class KJvmUtils {
 
   static Iterable<ReferenceID> withAllSubclassesIfSealed(Utils utils, ReferenceID sealedClassId) {
     Iterators.Function<ReferenceID, Iterable<? extends ReferenceID>> withSubclassesIfSealed =
-      id -> flat(map(utils.getNodes(id, JvmClass.class), n -> isSealed(n)? utils.directSubclasses(n.getReferenceID()) : List.of()));
+      id -> flat(map(utils.getNodes(id, JvmClass.class), n -> isSealed(n)? utils.directSubclasses(n.getReferenceID()) : Collections.emptyList()));
     return recurse(sealedClassId, withSubclassesIfSealed, true);
   }
 }

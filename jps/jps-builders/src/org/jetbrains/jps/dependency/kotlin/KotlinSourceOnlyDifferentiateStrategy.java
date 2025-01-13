@@ -31,9 +31,9 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     Set<JvmNodeReferenceID> affectedSealedClasses = new HashSet<>();
     Set<JvmNodeReferenceID> baseNodes = new HashSet<>();
 
-    for (JvmClass aClass : Utils.uniqueBy(flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class))), JvmClass::isSame, JvmClass::diffHashCode)) {
-      if (!aClass.isPrivate()) {
-        for (ReferenceID id : present.withAllSubclasses(aClass.getReferenceID())) {
+    for (JvmClass cls : Utils.uniqueBy(flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class))), JvmClass::isSame, JvmClass::diffHashCode)) {
+      if (!cls.isPrivate()) {
+        for (ReferenceID id : present.withAllSubclasses(cls.getReferenceID())) {
           if (id instanceof JvmNodeReferenceID) {
             // potentially changed types can be used in kotlin's type inference in super classes
             affectedUsages.add(new ClassUsage(((JvmNodeReferenceID)id)));
@@ -41,16 +41,16 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
         }
       }
 
-      KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(aClass);
+      KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(cls);
       if (container != null) {
         if (container instanceof KmClass) {
-          baseNodes.add(aClass.getReferenceID());
-          appendSealedClasses(aClass, present, affectedSealedClasses);
+          baseNodes.add(cls.getReferenceID());
+          appendSealedClasses(cls, present, affectedSealedClasses);
         }
         
         List<KmTypeAlias> typeAliases = container.getTypeAliases();
         if (!typeAliases.isEmpty()) {
-          String ownerName = KJvmUtils.getKotlinNameByContainer(aClass, container);
+          String ownerName = KJvmUtils.getKotlinName(cls);
           if (ownerName != null) {
             for (KmTypeAlias alias : typeAliases) {
               // there can be dependencies in the kotlin super classes on potentially changed type aliases

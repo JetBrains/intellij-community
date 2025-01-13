@@ -56,7 +56,28 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
     List<NodeSource> nodeSources = Iterators.collect(Iterators.map(sources, myGraphConfig.getPathMapper()::toNodeSource), new SmartList<>());
 
     Iterable<LookupNameUsage> lookups = Iterators.flat(Iterators.map(node.getMetadata(KotlinMeta.class), meta -> {
-      return getLookupNameUsages(meta, node);
+      KmDeclarationContainer container = meta.getDeclarationContainer();
+      final JvmNodeReferenceID owner;
+      LookupNameUsage clsUsage = null;
+      if (container instanceof KmPackage) {
+        owner = new JvmNodeReferenceID(JvmClass.getPackageName(node.getName()));
+      }
+      else if (container instanceof KmClass) {
+        owner = new JvmNodeReferenceID(((KmClass)container).getName());
+        String ownerName = owner.getNodeName();
+        String scopeName = JvmClass.getPackageName(ownerName);
+        String symbolName = scopeName.isEmpty()? ownerName : ownerName.substring(scopeName.length() + 1);
+        clsUsage = new LookupNameUsage(scopeName, symbolName);
+      }
+      else {
+        owner = null;
+      }
+      if (owner == null) {
+        return Collections.emptyList();
+      }
+      Iterable<LookupNameUsage> memberLookups =
+        Iterators.map(Iterators.unique(Iterators.flat(Iterators.map(container.getFunctions(), KmFunction::getName), Iterators.map(container.getProperties(), KmProperty::getName))), name -> new LookupNameUsage(owner, name));
+      return clsUsage == null? memberLookups : Iterators.flat(Iterators.asIterable(clsUsage), memberLookups);
     }));
 
     for (LookupNameUsage lookup : lookups) {
@@ -68,37 +89,8 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
     myNodes.add(new Pair<>(node, nodeSources));
   }
 
-  private static Iterable<LookupNameUsage> getLookupNameUsages(
-    KotlinMeta meta,
-    JVMClassNode<? extends JVMClassNode<?, ? extends Proto.Diff<? extends JVMClassNode<?, ?>>>, ? extends Proto.Diff<? extends JVMClassNode<? extends JVMClassNode<?, ?>, ?>>> node
-  ) {
-    KmDeclarationContainer container = meta.getDeclarationContainer();
-    JvmNodeReferenceID owner;
-    LookupNameUsage classUsage;
-    if (container instanceof KmPackage) {
-      owner = new JvmNodeReferenceID(JvmClass.getPackageName(node.getName()));
-      classUsage = null;
-    }
-    else if (container instanceof KmClass) {
-      owner = new JvmNodeReferenceID(((KmClass)container).getName());
-      String ownerName = owner.getNodeName();
-      String scopeName = JvmClass.getPackageName(ownerName);
-      String symbolName = scopeName.isEmpty() ? ownerName : ownerName.substring(scopeName.length() + 1);
-      classUsage = new LookupNameUsage(scopeName, symbolName);
-    }
-    else {
-      return List.of();
-    }
-
-    Iterable<LookupNameUsage> memberLookups =
-      Iterators.map(Iterators.unique(Iterators.flat(Iterators.map(container.getFunctions(), KmFunction::getName),
-                                                    Iterators.map(container.getProperties(), KmProperty::getName))),
-                    name -> new LookupNameUsage(owner, name));
-    //noinspection ALL
-    return classUsage == null ? memberLookups : Iterators.flat(Iterators.asIterable(classUsage), memberLookups);
-  }
-
   public List<Pair<Node<?, ?>, Iterable<NodeSource>>> getNodes() {
+    
     if (!myPerSourceAdditionalUsages.isEmpty()) {
       NodeSourcePathMapper pathMapper = myGraphConfig.getPathMapper();
       for (Map.Entry<Path, Set<Usage>> entry : myPerSourceAdditionalUsages.entrySet()) {
