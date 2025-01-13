@@ -855,8 +855,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           boolean includeFilesFromOtherProjects = restrictedFile == null && project == null;
           ProjectFilesCondition projectFilterCondition = new ProjectFilesCondition(
             projectIndexableFiles(project),
-            // Index everything for performance reasons: unindexed project files will trigger "indexUnsavedDocument" too often
-            project == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.everythingScope(project),
+            // TODO: index changed documents from other projects too for performance reasons: changed documents will break
+            //  fast check (myUpToDateIndicesForUnsavedOrTransactedDocuments) in indexUnsavedDocument
+            project == null ? null : GlobalSearchScope.everythingScope(project),
             restrictedFile,
             includeFilesFromOtherProjects);
 
