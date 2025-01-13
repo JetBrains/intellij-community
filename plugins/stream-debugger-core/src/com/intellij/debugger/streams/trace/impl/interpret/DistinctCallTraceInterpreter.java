@@ -71,7 +71,11 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
     for (int i = 0; i < size; i++) {
       final int fromTime = extractIntValue(keys.getValue(i));
       final int afterTime = extractIntValue(values.getValue(i));
-      result.put(before.get(fromTime), Collections.singletonList(after.get(afterTime)));
+      TraceElement beforeElement = before.get(fromTime);
+      TraceElement afterElement = after.get(afterTime);
+      if (beforeElement != null && afterElement != null) {
+        result.put(beforeElement, Collections.singletonList(afterElement));
+      }
     }
 
     return result;
@@ -94,7 +98,9 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
       final int afterTime = extractIntValue(values.getValue(i));
       final TraceElement beforeElement = before.get(fromTime);
       final TraceElement afterElement = after.get(afterTime);
-      result.computeIfAbsent(afterElement, x -> new ArrayList<>()).add(beforeElement);
+      if (beforeElement != null && afterElement != null) {
+        result.computeIfAbsent(afterElement, x -> new ArrayList<>()).add(beforeElement);
+      }
     }
 
     return result;
