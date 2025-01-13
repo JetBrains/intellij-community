@@ -35,7 +35,8 @@ object CreateFromUsageUtil {
 
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
-                (container as? KtClass)?.createPrimaryConstructorIfAbsent()?.replaced(declaration) ?: declaration
+                val primaryConstructor = (container as? KtClass)?.createPrimaryConstructorIfAbsent()
+                primaryConstructor?.replaced(declaration) ?: declaration
             }
 
             declaration is KtProperty && container !is KtBlockExpression -> {
@@ -45,6 +46,15 @@ object CreateFromUsageUtil {
                     else -> null
                 }
                 sibling?.let { actualContainer.addBefore(declaration, it) as D } ?: fileToEdit.add(declaration) as D
+            }
+            declaration is KtParameter -> {
+                val sibling = when (actualContainer) {
+                    is KtParameterList -> actualContainer.rightParenthesis
+                    else -> error("Invalid container: $actualContainer for parameter $declaration\n${actualContainer.text}")
+                }
+                sibling?.let {
+                    actualContainer.addBefore(declaration, it) as D
+                } ?: fileToEdit.add(declaration) as D
             }
 
             actualContainer.isAncestor(anchor, true) -> {

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -12,10 +13,12 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -27,8 +30,108 @@ import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 class K2ElementActionsFactory : JvmElementActionsFactory() {
+    override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+        return super.createAddConstructorActions(targetClass, request)
+    }
+
+    override fun createChangeOverrideActions(
+        target: JvmModifiersOwner,
+        shouldBePresent: Boolean
+    ): List<IntentionAction> {
+        return super.createChangeOverrideActions(target, shouldBePresent)
+    }
+
+    override fun createRemoveAnnotationActions(
+        target: JvmModifiersOwner,
+        request: AnnotationRequest
+    ): List<IntentionAction> {
+        return super.createRemoveAnnotationActions(target, request)
+    }
+
+    override fun createChangeParametersActions(
+        target: JvmMethod,
+        request: ChangeParametersRequest
+    ): List<IntentionAction> {
+        return when (val kotlinOrigin = (target as? KtLightElement<*, *>)?.kotlinOrigin) {
+            is KtNamedFunction -> listOfNotNull(ChangeMethodParameters.create(kotlinOrigin, request))
+            is KtConstructor<*> -> kotlinOrigin.containingClass()?.let {
+                createChangeConstructorParametersAction(kotlinOrigin, it, request)
+            } ?: emptyList()
+            is KtClass -> createChangeConstructorParametersAction(kotlinOrigin, kotlinOrigin, request)
+            else -> emptyList()
+        }
+    }
+
+    private fun createChangeConstructorParametersAction(kotlinOrigin: PsiElement,
+                                                        targetKtClass: KtClass,
+                                                        request: ChangeParametersRequest): List<IntentionAction> {
+        return listOfNotNull(run {
+            val lightMethod = kotlinOrigin.toLightMethods().firstOrNull() ?: return@run null
+            val project = kotlinOrigin.project
+            val fakeParametersExpressions = fakeParametersExpressions(request.expectedParameters, project) ?: return@run null
+            QuickFixFactory.getInstance().createChangeMethodSignatureFromUsageFix(
+                lightMethod,
+                fakeParametersExpressions,
+                PsiSubstitutor.EMPTY,
+                targetKtClass,
+                false,
+                2
+            ).takeIf { it.isAvailable(project, null, targetKtClass.containingFile) }
+        })
+    }
+
+    private fun fakeParametersExpressions(parameters: List<ExpectedParameter>, project: Project): Array<PsiExpression>? = when {
+        parameters.isEmpty() -> emptyArray()
+        else -> JavaPsiFacade
+            .getElementFactory(project)
+            .createParameterList(
+                parameters.map { it.semanticNames.firstOrNull() }.toTypedArray(),
+                parameters.map { param ->
+                    param.expectedTypes.firstOrNull()?.theType?.let { type ->
+                        JvmPsiConversionHelper.getInstance(project).convertType(type)
+                    } ?: return null
+                }.toTypedArray()
+            )
+            .parameters
+            .map(::FakeExpressionFromParameter)
+            .toTypedArray()
+    }
+
+    private class FakeExpressionFromParameter(private val psiParam: PsiParameter) : PsiReferenceExpressionImpl() {
+        override fun getText(): String = psiParam.name
+        override fun getProject(): Project = psiParam.project
+        override fun getParent(): PsiElement = psiParam.parent
+        override fun getType(): PsiType = psiParam.type
+        override fun isValid(): Boolean = true
+        override fun getContainingFile(): PsiFile = psiParam.containingFile
+        override fun getReferenceName(): String = psiParam.name
+        override fun resolve(): PsiElement = psiParam
+    }
+
+    override fun createChangeTypeActions(
+        target: JvmMethod,
+        request: ChangeTypeRequest
+    ): List<IntentionAction> {
+        return super.createChangeTypeActions(target, request)
+    }
+
+    override fun createChangeTypeActions(
+        target: JvmParameter,
+        request: ChangeTypeRequest
+    ): List<IntentionAction> {
+        return super.createChangeTypeActions(target, request)
+    }
+
+    override fun createChangeTypeActions(
+        target: JvmField,
+        request: ChangeTypeRequest
+    ): List<IntentionAction> {
+        return super.createChangeTypeActions(target, request)
+    }
+
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
         val kModifierOwner = target.sourceElement?.unwrapped as? KtModifierListOwner ?: return emptyList()
 

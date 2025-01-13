@@ -143,20 +143,45 @@ object K2CreatePropertyFromUsageBuilder {
                 return
             }
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
-                val actualAnchor = when (container) {
+                val createConstructorParameter = container is KtClass && !lateinit
+                val adjustedContainer = if (createConstructorParameter) {
+                    container.createPrimaryConstructorIfAbsent().valueParameterList!!
+                } else {
+                    container
+                }
+                val psiFactory = KtPsiFactory(pointer.project)
+                val actualAnchor = when (adjustedContainer) {
                     is KtClassOrObject -> {
-                        val bodyBlock = container.body
+                        val bodyBlock = adjustedContainer.body
                         bodyBlock?.declarations?.firstOrNull()
+                    }
+                    is KtParameterList -> {
+                        val rightParenthesis = adjustedContainer.rightParenthesis!!
+                        if (adjustedContainer.trailingComma == null) {
+                            val lastParameter = adjustedContainer.parameters.lastOrNull()
+                            if (lastParameter != null) {
+                                val comma = psiFactory.createComma()
+                                lastParameter.add(comma)
+                            }
+                        }
+
+                        rightParenthesis
                     }
                     else -> throw IllegalStateException(container.toString())
                 }
-                val psiFactory = KtPsiFactory(pointer.project)
-                val createdDeclaration = psiFactory.createDeclaration(declarationText) as KtVariableDeclaration
+                val createdDeclaration: KtCallableDeclaration =
+                    if (createConstructorParameter) {
+                        psiFactory.createParameter(declarationText)
+                    } else {
+                        psiFactory.createDeclaration(declarationText) as KtVariableDeclaration
+                    }
 
                 if (actualAnchor != null) {
                     val declarationInContainer =
-                        CreateFromUsageUtil.placeDeclarationInContainer(createdDeclaration, container, actualAnchor)
-                    declarationInContainer.typeReference?.let { ShortenReferencesFacility.getInstance().shorten(it) }
+                        CreateFromUsageUtil.placeDeclarationInContainer(createdDeclaration, adjustedContainer, actualAnchor)
+                    declarationInContainer.typeReference?.let {
+                        ShortenReferencesFacility.getInstance().shorten(it)
+                    }
                 }
             }
         }
