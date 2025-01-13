@@ -8,9 +8,7 @@ import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.plist.PlistReader;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
@@ -129,7 +127,9 @@ public class Bundle {
    */
   @Deprecated(forRemoval = true)
   public List<Map.Entry<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
-    return Collections.singletonList(PreferencesReadUtil.retrieveSettingsPlist(plistReader.read(file)));
+    try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
+      return Collections.singletonList(PreferencesReadUtil.retrieveSettingsPlist(plistReader.read(in)));
+    }
   }
 
   private static final class BundleFilesFilter implements FileFilter {
