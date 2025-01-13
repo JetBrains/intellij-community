@@ -26,7 +26,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
 import com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil.isObsolete
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.NonNls
 import java.awt.Font
-import java.util.concurrent.atomic.AtomicReference
 import javax.swing.Icon
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
@@ -148,7 +147,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       val channelCs = this@channelFlow as CoroutineScope
       var isObsolete = false
 
-      val valueNode = object : XValueNode {
+      val valueNode = object : XValueNodeEx {
         override fun isObsolete(): Boolean {
           return isObsolete
         }
@@ -192,6 +191,15 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
                 ))
             )
           }
+        }
+
+        override fun getXValue(): XValue {
+          return xValue
+        }
+
+        override fun clearFullValueEvaluator() {
+          // TODO[IJPL-160146]: data race with setFullValueEvaluator
+          presentations.trySend(XValuePresentationEvent.ClearFullValueEvaluator)
         }
       }
       xValue.computePresentation(valueNode, xValuePlace)

@@ -229,7 +229,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
           private boolean setFullValueEvaluator(Renderer renderer) {
             if (renderer instanceof FullValueEvaluatorProvider) {
-              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)renderer).getFullValueEvaluator(myEvaluationContext, myValueDescriptor);
+              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)renderer).getFullValueEvaluator(node, myEvaluationContext, myValueDescriptor);
               if (evaluator != null) {
                 node.setFullValueEvaluator(evaluator);
                 return true;

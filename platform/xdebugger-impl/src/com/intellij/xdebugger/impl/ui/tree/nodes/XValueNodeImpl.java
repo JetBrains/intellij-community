@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.Document;
@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
+public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNodeEx, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
   public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
   private static final int MAX_NAME_LENGTH = 100;
@@ -172,6 +172,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     });
   }
 
+  @Override
   public void clearFullValueEvaluator() {
     myFullValueEvaluator = null;
   }
@@ -199,6 +200,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       SimpleTextAttributes attributes = myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
       XValuePresentationUtil.renderName(myName, MAX_NAME_LENGTH, s -> renderer.renderRaw(s, attributes));
     }
+  }
+
+  @Override
+  public @NotNull XValue getXValue() {
+    return getValueContainer();
   }
 
   private static @NotNull XCustomizableTextRenderer createTextRenderer(ColoredTextContainer text,

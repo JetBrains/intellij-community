@@ -1681,10 +1681,10 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueGroupNodeImpl
 - markChanged():V
 - onExpansion(Z):V
 c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-- com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 - com.intellij.xdebugger.frame.XCompositeNode
 - com.intellij.xdebugger.frame.XValueNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode
+- com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode
 - sf:COMPARATOR:java.util.Comparator
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,java.lang.String,com.intellij.xdebugger.frame.XValue):V
@@ -1702,6 +1702,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - getName():java.lang.String
 - getRawValue():java.lang.String
 - getValuePresentation():com.intellij.xdebugger.frame.presentation.XValuePresentation
+- getXValue():com.intellij.xdebugger.frame.XValue
 - isComputed():Z
 - markChanged():V
 - setFullValueEvaluator(com.intellij.xdebugger.frame.XFullValueEvaluator):V

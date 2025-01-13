@@ -25,6 +25,7 @@ import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
 import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
 import com.intellij.xdebugger.impl.rpc.XValueDto
 import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
 
 internal class FrontendXValue(private val project: Project, private val xValueDto: XValueDto) : XValue(), HintXValue {
@@ -55,6 +56,11 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
           }
           is XValuePresentationEvent.SetFullValueEvaluator -> {
             node.setFullValueEvaluator(FrontendXFullValueEvaluator(cs, presentationEvent.fullValueEvaluatorDto))
+          }
+          XValuePresentationEvent.ClearFullValueEvaluator -> {
+            if (node is XValueNodeEx) {
+              node.clearFullValueEvaluator()
+            }
           }
         }
       }

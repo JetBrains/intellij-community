@@ -134,6 +134,10 @@ sealed interface XValuePresentationEvent {
   @ApiStatus.Internal
   @Serializable
   data class SetFullValueEvaluator(val fullValueEvaluatorDto: XFullValueEvaluatorDto) : XValuePresentationEvent
+
+  @ApiStatus.Internal
+  @Serializable
+  data object ClearFullValueEvaluator : XValuePresentationEvent
 }
 
 @ApiStatus.Internal
