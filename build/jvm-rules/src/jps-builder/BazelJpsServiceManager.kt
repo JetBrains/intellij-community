@@ -3,6 +3,7 @@
 
 package org.jetbrains.bazel.jvm.jps
 
+import org.jetbrains.bazel.jvm.jps.impl.BazelKotlinBuilder
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.builders.AdditionalRootsProviderService
 import org.jetbrains.jps.builders.PreloadedDataExtension
@@ -16,7 +17,6 @@ import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.service.JpsServiceManager
 import org.jetbrains.jps.service.SharedThreadPool
-import org.jetbrains.kotlin.jps.build.KotlinBuilder
 import org.jetbrains.kotlin.jps.incremental.KotlinCompilerReferenceIndexBuilder
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -123,7 +123,7 @@ private object BazelJavaBuilderService : BuilderService() {
       JavaBuilder(SharedThreadPool.getInstance()),
       //NotNullInstrumentingBuilder(),
       JavaBackwardReferenceIndexBuilder(),
-      KotlinBuilder(),
+      BazelKotlinBuilder(),
       KotlinCompilerReferenceIndexBuilder(),
     )
   }

@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
+import org.jetbrains.bazel.jvm.logging.LogWriter
+import java.io.PrintStream
 import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -13,12 +15,12 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.walk
 
+//private val dateTimeFormatter = DateTimeFormatter.ofPattern("yy-MM-dd_T-HH-mm-ss")
+
 object TestJpsBuildWorker {
   @OptIn(ExperimentalPathApi::class)
   @JvmStatic
   fun main(startupArgs: Array<String>) {
-    configureGlobalJps()
-
     val userHomeDir = Path.of(System.getProperty("user.home"))
     val out = StringWriter()
     try {
@@ -42,6 +44,11 @@ object TestJpsBuildWorker {
       require(sources.isNotEmpty())
 
       runBlocking(Dispatchers.Default) {
+        // IDEA console is bad and outdated, write to file and use modern tooling to view logs
+        // ${dateTimeFormatter.format(LocalDateTime.now())}
+        val logFile = userHomeDir.resolve("kotlin-worker/log.ndjson")
+        configureGlobalJps(LogWriter(this, PrintStream(Files.newOutputStream(logFile)), closeWriterOnShutdown = true))
+
         val args = parseArgs(testParams.trimStart().lines().toTypedArray())
         val messageDigest = MessageDigest.getInstance("SHA-256")
         buildUsingJps(
@@ -73,26 +80,32 @@ private const val testParams = """
 kt_jvm_library
 --kotlin_module_name
 intellij.platform.ide.impl
---add-export
-java.desktop/sun.awt=ALL-UNNAMED
-java.desktop/sun.font=ALL-UNNAMED
-java.desktop/java.awt.peer=ALL-UNNAMED
-jdk.attach/sun.tools.attach=ALL-UNNAMED
-java.desktop/sun.awt.image=ALL-UNNAMED
-java.desktop/sun.awt.datatransfer=ALL-UNNAMED
-java.desktop/sun.swing=ALL-UNNAMED
-java.base/sun.nio.fs=ALL-UNNAMED
---out
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/platform-impl/ide-impl.jar
---abi-out
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/platform-impl/ide-impl.abi.jar
+--deps_artifacts
+bazel-out/community+/darwin_arm64-fastbuild/bin/jps/model-impl/model-impl.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/observable/ide-observable-kt.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/rd-platform-community/rd-community-kt.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util-class-loader/util-classLoader.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/zip/zip.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/xmlDom/xmlDom-kt.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/jdom/jdom.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/text-matching/text-matching.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/platform-impl/rpc/ide-rpc-kt.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/diagnostic/startUpPerformanceReporter/startUpPerformanceReporter-kt.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/backend/observation/observation-kt.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/ml-api/ml-kt.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/storages/io-storages.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/core-nio-fs/libcore-nio-fs.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/project/shared/project-kt.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/jbr/jbr.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/fleet/util/core/fleet-util-core-kt.jdeps
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/buildData/buildData-kt.jdeps
 --warn
 off
 --jvm-default
 all
 --jvm-target
 17
---opt_in
+--opt-in
 com.intellij.openapi.util.IntellijInternalApi
 org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 --classpath
@@ -108,7 +121,6 @@ bazel-out/community+/darwin_arm64-fastbuild/bin/platform/extensions/extensions.a
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/forms_rt/java-guiForms-rt-hjar.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/projectModel-api/projectModel.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/jps/model-api/model-hjar.jar
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/analysis-api/analysis.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/editor-ui-api/editor.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/credential-store/credentialStore.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/remote-core/remote-core.abi.jar
@@ -119,6 +131,7 @@ bazel-out/community+/darwin_arm64-fastbuild/bin/platform/lang-api/lang.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/lang-core/lang-core.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/lvcs-api/lvcs.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/indexing-api/indexing.abi.jar
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/analysis-api/analysis.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/code-style-api/codeStyle.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/execution/execution.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/refactoring/refactoring.abi.jar
@@ -235,7 +248,7 @@ bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/coroutines/corouti
 ../lib++_repo_rules+rwmutex-idea-0_0_7_http/file/rwmutex-idea-0.0.7.jar
 bazel-out/lib+/darwin_arm64-fastbuild/bin/_ijar/lz4-java/lib++_repo_rules+lz4-java-1_8_0_http/file/lz4-java-1.8.0-ijar.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/ml-api/ml.abi.jar
-../lib++_repo_rules+extension-34_http/file/extension-34.jar
+../lib++_repo_rules+ml-feature-api-58_http/file/ml-feature-api-58.jar
 ../lib++_repo_rules+kotlinx-collections-immutable-jvm-0_3_8_http/file/kotlinx-collections-immutable-jvm-0.3.8.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/storages/io-storages-hjar.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/core-nio-fs/libcore-nio-fs-hjar.jar
@@ -274,6 +287,7 @@ bazel-out/community+/darwin_arm64-fastbuild/bin/fleet/preferences/preferences.ab
 bazel-out/community+/darwin_arm64-fastbuild/bin/fleet/util/os/fleet-util-os-hjar.jar
 ../lib++_repo_rules+expects-compiler-plugin-2_1_0-0_3_http/file/expects-compiler-plugin-2.1.0-0.3.jar
 ../lib++_repo_rules+rpc-compiler-plugin-2_1_0-0_4_http/file/rpc-compiler-plugin-2.1.0-0.4.jar
+../lib++_repo_rules+kotlinx-datetime-jvm-0_6_1_http/file/kotlinx-datetime-jvm-0.6.1.jar
 ../lib++_repo_rules+rhizomedb-compiler-plugin-2_1_0-0_2_http/file/rhizomedb-compiler-plugin-2.1.0-0.2.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/usageView/usageView.abi.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/statistics/uploader/uploader.abi.jar
@@ -299,26 +313,21 @@ bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/http/http.abi.jar
 ../lib++_repo_rules+ktor-websockets-jvm-2_3_13_http/file/ktor-websockets-jvm-2.3.13.jar
 ../lib++_repo_rules+ktor-client-java-jvm-2_3_13_http/file/ktor-client-java-jvm-2.3.13.jar
 bazel-out/community+/darwin_arm64-fastbuild/bin/platform/eel-impl/eel-impl.abi.jar
---deps_artifacts
-bazel-out/community+/darwin_arm64-fastbuild/bin/jps/model-impl/model-impl.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/observable/ide-observable-kt.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/rd-platform-community/rd-community-kt.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util-class-loader/util-classLoader.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/zip/zip.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/xmlDom/xmlDom-kt.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/jdom/jdom.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/text-matching/text-matching.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/platform-impl/rpc/ide-rpc-kt.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/diagnostic/startUpPerformanceReporter/startUpPerformanceReporter-kt.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/backend/observation/observation-kt.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/ml-api/ml-kt.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/util/storages/io-storages.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/core-nio-fs/libcore-nio-fs.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/project/shared/project-kt.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/jbr/jbr.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/fleet/util/core/fleet-util-core-kt.jdeps
-bazel-out/community+/darwin_arm64-fastbuild/bin/platform/buildData/buildData-kt.jdeps
 --plugin-id
 org.jetbrains.kotlin.kotlin-serialization-compiler-plugin
 --plugin-classpath
+
+--out
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/platform-impl/ide-impl.jar
+--abi-out
+bazel-out/community+/darwin_arm64-fastbuild/bin/platform/platform-impl/ide-impl.abi.jar
+--add-export
+java.desktop/sun.awt=ALL-UNNAMED
+java.desktop/sun.font=ALL-UNNAMED
+java.desktop/java.awt.peer=ALL-UNNAMED
+jdk.attach/sun.tools.attach=ALL-UNNAMED
+java.desktop/sun.awt.image=ALL-UNNAMED
+java.desktop/sun.awt.datatransfer=ALL-UNNAMED
+java.desktop/sun.swing=ALL-UNNAMED
+java.base/sun.nio.fs=ALL-UNNAMED
 """

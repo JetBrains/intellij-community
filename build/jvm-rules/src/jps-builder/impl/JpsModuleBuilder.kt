@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMaps
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.bazel.jvm.jps.ConsoleMessageHandler
 import org.jetbrains.jps.ModuleChunk
-import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.FileProcessor
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl
@@ -175,8 +174,8 @@ internal class JpsProjectBuilder(
         val processedSources = processedSourcesRef?.get() ?: 0
         BuilderStatisticsMessage(entry.key.presentableName, processedSources, entry.value.get() / 1000000)
       }
-      .sorted(Comparator.comparing<BuilderStatisticsMessage?, String?>(Function { obj: BuilderStatisticsMessage? -> obj!!.builderName }))
-      .forEach { buildMessage: BuilderStatisticsMessage? -> context.processMessage(buildMessage) }
+      .sorted(Comparator.comparing<BuilderStatisticsMessage?, String?>(Function { it.builderName }))
+      .forEach { context.processMessage(it) }
   }
 
   private fun processDeletedPaths(context: CompileContext, target: ModuleBuildTarget): Boolean {
@@ -418,8 +417,9 @@ internal class JpsProjectBuilder(
       FSOperations.addCompletelyMarkedDirtyTarget(context, target)
       fsState.markInitialScanPerformed(target)
     }
-    else if (!fsState.isInitialScanPerformed(target)) {
-      BuildOperations.initTargetFSState(context, target, false)
+    else {
+      require(!fsState.isInitialScanPerformed(target))
+      initTargetFsStateForNonInitialBuild(context, target, messageHandler)
     }
   }
 
@@ -498,7 +498,7 @@ internal class JpsProjectBuilder(
 }
 
 private class ChunkBuildOutputConsumerImpl(private val context: CompileContext) : OutputConsumer {
-  private val target2Consumer = HashMap<BuildTarget<*>, BuildOutputConsumerImpl>()
+  private val targetToConsumer = HashMap<BuildTarget<*>, BuildOutputConsumerImpl>()
   private val classes = HashMap<String, CompiledClass>()
   private val targetToClassesMap = HashMap<BuildTarget<*>, MutableCollection<CompiledClass>>()
   private val outputToBuilderNameMap = Object2ObjectMaps.synchronize(Object2ObjectOpenCustomHashMap<File, String>(FileHashStrategy))
@@ -511,7 +511,7 @@ private class ChunkBuildOutputConsumerImpl(private val context: CompileContext) 
   }
 
   override fun getTargetCompiledClasses(target: BuildTarget<*>): Collection<CompiledClass> {
-    return Collections.unmodifiableCollection(targetToClassesMap.get(target) ?: return emptyList())
+    return targetToClassesMap.get(target) ?: return java.util.List.of()
   }
 
   override fun getCompiledClasses(): MutableMap<String, CompiledClass> = Collections.unmodifiableMap(classes)
@@ -536,7 +536,7 @@ private class ChunkBuildOutputConsumerImpl(private val context: CompileContext) 
     }
   }
 
-  override fun registerOutputFile(target: BuildTarget<*>, outputFile: File, sourcePaths: MutableCollection<String?>) {
+  override fun registerOutputFile(target: BuildTarget<*>, outputFile: File, sourcePaths: Collection<String>) {
     val currentBuilder = currentBuilderName
     if (currentBuilder != null) {
       val previousBuilder = outputToBuilderNameMap.put(outputFile, currentBuilder)
@@ -547,30 +547,30 @@ private class ChunkBuildOutputConsumerImpl(private val context: CompileContext) 
         ))
       }
     }
-    var consumer = target2Consumer.get(target)
+    var consumer = targetToConsumer.get(target)
     if (consumer == null) {
       consumer = BuildOutputConsumerImpl(target, context)
-      target2Consumer.put(target, consumer)
+      targetToConsumer.put(target, consumer)
     }
     consumer.registerOutputFile(outputFile, sourcePaths)
   }
 
   fun fireFileGeneratedEvents() {
-    for (consumer in target2Consumer.values) {
+    for (consumer in targetToConsumer.values) {
       consumer.fireFileGeneratedEvent()
     }
   }
 
   fun getNumberOfProcessedSources(): Int {
     var total = 0
-    for (consumer in target2Consumer.values) {
+    for (consumer in targetToConsumer.values) {
       total += consumer.numberOfProcessedSources
     }
     return total
   }
 
   fun clear() {
-    target2Consumer.clear()
+    targetToConsumer.clear()
     classes.clear()
     targetToClassesMap.clear()
     outputToBuilderNameMap.clear()
@@ -581,24 +581,31 @@ private class ChainedTargetsBuildListener(private val context: CompileContextImp
   override fun filesGenerated(event: FileGeneratedEvent) {
     val projectDescriptor = context.projectDescriptor
     val fsState = projectDescriptor.fsState
+    val buildRootIndex = projectDescriptor.buildRootIndex as BazelBuildRootIndex
     for (pair in event.paths) {
       val relativePath = pair.getSecond()
-      val file = if (relativePath == ".") File(pair.getFirst()) else File(pair.getFirst(), relativePath)
-      for (buildRootDescriptor in projectDescriptor.buildRootIndex.findAllParentDescriptors<BuildRootDescriptor>(file, context)) {
-        val target = buildRootDescriptor.target
-        if (event.sourceTarget != target) {
-          fsState.markDirty(context, file, buildRootDescriptor, projectDescriptor.dataManager.getFileStampStorage(target), false)
-        }
+      val file = if (relativePath == ".") Path.of(pair.getFirst()) else Path.of(pair.getFirst(), relativePath)
+      val buildRootDescriptor = buildRootIndex.fileToDescriptors.get(file) ?: continue
+      val target = buildRootDescriptor.target
+      if (event.sourceTarget != target) {
+        fsState.markDirty(
+          /* context = */ context,
+          /* round = */ CompilationRound.NEXT,
+          /* file = */ file,
+          /* buildRootDescriptor = */ buildRootDescriptor,
+          /* stampStorage = */ projectDescriptor.dataManager.getFileStampStorage(target),
+          /* saveEventStamp = */ false,
+        )
       }
     }
   }
 
   override fun filesDeleted(event: FileDeletedEvent) {
     val fsState = context.projectDescriptor.fsState
-    val rootIndex = context.projectDescriptor.buildRootIndex as BazelBuildRootIndex
+    val buildRootIndex = context.projectDescriptor.buildRootIndex as BazelBuildRootIndex
     for (path in event.filePaths) {
       val file = Path.of(path)
-      val rootDescriptor = rootIndex.fileToDescriptors.get(file) ?: continue
+      val rootDescriptor = buildRootIndex.fileToDescriptors.get(file) ?: continue
       fsState.registerDeleted(context, rootDescriptor.target, file)
     }
   }

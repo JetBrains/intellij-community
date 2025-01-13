@@ -9,7 +9,7 @@ java_proto_library(
 
 kt_jvm_library(
     name = "worker-framework",
-    srcs = glob(["*.kt"], exclude = ["*Test.kt"]),
+    srcs = glob(["*.kt", "logging/*.kt"], exclude = ["*Test.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",

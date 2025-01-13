@@ -62,15 +62,15 @@ archive_override(
 ### auto-generated section `libraries` start
 http_file(
     name = "protobuf-java",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.29.2/protobuf-java-4.29.2.jar",
-    sha256 = "7441a6394dca477b3f8b7c86f17bef035f705a8aaa11f53065d380300158177c",
-    downloaded_file_path = "protobuf-java-4.29.2.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.29.3/protobuf-java-4.29.3.jar",
+    sha256 = "442db5991a11974d72127353be7d7e7abdf8d943d83b16668cb2e336d7392f54",
+    downloaded_file_path = "protobuf-java-4.29.3.jar",
 )
 http_file(
     name = "protobuf-java-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.29.2/protobuf-java-4.29.2-sources.jar",
-    sha256 = "68f0f47297335e2c3fb5a904ade91aadef884b3aa8f558a4efac16ba803b8b27",
-    downloaded_file_path = "protobuf-java-4.29.2-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.29.3/protobuf-java-4.29.3-sources.jar",
+    sha256 = "6a755c09e0e5112a39c9e0910e07021d8700294666cd22c431fcf572acb4eb77",
+    downloaded_file_path = "protobuf-java-4.29.3-sources.jar",
 )
 
 http_file(

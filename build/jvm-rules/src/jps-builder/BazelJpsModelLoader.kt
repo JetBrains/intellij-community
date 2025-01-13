@@ -47,6 +47,7 @@ internal fun loadJpsModel(
   classPathRootDir: Path,
   classOutDir: Path,
   dependencyFileToDigest: Map<Path, ByteArray>,
+  messageHandler: ConsoleMessageHandler,
 ): Pair<JpsModel, TargetConfigurationDigestContainer> {
   val model = jpsElementFactory.createModel()
 
@@ -76,6 +77,10 @@ internal fun loadJpsModel(
     // used as a key - immutable instance cannot be used
     val properties = JavaSourceRootProperties("", false)
     module.addSourceRoot(JpsModuleSourceRootImpl(source.toUri().toString(), JavaSourceRootType.SOURCE, properties))
+  }
+
+  if (messageHandler.isDebugEnabled) {
+    messageHandler.info("sources:\n  ${sources.joinToString(separator = "\n  ") { it.invariantSeparatorsPathString }}\n")
   }
 
   configureKotlinCompiler(module = module, args = args, classPathRootDir = classPathRootDir, configHash = configHash)
@@ -111,9 +116,11 @@ private fun configureJavac(project: JpsProject, args: ArgMap<JvmBuilderFlags>) {
   compilerOptions.DEPRECATION = false
   compilerOptions.GENERATE_NO_WARNINGS = true
   compilerOptions.MAXIMUM_HEAP_SIZE = 512
-  compilerOptions.ADDITIONAL_OPTIONS_STRING = args.optionalList(JvmBuilderFlags.ADD_EXPORT).joinToString(separator = " ") {
-    "--add-exports $it"
-  }
+  compilerOptions.ADDITIONAL_OPTIONS_STRING = args.optionalList(JvmBuilderFlags.ADD_EXPORT).asSequence()
+    .filter { !it.isBlank() }
+    .joinToString(separator = " ") {
+      "--add-exports $it"
+    }
   configuration.setCompilerOptions("Javac", compilerOptions)
 }
 

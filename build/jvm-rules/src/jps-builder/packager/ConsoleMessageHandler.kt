@@ -6,10 +6,17 @@ package org.jetbrains.bazel.jvm.jps
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
-import java.io.Writer
 
-class ConsoleMessageHandler(@PublishedApi @JvmField internal val out: Writer) : MessageHandler {
+class ConsoleMessageHandler(
+  @PublishedApi @JvmField internal val out: Appendable,
+  @JvmField val isDebugEnabled: Boolean,
+) : MessageHandler {
+  @Volatile
   private var hasErrors = false
+
+  fun resetState() {
+    hasErrors = false
+  }
 
   fun warn(message: String) {
     out.appendLine("WARN: $message")

@@ -10,8 +10,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.WorkRequestState.*
+import org.jetbrains.bazel.jvm.logging.LogEvent
+import org.jetbrains.bazel.jvm.logging.LogWriter
 import java.io.*
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -23,37 +24,34 @@ fun interface WorkRequestExecutor {
   suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int
 }
 
-internal fun createLogger(classifier: String, coroutineScope: CoroutineScope): AsyncFileLogger? {
-  val dir = Path.of(System.getProperty("user.home"), "$classifier-worker")
-  // changing env or flag leads to rebuild, so, we create logger if log dir exists
-  if (!Files.isDirectory(dir)) {
-    return null
-  }
-  return AsyncFileLogger(file = dir.resolve("log-" + System.currentTimeMillis() + ".txt"), coroutineScope = coroutineScope)
-}
-
-fun processRequests(startupArgs: Array<String>, executor: WorkRequestExecutor, debugLogClassifier: String? = null) {
+fun processRequests(
+  startupArgs: Array<String>,
+  executor: WorkRequestExecutor,
+  setup: (LogWriter) -> Unit = {},
+) {
   if (!startupArgs.contains("--persistent_worker")) {
     System.err.println("Only persistent worker mode is supported")
     exitProcess(1)
   }
 
-  // wrap the system streams into a WorkerIO instance to prevent unexpected reads and writes on stdin/stdout
   try {
     runBlocking(Dispatchers.Default) {
-      val logger = debugLogClassifier?.let { createLogger(classifier = debugLogClassifier, this) }
-      if (logger != null) {
-        coroutineContext.job.invokeOnCompletion {
-          logger.log("main job completed (cause=$it)")
-        }
-      }
-
+      val log = LogWriter(this, System.err)
       try {
-        WorkRequestHandler(requestExecutor = executor, input = System.`in`, out = System.out, logger = logger)
+        setup(log)
+
+        WorkRequestHandler(requestExecutor = executor, input = System.`in`, out = System.out, log = log)
           .processRequests()
       }
+      catch (e: CancellationException) {
+        log.log(LogEvent(message = "cancelled", exception = e))
+        throw e
+      }
+      catch (e: Throwable) {
+        log.log(LogEvent(message = "internal error", exception = e))
+      }
       finally {
-        logger?.shutdown()
+        log.shutdown()
       }
     }
   }
@@ -91,7 +89,7 @@ internal class WorkRequestHandler internal constructor(
    * Must be quick and safe - executed in a read thread
    */
   private val cancelHandler: ((Int) -> Unit)? = null,
-  private val logger: AsyncFileLogger? = null,
+  private val log: LogWriter? = null,
 ) {
   private val workingDir = Path.of(".").toAbsolutePath().normalize()
 
@@ -116,7 +114,7 @@ internal class WorkRequestHandler internal constructor(
           requestChannel.close()
         }
 
-        logger?.log("Unprocessed requests: ${activeRequests.keys.joinToString(", ")}")
+        //logger?.log("Unprocessed requests: ${activeRequests.keys.joinToString(", ")}")
 
         for (item in requestChannel) {
           cancelRequestOnShutdown(item)
@@ -139,19 +137,19 @@ internal class WorkRequestHandler internal constructor(
         }
       }
       catch (e: InterruptedIOException) {
-        logger?.log("stop processing: $e")
+        log?.info("stop processing", e)
         null
       }
 
       if (request == null) {
-        logger?.log("stop processing - no more requests")
+        log?.info("stop processing - no more requests")
         requestChannel.close()
         break
       }
 
       val requestId = request.requestId
 
-      logger?.log("request(id=$requestId${if (request.cancel) ", cancel=true" else ""}) start")
+      //logger?.log("request(id=$requestId${if (request.cancel) ", cancel=true" else ""}) start")
       if (request.cancel) {
         withContext(NonCancellable) {
           // Theoretically, we could have gotten two singleplex requests, and we can't tell those apart.
@@ -163,7 +161,7 @@ internal class WorkRequestHandler internal constructor(
               if (cancelHandler != null) {
                 cancelHandler(request.requestId)
               }
-              logger?.log("request(id=$requestId) cancelled before handling")
+              //logger?.log("request(id=$requestId) cancelled before handling")
               writeAndRemoveRequest(requestId = requestId, wasCancelled = true)
             }
           }
@@ -192,7 +190,7 @@ internal class WorkRequestHandler internal constructor(
     repeat(Runtime.getRuntime().availableProcessors().coerceAtLeast(2)) {
       launch {
         for (item in requestChannel) {
-          logger?.log("request(id=${item.request.requestId}) started to execute")
+          //logger?.log("request(id=${item.request.requestId}) started to execute")
           val stateRef = item.state
           when {
             stateRef.compareAndSet(NOT_STARTED, STARTED) -> {
@@ -253,7 +251,7 @@ internal class WorkRequestHandler internal constructor(
     val stateRef = item.state
     val requestId = item.request.requestId
     if (stateRef.compareAndSet(NOT_STARTED, FINISHED) || stateRef.compareAndSet(STARTED, FINISHED)) {
-      logger?.log("request(id=$requestId}) failed because it was not handled due to worker being forced to exit")
+      //logger?.log("request(id=$requestId}) failed because it was not handled due to worker being forced to exit")
       writeAndRemoveRequest(requestId = requestId, exitCode = 2)
     }
     else {
@@ -273,11 +271,20 @@ internal class WorkRequestHandler internal constructor(
   internal suspend fun handleRequest(request: WorkRequest, requestState: AtomicReference<WorkRequestState>) {
     val baseDir = if (request.sandboxDir.isNullOrEmpty()) workingDir else workingDir.resolve(request.sandboxDir)
     var exitCode = 1
-    val stringWriter = StringWriter()
+    val stringWriter = StringBuilderWriter()
     var errorToThrow: Throwable? = null
     val requestId = request.requestId
     try {
-      //System.err.println("request: ${request.inputs.asSequence().take(4).joinToString { it.path }}, $baseDir, ${request.sandboxDir}")
+      if (request.verbosity > 0) {
+        log?.log(LogEvent(
+          message = "execute request",
+          context = arrayOf(
+            "id", requestId,
+            "baseDir", baseDir,
+            "inputs", request.inputs.asSequence().map { it.path },
+          ),
+        ))
+      }
       exitCode = requestExecutor.execute(request = request, writer = stringWriter, baseDir = baseDir)
     }
     catch (e: CancellationException) {
@@ -291,21 +298,106 @@ internal class WorkRequestHandler internal constructor(
     }
 
     withContext(NonCancellable) {
-      if (requestState.compareAndSet(STARTED, FINISHED)) {
-        logger?.log("request(id=$requestId) handled(exitCode=$exitCode)")
-        writeAndRemoveRequest(
-          requestId = requestId,
-          exitCode = exitCode,
-          outString = stringWriter.buffer.takeIf { it.isNotEmpty() }?.toString(),
-        )
+      if (!requestState.compareAndSet(STARTED, FINISHED)) {
+        if (request.verbosity > 0) {
+          log?.info("request state was modified during processing", arrayOf("id", requestId, "state", requestState.get()))
+        }
+        return@withContext
       }
-      else {
-        logger?.log("request(id=$requestId) state was changed to ${requestState.get()}")
+
+      val outString = stringWriter.toString()
+      writeAndRemoveRequest(
+        requestId = requestId,
+        exitCode = exitCode,
+        outString = outString.takeIf { it.isNotEmpty() },
+      )
+
+      if (request.verbosity > 0) {
+        log?.log(LogEvent(
+          message = "request processed",
+          context = arrayOf("id", requestId, "exitCode", exitCode, "out", outString),
+        ))
       }
     }
 
     if (errorToThrow != null) {
       throw errorToThrow
     }
+  }
+}
+
+private class StringBuilderWriter : Writer() {
+  private val sb = StringBuilder()
+
+  override fun write(cbuf: CharArray?) {
+    synchronized(lock) {
+      sb.append(cbuf)
+    }
+  }
+
+  override fun write(c: Int) {
+    synchronized(lock) {
+      sb.append(c)
+    }
+  }
+
+  override fun write(cbuf: CharArray, off: Int, len: Int) {
+    if (len != 0) {
+      synchronized(lock) {
+        sb.append(cbuf, off, len)
+      }
+    }
+  }
+
+  override fun write(str: String?) {
+    if (!str.isNullOrEmpty()) {
+      synchronized(lock) {
+        sb.append(str)
+      }
+    }
+  }
+
+  override fun write(str: String?, off: Int, len: Int) {
+    if (len != 0) {
+      synchronized(lock) {
+        sb.append(str, off, off + len)
+      }
+    }
+  }
+
+  override fun append(csq: CharSequence): StringBuilderWriter {
+    synchronized(lock) {
+      sb.append(csq)
+    }
+    return this
+  }
+
+  override fun append(csq: CharSequence?, start: Int, end: Int): StringBuilderWriter {
+    synchronized(lock) {
+      sb.append(csq, start, end)
+    }
+    return this
+  }
+
+  override fun append(c: Char): StringBuilderWriter {
+    synchronized(lock) {
+      sb.append(c)
+    }
+    return this
+  }
+
+  override fun toString(): String {
+    synchronized(lock) {
+      if (sb.isEmpty()) {
+        return ""
+      }
+      return sb.toString()
+    }
+  }
+
+  override fun flush() {
+  }
+
+  override fun close() {
   }
 }

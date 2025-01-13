@@ -62,7 +62,7 @@ internal fun saveTargetState(
   manager: BazelBuildTargetStateManager,
   storageManager: StorageManager
 ) {
-  val map = storageManager.openMap(targetStateMapName, targetStateMapBuilder).map
+  val map = storageManager.openMap(targetStateMapName, targetStateMapBuilder)
   map.operate(DIGEST_LIST_KEY, targetDigests.asArray(), PutIfChanged)
   map.operate(DURATION_KEY, manager.state.asArray(), PutIfChanged)
 }
@@ -74,7 +74,7 @@ private object PutIfChanged : MVMap.DecisionMaker<LongArray>() {
 }
 
 internal fun loadTargetState(storageManager: StorageManager): TargetStateContainer {
-  val map = storageManager.openMap(targetStateMapName, targetStateMapBuilder).map
+  val map = storageManager.openMap(targetStateMapName, targetStateMapBuilder)
   // copyOf - do not mutate data in store directly
   return map.get(DURATION_KEY)?.let { TargetStateContainer(it.copyOf()) }?.takeIf { it.isCorrect } ?: TargetStateContainer()
 }

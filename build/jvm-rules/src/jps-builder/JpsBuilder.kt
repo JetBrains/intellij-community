@@ -17,18 +17,20 @@ import org.jetbrains.bazel.jvm.jps.state.saveTargetState
 import org.jetbrains.bazel.jvm.kotlin.ArgMap
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
+import org.jetbrains.bazel.jvm.logging.LogWriter
 import org.jetbrains.bazel.jvm.processRequests
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.ExperimentalSourceToOutputMapping
 import org.jetbrains.jps.incremental.storage.StorageManager
+import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Set
 import kotlin.coroutines.coroutineContext
 
 // Please note: for performance reasons, we do not set `jps.new.storage.compact.on.close` to true.
@@ -43,8 +45,8 @@ private fun configureKotlincHome() {
   System.setProperty("jps.kotlin.home", singleFile.parent.toString())
 }
 
-internal fun configureGlobalJps() {
-  Logger.setFactory { BazelLogger(IdeaLogRecordFormatter.smartAbbreviate(it)) }
+internal fun configureGlobalJps(logWriter: LogWriter) {
+  Logger.setFactory { BazelLogger(category = IdeaLogRecordFormatter.smartAbbreviate(it), writer = logWriter) }
   System.setProperty("jps.service.manager.impl", BazelJpsServiceManager::class.java.name)
   System.setProperty("jps.backward.ref.index.builder.fs.case.sensitive", "true")
   System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Runtime.getRuntime().availableProcessors().toString())
@@ -59,8 +61,7 @@ internal fun configureGlobalJps() {
 object JpsBuildWorker : WorkRequestExecutor {
   @JvmStatic
   fun main(startupArgs: Array<String>) {
-    configureGlobalJps()
-    processRequests(startupArgs, this)
+    processRequests(startupArgs = startupArgs, executor = this, setup = { configureGlobalJps(it) })
   }
 
   override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int {
@@ -74,6 +75,7 @@ object JpsBuildWorker : WorkRequestExecutor {
         dependencyFileToDigest.put(baseDir.resolve(input.path).normalize(), input.digest)
       }
     }
+
     return buildUsingJps(
       baseDir = baseDir,
       args = parseArgs(request.arguments),
@@ -93,7 +95,7 @@ internal suspend fun buildUsingJps(
   dependencyFileToDigest: Map<Path, ByteArray>,
   isDebugEnabled: Boolean,
 ): Int {
-  val messageHandler = ConsoleMessageHandler(out)
+  val messageHandler = ConsoleMessageHandler(out = out, isDebugEnabled = isDebugEnabled)
 
   val abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() }
   val outJar = baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize()
@@ -110,6 +112,7 @@ internal suspend fun buildUsingJps(
     classPathRootDir = baseDir,
     classOutDir = classOutDir,
     dependencyFileToDigest = dependencyFileToDigest,
+    messageHandler = messageHandler
   )
   val moduleTarget = BazelModuleBuildTarget(
     outDir = classOutDir,
@@ -119,40 +122,89 @@ internal suspend fun buildUsingJps(
 
   val relativizer = createPathRelativizer(baseDir = baseDir, classOutDir = classOutDir)
 
-  val compileScope = CompileScopeImpl(
-    /* types = */ Set.of(JavaModuleBuildTargetType.PRODUCTION),
-    /* typesToForceBuild = */ Set.of(),
-    /* targets = */ Set.of(),
-    /* files = */ java.util.Map.of()
+  // if class output dir doesn't exist, make sure that we do not to use existing cache - pass `isRebuild` as true in this case
+  val ok = initAndBuild(
+    isRebuild = Files.notExists(classOutDir),
+    messageHandler = messageHandler,
+    dataDir = dataDir,
+    classOutDir = classOutDir,
+    targetDigests = targetDigests,
+    moduleTarget = moduleTarget,
+    outJar = outJar,
+    abiJar = abiJar,
+    relativizer = relativizer,
+    jpsModel = jpsModel,
   )
+  if (!ok) {
+    initAndBuild(
+      isRebuild = true,
+      messageHandler = messageHandler,
+      dataDir = dataDir,
+      classOutDir = classOutDir,
+      targetDigests = targetDigests,
+      moduleTarget = moduleTarget,
+      outJar = outJar,
+      abiJar = abiJar,
+      relativizer = relativizer,
+      jpsModel = jpsModel,
+    )
+  }
 
-  suspend fun initAndBuild(isRebuild: Boolean): Boolean {
-    val storageInitializer = StorageInitializer(dataDir = dataDir, classOutDir = classOutDir)
-    val storageManager = if (isRebuild) {
-      storageInitializer.clearAndInit(messageHandler)
-    }
-    else {
-      storageInitializer.init(messageHandler, targetDigests)
-    }
+  return if (messageHandler.hasErrors()) 1 else 0
+}
 
+private suspend fun initAndBuild(
+  isRebuild: Boolean,
+  messageHandler: ConsoleMessageHandler,
+  dataDir: Path,
+  classOutDir: Path,
+  targetDigests: TargetConfigurationDigestContainer,
+  moduleTarget: BazelModuleBuildTarget,
+  outJar: Path,
+  abiJar: Path?,
+  relativizer: PathRelativizerService,
+  jpsModel: JpsModel,
+): Boolean {
+  messageHandler.resetState()
+
+  if (messageHandler.isDebugEnabled) {
+    messageHandler.info("build (isRebuild=$isRebuild)")
+  }
+
+  val storageInitializer = StorageInitializer(dataDir = dataDir, classOutDir = classOutDir)
+  val storageManager = if (isRebuild) {
+    storageInitializer.clearAndInit(messageHandler)
+  }
+  else {
+    storageInitializer.init(messageHandler, targetDigests)
+  }
+
+  try {
+    val projectDescriptor = storageInitializer.createProjectDescriptor(messageHandler, jpsModel, moduleTarget, relativizer)
     try {
-      val projectDescriptor = storageInitializer.createProjectDescriptor(messageHandler, jpsModel, moduleTarget, relativizer)
-      try {
-        val coroutineContext = coroutineContext
-        val context = CompileContextImpl(
-          compileScope,
-          projectDescriptor,
-          messageHandler,
-          emptyMap(),
-          object : CanceledStatus {
-            override fun isCanceled(): Boolean = !coroutineContext.isActive
-          },
-        )
-        JpsProjectBuilder(
-          builderRegistry = BuilderRegistry.getInstance(),
-          messageHandler = messageHandler,
-          isCleanBuild = storageInitializer.isCleanBuild,
-        ).build(context, moduleTarget)
+      val compileScope = CompileScopeImpl(
+        /* types = */ java.util.Set.of(JavaModuleBuildTargetType.PRODUCTION),
+        /* typesToForceBuild = */ java.util.Set.of(),
+        /* targets = */ if (isRebuild) java.util.Set.of(moduleTarget) else java.util.Set.of(),
+        /* files = */ java.util.Map.of()
+      )
+
+      val coroutineContext = coroutineContext
+      val context = CompileContextImpl(
+        compileScope,
+        projectDescriptor,
+        messageHandler,
+        emptyMap(),
+        object : CanceledStatus {
+          override fun isCanceled(): Boolean = !coroutineContext.isActive
+        },
+      )
+      JpsProjectBuilder(
+        builderRegistry = BuilderRegistry.getInstance(),
+        messageHandler = messageHandler,
+        isCleanBuild = storageInitializer.isCleanBuild,
+      ).build(context, moduleTarget)
+      if (!messageHandler.hasErrors()) {
         postBuild(
           messageHandler = messageHandler,
           moduleTarget = moduleTarget,
@@ -163,28 +215,20 @@ internal suspend fun buildUsingJps(
           targetDigests = targetDigests,
           storageManager = storageManager,
         )
-        return true
       }
-      finally {
-        projectDescriptor.release()
-      }
+      return true
     }
     catch (_: RebuildRequestedException) {
       return false
     }
     finally {
-      storageManager.forceClose()
+      projectDescriptor.release()
     }
   }
-
-  // if class output dir doesn't exist, make sure that we do not to use existing cache - pass `isRebuild` as true in this case
-  if (!initAndBuild(isRebuild = Files.notExists(classOutDir))) {
-    initAndBuild(isRebuild = true)
+  finally {
+    storageManager.forceClose()
   }
-
-  return if (messageHandler.hasErrors()) 1 else 0
 }
-
 
 private suspend fun postBuild(
   messageHandler: ConsoleMessageHandler,

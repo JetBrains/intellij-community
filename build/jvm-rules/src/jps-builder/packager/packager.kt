@@ -18,7 +18,6 @@ import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.util.zip.ZipEntry
 
-
 suspend fun packageToJar(
   outJar: Path,
   abiJar: Path?,
@@ -112,7 +111,7 @@ private suspend fun createJar(
         }
       }
       catch (_: NoSuchFileException) {
-        messageHandler.warn("output file exists in src-to-output mapping, but not found on disk: $path")
+        messageHandler.warn("output file exists in src-to-output mapping, but not found on disk: $path (classOutDir=$classOutDir)")
       }
     }
     packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)

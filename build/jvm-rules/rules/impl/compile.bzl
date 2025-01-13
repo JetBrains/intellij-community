@@ -43,24 +43,20 @@ def _java_info(target):
     return target[JavaInfo] if JavaInfo in target else None
 
 def _partitioned_srcs(srcs):
-    """Creates a struct of srcs sorted by extension. Fails if there are no sources."""
     kt_srcs = []
     java_srcs = []
-    src_jars = []
 
     for f in srcs:
         if f.path.endswith(".kt"):
             kt_srcs.append(f)
         elif f.path.endswith(".java"):
             java_srcs.append(f)
-        elif f.path.endswith(".srcjar"):
-            src_jars.append(f)
 
     return struct(
         kt = kt_srcs,
         java = java_srcs,
         all_srcs = kt_srcs + java_srcs,
-        src_jars = src_jars,
+        src_jars = [],
     )
 
 def _compiler_toolchains(ctx):
@@ -102,9 +98,6 @@ def _jvm_deps(ctx, associated_targets, deps, runtime_deps):
         compile_jars = depset(transitive = transitive),
         runtime_deps = [_java_info(d) for d in runtime_deps],
     )
-
-def _java_infos_to_compile_jars(java_infos):
-    return depset(transitive = [j.compile_jars for j in java_infos])
 
 def _exported_plugins(deps):
     """Encapsulates compiler dependency metadata."""
@@ -255,42 +248,6 @@ def _run_merge_jdeps_action(ctx, report_unused_deps, jdeps, output, deps):
         progress_message = progress_message,
     )
 
-def _run_jvm_builder_action(
-        mnemonic,
-        executable,
-        ctx,
-        rule_kind,
-        toolchains,
-        srcs,
-        transitiveInputs,
-        compile_deps,
-        args,
-        outputs):
-    """Creates a KotlinBuilder action invocation."""
-    if ctx.attr._reduced_classpath:
-        args.add("--reduced-classpath-mode", "true")
-        args.add_all("--direct-dependencies", _java_infos_to_compile_jars(compile_deps.deps))
-
-    progress_message = "Compile %%{label} { kt: %d, java: %d }" % (len(srcs.kt), len(srcs.java))
-
-    ctx.actions.run(
-        mnemonic = mnemonic,
-        inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
-        use_default_shell_env = True,
-        outputs = outputs,
-        executable = ctx.attr._kotlin_builder.files_to_run.executable,
-        execution_requirements = {
-            "supports-workers": "1",
-            "supports-multiplex-workers": "1",
-            "supports-worker-cancellation": "1",
-        },
-        arguments = [args],
-        progress_message = progress_message,
-        env = {
-            "LC_CTYPE": "en_US.UTF-8",
-        },
-    )
-
 def kt_jvm_produce_jar_actions(ctx, rule_kind):
     """This macro sets up a compile action for a Kotlin jar.
 
@@ -334,7 +291,6 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
             rule_kind = rule_kind,
             toolchains = toolchains,
             srcs = srcs,
-            generated_ksp_src_jars = [],
             associates = associates,
             compile_deps = compile_deps,
             transitiveInputs = transitiveInputs,
@@ -490,7 +446,7 @@ def _run_kt_java_builder_actions(
 
     # build Kotlin
     if has_kt_sources:
-        args = init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins = plugins, compile_jars = compile_deps.compile_jars)
+        args = init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
 
         kt_output_jar = ctx.actions.declare_file(ctx.label.name + "-kt.jar") if has_java_sources else output_jar
         outputs.append(kt_output_jar)
@@ -510,17 +466,22 @@ def _run_kt_java_builder_actions(
             args.add("--jdeps-out", kt_jdeps)
             outputs.append(kt_jdeps)
 
-        _run_jvm_builder_action(
+        ctx.actions.run(
             mnemonic = "KotlinCompile",
-            executable = ctx.attr._kotlin_builder.files_to_run.executable,
-            args = args,
-            ctx = ctx,
-            rule_kind = rule_kind,
-            toolchains = toolchains,
-            srcs = srcs,
-            transitiveInputs = transitiveInputs,
-            compile_deps = compile_deps,
+            inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
+            use_default_shell_env = True,
             outputs = outputs,
+            executable = ctx.attr._kotlin_builder.files_to_run.executable,
+            execution_requirements = {
+                "supports-workers": "1",
+                "supports-multiplex-workers": "1",
+                "supports-worker-cancellation": "1",
+            },
+            arguments = [args],
+            progress_message = "Compile %%{label} { kt: %d, java: %d }" % (len(srcs.kt), len(srcs.java)),
+            env = {
+                "LC_CTYPE": "en_US.UTF-8",
+            },
         )
 
         if not annotation_processors or not srcs.kt:
@@ -612,7 +573,6 @@ def _run_jps_builder(
         rule_kind,
         toolchains,
         srcs,
-        generated_ksp_src_jars,
         associates,
         compile_deps,
         transitiveInputs,
@@ -623,17 +583,15 @@ def _run_jps_builder(
         A struct containing the a list of output_jars and a struct annotation_processing jars
     """
 
-    args = init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins = plugins, compile_jars = compile_deps.compile_jars)
+    args = init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
     args.add("--out", output_jar)
 
-    outputs = []
+    outputs = [output_jar]
     abi_jar = output_jar
     if not "kt_abi_plugin_incompatible" in ctx.attr.tags:
         abi_jar = ctx.actions.declare_file(ctx.label.name + ".abi.jar")
-        outputs = [output_jar, abi_jar]
+        outputs.append(abi_jar)
         args.add("--abi-out", abi_jar)
-    else:
-        outputs = [output_jar]
 
     # todo JDEPS for JVM
     # emit_jdeps = kotlinc_options.emit_jdeps
@@ -649,22 +607,27 @@ def _run_jps_builder(
     if javac_opts and javac_opts.add_exports:
         args.add_all("--add-export", javac_opts.add_exports)
 
-    _run_jvm_builder_action(
+    ctx.actions.run(
         mnemonic = "JpsCompile",
-        executable = ctx.attr._jps_builder.files_to_run.executable,
-        args = args,
-        ctx = ctx,
-        rule_kind = rule_kind,
-        toolchains = toolchains,
-        srcs = srcs,
-        transitiveInputs = transitiveInputs,
-        compile_deps = compile_deps,
+        inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
+        use_default_shell_env = True,
         outputs = outputs,
+        executable = ctx.attr._jps_builder.files_to_run.executable,
+        execution_requirements = {
+            "supports-workers": "1",
+            "supports-multiplex-workers": "1",
+            "supports-worker-cancellation": "1",
+        },
+        arguments = [args],
+        progress_message = "Incremental compile %%{label} { kt: %d, java: %d }" % (len(srcs.kt), len(srcs.java)),
+        env = {
+            "LC_CTYPE": "en_US.UTF-8",
+        },
     )
 
     return struct(
         compile_jar = abi_jar,
-        generated_src_jars = generated_ksp_src_jars,
+        generated_src_jars = [],
         annotation_processing = None,
         output_jdeps = jdeps,
     )

@@ -5,7 +5,7 @@ load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions", "kotlinc_options_to_
 
 visibility("private")
 
-def init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins, compile_jars):
+def init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins, compile_deps):
     """Initialize an arg object for a task that will be executed by the Kotlin Builder."""
     args = ctx.actions.args()
     args.set_param_file_format("multiline")
@@ -31,7 +31,11 @@ def init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins, com
     kotlinc_options_to_flags(kotlinc_options, args)
 
     args.add_all("--opt-in", kotlinc_options.opt_in)
-    args.add_all("--classpath", compile_jars)
+    args.add_all("--classpath", compile_deps.compile_jars)
+
+    if ctx.attr._reduced_classpath:
+        args.add("--reduced-classpath-mode", "true")
+        args.add_all("--direct-dependencies", depset(transitive = [j.compile_jars for j in compile_deps.deps]))
 
     for id, classpath in plugins.compile_phase.classpath.items():
         args.add("--plugin-id", id)

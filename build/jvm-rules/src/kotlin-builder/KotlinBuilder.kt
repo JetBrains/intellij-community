@@ -11,7 +11,7 @@ object KotlinBuildWorker : WorkRequestExecutor {
   @JvmStatic
   fun main(startupArgs: Array<String>) {
     org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentUtil
-    processRequests(startupArgs, this, debugLogClassifier = "kotlin")
+    processRequests(startupArgs, this)
   }
 
   override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int {

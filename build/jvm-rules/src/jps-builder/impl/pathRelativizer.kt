@@ -41,6 +41,13 @@ internal fun createPathRelativizer(baseDir: Path, classOutDir: Path): PathRelati
       return toRelative(path.invariantSeparatorsPathString, type)
     }
 
+    override fun toAbsoluteFile(path: String, type: RelativePathType): Path {
+      return when (type) {
+        RelativePathType.SOURCE -> baseDir.resolve(path)
+        RelativePathType.OUTPUT -> classOutDir.resolve(path)
+      }
+    }
+
     override fun toAbsolute(path: String, type: RelativePathType): String {
       return when (type) {
         RelativePathType.SOURCE -> baseDirPrefix + path
@@ -53,6 +60,7 @@ internal fun createPathRelativizer(baseDir: Path, classOutDir: Path): PathRelati
     override fun toRelativePath(path: String): String? {
       return when {
         path.startsWith(outBaseDirPrefix) -> OUT_ID_PREFIX + path.substring(outBaseDirPrefix.length)
+        path.startsWith(parentOfBaseDirPrefix) -> OUT_ID_PREFIX + "../" + path.substring(parentOfBaseDirPrefix.length)
         path.startsWith(baseDirPrefix) -> BASE_ID_PREFIX + path.substring(baseDirPrefix.length)
         else -> null
       }
