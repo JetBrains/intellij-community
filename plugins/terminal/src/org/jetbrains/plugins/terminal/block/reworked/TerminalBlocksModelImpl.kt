@@ -68,6 +68,11 @@ internal class TerminalBlocksModelImpl(outputModel: TerminalOutputModel) : Termi
     blocks[blocks.lastIndex] = curBlock.copy(outputStartOffset = offset)
   }
 
+  override fun commandFinished(exitCode: Int) {
+    val curBlock = blocks.last()
+    blocks[blocks.lastIndex] = curBlock.copy(exitCode = exitCode)
+  }
+
   /**
    * Removes all blocks that end before the [offset] (inclusive), and adjusts all left blocks offsets.
    */
@@ -87,6 +92,7 @@ internal class TerminalBlocksModelImpl(outputModel: TerminalOutputModel) : Termi
           commandStartOffset = if (block.commandStartOffset != -1) max(block.commandStartOffset - offset, 0) else -1,
           outputStartOffset = if (block.outputStartOffset != -1) max(block.outputStartOffset - offset, 0) else -1,
           endOffset = max(block.endOffset - offset, 0),
+          exitCode = block.exitCode
         )
       }
     }
@@ -120,7 +126,14 @@ internal class TerminalBlocksModelImpl(outputModel: TerminalOutputModel) : Termi
   }
 
   private fun createNewBlock(startOffset: Int): TerminalOutputBlock {
-    return TerminalOutputBlock(blockIdCounter++, startOffset, -1, -1, document.textLength)
+    return TerminalOutputBlock(
+      id = blockIdCounter++,
+      startOffset = startOffset,
+      commandStartOffset = -1,
+      outputStartOffset = -1,
+      endOffset = document.textLength,
+      exitCode = null
+    )
   }
 
   override fun toString(): String {

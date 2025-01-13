@@ -22,4 +22,7 @@ internal interface TerminalBlocksModel {
 
   @RequiresEdt
   fun commandStarted(offset: Int)
+
+  @RequiresEdt
+  fun commandFinished(exitCode: Int)
 }

@@ -85,8 +85,12 @@ internal class TerminalBlocksDecorator(
     val topInlay = createTopInlay(block)
     val bottomInlay = createBottomInlay(endOffset)
     val bgHighlighter = createBackgroundHighlighter(startOffset, endOffset)
+
     val cornersHighlighter = createCornersHighlighter(startOffset, endOffset)
     cornersHighlighter.customRenderer = BlockSeparatorRenderer()
+    if (block.exitCode != null && block.exitCode != 0) {
+      cornersHighlighter.lineMarkerRenderer = TerminalBlockLeftErrorRenderer()
+    }
 
     return BlockDecoration(block.id, bgHighlighter, cornersHighlighter, topInlay, bottomInlay)
   }

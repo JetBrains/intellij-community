@@ -76,7 +76,9 @@ internal class TerminalSessionController(
         }
       }
       is TerminalCommandFinishedEvent -> {
-        // TODO
+        withContext(Dispatchers.EDT) {
+          blocksModel.commandFinished(event.exitCode)
+        }
       }
     }
   }

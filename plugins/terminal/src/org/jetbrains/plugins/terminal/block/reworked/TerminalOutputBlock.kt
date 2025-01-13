@@ -8,4 +8,9 @@ internal data class TerminalOutputBlock(
   val commandStartOffset: Int,
   val outputStartOffset: Int,
   val endOffset: Int,
+  /**
+   * Exit code of the command executed in this block.
+   * If code is null, then no command was executed.
+   */
+  val exitCode: Int?,
 )
