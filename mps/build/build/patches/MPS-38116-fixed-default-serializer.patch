@@ -1,0 +1,100 @@
+From 8f65f56b741920ca996ade8af7766cdf179f8095 Mon Sep 17 00:00:00 2001
+From: Ruslan Cheremin <ruslan.cheremin@jetbrains.com>
+Date: Sat, 11 Jan 2025 17:11:32 +0100
+Subject: [PATCH] [indexes] MPS-38116: fixed optimized<->default serializers
+ compatibility for IdIndex
+
++ optimized serializer for IdIndex contained a bug that led to corrupted binary format (<size> field written twice) then fallback branch to default serializer is taken -> fixed
+
+GitOrigin-RevId: 3a82454022227f924a4949a56658ce0f6269fc18
+---
+ .../impl/id/IdIndexEntryMapExternalizer.java  |  9 +++++----
+ .../impl/id/IdEntryMapExternalizerTest.java   | 19 +++++++++++++++----
+ 2 files changed, 20 insertions(+), 8 deletions(-)
+
+diff --git a/platform/lang-impl/src/com/intellij/psi/impl/cache/impl/id/IdIndexEntryMapExternalizer.java b/platform/lang-impl/src/com/intellij/psi/impl/cache/impl/id/IdIndexEntryMapExternalizer.java
+index d870d5ef2a52..39564bf7339d 100644
+--- a/platform/lang-impl/src/com/intellij/psi/impl/cache/impl/id/IdIndexEntryMapExternalizer.java
++++ b/platform/lang-impl/src/com/intellij/psi/impl/cache/impl/id/IdIndexEntryMapExternalizer.java
+@@ -1,4 +1,4 @@
+-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
++// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ package com.intellij.psi.impl.cache.impl.id;
+ 
+ import com.intellij.openapi.util.ThreadLocalCachedIntArray;
+@@ -39,9 +39,9 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
+   public void save(@NotNull DataOutput out,
+                    @NotNull Map<IdIndexEntry, Integer> entries) throws IOException {
+     int size = entries.size();
+-    DataInputOutputUtil.writeINT(out, size);
+-
+-    if (size == 0) {
++    
++    if (size == 0) {//fast path:
++      DataInputOutputUtil.writeINT(out, size);
+       return;
+     }
+ 
+@@ -50,6 +50,7 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
+       return;
+     }
+ 
++    DataInputOutputUtil.writeINT(out, size);
+ 
+     Int2ObjectMap<IntSet> scopeMaskToHashes = new Int2ObjectOpenHashMap<>(8);
+     idToScopeMap.forEach((idHash, scopeMask) -> {
+diff --git a/platform/lang-impl/testSources/com/intellij/psi/impl/cache/impl/id/IdEntryMapExternalizerTest.java b/platform/lang-impl/testSources/com/intellij/psi/impl/cache/impl/id/IdEntryMapExternalizerTest.java
+index e959ed8baede..b10788ed79b1 100644
+--- a/platform/lang-impl/testSources/com/intellij/psi/impl/cache/impl/id/IdEntryMapExternalizerTest.java
++++ b/platform/lang-impl/testSources/com/intellij/psi/impl/cache/impl/id/IdEntryMapExternalizerTest.java
+@@ -1,4 +1,4 @@
+-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
++// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ package com.intellij.psi.impl.cache.impl.id;
+ 
+ import com.intellij.util.indexing.InputMapExternalizer;
+@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
+ import org.junit.jupiter.api.Test;
+ 
+ import java.io.*;
++import java.util.Arrays;
++import java.util.Map;
+ import java.util.concurrent.ThreadLocalRandom;
+ import java.util.stream.IntStream;
+ import java.util.stream.Stream;
+@@ -28,20 +30,29 @@ class IdEntryMapExternalizerTest {
+ 
+ 
+   @Test
+-  void emptyMapSerializesIdenticallyByBothExternalizers() throws IOException {
++  void emptyMapSerializesIdentically_ByBothExternalizers() throws IOException {
+     IdEntryToScopeMapImpl emptyMap = new IdEntryToScopeMapImpl();
+ 
+     externalizersAreEquivalent(emptyMap, defaultMapExternalizer, optimizedMapExternalizer);
+   }
+ 
+   @Test
+-  void generatedMapsSerializeIdenticallyByBothExternalizers() throws IOException {
++  void generatedMapsSerializeIdentically_ByBothExternalizers() throws IOException {
+     IdEntryToScopeMapImpl[] generatedMaps = generateMaps().toArray(IdEntryToScopeMapImpl[]::new);
+-    for (final IdEntryToScopeMapImpl generatedMap : generatedMaps) {
++    for (IdEntryToScopeMapImpl generatedMap : generatedMaps) {
+       externalizersAreEquivalent(generatedMap, defaultMapExternalizer, optimizedMapExternalizer);
+     }
+   }
+ 
++  @Test
++  void generatedMapsSerializeIdentically_ByBothExternalizers_evenWithDefaultMapImplementation() throws IOException {
++    IdEntryToScopeMapImpl[] generatedMaps = generateMaps().toArray(IdEntryToScopeMapImpl[]::new);
++    for (IdEntryToScopeMapImpl generatedMap : generatedMaps) {
++      //copy specialized IdEntryToScopeMapImpl to default Map impl: test fallback path
++      Map<IdIndexEntry, Integer> defaultMapImpl = Map.copyOf(generatedMap);
++      externalizersAreEquivalent(defaultMapImpl, defaultMapExternalizer, optimizedMapExternalizer);
++    }
++  }
+ 
+   private static Stream<IdEntryToScopeMapImpl> generateMaps() {
+     ThreadLocalRandom rnd = ThreadLocalRandom.current();
+-- 
+2.47.0
+

@@ -324,6 +324,18 @@
             </exec>
         -->
 
+        <property name="patchFixDefaultIndexerSerializer"
+                  value="${basedir}/patches/MPS-38116-fixed-default-serializer.patch"/>
+        <echo message="Applying ${patchFixDefaultIndexerSerializer}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${patchFixDefaultIndexerSerializer}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchFixDefaultIndexerSerializer}"/>
+        </exec>
     </target>
 
     <!-- ===================================================== -->
