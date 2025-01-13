@@ -122,6 +122,11 @@ public abstract class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
             runTest("../../idea/tests/testData/editor/quickDoc/ConstructorVarParameter.kt");
         }
 
+        @TestMetadata("ConstructorVarVarargParameter.kt")
+        public void testConstructorVarVarargParameter() throws Exception {
+            runTest("../../idea/tests/testData/editor/quickDoc/ConstructorVarVarargParameter.kt");
+        }
+
         @TestMetadata("DataClass.kt")
         public void testDataClass() throws Exception {
             runTest("../../idea/tests/testData/editor/quickDoc/DataClass.kt");

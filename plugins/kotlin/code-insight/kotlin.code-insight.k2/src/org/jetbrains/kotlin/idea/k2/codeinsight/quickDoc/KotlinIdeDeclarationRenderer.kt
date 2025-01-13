@@ -210,8 +210,6 @@ internal class KotlinIdeDeclarationRenderer(
                 annotationRenderer: KaAnnotationRenderer,
                 printer: PrettyPrinter
             ) {
-                if (annotation !is KaAnnotation) return
-
                 if (annotation.arguments.isEmpty()) return
                 printer.printCollection(annotation.arguments, prefix = "(", postfix = ")") { argument ->
                     append(highlight(argument.name.renderName()) { asParameter })
@@ -534,7 +532,7 @@ internal class KotlinIdeDeclarationRenderer(
                         {
                             declarationRenderer.valueParametersRenderer.renderValueParameters(analysisSession, symbol, declarationRenderer, printer)
                             withPrefix(highlight(": ") { asColon }) {
-                                declarationRenderer.returnTypeRenderer.renderReturnType(analysisSession, symbol, declarationRenderer, printer)
+                                declarationRenderer.returnTypeRenderer.renderReturnType(analysisSession, callableSymbol, declarationRenderer, printer)
                             }
                         },
                         {
