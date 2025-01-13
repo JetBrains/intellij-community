@@ -119,8 +119,22 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - sf:nameMatches(com.intellij.webSymbols.WebSymbol,java.lang.String,com.intellij.webSymbols.query.WebSymbolsQueryExecutor):Z
 - sf:toCodeCompletionItems(com.intellij.webSymbols.WebSymbol,java.lang.String,com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
 - sf:unwrapMatchedSymbols(com.intellij.webSymbols.WebSymbol):kotlin.sequences.Sequence
+- sf:withMatchedKind(com.intellij.webSymbols.WebSymbol,com.intellij.webSymbols.WebSymbolQualifiedKind):com.intellij.webSymbols.WebSymbol
 - sf:withMatchedName(com.intellij.webSymbols.WebSymbol,java.lang.String):com.intellij.webSymbols.WebSymbol
 - sf:withNavigationTarget(com.intellij.webSymbols.WebSymbol,com.intellij.psi.PsiElement):com.intellij.webSymbols.WebSymbol
 - sf:withOffset(java.util.List,I):java.util.List
 - sf:withSegments(com.intellij.webSymbols.query.WebSymbolMatch,java.util.List):com.intellij.webSymbols.query.WebSymbolMatch
 - sf:withSymbols(com.intellij.webSymbols.WebSymbolNameSegment,java.util.List):com.intellij.webSymbols.WebSymbolNameSegment
+a:com.intellij.webSymbols.utils.WebSymbolsIsolatedMappingScope
+- com.intellij.webSymbols.WebSymbolsScope
+- <init>(java.util.Map,com.intellij.psi.PsiElement):V
+- pa:acceptSymbol(com.intellij.webSymbols.WebSymbol):Z
+- equals(java.lang.Object):Z
+- f:getCodeCompletions(com.intellij.webSymbols.WebSymbolQualifiedName,com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
+- pf:getLocation():com.intellij.psi.PsiElement
+- pf:getMappings():java.util.Map
+- f:getMatchingSymbols(com.intellij.webSymbols.WebSymbolQualifiedName,com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
+- f:getModificationCount():J
+- pa:getSubScopeBuilder():kotlin.jvm.functions.Function2
+- f:getSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind,com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
+- hashCode():I

@@ -459,7 +459,7 @@ fun CodeInsightTestFixture.multiResolveReference(signature: String): List<PsiEle
 }
 
 @JvmOverloads
-fun CodeInsightTestFixture.assertUnresolvedReference(signature: String, okWithNoRef: Boolean = false) {
+fun CodeInsightTestFixture.assertUnresolvedReference(signature: String, okWithNoRef: Boolean = false, allowSelfReference: Boolean = false) {
   assertEmpty("Reference at $signature should not resolve to WebSymbols.", multiResolveWebSymbolReference(signature))
   val offsetBySignature = file.findOffsetBySignature(signature)
   val ref = file.findReferenceAt(offsetBySignature)
@@ -468,6 +468,12 @@ fun CodeInsightTestFixture.assertUnresolvedReference(signature: String, okWithNo
   }
   assertNotNull("Expected not null reference for signature '$signature' at offset $offsetBySignature in file\n${file.text}", ref)
   val resolved = ref!!.resolve()
+  if (ref.element == resolved && allowSelfReference) {
+    if (ref is PsiPolyVariantReference) {
+      assertEmpty(ref.multiResolve(false).filter { it.element != ref.element })
+    }
+    return
+  }
   assertNull(
     "Expected that reference for signature '$signature' at offset $offsetBySignature resolves to null but resolved to $resolved (${resolved?.text}) in file ${resolved?.containingFile?.name}",
     resolved)
