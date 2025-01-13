@@ -15,13 +15,13 @@ interface NotebookCellInlayController {
     /**
      * There must be at most one controller (and one inlay) of some factory attached to some cell.
      *
-     * This methods consumes all controllers attached to some cell. Upon the method call,
-     * there could be more than one controller attached to the cell.
+     * This method consumes all controllers attached to some cell.
+     * Upon the method call, there could be more than one controller attached to the cell.
      * For instance, it happens after cell deletion.
      *
      * The method should either choose one of the attached controllers, update and return it,
-     * or should create a new controller, or return null if there should be no controller for the cell.
-     * Inlays from all remaining controllers will be disposed automatically.
+     * or should create a new controller or return null if there should be no controller for the cell.
+     * Inlays from all remaining controllers will be disposed of automatically.
      *
      * The method may traverse iterator without returning to the initial position, the iterator is disposable.
      */
@@ -33,7 +33,7 @@ interface NotebookCellInlayController {
 
     companion object {
       @JvmField
-      val EP_NAME = ExtensionPointName.create<Factory>("org.jetbrains.plugins.notebooks.notebookCellInlayController")
+      val EP_NAME: ExtensionPointName<Factory> = ExtensionPointName.create<Factory>("org.jetbrains.plugins.notebooks.notebookCellInlayController")
     }
   }
 
@@ -76,7 +76,7 @@ interface NotebookCellInlayController {
 
     companion object {
       @JvmField
-      val EP_NAME = ExtensionPointName.create<InputFactory>("org.jetbrains.plugins.notebooks.inputFactory")
+      val EP_NAME: ExtensionPointName<InputFactory> = ExtensionPointName.create<InputFactory>("org.jetbrains.plugins.notebooks.inputFactory")
     }
   }
 
@@ -84,7 +84,7 @@ interface NotebookCellInlayController {
 
   val factory: Factory
 
-  fun onViewportChange() = Unit
+  fun onViewportChange(): Unit = Unit
 
   /**
    * The method may traverse iterator without returning to the initial position, the iterator is disposable.
@@ -92,4 +92,7 @@ interface NotebookCellInlayController {
   fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, interval: NotebookCellLines.Interval) {}
 
   fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval, cellView: EditorCellView) {}
+
+  fun updateFrameVisibility(isVisible: Boolean) {}
+
 }

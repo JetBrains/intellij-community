@@ -70,6 +70,12 @@ class EditorCellView(
   var outputs: EditorCellOutputsView? = null
     private set
 
+  private val myEditorCellFrameManager: EditorCellFrameManager? =
+    when (interval.type == NotebookCellLines.CellType.MARKDOWN && Registry.`is`("jupyter.markdown.cells.border")) {
+      true -> EditorCellFrameManager(editor, this)
+      else -> null
+    }
+
   var selected: Boolean = false
     set(value) {
       field = value
@@ -77,11 +83,12 @@ class EditorCellView(
       updateRunButtonVisibility()
       updateCellHighlight()
       updateCellActionsToolbarVisibility()
+      myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
     }
 
   private var mouseOver = false
 
-  // We are storing last lines range for highlighters to prevent highlighters unnecessary recreation on same lines.
+  // We are storing last lines range for highlighters to prevent highlighters unnecessary recreation on the same lines.
   private var lastHighLightersLines: IntRange? = null
 
   var disableActions: Boolean = false
@@ -123,6 +130,7 @@ class EditorCellView(
     _controllers.forEach { controller ->
       disposeController(controller)
     }
+    myEditorCellFrameManager?.dispose()
     removeCellHighlight()
   }
 
@@ -255,12 +263,14 @@ class EditorCellView(
     mouseOver = false
     updateFolding()
     updateRunButtonVisibility()
+    myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
   }
 
   fun mouseEntered() {
     mouseOver = true
     updateFolding()
     updateRunButtonVisibility()
+    myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
   }
 
   inline fun <reified T : Any> getExtension(): T? {
@@ -297,7 +307,7 @@ class EditorCellView(
 
     removeCellHighlight()
 
-    // manages the cell background + clips background on the right below the scroll bar
+    // manages the cell background and clips background on the right below the scroll bar
     if (interval.type == NotebookCellLines.CellType.CODE && !editor.isDiffKind()) {
       addCellHighlighter {
         editor.markupModel.addRangeHighlighter(
@@ -342,6 +352,7 @@ class EditorCellView(
     updateFolding()
     updateRunButtonVisibility()
     updateCellHighlight()
+    myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
   }
 
   private fun updateFolding() {
@@ -375,6 +386,8 @@ class EditorCellView(
 
     return Rectangle(0, inputBounds.y, editor.contentSize.width, height)
   }
+
+  fun updateFrameVisibility(selected: Boolean): Unit = _controllers.forEach { it.updateFrameVisibility(selected) }
 
   private fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
     _controllers.filterIsInstance<CellExecutionStatusView>().firstOrNull()

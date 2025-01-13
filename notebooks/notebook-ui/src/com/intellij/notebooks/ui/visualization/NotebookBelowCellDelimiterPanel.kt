@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBBox
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -44,6 +46,7 @@ class NotebookBelowCellDelimiterPanel(
   private var elapsedStartTime: ZonedDateTime? = null
   private val updateElapsedTimeDelay = 100L
   private var elapsedTimeJob: Job? = null
+  private val frameColor = editor.notebookAppearance.codeCellBackgroundColor.get()
 
   init {
     border = BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
@@ -52,6 +55,17 @@ class NotebookBelowCellDelimiterPanel(
     val addingTagsRow = (cellTags.isNotEmpty() && !isRenderedMarkdown && Registry.`is`("jupyter.cell.metadata.tags", false))
     if (addingTagsRow) add(createTagsRow(), BorderLayout.EAST)
     updateExecutionStatus(initTooltipText, executionCount, initStatusIcon, initExecutionDurationText)
+  }
+
+  fun setFrameVisible(isVisible: Boolean) {
+    border = BorderFactory.createCompoundBorder(
+      when (isVisible) {
+        true -> IdeBorderFactory.createBorder(frameColor, SideBorder.BOTTOM or SideBorder.RIGHT)
+        else -> BorderFactory.createEmptyBorder()
+      },
+      BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
+    )
+    repaint()
   }
 
   private fun createExecutionLabel(): JLabel {
@@ -94,7 +108,7 @@ class NotebookBelowCellDelimiterPanel(
     else -> "[$executionCount]"
   }
 
-  private fun isExecutionCountDefined(executionCount: Int?): Boolean = executionCount?.let { it > 0 } ?: false
+  private fun isExecutionCountDefined(executionCount: Int?): Boolean = executionCount?.let { it > 0 } == true
 
   fun updateExecutionStatus(
     @NlsSafe tooltipText: String?,

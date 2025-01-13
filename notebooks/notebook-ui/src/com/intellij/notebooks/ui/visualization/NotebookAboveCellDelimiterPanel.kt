@@ -7,7 +7,9 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiff
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.openapi.project.Project
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
+import com.intellij.ui.SideBorder
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
@@ -22,6 +24,7 @@ class NotebookAboveCellDelimiterPanel(
 ) : JPanel(BorderLayout()) {
   private var delimiterPanel: JPanel? = null
   private var roofPanel: JPanel? = null
+  private val frameColor = editor.notebookAppearance.codeCellBackgroundColor.get()
 
   var backgroundColor: Color = editor.colorsScheme.defaultBackground
     set(value) {
@@ -61,6 +64,17 @@ class NotebookAboveCellDelimiterPanel(
   fun removeHighlight() {
     isHighlighted = false
     delimiterPanel?.repaint()
+  }
+
+  fun setFrameVisible(isVisible: Boolean) {
+    roofPanel?.let {
+      it.border = when (isVisible) {
+        true -> IdeBorderFactory.createBorder(frameColor, SideBorder.TOP or SideBorder.RIGHT)
+        else -> null
+      }
+
+      it.repaint()
+    }
   }
 
   private fun createRoofAndDelimiterPanels(cellRoofColor: Color?) {
