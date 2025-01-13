@@ -105,7 +105,7 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
                 }
             }
         }
-        selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it == key }
+        selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
     }
 
     override fun onExtendSelectionToKey(
