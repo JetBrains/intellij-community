@@ -66,9 +66,10 @@ class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
     val isToolbarEnabled = service<JavaAutoRunFloatingToolbarService>().toolbarEnabled
     val hasEnabledAutoTests = autoRunManager.hasEnabledAutoTests()
     if (isToolbarEnabled && hasEnabledAutoTests) {
-      component.scheduleShow()
+      component.autoHideable = true
     } else {
-      component.scheduleHide()
+      component.autoHideable = false
+      component.hideImmediately()
     }
   }
 }
