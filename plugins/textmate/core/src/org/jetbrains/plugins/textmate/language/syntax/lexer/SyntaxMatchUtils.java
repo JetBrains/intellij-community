@@ -16,16 +16,6 @@ import java.util.regex.Pattern;
 
 
 public final class SyntaxMatchUtils {
-  private static Runnable ourCheckCancelledCallback = null;
-
-  public static void setCheckCancelledCallback(@Nullable Runnable runnable) {
-    ourCheckCancelledCallback = runnable;
-  }
-
-  public static Runnable getCheckCancelledCallback() {
-    return ourCheckCancelledCallback;
-  }
-
   public static @Nullable CharSequence getStringAttribute(Constants.@NotNull StringKey keyName,
                                                           @NotNull SyntaxNodeDescriptor syntaxRule,
                                                           @NotNull TextMateString string,

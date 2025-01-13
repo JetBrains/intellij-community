@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.StringUtil
@@ -31,7 +30,6 @@ import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter
-import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -53,12 +51,6 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
   private val preferenceRegistry = PreferencesRegistryImpl()
   private val shellVariablesRegistry = ShellVariablesRegistryImpl()
   private val interner: TextMateInterner = TextMateConcurrentMapInterner()
-
-  init {
-    val app = ApplicationManager.getApplication()
-    val checkCancelled = if (app == null || app.isUnitTestMode) null else Runnable { ProgressManager.checkCanceled() }
-    SyntaxMatchUtils.setCheckCancelledCallback(checkCancelled)
-  }
 
   override fun reloadEnabledBundles() {
     registerBundles(fireEvents = true)

@@ -14,7 +14,10 @@ import org.jetbrains.plugins.textmate.language.syntax.TextMateCapture;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
-import org.jetbrains.plugins.textmate.regex.*;
+import org.jetbrains.plugins.textmate.regex.MatchData;
+import org.jetbrains.plugins.textmate.regex.RegexUtil;
+import org.jetbrains.plugins.textmate.regex.TextMateRange;
+import org.jetbrains.plugins.textmate.regex.TextMateString;
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 
 import java.util.*;
@@ -39,7 +42,6 @@ public final class TextMateLexer {
   private final TextMateSyntaxMatcher mySyntaxMatcher;
   private final int myLineLimit;
   private final boolean myStripWhitespaces;
-  private final Runnable myCheckCancelledCallback;
   private final TextMateLexerState myLanguageInitialState;
 
   /**
@@ -71,7 +73,6 @@ public final class TextMateLexer {
     mySyntaxMatcher = syntaxMatcher;
     myLineLimit = lineLimit;
     myStripWhitespaces = stripWhitespaces;
-    myCheckCancelledCallback = SyntaxMatchUtils.getCheckCancelledCallback();
   }
 
   public void init(CharSequence text, int startOffset) {
@@ -87,7 +88,15 @@ public final class TextMateLexer {
     return myCurrentOffset;
   }
 
+  /**
+   * @deprecated pass checkCancelledCallback
+   */
+  @Deprecated
   public void advanceLine(@NotNull Queue<Token> output) {
+    advanceLine(output, null);
+  }
+
+  public void advanceLine(@NotNull Queue<Token> output, @Nullable Runnable checkCancelledCallback) {
     int startLineOffset = myCurrentOffset;
     int endLineOffset = startLineOffset;
     while (endLineOffset < myText.length()) {
@@ -100,11 +109,11 @@ public final class TextMateLexer {
 
     CharSequence lineCharSequence = myText.subSequence(startLineOffset, endLineOffset);
     if (myLineLimit >= 0 && lineCharSequence.length() > myLineLimit) {
-      myStates = parseLine(lineCharSequence.subSequence(0, myLineLimit), output, myStates, startLineOffset, 0, 0);
+      myStates = parseLine(lineCharSequence.subSequence(0, myLineLimit), output, myStates, startLineOffset, 0, 0, checkCancelledCallback);
       addToken(output, endLineOffset);
     }
     else {
-      myStates = parseLine(lineCharSequence, output, myStates, startLineOffset, 0, 0);
+      myStates = parseLine(lineCharSequence, output, myStates, startLineOffset, 0, 0, checkCancelledCallback);
     }
   }
 
@@ -113,7 +122,8 @@ public final class TextMateLexer {
                                                        @NotNull PersistentList<TextMateLexerState> states,
                                                        int lineStartOffset,
                                                        int linePosition,
-                                                       int lineByteOffset) {
+                                                       int lineByteOffset,
+                                                       @Nullable Runnable checkCancelledCallback) {
     PersistentList<TextMateLexerState> lastSuccessState = states;
     int lastSuccessStateOccursCount = 0;
     int lastMovedOffset = lineStartOffset;
@@ -129,7 +139,7 @@ public final class TextMateLexer {
       whileStates = whileStates.removeAt(whileStates.size() - 1);
       if (whileState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
         MatchData matchWhile = mySyntaxMatcher.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, anchorByteOffset,
-                                                                matchBeginOfString, whileState, myCheckCancelledCallback);
+                                                                matchBeginOfString, whileState, checkCancelledCallback);
         if (matchWhile.matched) {
           // todo: support whileCaptures
           if (anchorByteOffset == -1) {
@@ -151,12 +161,12 @@ public final class TextMateLexer {
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
 
       TextMateLexerState currentState = mySyntaxMatcher.matchRule(lastRule, string, lineByteOffset, anchorByteOffset, matchBeginOfString,
-                                                                  TextMateWeigh.Priority.NORMAL, myCurrentScope, myCheckCancelledCallback);
+                                                                  TextMateWeigh.Priority.NORMAL, myCurrentScope, checkCancelledCallback);
       SyntaxNodeDescriptor currentRule = currentState.syntaxRule;
       MatchData currentMatch = currentState.matchData;
 
       int endPosition;
-      MatchData endMatch = mySyntaxMatcher.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, anchorByteOffset, matchBeginOfString, lastState, myCheckCancelledCallback);
+      MatchData endMatch = mySyntaxMatcher.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, anchorByteOffset, matchBeginOfString, lastState, checkCancelledCallback);
       if (endMatch.matched && (!currentMatch.matched ||
                                  currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
                                  lastState.equals(currentState))) {
@@ -174,9 +184,9 @@ public final class TextMateLexer {
         if (lastRule.getCaptureRules(Constants.CaptureKey.END_CAPTURES) == null
             && lastRule.getCaptureRules(Constants.CaptureKey.CAPTURES) == null
             ||
-            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states)
+            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states, checkCancelledCallback)
             ||
-            parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states)) {
+            parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states, checkCancelledCallback)) {
           // move line position only if anything was captured or if there is nothing to capture at all
           endPosition = endRange.end;
         }
@@ -201,8 +211,8 @@ public final class TextMateLexer {
           CharSequence name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
           openScopeSelector(output, name, startPosition + lineStartOffset);
 
-          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states);
+          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states, checkCancelledCallback);
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states, checkCancelledCallback);
 
           CharSequence contentName = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch);
           openScopeSelector(output, contentName, endPosition + lineStartOffset);
@@ -210,7 +220,7 @@ public final class TextMateLexer {
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
           CharSequence name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
           openScopeSelector(output, name, startPosition + lineStartOffset);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states);
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states, checkCancelledCallback);
           closeScopeSelector(output, endPosition + lineStartOffset);
         }
 
@@ -244,8 +254,8 @@ public final class TextMateLexer {
         linePosition = endPosition;
       }
 
-      if (myCheckCancelledCallback != null) {
-        myCheckCancelledCallback.run();
+      if (checkCancelledCallback != null) {
+        checkCancelledCallback.run();
       }
     }
     return states;
@@ -267,7 +277,8 @@ public final class TextMateLexer {
                                 TextMateString string,
                                 CharSequence line,
                                 int startLineOffset,
-                                PersistentList<TextMateLexerState> states) {
+                                PersistentList<TextMateLexerState> states,
+                                @Nullable Runnable checkCancelledCallback) {
     TextMateCapture @Nullable [] captures = rule.getCaptureRules(captureKey);
     if (captures == null) {
       return false;
@@ -321,7 +332,7 @@ public final class TextMateLexer {
                                                                  TextMateWeigh.Priority.NORMAL,
                                                                  byteRange.start,
                                                                  capturedTextMateString);
-        parseLine(capturedString, output, states.add(captureState), startLineOffset, captureRange.start, byteRange.start);
+        parseLine(capturedString, output, states.add(captureState), startLineOffset, captureRange.start, byteRange.start, checkCancelledCallback);
       }
       else {
         throw new IllegalStateException("unknown capture type: " + capture);

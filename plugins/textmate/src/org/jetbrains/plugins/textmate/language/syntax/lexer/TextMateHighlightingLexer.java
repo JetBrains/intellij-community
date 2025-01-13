@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +92,9 @@ public class TextMateHighlightingLexer extends LexerBase {
     }
 
     if (currentLineTokens.isEmpty()) {
-      myLexer.advanceLine(currentLineTokens);
+      Application app = ApplicationManager.getApplication();
+      Runnable checkCancelledCallback = app == null || app.isUnitTestMode() ? null : () -> ProgressManager.checkCanceled();
+      myLexer.advanceLine(currentLineTokens, checkCancelledCallback);
     }
     updateState(currentLineTokens.poll(), myLexer.getCurrentOffset());
   }
