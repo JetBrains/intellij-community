@@ -11,30 +11,57 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.*
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.util.operation
 import com.intellij.openapi.observable.util.transform
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.ui.JBColor
 import java.awt.Color
 
 open class DefaultNotebookEditorAppearance(private val editor: Editor) : NotebookEditorAppearance,
                                                                          NotebookEditorAppearanceSizes by DefaultNotebookEditorAppearanceSizes {
 
+  private val swapCellAndEditorBackgroundColor = AtomicBooleanProperty(
+    Registry.`is`("jupyter.editor.swap.cell.and.editor.background", false)
+  ).distinct()
+
   private val colorsScheme: ObservableMutableProperty<EditorColorsScheme> = AtomicProperty<EditorColorsScheme>(
     editor.colorsScheme
   )
-  override val editorBackgroundColor: ObservableProperty<Color> = colorsScheme
-    .transform { it.getColor(NotebookEditorAppearance.EDITOR_BACKGROUND) ?: it.defaultBackground }
-    .distinct()
+  override val editorBackgroundColor: ObservableProperty<Color> = operation(colorsScheme, swapCellAndEditorBackgroundColor) { colorsScheme, swapCellAndEditorBackgroundColor ->
+    val color = if (swapCellAndEditorBackgroundColor) {
+      colorsScheme.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND)
+    }
+    else {
+      colorsScheme.getColor(NotebookEditorAppearance.EDITOR_BACKGROUND)
+    }
+    color ?: colorsScheme.defaultBackground
+  }.distinct()
 
-  override val caretRowBackgroundColor: ObservableProperty<Color?> = colorsScheme
-    .transform { it.getColor(NotebookEditorAppearance.CARET_ROW_COLOR) ?: it.getColor(EditorColors.CARET_ROW_COLOR) }
-    .distinct()
+  override val caretRowBackgroundColor: ObservableProperty<Color?> = operation(colorsScheme, swapCellAndEditorBackgroundColor) { colorsScheme, swapCellAndEditorBackgroundColor ->
+    val color = if (swapCellAndEditorBackgroundColor) {
+      null
+    }
+    else {
+      colorsScheme.getColor(NotebookEditorAppearance.CARET_ROW_COLOR)
+    }
+    color ?: colorsScheme.getColor(EditorColors.CARET_ROW_COLOR)
+  }.distinct()
 
-  override val codeCellBackgroundColor: ObservableProperty<Color> = colorsScheme
-    .transform { it.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND) ?: it.defaultBackground }
-    .distinct()
+  override val codeCellBackgroundColor: ObservableProperty<Color> = operation(colorsScheme, swapCellAndEditorBackgroundColor) { colorsScheme, swapCellAndEditorBackgroundColor ->
+    val color = if (swapCellAndEditorBackgroundColor) {
+      colorsScheme.getColor(NotebookEditorAppearance.EDITOR_BACKGROUND)
+    }
+    else {
+      colorsScheme.getColor(NotebookEditorAppearance.CODE_CELL_BACKGROUND)
+    }
+    color ?: colorsScheme.defaultBackground
+  }.distinct()
 
   override val cellStripeSelectedColor: ObservableProperty<Color> = colorsScheme
     .transform {
@@ -64,6 +91,14 @@ open class DefaultNotebookEditorAppearance(private val editor: Editor) : Noteboo
     service<NotebookEditorAppearanceManager>().addEditorColorsListener(editor.disposable) {
       colorsScheme.set(editor.colorsScheme)
     }
+    Registry.get("jupyter.editor.swap.cell.and.editor.background").addListener(
+      object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          swapCellAndEditorBackgroundColor.set(value.asBoolean())
+        }
+      },
+      editor.disposable
+    )
   }
 
   override fun getGutterInputExecutionCountForegroundColor(scheme: EditorColorsScheme): Color? =
