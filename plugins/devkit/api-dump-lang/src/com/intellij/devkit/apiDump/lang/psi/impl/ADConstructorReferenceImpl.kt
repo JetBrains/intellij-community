@@ -4,15 +4,20 @@ package com.intellij.devkit.apiDump.lang.psi.impl
 import com.intellij.devkit.apiDump.lang.psi.ADClassDeclaration
 import com.intellij.devkit.apiDump.lang.psi.ADConstructor
 import com.intellij.devkit.apiDump.lang.psi.ADConstructorReference
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
+import com.intellij.devkit.apiDump.lang.reference.ADMemberPsiReference
+import com.intellij.devkit.apiDump.lang.reference.getReference
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.tree.IElementType
 
-internal abstract class ADConstructorReferenceImpl(type: IElementType) : ADPsiElementImpl(type), ADConstructorReference, PsiReference {
+internal abstract class ADConstructorReferenceImpl(type: IElementType) : ADPsiElementImpl(type), ADConstructorReference {
+  override fun getReference(): PsiReference? =
+    getReference { ADConstructorPsiReference(this) }
+}
+
+private class ADConstructorPsiReference(psi: ADConstructorReference) : ADMemberPsiReference(psi) {
   override fun resolve(): PsiElement? {
-    val constructor = parent as? ADConstructor ?: return null
+    val constructor = psi.parent as? ADConstructor ?: return null
     val classDeclaration = constructor.parent as? ADClassDeclaration ?: return null
     val parameters = constructor.parameters.parameterList.map { parameter -> parameter.text }
 
@@ -21,28 +26,4 @@ internal abstract class ADConstructorReferenceImpl(type: IElementType) : ADPsiEl
 
     return constructors.firstOrNull { constructor -> parametersMatch(constructor.parameters, parameters) }
   }
-
-  override fun getReference(): PsiReference? =
-    this
-
-  override fun getElement(): PsiElement =
-    this
-
-  override fun getRangeInElement(): TextRange =
-    TextRange(0, textLength)
-
-  override fun getCanonicalText(): @NlsSafe String =
-    text
-
-  override fun handleElementRename(newElementName: String): PsiElement? =
-    this
-
-  override fun bindToElement(element: PsiElement): PsiElement? =
-    throw UnsupportedOperationException()
-
-  override fun isReferenceTo(element: PsiElement): Boolean =
-    resolve() == element
-
-  override fun isSoft(): Boolean =
-    true
 }

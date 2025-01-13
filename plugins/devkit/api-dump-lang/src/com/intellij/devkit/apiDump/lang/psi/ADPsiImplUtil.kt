@@ -11,7 +11,3 @@ internal fun ADClassDeclaration.resolvePsiClass(): PsiClass? {
   val classRef = typeReference.references.lastOrNull() ?: return null
   return classRef.resolve() as? PsiClass
 }
-
-internal fun <Psi : ADPsiElement> Psi.updateText(newElementName: String): Psi {
-  return this
-}

@@ -4,46 +4,26 @@ package com.intellij.devkit.apiDump.lang.psi.impl
 import com.intellij.devkit.apiDump.lang.psi.ADClassDeclaration
 import com.intellij.devkit.apiDump.lang.psi.ADMethod
 import com.intellij.devkit.apiDump.lang.psi.ADMethodReference
-import com.intellij.devkit.apiDump.lang.psi.updateText
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
+import com.intellij.devkit.apiDump.lang.reference.ADMemberPsiReference
+import com.intellij.devkit.apiDump.lang.reference.getReference
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.tree.IElementType
 
-internal abstract class ADMethodReferenceImpl(type: IElementType) : ADPsiElementImpl(type), ADMethodReference, PsiReference {
+internal abstract class ADMethodReferenceImpl(type: IElementType) : ADPsiElementImpl(type), ADMethodReference {
+  override fun getReference(): PsiReference? =
+    getReference { ADMethodPsiReference(this) }
+}
+
+private class ADMethodPsiReference(psi: ADMethodReference) : ADMemberPsiReference(psi) {
   override fun resolve(): PsiElement? {
-    val method = parent as? ADMethod ?: return null
+    val method = psi.parent as? ADMethod ?: return null
     val classDeclaration = method.parent as? ADClassDeclaration ?: return null
     val parameters = method.parameters.parameterList.map { parameter -> parameter.text }
 
     val clazz = classDeclaration.resolvePsiClass() ?: return null
-    val methods = clazz.findMethodsByName(this.text, false)
+    val methods = clazz.findMethodsByName(psi.text, false)
 
     return methods.firstOrNull { method -> parametersMatch(method.parameters, parameters) }
   }
-
-  override fun getReference(): PsiReference? =
-    this
-
-  override fun getElement(): PsiElement =
-    this
-
-  override fun getRangeInElement(): TextRange =
-    TextRange(0, textLength)
-
-  override fun getCanonicalText(): @NlsSafe String =
-    text
-
-  override fun handleElementRename(newElementName: String): PsiElement? =
-    updateText(newElementName)
-
-  override fun bindToElement(element: PsiElement): PsiElement? =
-    throw UnsupportedOperationException()
-
-  override fun isReferenceTo(element: PsiElement): Boolean =
-    resolve() == element
-
-  override fun isSoft(): Boolean =
-    true
 }

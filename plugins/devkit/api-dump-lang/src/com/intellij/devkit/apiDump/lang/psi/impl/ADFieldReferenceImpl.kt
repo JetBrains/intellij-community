@@ -3,40 +3,21 @@ package com.intellij.devkit.apiDump.lang.psi.impl
 
 import com.intellij.devkit.apiDump.lang.psi.ADClassDeclaration
 import com.intellij.devkit.apiDump.lang.psi.ADFieldReference
-import com.intellij.devkit.apiDump.lang.psi.updateText
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
+import com.intellij.devkit.apiDump.lang.reference.ADMemberPsiReference
+import com.intellij.devkit.apiDump.lang.reference.getReference
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.tree.IElementType
 
-internal abstract class ADFieldReferenceImpl(type: IElementType) : ADPsiElementImpl(type), ADFieldReference, PsiReference {
-  override fun resolve(): PsiElement? {
-    val classDeclaration = parent?.parent as? ADClassDeclaration ?: return null
-    val clazz = classDeclaration.resolvePsiClass() ?: return null
-    return clazz.findFieldByName(this.text, false)
-  }
-
+internal abstract class ADFieldReferenceImpl(type: IElementType) : ADPsiElementImpl(type), ADFieldReference {
   override fun getReference(): PsiReference =
-    this
+    getReference { ADFieldPsiReference(this) }
+}
 
-  override fun getElement(): PsiElement =
-    this
-
-  override fun getRangeInElement(): TextRange =
-    TextRange(0, textLength)
-
-  override fun getCanonicalText(): @NlsSafe String =
-    text
-
-  override fun handleElementRename(newElementName: String): PsiElement? =
-    updateText(newElementName)
-
-  override fun bindToElement(element: PsiElement): PsiElement? =
-    throw UnsupportedOperationException()
-
-  override fun isReferenceTo(element: PsiElement): Boolean =
-    resolve() == element
-
-  override fun isSoft(): Boolean = true
+private class ADFieldPsiReference(psi: ADFieldReference) : ADMemberPsiReference(psi) {
+  override fun resolve(): PsiElement? {
+    val classDeclaration = psi.parent?.parent as? ADClassDeclaration ?: return null
+    val clazz = classDeclaration.resolvePsiClass() ?: return null
+    return clazz.findFieldByName(psi.text, false)
+  }
 }
