@@ -135,7 +135,6 @@ public final class EditorPainter implements TextDrawingCallback {
     private final int myLineHeight;
     private final int myAscent;
     private final int myDescent;
-    private final Color myDefaultBackgroundColor;
     private final Color myBackgroundColor;
     private final int myMarginColumns;
     private final List<Consumer<Graphics2D>> myTextDrawingTasks = new ArrayList<>();
@@ -169,7 +168,6 @@ public final class EditorPainter implements TextDrawingCallback {
       myLineHeight = myView.getLineHeight();
       myAscent = myView.getAscent();
       myDescent = myView.getDescent();
-      myDefaultBackgroundColor = myEditor.getColorsScheme().getDefaultBackground();
       myBackgroundColor = myEditor.getBackgroundColor();
       myMarginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
       myScaleContext = ScaleContext.create(myGraphics);
@@ -586,7 +584,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintBackground(Color color, float x, int y, float width, int height) {
-      if (width <= 0 || color == null || color.equals(myDefaultBackgroundColor) || color.equals(myBackgroundColor)) return;
+      if (width <= 0 || color == null || color.equals(myBackgroundColor)) return;
       myGraphics.setColor(color);
       myGraphics.fill(new Rectangle2D.Float(x, y, width, height));
     }
