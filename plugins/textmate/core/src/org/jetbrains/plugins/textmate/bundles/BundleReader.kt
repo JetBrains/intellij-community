@@ -49,7 +49,7 @@ fun readTextMateBundle(path: Path): TextMateBundleReader {
   val plistReader = CompositePlistReader()
   val infoPlistPath = path.resolve(Constants.BUNDLE_INFO_PLIST_NAME)
   val infoPlist = infoPlistPath.inputStream().buffered().use { plistReader.read(it) }
-  val bundleName = infoPlist.getPlistValue(Constants.NAME_KEY, path.name).string
+  val bundleName = infoPlist.getPlistValue(Constants.NAME_KEY, path.name).string!!
 
   return object : TextMateBundleReader {
     override val bundleName: String = bundleName
@@ -57,7 +57,7 @@ fun readTextMateBundle(path: Path): TextMateBundleReader {
     override fun readGrammars(): Sequence<TextMateGrammar> {
       return readPlistInDirectory(path.resolve("Syntaxes"), plistReader = plistReader,
                                   glob = "*.{tmLanguage,plist,tmLanguage.json}").map { plist ->
-        val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
+        val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.filterNotNull().flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
         val firstLinePattern = plist.getPlistValue(Constants.FIRST_LINE_MATCH)?.string
@@ -91,7 +91,7 @@ fun readSublimeBundle(path: Path): TextMateBundleReader {
 
     override fun readGrammars(): Sequence<TextMateGrammar> {
       return readPlistInDirectory(path, plistReader = plistReader, glob = "*.{tmLanguage,plist,tmLanguage.json}").map { plist ->
-        val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
+        val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.filterNotNull().flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
         val firstLinePattern = plist.getPlistValue(Constants.FIRST_LINE_MATCH)?.string
@@ -118,12 +118,12 @@ fun readSublimeBundle(path: Path): TextMateBundleReader {
 }
 
 private fun readSnippetFromPlist(plist: Plist, explicitUuid: String): TextMateSnippet? {
-  val key = plist.getPlistValue(Constants.TAB_TRIGGER_KEY, "").string.takeIf { it.isNotEmpty() } ?: return null
-  val content = plist.getPlistValue(Constants.StringKey.CONTENT.value, "").string.takeIf { it.isNotEmpty() } ?: return null
-  val name = plist.getPlistValue(Constants.NAME_KEY, "").string.takeIf { it.isNotEmpty() } ?: key
-  val scope = plist.getPlistValue(Constants.SCOPE_KEY, "").string
-  val description = plist.getPlistValue(Constants.DESCRIPTION_KEY, "").string //NON-NLS
-  val uuid = plist.getPlistValue(Constants.UUID_KEY, explicitUuid).string
+  val key = plist.getPlistValue(Constants.TAB_TRIGGER_KEY, "").string.takeIf { !it.isNullOrEmpty() } ?: return null
+  val content = plist.getPlistValue(Constants.StringKey.CONTENT.value, "").string.takeIf { !it.isNullOrEmpty() } ?: return null
+  val name = plist.getPlistValue(Constants.NAME_KEY, "").string.takeIf { !it.isNullOrEmpty() } ?: key
+  val scope = plist.getPlistValue(Constants.SCOPE_KEY, "").string!!
+  val description = plist.getPlistValue(Constants.DESCRIPTION_KEY, "").string!! //NON-NLS
+  val uuid = plist.getPlistValue(Constants.UUID_KEY, explicitUuid).string!!
   return TextMateSnippet(key, content, scope, name, description, uuid)
 }
 
@@ -139,8 +139,8 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
         variables.array.map { variable ->
           val variablePlist = variable.plist
           TextMateShellVariable(scopeName,
-                                variablePlist.getPlistValue(Constants.NAME_KEY, "").string,
-                                variablePlist.getPlistValue(Constants.VALUE_KEY, "").string)
+                                variablePlist.getPlistValue(Constants.NAME_KEY, "").string!!,
+                                variablePlist.getPlistValue(Constants.VALUE_KEY, "").string!!)
         }
       } ?: emptyList()
       val customHighlightingAttributes = TextMateTextAttributes.fromPlist(settings)

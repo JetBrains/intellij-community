@@ -94,7 +94,7 @@ class PreferencesTest {
     val preferencesRegistry = loadPreferences(TestUtil.RESTRUCTURED_TEXT)
     val preferences: Preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.rst")))
     assertNotNull(preferences.onEnterRules)
-    assertFalse(preferences.onEnterRules!!.isEmpty())
+    assertFalse(preferences.onEnterRules.isEmpty())
   }
 
   private fun loadPreferences(bundleName: String): PreferencesRegistry {
@@ -106,7 +106,7 @@ class PreferencesTest {
       preferencesRegistry.addPreferences(Preferences(next.scopeName,
                                                      next.highlightingPairs,
                                                      next.smartTypingPairs,
-                                                     mutableSetOf<TextMateBracePair?>(),
+                                                     setOf<TextMateBracePair>(),
                                                      null,
                                                      next.indentationRules,
                                                      next.onEnterRules))
@@ -115,12 +115,12 @@ class PreferencesTest {
   }
 
   private fun mergeAll(preferences: List<Preferences>): Preferences {
-    val highlightingPairs = mutableSetOf<TextMateBracePair?>()
-    val smartTypingPairs = mutableSetOf<TextMateAutoClosingPair?>()
-    val surroundingPairs = mutableSetOf<TextMateBracePair?>()
-    val autoCloseBefore = mutableSetOf<Char?>()
+    val highlightingPairs = mutableSetOf<TextMateBracePair>()
+    val smartTypingPairs = mutableSetOf<TextMateAutoClosingPair>()
+    val surroundingPairs = mutableSetOf<TextMateBracePair>()
+    val autoCloseBefore = mutableSetOf<Char>()
     var indentationRules = IndentationRules.empty()
-    val onEnterRules = mutableSetOf<OnEnterRule?>()
+    val onEnterRules = mutableSetOf<OnEnterRule>()
 
     for (preference in preferences) {
       val localHighlightingPairs = preference.highlightingPairs
@@ -143,7 +143,7 @@ class PreferencesTest {
         }
       }
       if (preference.onEnterRules != null) {
-        onEnterRules.addAll(preference.onEnterRules!!)
+        onEnterRules.addAll(preference.onEnterRules)
       }
     }
     return Preferences("",

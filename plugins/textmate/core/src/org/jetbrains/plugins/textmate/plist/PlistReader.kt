@@ -1,19 +1,16 @@
-package org.jetbrains.plugins.textmate.plist;
+package org.jetbrains.plugins.textmate.plist
 
-import org.jetbrains.annotations.NotNull;
+import java.io.*
 
-import java.io.*;
-
-public interface PlistReader {
-  /**
-   * @deprecated use {@link #read(InputStream)}
-   */
-  @Deprecated
-  default Plist read(@NotNull File file) throws IOException {
-    try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
-      return read(in);
+interface PlistReader {
+  @Deprecated("use {@link #read(InputStream)}")
+  @Throws(IOException::class)
+  fun read(file: File): Plist {
+    file.inputStream().buffered().use {
+      return read(it)
     }
   }
 
-  Plist read(@NotNull InputStream inputStream) throws IOException;
+  @Throws(IOException::class)
+  fun read(inputStream: InputStream): Plist
 }

@@ -90,15 +90,15 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
           val valuePlist = value.plist
           val bodyValue = valuePlist.getPlistValue("body", "")
           val body = when (bodyValue.type) {
-            PlistValueType.STRING -> bodyValue.string
-            PlistValueType.ARRAY -> bodyValue.array.joinToString(separator = "\n") { it.string }
+            PlistValueType.STRING -> bodyValue.string!!
+            PlistValueType.ARRAY -> bodyValue.array.mapNotNull { it.string }.joinToString(separator = "\n")
             else -> error("Can't parse body: $bodyValue")
           }
           valuePlist.getPlistValue("prefix")?.string?.let { key ->
-            val description = valuePlist.getPlistValue(Constants.DESCRIPTION_KEY, "").string
-            val snippetScopeName = valuePlist.getPlistValue(Constants.SCOPE_KEY)
+            val description = valuePlist.getPlistValue(Constants.DESCRIPTION_KEY, "").string!!
+            val snippetScopeName = valuePlist.getPlistValue(Constants.SCOPE_KEY)?.string
             if (snippetScopeName != null) {
-              sequenceOf(TextMateSnippet(key, body, snippetScopeName.string, name, description, name))
+              sequenceOf(TextMateSnippet(key, body, snippetScopeName, name, description, name))
             }
             else {
               scopesForLanguage(snippetConfiguration.language).map { scopeName ->

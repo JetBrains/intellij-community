@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;

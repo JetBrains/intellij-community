@@ -1,82 +1,32 @@
-package org.jetbrains.plugins.textmate.plist;
+package org.jetbrains.plugins.textmate.plist
 
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.plist.PlistValueType.Companion.fromObject
+import java.text.SimpleDateFormat
 
-import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
-import static java.util.Collections.unmodifiableMap;
-
-public final class Plist {
-  public static final Plist EMPTY_PLIST = new Plist(Collections.emptyMap());
-
-  public static SimpleDateFormat dateFormatter() {
-    return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+data class Plist(private val myMap: Map<String, PListValue>) {
+  fun getPlistValue(key: String): PListValue? {
+    return myMap[key]
   }
 
-  private final Map<String, PListValue> myMap;
-
-  public static Plist fromMap(Map<String, PListValue> map) {
-    return new Plist(unmodifiableMap(map));
+  fun getPlistValue(key: String, defValue: Any): PListValue {
+    return myMap[key] ?: PListValue(defValue, fromObject(defValue))
   }
 
-  public Plist() {
-    this(new LinkedHashMap<>());
+  fun contains(key: String): Boolean {
+    return myMap.containsKey(key)
   }
 
-  private Plist(Map<String, PListValue> map) {
-    myMap = map;
+  fun entries(): Set<Map.Entry<String, PListValue>> {
+    return myMap.entries
   }
 
-  public void setEntry(@NotNull String key, @Nullable PListValue value) {
-    if (value == null) {
-      myMap.remove(key);
+  companion object {
+    @JvmField
+    val EMPTY_PLIST: Plist = Plist(emptyMap())
+
+    @JvmStatic
+    fun dateFormatter(): SimpleDateFormat {
+      return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     }
-    else {
-      myMap.put(key, value);
-    }
-  }
-
-  public @Nullable PListValue getPlistValue(@NotNull String key) {
-    return getPlistValue(key, null);
-  }
-
-  @Contract("_,!null -> !null")
-  public PListValue getPlistValue(@NotNull String key, @Nullable Object defValue) {
-    PListValue result = myMap.get(key);
-    if (result != null) {
-      return result;
-    }
-    if (defValue != null) {
-      return new PListValue(defValue, PlistValueType.fromObject(defValue));
-    }
-    return null;
-  }
-
-  public boolean contains(@NotNull String key) {
-    return myMap.containsKey(key);
-  }
-
-  public Set<Map.Entry<String, PListValue>> entries() {
-    return myMap.entrySet();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Plist plist = (Plist)o;
-    if (!myMap.equals(plist.myMap)) return false;
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return myMap.hashCode();
   }
 }

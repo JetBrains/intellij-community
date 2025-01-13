@@ -1,33 +1,39 @@
-package org.jetbrains.plugins.textmate.plist;
+package org.jetbrains.plugins.textmate.plist
 
-import java.util.Date;
-import java.util.List;
+import java.util.*
 
-public enum PlistValueType {
+enum class PlistValueType {
   STRING, INTEGER, REAL, BOOLEAN, DATE, ARRAY, DICT;
 
-  public static PlistValueType fromObject(Object o) {
-    if (o instanceof String) {
-      return STRING;
+  companion object {
+    @JvmStatic
+    fun fromObject(o: Any?): PlistValueType {
+      when (o) {
+        is String -> {
+          return STRING
+        }
+        is Int -> {
+          return INTEGER
+        }
+        is Plist -> {
+          return DICT
+        }
+        is List<*> -> {
+          return ARRAY
+        }
+        is Double -> {
+          return REAL
+        }
+        is Boolean -> {
+          return BOOLEAN
+        }
+        is Date -> {
+          return DATE
+        }
+        else -> {
+          error("Unknown type of object: $o")
+        }
+      }
     }
-    if (o instanceof Integer) {
-      return INTEGER;
-    }
-    if (o instanceof Plist) {
-      return DICT;
-    }
-    if (o instanceof List) {
-      return ARRAY;
-    }
-    if (o instanceof Double) {
-      return REAL;
-    }
-    if (o instanceof Boolean) {
-      return BOOLEAN;
-    }
-    if (o instanceof Date) {
-      return DATE;
-    }
-    throw new RuntimeException("Unknown type of object: " + o);
   }
 }

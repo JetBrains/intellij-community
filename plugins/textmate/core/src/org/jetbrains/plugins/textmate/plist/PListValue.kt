@@ -1,144 +1,69 @@
-package org.jetbrains.plugins.textmate.plist;
+package org.jetbrains.plugins.textmate.plist
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.*
 
-import java.util.*;
-
-public class PListValue {
-  private final Object myValue;
-  private final PlistValueType myType;
-
-  PListValue(Object value, PlistValueType type) {
-    myValue = value;
-    myType = type;
-  }
-
-  public @Nullable Object getValue() {
-    return myValue;
-  }
-
-  public PlistValueType getType() {
-    return myType;
-  }
-
-  public @NotNull Plist getPlist() {
-    return myType == PlistValueType.DICT
-           ? (Plist)myValue
-           : Plist.EMPTY_PLIST;
-  }
-
-  @SuppressWarnings("unchecked")
-  public @NotNull List<PListValue> getArray() {
-    return myType == PlistValueType.ARRAY ? (List<PListValue>)myValue : Collections.emptyList();
-  }
-
-  public @NotNull List<String> getStringArray() {
-    List<PListValue> array = getArray();
-    List<String> result = new ArrayList<>(array.size());
-    for (PListValue value : array) {
-      result.add(value.getString());
-    }
-    return result;
-  }
-
-  public String getString() {
-    return myType == PlistValueType.STRING
-           ? (String)myValue
-           : myValue.toString();
-  }
-
-
-  public static PListValue value(Object value, PlistValueType type) {
-    if (value == null) {
-      return new NullablePListValue(type);
-    }
-    return new PListValue(value, type);
-  }
-
-  public static PListValue string(String value) {
-    return value(value, PlistValueType.STRING);
-  }
-
-  public static PListValue bool(Boolean value) {
-    return value(value, PlistValueType.BOOLEAN);
-  }
-
-  public static PListValue integer(Integer value) {
-    return value(value, PlistValueType.INTEGER);
-  }
-
-  public static PListValue real(Double value) {
-    return value(value, PlistValueType.REAL);
-  }
-
-  public static PListValue date(Date value) {
-    return value(value, PlistValueType.DATE);
-  }
-
-  public static PListValue array(List<PListValue> value) {
-    return value(value, PlistValueType.ARRAY);
-  }
-
-  public static PListValue array(PListValue... value) {
-    return value(Arrays.asList(value), PlistValueType.ARRAY);
-  }
-
-  public static PListValue dict(Plist value) {
-    return value(value, PlistValueType.DICT);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    PListValue value = (PListValue)o;
-
-    if (myType != value.myType) return false;
-    if (!Objects.equals(myValue, value.myValue)) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myValue != null ? myValue.hashCode() : 0;
-    result = 31 * result + myType.hashCode();
-    return result;
-  }
-
-  @Override
-  public String toString() {
-    return "PListValue{" +
-           "myValue=" + myValue +
-           ", myType=" + myType +
-           '}';
-  }
-
-  private static final class NullablePListValue extends PListValue {
-    private NullablePListValue(PlistValueType type) {
-      super(null, type);
+data class PListValue(val value: Any?, val type: PlistValueType) {
+  val plist: Plist
+    get() = when {
+      value == null -> Plist.EMPTY_PLIST
+      type == PlistValueType.DICT -> this.value as Plist
+      else -> Plist.EMPTY_PLIST
     }
 
-    @Override
-    public @NotNull Plist getPlist() {
-      return Plist.EMPTY_PLIST;
+  val array: List<PListValue>
+    get() = when {
+      value == null -> emptyList()
+      type == PlistValueType.ARRAY -> this.value as List<PListValue>
+      else -> emptyList()
     }
 
-    @Override
-    public @NotNull List<PListValue> getArray() {
-      return Collections.emptyList();
+  val stringArray: List<String?>
+    get() {
+      return array.map(PListValue::string)
     }
 
-    @Override
-    public @NotNull List<String> getStringArray() {
-      return Collections.emptyList();
+  val string: String?
+    get() = when {
+      value == null -> null
+      type == PlistValueType.STRING -> this.value as String?
+      else -> value.toString()
     }
 
-    @Override
-    public @Nullable String getString() {
-      return null;
+  companion object {
+    fun value(value: Any?, type: PlistValueType): PListValue {
+      return PListValue(value, type)
+    }
+
+    fun string(value: String?): PListValue {
+      return value(value, PlistValueType.STRING)
+    }
+
+    fun bool(value: Boolean?): PListValue {
+      return value(value, PlistValueType.BOOLEAN)
+    }
+
+    fun integer(value: Int?): PListValue {
+      return value(value, PlistValueType.INTEGER)
+    }
+
+    fun real(value: Double?): PListValue {
+      return value(value, PlistValueType.REAL)
+    }
+
+    fun date(value: Date?): PListValue {
+      return value(value, PlistValueType.DATE)
+    }
+
+    fun array(value: List<PListValue?>?): PListValue {
+      return value(value, PlistValueType.ARRAY)
+    }
+
+    fun array(vararg value: PListValue?): PListValue {
+      return value(value.toList(), PlistValueType.ARRAY)
+    }
+
+    fun dict(value: Plist?): PListValue {
+      return value(value, PlistValueType.DICT)
     }
   }
 }

@@ -1,42 +1,43 @@
-package org.jetbrains.plugins.textmate.plist;
+package org.jetbrains.plugins.textmate.plist
 
-import org.junit.Test;
+import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
-public class CompositePlistReaderTest {
+class CompositePlistReaderTest {
   @Test
-  public void parseJson() throws IOException {
-    Plist read = new CompositePlistReader().read(new ByteArrayInputStream("{}".getBytes(StandardCharsets.UTF_8)));
-    assertNotNull(read);
+  @Throws(IOException::class)
+  fun parseJson() {
+    val read = CompositePlistReader().read(ByteArrayInputStream("{}".toByteArray(StandardCharsets.UTF_8)))
+    assertNotNull(read)
   }
 
   @Test
-  public void parseJsonWithNewline() throws IOException {
-    Plist read = new CompositePlistReader().read(new ByteArrayInputStream("\n\n{}".getBytes(StandardCharsets.UTF_8)));
-    assertNotNull(read);
+  @Throws(IOException::class)
+  fun parseJsonWithNewline() {
+    val read = CompositePlistReader().read(ByteArrayInputStream("\n\n{}".toByteArray(StandardCharsets.UTF_8)))
+    assertNotNull(read)
   }
 
   @Test
-  public void parseXml() throws IOException {
-    Plist read = new CompositePlistReader().read(new ByteArrayInputStream(("""
+  @Throws(IOException::class)
+  fun parseXml() {
+    val read = CompositePlistReader().read(ByteArrayInputStream(("""
                                                                              <?xml version="1.0" encoding="UTF-8"?>
                                                                              <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
                                                                              <plist version="1.0">
-                                                                             <dict><key>someKey</key><string>someValue</string></dict></plist>""").getBytes(StandardCharsets.UTF_8)));
-    assertNotNull(read);
+                                                                             <dict><key>someKey</key><string>someValue</string></dict></plist>
+                                                                             """.trimIndent()).toByteArray(StandardCharsets.UTF_8)))
+    assertNotNull(read)
   }
 
   @Test
-  public void parseUnknown() {
-    try {
-      new CompositePlistReader().read(new ByteArrayInputStream("!!!".getBytes(StandardCharsets.UTF_8)));
-      fail("");
-    } catch (IOException ignored) { }
+  fun parseUnknown() {
+    assertFailsWith(IOException::class) {
+      CompositePlistReader().read(ByteArrayInputStream("!!!".toByteArray(StandardCharsets.UTF_8)))
+    }
   }
 }

@@ -8,7 +8,6 @@ import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.plist.PListValue
 import org.jetbrains.plugins.textmate.plist.Plist
-import java.util.Collections
 
 object PreferencesReadUtil {
   /**
@@ -30,7 +29,7 @@ object PreferencesReadUtil {
     return if (scopeName != null && settingsValuePlist != null) scopeName to settingsValuePlist else null
   }
 
-  fun readPairs(pairsValue: PListValue?): Set<TextMateBracePair?>? {
+  fun readPairs(pairsValue: PListValue?): Set<TextMateBracePair>? {
     if (pairsValue == null) {
       return null
     }
@@ -42,7 +41,7 @@ object PreferencesReadUtil {
         if (chars.size == 2) {
           val left = chars[0].string
           val right = chars[1].string
-          if (!left.isEmpty() && !right.isEmpty()) {
+          if (!left.isNullOrEmpty() && !right.isNullOrEmpty()) {
             add(TextMateBracePair(left, right))
           }
         }
@@ -52,12 +51,9 @@ object PreferencesReadUtil {
 
   @JvmStatic
   fun <K, V> compactMap(map: Map<K, V>): Map<K, V> {
-    if (map.isEmpty()) {
-      return emptyMap()
-    }
-    if (map.size == 1) {
-      val singleEntry = map.entries.iterator().next()
-      return Collections.singletonMap(singleEntry.key, singleEntry.value)
+    if (map.size <= 1) {
+      // kotlin return optimized map internally
+      return map.toMap()
     }
     if (map !is HashMap<*, *>) {
       return map

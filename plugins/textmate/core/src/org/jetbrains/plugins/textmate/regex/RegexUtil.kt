@@ -16,7 +16,7 @@ object RegexUtil {
     var result = 0
     var i = startOffset
     while (i < targetOffset) {
-      result += UTF8Encoding.INSTANCE.codeToMbcLength(charSequence.get(i).code)
+      result += UTF8Encoding.INSTANCE.codeToMbcLength(charSequence[i].code)
       i++
     }
     return result

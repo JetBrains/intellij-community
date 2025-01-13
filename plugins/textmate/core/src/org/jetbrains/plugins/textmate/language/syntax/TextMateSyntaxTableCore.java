@@ -74,8 +74,9 @@ public class TextMateSyntaxTableCore {
   private @NotNull SyntaxNodeDescriptor loadRealNode(@NotNull Plist plist,
                                                      @Nullable SyntaxNodeDescriptor parentNode,
                                                      @NotNull TextMateInterner interner) {
-    PListValue scopeNameValue = plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value);
-    CharSequence scopeName = scopeNameValue != null ? interner.intern(scopeNameValue.getString()) : null;
+    PListValue scopeNamePlistValue = plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value);
+    String scopeNameValue = scopeNamePlistValue != null ? scopeNamePlistValue.getString() : null;
+    CharSequence scopeName = scopeNameValue != null ? interner.intern(scopeNameValue) : null;
     MutableSyntaxNodeDescriptor result = new SyntaxNodeDescriptorImpl(scopeName, parentNode);
     if (scopeName != null) {
       rulesMap.put(scopeName, result);
@@ -124,7 +125,8 @@ public class TextMateSyntaxTableCore {
         Plist captureDict = capture.getValue().getPlist();
         PListValue captureName = captureDict.getPlistValue(Constants.NAME_KEY);
         if (captureName != null) {
-          map.put(index, new TextMateCapture.Name(interner.intern(captureName.getString())));
+          String captureNameString = captureName.getString();
+          map.put(index, new TextMateCapture.Name(interner.intern(captureNameString != null ? captureNameString : "")));
         }
         else {
           map.put(index, new TextMateCapture.Rule(loadRealNode(captureDict, parentNode, interner)));
@@ -146,13 +148,13 @@ public class TextMateSyntaxTableCore {
                                              @NotNull SyntaxNodeDescriptor result,
                                              @NotNull TextMateInterner interner) {
     String include = plist.getPlistValue(Constants.INCLUDE_KEY, "").getString();
-    if (!include.isEmpty() && include.charAt(0) == '#') {
+    if (include != null && !include.isEmpty() && include.charAt(0) == '#') {
       return new SyntaxRuleProxyDescriptor(getRuleId(include.substring(1)), result);
     }
     else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(include) || Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(include)) {
       return new SyntaxRootProxyDescriptor(result);
     }
-    int i = include.indexOf('#');
+    int i = include != null ? include.indexOf('#') : -1;
     String scope = i >= 0 ? include.substring(0, i) : include;
     String ruleId = i >= 0 ? include.substring(i + 1) : "";
     return new SyntaxScopeProxyDescriptor(interner.intern(scope), ruleId.isEmpty() ? -1 : getRuleId(ruleId), this, result);

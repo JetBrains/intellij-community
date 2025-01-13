@@ -1,90 +1,86 @@
-package org.jetbrains.plugins.textmate.plist;
+package org.jetbrains.plugins.textmate.plist
 
-import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.jetbrains.plugins.textmate.plist.PListValue.Companion.array
+import org.jetbrains.plugins.textmate.plist.PListValue.Companion.bool
+import org.jetbrains.plugins.textmate.plist.PListValue.Companion.dict
+import org.jetbrains.plugins.textmate.plist.PListValue.Companion.integer
+import org.jetbrains.plugins.textmate.plist.PListValue.Companion.real
+import org.jetbrains.plugins.textmate.plist.PListValue.Companion.string
+import org.junit.Assert
+import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.nio.charset.StandardCharsets
+import kotlin.test.assertEquals
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-
-import static org.jetbrains.plugins.textmate.plist.PListValue.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-public class JsonPlistReaderTest {
-
+class JsonPlistReaderTest {
   @Test
-  public void parseArray() {
-    Plist plist = read("{list:[\"alex\",\"zolotov\",42]}");
-    HashMap<String, PListValue> map = new HashMap<>() {{
-      put("list", array(string("alex"), string("zolotov"), integer(Integer.valueOf(42))));
-    }};
-    assertEquals(Plist.fromMap(map), plist);
+  fun parseArray() {
+    val plist = read("{list:[\"alex\",\"zolotov\",42]}")
+    val map = mapOf("list" to array(string("alex"), string("zolotov"), integer(42)))
+    assertEquals(Plist(map), plist)
   }
 
   @Test
-  public void getStringMethod() {
-    Plist plist = read("{someKey: \"someValue\"}");
-    assertEquals("someValue", plist.getPlistValue("someKey").getString());
-    assertEquals("default", plist.getPlistValue("unknown", "default").getString());
+  fun getStringMethod() {
+    val plist = read("{someKey: \"someValue\"}")
+    Assert.assertEquals("someValue", plist.getPlistValue("someKey")!!.string)
+    Assert.assertEquals("default", plist.getPlistValue("unknown", "default").string)
   }
 
   @Test
-  public void parseString() {
-    Plist plist = read("{someKey: \"someValue\",anotherKey: \">\"}");
-    assertEquals(2, plist.entries().size());
-    assertEquals(string("someValue"), plist.getPlistValue("someKey"));
-    assertEquals(string(">"), plist.getPlistValue("anotherKey"));
-    assertEquals(string("default"), plist.getPlistValue("unknown", "default"));
-    assertNull(plist.getPlistValue("unknown"));
+  fun parseString() {
+    val plist = read("{someKey: \"someValue\",anotherKey: \">\"}")
+    Assert.assertEquals(2, plist.entries().size.toLong())
+    assertEquals(string("someValue"), plist.getPlistValue("someKey"))
+    assertEquals(string(">"), plist.getPlistValue("anotherKey"))
+    assertEquals(string("default"), plist.getPlistValue("unknown", "default"))
+    Assert.assertNull(plist.getPlistValue("unknown"))
   }
 
   @Test
-  public void parseBoolean() {
-    Plist plist = read("{true: true,false: false}");
-    assertEquals(2, plist.entries().size());
-    assertEquals(bool(true), plist.getPlistValue("true"));
-    assertEquals(bool(false), plist.getPlistValue("false"));
-    assertNull(plist.getPlistValue("unknown"));
-    assertEquals(bool(true), plist.getPlistValue("unknown", true));
-    assertEquals(bool(false), plist.getPlistValue("unknown", false));
+  fun parseBoolean() {
+    val plist = read("{true: true,false: false}")
+    Assert.assertEquals(2, plist.entries().size.toLong())
+    assertEquals(bool(true), plist.getPlistValue("true"))
+    assertEquals(bool(false), plist.getPlistValue("false"))
+    Assert.assertNull(plist.getPlistValue("unknown"))
+    assertEquals(bool(true), plist.getPlistValue("unknown", true))
+    assertEquals(bool(false), plist.getPlistValue("unknown", false))
   }
 
   @Test
-  public void parseInteger() {
-    Plist plist = read("{int: 124}");
-    assertEquals(1, plist.entries().size());
-    assertEquals(integer(Integer.valueOf(124)), plist.getPlistValue("int"));
-    assertNull(plist.getPlistValue("unknown"));
-    assertEquals(integer(Integer.valueOf(124)), plist.getPlistValue("unknown", Integer.valueOf(124)));
+  fun parseInteger() {
+    val plist = read("{int: 124}")
+    Assert.assertEquals(1, plist.entries().size.toLong())
+    assertEquals(integer(124), plist.getPlistValue("int"))
+    Assert.assertNull(plist.getPlistValue("unknown"))
+    assertEquals(integer(124), plist.getPlistValue("unknown", 124))
   }
 
   @Test
-  public void parseReal() {
-    Plist plist = read("{real: 145.3}");
-    assertEquals(1, plist.entries().size());
-    assertEquals(real(Double.valueOf(145.3)), plist.getPlistValue("real"));
-    assertEquals(real(Double.valueOf(120.0)), plist.getPlistValue("unknown", 120.0));
-    assertNull(plist.getPlistValue("unknown"));
+  fun parseReal() {
+    val plist = read("{real: 145.3}")
+    Assert.assertEquals(1, plist.entries().size.toLong())
+    assertEquals(real(145.3), plist.getPlistValue("real"))
+    assertEquals(real(120.0), plist.getPlistValue("unknown", 120.0))
+    Assert.assertNull(plist.getPlistValue("unknown"))
   }
 
 
   @Test
-  public void parseInnerDict() {
-    Plist plist = read("{dict: {name: \"alex\",lastname: \"zolotov\",age: 22}}");
-    HashMap<String, PListValue> inner = new HashMap<>() {{
-      put("name", string("alex"));
-      put("lastname", string("zolotov"));
-      put("age", integer(Integer.valueOf(22)));
-    }};
-    HashMap<String, PListValue> map = new HashMap<>() {{
-      put("dict", dict(Plist.fromMap(inner)));
-    }};
-    assertEquals(Plist.fromMap(map), plist);
+  fun parseInnerDict() {
+    val plist = read("{dict: {name: \"alex\",lastname: \"zolotov\",age: 22}}")
+    val inner = mapOf(
+      "name" to string("alex"),
+      "lastname" to string("zolotov"),
+      "age" to integer(22),
+    )
+    val map = mapOf("dict" to dict(Plist(inner)))
+
+    assertEquals(Plist(map), plist)
   }
 
-  protected Plist read(String string) {
-    return new JsonPlistReader().read(new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)));
+  private fun read(string: String): Plist {
+    return JsonPlistReader().read(ByteArrayInputStream(string.toByteArray(StandardCharsets.UTF_8)))
   }
 }
