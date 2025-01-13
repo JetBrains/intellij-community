@@ -89,17 +89,18 @@ private suspend fun CoroutineScope.markSuspendable(task: TaskInfoEntity, indicat
   val tempIndicator = ProgressIndicatorBase()
   val suspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
     { ProgressSuspender.markSuspendable(tempIndicator, suspendableInfo.suspendText) }, tempIndicator)
-  // Instead of markSuspendable, which has to be called under runProcess, we can use attachToProgress on the already created suspender
-  suspender.attachToProgress(indicator)
-
-  val suspenderStateChange = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  ProgressSuspenderTracker.getInstance().startTracking(suspender, object : ProgressSuspenderTracker.SuspenderListener {
-    override fun onStateChanged(progressSuspender: ProgressSuspender) {
-      suspenderStateChange.tryEmit(Unit)
-    }
-  })
 
   try {
+    val suspenderStateChange = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    ProgressSuspenderTracker.getInstance().startTracking(suspender, object : ProgressSuspenderTracker.SuspenderListener {
+      override fun onStateChanged(progressSuspender: ProgressSuspender) {
+        suspenderStateChange.tryEmit(Unit)
+      }
+    })
+
+    // Instead of markSuspendable, which has to be called under runProcess, we can use attachToProgress on the already created suspender
+    suspender.attachToProgress(indicator)
+
     launch {
       suspenderStateChange.collectLatest {
         if (suspender.isSuspended) {
