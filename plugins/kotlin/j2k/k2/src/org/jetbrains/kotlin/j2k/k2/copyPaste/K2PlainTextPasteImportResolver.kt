@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
@@ -206,10 +207,12 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
     private fun PsiQualifiedReference.isResolved(): Boolean =
         runReadAction { this.resolve() } != null
 
+    @OptIn(KaExperimentalApi::class)
     private fun findClassesByShortName(name: String): List<PsiClass> {
         return runReadAction {
             analyze(targetKotlinFile) {
                 val candidateClasses = shortNameCache.getClassesByName(name, scope)
+                val visibilityChecker = createUseSiteVisibilityChecker(targetKotlinFile.symbol, position = targetKotlinFile)
                 candidateClasses.filter { psiClass ->
                     if (!RootKindFilter.everything.matches(psiClass.containingFile)) return@filter false
                     val declarationSymbol = if (psiClass is KtLightClass) {
@@ -217,29 +220,32 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
                     } else {
                         psiClass.namedClassSymbol
                     }
-                    declarationSymbol != null && canBeImported(declarationSymbol)
+                    declarationSymbol != null && canBeImported(declarationSymbol, visibilityChecker)
                 }
             }
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun findUniqueMemberByShortName(name: String): PsiMember? {
         return runReadAction {
             analyze(targetKotlinFile) {
                 val candidateMembers: List<PsiMember> =
                     shortNameCache.getMethodsByName(name, scope).asList() + shortNameCache.getFieldsByName(name, scope).asList()
+                if (candidateMembers.isEmpty()) return@analyze null
+                val visibilityChecker = createUseSiteVisibilityChecker(targetKotlinFile.symbol, position = targetKotlinFile)
                 candidateMembers.filter { member ->
                     if (member.module == null) return@filter false
                     val callableSymbol = member.callableSymbol ?: return@filter false
-                    canBeImported(callableSymbol)
+                    canBeImported(callableSymbol, visibilityChecker)
                 }.singleOrNull()
             }
         }
     }
 
     @OptIn(KaExperimentalApi::class, KaIdeApi::class)
-    private fun KaSession.canBeImported(symbol: KaDeclarationSymbol): Boolean {
-        return symbol.importableFqName != null && isVisible(symbol, targetKotlinFile.symbol, position = targetKotlinFile)
+    private fun KaSession.canBeImported(symbol: KaDeclarationSymbol, visibilityChecker: KaUseSiteVisibilityChecker): Boolean {
+        return symbol.importableFqName != null && visibilityChecker.isVisible(symbol)
     }
 
     private fun runWriteActionOnEDTSync(runnable: () -> Unit) {

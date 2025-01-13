@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiMember
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -29,6 +30,7 @@ internal open class CallableImportCandidatesProvider(
         !javaCallable.isImported() && javaCallable.canBeImported()
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     override fun collectCandidates(
         indexProvider: KtSymbolFromIndexProvider,
     ): List<KaCallableSymbol> {
@@ -56,7 +58,10 @@ internal open class CallableImportCandidatesProvider(
             }
         }
 
-        return candidates.filter { it.isVisible(fileSymbol) && it.callableId != null }
+        if (candidates.isEmpty()) return emptyList()
+
+        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, positionContext.position)
+        return candidates.filter { it.isVisible(visibilityChecker) && it.callableId != null }
     }
 }
 

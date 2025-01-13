@@ -5,6 +5,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -29,8 +30,8 @@ internal abstract class ImportCandidatesProvider(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    protected fun KaSymbol.isVisible(fileSymbol: KaFileSymbol): Boolean =
-        this is KaDeclarationSymbol && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
+    protected fun KaSymbol.isVisible(visibilityChecker: KaUseSiteVisibilityChecker): Boolean =
+        this is KaDeclarationSymbol && visibilityChecker.isVisible(this)
 
     protected fun PsiElement.isImported(): Boolean =
         kotlinFqName?.let { ImportPath(it, isAllUnder = false).isImported(fileImports, excludedFqNames = emptyList()) } == true
