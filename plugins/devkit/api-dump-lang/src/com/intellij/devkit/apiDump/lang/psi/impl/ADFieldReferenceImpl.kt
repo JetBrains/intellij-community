@@ -15,7 +15,7 @@ internal abstract class ADFieldReferenceImpl(type: IElementType) : ADPsiElementI
 }
 
 private class ADFieldPsiReference(psi: ADFieldReference) : ADMemberPsiReference(psi) {
-  override fun resolve(): PsiElement? {
+  override fun resolveRaw(): PsiElement? {
     val classDeclaration = psi.parent?.parent as? ADClassDeclaration ?: return null
     val clazz = classDeclaration.resolvePsiClass() ?: return null
     return clazz.findFieldByName(psi.text, false)

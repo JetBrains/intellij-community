@@ -16,7 +16,7 @@ internal abstract class ADConstructorReferenceImpl(type: IElementType) : ADPsiEl
 }
 
 private class ADConstructorPsiReference(psi: ADConstructorReference) : ADMemberPsiReference(psi) {
-  override fun resolve(): PsiElement? {
+  override fun resolveRaw(): PsiElement? {
     val constructor = psi.parent as? ADConstructor ?: return null
     val classDeclaration = constructor.parent as? ADClassDeclaration ?: return null
     val parameters = constructor.parameters.parameterList.map { parameter -> parameter.text }

@@ -16,7 +16,7 @@ internal abstract class ADMethodReferenceImpl(type: IElementType) : ADPsiElement
 }
 
 private class ADMethodPsiReference(psi: ADMethodReference) : ADMemberPsiReference(psi) {
-  override fun resolve(): PsiElement? {
+  override fun resolveRaw(): PsiElement? {
     val method = psi.parent as? ADMethod ?: return null
     val classDeclaration = method.parent as? ADClassDeclaration ?: return null
     val parameters = method.parameters.parameterList.map { parameter -> parameter.text }

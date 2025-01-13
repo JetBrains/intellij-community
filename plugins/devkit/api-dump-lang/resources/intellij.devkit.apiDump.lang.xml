@@ -19,6 +19,8 @@
 
     <lang.elementManipulator forClass="com.intellij.devkit.apiDump.lang.psi.impl.ADTypeReferenceImplGen"
                              implementationClass="com.intellij.devkit.apiDump.lang.reference.ADTypeReferenceManipulator"/>
+
+    <registryKey defaultValue="false" description="Enable find usages for references in api dump" key="intellij.devkit.api.dump.find.usages"/>
   </extensions>
 
 </idea-plugin>
