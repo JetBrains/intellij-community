@@ -27,7 +27,8 @@ private object PauseListener : DebuggerManagerListener {
     session.process.addDebugProcessListener(object : DebugProcessListener {
       override fun paused(suspendContext: SuspendContext) {
         val context = suspendContext as? SuspendContextImpl ?: return
-        getSessionData(context.debugProcess.session)?.resetNonCancellableSection(context)
+        val sessionData = getSessionData(context.debugProcess.session) ?: return
+        sessionData.setNonCancellableSection(context)
       }
     })
   }
@@ -40,9 +41,10 @@ private object PauseListener : DebuggerManagerListener {
   fun getSessionData(session: DebuggerSession): SessionThreadsData? = sessions[session]
 }
 
-private class SteppingStartListener : SteppingListener {
-  override fun beforeSteppingStarted(suspendContext: SuspendContextImpl, steppingAction: SteppingAction) {
-    PauseListener.getSessionData(suspendContext.debugProcess.session)?.setNonCancellableSection(suspendContext)
+private class ResumeListener : SteppingListener {
+  override fun beforeResume(suspendContext: SuspendContextImpl) {
+    val sessionData = PauseListener.getSessionData(suspendContext.debugProcess.session) ?: return
+    sessionData.resetNonCancellableSection(suspendContext)
   }
 }
 
@@ -71,7 +73,7 @@ private class SessionThreadsData() {
    */
   fun setNonCancellableSection(suspendContext: SuspendContextImpl) {
     try {
-      if (!isSteppingAdjustmentEnabled(suspendContext)) return
+      if (!isPCEAdjustmentEnabled(suspendContext)) return
       val state = getOrCreateThreadState(suspendContext) ?: return
       state.setNonCancellable(suspendContext, true)
     }
@@ -86,7 +88,7 @@ private class SessionThreadsData() {
    */
   fun resetNonCancellableSection(suspendContext: SuspendContextImpl) {
     try {
-      if (!isSteppingAdjustmentEnabled(suspendContext)) return
+      if (!isPCEAdjustmentEnabled(suspendContext)) return
       val pausedThreads = suspendContext.debugProcess.suspendManager.pausedContexts
         .mapNotNull { it.thread }
         .mapNotNull { threadStates[it] }
@@ -113,7 +115,7 @@ private class SessionThreadsData() {
     return state.also { threadStates[thread] = it }
   }
 
-  private fun isSteppingAdjustmentEnabled(suspendContextImpl: SuspendContextImpl): Boolean {
+  private fun isPCEAdjustmentEnabled(suspendContextImpl: SuspendContextImpl): Boolean {
     if (!Registry.`is`("devkit.debugger.prevent.pce.while.stepping")) return false
     if (isIdeRuntime) return true
     val cancellationClasses = suspendContextImpl.virtualMachineProxy.classesByName(CANCELLATION_FQN).filter(ReferenceType::isPrepared)
@@ -133,7 +135,7 @@ private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectRef
                                             "initThreadNonCancellableState",
                                             "()Lcom/intellij/openapi/progress/Cancellation\$DebugNonCancellableState;")
                ?: run {
-                 logger<SteppingStartListener>().debug("Init method not found. Unsupported IJ platform version?")
+                 logger<ResumeListener>().debug("Init method not found. Unsupported IJ platform version?")
                  return null
                }
   try {

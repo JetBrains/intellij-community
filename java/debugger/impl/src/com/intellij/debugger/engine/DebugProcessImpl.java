@@ -2136,7 +2136,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     protected void beforeSteppingAction(SuspendContextImpl context) {
       if (context != null) {
-        SteppingListener.notifySteppingStarted(context, getSteppingAction());
+        DebuggerUtilsImpl.forEachSafe(SteppingListener.getExtensions(),
+                                      listener -> listener.beforeSteppingStarted(context, getSteppingAction()));
       }
     }
 
@@ -2184,6 +2185,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       showStatusText(JavaDebuggerBundle.message("status.process.resumed"));
+      if (!(this instanceof StepCommand)) {
+        DebuggerUtilsImpl.forEachSafe(SteppingListener.getExtensions(), listener -> listener.beforeResume(suspendContext));
+      }
       resumeAction();
 
       myDebugProcessListeners.forEach(it -> it.resumed(suspendContext));
