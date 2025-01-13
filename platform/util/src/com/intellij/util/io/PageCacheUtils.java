@@ -85,22 +85,20 @@ public final class PageCacheUtils {
   static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(CHANNELS_CACHE_CAPACITY);
 
   static {
-    LOG.info("File page caching params:");
-    LOG.info("\tDEFAULT_PAGE_SIZE: " + DEFAULT_PAGE_SIZE);
-    LOG.info("\tDirect memory to use, max: " + MAX_DIRECT_MEMORY_TO_USE_BYTES);
-    if (LOCK_FREE_PAGE_CACHE_ENABLED) {
-      LOG.info("\tFilePageCache: regular + lock-free (LOCK_FREE_PAGE_CACHE_ENABLED:true)");
-      LOG.info("\tNEW_PAGE_CACHE_MEMORY_FRACTION: " + NEW_PAGE_CACHE_MEMORY_FRACTION);
-      LOG.info("\tRegular FilePageCache: " + FILE_PAGE_CACHE_OLD_CAPACITY_BYTES + " bytes");
-      LOG.info("\tNew     FilePageCache: " + FILE_PAGE_CACHE_NEW_CAPACITY_BYTES + " bytes" +
-               " (+ up to " + (HEAP_CAPACITY_FRACTION * 100) + "% overflow)");
-    }
-    else {
-      LOG.info("\tFilePageCache: regular");
-      LOG.info("\tRegular FilePageCache: " + FILE_PAGE_CACHE_OLD_CAPACITY_BYTES + " bytes");
-    }
-
-    LOG.info("\tDirectByteBuffers pool: " + MAX_DIRECT_BUFFERS_POOL_BYTES + " bytes");
+    LOG.info(
+      "File page caching params:\n" +
+      "\tDEFAULT_PAGE_SIZE: " + DEFAULT_PAGE_SIZE + "\n" +
+      "\tDirect memory to use, max: " + MAX_DIRECT_MEMORY_TO_USE_BYTES + "\n" +
+      (LOCK_FREE_PAGE_CACHE_ENABLED
+       ? "\tFilePageCache: regular + lock-free (LOCK_FREE_PAGE_CACHE_ENABLED:true)\n" +
+         "\tNEW_PAGE_CACHE_MEMORY_FRACTION: " + NEW_PAGE_CACHE_MEMORY_FRACTION + "\n" +
+         "\tRegular FilePageCache: " + FILE_PAGE_CACHE_OLD_CAPACITY_BYTES + " bytes\n" +
+         "\tNew     FilePageCache: " + FILE_PAGE_CACHE_NEW_CAPACITY_BYTES + " bytes" +
+         " (+ up to " + (HEAP_CAPACITY_FRACTION * 100) + "% overflow)\n"
+       : "\tFilePageCache: regular\n" +
+         "\tRegular FilePageCache: " + FILE_PAGE_CACHE_OLD_CAPACITY_BYTES + " bytes\n") +
+      "\tDirectByteBuffers pool: " + MAX_DIRECT_BUFFERS_POOL_BYTES + " bytes"
+    );
   }
 
   /**
