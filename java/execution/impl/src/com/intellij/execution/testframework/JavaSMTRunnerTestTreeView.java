@@ -1,11 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
-import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
+import com.intellij.execution.testframework.sm.runner.ui.*;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.Key;
@@ -28,6 +27,21 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
 
   public JavaSMTRunnerTestTreeView(@NotNull TestConsoleProperties testConsoleProperties) {
     myTestConsoleProperties = testConsoleProperties;
+  }
+
+  @Override
+  public void setTestResultsViewer(TestResultsViewer resultsViewer) {
+    super.setTestResultsViewer(resultsViewer);
+    if (resultsViewer instanceof SMTestRunnerResultsForm testFrameworkRunningModel) {
+      TestFrameworkActions.addPropertyListener(JavaAwareTestConsoleProperties.USE_WALL_TIME,
+                                               new TestFrameworkPropertyListener<>() {
+                                                 @Override
+                                                 public void onChanged(Boolean ignore) {
+                                                   testFrameworkRunningModel.redrawStatusLabel();
+                                                 }
+                                               }
+        , testFrameworkRunningModel, true);
+    }
   }
 
   @Override

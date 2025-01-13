@@ -657,6 +657,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.select(testProxy, onDone);
   }
 
+  @ApiStatus.Internal
+  public void redrawStatusLabel() {
+    if (!TestsPresentationUtil.hasNonDefaultCategories(myMentionedCategories)) {
+      myStatusLine.formatTestMessage(isUndefined() ? -1 : myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount,
+                                     myTestsRootNode.getCustomizedDuration(myProperties), myEndTime);
+    }
+  }
+
   private void updateStatusLabel(final boolean testingFinished) {
     if (myFailedTestCount > 0) {
       myStatusLine.setStatus(ProgressBarUtil.FAILED_VALUE);
