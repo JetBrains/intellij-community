@@ -29,7 +29,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull PsiFile myFile;
   private final @NotNull LanguageLevel myLanguageLevel;
   private final @NotNull AnnotationChecker myAnnotationChecker = new AnnotationChecker(this);
-  private final @NotNull ClassChecker myClassChecker = new ClassChecker(this);
+  final @NotNull ClassChecker myClassChecker = new ClassChecker(this);
   private final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
   private final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
@@ -113,6 +113,15 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkAnonymousInheritProhibited(expression);
     if (!hasErrorResults()) myClassChecker.checkAnonymousSealedProhibited(expression);
     if (!hasErrorResults()) myClassChecker.checkQualifiedNew(expression, type, aClass);
+  }
+
+  @Override
+  public void visitTypeParameterList(@NotNull PsiTypeParameterList list) {
+    PsiTypeParameter[] typeParameters = list.getTypeParameters();
+    if (typeParameters.length > 0) {
+      checkFeature(list, JavaFeature.GENERICS);
+      if (!hasErrorResults()) myGenericsChecker.checkTypeParametersList(list, typeParameters);
+    }
   }
 
   @Override

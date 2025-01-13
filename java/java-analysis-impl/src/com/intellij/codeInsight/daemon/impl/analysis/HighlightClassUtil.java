@@ -145,16 +145,6 @@ public final class HighlightClassUtil {
     return info;
   }
 
-  static HighlightInfo.Builder checkCyclicInheritance(@NotNull PsiClass aClass) {
-    PsiClass circularClass = InheritanceUtil.getCircularClass(aClass);
-    if (circularClass != null) {
-      String description = JavaErrorBundle.message("cyclic.inheritance", HighlightUtil.formatClass(circularClass));
-      TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description);
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkClassAlreadyImported(@NotNull PsiClass aClass, @NotNull PsiElement elementToHighlight) {
     PsiFile file = aClass.getContainingFile();
     if (!(file instanceof PsiJavaFile javaFile)) return null;

@@ -1677,15 +1677,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitTypeParameterList(@NotNull PsiTypeParameterList list) {
-    PsiTypeParameter[] typeParameters = list.getTypeParameters();
-    if (typeParameters.length > 0) {
-      add(checkFeature(list, JavaFeature.GENERICS));
-      if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParametersList(list, typeParameters));
-    }
-  }
-
-  @Override
   public void visitVariable(@NotNull PsiVariable variable) {
     super.visitVariable(variable);
     if (variable instanceof PsiPatternVariable patternVariable) {

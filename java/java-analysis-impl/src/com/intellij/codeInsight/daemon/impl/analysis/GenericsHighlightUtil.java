@@ -952,38 +952,6 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkTypeParametersList(@NotNull PsiTypeParameterList list, PsiTypeParameter @NotNull [] parameters) {
-    PsiElement parent = list.getParent();
-    if (parent instanceof PsiClass psiClass && psiClass.isEnum()) {
-      String description = JavaErrorBundle.message("generics.enum.may.not.have.type.parameters");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
-    }
-    if (PsiUtil.isAnnotationMethod(parent)) {
-      String description = JavaErrorBundle.message("generics.annotation.members.may.not.have.type.parameters");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
-    }
-    if (parent instanceof PsiClass psiClass && psiClass.isAnnotationType()) {
-      String description = JavaErrorBundle.message("annotation.may.not.have.type.parameters");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
-    }
-
-    for (int i = 0; i < parameters.length; i++) {
-      PsiTypeParameter typeParameter1 = parameters[i];
-      HighlightInfo.Builder cyclicInheritance = HighlightClassUtil.checkCyclicInheritance(typeParameter1);
-      if (cyclicInheritance != null) return cyclicInheritance;
-      String name1 = typeParameter1.getName();
-      for (int j = i + 1; j < parameters.length; j++) {
-        PsiTypeParameter typeParameter2 = parameters[j];
-        String name2 = typeParameter2.getName();
-        if (Comparing.strEqual(name1, name2)) {
-          String message = JavaErrorBundle.message("generics.duplicate.type.parameter", name1);
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeParameter2).descriptionAndTooltip(message);
-        }
-      }
-    }
-    return null;
-  }
-
   static void checkCatchParameterIsClass(@NotNull PsiParameter parameter, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) return;
 

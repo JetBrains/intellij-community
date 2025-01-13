@@ -323,6 +323,12 @@ public final class JavaErrorKinds {
     parameterized("type.parameter.extends.interface.expected");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> TYPE_PARAMETER_CANNOT_BE_FOLLOWED_BY_OTHER_BOUNDS = 
     parameterized("type.parameter.cannot.be.followed.by.other.bounds");
+  public static final Simple<PsiTypeParameterList> TYPE_PARAMETER_ON_ENUM = error("type.parameter.on.enum");
+  public static final Simple<PsiTypeParameterList> TYPE_PARAMETER_ON_ANNOTATION = error("type.parameter.on.annotation");
+  public static final Simple<PsiTypeParameterList> TYPE_PARAMETER_ON_ANNOTATION_MEMBER = error("type.parameter.on.annotation.member");
+  public static final Simple<PsiTypeParameter> TYPE_PARAMETER_DUPLICATE = 
+    error(PsiTypeParameter.class, "type.parameter.on.annotation.member")
+      .withRawDescription(typeParameter -> message("type.parameter.duplicate", typeParameter.getName()));
 
   public static final Simple<PsiJavaCodeReferenceElement> METHOD_THROWS_CLASS_NAME_EXPECTED =
     error("method.throws.class.name.expected");
