@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.status.widget
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -56,7 +57,8 @@ internal class StatusBarWidgetsActionGroup : DefaultActionGroup() {
   }
 }
 
-internal class ToggleWidgetAction(val widgetFactory: StatusBarWidgetFactory) : DumbAwareToggleAction() {
+internal class ToggleWidgetAction(val widgetFactory: StatusBarWidgetFactory) : DumbAwareToggleAction(),
+                                                                               ActionRemoteBehaviorSpecification.FrontendThenBackend {
   init {
     templatePresentation.text = UIBundle.message("status.bar.toggle.widget.action.name", widgetFactory.displayName)
   }
