@@ -13,6 +13,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
+import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeError;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
@@ -76,13 +77,44 @@ final class JavaErrorFixProvider {
     }
     
     createClassFixes();
+    createGenericFixes();
     createRecordFixes();
+    createTypeFixes();
     createAnnotationFixes();
     createReceiverParameterFixes();
   }
-  
+
   public static JavaErrorFixProvider getInstance() {
     return ApplicationManager.getApplication().getService(JavaErrorFixProvider.class);
+  }
+
+  private void createTypeFixes() {
+    multi(TYPE_INCOMPATIBLE, error -> {
+      JavaIncompatibleTypeError context = error.context();
+      PsiElement anchor = error.psi();
+      PsiElement parent = anchor.getParent();
+      if (anchor instanceof PsiJavaCodeReferenceElement && parent instanceof PsiReferenceList &&
+          parent.getParent() instanceof PsiMethod method && method.getThrowsList() == parent) {
+        // Incompatible type in throws clause
+        PsiClass usedClass = PsiUtil.resolveClassInClassTypeOnly(context.rType());
+        if (usedClass != null && context.lType() instanceof PsiClassType throwableType) {
+          return List.of(myFactory.createExtendsListFix(usedClass, throwableType, true));
+        }
+      }
+      return List.of();
+    });
+
+  }
+
+  private void createGenericFixes() {
+    fix(TYPE_PARAMETER_EXTENDS_INTERFACE_EXPECTED, error -> {
+      PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.psi());
+      return myFactory.createMoveBoundClassToFrontFix(error.context(), type);
+    });
+    fix(TYPE_PARAMETER_EXTENDS_INTERFACE_EXPECTED, error -> {
+      PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.psi());
+      return myFactory.createExtendsListFix(error.context(), type, false);
+    });
   }
 
   private void createClassFixes() {
@@ -103,7 +135,7 @@ final class JavaErrorFixProvider {
                                        ClassUtil.getAnyMethodToImplement(aClass);
       if (anyMethodToImplement == null) return List.of();
       if (!anyMethodToImplement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) ||
-          JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, containingClass)) {
+          JavaPsiFacade.getInstance(error.project()).arePackagesTheSame(aClass, containingClass)) {
         return List.of(myFactory.createImplementMethodsFix(member));
       }
       else {
@@ -196,7 +228,17 @@ final class JavaErrorFixProvider {
       }
       return null;
     });
+    JavaFixProvider<PsiJavaCodeReferenceElement, PsiClass> extendsToImplementsFix = error -> {
+      PsiJavaCodeReferenceElement ref = error.psi();
+      PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(ref);
+      return myFactory.createChangeExtendsToImplementsFix(error.context(), type);
+    };
+    fix(CLASS_EXTENDS_INTERFACE, extendsToImplementsFix);
+    fix(CLASS_IMPLEMENTS_CLASS, extendsToImplementsFix);
+    fix(INTERFACE_EXTENDS_CLASS, extendsToImplementsFix);
     fix(CLASS_SEALED_PERMITS_ON_NON_SEALED, error -> addModifierFix(error.psi(), PsiModifier.SEALED));
+    multi(CLASS_EXTENDS_FINAL, error ->
+      JvmElementActionFactories.createModifierActions(error.context(), MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
   }
   
   private void createRecordFixes() {

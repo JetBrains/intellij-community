@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
@@ -19,8 +20,16 @@ import org.jetbrains.annotations.Nullable;
 public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull JavaErrorKind<Psi, Context> kind, 
                                                                     @NotNull Psi psi, 
                                                                     Context context) {
+  static final String JAVA_DISPLAY_INFORMATION = "--java-display-information";
+  static final String JAVA_DISPLAY_GRAYED = "--java-display-grayed";
+  static final String JAVA_DISPLAY_ERROR = "--java-display-error";
+  
   public JavaCompilationError {
     kind.validate(psi, context);
+  }
+  
+  public @NotNull Project project() {
+    return psi.getProject();
   }
 
   /**
@@ -49,5 +58,20 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
    */
   public @NotNull HtmlChunk description() {
     return kind.description(psi, context);
+  }
+
+  /**
+   * A tooltip may contain formatting classes, including:
+   * <ul>
+   *   <li>"--java-display-information" for informational formatting
+   *   <li>"--java-display-grayed" for grayed formatting
+   *   <li>"--java-display-error" for error formatting (typically red text or background)</li>
+   * </ul>
+   * 
+   * @return a user-readable localized error tooltip.
+   * 
+   */
+  public @NotNull HtmlChunk tooltip() {
+    return kind.tooltip(psi, context);
   }
 }

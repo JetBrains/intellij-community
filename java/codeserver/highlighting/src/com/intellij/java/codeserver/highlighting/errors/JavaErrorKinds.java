@@ -249,6 +249,20 @@ public final class JavaErrorKinds {
       .withRawDescription((ref, target) -> message("class.reference.list.no.enclosing.instance", formatClass(target)));
   public static final Simple<PsiReferenceList> CLASS_CANNOT_EXTEND_MULTIPLE_CLASSES =
     error("class.cannot.extend.multiple.classes");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_INTERFACE = 
+    parameterized("class.extends.interface");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_PROHIBITED_CLASS = 
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.prohibited.class")
+      .withRawDescription((ref, cls) -> message("class.extends.prohibited.class", cls.getQualifiedName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_INHERITS_TYPE_PARAMETER =
+    parameterized("class.inherits.type.parameter");  
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_FINAL = 
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.final").withRawDescription((ref, cls) -> {
+      int choice = cls.isEnum() ? 2 : cls.isRecord() ? 3 : cls.isValueClass() ? 4 : 1;
+      return message("class.extends.final", formatClass(cls), choice);
+    });
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_IMPLEMENTS_CLASS = 
+    parameterized("class.implements.class");
   public static final Simple<PsiClass> CLASS_SEALED_NO_INHERITORS =
     error(PsiClass.class, "class.sealed.no.inheritors").withAnchor(PsiClass::getNameIdentifier);
   public static final Simple<PsiClass> CLASS_SEALED_INCOMPLETE_PERMITS =
@@ -261,6 +275,8 @@ public final class JavaErrorKinds {
     error(PsiClass.class, "class.sealed.permits.on.non.sealed")
       .withAnchor(cls -> requireNonNull(cls.getPermitsList()).getFirstChild())
       .withRawDescription(cls -> message("class.sealed.permits.on.non.sealed", cls.getName()));
+  
+  public static final Simple<PsiJavaCodeReferenceElement> VALUE_CLASS_EXTENDS_NON_ABSTRACT = error("value.class.extends.non.abstract");
   
   public static final Simple<PsiExpression> INSTANTIATION_ENUM = error("instantiation.enum");
   public static final Parameterized<PsiExpression, PsiClass> INSTANTIATION_ABSTRACT = 
@@ -286,6 +302,8 @@ public final class JavaErrorKinds {
   public static final Simple<PsiMethod> INTERFACE_CONSTRUCTOR = error("interface.constructor");
   public static final Simple<PsiReferenceList> INTERFACE_IMPLEMENTS = error(PsiReferenceList.class, "interface.implements")
     .withAnchor(PsiReferenceList::getFirstChild);
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> INTERFACE_EXTENDS_CLASS = 
+    parameterized("interface.extends.class");
 
   public static final Parameterized<PsiJavaFile, PsiImplicitClass> CLASS_IMPLICIT_NO_MAIN_METHOD = 
     error(PsiJavaFile.class, "class.implicit.no.main.method")
@@ -298,6 +316,20 @@ public final class JavaErrorKinds {
   
   public static final Simple<PsiIdentifier> IDENTIFIER_RESTRICTED = error(PsiIdentifier.class, "identifier.restricted")
     .withRawDescription(psi -> message("identifier.restricted", psi.getText()));
+  
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> TYPE_PARAMETER_EXTENDS_INTERFACE_EXPECTED = 
+    parameterized("type.parameter.extends.interface.expected");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> TYPE_PARAMETER_CANNOT_BE_FOLLOWED_BY_OTHER_BOUNDS = 
+    parameterized("type.parameter.cannot.be.followed.by.other.bounds");
+
+  public static final Simple<PsiJavaCodeReferenceElement> METHOD_THROWS_CLASS_NAME_EXPECTED =
+    error("method.throws.class.name.expected");
+
+  public static final Parameterized<PsiElement, JavaIncompatibleTypeError> TYPE_INCOMPATIBLE =
+    parameterized(PsiElement.class, JavaIncompatibleTypeError.class, "type.incompatible")
+      .withDescription((psi, context) -> context.createDescription())
+      .withTooltip((psi, context) -> context.createTooltip());
+    
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {
     return new Simple<>(key);

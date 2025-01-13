@@ -316,33 +316,6 @@ public final class GenericsHighlightUtil {
     }
   }
 
-  static HighlightInfo.Builder checkElementInTypeParameterExtendsList(@NotNull PsiReferenceList referenceList,
-                                                              @NotNull PsiTypeParameter typeParameter,
-                                                              @NotNull JavaResolveResult resolveResult,
-                                                              @NotNull PsiElement element) {
-    PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
-    PsiClass extendFrom = (PsiClass)resolveResult.getElement();
-    if (extendFrom == null) return null;
-    HighlightInfo.Builder errorResult = null;
-    if (!extendFrom.isInterface() && referenceElements.length != 0 && element != referenceElements[0]) {
-      String description = JavaErrorBundle.message("interface.expected");
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-      PsiClassType type =
-        JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(extendFrom, resolveResult.getSubstitutor());
-      IntentionAction action = QuickFixFactory.getInstance().createMoveBoundClassToFrontFix(typeParameter, type);
-      errorResult.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(null), null, null);
-    }
-    else if (referenceElements.length != 0 && element != referenceElements[0] && referenceElements[0].resolve() instanceof PsiTypeParameter) {
-      String description = JavaErrorBundle.message("type.parameter.cannot.be.followed.by.other.bounds");
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-      PsiClassType type =
-        JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(extendFrom, resolveResult.getSubstitutor());
-      IntentionAction action = QuickFixFactory.getInstance().createExtendsListFix(typeParameter, type, false);
-      errorResult.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(null), null, null);
-    }
-    return errorResult;
-  }
-
   static HighlightInfo.Builder checkInterfaceMultipleInheritance(@NotNull PsiClass aClass) {
     PsiClassType[] types = aClass.getSuperTypes();
     if (types.length < 2) return null;
@@ -1272,14 +1245,6 @@ public final class GenericsHighlightUtil {
             .registerFix(QuickFixFactory.getInstance().createDeleteFix(parameterList), null, null, null, null);
         }
       }
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkCannotInheritFromTypeParameter(@Nullable PsiClass superClass, @NotNull PsiJavaCodeReferenceElement toHighlight) {
-    if (superClass instanceof PsiTypeParameter) {
-      String description = JavaErrorBundle.message("class.cannot.inherit.from.its.type.parameter");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(toHighlight).descriptionAndTooltip(description);
     }
     return null;
   }

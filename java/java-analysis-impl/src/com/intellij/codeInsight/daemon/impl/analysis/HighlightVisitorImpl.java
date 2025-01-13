@@ -27,8 +27,11 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -42,25 +45,40 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.NewUI;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.psi.PsiModifier.SEALED;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
+  private final Map<String, Color> myTooltipColors = Map.of(
+    "information", NewUI.isEnabled() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground(),
+    "grayed", UIUtil.getContextHelpForeground(),
+    "error", NamedColorUtil.getErrorForeground()
+  );
+  private static final Pattern COLOR_CLASS = Pattern.compile("class=\"--java-display-(\\w+)\"");
   private @NotNull HighlightInfoHolder myHolder;
   private @NotNull LanguageLevel myLanguageLevel;
   private JavaSdkVersion myJavaSdkVersion;
@@ -212,8 +230,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         case WRONG_REF -> HighlightInfoType.WRONG_REF;
       };
       TextRange range = error.range();
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(type)
-        .descriptionAndTooltip(error.description().toString());
+      HtmlChunk tooltip = error.tooltip();
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(type);
+      if (tooltip.isEmpty()) {
+        info.descriptionAndTooltip(error.description().toString());
+      } else {
+        info.description(error.description().toString()).escapedToolTip(postProcessClasses(tooltip.toString()));
+      }
       if (javaHighlightType == JavaErrorHighlightType.FILE_LEVEL_ERROR) {
         info.fileLevelAnnotation();
       }
@@ -227,6 +250,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       add(info);
     });
+  }
+
+  private @NlsContexts.Tooltip @NotNull String postProcessClasses(@NlsSafe @NotNull String html) {
+    Matcher matcher = COLOR_CLASS.matcher(html);
+    @NlsSafe StringBuilder result = new StringBuilder();
+    while (matcher.find()) {
+      Color color = myTooltipColors.get(matcher.group(1));
+      if (color != null) {
+        matcher.appendReplacement(result, "style=\"color:" + ColorUtil.toHtmlColor(color) + ";\"");
+      } else {
+        matcher.appendReplacement(result, matcher.group());
+      }
+    }
+    matcher.appendTail(result);
+    return result.toString();
   }
 
   @Override

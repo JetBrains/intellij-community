@@ -2,11 +2,14 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeError;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +41,16 @@ final class MethodChecker {
       myDuplicateMethods.put(aClass, signatures);
     }
     return signatures;
+  }
+
+  void checkMustBeThrowable(@NotNull PsiClass aClass, @NotNull PsiElement context) {
+    PsiClassType type = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+    PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
+    if (!TypeConversionUtil.isAssignable(throwable, type)) {
+      if (IncompleteModelUtil.isIncompleteModel(context) && IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context)) return;
+      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(context, new JavaIncompatibleTypeError(throwable, type)));
+    }
   }
 
   private static boolean isEnumSyntheticMethod(@NotNull MethodSignature methodSignature, @NotNull Project project) {

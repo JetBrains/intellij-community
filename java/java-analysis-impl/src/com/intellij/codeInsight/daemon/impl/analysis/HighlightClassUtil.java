@@ -59,26 +59,6 @@ public final class HighlightClassUtil {
     }
   }
 
-  static HighlightInfo.Builder checkExtendsClassAndImplementsInterface(@NotNull PsiReferenceList referenceList,
-                                                                       @NotNull PsiClass extendFrom,
-                                                                       @NotNull PsiJavaCodeReferenceElement ref) {
-    PsiClass aClass = (PsiClass)referenceList.getParent();
-    boolean isImplements = referenceList.equals(aClass.getImplementsList());
-    boolean isInterface = aClass.isInterface();
-    if (isInterface && isImplements) return null;
-    boolean mustBeInterface = isImplements || isInterface;
-    HighlightInfo.Builder errorResult = null;
-    if (extendFrom.isInterface() != mustBeInterface) {
-      String message = JavaErrorBundle.message(mustBeInterface ? "interface.expected" : "no.interface.expected");
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(message);
-      PsiClassType type =
-        JavaPsiFacade.getElementFactory(aClass.getProject()).createType(ref);
-      IntentionAction action = QuickFixFactory.getInstance().createChangeExtendsToImplementsFix(aClass, type);
-      errorResult.registerFix(action, null, null, null, null);
-    }
-    return errorResult;
-  }
-
   static HighlightInfo.Builder checkCannotInheritFromFinal(@NotNull PsiClass superClass, @NotNull PsiElement elementToHighlight) {
     if (superClass.hasModifierProperty(PsiModifier.FINAL) || superClass.isEnum()) {
       int choice;
@@ -383,18 +363,6 @@ public final class HighlightClassUtil {
         builder.registerFix(action, null, null, null, null);
       }
       return builder;
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkValueClassExtends(@NotNull PsiClass superClass,
-                                                      @NotNull PsiClass psiClass,
-                                                      @NotNull PsiElement elementToHighlight) {
-    if (!(!psiClass.isValueClass() ||
-          superClass.isValueClass() ||
-          CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()))) {
-      String message = JavaErrorBundle.message("value.class.can.only.inherit");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message);
     }
     return null;
   }

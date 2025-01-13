@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
+import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -9,7 +10,9 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class JavaErrorFormatUtil {
   static @NotNull @NlsSafe String formatMethod(@NotNull PsiMethod method) {
@@ -86,5 +89,17 @@ final class JavaErrorFormatUtil {
     }
     if (node != null) return node.getTextRange().getStartOffset();
     return textRange.getStartOffset();
+  }
+
+  static @NotNull String formatType(@Nullable PsiType type) {
+    return type == null ? PsiKeyword.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+  }
+
+  static @NlsSafe @NotNull String format(@NotNull PsiElement element) {
+    if (element instanceof PsiClass psiClass) return formatClass(psiClass);
+    if (element instanceof PsiMethod psiMethod) return formatMethod(psiMethod);
+    if (element instanceof PsiField psiField) return formatField(psiField);
+    if (element instanceof PsiLabeledStatement statement) return statement.getName() + ':';
+    return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
 }

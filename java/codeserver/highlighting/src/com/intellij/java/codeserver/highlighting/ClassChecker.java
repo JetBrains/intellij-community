@@ -563,6 +563,53 @@ final class ClassChecker {
     // TODO: module graph
   }
 
+  void checkExtendsClassAndImplementsInterface(@NotNull PsiReferenceList referenceList,
+                                               @NotNull PsiClass extendFrom,
+                                               @NotNull PsiJavaCodeReferenceElement ref) {
+    PsiClass aClass = (PsiClass)referenceList.getParent();
+    boolean isImplements = referenceList.equals(aClass.getImplementsList());
+    boolean isInterface = aClass.isInterface();
+    if (isInterface && isImplements) return;
+    boolean mustBeInterface = isImplements || isInterface;
+    if (extendFrom.isInterface() == mustBeInterface) return;
+
+    JavaErrorKind.Parameterized<PsiJavaCodeReferenceElement, PsiClass> error;
+    if (isInterface) {
+      error = JavaErrorKinds.INTERFACE_EXTENDS_CLASS;
+    } else if (isImplements) {
+      error = JavaErrorKinds.CLASS_IMPLEMENTS_CLASS;
+    } else {
+      error = JavaErrorKinds.CLASS_EXTENDS_INTERFACE;
+    }
+    myVisitor.report(error.create(ref, aClass));
+  }
+
+  void checkValueClassExtends(@NotNull PsiClass superClass,
+                              @NotNull PsiClass psiClass,
+                              @NotNull PsiJavaCodeReferenceElement ref) {
+    if (!(!psiClass.isValueClass() ||
+          superClass.isValueClass() ||
+          CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()))) {
+      myVisitor.report(JavaErrorKinds.VALUE_CLASS_EXTENDS_NON_ABSTRACT.create(ref));
+    }
+  }
+
+  void checkCannotInheritFromFinal(@NotNull PsiClass superClass, @NotNull PsiJavaCodeReferenceElement elementToHighlight) {
+    if (superClass.hasModifierProperty(PsiModifier.FINAL) || superClass.isEnum()) {
+      myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_FINAL.create(elementToHighlight, superClass));
+    }
+  }
+
+  void checkExtendsProhibitedClass(@NotNull PsiClass superClass,
+                                   @NotNull PsiClass psiClass,
+                                   @NotNull PsiJavaCodeReferenceElement elementToHighlight) {
+    String qualifiedName = superClass.getQualifiedName();
+    if (CommonClassNames.JAVA_LANG_ENUM.equals(qualifiedName) && !psiClass.isEnum() ||
+        CommonClassNames.JAVA_LANG_RECORD.equals(qualifiedName) && !psiClass.isRecord()) {
+      myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_PROHIBITED_CLASS.create(elementToHighlight, superClass));
+    }
+  }
+
   private static @Unmodifiable @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
     PsiReferenceList permitsList = psiClass.getPermitsList();
     if (permitsList == null) return Collections.emptyMap();

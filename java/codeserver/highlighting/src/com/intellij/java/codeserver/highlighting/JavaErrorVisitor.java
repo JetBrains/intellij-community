@@ -30,6 +30,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull LanguageLevel myLanguageLevel;
   private final @NotNull AnnotationChecker myAnnotationChecker = new AnnotationChecker(this);
   private final @NotNull ClassChecker myClassChecker = new ClassChecker(this);
+  private final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
   private final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
@@ -147,7 +148,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitModifierList(list);
     PsiElement parent = list.getParent();
     if (parent instanceof PsiMethod method) {
-
+      
     }
     else if (parent instanceof PsiClass aClass) {
       if (!hasErrorResults()) myClassChecker.checkDuplicateNestedClass(aClass);
@@ -251,11 +252,53 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (result == null) return null;
 
     PsiElement resolved = result.getElement();
+    PsiElement parent = ref.getParent();
 
+    if (resolved != null && parent instanceof PsiReferenceList referenceList && !hasErrorResults()) {
+      checkElementInReferenceList(ref, referenceList, result);
+    }
     if (!hasErrorResults()) myClassChecker.checkAbstractInstantiation(ref);
     if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
     if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);
     return result;
+  }
+
+  private void checkElementInReferenceList(@NotNull PsiJavaCodeReferenceElement ref,
+                                           @NotNull PsiReferenceList referenceList,
+                                           @NotNull JavaResolveResult resolveResult) {
+    PsiElement resolved = resolveResult.getElement();
+    PsiElement refGrandParent = referenceList.getParent();
+    if (resolved instanceof PsiClass aClass) {
+      if (refGrandParent instanceof PsiClass parentClass) {
+        if (refGrandParent instanceof PsiTypeParameter typeParameter) {
+          myGenericsChecker.checkElementInTypeParameterExtendsList(referenceList, typeParameter, resolveResult, ref);
+        }
+        else if (referenceList.equals(parentClass.getImplementsList()) || referenceList.equals(parentClass.getExtendsList())) {
+          myClassChecker.checkExtendsClassAndImplementsInterface(referenceList, aClass, ref);
+          if (!hasErrorResults() && referenceList.equals(parentClass.getExtendsList())) {
+            myClassChecker.checkValueClassExtends(aClass, parentClass, ref);
+          }
+          if (!hasErrorResults()) {
+            myClassChecker.checkCannotInheritFromFinal(aClass, ref);
+          }
+          if (!hasErrorResults()) {
+            myClassChecker.checkExtendsProhibitedClass(aClass, parentClass, ref);
+          }
+          if (!hasErrorResults()) {
+            // TODO: checkExtendsSealedClass
+          }
+          if (!hasErrorResults()) {
+            myGenericsChecker.checkCannotInheritFromTypeParameter(aClass, ref);
+          }
+        }
+      }
+      else if (refGrandParent instanceof PsiMethod method && method.getThrowsList() == referenceList) {
+        myMethodChecker.checkMustBeThrowable(aClass, ref);
+      }
+    }
+    else if (refGrandParent instanceof PsiMethod method && referenceList == method.getThrowsList()) {
+      report(JavaErrorKinds.METHOD_THROWS_CLASS_NAME_EXPECTED.create(ref));
+    }
   }
 
   static @Nullable JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {

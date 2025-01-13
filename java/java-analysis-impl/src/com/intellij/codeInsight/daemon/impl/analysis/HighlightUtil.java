@@ -3759,35 +3759,12 @@ public final class HighlightUtil {
     PsiElement refGrandParent = referenceList.getParent();
     if (resolved instanceof PsiClass aClass) {
       if (refGrandParent instanceof PsiClass parentClass) {
-        if (refGrandParent instanceof PsiTypeParameter typeParameter) {
-          builder = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, typeParameter, resolveResult, ref);
-        }
-        else if (referenceList.equals(parentClass.getImplementsList()) || referenceList.equals(parentClass.getExtendsList())) {
-          builder = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, aClass, ref);
-          if (builder == null && referenceList.equals(parentClass.getExtendsList())) {
-            builder = HighlightClassUtil.checkValueClassExtends(aClass, parentClass, ref);
-          }
-          if (builder == null) {
-            builder = HighlightClassUtil.checkCannotInheritFromFinal(aClass, ref);
-          }
-          if (builder == null) {
-            builder = HighlightClassUtil.checkExtendsProhibitedClass(aClass, parentClass, ref);
-          }
-          if (builder == null) {
-            builder = GenericsHighlightUtil.checkCannotInheritFromTypeParameter(aClass, ref);
-          }
-          if (builder == null) {
+        if (!(refGrandParent instanceof PsiTypeParameter)) {
+          if (referenceList.equals(parentClass.getImplementsList()) || referenceList.equals(parentClass.getExtendsList())) {
             builder = HighlightClassUtil.checkExtendsSealedClass(parentClass, aClass, ref);
           }
         }
       }
-      else if (refGrandParent instanceof PsiMethod method && method.getThrowsList() == referenceList) {
-        builder = checkMustBeThrowable(aClass, ref);
-      }
-    }
-    else if (refGrandParent instanceof PsiMethod method && referenceList == method.getThrowsList()) {
-      String description = JavaErrorBundle.message("class.name.expected");
-      builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description);
     }
     return builder;
   }
