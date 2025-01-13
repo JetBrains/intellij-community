@@ -4,16 +4,18 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 internal class PluginDependenciesTest {
-  @Rule
+  @RegisterExtension
   @JvmField
-  val inMemoryFs = InMemoryFsRule()
+  val inMemoryFs = InMemoryFsExtension()
 
   private val rootPath get() = inMemoryFs.fs.getPath("/")
   private val pluginDirPath get() = rootPath.resolve("plugin")
@@ -103,6 +105,8 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `disable plugin if dependency of required content module is not available`() {
+    PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
+    
     PluginBuilder()
       .noDepends()
       .id("sample.plugin")
