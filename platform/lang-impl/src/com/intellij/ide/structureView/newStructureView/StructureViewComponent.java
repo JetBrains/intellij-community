@@ -684,7 +684,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     protected boolean isAutoScrollMode() {
       return myShouldAutoScroll && !myProject.isDisposed()
-             && getSettings().AUTOSCROLL_MODE;
+             && getSettings().AUTOSCROLL_MODE
+             && !Registry.is("logical.structure.actions.on.hover", false);
     }
 
     @Override
@@ -1024,6 +1025,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         Rectangle pathBounds = getPathBounds(path);
         lastHoveredPath = path;
         myLayeredPane.repaintFloatingToolbar(pathBounds.y);
+        getSelectionModel().setSelectionPath(path);
       }
     }
 
