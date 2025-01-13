@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPackageType.entries
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -187,7 +186,7 @@ data class JdkItem(
    * returns Arch if it's expected to be shown, `null` otherwise
    */
   val presentableArchIfNeeded: @NlsSafe String?
-    get() = if (arch != "x86_64") arch else null
+    get() = if (Registry.`is`("jdk.downloader.show.other.arch", false) || arch != "x86_64") arch else null
 
   val fullPresentationText: @NlsSafe String
     get() = product.packagePresentationText + " " + jdkVersion + (presentableArchIfNeeded?.let {" ($it)" } ?: "")
