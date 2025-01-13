@@ -16,7 +16,6 @@ import com.intellij.util.ThreeState
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitLocalBranch
-import git4idea.actions.GitFetch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.fetch.GitFetchInProgressListener
@@ -94,6 +93,7 @@ internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
       override fun fetchStarted() = runInEdt { startLoading() }
       override fun fetchFinished() = runInEdt { finishLoading() }
     })
+    updateBranchesTree()
   }
 
   override fun dispose() {
