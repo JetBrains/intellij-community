@@ -6,6 +6,7 @@ import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
+import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.EDITOR_LAYER_CONTROLLER_KEY
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.client.ClientSystemInfo
@@ -18,15 +19,20 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.ui.ComponentUtil
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Component
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.GraphicsEnvironment
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseEvent.MOUSE_PRESSED
 import java.awt.event.MouseWheelEvent
+import java.awt.geom.Line2D
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
+import javax.swing.plaf.LayerUI
 import kotlin.math.max
 import kotlin.math.min
 
@@ -122,21 +128,45 @@ class DecoratedEditor private constructor(
   }
 
   /** The main thing while we need it - to perform updating of underlying components within keepScrollingPositionWhile. */
-  private class EditorComponentWrapper(
+  class EditorComponentWrapper(
     private val editor: Editor,
     private val editorViewport: JViewport,
     component: Component,
   ) : JPanel(BorderLayout()) {
+    private val layeredPane: JLayer<JPanel>
+    private val overlayLines = mutableListOf<Pair<Line2D, Color>>()
+
     init {
       isOpaque = false
-      // The reason why we need to wrap into fate viewport is the code in [com/intellij/openapi/editor/impl/EditorImpl.java:2031]
-      //     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
-      // There is expected that the parent of myEditorComponent will be not EditorComponentWrapper, but JViewport.
-      add(object : JViewport() {
-        override fun getViewRect() = editorViewport.viewRect
-      }.apply {
-        view = component
-      }, BorderLayout.CENTER)
+
+      val editorPanel = JPanel(BorderLayout()).apply {
+        isOpaque = false
+        val viewportWrapper = object : JViewport() {
+          override fun getViewRect() = editorViewport.viewRect
+        }
+        viewportWrapper.view = component
+        add(viewportWrapper, BorderLayout.CENTER)
+      }
+
+      layeredPane = JLayer(editorPanel).apply {
+        setUI(object : LayerUI<JPanel>() {
+          override fun paint(graphics: Graphics, component: JComponent) {
+            super.paint(graphics, component)
+
+            val g2d = graphics.create() as Graphics2D
+            try {
+              for ((line, color) in overlayLines) {
+                g2d.color = color
+                g2d.draw(line)
+              }
+            } finally {
+              g2d.dispose()
+            }
+          }
+        })
+      }
+
+      add(layeredPane, BorderLayout.CENTER)
     }
 
     override fun validateTree() {
@@ -145,6 +175,16 @@ class DecoratedEditor private constructor(
         super.validateTree()
         JupyterBoundsChangeHandler.get(editor).performPostponed()
       }
+    }
+
+    fun addOverlayLine(line: Line2D, color: Color) {
+      overlayLines.add(line to color)
+      layeredPane.repaint()
+    }
+
+    fun removeOverlayLine(line: Line2D) {
+      overlayLines.removeIf { it.first == line }
+      layeredPane.repaint()
     }
   }
 
@@ -239,7 +279,7 @@ class DecoratedEditor private constructor(
         }
       }
       shiftPressed -> {
-        // select or deselect all cells from primary to selected
+        // select or deselect all cells from primary to the selected one
         val primaryCell = model.primarySelectedCell
         val line1 = primaryCell.lines.first
         val line2 = clickedCell.lines.first
@@ -272,7 +312,11 @@ class DecoratedEditor private constructor(
 
   companion object {
     fun install(original: EditorImpl, manager: NotebookCellInlayManager) {
-      DecoratedEditor(original, manager)
+      val decoratedEditor = DecoratedEditor(original, manager)
+      val controller = EditorLayerController(
+        decoratedEditor.editorImpl.scrollPane.viewport.view as EditorComponentWrapper
+      )
+      original.putUserData(EDITOR_LAYER_CONTROLLER_KEY, controller)
     }
   }
 }
