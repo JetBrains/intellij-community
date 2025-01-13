@@ -62,10 +62,6 @@ fun Project?.getEelApiBlocking(): EelApi {
   return runBlockingMaybeCancellable { getEelApi() }
 }
 
-fun EelDescriptor.upgradeBlocking(): EelApi {
-  return runBlockingMaybeCancellable { upgrade() }
-}
-
 fun Project?.getEelDescriptor(): EelDescriptor {
   return computeProjectPath("Project?.getEelDescriptor")?.getEelDescriptor() ?: LocalEelDescriptor
 }

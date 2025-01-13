@@ -78,6 +78,10 @@ data object LocalEelDescriptor : EelDescriptor {
   }
 }
 
+fun EelDescriptor.upgradeBlocking(): EelApi {
+  return runBlockingMaybeCancellable { upgrade() }
+}
+
 @RequiresBlockingContext
 fun Path.getEelApiBlocking(): EelApi = runBlockingMaybeCancellable { getEelApi() }
 

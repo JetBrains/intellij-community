@@ -19,9 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.eel.LocalEelApi;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,10 +92,10 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     }
 
     var vitrualFilePath = virtualFile.toNioPath();
-    var eel = EelProviderUtil.getEelApiBlocking(vitrualFilePath);
+    var descriptor = EelProviderUtil.getEelDescriptor(vitrualFilePath);
 
-    if (!(eel instanceof LocalEelApi)) {
-      var config = new EelTargetEnvironmentRequest.Configuration(eel);
+    if (descriptor != LocalEelDescriptor.INSTANCE) {
+      var config = new EelTargetEnvironmentRequest.Configuration(EelProviderUtil.upgradeBlocking(descriptor));
       addJavaLangConfig(config, Objects.requireNonNull(EelNioBridgeServiceKt.asEelPath(vitrualFilePath)).toString(), jdk);
       return config;
     }
