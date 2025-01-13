@@ -83,7 +83,7 @@ private class GitSkipHooksConfigurationPanel(
     commitContext.isSkipHooks = isCommitHooksFullyDisabled() || (runHooks.isVisible && !runHooks.isSelected)
   }
 
-  private fun isCommitHooksFullyDisabled(): Boolean = AdvancedSettings.getBoolean("git.commit.do.not.run.hooks")
+  private fun isCommitHooksFullyDisabled(): Boolean = AdvancedSettings.getBoolean("git.commit.do.not.run.commit.hooks")
 
   override fun restoreState() {
     refreshAvailability()
