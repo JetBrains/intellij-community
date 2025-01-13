@@ -19,16 +19,28 @@ class OpenProjectViewCommand(text: String, line: Int) : PlaybackCommandCoroutine
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
+    val parameters = extractCommandArgument(PREFIX).split(",").map { it.trim() }
+    val open = if (parameters.isEmpty()) true else parameters[0].toBoolean()
     val windowManager = context.project.serviceAsync<ToolWindowManager>()
     withTimeout(60.seconds) {
       withContext(Dispatchers.EDT) {
         val window = windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW) ?: throw IllegalStateException("Window is not found")
-        if (!window.isActive && (windowManager.isEditorComponentActive || ToolWindowId.PROJECT_VIEW != windowManager.activeToolWindowId)) {
-          window.activate(null)
-          LOG.warn("Project View is opened")
+        val isActive = window.isActive || !windowManager.isEditorComponentActive && ToolWindowId.PROJECT_VIEW == windowManager.activeToolWindowId
+        if (open) {
+          if (isActive) {
+            window.activate(null)
+          }
+          else {
+            LOG.warn("Project View has been opened already")
+          }
         }
         else {
-          LOG.warn("Project View has been opened already")
+          if (!isActive) {
+            window.hide()
+          }
+          else {
+            LOG.warn("Project View is not open")
+          }
         }
       }
     }

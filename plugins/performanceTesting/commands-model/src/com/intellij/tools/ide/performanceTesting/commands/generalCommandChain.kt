@@ -372,6 +372,10 @@ fun <T : CommandChain> T.openProjectView(): T = apply {
   addCommand("${CMD_PREFIX}openProjectView")
 }
 
+fun <T : CommandChain> T.hideProjectView(): T = apply {
+  addCommand("${CMD_PREFIX}openProjectView false")
+}
+
 fun <T : CommandChain> T.getLibraryPathByName(name: String, path: Path): T = apply {
   addCommand("${CMD_PREFIX}getLibraryPathByName $name,$path")
 }
