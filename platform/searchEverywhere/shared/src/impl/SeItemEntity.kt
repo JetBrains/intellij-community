@@ -4,33 +4,49 @@ package com.intellij.platform.searchEverywhere.impl
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.api.SeItem
-import com.jetbrains.rhizomedb.*
-import fleet.kernel.DurableRef
-import fleet.kernel.change
+import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder.Companion.Entity
+import com.intellij.platform.searchEverywhere.impl.SeItemEntityHolder.Companion.Item
+import com.jetbrains.rhizomedb.EID
+import com.jetbrains.rhizomedb.Entity
+import com.jetbrains.rhizomedb.RefFlags
+import com.jetbrains.rhizomedb.entities
+import fleet.kernel.*
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
+
 @ApiStatus.Experimental
+@Serializable
 class SeItemEntity(override val eid: EID) : Entity {
-  val item: SeItem?
-    get() = this[Item] as? SeItem
+  suspend fun findItemOrNull(): SeItem? {
+    val entity = this
+    return withKernel {
+      entities(Entity, entity).firstOrNull()
+    }?.item
+  }
 
   @ApiStatus.Internal
-  companion object : EntityType<SeItemEntity>(SeItemEntity::class.java.name, "com.intellij", {
-    SeItemEntity(it)
-  }) {
-    private val Item = requiredTransient<Any>("item")
+  companion object : DurableEntityType<SeItemEntity>(SeItemEntity::class, ::SeItemEntity) {
     private val Session = requiredRef<SeSessionEntity>("session", RefFlags.CASCADE_DELETE_BY)
 
-    suspend fun createWith(sessionRef: DurableRef<SeSessionEntity>, item: SeItem): SeItemEntity? {
+    suspend fun createWith(sessionRef: DurableRef<SeSessionEntity>, item: SeItem): DurableRef<SeItemEntity>? {
       return withKernel {
         val session = sessionRef.derefOrNull() ?: return@withKernel null
 
         change {
-          SeItemEntity.new {
-            it[Item] = item
-            it[Session] = session
+          val entity = shared {
+            SeItemEntity.new {
+              it[Session] = session
+            }
           }
-        }
+
+          SeItemEntityHolder.new {
+            it[Item] = item
+            it[Entity] = entity
+          }
+
+          entity
+        }.ref()
       }
     }
   }

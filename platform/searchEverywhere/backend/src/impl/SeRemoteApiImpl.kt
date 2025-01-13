@@ -7,16 +7,16 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
-import com.jetbrains.rhizomedb.EID
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeRemoteApiImpl: SeRemoteApi {
-  override suspend fun itemSelected(projectId: ProjectId, itemId: EID) {
-    SeBackendService.getInstance(projectId.findProject()).itemSelected(itemId)
+  override suspend fun itemSelected(projectId: ProjectId, itemEntityRef: DurableRef<SeItemEntity>) {
+    SeBackendService.getInstance(projectId.findProject()).itemSelected(itemEntityRef)
   }
 
   override suspend fun getItems(projectId: ProjectId,

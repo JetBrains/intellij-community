@@ -4,7 +4,6 @@ package com.intellij.platform.searchEverywhere
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
-import com.jetbrains.rhizomedb.entity
 import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -16,11 +15,12 @@ data class SeItemData(
   val providerId: SeProviderId,
   val weight: Int,
   val presentation: SeItemPresentation,
+  private val itemRef: DurableRef<SeItemEntity>
 ) {
 
   suspend fun fetchItemIfExists(): SeItem? {
     return withKernel {
-      (entity(itemId.value) as? SeItemEntity)?.item
+      itemRef.derefOrNull()?.findItemOrNull()
     }
   }
 
@@ -33,8 +33,12 @@ data class SeItemData(
       weight: Int,
       presentation: SeItemPresentation,
     ): SeItemData? {
-      val entity = SeItemEntity.createWith(sessionRef, item) ?: return null
-      return SeItemData(SeItemId(entity.eid), providerId, weight, presentation)
+      val entityRef = SeItemEntity.createWith(sessionRef, item) ?: return null
+
+      // TODO: Seems like we don't need this id. We should rid of this as soon as SeResultsAccumulator stops using it.
+      val itemId = withKernel { entityRef.derefOrNull()?.eid } ?: return null
+
+      return SeItemData(SeItemId(itemId), providerId, weight, presentation, entityRef)
     }
   }
 }

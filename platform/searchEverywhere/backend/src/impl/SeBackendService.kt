@@ -14,9 +14,7 @@ import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Providers
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Session
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
-import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.entities
-import com.jetbrains.rhizomedb.entity
 import fleet.kernel.DurableRef
 import fleet.kernel.change
 import kotlinx.coroutines.flow.Flow
@@ -62,17 +60,15 @@ class SeBackendService(val project: Project) {
       existingHolderEntities.first().providers
     } ?: emptyMap()
 
-  suspend fun itemSelected(itemId: EID) {
-    val item = withKernel {
-      entity(itemId) as? SeItemEntity
-    }?.item
+  suspend fun itemSelected(itemEntityRef: DurableRef<SeItemEntity>) {
+    val item = itemEntityRef.derefOrNull()?.findItemOrNull()
 
     if (item == null) {
-      println("item not found: $itemId")
+      println("item not found: $itemEntityRef")
       return
     }
 
-    println("item selected: ${item}")
+    println("item selected: ${item.presentation().text}")
   }
 
   companion object {

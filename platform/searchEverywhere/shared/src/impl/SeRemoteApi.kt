@@ -7,7 +7,6 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.jetbrains.rhizomedb.EID
 import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -23,7 +22,7 @@ interface SeRemoteApi: RemoteApi<Unit> {
                        providerId: SeProviderId,
                        params: SeParams): Flow<SeItemData>
 
-  suspend fun itemSelected(projectId: ProjectId, itemId: EID)
+  suspend fun itemSelected(projectId: ProjectId, itemEntityRef: DurableRef<SeItemEntity>)
 
   companion object {
     @JvmStatic

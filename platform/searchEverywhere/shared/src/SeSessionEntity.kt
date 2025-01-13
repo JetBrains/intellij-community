@@ -3,7 +3,7 @@ package com.intellij.platform.searchEverywhere
 
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
-import com.jetbrains.rhizomedb.EntityType
+import fleet.kernel.DurableEntityType
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -11,5 +11,5 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Serializable
 class SeSessionEntity(override val eid: EID) : Entity {
   @Internal
-  companion object : EntityType<SeSessionEntity>(SeSessionEntity::class, ::SeSessionEntity)
+  companion object : DurableEntityType<SeSessionEntity>(SeSessionEntity::class, ::SeSessionEntity)
 }
