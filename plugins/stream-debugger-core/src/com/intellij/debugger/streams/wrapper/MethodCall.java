@@ -22,4 +22,14 @@ public interface MethodCall {
 
   @NotNull
   TextRange getTextRange();
+
+  @NotNull
+  default @NlsSafe String getTabTitle() {
+    return getName().replace(" ", "") + getGenericArguments();
+  }
+
+  @NotNull
+  default @NlsSafe String getTabTooltip() {
+    return TraceUtil.formatWithArguments(this);
+  }
 }

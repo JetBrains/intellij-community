@@ -74,8 +74,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
       final StreamCall call = chain.getCall(i);
       final MyPlaceholder tab = new MyPlaceholder();
-      final String callName = call.getName().replace(" ", "");
-      myTabsPane.insertTab(callName, AllIcons.Debugger.Console, tab, TraceUtil.formatWithArguments(call), i + 1);
+      final String tabTitle = call.getTabTitle();
+      final String tabTooltip = call.getTabTooltip();
+      myTabsPane.insertTab(tabTitle, AllIcons.Debugger.Console, tab, tabTooltip, i + 1);
       myTabContents.add(tab);
     }
 

@@ -73,6 +73,7 @@ abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val ha
       newIntermediateCalls.addAll(handler.additionalCallsBefore())
 
       newIntermediateCalls.add(handler.transformCall(call))
+      newIntermediateCalls.addAll(handler.additionalInseparableCalls())
       newIntermediateCalls.add(createTimePeekCall(call.typeAfter))
 
       newIntermediateCalls.addAll(handler.additionalCallsAfter())
