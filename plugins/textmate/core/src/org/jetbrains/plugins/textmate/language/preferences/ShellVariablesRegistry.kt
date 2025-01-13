@@ -1,11 +1,8 @@
-package org.jetbrains.plugins.textmate.language.preferences;
+package org.jetbrains.plugins.textmate.language.preferences
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 
-public interface ShellVariablesRegistry {
-
+interface ShellVariablesRegistry {
   /**
    * Returns variable value by scope selector.
    *
@@ -13,6 +10,5 @@ public interface ShellVariablesRegistry {
    * @return preferences from table for given scope sorted by descending weigh
    * of rule selector relative to scope selector.
    */
-  @Nullable
-  TextMateShellVariable getVariableValue(@NotNull String name, @Nullable TextMateScope scope);
+  fun getVariableValue(name: String, scope: TextMateScope?): TextMateShellVariable?
 }

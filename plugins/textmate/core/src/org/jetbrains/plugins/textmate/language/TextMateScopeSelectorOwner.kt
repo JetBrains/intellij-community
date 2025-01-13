@@ -1,8 +1,5 @@
-package org.jetbrains.plugins.textmate.language;
+package org.jetbrains.plugins.textmate.language
 
-import org.jetbrains.annotations.NotNull;
-
-public interface TextMateScopeSelectorOwner {
-  @NotNull
-  CharSequence getScopeSelector();
+interface TextMateScopeSelectorOwner {
+  val scopeSelector: CharSequence
 }

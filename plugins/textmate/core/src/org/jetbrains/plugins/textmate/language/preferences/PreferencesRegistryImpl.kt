@@ -8,7 +8,7 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
 
 class PreferencesRegistryImpl(private val weigher: TextMateSelectorWeigher) : PreferencesRegistry {
-  private val myPreferences: MutableSet<Preferences> = hashSetOf()
+  private val myPreferences: MutableSet<Preferences> = mutableSetOf()
   private val myLeftHighlightingBraces: IntSet = IntOpenHashSet()
   private val myRightHighlightingBraces: IntSet = IntOpenHashSet()
   private val myLeftSmartTypingBraces: IntSet = IntOpenHashSet()
@@ -84,7 +84,7 @@ class PreferencesRegistryImpl(private val weigher: TextMateSelectorWeigher) : Pr
    */
   @Synchronized
   override fun getPreferences(scope: TextMateScope): List<Preferences> {
-    return TextMateScopeComparatorCore<Preferences>(weigher, scope, Preferences::getScopeSelector).sortAndFilter(myPreferences)
+    return TextMateScopeComparatorCore<Preferences>(weigher, scope, Preferences::scopeSelector).sortAndFilter(myPreferences)
   }
 
   @Synchronized

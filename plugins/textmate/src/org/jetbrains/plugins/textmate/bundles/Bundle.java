@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.bundles;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -126,7 +127,7 @@ public class Bundle {
    * @deprecated use `TextMateService#readBundle#readPreferences` or `TextMateBundleReader`
    */
   @Deprecated(forRemoval = true)
-  public List<Map.Entry<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
+  public List<Pair<String, Plist>> loadPreferenceFile(@NotNull File file, @NotNull PlistReader plistReader) throws IOException {
     try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
       return Collections.singletonList(PreferencesReadUtil.retrieveSettingsPlist(plistReader.read(in)));
     }

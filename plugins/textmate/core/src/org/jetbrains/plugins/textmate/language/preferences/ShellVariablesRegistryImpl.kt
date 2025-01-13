@@ -33,7 +33,7 @@ class ShellVariablesRegistryImpl(private val weigher: TextMateSelectorWeigher) :
     if (variables == null) {
       return null
     }
-    return TextMateScopeComparatorCore(weigher, scope, TextMateShellVariable::getScopeSelector).max(variables)
+    return TextMateScopeComparatorCore(weigher, scope, TextMateShellVariable::scopeSelector).max(variables)
   }
 
   fun clear() {
