@@ -31,7 +31,7 @@ final class StatusBarWidgetsOptionProvider implements SearchTopHitProvider {
 
     WordPrefixMatcher matcher = new WordPrefixMatcher(pattern);
     for (StatusBarWidgetFactory factory : manager.getWidgetFactories()) {
-      if (!factory.isConfigurable() || !factory.isAvailable(project) || !manager.canBeEnabledOnStatusBar(factory, statusBar)) {
+      if (!manager.canBeEnabledOnStatusBar(factory, statusBar)) {
         continue;
       }
 
