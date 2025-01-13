@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status
 
 import com.intellij.ide.ui.NavBarLocation
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -25,7 +26,7 @@ class StatusTextModeAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpec
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isVisible = ExperimentalUI.isNewUI()
+    e.presentation.isVisible = e.place == ActionPlaces.STATUS_BAR_PLACE && ExperimentalUI.isNewUI()
     e.presentation.isEnabled = UISettings.getInstance().navBarLocation == NavBarLocation.BOTTOM
   }
 
