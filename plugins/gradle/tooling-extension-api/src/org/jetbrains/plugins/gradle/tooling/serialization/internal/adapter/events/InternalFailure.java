@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events;
 
 import org.gradle.tooling.Failure;
+import org.gradle.tooling.events.problems.Problem;
+import org.gradle.tooling.model.internal.Exceptions;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.io.Serializable;
@@ -32,5 +34,11 @@ public final class InternalFailure implements Failure, Serializable {
   @Override
   public List<? extends Failure> getCauses() {
     return this.causes;
+  }
+
+  // Android Studio: Update version of gradle-tooling-api ahead of update in intellij platform
+  @Override
+  public List<Problem> getProblems() {
+    throw Exceptions.unsupportedMethod(InternalFailure.class.getSimpleName() + ".getProblems()");
   }
 }
