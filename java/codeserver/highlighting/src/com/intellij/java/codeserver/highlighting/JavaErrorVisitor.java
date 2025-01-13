@@ -33,6 +33,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
   private final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
+  private final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   JavaErrorVisitor(@NotNull PsiFile file, @NotNull Consumer<JavaCompilationError<?, ?>> consumer) {
@@ -112,7 +113,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkAnonymousInheritFinal(expression);
     if (!hasErrorResults()) myClassChecker.checkAnonymousInheritProhibited(expression);
     if (!hasErrorResults()) myClassChecker.checkAnonymousSealedProhibited(expression);
-    if (!hasErrorResults()) myClassChecker.checkQualifiedNew(expression, type, aClass);
+    if (!hasErrorResults()) myExpressionChecker.checkQualifiedNew(expression, type, aClass);
   }
 
   @Override
