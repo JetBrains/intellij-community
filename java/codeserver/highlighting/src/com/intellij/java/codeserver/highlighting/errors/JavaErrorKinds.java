@@ -261,6 +261,8 @@ public final class JavaErrorKinds {
       int choice = cls.isEnum() ? 2 : cls.isRecord() ? 3 : cls.isValueClass() ? 4 : 1;
       return message("class.extends.final", formatClass(cls), choice);
     });
+  public static final Simple<PsiAnonymousClass> CLASS_ANONYMOUS_EXTENDS_SEALED =
+    error(PsiAnonymousClass.class, "class.anonymous.extends.sealed").withAnchor(PsiAnonymousClass::getBaseClassReference);
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_IMPLEMENTS_CLASS = 
     parameterized("class.implements.class");
   public static final Simple<PsiClass> CLASS_SEALED_NO_INHERITORS =
@@ -329,8 +331,16 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, JavaIncompatibleTypeError.class, "type.incompatible")
       .withDescription((psi, context) -> context.createDescription())
       .withTooltip((psi, context) -> context.createTooltip());
-    
 
+  public static final Simple<PsiNewExpression> NEW_EXPRESSION_QUALIFIED_MALFORMED =
+    error("new.expression.qualified.malformed");
+  public static final Parameterized<PsiNewExpression, PsiClass> NEW_EXPRESSION_QUALIFIED_STATIC_CLASS =
+    parameterized("new.expression.qualified.static.class");
+  public static final Parameterized<PsiNewExpression, PsiClass> NEW_EXPRESSION_QUALIFIED_ANONYMOUS_IMPLEMENTS_INTERFACE =
+    parameterized("new.expression.qualified.anonymous.implements.interface");
+  public static final Simple<PsiElement> NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE =
+    error("new.expression.qualified.qualified.class.reference");
+  
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {
     return new Simple<>(key);
   }

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ClassUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationToPackageInfoFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveMembersIntoClassFix;
@@ -77,6 +78,7 @@ final class JavaErrorFixProvider {
     }
     
     createClassFixes();
+    createExpressionFixes();
     createGenericFixes();
     createRecordFixes();
     createTypeFixes();
@@ -86,6 +88,17 @@ final class JavaErrorFixProvider {
 
   public static JavaErrorFixProvider getInstance() {
     return ApplicationManager.getApplication().getService(JavaErrorFixProvider.class);
+  }
+
+  private void createExpressionFixes() {
+    fix(NEW_EXPRESSION_QUALIFIED_MALFORMED, error -> myFactory.createRemoveNewQualifierFix(error.psi(), null));
+    multi(NEW_EXPRESSION_QUALIFIED_STATIC_CLASS, 
+          error -> error.context().isEnum() ? List.of() : JvmElementActionFactories.createModifierActions(
+            error.context(), MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
+    fix(NEW_EXPRESSION_QUALIFIED_STATIC_CLASS, error -> myFactory.createRemoveNewQualifierFix(error.psi(), error.context()));
+    fix(NEW_EXPRESSION_QUALIFIED_ANONYMOUS_IMPLEMENTS_INTERFACE, error -> myFactory.createRemoveNewQualifierFix(error.psi(), null));
+    fix(NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("remove.qualifier.fix")));
   }
 
   private void createTypeFixes() {
@@ -239,6 +252,7 @@ final class JavaErrorFixProvider {
     fix(CLASS_SEALED_PERMITS_ON_NON_SEALED, error -> addModifierFix(error.psi(), PsiModifier.SEALED));
     multi(CLASS_EXTENDS_FINAL, error ->
       JvmElementActionFactories.createModifierActions(error.context(), MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
+    fix(CLASS_ANONYMOUS_EXTENDS_SEALED, error -> myFactory.createConvertAnonymousToInnerAction(error.psi()));
   }
   
   private void createRecordFixes() {

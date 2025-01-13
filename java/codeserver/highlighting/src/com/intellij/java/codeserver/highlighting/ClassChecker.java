@@ -610,6 +610,64 @@ final class ClassChecker {
     }
   }
 
+  void checkAnonymousInheritFinal(@NotNull PsiNewExpression expression) {
+    PsiAnonymousClass aClass = PsiTreeUtil.getChildOfType(expression, PsiAnonymousClass.class);
+    if (aClass == null) return;
+    PsiClassType baseClassReference = aClass.getBaseClassType();
+    PsiClass baseClass = baseClassReference.resolve();
+    if (baseClass == null) return;
+    checkCannotInheritFromFinal(baseClass, aClass.getBaseClassReference());
+  }
+
+  void checkAnonymousInheritProhibited(@NotNull PsiNewExpression expression) {
+    PsiAnonymousClass aClass = expression.getAnonymousClass();
+    if (aClass != null) {
+      PsiClass superClass = aClass.getSuperClass();
+      PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
+      if (superClass != null && reference != null) {
+        checkExtendsProhibitedClass(superClass, aClass, reference);
+      }
+    }
+  }
+
+  void checkAnonymousSealedProhibited(@NotNull PsiNewExpression newExpression) {
+    PsiAnonymousClass aClass = newExpression.getAnonymousClass();
+    if (aClass != null) {
+      PsiClass superClass = aClass.getBaseClassType().resolve();
+      if (superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED)) {
+        myVisitor.report(JavaErrorKinds.CLASS_ANONYMOUS_EXTENDS_SEALED.create(aClass));
+      }
+    }
+  }
+
+  void checkQualifiedNew(@NotNull PsiNewExpression expression, @Nullable PsiType type, @Nullable PsiClass aClass) {
+    PsiExpression qualifier = expression.getQualifier();
+    if (qualifier == null) return;
+    if (type instanceof PsiArrayType) {
+      myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_QUALIFIED_MALFORMED.create(expression));
+      return;
+    }
+    if (aClass == null) return;
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+      myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_QUALIFIED_STATIC_CLASS.create(expression, aClass));
+      return;
+    }
+    if (aClass instanceof PsiAnonymousClass anonymousClass) {
+      PsiClass baseClass = PsiUtil.resolveClassInType(anonymousClass.getBaseClassType());
+      if (baseClass != null && baseClass.isInterface()) {
+        myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_QUALIFIED_ANONYMOUS_IMPLEMENTS_INTERFACE.create(expression, aClass));
+        return;
+      }
+    }
+    PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
+    if (reference != null) {
+      PsiElement refQualifier = reference.getQualifier();
+      if (refQualifier != null) {
+        myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE.create(refQualifier));
+      }
+    }
+  }
+
   private static @Unmodifiable @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
     PsiReferenceList permitsList = psiClass.getPermitsList();
     if (permitsList == null) return Collections.emptyMap();
