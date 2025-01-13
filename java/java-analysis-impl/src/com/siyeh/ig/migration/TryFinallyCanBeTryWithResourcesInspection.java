@@ -560,23 +560,9 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       if (target == null) {
         return;
       }
-      if (target.equals(variable) && !isCloseMethodCalled(referenceExpression)) {
+      if (target.equals(variable)) {
         used = true;
       }
-    }
-
-    private static boolean isCloseMethodCalled(PsiReferenceExpression referenceExpression) {
-      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class);
-      if (methodCallExpression == null) {
-        return false;
-      }
-      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      if (!argumentList.isEmpty()) {
-        return false;
-      }
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final String name = methodExpression.getReferenceName();
-      return HardcodedMethodConstants.CLOSE.equals(name);
     }
 
     public boolean variableIsUsed() {
