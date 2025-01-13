@@ -2,6 +2,7 @@ package org.jetbrains.plugins.textmate.language.preferences;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -50,7 +51,7 @@ public class TextMateSnippetsLoadingTest {
   @NotNull
   private static SnippetsRegistry loadSnippets(@NotNull String bundleName) {
     Iterator<TextMateSnippet> snippets = readBundle(bundleName).readSnippets().iterator();
-    final SnippetsRegistryImpl snippetsRegistry = new SnippetsRegistryImpl();
+    final SnippetsRegistryImpl snippetsRegistry = new SnippetsRegistryImpl(new TextMateSelectorWeigherImpl());
     while (snippets.hasNext()) {
       snippetsRegistry.register(snippets.next());
     }

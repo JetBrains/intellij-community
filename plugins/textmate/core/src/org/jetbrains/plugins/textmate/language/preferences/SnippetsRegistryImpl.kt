@@ -1,45 +1,41 @@
-package org.jetbrains.plugins.textmate.language.preferences;
+package org.jetbrains.plugins.textmate.language.preferences
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
+import java.util.concurrent.ConcurrentHashMap
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+class SnippetsRegistryImpl(private val weigher: TextMateSelectorWeigher) : SnippetsRegistry {
+  private val mySnippets: MutableMap<String?, PersistentList<TextMateSnippet>> = ConcurrentHashMap<String?, PersistentList<TextMateSnippet>>()
 
-public final class SnippetsRegistryImpl implements SnippetsRegistry {
-  private final @NotNull Map<String, Collection<TextMateSnippet>> mySnippets = new ConcurrentHashMap<>();
-
-  public void register(@NotNull TextMateSnippet snippet) {
-    mySnippets.computeIfAbsent(snippet.getKey(), (key) -> Collections.synchronizedList(new ArrayList<>())).add(snippet);
+  fun register(snippet: TextMateSnippet) {
+    mySnippets.compute(snippet.key) { k, v ->
+      v?.add(snippet) ?: persistentListOf(snippet)
+    }
   }
 
-  @Override
-  public @NotNull Collection<TextMateSnippet> findSnippet(@NotNull String key, @Nullable TextMateScope scope) {
+  override fun findSnippet(key: String, scope: TextMateScope?): Collection<TextMateSnippet?> {
     if (scope == null) {
-      return Collections.emptyList();
+      return mutableListOf<TextMateSnippet?>()
     }
-    Collection<TextMateSnippet> snippets = mySnippets.get(key);
+    val snippets = mySnippets[key]
     if (snippets == null) {
-      return Collections.emptyList();
+      return mutableListOf<TextMateSnippet?>()
     }
-    return new TextMateScopeComparator<>(scope, TextMateSnippet::getScopeSelector).sortAndFilter(snippets);
+    return TextMateScopeComparatorCore(weigher, scope, TextMateSnippet::getScopeSelector).sortAndFilter(snippets)
   }
 
-  @Override
-  public @NotNull Collection<TextMateSnippet> getAvailableSnippets(@Nullable TextMateScope scopeSelector) {
+  override fun getAvailableSnippets(scopeSelector: TextMateScope?): Collection<TextMateSnippet?> {
     if (scopeSelector == null) {
-      return Collections.emptyList();
+      return mutableListOf<TextMateSnippet?>()
     }
-    return new TextMateScopeComparator<>(scopeSelector, TextMateSnippet::getScopeSelector)
-      .sortAndFilter(mySnippets.values().stream().flatMap((values) -> values.stream()));
+    return TextMateScopeComparatorCore(weigher, scopeSelector, TextMateSnippet::getScopeSelector)
+      .sortAndFilter(mySnippets.values.flatMap { it })
   }
 
-  public void clear() {
-    mySnippets.clear();
+  fun clear() {
+    mySnippets.clear()
   }
 }

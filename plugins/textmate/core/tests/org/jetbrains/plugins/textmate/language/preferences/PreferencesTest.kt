@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.language.preferences
 
 import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -99,7 +100,7 @@ class PreferencesTest {
   private fun loadPreferences(bundleName: String): PreferencesRegistry {
     val preferences = TestUtil.readBundle(bundleName).readPreferences().iterator()
     assertNotNull(preferences)
-    val preferencesRegistry = PreferencesRegistryImpl()
+    val preferencesRegistry = PreferencesRegistryImpl(TextMateSelectorWeigherImpl())
     while (preferences.hasNext()) {
       val next = preferences.next()
       preferencesRegistry.addPreferences(Preferences(next.scopeName,

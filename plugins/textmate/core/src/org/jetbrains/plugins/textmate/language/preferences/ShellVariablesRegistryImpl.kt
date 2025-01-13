@@ -1,27 +1,20 @@
-package org.jetbrains.plugins.textmate.language.preferences;
+package org.jetbrains.plugins.textmate.language.preferences
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
+import java.util.concurrent.ConcurrentHashMap
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Function;
+class ShellVariablesRegistryImpl(private val weigher: TextMateSelectorWeigher) : ShellVariablesRegistry {
+  private val myVariables: MutableMap<String?, PersistentList<TextMateShellVariable>> = ConcurrentHashMap<String?, PersistentList<TextMateShellVariable>>()
 
-public final class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
-
-  private final Function<String, Collection<TextMateShellVariable>>
-    ADD_VARIABLE_FACTORY = key -> Collections.synchronizedList(new CopyOnWriteArrayList<>());
-
-  private final @NotNull Map<String, Collection<TextMateShellVariable>> myVariables = new ConcurrentHashMap<>();
-
-  public void addVariable(@NotNull TextMateShellVariable variable) {
-    if (!variable.name.isEmpty()) {
-      myVariables.computeIfAbsent(variable.name, ADD_VARIABLE_FACTORY).add(variable);
+  fun addVariable(variable: TextMateShellVariable) {
+    if (variable.name.isNotEmpty()) {
+      myVariables.compute(variable.name) { k, v ->
+        v?.add(variable) ?: persistentListOf(variable)
+      }
     }
   }
 
@@ -32,20 +25,18 @@ public final class ShellVariablesRegistryImpl implements ShellVariablesRegistry 
    * @return preferences from table for given scope sorted by descending weigh
    * of rule selector relative to scope selector.
    */
-  @Override
-  public @Nullable TextMateShellVariable getVariableValue(@NotNull String name, @Nullable TextMateScope scope) {
+  override fun getVariableValue(name: String, scope: TextMateScope?): TextMateShellVariable? {
     if (scope == null) {
-      return null;
+      return null
     }
-    Collection<TextMateShellVariable> variables = myVariables.get(name);
+    val variables = myVariables[name]
     if (variables == null) {
-      return null;
+      return null
     }
-    return new TextMateScopeComparator<>(scope, TextMateShellVariable::getScopeSelector).max(variables);
+    return TextMateScopeComparatorCore(weigher, scope, TextMateShellVariable::getScopeSelector).max(variables)
   }
 
-  public void clear() {
-    myVariables.clear();
+  fun clear() {
+    myVariables.clear()
   }
-
 }

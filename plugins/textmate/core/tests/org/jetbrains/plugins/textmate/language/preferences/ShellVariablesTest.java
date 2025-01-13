@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.TestUtil;
 import org.jetbrains.plugins.textmate.bundles.TextMatePreferences;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -28,7 +29,7 @@ public class ShellVariablesTest {
   private static ShellVariablesRegistry loadVariables(@NotNull String bundleName) {
     Iterator<TextMatePreferences> preferences = TestUtil.readBundle(bundleName).readPreferences().iterator();
     assertNotNull(preferences);
-    ShellVariablesRegistryImpl variablesRegistry = new ShellVariablesRegistryImpl();
+    ShellVariablesRegistryImpl variablesRegistry = new ShellVariablesRegistryImpl(new TextMateSelectorWeigherImpl());
     while (preferences.hasNext()) {
       for (TextMateShellVariable variable : preferences.next().getVariables()) {
         variablesRegistry.addVariable(variable);

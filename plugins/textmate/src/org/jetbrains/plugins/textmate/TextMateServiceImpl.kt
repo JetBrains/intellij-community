@@ -30,6 +30,9 @@ import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -44,12 +47,13 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
   private var isInitialized = false
   private val registrationLock = ReentrantLock()
 
+  private val globalCachingSelectorWeigher: TextMateSelectorWeigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
   private val customHighlightingColors = HashMap<CharSequence, TextMateTextAttributesAdapter>()
   private var extensionMapping: Map<TextMateFileNameMatcher, CharSequence> = java.util.Map.of()
   private val syntaxTable = TextMateSyntaxTableCore()
-  private val snippetRegistry = SnippetsRegistryImpl()
-  private val preferenceRegistry = PreferencesRegistryImpl()
-  private val shellVariablesRegistry = ShellVariablesRegistryImpl()
+  private val snippetRegistry = SnippetsRegistryImpl(globalCachingSelectorWeigher)
+  private val preferenceRegistry = PreferencesRegistryImpl(globalCachingSelectorWeigher)
+  private val shellVariablesRegistry = ShellVariablesRegistryImpl(globalCachingSelectorWeigher)
   private val interner: TextMateInterner = TextMateConcurrentMapInterner()
 
   override fun reloadEnabledBundles() {
