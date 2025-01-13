@@ -5,6 +5,7 @@ import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -33,5 +34,24 @@ public final class JavaErrorCollector {
    */
   public void processElement(@NotNull PsiElement element) {
     element.accept(myVisitor);
+  }
+
+  /**
+   * @param element element to check
+   * @return the first compilation error while processing the specified element (without processing its children)
+   */
+  public static @Nullable JavaCompilationError<?, ?> findSingleError(@NotNull PsiElement element) {
+    var processor = new Consumer<JavaCompilationError<?, ?>>() {
+      JavaCompilationError<?, ?> myError = null;
+      
+      @Override
+      public void accept(JavaCompilationError<?, ?> error) {
+        if (myError != null) {
+          myError = error;
+        }
+      }
+    };
+    new JavaErrorCollector(element.getContainingFile(), processor).processElement(element);
+    return processor.myError;
   }
 }

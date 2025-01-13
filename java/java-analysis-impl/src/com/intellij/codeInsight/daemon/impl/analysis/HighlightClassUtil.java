@@ -8,12 +8,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -410,20 +408,5 @@ public final class HighlightClassUtil {
     return modifiers.hasModifierProperty(PsiModifier.SEALED) ||
            modifiers.hasModifierProperty(PsiModifier.NON_SEALED) ||
            modifiers.hasModifierProperty(PsiModifier.FINAL);
-  }
-
-  static HighlightInfo.Builder checkShebangComment(@NotNull PsiComment comment) {
-    if (comment.getTextOffset() != 0) {
-      return null;
-    }
-    if (comment.getText().startsWith("#!")) {
-      VirtualFile file = PsiUtilCore.getVirtualFile(comment);
-      if (file != null && "java".equals(file.getExtension())) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .descriptionAndTooltip(JavaAnalysisBundle.message("text.shebang.mechanism.in.java.files.not.permitted"))
-          .range(comment, 0, 2);
-      }
-    }
-    return null;
   }
 }

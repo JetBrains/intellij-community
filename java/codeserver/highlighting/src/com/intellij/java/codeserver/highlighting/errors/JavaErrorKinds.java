@@ -7,9 +7,11 @@ import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -38,7 +40,16 @@ public final class JavaErrorKinds {
         String name = feature.getFeatureName();
         String version = JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(element)).getDescription();
         return message("insufficient.language.level", name, version);
+      })
+      .withRange((element, feature) -> {
+        if (feature == JavaFeature.TEXT_BLOCK_ESCAPES && element instanceof PsiLiteralExpression literalExpression) {
+          return PsiLiteralUtil.findSlashS(literalExpression.getText());
+        }
+        return null;
       });
+  public static final Parameterized<PsiElement, @NotNull TextRange> ILLEGAL_UNICODE_ESCAPE =
+    parameterized(PsiElement.class, TextRange.class, "illegal.unicode.escape")
+      .withRange((psi, range) -> range);
 
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_HERE = error("annotation.not.allowed.here");
   public static final Simple<PsiPackageStatement> ANNOTATION_NOT_ALLOWED_ON_PACKAGE =
@@ -349,7 +360,34 @@ public final class JavaErrorKinds {
     parameterized("new.expression.qualified.anonymous.implements.interface");
   public static final Simple<PsiElement> NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE =
     error("new.expression.qualified.qualified.class.reference");
+
+  public static final Simple<PsiComment> COMMENT_SHEBANG_JAVA_FILE = error(PsiComment.class, "comment.shebang.java.file")
+    .withRange(psi -> TextRange.create(0, 2));
+  public static final Simple<PsiComment> COMMENT_UNCLOSED = error(PsiComment.class, "comment.unclosed")
+    .withRange(psi -> TextRange.from(psi.getTextLength() - 1, 1));
   
+  public static final Simple<PsiLiteralExpression> LITERAL_ILLEGAL_UNDERSCORE = error("literal.illegal.underscore");
+  public static final Simple<PsiLiteralExpression> LITERAL_HEXADECIMAL_NO_DIGITS = error("literal.hexadecimal.no.digits");
+  public static final Simple<PsiLiteralExpression> LITERAL_BINARY_NO_DIGITS = error("literal.binary.no.digits");
+  public static final Simple<PsiLiteralExpression> LITERAL_INTEGER_TOO_LARGE = error("literal.integer.too.large");
+  public static final Simple<PsiLiteralExpression> LITERAL_LONG_TOO_LARGE = error("literal.long.too.large");
+  public static final Simple<PsiLiteralExpression> LITERAL_FLOATING_MALFORMED = error("literal.floating.malformed");
+  public static final Simple<PsiLiteralExpression> LITERAL_FLOATING_TOO_LARGE = error("literal.floating.too.large");
+  public static final Simple<PsiLiteralExpression> LITERAL_FLOATING_TOO_SMALL = error("literal.floating.too.small");
+  public static final Parameterized<PsiLiteralExpression, @NotNull TextRange> LITERAL_CHARACTER_ILLEGAL_ESCAPE = 
+    parameterized(PsiLiteralExpression.class, TextRange.class, "literal.character.illegal.escape").withRange((psi, range) -> range);
+  public static final Simple<PsiLiteralExpression> LITERAL_CHARACTER_TOO_LONG = error("literal.character.too.long");
+  public static final Simple<PsiLiteralExpression> LITERAL_CHARACTER_EMPTY = error("literal.character.empty");
+  public static final Simple<PsiLiteralExpression> LITERAL_CHARACTER_UNCLOSED = error("literal.character.unclosed");
+  public static final Parameterized<PsiLiteralExpression, @NotNull TextRange> LITERAL_STRING_ILLEGAL_ESCAPE =
+    parameterized(PsiLiteralExpression.class, TextRange.class, "literal.string.illegal.escape").withRange((psi, range) -> range);
+  public static final Simple<PsiLiteralExpression> LITERAL_STRING_ILLEGAL_LINE_END = error("literal.string.illegal.line.end");
+  public static final Simple<PsiLiteralExpression> LITERAL_TEXT_BLOCK_UNCLOSED = 
+    error(PsiLiteralExpression.class, "literal.text.block.unclosed").withRange(e -> TextRange.from(e.getTextLength(), 0));
+  public static final Simple<PsiLiteralExpression> LITERAL_TEXT_BLOCK_NO_NEW_LINE = 
+    error(PsiLiteralExpression.class, "literal.text.block.no.new.line").withRange(e -> TextRange.create(0, 3));
+
+
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {
     return new Simple<>(key);
   }

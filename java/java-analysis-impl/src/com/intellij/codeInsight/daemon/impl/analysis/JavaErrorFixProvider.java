@@ -99,6 +99,8 @@ final class JavaErrorFixProvider {
     fix(NEW_EXPRESSION_QUALIFIED_ANONYMOUS_IMPLEMENTS_INTERFACE, error -> myFactory.createRemoveNewQualifierFix(error.psi(), null));
     fix(NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE,
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("remove.qualifier.fix")));
+    fix(LITERAL_CHARACTER_TOO_LONG, error -> myFactory.createConvertToStringLiteralAction());
+    fix(LITERAL_CHARACTER_EMPTY, error -> myFactory.createConvertToStringLiteralAction());
   }
 
   private void createTypeFixes() {

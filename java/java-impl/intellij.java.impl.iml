@@ -88,6 +88,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks" />
     <orderEntry type="module" module-name="intellij.platform.todo" />
+    <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" />
   </component>
   <component name="copyright">
     <Base>

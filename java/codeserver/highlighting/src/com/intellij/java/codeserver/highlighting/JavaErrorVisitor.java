@@ -5,14 +5,18 @@ import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +38,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
   private final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
+  private final @NotNull LiteralChecker myLiteralChecker = new LiteralChecker(this);
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   JavaErrorVisitor(@NotNull PsiFile file, @NotNull Consumer<JavaCompilationError<?, ?>> consumer) {
@@ -114,6 +119,40 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkAnonymousInheritProhibited(expression);
     if (!hasErrorResults()) myClassChecker.checkAnonymousSealedProhibited(expression);
     if (!hasErrorResults()) myExpressionChecker.checkQualifiedNew(expression, type, aClass);
+  }
+
+  @Override
+  public void visitComment(@NotNull PsiComment comment) {
+    super.visitComment(comment);
+    if (!hasErrorResults()) checkShebangComment(comment);
+    if (!hasErrorResults()) checkUnclosedComment(comment);
+    if (!hasErrorResults()) checkIllegalUnicodeEscapes(comment);
+  }
+
+  @Override
+  public void visitDocComment(@NotNull PsiDocComment comment) {
+    if (!hasErrorResults()) checkUnclosedComment(comment);
+    if (!hasErrorResults()) checkIllegalUnicodeEscapes(comment);
+  }
+
+  @Override
+  public void visitFragment(@NotNull PsiFragment fragment) {
+    super.visitFragment(fragment);
+    checkIllegalUnicodeEscapes(fragment);
+  }
+
+  @Override
+  public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+    super.visitLiteralExpression(expression);
+
+    if (!hasErrorResults() &&
+        expression.getParent() instanceof PsiCaseLabelElementList &&
+        expression.textMatches(PsiKeyword.NULL)) {
+      checkFeature(expression, JavaFeature.PATTERNS_IN_SWITCH);
+    }
+
+    if (!hasErrorResults()) checkIllegalUnicodeEscapes(expression);
+    if (!hasErrorResults()) myLiteralChecker.getLiteralExpressionParsingError(expression);
   }
 
   @Override
@@ -274,6 +313,29 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
     if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);
     return result;
+  }
+
+  private void checkShebangComment(@NotNull PsiComment comment) {
+    if (comment.getTextOffset() != 0) return;
+    if (comment.getText().startsWith("#!")) {
+      VirtualFile file = PsiUtilCore.getVirtualFile(comment);
+      if (file != null && "java".equals(file.getExtension())) {
+        report(JavaErrorKinds.COMMENT_SHEBANG_JAVA_FILE.create(comment));
+      }
+    }
+  }
+
+  private void checkUnclosedComment(@NotNull PsiComment comment) {
+    if (!(comment instanceof PsiDocComment) && comment.getTokenType() != JavaTokenType.C_STYLE_COMMENT) return;
+    String text = comment.getText();
+    if (text.startsWith("/*") && !text.endsWith("*/")) {
+      report(JavaErrorKinds.COMMENT_UNCLOSED.create(comment));
+    }
+  }
+
+  private void checkIllegalUnicodeEscapes(@NotNull PsiElement element) {
+    LiteralChecker.parseUnicodeEscapes(element.getText(),
+                                       (start, end) -> report(JavaErrorKinds.ILLEGAL_UNICODE_ESCAPE.create(element, TextRange.create(start, end))));
   }
 
   private void checkElementInReferenceList(@NotNull PsiJavaCodeReferenceElement ref,

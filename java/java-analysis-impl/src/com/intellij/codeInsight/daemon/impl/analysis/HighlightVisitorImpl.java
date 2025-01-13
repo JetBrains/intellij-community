@@ -14,6 +14,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
+import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -41,7 +42,6 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -223,33 +223,43 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
     myPreviewFeatureVisitor = myLanguageLevel.isPreview() ? null : new PreviewFeatureUtil.PreviewFeatureVisitor(myLanguageLevel, myErrorSink);
     JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
-    myCollector = new JavaErrorCollector(myFile, error -> {
-      JavaErrorHighlightType javaHighlightType = error.highlightType();
-      HighlightInfoType type = switch (javaHighlightType) {
-        case ERROR, FILE_LEVEL_ERROR -> HighlightInfoType.ERROR;
-        case WRONG_REF -> HighlightInfoType.WRONG_REF;
-      };
-      TextRange range = error.range();
-      HtmlChunk tooltip = error.tooltip();
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(type);
-      if (tooltip.isEmpty()) {
-        info.descriptionAndTooltip(error.description().toString());
-      } else {
-        info.description(error.description().toString()).escapedToolTip(postProcessClasses(tooltip.toString()));
+    myCollector = new JavaErrorCollector(myFile, error -> reportError(error, errorFixProvider));
+  }
+
+  private void reportError(JavaCompilationError<?, ?> error, JavaErrorFixProvider errorFixProvider) {
+    JavaErrorHighlightType javaHighlightType = error.highlightType();
+    HighlightInfoType type = switch (javaHighlightType) {
+      case ERROR, FILE_LEVEL_ERROR -> HighlightInfoType.ERROR;
+      case WRONG_REF -> HighlightInfoType.WRONG_REF;
+    };
+    TextRange range = error.range();
+    HtmlChunk tooltip = error.tooltip();
+    HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(type);
+    if (tooltip.isEmpty()) {
+      info.descriptionAndTooltip(error.description().toString());
+    } else {
+      info.description(error.description().toString()).escapedToolTip(postProcessClasses(tooltip.toString()));
+    }
+    if (javaHighlightType == JavaErrorHighlightType.FILE_LEVEL_ERROR) {
+      info.fileLevelAnnotation();
+    }
+    PsiElement anchor = error.anchor();
+    if (range != null) {
+      info.range(anchor, range);
+      if (range.getLength() == 0) {
+        int offset = range.getStartOffset() + anchor.getTextRange().getStartOffset();
+        CharSequence sequence = myFile.getFileDocument().getCharsSequence();
+        if (offset >= sequence.length() || sequence.charAt(offset) == '\n') {
+          info.endOfLine();
+        }
       }
-      if (javaHighlightType == JavaErrorHighlightType.FILE_LEVEL_ERROR) {
-        info.fileLevelAnnotation();
-      }
-      if (range != null) {
-        info.range(error.anchor(), range);
-      } else {
-        info.range(error.anchor());
-      }
-      for (CommonIntentionAction fix : errorFixProvider.getFixes(error)) {
-        info.registerFix(fix.asIntention(), null, null, null, null);
-      }
-      add(info);
-    });
+    } else {
+      info.range(anchor);
+    }
+    for (CommonIntentionAction fix : errorFixProvider.getFixes(error)) {
+      info.registerFix(fix.asIntention(), null, null, null, null);
+    }
+    add(info);
   }
 
   private @NlsContexts.Tooltip @NotNull String postProcessClasses(@NlsSafe @NotNull String html) {
@@ -470,14 +480,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitComment(@NotNull PsiComment comment) {
-    super.visitComment(comment);
-    if (!hasErrorResults()) add(HighlightClassUtil.checkShebangComment(comment));
-    if (!hasErrorResults()) add(HighlightUtil.checkUnclosedComment(comment));
-    if (!hasErrorResults()) HighlightUtil.checkIllegalUnicodeEscapes(comment, myErrorSink);
-  }
-
-  @Override
   public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
     super.visitContinueStatement(statement);
     if (!hasErrorResults()) add(HighlightUtil.checkContinueTarget(statement, myLanguageLevel));
@@ -515,12 +517,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) {
       add(HighlightUtil.checkExtraSemicolonBetweenImportStatements(token, type, myLanguageLevel));
     }
-  }
-
-  @Override
-  public void visitDocComment(@NotNull PsiDocComment comment) {
-    if (!hasErrorResults()) add(HighlightUtil.checkUnclosedComment(comment));
-    if (!hasErrorResults()) HighlightUtil.checkIllegalUnicodeEscapes(comment, myErrorSink);
   }
 
   @Override
@@ -836,25 +832,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitFragment(@NotNull PsiFragment fragment) {
     super.visitFragment(fragment);
-
-    HighlightUtil.checkIllegalUnicodeEscapes(fragment, myErrorSink);
     if (!hasErrorResults()) add(HighlightUtil.checkFragmentError(fragment));
-  }
-
-  @Override
-  public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
-    super.visitLiteralExpression(expression);
-
-    if (!hasErrorResults() &&
-        expression.getParent() instanceof PsiCaseLabelElementList &&
-        expression.textMatches(PsiKeyword.NULL)) {
-      add(checkFeature(expression, JavaFeature.PATTERNS_IN_SWITCH));
-    }
-
-    if (!hasErrorResults()) HighlightUtil.checkIllegalUnicodeEscapes(expression, myErrorSink);
-    if (!hasErrorResults()) {
-      add(HighlightUtil.checkLiteralExpressionParsingError(expression, myLanguageLevel, myFile, null));
-    }
   }
 
   @Override

@@ -42,14 +42,11 @@ import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ImplicitClassSearch;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
@@ -72,11 +69,8 @@ import org.jetbrains.annotations.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -1265,276 +1259,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  public static HighlightInfo.Builder checkLiteralExpressionParsingError(@NotNull PsiLiteralExpression expression,
-                                                                         @NotNull LanguageLevel level,
-                                                                         @Nullable PsiFile file, @Nullable Ref<? super String> description) {
-    PsiElement literal = expression.getFirstChild();
-    assert literal instanceof PsiJavaToken : literal;
-    IElementType type = ((PsiJavaToken)literal).getTokenType();
-    if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD || type == JavaTokenType.NULL_KEYWORD) {
-      return null;
-    }
-
-    boolean isInt = ElementType.INTEGER_LITERALS.contains(type);
-    boolean isFP = ElementType.REAL_LITERALS.contains(type);
-    String rawText = isInt || isFP ? StringUtil.toLowerCase(literal.getText()) : literal.getText();
-    String text = parseUnicodeEscapes(rawText, null);
-    Object value = expression.getValue();
-
-    if (file != null) {
-      if (isFP) {
-        if (text.startsWith(PsiLiteralUtil.HEX_PREFIX)) {
-          HighlightInfo.Builder info = checkFeature(expression, JavaFeature.HEX_FP_LITERALS, level, file);
-          if (info != null) {
-            if (description != null) {
-              description.set(getUnsupportedFeatureMessage(JavaFeature.HEX_FP_LITERALS, level, file));
-            }
-            return info;
-          }
-        }
-      }
-      if (isInt) {
-        if (text.startsWith(PsiLiteralUtil.BIN_PREFIX)) {
-          HighlightInfo.Builder info = checkFeature(expression, JavaFeature.BIN_LITERALS, level, file);
-          if (info != null) {
-            if (description != null) {
-              description.set(getUnsupportedFeatureMessage(JavaFeature.BIN_LITERALS, level, file));
-            }
-            return info;
-          }
-        }
-      }
-      if (isInt || isFP) {
-        if (text.contains("_")) {
-          HighlightInfo.Builder info = checkFeature(expression, JavaFeature.UNDERSCORES, level, file);
-          if (info != null) {
-            if (description != null) {
-              description.set(getUnsupportedFeatureMessage(JavaFeature.UNDERSCORES, level, file));
-            }
-            return info;
-          }
-          info = checkUnderscores(expression, text, isInt);
-          if (info != null) {
-            if (description != null) {
-              description.set(JavaErrorBundle.message("illegal.underscore"));
-            }
-            return info;
-          }
-        }
-      }
-    }
-
-    PsiElement parent = expression.getParent();
-    if (type == JavaTokenType.INTEGER_LITERAL) {
-      String cleanText = StringUtil.replace(text, "_", "");
-      //literal 2147483648 may appear only as the operand of the unary negation operator -.
-      if (!(cleanText.equals(PsiLiteralUtil._2_IN_31) &&
-            parent instanceof PsiPrefixExpression prefixExpression &&
-            prefixExpression.getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (cleanText.equals(PsiLiteralUtil.HEX_PREFIX)) {
-          String message = JavaErrorBundle.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
-          if (description != null) {
-            description.set(message);
-          }
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-        }
-        if (cleanText.equals(PsiLiteralUtil.BIN_PREFIX)) {
-          String message = JavaErrorBundle.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
-          if (description != null) {
-            description.set(message);
-          }
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-        }
-        if (value == null || cleanText.equals(PsiLiteralUtil._2_IN_31)) {
-          String message = JavaErrorBundle.message("integer.number.too.large");
-          if (description != null) {
-            description.set(message);
-          }
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-        }
-      }
-    }
-    else if (type == JavaTokenType.LONG_LITERAL) {
-      String cleanText = StringUtil.replace(StringUtil.trimEnd(text, 'l'), "_", "");
-      //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
-      if (!(cleanText.equals(PsiLiteralUtil._2_IN_63) &&
-            parent instanceof PsiPrefixExpression prefixExpression &&
-            prefixExpression.getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (cleanText.equals(PsiLiteralUtil.HEX_PREFIX)) {
-          String message = JavaErrorBundle.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
-          if (description != null) {
-            description.set(message);
-          }
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-        }
-        if (cleanText.equals(PsiLiteralUtil.BIN_PREFIX)) {
-          String message = JavaErrorBundle.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
-          if (description != null) {
-            description.set(message);
-          }
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-        }
-        if (value == null || cleanText.equals(PsiLiteralUtil._2_IN_63)) {
-          String message = JavaErrorBundle.message("long.number.too.large");
-          if (description != null) {
-            description.set(message);
-          }
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-        }
-      }
-    }
-    else if (isFP) {
-      if (value == null) {
-        String message = JavaErrorBundle.message("malformed.floating.point.literal");
-        if (description != null) {
-          description.set(message);
-        }
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      }
-    }
-    else if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (!StringUtil.startsWithChar(text, '\'')) {
-        return null;
-      }
-      if (!StringUtil.endsWithChar(text, '\'') || text.length() == 1) {
-        String message = JavaErrorBundle.message("unclosed.char.literal");
-        if (description != null) {
-          description.set(message);
-        }
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      }
-      int rawLength = rawText.length();
-      StringBuilder chars = new StringBuilder(rawLength);
-      int[] offsets = new int[rawLength + 1];
-      final boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets, false);
-      if (!success) {
-        String message = JavaErrorBundle.message("illegal.escape.character.in.character.literal");
-        if (description != null) {
-          description.set(message);
-        }
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
-          .descriptionAndTooltip(message);
-      }
-      int length = chars.length();
-      if (length > 3) {
-        String message = JavaErrorBundle.message("too.many.characters.in.character.literal");
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-        IntentionAction action = getFixFactory().createConvertToStringLiteralAction();
-        info.registerFix(action, null, null, null, null);
-        if (description != null) {
-          description.set(message);
-        }
-        return info;
-      }
-      else if (length == 2) {
-        String message = JavaErrorBundle.message("empty.character.literal");
-        if (description != null) {
-          description.set(message);
-        }
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      }
-      final HighlightInfo.Builder info = checkTextBlockEscapes(expression, rawText, level, file, description);
-      if (info != null) return info;
-    }
-    else if (type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      if (type == JavaTokenType.STRING_LITERAL) {
-        for (PsiElement element = expression.getFirstChild(); element != null; element = element.getNextSibling()) {
-          if (element instanceof OuterLanguageElement) {
-            return null;
-          }
-        }
-
-        if (!StringUtil.startsWithChar(text, '"')) return null;
-        if (!StringUtil.endsWithChar(text, '"') || text.length() == 1) {
-          String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
-          if (description != null) {
-            description.set(message);
-          }
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-        }
-        int length = rawText.length();
-        StringBuilder chars = new StringBuilder(length);
-        int[] offsets = new int[length + 1];
-        boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets, false);
-        if (!success) {
-          String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
-          if (description != null) {
-            description.set(message);
-          }
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
-            .descriptionAndTooltip(message);
-        }
-        final HighlightInfo.Builder info2 = checkTextBlockEscapes(expression, rawText, level, file, description);
-        if (info2 != null) return info2;
-      }
-      else {
-        if (!text.endsWith("\"\"\"")) {
-          String message = JavaErrorBundle.message("text.block.unclosed");
-          if (description != null) {
-            description.set(message);
-          }
-          int p = expression.getTextRange().getEndOffset();
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message);
-        }
-        else if (text.length() > 3) {
-          final HighlightInfo.Builder info = checkTextBlockNewlineAfterOpeningQuotes(expression, text, description);
-          if (info != null) return info;
-          final int rawLength = rawText.length();
-          StringBuilder chars = new StringBuilder(rawLength);
-          int[] offsets = new int[rawLength + 1];
-          boolean success = CodeInsightUtilCore.parseStringCharacters(rawText, chars, offsets, true);
-          if (!success) {
-            String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
-            if (description != null) {
-              description.set(message);
-            }
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(expression, calculateErrorRange(rawText, offsets[chars.length()]))
-              .descriptionAndTooltip(message);
-          }
-        }
-      }
-    }
-
-    if (value instanceof Float number) {
-      if (number.isInfinite()) {
-        String message = JavaErrorBundle.message("floating.point.number.too.large");
-        if (description != null) {
-          description.set(message);
-        }
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      }
-      if (number.floatValue() == 0 && !TypeConversionUtil.isFPZero(text)) {
-        String message = JavaErrorBundle.message("floating.point.number.too.small");
-        if (description != null) {
-          description.set(message);
-        }
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      }
-    }
-    else if (value instanceof Double number) {
-      if (number.isInfinite()) {
-        String message = JavaErrorBundle.message("floating.point.number.too.large");
-        if (description != null) {
-          description.set(message);
-        }
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      }
-      if (number.doubleValue() == 0 && !TypeConversionUtil.isFPZero(text)) {
-        String message = JavaErrorBundle.message("floating.point.number.too.small");
-        if (description != null) {
-          description.set(message);
-        }
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      }
-    }
-
-    return null;
-  }
-
   private static HighlightInfo.Builder checkTextBlockNewlineAfterOpeningQuotes(@NotNull PsiElement expression,
                                                                                String text,
                                                                                @Nullable Ref<? super String> description) {
@@ -1584,22 +1308,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  private static HighlightInfo.@Nullable Builder checkTextBlockEscapes(@NotNull PsiLiteralExpression expression,
-                                                                       @NotNull String text,
-                                                                       @NotNull LanguageLevel level,
-                                                                       @Nullable PsiFile file,
-                                                                       @Nullable Ref<? super String> description) {
-    if (file == null) return null;
-    TextRange errorRange = calculateUnescapedRange(text, "\\s", expression.getTextOffset());
-    if (errorRange == null) return null;
-    HighlightInfo.Builder info = checkFeature(errorRange, JavaFeature.TEXT_BLOCK_ESCAPES, level, file);
-    if (info == null) return null;
-    if (description != null) {
-      description.set(getUnsupportedFeatureMessage(JavaFeature.TEXT_BLOCK_ESCAPES, level, file));
-    }
-    return info;
-  }
-
   private static @NotNull TextRange calculateErrorRange(@NotNull String rawText, int start) {
     int end;
     if (rawText.charAt(start + 1) == 'u') {
@@ -1609,61 +1317,6 @@ public final class HighlightUtil {
     }
     else end = start + 2;
     return new TextRange(start, end);
-  }
-
-  private static TextRange calculateUnescapedRange(@NotNull String text, @NotNull String subText, int offset) {
-    int start = 0;
-    while ((start = StringUtil.indexOf(text, subText, start)) != -1) {
-      int nSlashes = 0;
-      for (int pos = start - 1; pos >= 0; pos--) {
-        if (text.charAt(pos) != '\\') break;
-        nSlashes++;
-      }
-      if (nSlashes % 2 == 0) {
-        return TextRange.from(offset + start, subText.length());
-      }
-      start += subText.length();
-    }
-    return null;
-  }
-
-  private static final Pattern FP_LITERAL_PARTS =
-    Pattern.compile("(?:" +
-                    "0x([_\\p{XDigit}]*)\\.?([_\\p{XDigit}]*)p[+-]?([_\\d]*)" +
-                    "|" +
-                    "([_\\d]*)\\.?([_\\d]*)e?[+-]?([_\\d]*)" +
-                    ")[fd]?");
-
-  private static HighlightInfo.Builder checkUnderscores(@NotNull PsiElement expression, @NotNull String text, boolean isInt) {
-    String[] parts;
-    if (isInt) {
-      int start = 0;
-      if (text.startsWith(PsiLiteralUtil.HEX_PREFIX) || text.startsWith(PsiLiteralUtil.BIN_PREFIX)) start += 2;
-      int end = text.length();
-      if (StringUtil.endsWithChar(text, 'l')) --end;
-      parts = new String[]{text.substring(start, end)};
-    }
-    else {
-      Matcher matcher = FP_LITERAL_PARTS.matcher(text);
-      if (matcher.matches()) {
-        parts = new String[matcher.groupCount()];
-        for (int i = 0; i < matcher.groupCount(); i++) {
-          parts[i] = matcher.group(i + 1);
-        }
-      }
-      else {
-        parts = ArrayUtilRt.EMPTY_STRING_ARRAY;
-      }
-    }
-
-    for (String part : parts) {
-      if (part != null && (StringUtil.startsWithChar(part, '_') || StringUtil.endsWithChar(part, '_'))) {
-        String message = JavaErrorBundle.message("illegal.underscore");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      }
-    }
-
-    return null;
   }
 
   static HighlightInfo.Builder checkMustBeBoolean(@NotNull PsiExpression expr, @Nullable PsiType type) {
@@ -3032,84 +2685,6 @@ public final class HighlightUtil {
   }
 
 
-  static HighlightInfo.Builder checkUnclosedComment(@NotNull PsiComment comment) {
-    if (!(comment instanceof PsiDocComment) && comment.getTokenType() != JavaTokenType.C_STYLE_COMMENT) return null;
-    String text = comment.getText();
-    if (text.startsWith("/*") && !text.endsWith("*/")) {
-      int start = comment.getTextRange().getEndOffset() - 1;
-      int end = start + 1;
-      String description = JavaErrorBundle.message("unclosed.comment");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description);
-    }
-    return null;
-  }
-
-  static void checkIllegalUnicodeEscapes(@NotNull PsiElement element, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    parseUnicodeEscapes(element.getText(), (start, end) -> {
-      int offset = element.getTextOffset();
-      errorSink.accept(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(offset + start, offset + end)
-        .descriptionAndTooltip(JavaErrorBundle.message("illegal.unicode.escape")));
-    });
-  }
-
-  private static @NotNull String parseUnicodeEscapes(@NotNull String text, @Nullable BiConsumer<? super Integer, ? super Integer> illegalEscapeConsumer) {
-    // JLS 3.3
-    if (!text.contains("\\u")) return text;
-    StringBuilder result = new StringBuilder();
-    boolean escape = false;
-    for (int i = 0, length = text.length(); i < length; i++) {
-      char c = text.charAt(i);
-      if (c == '\\') {
-        if (escape) result.append("\\\\");
-        escape = !escape;
-      }
-      else {
-        if (!escape) {
-          result.append(c);
-        }
-        else if (c != 'u') {
-          result.append('\\').append(c);
-          escape = false;
-        }
-        else {
-          int startOfUnicodeEscape = i - 1;
-          do {
-            i++;
-            if (i == length) {
-              if (illegalEscapeConsumer != null) illegalEscapeConsumer.accept(startOfUnicodeEscape, i);
-              return result.toString();
-            }
-            c = text.charAt(i);
-          } while (c == 'u');
-          int value = 0;
-          for (int j = 0; j < 4; j++) {
-            if (i + j >= length) {
-              if (illegalEscapeConsumer != null) illegalEscapeConsumer.accept(startOfUnicodeEscape, i + j);
-              return result.toString();
-            }
-            value <<= 4;
-            c = text.charAt(i + j);
-            if ('0' <= c && c <= '9') value += c - '0';
-            else if ('a' <= c && c <= 'f') value += (c - 'a') + 10;
-            else if ('A' <= c && c <= 'F') value += (c - 'A') + 10;
-            else {
-              if (illegalEscapeConsumer != null) illegalEscapeConsumer.accept(startOfUnicodeEscape, i + j);
-              value = -1;
-              break;
-            }
-          }
-          if (value != -1) {
-            i += 3;
-            result.appendCodePoint(value);
-          }
-          escape = false;
-        }
-      }
-    }
-    return result.toString();
-  }
-
   static void checkCatchTypeIsDisjoint(@NotNull PsiParameter parameter, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     if (!(parameter.getType() instanceof PsiDisjunctionType)) return;
 
@@ -3497,11 +3072,6 @@ public final class HighlightUtil {
   }
 
 
-  private static HighlightInfo.Builder checkMustBeThrowable(@NotNull PsiClass aClass, @NotNull PsiElement context) {
-    PsiClassType type = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
-    return checkMustBeThrowable(type, context, false);
-  }
-
   static HighlightInfo.Builder checkReference(@NotNull PsiJavaCodeReferenceElement ref,
                                               @NotNull JavaResolveResult result,
                                               @NotNull PsiFile containingFile,
@@ -3884,20 +3454,6 @@ public final class HighlightUtil {
     if (!feature.isSufficient(level)) {
       message = message == null ? getUnsupportedFeatureMessage(feature, level, file) : message;
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message);
-      registerIncreaseLanguageLevelFixes(file, feature, info);
-      return info;
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkFeature(@NotNull TextRange range,
-                                            @NotNull JavaFeature feature,
-                                            @NotNull LanguageLevel level,
-                                            @NotNull PsiFile file) {
-    if (!feature.isSufficient(level)) {
-      String message = getUnsupportedFeatureMessage(feature, level, file);
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
       registerIncreaseLanguageLevelFixes(file, feature, info);
       return info;
     }

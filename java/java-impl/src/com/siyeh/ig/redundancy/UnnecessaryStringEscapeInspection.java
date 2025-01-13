@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiFragmentImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -241,9 +241,7 @@ public final class UnnecessaryStringEscapeInspection extends BaseInspection impl
       if (type == null) {
         return;
       }
-      HighlightInfo.Builder parsingError =
-        HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null, null);
-      if (parsingError != null) {
+      if (JavaErrorCollector.findSingleError(expression) != null) {
         return;
       }
       InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getCurrentFile().getProject());

@@ -675,6 +675,27 @@ public final class PsiLiteralUtil {
     return null;
   }
 
+  /**
+   * @param text string literal content (either normal, or text-block)
+   * @return range of the first occurrence of '\s' escape; null if there's no '\s' escape 
+   */
+  public static TextRange findSlashS(@NotNull String text) {
+    int start = 0;
+    String slashS = "\\s";
+    while ((start = StringUtil.indexOf(text, slashS, start)) != -1) {
+      int nSlashes = 0;
+      for (int pos = start - 1; pos >= 0; pos--) {
+        if (text.charAt(pos) != '\\') break;
+        nSlashes++;
+      }
+      if (nSlashes % 2 == 0) {
+        return TextRange.from(start, slashS.length());
+      }
+      start += slashS.length();
+    }
+    return null;
+  }
+
   private static final class TextBlockModel {
 
     private final String[] lines;
