@@ -10,7 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateCachingSyntaxMatcher;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcherImpl;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 
 public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
@@ -29,7 +33,7 @@ public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       if (languageDescriptor != null) {
         LOG.debug("Textmate highlighting: " + virtualFile.getPath());
         return new TextMateHighlighter(new TextMateHighlightingLexer(languageDescriptor,
-                                                                     new JoniRegexFactory(),
+                                                                     new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(new JoniRegexFactory(), new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl()))),
                                                                      Registry.get("textmate.line.highlighting.limit").asInteger()));
       }
     }

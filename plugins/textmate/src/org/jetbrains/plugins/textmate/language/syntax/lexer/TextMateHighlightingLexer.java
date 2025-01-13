@@ -6,7 +6,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.regex.RegexFactory;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 
 import java.util.LinkedList;
@@ -26,17 +27,17 @@ public class TextMateHighlightingLexer extends LexerBase {
   private boolean myRestartable;
 
   /**
-   * @deprecated pass regex factory to a constructor
+   * @deprecated pass syntax matcher to a constructor
    */
   public TextMateHighlightingLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
                                    int lineLimit) {
-    myLexer = new TextMateLexer(languageDescriptor, new JoniRegexFactory(), lineLimit);
+    myLexer = new TextMateLexer(languageDescriptor, new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(new JoniRegexFactory(), new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl()))), lineLimit, false);
   }
   
   public TextMateHighlightingLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
-                                   @NotNull RegexFactory regexFactory,
+                                   @NotNull TextMateSyntaxMatcher syntaxMatcher,
                                    int lineLimit) {
-    myLexer = new TextMateLexer(languageDescriptor, regexFactory, lineLimit);
+    myLexer = new TextMateLexer(languageDescriptor, syntaxMatcher, lineLimit, false);
   }
 
   @Override

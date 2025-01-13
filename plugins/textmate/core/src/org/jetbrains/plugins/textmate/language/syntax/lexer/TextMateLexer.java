@@ -11,6 +11,8 @@ import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateCapture;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.regex.*;
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
@@ -34,14 +36,14 @@ public final class TextMateLexer {
   private PersistentList<TextMateLexerState> myStates = ExtensionsKt.persistentListOf();
 
   private final CharSequence myLanguageScopeName;
-  private final RegexFactory myRegexFactory;
+  private final TextMateSyntaxMatcher mySyntaxMatcher;
   private final int myLineLimit;
   private final boolean myStripWhitespaces;
   private final Runnable myCheckCancelledCallback;
   private final TextMateLexerState myLanguageInitialState;
 
   /**
-   * @deprecated pass regex factory to a constructor
+   * @deprecated syntax matcher to a constructor
    */
   @Deprecated
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
@@ -50,26 +52,23 @@ public final class TextMateLexer {
   }
 
   /**
-   * @deprecated pass regex factory to a constructor
+   * @deprecated syntax matcher to a constructor
    */
   @Deprecated
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit, boolean stripWhitespaces) {
-    this(languageDescriptor, new JoniRegexFactory(), lineLimit, stripWhitespaces);
+    this(languageDescriptor,
+         new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(new JoniRegexFactory(), new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl()))),
+         lineLimit,
+         stripWhitespaces);
   }
 
   public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
-                       @NotNull RegexFactory regexFactory,
-                       int lineLimit) {
-    this(languageDescriptor, regexFactory, lineLimit, false);
-  }
-
-  public TextMateLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
-                       @NotNull RegexFactory regexFactory,
+                       @NotNull TextMateSyntaxMatcher syntaxMatcher,
                        int lineLimit,
                        boolean stripWhitespaces) {
     myLanguageScopeName = languageDescriptor.getScopeName();
     myLanguageInitialState = TextMateLexerState.notMatched(languageDescriptor.getRootSyntaxNode());
-    myRegexFactory = regexFactory;
+    mySyntaxMatcher = syntaxMatcher;
     myLineLimit = lineLimit;
     myStripWhitespaces = stripWhitespaces;
     myCheckCancelledCallback = SyntaxMatchUtils.getCheckCancelledCallback();
@@ -129,9 +128,8 @@ public final class TextMateLexer {
       final TextMateLexerState whileState = whileStates.get(whileStates.size() - 1);
       whileStates = whileStates.removeAt(whileStates.size() - 1);
       if (whileState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
-        MatchData matchWhile = SyntaxMatchUtils.matchStringRegex(myRegexFactory,
-                                                                 Constants.StringKey.WHILE, string, lineByteOffset, anchorByteOffset,
-                                                                 matchBeginOfString, whileState);
+        MatchData matchWhile = mySyntaxMatcher.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, anchorByteOffset,
+                                                                matchBeginOfString, whileState, myCheckCancelledCallback);
         if (matchWhile.matched) {
           // todo: support whileCaptures
           if (anchorByteOffset == -1) {
@@ -152,16 +150,13 @@ public final class TextMateLexer {
       TextMateLexerState lastState = states.get(states.size() - 1);
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
 
-      TextMateLexerState currentState = SyntaxMatchUtils.matchFirst(myRegexFactory,
-                                                                    lastRule, string, lineByteOffset, anchorByteOffset, matchBeginOfString,
-                                                                    TextMateWeigh.Priority.NORMAL, myCurrentScope);
+      TextMateLexerState currentState = mySyntaxMatcher.matchRule(lastRule, string, lineByteOffset, anchorByteOffset, matchBeginOfString,
+                                                                  TextMateWeigh.Priority.NORMAL, myCurrentScope, myCheckCancelledCallback);
       SyntaxNodeDescriptor currentRule = currentState.syntaxRule;
       MatchData currentMatch = currentState.matchData;
 
       int endPosition;
-      MatchData endMatch =
-        SyntaxMatchUtils.matchStringRegex(myRegexFactory,
-                                          Constants.StringKey.END, string, lineByteOffset, anchorByteOffset, matchBeginOfString, lastState);
+      MatchData endMatch = mySyntaxMatcher.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, anchorByteOffset, matchBeginOfString, lastState, myCheckCancelledCallback);
       if (endMatch.matched && (!currentMatch.matched ||
                                  currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
                                  lastState.equals(currentState))) {

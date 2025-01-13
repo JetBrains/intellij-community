@@ -9,6 +9,8 @@ import org.jetbrains.plugins.textmate.TestUtil
 import org.jetbrains.plugins.textmate.findScopeByFileName
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
 import org.jetbrains.plugins.textmate.loadBundle
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory
 import java.io.File
@@ -26,7 +28,7 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
 
     Benchmark.newBenchmark("bench") {
       val lexer = TextMateHighlightingLexer(TextMateLanguageDescriptor(scopeName, syntaxTable.getSyntax(scopeName)),
-                                            JoniRegexFactory(),
+                                            TextMateCachingSyntaxMatcher(TextMateSyntaxMatcherImpl(JoniRegexFactory(), TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl()))),
                                             -1)
       lexer.start(text)
       while (lexer.tokenType != null) {

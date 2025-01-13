@@ -1,0 +1,213 @@
+package org.jetbrains.plugins.textmate.language.syntax.lexer
+
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
+import org.jetbrains.plugins.textmate.Constants
+import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
+import org.jetbrains.plugins.textmate.regex.MatchData
+import org.jetbrains.plugins.textmate.regex.RegexFactory
+import org.jetbrains.plugins.textmate.regex.TextMateString
+import java.util.concurrent.TimeUnit
+
+interface TextMateSyntaxMatcher {
+  fun matchRule(
+    syntaxNodeDescriptor: SyntaxNodeDescriptor,
+    string: TextMateString,
+    byteOffset: Int,
+    gosOffset: Int,
+    matchBeginOfString: Boolean,
+    priority: TextMateWeigh.Priority,
+    currentScope: TextMateScope,
+    checkCancelledCallback: Runnable?,
+  ): TextMateLexerState
+
+  fun matchStringRegex(
+    keyName: Constants.StringKey,
+    string: TextMateString,
+    byteOffset: Int,
+    anchorOffset: Int,
+    matchBeginOfString: Boolean,
+    lexerState: TextMateLexerState,
+    checkCancelledCallback: Runnable?,
+  ): MatchData
+}
+
+class TextMateSyntaxMatcherImpl(
+  private val regexFactory: RegexFactory,
+  private val mySelectorWeigher: TextMateSelectorWeigher,
+) : TextMateSyntaxMatcher {
+
+  override fun matchRule(
+    syntaxNodeDescriptor: SyntaxNodeDescriptor,
+    string: TextMateString,
+    byteOffset: Int,
+    gosOffset: Int,
+    matchBeginOfString: Boolean,
+    priority: TextMateWeigh.Priority,
+    currentScope: TextMateScope,
+    checkCancelledCallback: Runnable?,
+  ): TextMateLexerState {
+    var resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor)
+    val children = syntaxNodeDescriptor.getChildren()
+    for (child in children) {
+      resultState = moreImportantState(resultState,
+                                       matchFirstChild(child, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope))
+      if (resultState.matchData.matched && resultState.matchData.byteOffset().start == byteOffset) {
+        // Optimization. There cannot be anything more `important` than the current state matched from the very beginning
+        break
+      }
+    }
+    return moreImportantState(resultState,
+                              matchInjections(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, currentScope,
+                                              checkCancelledCallback))
+  }
+
+  override fun matchStringRegex(
+    keyName: Constants.StringKey,
+    string: TextMateString,
+    byteOffset: Int,
+    anchorOffset: Int,
+    matchBeginOfString: Boolean,
+    lexerState: TextMateLexerState,
+    checkCancelledCallback: Runnable?,
+  ): MatchData {
+    val regex = lexerState.syntaxRule.getStringAttribute(keyName)
+    if (regex == null) return MatchData.NOT_MATCHED
+    val regexString = if (lexerState.syntaxRule.hasBackReference(keyName)) {
+      SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex(regex, lexerState.string, lexerState.matchData)
+    }
+    else {
+      regex.toString()
+    }
+    return regexFactory.regex(regexString).match(string, byteOffset, anchorOffset, matchBeginOfString, checkCancelledCallback)
+  }
+
+  private fun matchFirstChild(
+    syntaxNodeDescriptor: SyntaxNodeDescriptor,
+    string: TextMateString,
+    byteOffset: Int,
+    gosOffset: Int,
+    matchBeginOfString: Boolean,
+    priority: TextMateWeigh.Priority,
+    currentScope: TextMateScope,
+    checkCancelledCallback: Runnable? = null,
+  ): TextMateLexerState {
+    val match = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.MATCH)
+    if (match != null) {
+      val regex = regexFactory.regex(match.toString())
+      val matchData = regex.match(string, byteOffset, gosOffset, matchBeginOfString, checkCancelledCallback)
+      return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
+    }
+    val begin = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.BEGIN)
+    if (begin != null) {
+      val regex = regexFactory.regex(begin.toString())
+      val matchData = regex.match(string, byteOffset, gosOffset, matchBeginOfString, checkCancelledCallback)
+      return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
+    }
+    if (syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.END) != null) {
+      return TextMateLexerState.notMatched(syntaxNodeDescriptor)
+    }
+    return matchRule(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope,
+                     checkCancelledCallback)
+  }
+
+  private fun hasBeginKey(lexerState: TextMateLexerState): Boolean {
+    return lexerState.syntaxRule.getStringAttribute(Constants.StringKey.BEGIN) != null
+  }
+
+  private fun moreImportantState(oldState: TextMateLexerState, newState: TextMateLexerState): TextMateLexerState {
+    if (!newState.matchData.matched) {
+      return oldState
+    }
+    else if (!oldState.matchData.matched) {
+      return newState
+    }
+    val newScore = newState.matchData.byteOffset().start
+    val oldScore = oldState.matchData.byteOffset().start
+    if (newScore < oldScore || newScore == oldScore && newState.priorityMatch > oldState.priorityMatch) {
+      if (!newState.matchData.byteOffset().isEmpty || oldState.matchData.byteOffset().isEmpty || hasBeginKey(newState)) {
+        return newState
+      }
+    }
+    return oldState
+  }
+
+  private fun matchInjections(
+    syntaxNodeDescriptor: SyntaxNodeDescriptor,
+    string: TextMateString,
+    byteOffset: Int,
+    gosOffset: Int,
+    matchBeginOfString: Boolean,
+    currentScope: TextMateScope,
+    checkCancelledCallback: Runnable?,
+  ): TextMateLexerState {
+    var resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor)
+    val injections = syntaxNodeDescriptor.getInjections()
+
+    for (injection in injections) {
+      val selectorWeigh = mySelectorWeigher.weigh(injection.selector, currentScope)
+      if (selectorWeigh.weigh <= 0) {
+        continue
+      }
+      val injectionState: TextMateLexerState? =
+        matchRule(injection.syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, selectorWeigh.priority,
+                  currentScope, checkCancelledCallback)
+      resultState = moreImportantState(resultState, injectionState!!)
+    }
+    return resultState
+  }
+}
+
+class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) : TextMateSyntaxMatcher {
+  companion object {
+    private val CACHE: Cache<MatchKey?, TextMateLexerState> = Caffeine.newBuilder()
+      .maximumSize(100000)
+      .expireAfterAccess(1, TimeUnit.MINUTES)
+      .executor(Dispatchers.Default.asExecutor())
+      .build<MatchKey?, TextMateLexerState?>()
+  }
+
+  override fun matchRule(
+    syntaxNodeDescriptor: SyntaxNodeDescriptor,
+    string: TextMateString,
+    byteOffset: Int,
+    gosOffset: Int,
+    matchBeginOfString: Boolean,
+    priority: TextMateWeigh.Priority,
+    currentScope: TextMateScope,
+    checkCancelledCallback: Runnable?,
+  ): TextMateLexerState {
+    return CACHE.get(
+      MatchKey(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope)) {
+      requireNotNull(it)
+      delegate.matchRule(it.syntaxNodeDescriptor, it.string, it.byteOffset, it.gosOffset, it.matchBeginOfString,
+                         it.priority, it.currentScope, checkCancelledCallback)
+    }
+  }
+
+  override fun matchStringRegex(
+    keyName: Constants.StringKey,
+    string: TextMateString,
+    byteOffset: Int,
+    anchorOffset: Int,
+    matchBeginOfString: Boolean,
+    lexerState: TextMateLexerState,
+    checkCancelledCallback: Runnable?,
+  ): MatchData {
+    return delegate.matchStringRegex(keyName, string, byteOffset, anchorOffset, matchBeginOfString, lexerState, checkCancelledCallback)
+  }
+
+  private data class MatchKey(
+    val syntaxNodeDescriptor: SyntaxNodeDescriptor,
+    val string: TextMateString,
+    val byteOffset: Int,
+    val gosOffset: Int,
+    val matchBeginOfString: Boolean,
+    val priority: TextMateWeigh.Priority,
+    val currentScope: TextMateScope,
+  )
+}
