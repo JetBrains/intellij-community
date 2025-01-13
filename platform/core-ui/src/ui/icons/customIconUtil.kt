@@ -89,5 +89,5 @@ fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boole
   loadIconCustomVersion(icon = icon, width = size, height = size, isDark = isDark)?.let {
     return it
   }
-  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDark)
+  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDark ?: false)
 }

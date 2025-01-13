@@ -1192,7 +1192,6 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     val uniqueId = settings.uniqueID
     iconAndInvalidCache.checkValidity(uniqueId, project)
     var icon = iconAndInvalidCache.get(uniqueId, settings, project)
-    LOG.debug("=== RunConfigIcon: $uniqueId | $icon ===")
     if (withLiveIndicator) {
       val runningDescriptors = ExecutionManagerImpl.getInstanceIfCreated(project)
                                  ?.getRunningDescriptors(Condition { it === settings })

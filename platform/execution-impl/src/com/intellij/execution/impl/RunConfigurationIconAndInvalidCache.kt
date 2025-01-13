@@ -51,8 +51,6 @@ internal class RunConfigurationIconAndInvalidCache : RunConfigurationIconCache {
                   (System.currentTimeMillis() - configurationInfo.finishTime) > (max(configurationInfo.calculationTime, 150L) * 10) ||
                   lafId != configurationInfo.lafId
 
-    RunManagerImpl.LOG.debug("=== RunConfigIconCache: $id | $lafId | $configurationInfo | $expired ===")
-
     if (expired) {
       recalculateIcon(id, project)
     }
