@@ -888,6 +888,7 @@
     <bundledKeymap file="Sublime Text (Mac OS X).xml"/>
 
     <keymapExtension implementation="com.intellij.ide.actions.ToolWindowKeymapExtension"/>
+    <keymapExtension implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarKeymapExtension"/>
 
     <undoReportHandler implementation="com.intellij.openapi.command.impl.DefaultUndoReportHandler" order="last" id="default"/>
 
