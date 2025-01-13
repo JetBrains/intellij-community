@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStackWithNativeThreadId
+import com.intellij.xdebugger.frame.XMixedModeSuspendContextBase
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.nativeThreadId
 import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
@@ -25,11 +26,11 @@ private val logger = logger<XMixedModeSuspendContext>()
 
 class XMixedModeSuspendContext(
   val session: XDebugSession,
-  val lowLevelDebugSuspendContext: XSuspendContext,
-  val highLevelDebugSuspendContext: XSuspendContext,
+  lowLevelDebugSuspendContext: XSuspendContext,
+  highLevelDebugSuspendContext: XSuspendContext,
   val highLevelDebugProcess: XMixedModeHighLevelDebugProcess,
   val mixedModeDebugCoroutineScope: CoroutineScope,
-) : XSuspendContext() {
+) : XMixedModeSuspendContextBase(lowLevelDebugSuspendContext, highLevelDebugSuspendContext) {
 
   private val stacksMap = ConcurrentHashMap<Long, XMixedModeExecutionStack>()
   private val isStacksComputed = CompletableDeferred<Boolean>()

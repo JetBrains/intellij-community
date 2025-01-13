@@ -29,6 +29,9 @@ class XMixedModeExecutionStack(
   val framesMatcher: MixedModeFramesBuilder,
   val coroutineScope: CoroutineScope,
 ) : XExecutionStack(lowLevelExecutionStack.displayName), XExecutionStackWithNativeThreadId {
+
+  // TODO: If suspend context has been reset before computation of frames started, this deferred will never be completed
+  // TODO: need to set it cancelled in this case to not block waiters forever
   val computedFramesMap: CompletableDeferred<Map</*low level frame*/XStackFrame, /*high level frame*/XStackFrame?>> = CompletableDeferred()
 
   init {

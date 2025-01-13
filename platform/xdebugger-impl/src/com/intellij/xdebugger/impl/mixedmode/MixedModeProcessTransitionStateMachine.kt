@@ -62,7 +62,7 @@ class MixedModeProcessTransitionStateMachine(
 
   class HighLevelDebuggerStepRequested(val highSuspendContext: XSuspendContext, val stepType: StepType) : Event
   class MixedStepRequested(val highSuspendContext: XSuspendContext, val stepType: MixedStepType) : Event
-  class LowLevelStepRequested(val lowSuspendContext: XSuspendContext, val stepType: StepType) : Event
+  class LowLevelStepRequested(val mixedSuspendContext: XMixedModeSuspendContext, val stepType: StepType) : Event
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1)
   private val stateMachineHelperScope = coroutineScope.childScope("Helper coroutine scope", Dispatchers.Default)
@@ -322,15 +322,19 @@ class MixedModeProcessTransitionStateMachine(
       is LowLevelStepRequested -> {
         when (currentState) {
           is BothStopped -> {
-            when (event.stepType) {
-              StepType.Over -> {
-                this.low.asXDebugProcess.startStepOver(event.lowSuspendContext)
-              }
-              StepType.Into -> {
-                this.low.asXDebugProcess.startStepInto(event.lowSuspendContext)
-              }
-              StepType.Out -> {
-                this.low.asXDebugProcess.startStepOut(event.lowSuspendContext)
+            runBlocking(stateMachineHelperScope.coroutineContext) {
+              low.beforeStep(event.mixedSuspendContext)
+
+              when (event.stepType) {
+                StepType.Over -> {
+                  low.asXDebugProcess.startStepOver(event.mixedSuspendContext.lowLevelDebugSuspendContext)
+                }
+                StepType.Into -> {
+                  low.asXDebugProcess.startStepInto(event.mixedSuspendContext.lowLevelDebugSuspendContext)
+                }
+                StepType.Out -> {
+                  low.asXDebugProcess.startStepOut(event.mixedSuspendContext.lowLevelDebugSuspendContext)
+                }
               }
             }
             changeState(LowLevelStepStarted(currentState.high))
