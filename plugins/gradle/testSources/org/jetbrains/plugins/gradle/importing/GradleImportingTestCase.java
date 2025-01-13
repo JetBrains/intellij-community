@@ -477,7 +477,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
         allprojects {
             repositories {
                 maven {
-                    url 'https://repo.labs.intellij.net/repo1'
+                    url = 'https://repo.labs.intellij.net/repo1'
                 }
             }
         }

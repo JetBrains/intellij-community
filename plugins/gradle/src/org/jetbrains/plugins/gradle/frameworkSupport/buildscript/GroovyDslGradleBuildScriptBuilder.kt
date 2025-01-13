@@ -34,7 +34,7 @@ abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScrip
 
   override fun ScriptTreeBuilder.mavenRepository(url: String) = applyKt {
     call("maven") {
-      call("url", url)
+      assign("url", url)
     }
   }
 

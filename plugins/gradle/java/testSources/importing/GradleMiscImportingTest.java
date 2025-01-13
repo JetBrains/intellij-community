@@ -301,7 +301,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     createSettingsFile("rootProject.name = 'app'");
     importProject("apply plugin: 'java'\n" +
-                  "group 'my_group'");
+                  "group = 'my_group'");
 
     assertModules("app", "my_group.app.main",
                   "my_group.app", "my_group.app.main~1", "my_group.app.test");
