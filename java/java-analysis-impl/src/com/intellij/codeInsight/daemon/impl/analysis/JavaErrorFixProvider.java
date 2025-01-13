@@ -124,7 +124,7 @@ final class JavaErrorFixProvider {
       PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.psi());
       return myFactory.createMoveBoundClassToFrontFix(error.context(), type);
     });
-    fix(TYPE_PARAMETER_EXTENDS_INTERFACE_EXPECTED, error -> {
+    fix(TYPE_PARAMETER_CANNOT_BE_FOLLOWED_BY_OTHER_BOUNDS, error -> {
       PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.psi());
       return myFactory.createExtendsListFix(error.context(), type, false);
     });
