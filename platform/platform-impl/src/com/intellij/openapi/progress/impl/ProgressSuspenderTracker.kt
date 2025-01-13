@@ -5,11 +5,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.application
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 internal class ProgressSuspenderTracker : ProgressSuspender.SuspenderListener {
-  private val suspenderTrackers = mutableMapOf<ProgressSuspender, SuspenderListener>()
-  private val indicatorTrackers = mutableMapOf<ProgressIndicator, IndicatorListener>()
+  private val suspenderTrackers = ConcurrentHashMap<ProgressSuspender, SuspenderListener>()
+  private val indicatorTrackers = ConcurrentHashMap<ProgressIndicator, IndicatorListener>()
 
   init {
     application.messageBus.connect().subscribe(ProgressSuspender.TOPIC, this)
