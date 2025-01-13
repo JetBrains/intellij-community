@@ -172,6 +172,20 @@ final class JavaErrorFixProvider {
       boolean hasClassToRelocate = PsiTreeUtil.findChildOfType(implicitClass, PsiClass.class) != null;
       return hasClassToRelocate ? new MoveMembersIntoClassFix(implicitClass) : null;
     });
+    multi(UNSUPPORTED_FEATURE, error -> {
+      if (error.context() != JavaFeature.INNER_STATICS) return List.of();
+      PsiMember member = PsiTreeUtil.getParentOfType(error.psi(), PsiMember.class);
+      if (member == null) return List.of();
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      if (PsiUtil.isJavaToken(error.psi(), JavaTokenType.STATIC_KEYWORD)) {
+        registrar.add(myFactory.createModifierListFix(member, PsiModifier.STATIC, false, false));
+      }
+      PsiClass containingClass = member.getContainingClass();
+      if (containingClass != null && containingClass.getContainingClass() != null) {
+        registrar.add(addModifierFix(containingClass, PsiModifier.STATIC));
+      }
+      return registrar;
+    });
     fix(INTERFACE_CONSTRUCTOR, error -> myFactory.createConvertInterfaceToClassFix(requireNonNull(error.psi().getContainingClass())));
     fix(INTERFACE_CLASS_INITIALIZER, error -> myFactory.createConvertInterfaceToClassFix(requireNonNull(error.psi().getContainingClass())));
   }

@@ -31,7 +31,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -48,28 +51,6 @@ public final class HighlightClassUtil {
     return PsiTypesUtil.isRestrictedIdentifier(typeName, level);
   }
 
-  private static HighlightInfo.Builder checkStaticFieldDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
-    if (getEnclosingStaticClass(keyword, PsiField.class) == null) {
-      return null;
-    }
-
-    PsiField field = (PsiField)keyword.getParent().getParent();
-    if (PsiUtilCore.hasErrorElementChild(field) || PsiUtil.isCompileTimeConstant(field)) {
-      return null;
-    }
-
-    HighlightInfo.Builder result = HighlightUtil.checkFeature(keyword, JavaFeature.INNER_STATICS,
-                                                              PsiUtil.getLanguageLevel(field), field.getContainingFile());
-
-    IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(field, PsiModifier.STATIC, false, false);
-    if (result != null) {
-      result.registerFix(action, null, null, null, null);
-    }
-    registerMakeInnerClassStatic(field.getContainingClass(), result);
-
-    return result;
-  }
-
   private static void registerMakeInnerClassStatic(@Nullable PsiClass aClass, @Nullable HighlightInfo.Builder result) {
     if (aClass != null && aClass.getContainingClass() != null) {
       IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.STATIC, true, false);
@@ -77,101 +58,6 @@ public final class HighlightClassUtil {
         result.registerFix(action, null, null, null, null);
       }
     }
-  }
-
-  private static HighlightInfo.Builder checkStaticMethodDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
-    if (getEnclosingStaticClass(keyword, PsiMethod.class) == null) {
-      return null;
-    }
-    PsiMethod method = (PsiMethod)keyword.getParent().getParent();
-    if (PsiUtilCore.hasErrorElementChild(method)) return null;
-    HighlightInfo.Builder result = HighlightUtil.checkFeature(keyword, JavaFeature.INNER_STATICS,
-                                                              PsiUtil.getLanguageLevel(method), method.getContainingFile());
-    IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.STATIC, false, false);
-    if (result != null) {
-      result.registerFix(action, null, null, null, null);
-    }
-    registerMakeInnerClassStatic((PsiClass)method.getParent(), result);
-    return result;
-  }
-
-  private static HighlightInfo.Builder checkStaticInitializerDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
-    if (getEnclosingStaticClass(keyword, PsiClassInitializer.class) == null) {
-      return null;
-    }
-    PsiClassInitializer initializer = (PsiClassInitializer)keyword.getParent().getParent();
-    if (PsiUtilCore.hasErrorElementChild(initializer)) return null;
-    HighlightInfo.Builder result = HighlightUtil.checkFeature(keyword, JavaFeature.INNER_STATICS,
-                                                              PsiUtil.getLanguageLevel(initializer), initializer.getContainingFile());
-    IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(initializer, PsiModifier.STATIC, false, false);
-    if (result != null) {
-      result.registerFix(action, null, null, null, null);
-    }
-    registerMakeInnerClassStatic((PsiClass)keyword.getParent().getParent().getParent(), result);
-    return result;
-  }
-
-  private static PsiElement getEnclosingStaticClass(@NotNull PsiKeyword keyword, @NotNull Class<?> parentClass) {
-    return new PsiMatcherImpl(keyword)
-      .dot(PsiMatchers.hasText(PsiModifier.STATIC))
-      .parent(PsiMatchers.hasClass(PsiModifierList.class))
-      .parent(PsiMatchers.hasClass(parentClass))
-      .parent(PsiMatchers.hasClass(PsiClass.class))
-      .dot(JavaMatchers.hasModifier(PsiModifier.STATIC, false))
-      .parent(PsiMatchers.hasClass(PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class))
-      .getElement();
-  }
-
-  private static HighlightInfo.Builder checkStaticClassDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
-    // keyword points to 'class' or 'interface' or 'enum'
-    if (new PsiMatcherImpl(keyword)
-          .parent(PsiMatchers.hasClass(PsiClass.class))
-          .dot(JavaMatchers.hasModifier(PsiModifier.STATIC, true))
-          .parent(PsiMatchers.hasClass(PsiClass.class))
-          .dot(JavaMatchers.hasModifier(PsiModifier.STATIC, false))
-          .parent(PsiMatchers.hasClass(PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class))
-          .getElement() == null) {
-      return null;
-    }
-
-    PsiClass aClass = (PsiClass)keyword.getParent();
-    if (PsiUtilCore.hasErrorElementChild(aClass)) {
-      return null;
-    }
-
-    // highlight 'static' keyword if any, or class or interface if not
-    PsiElement context = null;
-    PsiModifierList modifierList = aClass.getModifierList();
-    if (modifierList != null) {
-      for (PsiElement element = modifierList.getFirstChild(); element != null; element = element.getNextSibling()) {
-        if (Objects.equals(element.getText(), PsiModifier.STATIC)) {
-          context = element;
-          break;
-        }
-      }
-    }
-
-    TextRange range = context == null ? HighlightNamesUtil.getClassDeclarationTextRange(aClass) : context.getTextRange();
-    HighlightInfo.Builder info = HighlightUtil.checkFeature(range, JavaFeature.INNER_STATICS,
-                                                            PsiUtil.getLanguageLevel(aClass), aClass.getContainingFile());
-    if (context != keyword) {
-      QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories
-        .createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
-    }
-    PsiClass containingClass = aClass.getContainingClass();
-    registerMakeInnerClassStatic(containingClass, info);
-    return info;
-  }
-
-  static HighlightInfo.Builder checkStaticDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
-    HighlightInfo.Builder errorResult = checkStaticFieldDeclarationInInnerClass(keyword);
-    if (errorResult != null) return errorResult;
-    errorResult = checkStaticMethodDeclarationInInnerClass(keyword);
-    if (errorResult != null) return errorResult;
-    errorResult = checkStaticClassDeclarationInInnerClass(keyword);
-    if (errorResult != null) return errorResult;
-    errorResult = checkStaticInitializerDeclarationInInnerClass(keyword);
-    return errorResult;
   }
 
   static HighlightInfo.Builder checkExtendsAllowed(@NotNull PsiReferenceList list) {

@@ -211,6 +211,12 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitKeyword(@NotNull PsiKeyword keyword) {
+    super.visitKeyword(keyword);
+    if (!hasErrorResults()) myClassChecker.checkStaticDeclarationInInnerClass(keyword);
+  }
+
+  @Override
   public void visitClass(@NotNull PsiClass aClass) {
     super.visitClass(aClass);
     if (aClass instanceof PsiSyntheticClass) return;

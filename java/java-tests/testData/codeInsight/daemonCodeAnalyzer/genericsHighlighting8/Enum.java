@@ -190,7 +190,7 @@ class NestedEnums {
   enum E1 { }
 
   class C2 {
-    <error descr="Static declarations in inner classes are not supported at language level '8'">enum E2</error> { }
+    <error descr="Static declarations in inner classes are not supported at language level '8'">enum</error> E2 { }
   }
 
   static class C3 {
@@ -199,7 +199,7 @@ class NestedEnums {
 
   {
     new C3() {
-      <error descr="Static declarations in inner classes are not supported at language level '8'">enum E2</error> { }
+      <error descr="Static declarations in inner classes are not supported at language level '8'">enum</error> E2 { }
     };
   }
 }

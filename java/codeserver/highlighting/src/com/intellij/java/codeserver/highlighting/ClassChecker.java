@@ -465,6 +465,53 @@ final class ClassChecker {
     }
   }
 
+  void checkStaticDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
+    if (!myVisitor.hasErrorResults()) checkStaticClassDeclarationInInnerClass(keyword);
+    if (!myVisitor.hasErrorResults()) checkStaticMemberInInnerClass(keyword);
+  }
+
+  private void checkStaticClassDeclarationInInnerClass(@NotNull PsiKeyword keyword) {
+    // keyword points to 'class' or 'interface' or 'enum'; interface and enum are implicitly static
+    if (!(keyword.getParent() instanceof PsiClass curClass)) return;
+    if (!curClass.hasModifierProperty(PsiModifier.STATIC) || PsiUtilCore.hasErrorElementChild(curClass)) return;
+    if (!(curClass.getParent() instanceof PsiClass parentClass)) return;
+    if (parentClass.hasModifierProperty(PsiModifier.STATIC)) return;
+    PsiElement parent = parentClass.getParent();
+    if (!(parent instanceof PsiClass) && !(parent instanceof PsiDeclarationStatement) &&
+        !(parent instanceof PsiNewExpression) && !(parent instanceof PsiEnumConstant)) {
+      return;
+    }
+    // highlight 'static' keyword if any, or class or interface if not
+    PsiElement context = keyword;
+    PsiModifierList modifierList = curClass.getModifierList();
+    if (modifierList != null) {
+      for (PsiElement element = modifierList.getFirstChild(); element != null; element = element.getNextSibling()) {
+        if (Objects.equals(element.getText(), PsiModifier.STATIC)) {
+          context = element;
+          break;
+        }
+      }
+    }
+    myVisitor.checkFeature(context, JavaFeature.INNER_STATICS);
+  }
+
+  private void checkStaticMemberInInnerClass(@NotNull PsiKeyword keyword) {
+    if (!keyword.getTokenType().equals(JavaTokenType.STATIC_KEYWORD)) return;
+    if (!(keyword.getParent() instanceof PsiModifierList modifierList)) return;
+    if (!(modifierList.getParent() instanceof PsiMember member)) return;
+    if (member instanceof PsiClass) return; // checked separately
+    if (PsiUtilCore.hasErrorElementChild(member)) return;
+    if (member instanceof PsiField field && PsiUtil.isCompileTimeConstant(field)) return;
+    if (!(member.getParent() instanceof PsiClass psiClass)) return;
+    if (psiClass.hasModifierProperty(PsiModifier.STATIC)) return;
+    PsiElement classParent = psiClass.getParent();
+    if (!(classParent instanceof PsiClass) && !(classParent instanceof PsiDeclarationStatement) &&
+        !(classParent instanceof PsiNewExpression) && !(classParent instanceof PsiEnumConstant)) {
+      return;
+    }
+    myVisitor.checkFeature(keyword, JavaFeature.INNER_STATICS);
+  }
+
   private static @Unmodifiable @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
     PsiReferenceList permitsList = psiClass.getPermitsList();
     if (permitsList == null) return Collections.emptyMap();
