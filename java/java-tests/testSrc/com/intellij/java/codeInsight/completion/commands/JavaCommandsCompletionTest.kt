@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion.commands
 
-import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
@@ -10,7 +9,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.replaceService
 import com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection
@@ -20,7 +21,7 @@ import javax.swing.JComponent
 class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testFormatNotCall() {
-    Registry.get("java.completion.command.enabled").setValue(false, getTestRootDisposable());
+    Registry.get("java.completion.command.enabled").setValue(false, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
@@ -34,7 +35,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   fun testFormat() {
-    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
@@ -56,7 +57,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   fun testCommandsOnlyGoToDeclaration() {
-    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
@@ -69,7 +70,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
     val elements = myFixture.completeBasic()
     selectItem(elements.first { element -> element.lookupString.contains("Go to dec", ignoreCase = true) })
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       class A { 
         void foo() {
@@ -83,7 +84,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   fun testRedCode() {
-    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
@@ -105,7 +106,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   fun testComment() {
-    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
@@ -127,7 +128,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   fun testFlipIntention() {
-    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
@@ -149,7 +150,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   fun testInspection() {
-    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable())
     myFixture.enableInspections(SizeReplaceableByIsEmptyInspection())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       import java.util.List;
@@ -174,11 +175,10 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   fun testBinaryNotAllowed() {
-    Registry.get("java.completion.command.enabled").setValue(false, getTestRootDisposable());
-    val testDir = JavaTestUtil.getJavaTestDataPath()
-    val clsPath = "$testDir/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class"
-    val file = (if (clsPath.contains("!/")) StandardFileSystems.jar() else StandardFileSystems.local()).refreshAndFindFileByPath(clsPath)
-    assertNotNull(clsPath, file)
+    Registry.get("java.completion.command.enabled").setValue(false, getTestRootDisposable())
+    val psiClass = JavaPsiFacade.getInstance(project).findClass(JAVA_LANG_CLASS, GlobalSearchScope.allScope(project))
+    val file = psiClass?.containingFile?.virtualFile
+    assertNotNull(file)
     myFixture.openFileInEditor(file!!)
     val text = myFixture.file.text
     val pattern = " Serializable"
@@ -193,11 +193,10 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   fun testBinaryNotAllowedCalledCompletion() {
-    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
-    val testDir = JavaTestUtil.getJavaTestDataPath()
-    val clsPath = "$testDir/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class"
-    val file = (if (clsPath.contains("!/")) StandardFileSystems.jar() else StandardFileSystems.local()).refreshAndFindFileByPath(clsPath)
-    assertNotNull(clsPath, file)
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable())
+    val psiClass = JavaPsiFacade.getInstance(project).findClass(JAVA_LANG_CLASS, GlobalSearchScope.allScope(project))
+    val file = psiClass?.containingFile?.virtualFile
+    assertNotNull(file)
     myFixture.openFileInEditor(file!!)
     val text = myFixture.file.text
     val pattern = " Serializable"

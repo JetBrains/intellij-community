@@ -34,6 +34,7 @@ interface CommandProvider {
    * @param originalEditor the original editor instance, may differ in specific use cases (e.g., injected editors)
    * @param originalOffset the position within the document in the original editor
    * @param originalFile the PSI file in the context of the original editor
+   * @param isNonWritten it is not allowed to write in this PSI file. For example, a command can navigate to another file
    * @return a list of completion commands to be executed or displayed during the code completion process
    */
   fun getCommands(
@@ -42,5 +43,12 @@ interface CommandProvider {
   ): List<CompletionCommand>
 
   fun getId(): String
-  fun supportNonWrittenFiles() : Boolean = false
+
+  /**
+   * Indicates whether the implementation supports non-written files.
+   * (For example, a command can navigate to another file)
+   *
+   * @return true if non-written files are supported; false otherwise.
+   */
+  fun supportsNonWrittenFiles() : Boolean = false
 }

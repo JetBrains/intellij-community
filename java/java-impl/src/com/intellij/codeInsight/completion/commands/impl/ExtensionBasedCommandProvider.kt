@@ -23,7 +23,7 @@ class ExtensionPointCommandProvider : CommandProvider, DumbAware {
     return "ExtensionPointCommandProvider"
   }
 
-  override fun supportNonWrittenFiles(): Boolean {
+  override fun supportsNonWrittenFiles(): Boolean {
     return true
   }
 }

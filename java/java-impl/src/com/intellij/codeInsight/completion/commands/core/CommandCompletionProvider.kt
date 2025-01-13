@@ -207,7 +207,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (element == null) return
     for (provider in commandCompletionFactory.commandProviders(project)) {
       try {
-        if(isNonWritten && !provider.supportNonWrittenFiles()) continue
+        if(isNonWritten && !provider.supportsNonWrittenFiles()) continue
         //todo delete parameters
         val commands = provider.getCommands(project, copyEditor, offset, copyFile, originalEditor, originalOffset, originalFile, isNonWritten)
         processor.process(commands)
