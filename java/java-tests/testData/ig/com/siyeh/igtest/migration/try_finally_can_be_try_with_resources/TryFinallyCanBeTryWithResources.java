@@ -282,3 +282,45 @@ class AutoCloseableResourceInLambdaOrAnonymousClass {
     };
   }
 }
+
+class ExtraUsageOfAutoCloseableInFinally {
+  interface MyAutoCloseable extends AutoCloseable {
+    @Override
+    void close();
+  }
+
+  native MyAutoCloseable create();
+
+  public void secondCall() throws Exception {
+    MyAutoCloseable first = create();
+    MyAutoCloseable second = create();
+    try {
+      System.out.println(first.hashCode());
+    } finally {
+      System.out.println(second.hashCode());
+      first.close();
+    }
+  }
+
+  public void respectsIfStatement() throws Exception {
+    MyAutoCloseable first = create();
+    <warning descr="'try' can use automatic resource management">try</warning> {
+      System.out.println(first.hashCode());
+    } finally {
+      if (first != null) {
+        first.close();
+      }
+    }
+  }
+
+  public void methodAccessInIfStatement() throws Exception {
+    MyAutoCloseable first = create();
+    try {
+      System.out.println(first.hashCode());
+    } finally {
+      if (first.toString() != null) {
+        first.close();
+      }
+    }
+  }
+}

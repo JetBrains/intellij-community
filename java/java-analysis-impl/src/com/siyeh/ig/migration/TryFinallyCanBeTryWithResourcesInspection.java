@@ -237,7 +237,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     static @Nullable
     Context from(@NotNull PsiTryStatement tryStatement) {
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock == null) return null;
+      if (finallyBlock == null || resourceVariablesUsedInFinally(finallyBlock)) return null;
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (tryBlock == null) return null;
       PsiStatement[] tryStatements = tryBlock.getStatements();
@@ -249,7 +249,6 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
         closedVariableStatementIndices.set(i, findAutoCloseableVariables(finallyBlock, statement, collectedVariables));
       }
       if (collectedVariables.isEmpty()) return null;
-      if (resourceVariablesUsedInFinally(finallyStatements, closedVariableStatementIndices, collectedVariables)) return null;
       if (resourceVariableUsedInCatches(tryStatement, collectedVariables)) return null;
 
       List<ResourceVariable> resourceVariables = new ArrayList<>();
@@ -339,20 +338,10 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     return statements;
   }
 
-  private static boolean resourceVariablesUsedInFinally(PsiStatement[] statements,
-                                                        BitSet closedVariableStatementIndices,
-                                                        Set<PsiVariable> resourceVariables) {
-    for (int i = 0; i < statements.length; i++) {
-      if (!closedVariableStatementIndices.get(i)) {
-        Set<PsiVariable> usedVariables = VariableAccessUtils.collectUsedVariables(statements[i]);
-        for (PsiVariable usedVariable : usedVariables) {
-          if (resourceVariables.contains(usedVariable)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+  private static boolean resourceVariablesUsedInFinally(@NotNull PsiCodeBlock finallyBlock) {
+    ExtraAutoClosableUsedInsideContextVisitor visitor = new ExtraAutoClosableUsedInsideContextVisitor();
+    finallyBlock.accept(visitor);
+    return visitor.isExtraAutoClosableUsedInsideContext();
   }
 
   private static boolean resourceVariableUsedInCatches(PsiTryStatement tryStatement, Set<? extends PsiVariable> collectedVariables) {
@@ -392,6 +381,8 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       return myVariable;
     }
   }
+
+
 
   private static boolean isVariableUsedOutsideContext(PsiVariable variable, PsiElement context) {
     final VariableUsedOutsideContextVisitor visitor = new VariableUsedOutsideContextVisitor(variable, context);
@@ -533,6 +524,49 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     if (assignmentExpression == null) return false;
     if (assignmentExpression.getRExpression() == null) return false;
     return ExpressionUtils.isReferenceTo(assignmentExpression.getLExpression(), variable);
+  }
+
+  private static class ExtraAutoClosableUsedInsideContextVisitor extends JavaRecursiveElementWalkingVisitor {
+    private boolean used;
+
+    @Override
+    public void visitElement(@NotNull PsiElement element) {
+      if (used) return;
+      super.visitElement(element);
+    }
+
+    @Override
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
+      if (used) return;
+
+      if (!(referenceExpression.getParent() instanceof PsiMethodCallExpression)) return;
+      PsiExpression qualifier = referenceExpression.getQualifierExpression();
+
+      PsiVariable variable = ExpressionUtils.resolveVariable(qualifier);
+      if(variable != null && !isCloseMethodCalled(referenceExpression) && isAutoCloseable(variable)) {
+        used = true;
+        return;
+      }
+      super.visitReferenceExpression(referenceExpression);
+    }
+
+    private static boolean isCloseMethodCalled(@NotNull PsiReferenceExpression referenceExpression) {
+      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class);
+      if (methodCallExpression == null) {
+        return false;
+      }
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      if (!argumentList.isEmpty()) {
+        return false;
+      }
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final String name = methodExpression.getReferenceName();
+      return HardcodedMethodConstants.CLOSE.equals(name);
+    }
+
+    boolean isExtraAutoClosableUsedInsideContext() {
+      return used;
+    }
   }
 
   private static class VariableUsedOutsideContextVisitor extends JavaRecursiveElementWalkingVisitor {
