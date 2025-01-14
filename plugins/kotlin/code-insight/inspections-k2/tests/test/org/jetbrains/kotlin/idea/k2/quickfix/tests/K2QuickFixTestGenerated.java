@@ -1778,6 +1778,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/forbiddenTargetsExpression2.kt");
         }
 
+        @TestMetadata("forbiddenTargetsExpression3.kt")
+        public void testForbiddenTargetsExpression3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/forbiddenTargetsExpression3.kt");
+        }
+
         @TestMetadata("forbiddenTargetsInAnnotation.kt")
         public void testForbiddenTargetsInAnnotation() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/forbiddenTargetsInAnnotation.kt");

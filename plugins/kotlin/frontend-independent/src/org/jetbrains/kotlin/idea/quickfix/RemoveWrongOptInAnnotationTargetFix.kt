@@ -26,7 +26,7 @@ class RemoveWrongOptInAnnotationTargetFix(annotationEntry: KtAnnotationEntry) :
         val argumentList = annotationEntry.valueArgumentList ?: return
         val forbiddenArguments: List<KtValueArgument> = argumentList.arguments.filter {
             val text = it.text ?: return@filter false
-            WRONG_TARGETS.any { name -> text.contains(name) }
+            WRONG_TARGETS.any { name -> text.endsWith(name) }
         }
 
         if (forbiddenArguments.size == argumentList.arguments.size) {
