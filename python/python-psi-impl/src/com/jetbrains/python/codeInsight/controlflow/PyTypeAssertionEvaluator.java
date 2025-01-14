@@ -30,7 +30,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     myPositive = positive;
   }
 
-  public List<Assertion> getDefinitions() {
+  List<Assertion> getDefinitions() {
     return myStack;
   }
 
