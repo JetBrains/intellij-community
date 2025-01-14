@@ -23,7 +23,7 @@ class JdkDownloaderTest {
           continue
         }
 
-        if (os === JdkDownloader.OS.LINUX && arch === JdkDownloader.Arch.ARM64) {
+        if (os === JdkDownloader.OS.LINUX) {
           // check if linux arm musl available
           checkJdkVariantCouldBeDownloaded(communityRoot = communityRoot, os = os, arch = arch, isMusl = true)
         }
