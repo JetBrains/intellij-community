@@ -101,17 +101,17 @@ val <T, E> Either<T, E>.value: T
 val <T, E> Either<T, E>.error: E
   get() = requireNotNull(errorOrNull) { "Not a Error" }
 
-fun <T, E, R> Either<T, E>.flatMap(f: (T) -> Either<R, E>): Either<R, E> = when (this.isValue) {
+inline fun <T, E, R> Either<T, E>.flatMap(f: (T) -> Either<R, E>): Either<R, E> = when (this.isValue) {
   false -> this as Either<R, E>
   else -> f(valueOrNull!!)
 }
 
-fun <T, E, R> Either<T, E>.map(f: (T) -> R): Either<R, E> = when (this.isValue) {
+inline fun <T, E, R> Either<T, E>.map(f: (T) -> R): Either<R, E> = when (this.isValue) {
   false -> this as Either<R, E>
   true -> Either.value(f(valueOrNull!!))
 }
 
-fun <T, E, R> Either<T, E>.mapError(f: (E) -> R): Either<T, R> = when (this.isError) {
+inline fun <T, E, R> Either<T, E>.mapError(f: (E) -> R): Either<T, R> = when (this.isError) {
   false -> this as Either<T, R>
   true -> Either.error(f(error))
 }
