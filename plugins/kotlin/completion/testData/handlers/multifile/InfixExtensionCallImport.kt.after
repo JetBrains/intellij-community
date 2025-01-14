@@ -1,7 +1,5 @@
 import other.makePair
 
-// IGNORE_K2
-
 fun foo() {
     val pair = 1 makePair <caret>
 }
