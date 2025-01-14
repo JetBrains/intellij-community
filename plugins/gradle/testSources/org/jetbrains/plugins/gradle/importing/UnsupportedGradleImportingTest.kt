@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Test
@@ -26,10 +25,6 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
           assertNode("finished")
       }
     }
-  }
-
-  override fun assumeTestJavaRuntime(javaRuntimeVersion: JavaVersion) {
-    // run on all Java Runtime
   }
 
   companion object {

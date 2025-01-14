@@ -267,16 +267,11 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return myProjectRoot;
   }
 
-  protected void assumeTestJavaRuntime(@NotNull JavaVersion javaRuntimeVersion) {
-  }
-
   @NotNull
   private String requireRealJdkHome() {
     if (myWSLDistribution != null) {
       return requireWslJdkHome(myWSLDistribution);
     }
-    JavaVersion javaRuntimeVersion = JavaVersion.current();
-    assumeTestJavaRuntime(javaRuntimeVersion);
     return requireJdkHome();
   }
 
