@@ -24,6 +24,7 @@
 
     <lang.foldingBuilder language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.folding.ADFoldingBuilder"/>
     <lang.psiStructureViewFactory language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.structure.ADFileStructureFactory"/>
+    <fileStructureGroupRuleProvider implementation="com.intellij.devkit.apiDump.lang.usageView.ADFileStructureGroupRuleProvider"/>
   </extensions>
 
 </idea-plugin>

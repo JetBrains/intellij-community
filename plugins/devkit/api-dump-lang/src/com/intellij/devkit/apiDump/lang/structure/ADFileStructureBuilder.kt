@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.apiDump.lang.structure
 
+import com.intellij.devkit.apiDump.lang.icons.ADIcons
 import com.intellij.devkit.apiDump.lang.psi.ADClassDeclaration
 import com.intellij.devkit.apiDump.lang.psi.ADFile
 import com.intellij.ide.structureView.*
@@ -15,7 +16,6 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.ui.IconManager
 import javax.swing.Icon
 
 internal class ADFileStructureFactory : PsiStructureViewFactory {
@@ -87,5 +87,5 @@ private class ADClassNode(classDeclaration: ADClassDeclaration) : ADStructureVie
     psi?.classHeader?.typeReference?.identifierList?.lastOrNull()?.text ?: "Unknown"
 
   override fun getIcon(unused: Boolean): Icon? =
-    IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)
+    ADIcons.classIcon
 }
