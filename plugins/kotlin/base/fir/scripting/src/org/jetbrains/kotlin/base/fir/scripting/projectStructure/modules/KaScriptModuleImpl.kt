@@ -42,25 +42,12 @@ internal class KaScriptModuleImpl(
         ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
             .mapNotNull { it.toKaSourceModuleForProduction() }
     }
-    override val contentScope: GlobalSearchScope by lazy {
-        val basicScriptScope = GlobalSearchScope.fileScope(project, scriptFile)
 
-        val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
-
-        val contentScope = scriptFile.workspaceEntities(project, snapshot).filterIsInstance<ModuleEntity>().firstOrNull()
-            ?.let<ModuleEntity, GlobalSearchScope?> {
-                it.findModule(snapshot)?.let<ModuleBridge, GlobalSearchScope> { module ->
-                    val scope = KotlinResolveScopeEnlarger.enlargeScope(
-                        module.getModuleWithDependenciesAndLibrariesScope(false),
-                        module,
-                        isTestScope = false
-                    )
-                    basicScriptScope.union(scope)
-                }
-            } ?: basicScriptScope
-        KotlinScriptSearchScope(project, contentScope)
-    }
-
+    override val contentScope: GlobalSearchScope
+        get() {
+            val basicScriptScope = GlobalSearchScope.fileScope(project, scriptFile)
+            return KotlinScriptSearchScope(project, basicScriptScope)
+        }
 
     override val directRegularDependencies: List<KaModule> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         buildSet<KaModule> {
