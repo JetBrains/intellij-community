@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.GroupingKey
@@ -25,9 +25,11 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateExecutionProcess
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
+@Language("devkit-action-id")
 const val GIT_SINGLE_REF_ACTION_GROUP = "Git.Branch"
 
 @JvmOverloads

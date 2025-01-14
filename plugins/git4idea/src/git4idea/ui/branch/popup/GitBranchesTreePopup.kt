@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.DvcsUtil
@@ -23,6 +23,7 @@ import git4idea.ui.branch.GitBranchPopupFetchAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
+import org.intellij.lang.annotations.Language
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
@@ -119,6 +120,7 @@ class GitBranchesTreePopup(
 
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
+    @Language("devkit-action-id")
     private const val HEADER_SETTINGS_ACTION_GROUP = "Git.Branches.Popup.Settings"
 
     /**

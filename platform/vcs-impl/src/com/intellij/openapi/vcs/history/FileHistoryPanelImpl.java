@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.CommonBundle;
@@ -52,6 +52,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,10 +78,10 @@ import static java.util.Comparator.reverseOrder;
 public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider, Disposable, EditorColorsListener, CopyProvider {
   public static final DataKey<VcsFileRevision> PREVIOUS_REVISION_FOR_DIFF = DataKey.create("PREVIOUS_VCS_FILE_REVISION_FOR_DIFF");
 
-  private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
-  private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
-  private static final String VCS_HISTORY_POPUP_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup";
-  private static final String VCS_HISTORY_TOOLBAR_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup.Toolbar";
+  @Language("devkit-action-id") private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
+  @Language("devkit-action-id") private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
+  @Language("devkit-action-id") private static final String VCS_HISTORY_POPUP_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup";
+  @Language("devkit-action-id") private static final String VCS_HISTORY_TOOLBAR_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup.Toolbar";
   
   private final String myHelpId;
 

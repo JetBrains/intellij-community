@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization
 
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBUI
+import org.intellij.lang.annotations.Language
 import java.awt.FlowLayout
 import javax.swing.JPanel
 
@@ -26,6 +27,6 @@ class NotebookBelowLastCellPanel(val editor: EditorImpl) : JPanel(FlowLayout(Flo
   }
 
   companion object {
-    private const val ACTION_GROUP_ID = "Jupyter.BelowCellNewPanel"
+    @Language("devkit-action-id") private const val ACTION_GROUP_ID = "Jupyter.BelowCellNewPanel"
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
+import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
@@ -69,9 +70,13 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx): Disposable 
 
   companion object {
 
+    @Language("devkit-action-id")
     private const val ADDITIONAL_CODE_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar"
+    @Language("devkit-action-id")
     private const val ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar.Ellipsis"
+    @Language("devkit-action-id")
     private const val ADDITIONAL_MARKDOWN_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar"
+    @Language("devkit-action-id")
     private const val ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar.Ellipsis"
 
     private const val X_OFFSET_RATIO = 0.92
@@ -80,7 +85,7 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx): Disposable 
     private fun calculateToolbarBounds(
       editor: Editor,
       panel: JComponent,
-      toolbar: JPanel
+      toolbar: JPanel,
     ): Rectangle {
       // todo: maybe fuse with JupyterAboveCellToolbarManager.Companion.calculateToolbarBounds
       val toolbarHeight = toolbar.preferredSize.height

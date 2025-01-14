@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CommonActionsManager;
@@ -42,6 +42,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.CommitSessionCollector;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -102,6 +103,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
 
   public static final List<String> DEFAULT_GROUPING_KEYS = List.of(DIRECTORY_GROUPING, MODULE_GROUPING, REPOSITORY_GROUPING);
 
+  @Language("devkit-action-id")
   public static final @NonNls String GROUP_BY_ACTION_GROUP = "ChangesView.GroupBy";
 
   private final @NotNull CopyProvider myTreeCopyProvider;

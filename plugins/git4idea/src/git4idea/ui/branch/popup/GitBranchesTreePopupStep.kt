@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.DvcsUtil
@@ -30,6 +30,7 @@ import git4idea.ui.branch.GIT_SINGLE_REF_ACTION_GROUP
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase.Companion.TOP_LEVEL_ACTION_PLACE
 import git4idea.ui.branch.tree.*
+import org.intellij.lang.annotations.Language
 import javax.swing.JComponent
 
 class GitBranchesTreePopupStep(
@@ -142,7 +143,9 @@ class GitBranchesTreePopupStep(
   }
 
   companion object {
+    @Language("devkit-action-id")
     private const val TOP_LEVEL_ACTION_GROUP = "Git.Branches.List"
+    @Language("devkit-action-id")
     private const val BRANCH_ACTION_GROUP = "Git.Branch"
 
     internal val SINGLE_REPOSITORY_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.SingleRepo.Branch.Actions")
