@@ -39,7 +39,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
     val pathLocator = TestGpgPathLocator()
     val paths = pathLocator.resolvePaths()!!
-    project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
+    configureGpgAgent(paths)
 
     requestPasswordAndAssert(paths)
   }
@@ -50,7 +50,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val pathLocator = TestGpgPathLocator()
     val paths = pathLocator.resolvePaths()!!
     FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "${GpgAgentConfig.PINENTRY_PROGRAM} /usr/local/bin/pinentry")
-    project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
+    configureGpgAgent(paths)
     val generatedConfig = paths.gpgAgentConf.readLines()
     assertTrue(generatedConfig.size == 3)
     assertTrue(generatedConfig[0] == "${GpgAgentConfig.PINENTRY_PROGRAM} ${paths.gpgPinentryAppLauncherConfigPath}")
@@ -69,7 +69,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val pinentryConfig = "${GpgAgentConfig.PINENTRY_PROGRAM} ${paths.gpgPinentryAppLauncherConfigPath}"
 
     FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "$allowLoopbackPinentryConfig\n$defaultCacheTtlConfig\n$maxCacheTtlConfig")
-    project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
+    configureGpgAgent(paths)
     val generatedConfig = paths.gpgAgentConf.readLines()
 
     assertContainsOrdered(generatedConfig, listOf(allowLoopbackPinentryConfig, defaultCacheTtlConfig, maxCacheTtlConfig, pinentryConfig))
@@ -79,7 +79,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val pathLocator = TestGpgPathLocator()
     val paths = pathLocator.resolvePaths()!!
 
-    project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
+    configureGpgAgent(paths)
     var scriptContent = FileUtil.loadFile(paths.gpgPinentryAppLauncher.toFile())
     assertScriptContentStructure(scriptContent)
 
@@ -88,9 +88,13 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     FileUtil.delete(paths.gpgAgentConfBackup.toFile())
 
     FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "${GpgAgentConfig.PINENTRY_PROGRAM} /usr/local/bin/pinentry")
-    project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
+    configureGpgAgent(paths)
     scriptContent = FileUtil.loadFile(paths.gpgPinentryAppLauncher.toFile())
     assertScriptContentStructure(scriptContent)
+  }
+
+  private fun configureGpgAgent(gpgAgentPaths: GpgAgentPaths, pinetryFallback: String = "pinentry") {
+    project.service<GpgAgentConfigurator>().doConfigure(GitExecutableManager.getInstance().getExecutable(project), gpgAgentPaths, pinetryFallback)
   }
 
   private fun assertScriptContentStructure(scriptContent: String) {
