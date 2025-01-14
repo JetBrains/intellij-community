@@ -62,7 +62,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import kotlinx.coroutines.flow.collect
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.onHover
@@ -399,9 +398,10 @@ internal fun MenuItem(
         val itemColors = style.colors.itemColors
         val itemMetrics = style.metrics.itemMetrics
 
+        val updatedTextStyle = LocalTextStyle.current.copy(color = itemColors.contentFor(itemState).value)
         CompositionLocalProvider(
             LocalContentColor provides itemColors.contentFor(itemState).value,
-            LocalTextStyle provides LocalTextStyle.current.copy(color = itemColors.contentFor(itemState).value)
+            LocalTextStyle provides updatedTextStyle,
         ) {
             val backgroundColor by itemColors.backgroundFor(itemState)
 
