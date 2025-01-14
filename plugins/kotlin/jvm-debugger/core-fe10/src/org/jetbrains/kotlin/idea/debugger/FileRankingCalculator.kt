@@ -79,7 +79,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
     }
 
     private suspend fun rankingForClass(clazz: KtClassOrObject, fqName: String, virtualMachine: VirtualMachine): Ranking {
-        val bindingContext = smartReadAction(clazz.project) { analyze(clazz) }
+        val bindingContext = smartReadAction(readAction { clazz.project }) { analyze(clazz) }
         val descriptor = bindingContext[BindingContext.CLASS, clazz] ?: return ZERO
 
         val jdiType = virtualMachine.classesByName(fqName).firstOrNull() ?: run {
@@ -91,7 +91,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
     }
 
     private suspend fun rankingForClass(clazz: KtClassOrObject, type: ReferenceType): Ranking {
-        val bindingContext = smartReadAction(clazz.project) { analyze(clazz) }
+        val bindingContext = smartReadAction(readAction { clazz.project }) { analyze(clazz) }
         val descriptor = bindingContext[BindingContext.CLASS, clazz] ?: return ZERO
 
         return collect(
@@ -114,7 +114,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
     }
 
     private suspend fun rankingForMethod(function: KtFunction, method: Method): Ranking {
-        val bindingContext = smartReadAction(function.project) { analyze(function) }
+        val bindingContext = smartReadAction(readAction { function.project }) { analyze(function) }
         val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, function] as? CallableMemberDescriptor ?: return ZERO
 
         if (function !is KtConstructor<*> && method.name() != descriptor.name.asString())
