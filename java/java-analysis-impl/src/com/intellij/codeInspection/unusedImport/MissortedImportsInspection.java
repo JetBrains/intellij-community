@@ -52,7 +52,7 @@ public final class MissortedImportsInspection extends GlobalSimpleInspectionTool
       int entryIndex = JavaCodeStyleManager.getInstance(javaFile.getProject()).findEntryIndex(importStatement);
       if (entryIndex < currentEntryIndex) {
         // mis-sorted import found
-        IntentionAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, javaFile);
+        IntentionAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(false, javaFile);
         problemsHolder.registerProblem(importList, getDisplayNameText(), new IntentionWrapper(fix));
         return;
       }

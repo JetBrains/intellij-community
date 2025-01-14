@@ -5,9 +5,11 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.unusedImport.MissortedImportsInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.formatting.MockCodeStyleSettingsModifier;
 import com.intellij.ide.scratch.ScratchFileService;
@@ -441,6 +443,15 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
     // whatever: main thing it didn't throw
     assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+  }
+
+  public void testOptimizeImportNotOnTheFly() {
+    myFixture.enableInspections(new MissortedImportsInspection(), new UnusedImportInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+    IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("optimize.imports.fix"));
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testRemovingAllUnusedImports() throws Exception {

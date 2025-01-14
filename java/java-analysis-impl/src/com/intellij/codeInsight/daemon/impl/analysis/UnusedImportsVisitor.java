@@ -39,7 +39,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
   private final @NotNull Project myProject;
   private final PsiFile myFile;
   private final @NotNull Document myDocument;
-  private IntentionAction myOptimizeImportsFix; // when not null, there are not-optimized imports in the file
+  private boolean requiresFix = false;
   private int myCurrentEntryIndex = -1;
   private boolean errorFound;
 
@@ -71,15 +71,17 @@ class UnusedImportsVisitor extends JavaElementVisitor {
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
     }
-    IntentionAction fix = myOptimizeImportsFix;
-    if (fix != null) {
+    IntentionAction fixNotOnFly = null;
+    if (requiresFix) {
+      IntentionAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
       OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myFile, fix);
+      fixNotOnFly = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myFile);
     }
     HighlightDisplayKey misSortedKey = HighlightDisplayKey.find(MissortedImportsInspection.SHORT_NAME);
-    if (misSortedKey != null && isToolEnabled(misSortedKey) && fix != null && importList != null) {
+    if (misSortedKey != null && isToolEnabled(misSortedKey) && fixNotOnFly != null && importList != null) {
       holder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.MISSORTED_IMPORTS)
         .range(importList)
-        .registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey)
+        .registerFix(fixNotOnFly, null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey)
         .create());
     }
   }
@@ -134,9 +136,9 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     }
 
     int entryIndex = JavaCodeStyleManager.getInstance(myProject).findEntryIndex(importStatement);
-    if (entryIndex < myCurrentEntryIndex && myOptimizeImportsFix == null) {
+    if (entryIndex < myCurrentEntryIndex && !requiresFix) {
       // mis-sorted imports found
-      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+      requiresFix = true;
     }
     myCurrentEntryIndex = entryIndex;
   }
@@ -196,8 +198,8 @@ class UnusedImportsVisitor extends JavaElementVisitor {
 
     IntentionAction switchFix = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
     builder.registerFix(switchFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
-    if (!predefinedImport && myOptimizeImportsFix == null) {
-      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+    if (!predefinedImport && !requiresFix) {
+      requiresFix = true;
     }
     addInfo(holder, builder);
   }
