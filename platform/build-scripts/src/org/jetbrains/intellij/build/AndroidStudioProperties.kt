@@ -100,6 +100,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       // Workaround for C2 crashes b/377324522
       "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::simpleType",
       "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::toAttributes",
+      // b/373746515: K2 mode
+      // TODO(b/377539365): revert this after branching
+      "-Didea.kotlin.plugin.use.k2=true",
       )
 
     productLayout.productImplementationModules = listOf(
