@@ -10,9 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.client.ClientAppSession;
-import com.intellij.openapi.client.ClientKind;
-import com.intellij.openapi.client.ClientProjectSession;
+import com.intellij.openapi.client.*;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
@@ -186,6 +184,17 @@ public final class UndoManagerImpl extends UndoManager {
   }
 
   private @Nullable ClientState getClientState() {
+    ClientId clientId = ClientId.getCurrentOrNull();
+    if (clientId != null) {
+      ClientSession appSession = ClientSessionsManager.getAppSession(clientId);
+      if (appSession != null && appSession.isController()) {
+        // IJPL-168172: If current session is a controller, return a local client state instead
+        try (AccessToken ignored = ClientId.withExplicitClientId(ClientId.getLocalId())) {
+          return getComponentManager().getService(ClientState.class);
+        }
+      }
+    }
+
     return getComponentManager().getService(ClientState.class);
   }
 
