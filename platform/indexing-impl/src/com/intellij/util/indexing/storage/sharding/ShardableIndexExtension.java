@@ -38,7 +38,7 @@ public interface ShardableIndexExtension {
     // - 16-cores show little-to-no benefits from sharding
     // - 32-cores show some benefit from 2 shards
     // - 64..128-cores show better benefits from 3 shards.
-    if (cpus < 16) {
+    if (cpus <= 16) {
       return 1;
     }
     else if (cpus <= 32) {
