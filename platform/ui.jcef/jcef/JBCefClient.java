@@ -256,7 +256,7 @@ public final class JBCefClient implements JBCefDisposable {
                                     FileDialogMode mode,
                                     String title,
                                     String defaultFilePath,
-                                    Vector<String> acceptFilters,
+                                    @SuppressWarnings("UseOfObsoleteCollectionType") Vector<String> acceptFilters,
                                     CefFileDialogCallback callback) {
           return myDialogHandler.handleBooleanFirst(browser, handler -> {
             return handler.onFileDialog(browser, mode, title, defaultFilePath, acceptFilters, callback);
