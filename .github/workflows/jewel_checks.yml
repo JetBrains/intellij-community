@@ -3,11 +3,11 @@ name: Jewel Checks
 on:
   pull_request:
     paths:
-      - "community/platform/jewel/**"
+      - "platform/jewel/**"
 
 defaults:
   run:
-    working-directory: community/platform/jewel
+    working-directory: platform/jewel
 
 jobs:
   checks:
