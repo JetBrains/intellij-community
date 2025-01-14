@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.workspace.SubprojectInfoProvider
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.FilePath
@@ -57,7 +58,8 @@ object GHShareProjectUtil {
   fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
     val gitRepository = GithubGitHelper.findGitRepository(project, file)
     val root = gitRepository?.root ?: project.baseDir
-    shareProjectOnGithub(project, gitRepository, root, project.name)
+    val projectName = file?.let { SubprojectInfoProvider.Companion.getSubprojectName(project, file) }?: project.name
+    shareProjectOnGithub(project, gitRepository, root, projectName)
   }
 
     // get gitRepository
