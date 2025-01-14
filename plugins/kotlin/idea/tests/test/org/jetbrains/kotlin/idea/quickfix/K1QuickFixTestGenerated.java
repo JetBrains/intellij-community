@@ -18504,6 +18504,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             public void testChangeTimesFunctionParameterType() throws Exception {
                 runTest("testData/quickfix/typeMismatch/fixOverloadedOperator/changeTimesFunctionParameterType.kt");
             }
+
+            @TestMetadata("changeTimesFunctionParameterTypeParenthesis.kt")
+            public void testChangeTimesFunctionParameterTypeParenthesis() throws Exception {
+                runTest("testData/quickfix/typeMismatch/fixOverloadedOperator/changeTimesFunctionParameterTypeParenthesis.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

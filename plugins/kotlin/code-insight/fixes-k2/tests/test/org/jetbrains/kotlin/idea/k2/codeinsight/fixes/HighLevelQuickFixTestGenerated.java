@@ -5422,6 +5422,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testChangeTimesFunctionParameterType() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/fixOverloadedOperator/changeTimesFunctionParameterType.kt");
         }
+
+        @TestMetadata("changeTimesFunctionParameterTypeParenthesis.kt")
+        public void testChangeTimesFunctionParameterTypeParenthesis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/fixOverloadedOperator/changeTimesFunctionParameterTypeParenthesis.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
