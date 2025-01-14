@@ -33,7 +33,7 @@ import java.nio.file.Path
  * OPEN_PROJECT_SAME_WINDOW, so there is no dialog shown on open directory action, which makes attaching a new project impossible.
  * This action provides a way to do that in this case.
  */
-open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachProject.text")), DumbAware {
+open class AttachProjectAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ProjectAttachProcessor.canAttachToProject() &&
                                          GeneralSettings.getInstance().confirmOpenNewProject != GeneralSettings.OPEN_PROJECT_ASK
