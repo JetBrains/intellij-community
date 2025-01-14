@@ -40,7 +40,6 @@ val isFleetShortCircuitMode: Boolean by lazy {
     isFleetInternalDefaultValue -> false
     else -> true
   })
-  true
 }
 
 @Deprecated("remove FL-30525")
