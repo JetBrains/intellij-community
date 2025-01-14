@@ -133,6 +133,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   internal fun doConfigure(gitExecutable: GitExecutable, gpgAgentPaths: GpgAgentPaths, pinentryFallback: String) {
     val gpgAgentConfPath = gpgAgentPaths.gpgAgentConf
     val existingConfig = readConfig(gpgAgentConfPath).getOrThrow()
+    if (!generatePinentryLauncher(gitExecutable, gpgAgentPaths, pinentryFallback)) return
     if (existingConfig == null) {
       LOG.info("Cannot locate $gpgAgentConfPath, creating new")
       writeAgentConfig(gpgAgentPaths, GpgAgentConfig(gpgAgentPaths, pinentryFallback))
@@ -147,8 +148,6 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
         restartAgent(gitExecutable)
       }
     }
-
-    generatePinentryLauncher(gitExecutable, gpgAgentPaths, pinentryFallback)
   }
 
   private fun emitUpdateLauncherEvent() {
@@ -176,13 +175,9 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   }
 
   @Synchronized
-  private fun generatePinentryLauncher(
-    executable: GitExecutable,
-    gpgAgentPaths: GpgAgentPaths,
-    pinentryFallback: String?,
-  ) {
+  private fun generatePinentryLauncher(executable: GitExecutable, gpgAgentPaths: GpgAgentPaths, pinentryFallback: String?): Boolean {
     LOG.info("Creating pinentry launcher with fallback: ${pinentryFallback ?: "-"}")
-    PinentryShellScriptLauncherGenerator(executable).generate(project, gpgAgentPaths, pinentryFallback)
+    return PinentryShellScriptLauncherGenerator(executable).generate(project, gpgAgentPaths, pinentryFallback)
   }
 
   private fun resolveGpgAgentPaths(executable: GitExecutable): GpgAgentPaths? =
