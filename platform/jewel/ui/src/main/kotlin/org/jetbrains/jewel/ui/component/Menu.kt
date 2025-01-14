@@ -75,6 +75,7 @@ import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
@@ -397,7 +398,11 @@ internal fun MenuItem(
         val itemColors = style.colors.itemColors
         val itemMetrics = style.metrics.itemMetrics
 
-        CompositionLocalProvider(LocalContentColor provides itemColors.contentFor(itemState).value) {
+        val updatedTextStyle = LocalTextStyle.current.copy(color = itemColors.contentFor(itemState).value)
+        CompositionLocalProvider(
+            LocalContentColor provides itemColors.contentFor(itemState).value,
+            LocalTextStyle provides updatedTextStyle,
+        ) {
             val backgroundColor by itemColors.backgroundFor(itemState)
 
             Row(
