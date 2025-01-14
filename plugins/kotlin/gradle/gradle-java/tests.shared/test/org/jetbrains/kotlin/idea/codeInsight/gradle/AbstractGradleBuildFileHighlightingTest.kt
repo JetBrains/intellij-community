@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter
 import org.jetbrains.kotlin.idea.highlighter.checkHighlighting
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.parseDirectives
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -21,7 +22,7 @@ abstract class AbstractGradleBuildFileHighlightingTest : KotlinGradleImportingTe
 
     // Not to depend on JDK11_HOME variable
     override fun requireJdkHome(): String {
-        return requireJdkHome(currentGradleVersion)
+        return requireJdkHome(currentGradleVersion, JavaVersionRestriction.NO)
     }
 
     fun doTest(filePath: String) {

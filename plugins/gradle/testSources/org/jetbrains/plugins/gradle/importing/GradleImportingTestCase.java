@@ -292,12 +292,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return requireJdkHome(getCurrentGradleVersion(), myTargetJavaVersionWatcher.getRestriction());
   }
 
-  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
-    return requireJdkHome(gradleVersion, JavaVersionRestriction.NO);
-  }
-
-  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion,
-                                               @NotNull JavaVersionRestriction javaVersionRestriction) {
+  public static @NotNull String requireJdkHome(
+    @NotNull GradleVersion gradleVersion,
+    @NotNull JavaVersionRestriction javaVersionRestriction
+  ) {
     if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current()) &&
         !javaVersionRestriction.isRestricted(gradleVersion, JavaVersion.current())) {
       return IdeaTestUtil.requireRealJdkHome();
