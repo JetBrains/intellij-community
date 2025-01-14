@@ -1488,33 +1488,6 @@ public final class HighlightMethodUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkConstructorCallsBaseClassConstructor(@NotNull PsiMethod constructor,
-                                                                         @NotNull PsiResolveHelper resolveHelper) {
-    if (!constructor.isConstructor()) return null;
-    PsiClass aClass = constructor.getContainingClass();
-    if (aClass == null) return null;
-    if (aClass.isEnum()) return null;
-    PsiCodeBlock body = constructor.getBody();
-    if (body == null) return null;
-
-    if (JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor) != null) return null;
-    TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(constructor);
-    PsiClassType[] handledExceptions = constructor.getThrowsList().getReferencedTypes();
-    HighlightInfo.Builder info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, resolveHelper, textRange, handledExceptions);
-    if (info != null) {
-      IntentionAction action2 = QuickFixFactory.getInstance().createInsertSuperFix(constructor);
-      info.registerFix(action2, null, null, null, null);
-      IntentionAction action1 = QuickFixFactory.getInstance().createInsertThisFix(constructor);
-      info.registerFix(action1, null, null, null, null);
-      PsiClass superClass = aClass.getSuperClass();
-      if (superClass != null) {
-        IntentionAction action = QuickFixFactory.getInstance().createAddDefaultConstructorFix(superClass);
-        info.registerFix(action, null, null, null, null);
-      }
-    }
-    return info;
-  }
-
 
   /**
    * @return error if static method overrides instance method or

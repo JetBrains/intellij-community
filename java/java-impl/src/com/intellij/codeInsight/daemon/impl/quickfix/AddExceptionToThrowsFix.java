@@ -24,13 +24,21 @@ import java.util.*;
 
 public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiElement> {
   private final @NotNull ThreeState myProcessHierarchy;
+  private final Collection<PsiClassType> myExceptionsToAdd;
 
   public AddExceptionToThrowsFix(@NotNull PsiElement wrongElement) {
     this(wrongElement, ThreeState.UNSURE);
   }
 
+  public AddExceptionToThrowsFix(@NotNull PsiElement wrongElement, @NotNull Collection<PsiClassType> exceptionsToAdd) {
+    super(wrongElement);
+    myExceptionsToAdd = exceptionsToAdd;
+    myProcessHierarchy = ThreeState.UNSURE;
+  }
+
   public AddExceptionToThrowsFix(@NotNull PsiElement wrongElement, @NotNull ThreeState hierarchy) {
     super(wrongElement);
+    myExceptionsToAdd = List.of();
     myProcessHierarchy = hierarchy;
   }
 
@@ -139,12 +147,12 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
     return ContainerUtil.or(getSuperMethods(targetMethod), method -> method instanceof PsiCompiledElement || method instanceof SyntheticElement);
   }
 
-  private static @Nullable PsiMethod collectExceptions(Set<? super PsiClassType> unhandled, PsiElement element) {
+  private @Nullable PsiMethod collectExceptions(Set<? super PsiClassType> unhandled, PsiElement element) {
     PsiElement targetElement = null;
     PsiMethod targetMethod = null;
 
     final PsiElement psiElement;
-    if (element instanceof PsiMethodReferenceExpression) {
+    if (element instanceof PsiMethodReferenceExpression || element instanceof PsiMethod) {
       psiElement = element;
     }
     else {
@@ -169,7 +177,14 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
 
     if (targetElement == null || targetMethod == null) return null;
     if (!ExceptionUtil.canDeclareThrownExceptions(targetMethod)) return null;
-    List<PsiClassType> exceptions = getUnhandledExceptions(element, targetElement, targetMethod);
+    Collection<PsiClassType> exceptions;
+    if (!myExceptionsToAdd.isEmpty()) {
+      if (ContainerUtil.exists(myExceptionsToAdd, e -> !e.isValid())) return null;
+      exceptions = myExceptionsToAdd;
+    }
+    else {
+      exceptions = getUnhandledExceptions(element, targetElement, targetMethod);
+    } 
     if (exceptions == null || exceptions.isEmpty()) return null;
     unhandled.addAll(exceptions);
     return targetMethod;
@@ -181,9 +196,9 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
   }
 
   private static @Nullable List<PsiClassType> getUnhandledExceptions(@Nullable PsiElement element, PsiElement topElement, PsiMethod targetMethod) {
-    if (element == null || element == topElement && !(topElement instanceof PsiMethodReferenceExpression)) return null;
+    if (element == null || element == topElement && !(topElement instanceof PsiMethodReferenceExpression) && !(topElement instanceof PsiMethod)) return null;
     List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
-    if (!filterInProjectExceptions(targetMethod, unhandledExceptions).isEmpty()) {
+     if (!filterInProjectExceptions(targetMethod, unhandledExceptions).isEmpty()) {
       return unhandledExceptions;
     }
     if (topElement instanceof PsiMethodReferenceExpression) {

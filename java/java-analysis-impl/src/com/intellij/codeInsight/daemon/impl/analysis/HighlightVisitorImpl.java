@@ -50,7 +50,6 @@ import com.intellij.ui.NewUI;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -98,7 +97,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new HashMap<>();
   private final @NotNull Consumer<? super HighlightInfo.Builder> myErrorSink = builder -> add(builder);
 
-  private final Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new HashMap<>();
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
   // stored "clashing signatures" errors for the method (if the key is a PsiModifierList of the method), or the class (if the key is a PsiModifierList of the class)
   private final Map<PsiMember, HighlightInfo.Builder> myOverrideEquivalentMethodsErrors = new HashMap<>();
@@ -107,8 +105,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiElement, PsiMethod> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
-  protected @NotNull PsiResolveHelper getResolveHelper(@NotNull Project project) {
-    return PsiResolveHelper.getInstance(project);
+  private @NotNull PsiResolveHelper getResolveHelper() {
+    return PsiResolveHelper.getInstance(getProject());
   }
 
   protected HighlightVisitorImpl() {
@@ -118,7 +116,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private boolean hasErrorResults() {
     return myHasError;
   }
-  private @NotNull Project getProject() {
+
+  private @Contract(pure = true) @NotNull Project getProject() {
     return myHolder.getProject();
   }
 
@@ -144,7 +143,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   /**
-   * @deprecated use {@link #HighlightVisitorImpl()} and {@link #getResolveHelper(Project)}
+   * @deprecated use {@link #HighlightVisitorImpl()} and {@link #getResolveHelper()}
    */
   @Deprecated(forRemoval = true)
   protected HighlightVisitorImpl(@NotNull PsiResolveHelper psiResolveHelper) {
@@ -378,7 +377,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (parentInferenceErrorMessage != null && (returnErrors == null || !returnErrors.containsValue(parentInferenceErrorMessage))) {
         if (returnErrors == null) return;
         HighlightInfo.Builder info =
-          HighlightMethodUtil.createIncompatibleTypeHighlightInfo(callExpression, getResolveHelper(getProject()),
+          HighlightMethodUtil.createIncompatibleTypeHighlightInfo(callExpression, getResolveHelper(),
                                                                   parentCallResolveResult, expression);
         if (info != null) {
           for (PsiElement errorElement : returnErrors.keySet()) {
@@ -592,7 +591,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
       PsiResolveHelper resolveHelper;
       if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
-          !HighlightMethodUtil.isDummyConstructorCall(expression, resolveHelper = getResolveHelper(getProject()), list, referenceExpression) &&
+          !HighlightMethodUtil.isDummyConstructorCall(expression, resolveHelper = getResolveHelper(), list, referenceExpression) &&
           // this check is for fake expression from JspMethodCallImpl
           referenceExpression.getParent() == expression) {
         try {
@@ -850,7 +849,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(HighlightClassUtil.checkSuperQualifierType(myFile.getProject(), expression));
     if (!hasErrorResults()) {
       try {
-        HighlightMethodUtil.checkMethodCall(expression, getResolveHelper(getProject()), myLanguageLevel, myJavaSdkVersion, myFile,
+        HighlightMethodUtil.checkMethodCall(expression, getResolveHelper(), myLanguageLevel, myJavaSdkVersion, myFile,
                                             myErrorSink);
       }
       catch (IndexNotReadyException ignored) {
@@ -896,10 +895,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
       if (!hasErrorResults()) add(HighlightMethodUtil.checkMethodMustHaveBody(method, aClass));
-      if (!hasErrorResults()) {
-        add(
-          HighlightMethodUtil.checkConstructorCallsBaseClassConstructor(method, getResolveHelper(getProject())));
-      }
       if (!hasErrorResults()) add(HighlightMethodUtil.checkStaticMethodOverride(method, myFile));
       if (!hasErrorResults() && aClass != null) {
         GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
@@ -908,9 +903,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     else if (parent instanceof PsiClass aClass) {
       try {
-        if (!hasErrorResults()) {
-          add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, getResolveHelper(getProject())));
-        }
         if (!hasErrorResults()) add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass, myFile, myLanguageLevel));
         if (!hasErrorResults()) {
           GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
@@ -925,7 +917,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitNewExpression(@NotNull PsiNewExpression expression) {
     PsiType type = expression.getType();
-    PsiClass aClass = PsiUtil.resolveClassInType(type);
     add(HighlightUtil.checkUnhandledExceptions(expression));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
@@ -1198,7 +1189,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         methodCallExpression.getMethodExpression() == expression &&
         (!result.isAccessible() || !result.isStaticsScopeCorrect())) {
       PsiExpressionList list = methodCallExpression.getArgumentList();
-      PsiResolveHelper resolveHelper = getResolveHelper(getProject());
+      PsiResolveHelper resolveHelper = getResolveHelper();
       if (!HighlightMethodUtil.isDummyConstructorCall(methodCallExpression, resolveHelper, list, expression)) {
         try {
           add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(

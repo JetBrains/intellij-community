@@ -11,20 +11,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiLiteralUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle.message;
-import static com.intellij.java.codeserver.highlighting.errors.JavaErrorFormatUtil.formatClass;
-import static com.intellij.java.codeserver.highlighting.errors.JavaErrorFormatUtil.formatMethod;
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorFormatUtil.*;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
@@ -355,6 +353,21 @@ public final class JavaErrorKinds {
 
   public static final Simple<PsiJavaCodeReferenceElement> METHOD_THROWS_CLASS_NAME_EXPECTED =
     error("method.throws.class.name.expected");
+  
+  public static final Parameterized<PsiMember, AmbiguousImplicitConstructorCallContext> CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL =
+    parameterized(PsiMember.class, AmbiguousImplicitConstructorCallContext.class, "constructor.ambiguous.implicit.call")
+      .withRawDescription((member, ctx) -> ctx.description())
+      .withRange((member, ctx) -> getMemberDeclarationTextRange(member));
+  public static final Parameterized<PsiMember, PsiClass> CONSTRUCTOR_NO_DEFAULT =
+    parameterized(PsiMember.class, PsiClass.class, "constructor.no.default")
+      .withRawDescription((member, cls) -> message("constructor.no.default", formatClass(requireNonNull(cls))))
+      .withRange((member, ctx) -> getMemberDeclarationTextRange(member));
+
+  public static final Parameterized<PsiElement, Collection<PsiClassType>> EXCEPTION_UNHANDLED =
+    error(PsiElement.class, "exception.unhandled")
+      .withRange(psi -> psi instanceof PsiMember member ? getMemberDeclarationTextRange(member) : null)
+      .<Collection<PsiClassType>>parameterized()
+      .withRawDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
 
   public static final Parameterized<PsiElement, JavaIncompatibleTypeError> TYPE_INCOMPATIBLE =
     parameterized(PsiElement.class, JavaIncompatibleTypeError.class, "type.incompatible")
@@ -447,4 +460,29 @@ public final class JavaErrorKinds {
       return PsiUtil.getEnclosingStaticElement(place, outerClass);
     }
   }
+
+  /**
+   * A context for {@link #CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL} error kind
+   * @param psiClass a class where ambiguous call is performed
+   * @param candidate1 first constructor candidate in super class
+   * @param candidate2 second constructor candidate in super class
+   */
+  public record AmbiguousImplicitConstructorCallContext(@NotNull PsiClass psiClass,
+                                                        @NotNull PsiMethod candidate1,
+                                                        @NotNull PsiMethod candidate2) { 
+    @Nls String description() {
+      String m1 = PsiFormatUtil.formatMethod(candidate1, PsiSubstitutor.EMPTY,
+                                             PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                             PsiFormatUtilBase.SHOW_NAME |
+                                             PsiFormatUtilBase.SHOW_PARAMETERS,
+                                             PsiFormatUtilBase.SHOW_TYPE);
+      String m2 = PsiFormatUtil.formatMethod(candidate2, PsiSubstitutor.EMPTY,
+                                             PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                             PsiFormatUtilBase.SHOW_NAME |
+                                             PsiFormatUtilBase.SHOW_PARAMETERS,
+                                             PsiFormatUtilBase.SHOW_TYPE);
+      return message("constructor.ambiguous.implicit.call", m1, m2);
+    }
+  }
+  
 }

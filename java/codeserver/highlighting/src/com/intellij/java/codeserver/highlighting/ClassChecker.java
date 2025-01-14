@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ClassUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ImplicitClassSearch;
@@ -656,6 +658,73 @@ final class ClassChecker {
         myVisitor.report(JavaErrorKinds.CLASS_ALREADY_IMPORTED.create(aClass));
       }
     }
+  }
+
+  void checkClassDoesNotCallSuperConstructorOrHandleExceptions(PsiClass aClass) {
+    if (aClass.isEnum()) return;
+    // check only no-ctr classes. Problem with specific constructor will be highlighted inside it
+    if (aClass.getConstructors().length != 0) return;
+    // find no-args base class ctr
+    checkBaseClassDefaultConstructorProblem(aClass, aClass, PsiClassType.EMPTY_ARRAY);
+  }
+
+  void checkBaseClassDefaultConstructorProblem(@NotNull PsiClass aClass,
+                                               @NotNull PsiMember anchor,
+                                               PsiClassType @NotNull [] handledExceptions) {
+    if (aClass instanceof PsiAnonymousClass) return;
+    PsiClass baseClass = aClass.getSuperClass();
+    if (baseClass == null) return;
+    PsiMethod[] constructors = baseClass.getConstructors();
+    if (constructors.length == 0) return;
+
+    PsiElement resolved = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(aClass, aClass.getProject(), baseClass);
+    List<PsiMethod> constructorCandidates = (resolved != null ? Collections.singletonList((PsiMethod)resolved)
+                                                              : Arrays.asList(constructors))
+      .stream()
+      .filter(constructor -> {
+        PsiParameter[] parameters = constructor.getParameterList().getParameters();
+        return (parameters.length == 0 || parameters.length == 1 && parameters[0].isVarArgs()) &&
+               PsiResolveHelper.getInstance(aClass.getProject()).isAccessible(constructor, aClass, null);
+      })
+      .limit(2).toList();
+
+    if (constructorCandidates.size() >= 2) {// two ambiguous var-args-only constructors
+      var context =
+        new JavaErrorKinds.AmbiguousImplicitConstructorCallContext(aClass, constructorCandidates.get(0), constructorCandidates.get(1));
+      myVisitor.report(JavaErrorKinds.CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL.create(anchor, context));
+    } else if (!constructorCandidates.isEmpty()) {
+      checkDefaultConstructorThrowsException(constructorCandidates.get(0), anchor, handledExceptions);
+    } else {
+      // no need to distract with missing constructor error when there is already a "Cannot inherit from final class" error message
+      if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return;
+      myVisitor.report(JavaErrorKinds.CONSTRUCTOR_NO_DEFAULT.create(anchor, baseClass));
+    }
+  }
+
+  private void checkDefaultConstructorThrowsException(@NotNull PsiMethod constructor, @NotNull PsiMember anchor, PsiClassType[] handledExceptions) {
+    PsiClassType[] referencedTypes = constructor.getThrowsList().getReferencedTypes();
+    List<PsiClassType> exceptions = new ArrayList<>();
+    for (PsiClassType referencedType : referencedTypes) {
+      if (!ExceptionUtil.isUncheckedException(referencedType) && !ExceptionUtil.isHandledBy(referencedType, handledExceptions)) {
+        exceptions.add(referencedType);
+      }
+    }
+    if (!exceptions.isEmpty()) {
+      myVisitor.report(JavaErrorKinds.EXCEPTION_UNHANDLED.create(anchor, exceptions));
+    }
+  }
+
+  void checkConstructorCallsBaseClassConstructor(@NotNull PsiMethod constructor) {
+    if (!constructor.isConstructor()) return;
+    PsiClass aClass = constructor.getContainingClass();
+    if (aClass == null) return;
+    if (aClass.isEnum()) return;
+    PsiCodeBlock body = constructor.getBody();
+    if (body == null) return;
+
+    if (JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor) != null) return;
+    PsiClassType[] handledExceptions = constructor.getThrowsList().getReferencedTypes();
+    checkBaseClassDefaultConstructorProblem(aClass, constructor, handledExceptions);
   }
 
   private static @Unmodifiable @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {

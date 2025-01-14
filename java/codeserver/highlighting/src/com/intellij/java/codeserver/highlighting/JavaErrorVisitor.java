@@ -204,6 +204,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitModifierList(list);
     PsiElement parent = list.getParent();
     if (parent instanceof PsiMethod method) {
+      if (!hasErrorResults()) {
+        myClassChecker.checkConstructorCallsBaseClassConstructor(method);
+      }
       
     }
     else if (parent instanceof PsiClass aClass) {
@@ -213,7 +216,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         myClassChecker.checkClassMustBeAbstract(aClass);
       }
       if (!hasErrorResults()) {
-        //myClassChecker.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, getResolveHelper(getProject()));
+        myClassChecker.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass);
       }
       //if (!hasErrorResults()) add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass, myFile, myLanguageLevel));
       if (!hasErrorResults()) {

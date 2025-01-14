@@ -5,6 +5,7 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -13,6 +14,8 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 final class JavaErrorFormatUtil {
   static @NotNull @NlsSafe String formatMethod(@NotNull PsiMethod method) {
@@ -39,6 +42,13 @@ final class JavaErrorFormatUtil {
     TextRange throwsRange = method.getThrowsList().getTextRange();
     int end = throwsRange.getEndOffset();
     return new TextRange(start, end).shiftLeft(method.getTextRange().getStartOffset());
+  }
+
+  static @Nullable TextRange getMemberDeclarationTextRange(@NotNull PsiMember member) {
+    return member instanceof PsiClass psiClass ? getClassDeclarationTextRange(psiClass) :
+           member instanceof PsiMethod psiMethod ? getMethodDeclarationTextRange(psiMethod) :
+           member instanceof PsiField psiField ? getFieldDeclarationTextRange(psiField) :
+           null;
   }
 
   static @NotNull TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
@@ -89,6 +99,10 @@ final class JavaErrorFormatUtil {
     }
     if (node != null) return node.getTextRange().getStartOffset();
     return textRange.getStartOffset();
+  }
+
+  static @NotNull String formatTypes(@NotNull Collection<? extends PsiClassType> unhandled) {
+    return StringUtil.join(unhandled, JavaErrorFormatUtil::formatType, ", ");
   }
 
   static @NotNull String formatType(@Nullable PsiType type) {

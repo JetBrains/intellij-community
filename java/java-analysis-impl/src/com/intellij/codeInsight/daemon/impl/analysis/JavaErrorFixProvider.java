@@ -78,6 +78,7 @@ final class JavaErrorFixProvider {
     }
     
     createClassFixes();
+    createConstructorFixes();
     createExpressionFixes();
     createGenericFixes();
     createRecordFixes();
@@ -88,6 +89,35 @@ final class JavaErrorFixProvider {
 
   public static JavaErrorFixProvider getInstance() {
     return ApplicationManager.getApplication().getService(JavaErrorFixProvider.class);
+  }
+  
+  private void createConstructorFixes() {
+    JavaFixesProvider<PsiMember, Object> constructorCallFixes = error -> {
+        if (error.psi() instanceof PsiClass cls) {
+          return List.of(myFactory.createCreateConstructorMatchingSuperFix(cls));
+        }
+        else if (error.psi() instanceof PsiMethod method) {
+          return List.of(myFactory.createInsertSuperFix(method), myFactory.createInsertThisFix(method));
+        }
+        return List.of();
+      };
+    multi(CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL, constructorCallFixes);
+    multi(CONSTRUCTOR_NO_DEFAULT, constructorCallFixes);
+    fix(CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL, error -> myFactory.createAddDefaultConstructorFix(
+      requireNonNull(error.context().psiClass().getSuperClass())));
+    fix(CONSTRUCTOR_NO_DEFAULT, error -> myFactory.createAddDefaultConstructorFix(error.context()));
+    fix(EXCEPTION_UNHANDLED, error -> {
+      PsiClass psiClass = error.psi() instanceof PsiClass cls ? cls : 
+                          error.psi() instanceof PsiMethod method ? method.getContainingClass() :
+                          null;
+      return psiClass != null ? myFactory.createCreateConstructorMatchingSuperFix(psiClass) : null;
+    });
+    fix(EXCEPTION_UNHANDLED, error -> {
+      if (error.psi() instanceof PsiMethod method) {
+        return myFactory.createAddExceptionToThrowsFix(method, error.context());
+      }
+      return null;
+    });
   }
 
   private void createExpressionFixes() {
