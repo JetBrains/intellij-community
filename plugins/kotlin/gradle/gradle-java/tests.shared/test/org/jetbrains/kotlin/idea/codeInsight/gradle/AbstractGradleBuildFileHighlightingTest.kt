@@ -20,7 +20,7 @@ import kotlin.io.path.relativeTo
 abstract class AbstractGradleBuildFileHighlightingTest : KotlinGradleImportingTestCase() {
 
     // Not to depend on JDK11_HOME variable
-    override fun findJdkPath(): String {
+    override fun requireJdkHome(): String {
         return requireJdkHome(currentGradleVersion)
     }
 

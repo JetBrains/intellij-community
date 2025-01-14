@@ -277,7 +277,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     }
     JavaVersion javaRuntimeVersion = JavaVersion.current();
     assumeTestJavaRuntime(javaRuntimeVersion);
-    return findJdkPath();
+    return requireJdkHome();
   }
 
   private static String requireWslJdkHome(@NotNull WSLDistribution distribution) {
@@ -286,6 +286,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64";
     }
     return distribution.getWindowsPath(jdkPath);
+  }
+
+  public @NotNull String requireJdkHome() {
+    return requireJdkHome(getCurrentGradleVersion(), myTargetJavaVersionWatcher.getRestriction());
   }
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
@@ -301,10 +305,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion, javaVersionRestriction);
-  }
-
-  public String findJdkPath() {
-    return requireJdkHome(getCurrentGradleVersion(), myTargetJavaVersionWatcher.getRestriction());
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {

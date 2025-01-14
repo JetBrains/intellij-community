@@ -71,7 +71,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
 
     protected val importStatusCollector = ImportStatusCollector()
 
-    override fun findJdkPath(): String {
+    override fun requireJdkHome(): String {
         /*
         https://docs.gradle.org/current/userguide/compatibility.html
          */
@@ -80,14 +80,14 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
             System.getenv("JDK_17_0") ?: System.getenv("JDK_17") ?: System.getenv("JAVA17_HOME") ?: run {
                 val message = "Missing JDK_17_0 or JAVA17_HOME environment variable"
                 if (IS_UNDER_TEAMCITY) LOG.error(message) else LOG.warn(message)
-                super.findJdkPath()
+                super.requireJdkHome()
             }
         } else {
             /* Versions below 7.3 shall run with JDK 11 (supported since Gradle 5) */
             System.getenv("JDK_11") ?: System.getenv("JAVA11_HOME") ?: run {
                 val message = "Missing JDK_11 or JAVA11_HOME environment variable"
                 if (IS_UNDER_TEAMCITY) LOG.error(message) else LOG.warn(message)
-                super.findJdkPath()
+                super.requireJdkHome()
             }
         }
     }
@@ -274,7 +274,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase(),
         buildGradleModel(
             myProjectRoot.toNioPath().toFile(),
             GradleVersion.version(gradleVersion),
-            findJdkPath(),
+            requireJdkHome(),
             clazz,
             debuggerOptions
         )
