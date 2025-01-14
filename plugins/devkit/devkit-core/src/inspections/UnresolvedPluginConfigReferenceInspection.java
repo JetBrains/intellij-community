@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -18,7 +18,7 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 /**
- * Highlights all unresolved {@link PluginConfigReference}s in code.
+ * Highlights all unresolved {@link PluginConfigReference}s in code (including tests).
  */
 @VisibleForTesting
 @ApiStatus.Internal
@@ -26,6 +26,11 @@ public final class UnresolvedPluginConfigReferenceInspection extends DevKitUastI
 
   @SuppressWarnings("unchecked")
   private final Class<? extends UElement>[] HINTS = new Class[]{UInjectionHost.class};
+
+  @Override
+  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
+    return DevKitInspectionUtil.isAllowedIncludingTestSources(holder.getFile());
+  }
 
   @Override
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
