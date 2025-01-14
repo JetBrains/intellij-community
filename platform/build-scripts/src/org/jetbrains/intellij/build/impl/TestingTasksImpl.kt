@@ -569,6 +569,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       "io.netty.leakDetectionLevel" to "PARANOID",
       "kotlinx.coroutines.debug" to "on",
       "sun.io.useCanonCaches" to "false",
+      "user.home" to System.getProperty("user.home"),
     )) {
       if (v != null) {
         systemProperties.putIfAbsent(k, v)
