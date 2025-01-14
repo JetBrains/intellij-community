@@ -19,7 +19,10 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.util.lang.JavaVersion
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
@@ -32,7 +35,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
 import java.util.concurrent.CompletableFuture
 
-internal class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
+internal class GradleProjectSettingsUpdater(private val cs: CoroutineScope) : ExternalSystemSettingsListenerEx {
   class UpdatedSdkStatus(val sdk: Sdk?, val sdkName: String?, val updated: Boolean)
 
   object Util {
@@ -114,21 +117,25 @@ internal class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
      */
     if (ApplicationManager.getApplication().isUnitTestMode) return
     if (Registry.`is`("gradle.auto.auto.jdk.fix.disabled")) return
-
     if (manager !is GradleManager) return
-    for (projectSettings in settings) {
-      if (projectSettings is GradleProjectSettings) {
-        fixGradleJvm(project, projectSettings)
+
+    cs.launchTracked {
+      for (projectSettings in settings) {
+        if (projectSettings is GradleProjectSettings) {
+          fixGradleJvm(project, projectSettings)
+        }
       }
     }
   }
 }
 
-fun fixGradleJvm(project: Project, projectSettings: GradleProjectSettings) {
-  if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return
-  val statusFuture = Util.updateGradleJvm(project, projectSettings)
-  statusFuture.thenAccept {
-    if (it.updated && it.sdkName != null) notifyGradleJvmChangeInfo(project, projectSettings, it.sdkName, it.sdk)
+suspend fun fixGradleJvm(project: Project, projectSettings: GradleProjectSettings) {
+  if (!GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) {
+    val statusFuture = Util.updateGradleJvm(project, projectSettings)
+    val status = statusFuture.await()
+    if (status.updated && status.sdkName != null) {
+      notifyGradleJvmChangeInfo(project, projectSettings, status.sdkName, status.sdk)
+    }
   }
 }
 
