@@ -25,6 +25,23 @@ public class DefaultBannerStyle(public val colors: BannerColors, public val metr
     public companion object
 }
 
+@Stable
+@GenerateDataFunctions
+public class InlineBannerStyles(
+    public val information: InlineBannerStyle,
+    public val success: InlineBannerStyle,
+    public val warning: InlineBannerStyle,
+    public val error: InlineBannerStyle,
+) {
+    public companion object
+}
+
+@Stable
+@GenerateDataFunctions
+public class InlineBannerStyle(public val colors: BannerColors, public val metrics: BannerMetrics) {
+    public companion object
+}
+
 @Immutable
 @GenerateDataFunctions
 public class BannerColors(public val background: Color, public val border: Color) {
@@ -39,4 +56,8 @@ public class BannerMetrics(public val borderWidth: Dp) {
 
 public val LocalDefaultBannerStyle: ProvidableCompositionLocal<DefaultBannerStyles> = staticCompositionLocalOf {
     error("No DefaultBannerStyle provided. Have you forgotten the theme?")
+}
+
+public val LocalInlineBannerStyle: ProvidableCompositionLocal<InlineBannerStyles> = staticCompositionLocalOf {
+    error("No InlineBannerStyle provided. Have you forgotten the theme?")
 }
