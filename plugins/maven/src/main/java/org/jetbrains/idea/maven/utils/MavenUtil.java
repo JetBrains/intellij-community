@@ -1491,16 +1491,8 @@ public class MavenUtil {
     return module != null && MavenProjectsManager.getInstance(module.getProject()).isMavenizedModule(module);
   }
 
-  public static String getArtifactName(String packaging, Module module, boolean exploded) {
-    return getArtifactName(packaging, module.getName(), exploded);
-  }
-
   public static String getArtifactName(String packaging, String moduleName, boolean exploded) {
     return moduleName + ":" + packaging + (exploded ? " exploded" : "");
-  }
-
-  public static String getEjbClientArtifactName(Module module, boolean exploded) {
-    return getEjbClientArtifactName(module.getName(), exploded);
   }
 
   public static String getEjbClientArtifactName(String moduleName, boolean exploded) {

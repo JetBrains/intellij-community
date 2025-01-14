@@ -6,10 +6,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.UnsyncByteArrayOutputStream
 import org.jdom.Element
 import org.jetbrains.idea.maven.dom.MavenDomUtil
@@ -50,7 +48,7 @@ internal class ResourceConfigGenerator(
     val module = fileIndex.getModuleForFile(pomXml)
     if (module == null) return
 
-    if (!Comparing.equal<VirtualFile?>(mavenProject.directoryFile, fileIndex.getContentRootForFile(pomXml))) return
+    if (mavenProject.directoryFile != fileIndex.getContentRootForFile(pomXml)) return
 
     val javaVersions = getMavenJavaVersions(mavenProject)
     val moduleType = getModuleType(mavenProject, javaVersions)
@@ -66,8 +64,9 @@ internal class ResourceConfigGenerator(
     }
   }
 
-  private fun generate(module: Module?, moduleType: StandardMavenModuleType?) {
+  private fun generate(module: Module?, moduleType: StandardMavenModuleType) {
     if (module == null) return
+    val moduleName = module.name
 
     val resourceConfig = MavenModuleResourceConfiguration()
     val projectId = mavenProject.mavenId
@@ -101,8 +100,8 @@ internal class ResourceConfigGenerator(
       addResources(transformer, resourceConfig.testResources, mavenProject.testResources)
     }
 
-    addWebResources(transformer, module, projectConfig, mavenProject)
-    addEjbClientArtifactConfiguration(module, projectConfig, mavenProject)
+    addWebResources(transformer, moduleName, projectConfig, mavenProject)
+    addEjbClientArtifactConfiguration(moduleName, projectConfig, mavenProject)
 
     resourceConfig.filteringExclusions.addAll(getFilterExclusions(mavenProject))
 
@@ -122,7 +121,7 @@ internal class ResourceConfigGenerator(
       resourceConfig.overwrite = overwrite.toBoolean()
     }
 
-    projectConfig.moduleConfigurations.put(module.getName(), resourceConfig)
+    projectConfig.moduleConfigurations.put(moduleName, resourceConfig)
     generateManifest(mavenProject, module, resourceConfig)
   }
 
@@ -252,7 +251,7 @@ internal class ResourceConfigGenerator(
 
     private fun addWebResources(
       transformer: RemotePathTransformerFactory.Transformer,
-      module: Module,
+      moduleName: String,
       projectCfg: MavenProjectConfiguration,
       mavenProject: MavenProject,
     ) {
@@ -262,12 +261,12 @@ internal class ResourceConfigGenerator(
       val filterWebXml = warCfg.getChildTextTrim("filteringDeploymentDescriptors").toBoolean()
       val webResources = warCfg.getChild("webResources")
 
-      val webArtifactName = MavenUtil.getArtifactName("war", module, true)
+      val webArtifactName = MavenUtil.getArtifactName("war", moduleName, true)
 
       var artifactResourceCfg = projectCfg.webArtifactConfigs[webArtifactName]
       if (artifactResourceCfg == null) {
         artifactResourceCfg = MavenWebArtifactConfiguration()
-        artifactResourceCfg.moduleName = module.getName()
+        artifactResourceCfg.moduleName = moduleName
         projectCfg.webArtifactConfigs.put(webArtifactName, artifactResourceCfg)
       }
       else {
@@ -345,7 +344,7 @@ internal class ResourceConfigGenerator(
     }
 
     private fun addEjbClientArtifactConfiguration(
-      module: Module,
+      moduleName: String,
       projectCfg: MavenProjectConfiguration,
       mavenProject: MavenProject,
     ) {
@@ -378,7 +377,7 @@ internal class ResourceConfigGenerator(
       }
 
       if (!ejbClientCfg.isEmpty) {
-        projectCfg.ejbClientArtifactConfigs.put(MavenUtil.getEjbClientArtifactName(module, true), ejbClientCfg)
+        projectCfg.ejbClientArtifactConfigs.put(MavenUtil.getEjbClientArtifactName(moduleName, true), ejbClientCfg)
       }
     }
   }
