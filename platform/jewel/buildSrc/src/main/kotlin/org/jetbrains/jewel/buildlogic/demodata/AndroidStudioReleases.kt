@@ -1,10 +1,8 @@
 package org.jetbrains.jewel.buildlogic.demodata
 
 import com.squareup.kotlinpoet.ClassName
-import gradle.kotlin.dsl.accessors._327d2b3378ed6d2c1bec5d20438f90c7.kotlin
-import gradle.kotlin.dsl.accessors._327d2b3378ed6d2c1bec5d20438f90c7.sourceSets
-import java.io.File
-import java.net.URI
+import gradle.kotlin.dsl.accessors._2a8ca08099da662a3e5c042bc355f38a.kotlin
+import gradle.kotlin.dsl.accessors._2a8ca08099da662a3e5c042bc355f38a.sourceSets
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.gradle.api.DefaultTask
@@ -21,6 +19,8 @@ import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.property
 import org.gradle.kotlin.dsl.setProperty
+import java.io.File
+import java.net.URI
 
 open class StudioVersionsGenerationExtension(project: Project) {
 
