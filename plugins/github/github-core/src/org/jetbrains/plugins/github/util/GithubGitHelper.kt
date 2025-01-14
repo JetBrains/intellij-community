@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
-import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -33,18 +32,15 @@ class GithubGitHelper {
     @JvmStatic
     fun findGitRepository(project: Project, file: VirtualFile? = null): GitRepository? {
       val manager = GitUtil.getRepositoryManager(project)
+      if (file != null) {
+        return manager.getRepositoryForFileQuick(file)
+      }
       val repositories = manager.repositories
       if (repositories.size == 0) {
         return null
       }
       if (repositories.size == 1) {
         return repositories[0]
-      }
-      if (file != null) {
-        val repository = manager.getRepositoryForFileQuick(file)
-        if (repository != null) {
-          return repository
-        }
       }
       return manager.getRepositoryForFileQuick(project.baseDir)
     }
