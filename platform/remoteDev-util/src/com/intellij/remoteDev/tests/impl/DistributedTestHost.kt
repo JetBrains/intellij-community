@@ -68,7 +68,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       get() = Logger.getInstance(RdctTestFrameworkLoggerCategory.category + "Host")
 
     fun getDistributedTestPort(): Int? =
-      System.getProperty(AgentConstants.protocolPortPropertyName)?.toIntOrNull()
+      System.getProperty(DistributedTestsAgentConstants.protocolPortPropertyName)?.toIntOrNull()
 
     /**
      * ID of the plugin which contains test code.
@@ -89,8 +89,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
   init {
     val hostAddress =
-      System.getProperty(AgentConstants.protocolHostPropertyName)?.let {
-        LOG.info("${AgentConstants.protocolHostPropertyName} system property is set=$it, will try to get address from it.")
+      System.getProperty(DistributedTestsAgentConstants.protocolHostPropertyName)?.let {
+        LOG.info("${DistributedTestsAgentConstants.protocolHostPropertyName} system property is set=$it, will try to get address from it.")
         // this won't work when we do custom network setups as the default gateway will be overridden
         // val hostEntries = File("/etc/hosts").readText().lines()
         // val dockerInterfaceEntry = hostEntries.last { it.isNotBlank() }
@@ -125,8 +125,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     // EternalLifetime.createNested() is used intentionally to make sure logger session's lifetime is not terminated before the actual application stop.
     val lifetime = EternalLifetime.createNested()
 
-    val wire = SocketWire.Client(lifetime, DistributedTestIdeScheduler, port, AgentConstants.protocolName, hostAddress)
-    val protocol = Protocol(name = AgentConstants.protocolName,
+    val wire = SocketWire.Client(lifetime, DistributedTestIdeScheduler, port, DistributedTestsAgentConstants.protocolName, hostAddress)
+    val protocol = Protocol(name = DistributedTestsAgentConstants.protocolName,
                             serializers = Serializers(),
                             identity = Identities(IdKind.Client),
                             scheduler = DistributedTestIdeScheduler,
