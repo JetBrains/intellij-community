@@ -87,5 +87,5 @@ private class ADClassNode(classDeclaration: ADClassDeclaration) : ADStructureVie
     psi?.classHeader?.typeReference?.identifierList?.lastOrNull()?.text ?: "Unknown"
 
   override fun getIcon(unused: Boolean): Icon? =
-    ADIcons.classIcon
+    psi?.let { ADIcons.getIcon(it) } ?: ADIcons.classIcon
 }

@@ -50,7 +50,7 @@ private class ADClassDeclarationUsageGroup(psi: ADClassDeclaration) : UsageGroup
     presentableGroupText.compareTo(other.presentableGroupText, ignoreCase = true)
 
   override fun getIcon(): Icon? =
-    ADIcons.classIcon
+    pointer.element?.let { ADIcons.getIcon(it) } ?: ADIcons.classIcon
 
   override fun getFileStatus(): FileStatus? {
     if (pointer.getProject().isDisposed()) return null
