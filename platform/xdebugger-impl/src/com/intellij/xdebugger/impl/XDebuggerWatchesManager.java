@@ -98,7 +98,7 @@ public final class XDebuggerWatchesManager {
   public @NotNull WatchesManagerState saveState(@NotNull WatchesManagerState state) {
     List<ConfigurationState> expressions = state.getExpressions();
     expressions.clear();
-    watches.forEach((key, value) -> expressions.add(new ConfigurationState(key, ContainerUtil.map(value, XWatch::getExpression))));
+    watches.forEach((key, value) -> expressions.add(new ConfigurationState(key, value)));
     List<InlineWatchState> inlineExpressionStates = state.getInlineExpressionStates();
     inlineExpressionStates.clear();
     inlineWatches.values().stream()
@@ -123,7 +123,13 @@ public final class XDebuggerWatchesManager {
       if (!ContainerUtil.isEmpty(expressionStates)) {
         watches.put(configurationState.getName(), ContainerUtil.mapNotNull(expressionStates, watchState -> {
           XExpression expression = watchState.toXExpression();
-          return expression == null ? null : new XWatchImpl(expression);
+          if (expression == null) return null;
+          if (!watchState.getCanBePaused()) {
+            return new XAlwaysEvaluatedWatch(expression);
+          }
+          XWatchImpl watch = new XWatchImpl(expression);
+          watch.setPaused(watchState.isPaused());
+          return watch;
         }));
       }
     }
