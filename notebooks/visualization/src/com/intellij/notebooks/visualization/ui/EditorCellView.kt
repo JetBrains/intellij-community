@@ -83,7 +83,7 @@ class EditorCellView(
       updateRunButtonVisibility()
       updateCellHighlight()
       updateCellActionsToolbarVisibility()
-      myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
+      myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || value)
     }
 
   private var mouseOver = false

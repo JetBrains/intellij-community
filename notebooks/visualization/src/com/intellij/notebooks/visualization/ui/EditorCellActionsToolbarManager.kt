@@ -3,6 +3,8 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellLines
+import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
 import com.intellij.notebooks.visualization.ui.jupyterToolbar.JupyterCellActionsToolbar
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -20,11 +22,23 @@ import javax.swing.SwingUtilities
 class EditorCellActionsToolbarManager(private val editor: EditorEx, private val cell: EditorCell): Disposable {
   private var toolbar: JupyterCellActionsToolbar? = null
 
-  fun showToolbar(targetComponent: JComponent, cellType: NotebookCellLines.CellType) {
-    val actionGroup = getAdditionalActionGroup(cellType) ?: return
+  private val boundsChangeListener = object : JupyterBoundsChangeListener {
+    override fun boundsChanged() = toolbar?.let {
+      val targetComponent = it.targetComponent ?: return@let
+      it.bounds = calculateToolbarBounds(editor, targetComponent, it, cell.interval.ordinal)
+    }
+  }
 
+  init {
+    JupyterBoundsChangeHandler.get(editor).subscribe(this, boundsChangeListener)
+  }
+
+  fun showToolbar(targetComponent: JComponent, cellType: NotebookCellLines.CellType) {
+    val actionGroup = getActionGroup(cellType) ?: return
     if (targetComponent.width == 0 || targetComponent.height == 0) return
-    if (toolbar == null) toolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
+
+    removeToolbar()
+    toolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
 
     editor.contentComponent.add(toolbar, 0)
     updateToolbarPosition(targetComponent)
@@ -38,11 +52,8 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
   }
 
   fun hideToolbar() {
-    toolbar?.let {
-      editor.contentComponent.remove(it)
-      toolbar = null
-      refreshUI()
-    }
+    removeToolbar()
+    refreshUI()
   }
 
   private fun refreshUI() {
@@ -50,9 +61,17 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
     editor.contentComponent.repaint()
   }
 
-  override fun dispose(): Unit = hideToolbar()
+  private fun removeToolbar() = toolbar?.let {
+    editor.contentComponent.remove(it)
+    toolbar = null
+  }
 
-  private fun getAdditionalActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when(cellType) {
+  override fun dispose() {
+    JupyterBoundsChangeHandler.Companion.get(editor).unsubscribe(boundsChangeListener)
+    hideToolbar()
+  }
+
+  private fun getActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when(cellType) {
     NotebookCellLines.CellType.CODE -> {
       hideDropdownIcon(ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID)
       ActionManager.getInstance().getAction(ADDITIONAL_CODE_ACTION_GROUP_ID) as? ActionGroup
