@@ -2,18 +2,25 @@
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events;
 
 import org.gradle.tooling.Failure;
+import org.gradle.tooling.events.problems.Problem;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
 public final class InternalFailure implements Failure, Serializable {
+
   private final String message;
   private final String description;
   private final List<InternalFailure> causes;
 
-  public InternalFailure(String message, String description, List<InternalFailure> causes) {
+  public InternalFailure(
+    String message,
+    String description,
+    List<InternalFailure> causes
+  ) {
     this.message = message;
     this.description = description;
     this.causes = causes;
@@ -32,5 +39,10 @@ public final class InternalFailure implements Failure, Serializable {
   @Override
   public List<? extends Failure> getCauses() {
     return this.causes;
+  }
+
+  @Override
+  public List<Problem> getProblems() {
+    return Collections.emptyList();
   }
 }

@@ -46,6 +46,8 @@ public class DefaultBuildController implements BuildController {
 
   @Override
   public <T> T getModel(Class<T> aClass) throws UnknownModelException {
+    // QD-10704
+    //noinspection EqualsBetweenInconvertibleTypes
     if (aClass == GradleBuild.class) {
       //noinspection unchecked
       return (T)myMainGradleBuild;
@@ -55,6 +57,8 @@ public class DefaultBuildController implements BuildController {
 
   @Override
   public <T> T findModel(Class<T> aClass) {
+    // QD-10704
+    //noinspection EqualsBetweenInconvertibleTypes
     if (aClass == GradleBuild.class) {
       //noinspection unchecked
       return (T)myMainGradleBuild;
@@ -130,7 +134,7 @@ public class DefaultBuildController implements BuildController {
   }
 
   @Override
-  public <T> void send(T value) {
+  public void send(Object value) {
     myDelegate.send(value);
   }
 
