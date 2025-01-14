@@ -15,9 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -59,19 +57,20 @@ public fun SelectableLazyColumn(
     content: SelectableLazyListScope.() -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val container = SelectableLazyListScopeContainer().apply(content)
+    val container = remember(content) { SelectableLazyListScopeContainer().apply(content) }
 
     val keys = remember(container) { container.getKeys() }
     var isFocused by remember { mutableStateOf(false) }
 
-    val latestOnSelectedIndexesChanged = rememberUpdatedState(onSelectedIndexesChange)
-    LaunchedEffect(state, container) {
-        snapshotFlow { state.selectedKeys }
-            .collect { selectedKeys ->
-                val indices = selectedKeys.mapNotNull { key -> container.getKeyIndex(key) }
-                latestOnSelectedIndexesChanged.value.invoke(indices)
-            }
+    var lastSelectedKeys by remember { mutableStateOf(state.selectedKeys) }
+    LaunchedEffect(state.selectedKeys, onSelectedIndexesChange, container) {
+        if (lastSelectedKeys == state.selectedKeys) return@LaunchedEffect
+
+        val indices = state.selectedKeys.mapNotNull { key -> container.getKeyIndex(key) }
+        lastSelectedKeys = state.selectedKeys
+        onSelectedIndexesChange(indices)
     }
+
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
