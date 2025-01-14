@@ -2,6 +2,7 @@
 package git4idea.commit.signing
 
 import com.intellij.CommonBundle
+import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -443,7 +445,7 @@ internal class PinentryShellScriptLauncherGenerator(override val executable: Git
               |    ;;
               |  esac
               |fi
-              |exec $fallbackPinentryPath "$@"
+              |exec ${CommandLineUtil.posixQuote(fallbackPinentryPath)} "$@"
            """.trimMargin()
   }
 }
