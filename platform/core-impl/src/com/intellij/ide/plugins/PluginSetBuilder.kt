@@ -6,6 +6,7 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
+import com.intellij.util.graph.DFSTBuilder
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -15,10 +16,17 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
-  private val _moduleGraph = createModuleGraph(unsortedPlugins)
-  private val builder = _moduleGraph.builder()
-  @JvmField val moduleGraph: ModuleGraph = _moduleGraph.sorted(builder)
+  private val builder: DFSTBuilder<IdeaPluginDescriptorImpl>
+  val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>
+  @JvmField val moduleGraph: ModuleGraph
 
+  init {
+    val unsortedModuleGraph = createModuleGraph(unsortedPlugins)
+    builder = DFSTBuilder(unsortedModuleGraph, null, true)
+    topologicalComparator = toCoreAwareComparator(builder.comparator())
+    moduleGraph = unsortedModuleGraph.sorted(topologicalComparator)
+  }
+  
   private val enabledPluginIds = HashMap<PluginId, IdeaPluginDescriptorImpl>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<String, IdeaPluginDescriptorImpl>(unsortedPlugins.size * 2)
 

@@ -213,9 +213,7 @@ object DynamicPlugins {
     //  2) SortedModuleGraph;
     //  3) SortedModuleGraph.topologicalComparator;
     //  4) PluginSetBuilder.sortedModuleGraph.
-    var comparator = PluginSetBuilder(allPlugins)
-      .moduleGraph
-      .topologicalComparator
+    var comparator = PluginSetBuilder(allPlugins).topologicalComparator
 
     if (!load) {
       comparator = comparator.reversed()
@@ -1123,9 +1121,7 @@ private fun optionalDependenciesOnPlugin(
   }
 
   // 2. sort topologically
-  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first })
-    .moduleGraph
-    .topologicalComparator
+  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first }).topologicalComparator
   dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
   return dependentPluginsAndItsModule

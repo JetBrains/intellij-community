@@ -5,7 +5,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
-import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -17,7 +16,6 @@ import java.util.Collections.emptyList
  */
 @ApiStatus.Internal
 class ModuleGraph internal constructor(
-  @JvmField val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>,
   private val modules: Collection<IdeaPluginDescriptorImpl>,
   private val directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
   private val directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
@@ -32,12 +30,8 @@ class ModuleGraph internal constructor(
 
   override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependents(descriptor).iterator()
 
-  fun builder(): DFSTBuilder<IdeaPluginDescriptorImpl> = DFSTBuilder(this, null, true)
-
-  internal fun sorted(builder: DFSTBuilder<IdeaPluginDescriptorImpl> = builder()): ModuleGraph {
-    val topologicalComparator = toCoreAwareComparator(builder.comparator())
+  internal fun sorted(topologicalComparator: Comparator<IdeaPluginDescriptorImpl>): ModuleGraph {
     return ModuleGraph(
-      topologicalComparator = topologicalComparator,
       modules = modules.sortedWith(topologicalComparator),
       directDependencies = copySorted(directDependencies, topologicalComparator),
       directDependents = copySorted(directDependents, topologicalComparator)
@@ -139,7 +133,6 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
   }
 
   return ModuleGraph(
-    topologicalComparator = Comparator { _, _ -> 0 },
     modules = modules,
     directDependencies = directDependencies,
     directDependents = directDependents,
@@ -151,7 +144,7 @@ private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress(
   return plugin.pluginDependencies.any { it.pluginId == aliasId } || plugin.dependencies.plugins.any { it.id == aliasId }
 }
 
-private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
+internal fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
   // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
   // so, ensure that core plugin is always first (otherwise not possible to register actions - a parent group not defined)
   // don't use sortWith here - avoid loading kotlin stdlib
