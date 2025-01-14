@@ -10,7 +10,7 @@ public abstract interface class com/jetbrains/DesktopActions$Handler {
 	public fun print (Ljava/io/File;)V
 }
 
-public class com/jetbrains/JBR {
+public final class com/jetbrains/JBR {
 	public static fun getApiVersion ()Ljava/lang/String;
 	public static fun getDesktopActions ()Lcom/jetbrains/DesktopActions;
 	public static fun getRoundedCornersManager ()Lcom/jetbrains/RoundedCornersManager;
