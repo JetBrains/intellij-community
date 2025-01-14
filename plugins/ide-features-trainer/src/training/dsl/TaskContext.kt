@@ -99,24 +99,24 @@ abstract class TaskContext : LearningDslBase {
   open fun runtimeText(@Nls callback: RuntimeTextContext.() -> String?) = Unit
 
   /** Simply wait until an user perform particular action */
-  open fun trigger(actionId: String) = Unit
+  open fun trigger(@Language("devkit-action-id") actionId: String) = Unit
 
   /** Simply wait until an user perform actions */
   open fun trigger(checkId: (String) -> Boolean) = Unit
 
   /** Trigger on actions start. Needs if you want to split long actions into several tasks. */
-  open fun triggerStart(actionId: String, checkState: TaskRuntimeContext.() -> Boolean = { true }) = Unit
+  open fun triggerStart(@Language("devkit-action-id") actionId: String, checkState: TaskRuntimeContext.() -> Boolean = { true }) = Unit
 
   /** [actionIds] these actions required for the current task */
-  open fun triggers(vararg actionIds: String) = Unit
+  open fun triggers(@Language("devkit-action-id") vararg actionIds: String) = Unit
 
   /** An user need to rice an action which leads to necessary state change */
-  open fun <T : Any?> trigger(actionId: String,
+  open fun <T : Any?> trigger(@Language("devkit-action-id") actionId: String,
                               calculateState: TaskRuntimeContext.() -> T,
                               checkState: TaskRuntimeContext.(T, T) -> Boolean) = Unit
 
   /** An user need to rice an action which leads to appropriate end state */
-  fun trigger(actionId: String, checkState: TaskRuntimeContext.() -> Boolean) {
+  fun trigger(@Language("devkit-action-id") actionId: String, checkState: TaskRuntimeContext.() -> Boolean) {
     trigger(actionId, { }, { _, _ -> checkState() })
   }
 

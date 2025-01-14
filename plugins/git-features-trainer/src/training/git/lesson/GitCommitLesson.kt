@@ -192,6 +192,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     highlightToolWindowStripe(ToolWindowId.VCS)
 
+    @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // todo IJPL-165055
     task("ActivateVersionControlToolWindow") {
       openGitWindow(GitLessonsBundle.message("git.commit.open.git.window", action(it),
                                              icon(AllIcons.Toolwindows.ToolWindowChanges),

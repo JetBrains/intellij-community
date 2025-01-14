@@ -19,6 +19,7 @@ import org.assertj.swing.core.MouseClickInfo
 import org.assertj.swing.data.TableCell
 import org.assertj.swing.fixture.JTableFixture
 import org.assertj.swing.fixture.JTextComponentFixture
+import org.intellij.lang.annotations.Language
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -248,7 +249,7 @@ open class FindInFilesLesson(override val sampleFilePath: String,
   }
 
   private fun TaskContext.showWarningIfPopupClosed(isReplacePopup: Boolean) {
-    val actionId = if (isReplacePopup) "ReplaceInPath" else "FindInPath"
+    @Language("devkit-action-id") val actionId = if (isReplacePopup) "ReplaceInPath" else "FindInPath"
     showWarning(LessonsBundle.message("find.in.files.popup.closed.warning.message", action(actionId), LessonUtil.actionName(actionId))) {
       getFindPopup()?.helper?.isReplaceState != isReplacePopup
     }

@@ -28,6 +28,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 import org.assertj.swing.fixture.JComboBoxFixture
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
@@ -454,7 +455,7 @@ fun LessonContext.clearBreakpoints() {
   }
 }
 
-fun LessonContext.runSample(actionId: String, @Nls message: String) {
+fun LessonContext.runSample(@Language("devkit-action-id") actionId: String, @Nls message: String) {
   task {
     text(message, LearningBalloonConfig(Balloon.Position.below, 0, duplicateMessage = true))
     checkToolWindowState(actionId, true)

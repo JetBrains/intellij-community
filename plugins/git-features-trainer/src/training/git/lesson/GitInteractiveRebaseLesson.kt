@@ -57,6 +57,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
   override val lessonContent: LessonContext.() -> Unit = {
     highlightToolWindowStripe(ToolWindowId.VCS)
 
+    @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // todo IJPL-165055
     task("ActivateVersionControlToolWindow") {
       openGitWindow(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it),
                                              strong(GitBundle.message("git4idea.vcs.name"))))
@@ -170,6 +171,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.fixup", LessonUtil.rawKeyStroke(fixupShortcut),
                                     strong(GitBundle.message("rebase.entry.action.name.fixup"))))
       triggerAndBorderHighlight().component { ui: BasicOptionButtonUI.ArrowButton -> isInsideRebaseDialog(ui) }
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // no Action ID available
       trigger("git4idea.rebase.interactive.dialog.FixupAction")
       test(waitEditorToBeReady = false) {
         invokeActionViaShortcut("ALT F")
@@ -197,6 +199,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.squash",
                                     LessonUtil.rawKeyStroke(squashShortcut), strong(GitBundle.message("rebase.entry.action.name.squash"))))
       triggerAndBorderHighlight().component { ui: BasicOptionButtonUI.MainButton -> isInsideRebaseDialog(ui) }
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // no Action ID available
       trigger("git4idea.rebase.interactive.dialog.SquashAction")
       restoreState {
         val table = previous.ui as? JBTable ?: return@restoreState false

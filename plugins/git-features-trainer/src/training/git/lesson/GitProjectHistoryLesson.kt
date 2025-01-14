@@ -48,6 +48,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
   override val lessonContent: LessonContext.() -> Unit = {
     highlightToolWindowStripe(ToolWindowId.VCS)
 
+    @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // todo IJPL-165055
     task("ActivateVersionControlToolWindow") {
       openGitWindow(GitLessonsBundle.message("git.project.history.open.git.window", action(it),
                                              icon(AllIcons.Toolwindows.ToolWindowChanges),
