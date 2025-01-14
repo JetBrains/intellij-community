@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.frame
 
 import com.intellij.ide.dnd.DnDNativeTarget
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.util.application
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -29,11 +30,16 @@ class XSplitterWatchesViewImpl(
     private const val proportionKey = "debugger.immediate.window.in.watches.proportion.key"
 
     private fun checkContract(session: XDebugSessionImpl) {
-      if (tryGetBottomComponentProvider(session) == null)
+      if (tryGetBottomComponentProvider(session, null) == null)
         error("XDebugProcess must provide a properly configured XDebugSessionTabCustomizer to use XSplitterWatchesViewImpl. Read JavaDoc for details")
     }
 
-    private fun tryGetBottomComponentProvider(session: XDebugSessionImpl) = session.debugProcess.getBottomLocalsComponentProvider()
+    private fun tryGetBottomComponentProvider(session: XDebugSessionImpl, useLowLevelDebugProcessPanel: Boolean?) =
+      when (useLowLevelDebugProcessPanel) {
+        null -> session.debugProcess
+        else -> session.getDebugProcess(useLowLevelDebugProcessPanel)
+      }.getBottomLocalsComponentProvider()
+
   }
 
   lateinit var splitter: OnePixelSplitter
@@ -44,7 +50,6 @@ class XSplitterWatchesViewImpl(
   private var localsPanel : JComponent? = null
 
   override fun createMainPanel(localsPanelComponent: JComponent): JPanel {
-    // Can't initialize the panel in the constructor because this function is called from a super constructor
     customized = getShowCustomized()
     localsPanel = localsPanelComponent
 
@@ -67,7 +72,7 @@ class XSplitterWatchesViewImpl(
     }
 
     val session = mySession.get() ?: error("Not null session is expected here")
-    val bottomLocalsComponentProvider = tryGetBottomComponentProvider(session)
+    val bottomLocalsComponentProvider = tryGetBottomComponentProvider(session, useLowLevelDebugProcessPanel())
                                         ?: error("BottomLocalsComponentProvider is not implemented to use SplitterWatchesVariablesView")
 
     val evaluatorComponent = bottomLocalsComponentProvider.createBottomLocalsComponent()
@@ -88,26 +93,43 @@ class XSplitterWatchesViewImpl(
 
     session.addSessionListener(object : XDebugSessionListener {
       override fun stackFrameChanged() {
-        val showCustomizedView = getShowCustomized()
-        if (customized == showCustomizedView) return
-        customized = showCustomizedView
-        updateMainPanel()
+        updateView()
+      }
+
+      override fun sessionPaused() {
+        updateView()
       }
     })
+  }
+
+  private fun updateView() {
+    application.invokeLater {
+      val showCustomizedView = getShowCustomized()
+      if (customized == showCustomizedView) return@invokeLater
+
+      customized = showCustomizedView
+      updateMainPanel()
+    }
   }
 
   private fun getShowCustomized(): Boolean {
     val session = session ?: return false
     if (!session.isMixedMode) return true
-    val frame = session.currentStackFrame ?: return false
 
-    val low = session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess
     val debugProcess = session.getDebugProcess(true)
     val lowSupportsCustomization = debugProcess.useSplitterView()
     val highSupportsCustomization = session.getDebugProcess(false).useSplitterView()
 
-    val isLowFrame = low.belongsToMe(frame)
-    val isHighFrame = !isLowFrame
-    return isLowFrame && lowSupportsCustomization || isHighFrame && highSupportsCustomization
+    val useLowLevelPanel = useLowLevelDebugProcessPanel() == true
+    val useHighLevelPanel = !useLowLevelPanel
+    return useLowLevelPanel && lowSupportsCustomization || useHighLevelPanel && highSupportsCustomization
+  }
+
+  private fun useLowLevelDebugProcessPanel(): Boolean? {
+    val session = session ?: return null
+    if (!session.isMixedMode) return null
+    val frame = session.currentStackFrame ?: return false
+    val low = session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess
+    return low.belongsToMe(frame)
   }
 }
