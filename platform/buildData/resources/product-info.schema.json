@@ -3,7 +3,6 @@
   "$id": "http://jetbrains.org/intellij/schema/product.schema.json",
   "title": "IntelliJ-based IDE installation",
   "description": "Meta-information about installation of an IDE based on IntelliJ Platform",
-  "version": "0.4",
   "type": "object",
   "additionalProperties": false,
   "required": [
