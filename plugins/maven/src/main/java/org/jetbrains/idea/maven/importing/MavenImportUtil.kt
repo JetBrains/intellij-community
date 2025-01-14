@@ -1,324 +1,323 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.build.events.MessageEvent;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleTypeManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.VersionComparatorUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.tree.MavenJavaVersionHolder;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenPlugin;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import com.intellij.build.events.MessageEvent
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.module.ModuleTypeManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.util.text.VersionComparatorUtil
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.importing.tree.MavenJavaVersionHolder
+import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenPlugin
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenUtil
+import java.util.function.Supplier
 
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Supplier;
+@ApiStatus.Internal
+object MavenImportUtil {
+  const val TEST_SUFFIX: String = ".test"
+  const val MAIN_SUFFIX: String = ".main"
 
-import static com.intellij.openapi.util.text.StringUtil.compareVersionNumbers;
-import static com.intellij.util.ObjectUtils.notNull;
+  private val MAVEN_IDEA_PLUGIN_LEVELS = mapOf(
+    "JDK_1_3" to LanguageLevel.JDK_1_3,
+    "JDK_1_4" to LanguageLevel.JDK_1_4,
+    "JDK_1_5" to LanguageLevel.JDK_1_5,
+    "JDK_1_6" to LanguageLevel.JDK_1_6,
+    "JDK_1_7" to LanguageLevel.JDK_1_7
+  )
 
-public final class MavenImportUtil {
-  public static final String TEST_SUFFIX = ".test";
-  public static final String MAIN_SUFFIX = ".main";
-
-  private static final Map<String, LanguageLevel> MAVEN_IDEA_PLUGIN_LEVELS = Map.of(
-    "JDK_1_3", LanguageLevel.JDK_1_3,
-    "JDK_1_4", LanguageLevel.JDK_1_4,
-    "JDK_1_5", LanguageLevel.JDK_1_5,
-    "JDK_1_6", LanguageLevel.JDK_1_6,
-    "JDK_1_7", LanguageLevel.JDK_1_7);
-
-  public static @NotNull String getArtifactUrlForClassifierAndExtension(@NotNull MavenArtifact artifact,
-                                                                        @Nullable String classifier,
-                                                                        @Nullable String extension) {
-
-    String newPath = artifact.getPathForExtraArtifact(classifier, extension);
-    return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, newPath) + JarFileSystem.JAR_SEPARATOR;
+  fun getArtifactUrlForClassifierAndExtension(
+    artifact: MavenArtifact,
+    classifier: String?,
+    extension: String?,
+  ): String {
+    val newPath = artifact.getPathForExtraArtifact(classifier, extension)
+    return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, newPath) + JarFileSystem.JAR_SEPARATOR
   }
 
-  public static @NotNull String getArtifactUrl(@NotNull MavenArtifact artifact,
-                                               @NotNull MavenExtraArtifactType artifactType,
-                                               @NotNull MavenProject project) {
+  fun getArtifactUrl(
+    artifact: MavenArtifact,
+    artifactType: MavenExtraArtifactType,
+    project: MavenProject,
+  ): String {
+    val result = project.getClassifierAndExtension(artifact, artifactType)
+    val classifier = result.first
+    val extension = result.second
 
-    Pair<String, String> result = project.getClassifierAndExtension(artifact, artifactType);
-    String classifier = result.first;
-    String extension = result.second;
 
-
-    return getArtifactUrlForClassifierAndExtension(artifact, classifier, extension);
+    return getArtifactUrlForClassifierAndExtension(artifact, classifier, extension)
   }
 
-  public static @NotNull LanguageLevel getSourceLanguageLevel(@NotNull MavenProject mavenProject) {
-    return getLanguageLevel(mavenProject, () -> getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), true, false));
+  fun getSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel {
+    return getLanguageLevel(mavenProject,
+                            Supplier { getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), true, false) })
   }
 
-  public static @Nullable LanguageLevel getTargetLanguageLevel(@NotNull MavenProject mavenProject) {
-    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, false);
+  fun getTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
+    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, false)
   }
 
-  public static @Nullable LanguageLevel getTargetTestLanguageLevel(@NotNull MavenProject mavenProject) {
-    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, true);
+  fun getTargetTestLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
+    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, true)
   }
 
-  public static @NotNull LanguageLevel getLanguageLevel(@NotNull MavenProject mavenProject, @NotNull Supplier<LanguageLevel> supplier) {
-    LanguageLevel level = null;
+  fun getLanguageLevel(mavenProject: MavenProject, supplier: Supplier<LanguageLevel?>): LanguageLevel {
+    var level: LanguageLevel? = null
 
-    Element cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
+    val cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin")
     if (cfg != null) {
-      String key = cfg.getChildTextTrim("jdkLevel");
-      level = key == null ? null : MAVEN_IDEA_PLUGIN_LEVELS.get(key);
+      val key = cfg.getChildTextTrim("jdkLevel")
+      level = if (key == null) null else MAVEN_IDEA_PLUGIN_LEVELS.get(key)
     }
 
     if (level == null) {
-      level = supplier.get();
+      level = supplier.get()
     }
 
     // default source and target settings of maven-compiler-plugin is 1.5 for versions less than 3.8.1 and 1.6 for 3.8.1 and above
     // see details at http://maven.apache.org/plugins/maven-compiler-plugin and https://issues.apache.org/jira/browse/MCOMPILER-335
     if (level == null) {
-      level = getDefaultLevel(mavenProject);
+      level = getDefaultLevel(mavenProject)
     }
 
     if (level.isAtLeast(LanguageLevel.JDK_11)) {
-      level = adjustPreviewLanguageLevel(mavenProject, level);
+      level = adjustPreviewLanguageLevel(mavenProject, level)
     }
-    return level;
+    return level!!
   }
 
-  public static @NotNull MavenJavaVersionHolder getMavenJavaVersions(@NotNull MavenProject mavenProject) {
-    boolean useReleaseCompilerProp = isReleaseCompilerProp(mavenProject);
-    LanguageLevel sourceVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, false);
-    LanguageLevel sourceTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, true);
-    LanguageLevel targetVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, false);
-    LanguageLevel targetTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, true);
-    return new MavenJavaVersionHolder(sourceVersion, targetVersion, sourceTestVersion, targetTestVersion,
-                                      hasAnotherTestExecution(mavenProject),
-                                      hasTestCompilerArgs(mavenProject));
+  @JvmStatic
+  fun getMavenJavaVersions(mavenProject: MavenProject): MavenJavaVersionHolder {
+    val useReleaseCompilerProp = isReleaseCompilerProp(mavenProject)
+    val sourceVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, false)
+    val sourceTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, true)
+    val targetVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, false)
+    val targetTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, true)
+    return MavenJavaVersionHolder(sourceVersion, targetVersion, sourceTestVersion, targetTestVersion,
+                                  hasAnotherTestExecution(mavenProject),
+                                  hasTestCompilerArgs(mavenProject))
   }
 
-  private static boolean hasTestCompilerArgs(@NotNull MavenProject project) {
-    MavenPlugin plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    if (plugin == null) return false;
-    List<MavenPlugin.Execution> executions = plugin.getExecutions();
+  private fun hasTestCompilerArgs(project: MavenProject): Boolean {
+    val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin") ?: return false
+    val executions = plugin.executions
     if (executions == null || executions.isEmpty()) {
-      return hasTestCompilerArgs(plugin.getConfigurationElement());
+      return hasTestCompilerArgs(plugin.configurationElement)
     }
 
-    return ContainerUtil.exists(executions, e -> hasTestCompilerArgs(e.getConfigurationElement()));
+    return executions.any { hasTestCompilerArgs(it.configurationElement) }
   }
 
-  private static boolean hasTestCompilerArgs(@Nullable Element config) {
+  private fun hasTestCompilerArgs(config: Element?): Boolean {
     return config != null && (config.getChild("testCompilerArgument") != null ||
-                              config.getChild("testCompilerArguments") != null);
+                              config.getChild("testCompilerArguments") != null)
   }
 
-  private static boolean hasAnotherTestExecution(@NotNull MavenProject project) {
-    MavenPlugin plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    if (plugin == null) return false;
-    List<MavenPlugin.Execution> executions = plugin.getExecutions();
-    if (executions == null || executions.isEmpty()) return false;
-    var compileExec = ContainerUtil.find(executions, MavenImportUtil::isCompileExecution);
-    var testExec = ContainerUtil.find(executions, MavenImportUtil::isTestExecution);
-    if (compileExec == null) return testExec != null;
-    if (testExec == null) return true;
-    return !JDOMUtil.areElementsEqual(compileExec.getConfigurationElement(), testExec.getConfigurationElement());
+  private fun hasAnotherTestExecution(project: MavenProject): Boolean {
+    val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+    if (plugin == null) return false
+    val executions = plugin.executions
+    if (executions == null || executions.isEmpty()) return false
+    val compileExec = executions.find { isCompileExecution(it) }
+    val testExec = executions.find { isTestExecution(it) }
+    if (compileExec == null) return testExec != null
+    if (testExec == null) return true
+    return !JDOMUtil.areElementsEqual(compileExec.configurationElement, testExec.configurationElement)
   }
 
-  public static boolean isTestExecution(MavenPlugin.Execution e) {
-    return checkExecution(e, "test-compile", "test-compile", "default-testCompile");
+  fun isTestExecution(e: MavenPlugin.Execution): Boolean {
+    return checkExecution(e, "test-compile", "test-compile", "default-testCompile")
   }
 
 
-  private static boolean isCompileExecution(MavenPlugin.Execution e) {
-    return checkExecution(e, "compile", "compile", "default-compile");
+  private fun isCompileExecution(e: MavenPlugin.Execution): Boolean {
+    return checkExecution(e, "compile", "compile", "default-compile")
   }
 
-  private static boolean checkExecution(MavenPlugin.Execution e, String phase, String goal, String defaultExecId) {
-    return !Objects.equals("none", e.getPhase()) &&
-           (
-             phase.equals(e.getPhase()) ||
-             (e.getGoals() != null && e.getGoals().contains(goal)) ||
-             (defaultExecId.equals(e.getExecutionId()))
-           );
+  private fun checkExecution(e: MavenPlugin.Execution, phase: String, goal: String?, defaultExecId: String): Boolean {
+    return "none" != e.phase &&
+           (phase == e.phase ||
+            (e.goals != null && e.goals.contains(goal)) ||
+            (defaultExecId == e.executionId)
+           )
   }
 
-  private static @Nullable LanguageLevel getMavenLanguageLevel(@NotNull MavenProject mavenProject,
-                                                                 boolean useReleaseCompilerProp,
-                                                                 boolean isSource,
-                                                                 boolean isTest) {
-    String mavenProjectReleaseLevel = useReleaseCompilerProp
-                                      ? isTest ? mavenProject.getTestReleaseLevel() : mavenProject.getReleaseLevel()
-                                      : null;
-      LanguageLevel level = LanguageLevel.parse(mavenProjectReleaseLevel);
-      if (level == null) {
-        String mavenProjectLanguageLevel = getMavenLanguageLevel(mavenProject, isTest, isSource);
-        level = LanguageLevel.parse(mavenProjectLanguageLevel);
-        if (level == null && (StringUtil.isNotEmpty(mavenProjectLanguageLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
-          level = LanguageLevel.HIGHEST;
-        }
+  private fun getMavenLanguageLevel(
+    mavenProject: MavenProject,
+    useReleaseCompilerProp: Boolean,
+    isSource: Boolean,
+    isTest: Boolean,
+  ): LanguageLevel? {
+    val mavenProjectReleaseLevel = if (useReleaseCompilerProp)
+      if (isTest) mavenProject.testReleaseLevel else mavenProject.releaseLevel
+    else
+      null
+    var level = LanguageLevel.parse(mavenProjectReleaseLevel)
+    if (level == null) {
+      val mavenProjectLanguageLevel = getMavenLanguageLevel(mavenProject, isTest, isSource)
+      level = LanguageLevel.parse(mavenProjectLanguageLevel)
+      if (level == null && (StringUtil.isNotEmpty(mavenProjectLanguageLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
+        level = LanguageLevel.HIGHEST
       }
-      return level;
     }
+    return level
+  }
 
-  public static @NotNull LanguageLevel adjustLevelAndNotify(@NotNull Project project, @NotNull LanguageLevel level) {
+  @JvmStatic
+  fun adjustLevelAndNotify(project: Project, level: LanguageLevel): LanguageLevel {
+    var level = level
     if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(level)) {
-      LanguageLevel highestAcceptedLevel = AcceptedLanguageLevelsSettings.getHighestAcceptedLevel();
+      val highestAcceptedLevel = AcceptedLanguageLevelsSettings.getHighestAcceptedLevel()
       if (highestAcceptedLevel.isLessThan(level)) {
-        MavenProjectsManager.getInstance(project).getSyncConsole()
-          .addBuildIssue(new NonAcceptedJavaLevelIssue(level), MessageEvent.Kind.WARNING);
+        MavenProjectsManager.getInstance(project).getSyncConsole().addBuildIssue(NonAcceptedJavaLevelIssue(level), MessageEvent.Kind.WARNING)
       }
-      level = highestAcceptedLevel.isAtLeast(level) ? LanguageLevel.HIGHEST : highestAcceptedLevel;
+      level = if (highestAcceptedLevel.isAtLeast(level)) LanguageLevel.HIGHEST else highestAcceptedLevel
     }
-    return level;
+    return level
   }
 
-  private static String getMavenLanguageLevel(MavenProject project, boolean test, boolean source) {
+  private fun getMavenLanguageLevel(project: MavenProject, test: Boolean, source: Boolean): String? {
     if (test) {
-      return source ? project.getTestSourceLevel() : project.getTestTargetLevel();
+      return if (source) project.testSourceLevel else project.testTargetLevel
     }
     else {
-      return source ? project.getSourceLevel() : project.getTargetLevel();
+      return if (source) project.sourceLevel else project.targetLevel
     }
   }
 
-  public static @NotNull LanguageLevel getDefaultLevel(MavenProject mavenProject) {
-    MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    if (plugin != null && plugin.getVersion() != null) {
+  fun getDefaultLevel(mavenProject: MavenProject): LanguageLevel {
+    val plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+    if (plugin != null && plugin.version != null) {
       //https://github.com/apache/maven-compiler-plugin/blob/master/src/main/java/org/apache/maven/plugin/compiler/AbstractCompilerMojo.java
       // consider "source" parameter documentation.
-      // also note, that this are versions of plugin, not maven.
-      if (VersionComparatorUtil.compare("3.11.0", plugin.getVersion()) <= 0) {
-        return LanguageLevel.JDK_1_8;
+      // also note, that these are versions of plugin, not maven.
+      if (VersionComparatorUtil.compare("3.11.0", plugin.version) <= 0) {
+        return LanguageLevel.JDK_1_8
       }
-      if (VersionComparatorUtil.compare("3.9.0", plugin.getVersion()) <= 0) {
-        return LanguageLevel.JDK_1_7;
+      if (VersionComparatorUtil.compare("3.9.0", plugin.version) <= 0) {
+        return LanguageLevel.JDK_1_7
       }
-      if (VersionComparatorUtil.compare("3.8.0", plugin.getVersion()) <= 0) {
-        return LanguageLevel.JDK_1_6;
+      if (VersionComparatorUtil.compare("3.8.0", plugin.version) <= 0) {
+        return LanguageLevel.JDK_1_6
       }
       else {
-        return LanguageLevel.JDK_1_5;
+        return LanguageLevel.JDK_1_5
       }
     }
-    return LanguageLevel.JDK_1_5;
+    return LanguageLevel.JDK_1_5
   }
 
-  private static LanguageLevel adjustPreviewLanguageLevel(MavenProject mavenProject, LanguageLevel level) {
-    String enablePreviewProperty = mavenProject.getProperties().getProperty("maven.compiler.enablePreview");
-    if (Boolean.parseBoolean(enablePreviewProperty)) {
-      return notNull(level.getPreviewLevel(), level);
+  private fun adjustPreviewLanguageLevel(mavenProject: MavenProject, level: LanguageLevel): LanguageLevel? {
+    val enablePreviewProperty = mavenProject.properties.getProperty("maven.compiler.enablePreview")
+    if (enablePreviewProperty.toBoolean()) {
+      return level.getPreviewLevel() ?: level
     }
 
-    Element compilerConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
+    val compilerConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
     if (compilerConfiguration != null) {
-      String enablePreviewParameter = compilerConfiguration.getChildTextTrim("enablePreview");
-      if (Boolean.parseBoolean(enablePreviewParameter)) {
-        return notNull(level.getPreviewLevel(), level);
+      val enablePreviewParameter = compilerConfiguration.getChildTextTrim("enablePreview")
+      if (enablePreviewParameter.toBoolean()) {
+        return level.getPreviewLevel() ?: level
       }
 
-      Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
+      val compilerArgs = compilerConfiguration.getChild("compilerArgs")
       if (compilerArgs != null) {
         if (isPreviewText(compilerArgs) ||
-            ContainerUtil.exists(compilerArgs.getChildren("arg"), MavenImportUtil::isPreviewText) ||
-            ContainerUtil.exists(compilerArgs.getChildren("compilerArg"), MavenImportUtil::isPreviewText)) {
-          return notNull(level.getPreviewLevel(), level);
+            compilerArgs.getChildren("arg").any { isPreviewText(it) } ||
+            compilerArgs.getChildren("compilerArg").any{ isPreviewText(it) }
+        ) {
+          return level.getPreviewLevel() ?: level
         }
       }
     }
 
-    return level;
+    return level
   }
 
-  public static boolean isPreviewText(Element child) {
-    return JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY.equals(child.getTextTrim());
+  fun isPreviewText(child: Element): Boolean {
+    return JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY == child.textTrim
   }
 
-  public static boolean isReleaseCompilerProp(@NotNull MavenProject mavenProject) {
-    return compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") >= 0;
+  fun isReleaseCompilerProp(mavenProject: MavenProject): Boolean {
+    return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") >= 0
   }
 
-  public static boolean isCompilerTestSupport(@NotNull MavenProject mavenProject) {
-    return compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0;
+  fun isCompilerTestSupport(mavenProject: MavenProject): Boolean {
+    return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
   }
 
-  public static boolean isMainOrTestSubmodule(@NotNull String moduleName) {
-    return isMainModule(moduleName) || isTestModule(moduleName);
+  @JvmStatic
+  fun isMainOrTestSubmodule(moduleName: String): Boolean {
+    return isMainModule(moduleName) || isTestModule(moduleName)
   }
 
-  public static boolean isMainModule(@NotNull String moduleName) {
-    return moduleName.length() > 5 && moduleName.endsWith(MAIN_SUFFIX);
+  fun isMainModule(moduleName: String): Boolean {
+    return moduleName.length > 5 && moduleName.endsWith(MAIN_SUFFIX)
   }
 
-  public static boolean isTestModule(@NotNull String moduleName) {
-    return moduleName.length() > 5 && moduleName.endsWith(TEST_SUFFIX);
+  fun isTestModule(moduleName: String): Boolean {
+    return moduleName.length > 5 && moduleName.endsWith(TEST_SUFFIX)
   }
 
-  public static @NotNull String getParentModuleName(@NotNull String moduleName) {
+  @JvmStatic
+  fun getParentModuleName(moduleName: String): String {
     if (isMainModule(moduleName)) {
-      return StringUtil.trimEnd(moduleName, MAIN_SUFFIX);
+      return moduleName.removeSuffix(MAIN_SUFFIX)
     }
     if (isTestModule(moduleName)) {
-      return StringUtil.trimEnd(moduleName, TEST_SUFFIX);
+      return moduleName.removeSuffix(TEST_SUFFIX)
     }
-    return moduleName;
+    return moduleName
   }
 
-  public static Module createPreviewModule(Project project, VirtualFile contentRoot) {
-    return WriteAction.compute(() -> {
-      Path modulePath = contentRoot.toNioPath().resolve(project.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      Module module = ModuleManager.getInstance(project)
-        .newModule(modulePath, ModuleTypeManager.getInstance().getDefaultModuleType().getId());
-      ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      modifiableModel.addContentEntry(contentRoot);
-      modifiableModel.commit();
+  fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {
+    return WriteAction.compute<Module?, RuntimeException?>(ThrowableComputable {
+      val modulePath = contentRoot.toNioPath().resolve(project.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)
+      val module = getInstance(project)
+        .newModule(modulePath, ModuleTypeManager.getInstance().getDefaultModuleType().id)
+      val modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel()
+      modifiableModel.addContentEntry(contentRoot)
+      modifiableModel.commit()
 
-      ExternalSystemUtil.markModuleAsMaven(module, null, true);
-
-      return module;
-    });
+      ExternalSystemUtil.markModuleAsMaven(module, null, true)
+      module
+    })
   }
 
-  private static boolean needSplitMainAndTest(MavenProject project, MavenJavaVersionHolder mavenJavaVersions) {
-    if (!Registry.is("maven.import.separate.main.and.test.modules.when.needed")) return false;
-    return !project.isAggregator() && mavenJavaVersions.needSeparateTestModule() && isCompilerTestSupport(project);
+  private fun needSplitMainAndTest(project: MavenProject, mavenJavaVersions: MavenJavaVersionHolder): Boolean {
+    if (!`is`("maven.import.separate.main.and.test.modules.when.needed")) return false
+    return !project.isAggregator && mavenJavaVersions.needSeparateTestModule() && isCompilerTestSupport(project)
   }
 
+  @JvmStatic
   @ApiStatus.Internal
-  public static StandardMavenModuleType getModuleType(MavenProject project, MavenJavaVersionHolder mavenJavaVersions) {
+  fun getModuleType(project: MavenProject, mavenJavaVersions: MavenJavaVersionHolder): StandardMavenModuleType {
     if (needSplitMainAndTest(project, mavenJavaVersions)) {
-      return StandardMavenModuleType.COMPOUND_MODULE;
+      return StandardMavenModuleType.COMPOUND_MODULE
     }
-    else if (project.isAggregator()) {
-      return StandardMavenModuleType.AGGREGATOR;
+    else if (project.isAggregator) {
+      return StandardMavenModuleType.AGGREGATOR
     }
     else {
-      return StandardMavenModuleType.SINGLE_MODULE;
+      return StandardMavenModuleType.SINGLE_MODULE
     }
   }
 }

@@ -25,7 +25,7 @@ public final class MavenPlugin implements Serializable {
   private final boolean myExtensions;
 
   private final Element myConfiguration;
-  private final List<Execution> myExecutions;
+  private final List<@NotNull Execution> myExecutions;
 
   private final List<MavenId> myDependencies;
 
@@ -35,7 +35,7 @@ public final class MavenPlugin implements Serializable {
                      boolean aDefault,
                      boolean extensions,
                      Element configuration,
-                     List<Execution> executions,
+                     List<@NotNull Execution> executions,
                      List<MavenId> dependencies) {
     myGroupId = groupId;
     myArtifactId = artifactId;
@@ -75,7 +75,7 @@ public final class MavenPlugin implements Serializable {
     return myConfiguration;
   }
 
-  public List<Execution> getExecutions() {
+  public List<@NotNull Execution> getExecutions() {
     return myExecutions;
   }
 
