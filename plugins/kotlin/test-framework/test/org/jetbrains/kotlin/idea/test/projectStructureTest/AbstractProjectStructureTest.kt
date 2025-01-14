@@ -229,9 +229,15 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
     ) {
         dependencies.forEach { dependency ->
             check(dependency.kind == DependencyKind.REGULAR)
+            val scope = when (dependency.scope) {
+                DependencyScope.COMPILE -> com.intellij.openapi.roots.DependencyScope.COMPILE
+                DependencyScope.RUNTIME -> com.intellij.openapi.roots.DependencyScope.RUNTIME
+                DependencyScope.TEST -> com.intellij.openapi.roots.DependencyScope.TEST
+                DependencyScope.PROVIDED -> com.intellij.openapi.roots.DependencyScope.PROVIDED
+            }
             librariesByName[dependency.name]
-                ?.let { library -> module.addDependency(library, exported = dependency.isExported) }
-                ?: module.addDependency(modulesByName.getValue(dependency.name), exported = dependency.isExported)
+                ?.let { library -> module.addDependency(library, exported = dependency.isExported, dependencyScope = scope) }
+                ?: module.addDependency(modulesByName.getValue(dependency.name), exported = dependency.isExported, dependencyScope = scope)
         }
     }
 

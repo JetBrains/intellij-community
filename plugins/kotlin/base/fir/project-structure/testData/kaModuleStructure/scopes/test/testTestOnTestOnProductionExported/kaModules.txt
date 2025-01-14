@@ -17,8 +17,7 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <A>
   regularDependencies:
-    KaSourceModule(B, production)
-    KaSourceModule(C, production)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -47,7 +46,7 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <B>
   regularDependencies:
-    KaSourceModule(C, production)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:

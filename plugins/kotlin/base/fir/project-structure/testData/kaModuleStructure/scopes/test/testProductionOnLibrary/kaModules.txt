@@ -29,7 +29,7 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <A>
   regularDependencies:
-    KaLibraryModule(library)
+    <empty>
   friendDependencies:
     <empty>
   dependsOnDependencies:
