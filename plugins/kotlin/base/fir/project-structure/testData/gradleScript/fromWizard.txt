@@ -519,7 +519,6 @@ KaScriptModule:
   targetPlatform: JVM (1.8)
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(build.gradle.kts groovy dependencies, scriptDependency)
     KaLibraryModule(gradle-api-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-api-8.11.jar, scriptDependency)
@@ -532,6 +531,7 @@ KaScriptModule:
     KaLibraryModule(kotlin-reflect-2.0.20.jar, scriptDependency)
     KaLibraryModule(kotlin-stdlib-2.0.20.jar, scriptDependency)
     KaLibraryModule(settings.gradle.kts accessors dependencies, scriptDependency)
+    KaLibraryModule(settings.gradle.kts groovy dependencies, scriptDependency)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -541,6 +541,18 @@ KaLibraryModule:
   description: Library settings.gradle.kts accessors dependencies
   targetPlatform: JVM (1.8)
   libraryName: settings.gradle.kts accessors dependencies
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library settings.gradle.kts groovy dependencies
+  targetPlatform: JVM (1.8)
+  libraryName: settings.gradle.kts groovy dependencies
   isSdk: false
   regularDependencies:
     <empty>
