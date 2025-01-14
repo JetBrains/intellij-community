@@ -32,6 +32,7 @@ import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Group;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
+import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 
 import java.util.*;
 
@@ -142,11 +143,8 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
 
   private static void processScopes(Project project, Module module, final Processor<GlobalSearchScope> processor) {
-
     if (module == null) {
-      final GlobalSearchScope projectScope = GlobalSearchScopesCore.projectProductionScope(project).
-        union(ProjectScope.getLibrariesScope(project));
-      processor.process(projectScope);
+      processor.process(PluginRelatedLocatorsUtils.getCandidatesScope(project));
       return;
     }
 

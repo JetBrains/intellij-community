@@ -30,6 +30,7 @@ import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
+import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UastUtils;
@@ -53,7 +54,7 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
   public @NotNull ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     Project project = getElement().getProject();
 
-    final GlobalSearchScope domSearchScope = getProductionWithLibrariesScope(project);
+    final GlobalSearchScope domSearchScope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
 
     CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
     collectDomResults(myId, domSearchScope, processor);
