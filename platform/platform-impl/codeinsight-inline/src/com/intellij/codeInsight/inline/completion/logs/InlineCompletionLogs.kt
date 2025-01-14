@@ -3,11 +3,13 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.Cancellation
 import org.jetbrains.annotations.ApiStatus
 
@@ -21,6 +23,23 @@ object InlineCompletionLogs : CounterUsagesCollector() {
   init {
     Session.SESSION_EVENT // access session_event to load it
   }
+
+  private val EP_NAME = ExtensionPointName.create<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
+
+  private val mlRecorder = lazy {
+    EP_NAME.extensionList.firstOrNull { it.recorderId == "ML" }
+  }
+
+  // most essential logs
+  private val essentialLogs = listOf("experiment_group", "file_language", "finish_type", "request_id", "was_shown", "inline_api_provider", "total_inserted_length")
+
+  // these options are provided by AP FUS config
+  val basicFields: Collection<String>
+    get() = mlRecorder.value?.recorderOptionsProvider?.getListOption("basic_logs")?.takeIf { it.isNotEmpty() } ?: essentialLogs
+  val fullLogShare: Int
+    get() = mlRecorder.value?.recorderOptionsProvider?.getIntOption("local_logs_share") ?: 1
+  val cloudLogsShare: Int
+    get() = mlRecorder.value?.recorderOptionsProvider?.getIntOption("cloud_logs_share") ?: 10
 
   object Session {
     private val phaseToFieldList: List<Pair<Phase, EventFieldExt<*>>> = run {
@@ -49,8 +68,7 @@ object InlineCompletionLogs : CounterUsagesCollector() {
     }
 
     fun isBasic(eventPair: EventPair<*>): Boolean {
-      // all fields are unique and must be initialized before
-      return requireNotNull(eventFieldProperties[eventPair.field.name]?.isBasic)
+      return basicFields.contains(eventPair.field.name)
     }
 
     // Each phase will have a separate ObjectEventField in the session event with the corresponding features.
