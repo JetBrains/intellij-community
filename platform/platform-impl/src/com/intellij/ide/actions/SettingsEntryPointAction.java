@@ -56,7 +56,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
@@ -194,17 +196,18 @@ public final class SettingsEntryPointAction extends ActionGroup
       ActionProvider.EP_NAME.getExtensionList(), o -> !o.getLastActions(context).isEmpty()) != null;
 
     ListPopup popup;
+    String place = "SettingsEntryPoint";
+    if (eventPlace != null) {
+      place += "@" + eventPlace;
+    }
+    place = ActionPlaces.getPopupPlace(place);
 
     if (hasLastActions && ExperimentalUI.isNewUI()) {
-      popup = new MyPopup(group, context, new PresentationFactory());
+      popup = new MyPopup(group, context, new PresentationFactory(), place);
     }
     else {
-      String place = "SettingsEntryPoint";
-      if (eventPlace != null) {
-        place += "@" + eventPlace;
-      }
       popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, ActionSelectionAid.MNEMONICS, true, ActionPlaces.getPopupPlace(place));
+        null, group, context, ActionSelectionAid.MNEMONICS, true, place);
     }
 
     popup.setShowSubmenuOnHover(true);
@@ -216,8 +219,8 @@ public final class SettingsEntryPointAction extends ActionGroup
 
     final @NotNull PresentationFactory myPresentationFactory;
 
-    MyPopup(@NotNull ActionGroup group, @NotNull DataContext context, @NotNull PresentationFactory presentationFactory) {
-      super(null, null, group, context, ActionPlaces.POPUP, presentationFactory,
+    MyPopup(@NotNull ActionGroup group, @NotNull DataContext context, @NotNull PresentationFactory presentationFactory, @NotNull String place) {
+      super(null, null, group, context, place, presentationFactory,
             ActionPopupOptions.mnemonicsAndDisabled(), null);
       myPresentationFactory = presentationFactory;
     }
