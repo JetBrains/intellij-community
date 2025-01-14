@@ -12,6 +12,7 @@ dependencies {
 
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(projects.ui)
+    testImplementation(compose.desktop.currentOs)
 }
 
 publicApiValidation {

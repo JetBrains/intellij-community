@@ -7,6 +7,7 @@ import org.commonmark.parser.IncludeSourceSpans
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.html.HtmlRenderer
 import org.intellij.lang.annotations.Language
+import org.jetbrains.jewel.markdown.MarkdownMode
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
@@ -25,14 +26,14 @@ private val rawMarkdown =
     ## Header 4
     Paragraph 5
     continue paragraph 5
-    
-    
+
+
     ```
     line 6-1
     line 6-2
     ```
     Paragraph 7
-    
+
     Paragraph 8
     continue p8
     """
@@ -46,7 +47,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `first blocks stay the same`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -55,7 +56,7 @@ class MarkdownProcessorOptimizeEditsTest {
                 continue p0
                 # Header 1
                 Paragraph 2
-                
+
                 * list item 3-1
                 * list item 3-2
                 """
@@ -74,7 +75,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <li>list item 3-1</li>
             <li>list item 3-2</li>
             </ul>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -83,7 +84,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `first block edited`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -97,14 +98,14 @@ class MarkdownProcessorOptimizeEditsTest {
                 ## Header 4
                 Paragraph 5
                 continue paragraph 5
-                
-                
+
+
                 ```
                 line 6-1
                 line 6-2
                 ```
                 Paragraph 7
-                
+
                 Paragraph 8
                 continue p8
                 """
@@ -129,7 +130,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <p>Paragraph 7</p>
             <p>Paragraph 8
             continue p8</p>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -141,7 +142,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `last block edited`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -156,14 +157,14 @@ class MarkdownProcessorOptimizeEditsTest {
                 ## Header 4
                 Paragraph 5
                 continue paragraph 5
-                
-                
+
+
                 ```
                 line 6-1
                 line 6-2
                 ```
                 Paragraph 7
-                
+
                 Paragraph *CHANGE*
                 continue p8
                 """
@@ -189,7 +190,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <p>Paragraph 7</p>
             <p>Paragraph <em>CHANGE</em>
             continue p8</p>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -202,7 +203,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `middle block edited`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -217,14 +218,14 @@ class MarkdownProcessorOptimizeEditsTest {
                 ## Header 4
                 Paragraph 5
                 continue paragraph 5
-                
+
 
                 ```
                 line 6-1
                 line 6-2
                 ```
                 Paragraph 7
-                
+
                 Paragraph 8
                 continue p8
                 """
@@ -250,7 +251,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <p>Paragraph 7</p>
             <p>Paragraph 8
             continue p8</p>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -265,7 +266,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `blocks merged`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -280,8 +281,8 @@ class MarkdownProcessorOptimizeEditsTest {
                 ## Header 4
                 Paragraph 5
                 continue paragraph 5
-                
-                
+
+
                 ```
                 line 6-1
                 line 6-2
@@ -312,7 +313,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <p>Paragraph 7
             Paragraph 8
             continue p8</p>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -324,7 +325,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `blocks split`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -338,14 +339,14 @@ class MarkdownProcessorOptimizeEditsTest {
                 * list item 3-3
                 ## Header 4
                 Paragraph 5
-                
+
                 continue paragraph 5
                 ```
                 line 6-1
                 line 6-2
                 ```
                 Paragraph 7
-                
+
                 Paragraph 8
                 continue p8
                 """
@@ -371,7 +372,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <p>Paragraph 7</p>
             <p>Paragraph 8
             continue p8</p>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -384,7 +385,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `blocks deleted`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun =
             processor.processWithQuickEdits(
@@ -401,7 +402,7 @@ class MarkdownProcessorOptimizeEditsTest {
                 line 6-2
                 ```
                 Paragraph 7
-                
+
                 Paragraph 8
                 continue p8
                 """
@@ -424,7 +425,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <p>Paragraph 7</p>
             <p>Paragraph 8
             continue p8</p>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -438,7 +439,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `blocks added`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondDocument =
             """
@@ -450,20 +451,20 @@ class MarkdownProcessorOptimizeEditsTest {
             * list item 3-2
             * list item 3-3
             ## Header 4
-            
-                        
+
+
             *CHANGE*
-                        
+
             Paragraph 5
             continue paragraph 5
-            
-            
+
+
             ```
             line 6-1
             line 6-2
             ```
             Paragraph 7
-            
+
             Paragraph 8
             continue p8
             """
@@ -490,7 +491,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <p>Paragraph 7</p>
             <p>Paragraph 8
             continue p8</p>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -505,7 +506,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `no changes`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun = processor.processWithQuickEdits(rawMarkdown)
         assertHtmlEquals(
@@ -528,7 +529,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <p>Paragraph 7</p>
             <p>Paragraph 8
             continue p8</p>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -538,7 +539,7 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `empty line added`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondRun = processor.processWithQuickEdits("\n" + rawMarkdown)
         assertHtmlEquals(
@@ -561,7 +562,7 @@ class MarkdownProcessorOptimizeEditsTest {
             <p>Paragraph 7</p>
             <p>Paragraph 8
             continue p8</p>
-            
+
             """
                 .trimIndent(),
             secondRun,
@@ -573,7 +574,7 @@ class MarkdownProcessorOptimizeEditsTest {
     /** Regression https://github.com/JetBrains/jewel/issues/344 */
     @Test
     fun `content if empty`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         processor.processWithQuickEdits(rawMarkdown)
         val secondRun = processor.processWithQuickEdits("")
         assertHtmlEquals(
@@ -587,16 +588,16 @@ class MarkdownProcessorOptimizeEditsTest {
 
     @Test
     fun `chained changes`() {
-        val processor = MarkdownProcessor(editorMode = true)
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(null))
         processor.processWithQuickEdits(
             """
             # Header 0
             # Header 1
             # Header 2
-            
-            
-            
-            
+
+
+
+
             # Header 3
             # Header 4
             # Header 5
@@ -613,10 +614,10 @@ class MarkdownProcessorOptimizeEditsTest {
             # Header 0
             # Header 1
             some paragraph
-            
-            
-            
-            
+
+
+
+
             # Header 2
             # Header 3
             # Header 7
@@ -631,8 +632,8 @@ class MarkdownProcessorOptimizeEditsTest {
                 """
                 # Header 0
                 # Header 1
-                
-                
+
+
                 some paragraph
                 # Header 2
                 # Header 7
@@ -646,13 +647,13 @@ class MarkdownProcessorOptimizeEditsTest {
             """
             # Header 0
             # Header 1
-            
-            
+
+
             some paragraph
             # Header 2
             # Header 7
-                        
-                        
+
+
             - list item 1
             - list item 2
             # Header 8
@@ -683,7 +684,7 @@ class MarkdownProcessorOptimizeEditsTest {
             </ul>
             <h1>Header 8</h1>
             <h1>Header 9</h1>
-            
+
             """
                 .trimIndent(),
             fifthRun,

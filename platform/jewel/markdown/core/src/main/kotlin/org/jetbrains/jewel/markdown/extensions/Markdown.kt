@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
@@ -28,3 +29,10 @@ public val LocalMarkdownBlockRenderer: ProvidableCompositionLocal<MarkdownBlockR
 
 public val JewelTheme.Companion.markdownBlockRenderer: MarkdownBlockRenderer
     @Composable get() = LocalMarkdownBlockRenderer.current
+
+public val LocalMarkdownMode: ProvidableCompositionLocal<MarkdownMode> = staticCompositionLocalOf {
+    MarkdownMode.Standalone
+}
+
+public val JewelTheme.Companion.markdownMode: MarkdownMode
+    @Composable get() = LocalMarkdownMode.current
