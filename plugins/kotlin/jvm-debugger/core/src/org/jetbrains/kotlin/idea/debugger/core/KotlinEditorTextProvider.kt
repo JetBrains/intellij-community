@@ -100,7 +100,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
             is KtReferenceExpression -> isReferenceAllowed(target, allowMethodCalls)
             is KtOperationExpression -> {
                 isReferenceAllowed(target.operationReference, allowMethodCalls) &&
-                        (allowMethodCalls || false /* TODO: check operation arguments */)
+                        allowMethodCalls // TODO: check operation arguments: allowMethodCalls || arguments.all { it.isSafe }
             }
             is KtQualifiedExpression -> {
                 val selector = target.selectorExpression
