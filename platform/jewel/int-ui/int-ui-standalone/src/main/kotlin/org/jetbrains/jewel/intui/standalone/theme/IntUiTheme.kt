@@ -45,6 +45,7 @@ import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
+import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
@@ -115,6 +116,7 @@ public fun ComponentStyling.dark(
     defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.dark(),
     comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.dark(),
     defaultButtonStyle: ButtonStyle = ButtonStyle.Default.dark(),
+    defaultSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Default.dark(),
     defaultTabStyle: TabStyle = TabStyle.Default.dark(),
     dividerStyle: DividerStyle = DividerStyle.dark(),
     dropdownStyle: DropdownStyle = DropdownStyle.Default.dark(),
@@ -128,6 +130,7 @@ public fun ComponentStyling.dark(
     menuStyle: MenuStyle = MenuStyle.dark(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.dark(),
+    outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.dark(),
     radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
     scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
     segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.dark(),
@@ -149,6 +152,7 @@ public fun ComponentStyling.dark(
             comboBoxStyle = comboBoxStyle,
             defaultButtonStyle = defaultButtonStyle,
             defaultDropdownStyle = dropdownStyle,
+            defaultSplitButtonStyle = defaultSplitButtonStyle,
             defaultTabStyle = defaultTabStyle,
             dividerStyle = dividerStyle,
             editorTabStyle = editorTabStyle,
@@ -161,6 +165,7 @@ public fun ComponentStyling.dark(
             menuStyle = menuStyle,
             outlinedButtonStyle = outlinedButtonStyle,
             popupContainerStyle = popupContainerStyle,
+            outlinedSplitButtonStyle = outlinedSplitButtonStyle,
             radioButtonStyle = radioButtonStyle,
             scrollbarStyle = scrollbarStyle,
             segmentedControlButtonStyle = segmentedControlButtonStyle,
@@ -183,6 +188,7 @@ public fun ComponentStyling.light(
     defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.light(),
     comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.light(),
     defaultButtonStyle: ButtonStyle = ButtonStyle.Default.light(),
+    defaultSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Default.light(),
     defaultTabStyle: TabStyle = TabStyle.Default.light(),
     dividerStyle: DividerStyle = DividerStyle.light(),
     dropdownStyle: DropdownStyle = DropdownStyle.Default.light(),
@@ -196,6 +202,7 @@ public fun ComponentStyling.light(
     menuStyle: MenuStyle = MenuStyle.light(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.light(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
+    outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.light(),
     radioButtonStyle: RadioButtonStyle = RadioButtonStyle.light(),
     scrollbarStyle: ScrollbarStyle = ScrollbarStyle.light(),
     segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.light(),
@@ -217,6 +224,7 @@ public fun ComponentStyling.light(
             defaultBannerStyle = defaultBannerStyle,
             defaultButtonStyle = defaultButtonStyle,
             defaultDropdownStyle = dropdownStyle,
+            defaultSplitButtonStyle = defaultSplitButtonStyle,
             defaultTabStyle = defaultTabStyle,
             dividerStyle = dividerStyle,
             editorTabStyle = editorTabStyle,
@@ -229,6 +237,7 @@ public fun ComponentStyling.light(
             menuStyle = menuStyle,
             outlinedButtonStyle = outlinedButtonStyle,
             popupContainerStyle = popupContainerStyle,
+            outlinedSplitButtonStyle = outlinedSplitButtonStyle,
             radioButtonStyle = radioButtonStyle,
             scrollbarStyle = scrollbarStyle,
             segmentedControlButtonStyle = segmentedControlButtonStyle,

@@ -27,6 +27,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalDefaultBannerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultComboBoxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultDropdownStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDividerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalEditorTabStyle
@@ -38,6 +39,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalLazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
@@ -59,6 +61,7 @@ import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
+import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
@@ -74,6 +77,7 @@ public class DefaultComponentStyling(
     public val comboBoxStyle: ComboBoxStyle,
     public val defaultButtonStyle: ButtonStyle,
     public val defaultDropdownStyle: DropdownStyle,
+    public val defaultSplitButtonStyle: SplitButtonStyle,
     public val defaultTabStyle: TabStyle,
     public val dividerStyle: DividerStyle,
     public val editorTabStyle: TabStyle,
@@ -86,6 +90,7 @@ public class DefaultComponentStyling(
     public val menuStyle: MenuStyle,
     public val outlinedButtonStyle: ButtonStyle,
     public val popupContainerStyle: PopupContainerStyle,
+    public val outlinedSplitButtonStyle: SplitButtonStyle,
     public val radioButtonStyle: RadioButtonStyle,
     public val scrollbarStyle: ScrollbarStyle,
     public val segmentedControlButtonStyle: SegmentedControlButtonStyle,
@@ -108,6 +113,7 @@ public class DefaultComponentStyling(
             LocalDefaultBannerStyle provides defaultBannerStyle,
             LocalDefaultComboBoxStyle provides comboBoxStyle,
             LocalDefaultButtonStyle provides defaultButtonStyle,
+            LocalDefaultSplitButtonStyle provides defaultSplitButtonStyle,
             LocalDefaultDropdownStyle provides defaultDropdownStyle,
             LocalDefaultTabStyle provides defaultTabStyle,
             LocalDividerStyle provides dividerStyle,
@@ -121,6 +127,7 @@ public class DefaultComponentStyling(
             LocalMenuStyle provides menuStyle,
             LocalOutlinedButtonStyle provides outlinedButtonStyle,
             LocalPopupContainerStyle provides popupContainerStyle,
+            LocalOutlinedSplitButtonStyle provides outlinedSplitButtonStyle,
             LocalRadioButtonStyle provides radioButtonStyle,
             LocalScrollbarStyle provides scrollbarStyle,
             LocalSegmentedControlButtonStyle provides segmentedControlButtonStyle,
