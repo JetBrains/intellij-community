@@ -4,7 +4,6 @@ package com.intellij.codeInsight.navigation.actions
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.Companion.getCurrentEventData
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
@@ -19,8 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.ui.list.createTargetPopup
 
-internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclarationReporter?,
-                                           private val navigationHandler: NavigationRequestHandler?) : CodeInsightActionHandler {
+internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclarationReporter?) : CodeInsightActionHandler {
 
   companion object {
 
@@ -37,19 +35,18 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
       project: Project,
       editor: Editor,
       actionResult: NavigationActionResult,
-      reporter: GotoDeclarationReporter?,
-      navigationHandler: NavigationRequestHandler?
+      reporter: GotoDeclarationReporter?
     ) {
       // obtain event data before showing the popup,
       // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
-      val eventData: List<EventPair<*>>? = getCurrentEventData()
+      val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
       when (actionResult) {
         is SingleTarget -> {
           reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.SINGLE)
           actionResult.navigationProvider?.let {
-            eventData?.let { it1 -> GTDUCollector.recordNavigated(it1, it.javaClass) }
+            GTDUCollector.recordNavigated(eventData, it.javaClass)
           }
-          navigateRequestLazy(project, actionResult.requestor, navigationHandler)
+          navigateRequestLazy(project, actionResult.requestor)
           reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.AUTO, actionResult.navigationProvider)
         }
         is MultipleTargets -> {
@@ -59,9 +56,9 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
             actionResult.targets, LazyTargetWithPresentation::presentation
           ) { (requestor, _, navigationProvider) ->
             navigationProvider?.let {
-              eventData?.let { it1 -> GTDUCollector.recordNavigated(it1, navigationProvider.javaClass) }
+              GTDUCollector.recordNavigated(eventData, navigationProvider.javaClass)
             }
-            navigateRequestLazy(project, requestor, navigationHandler)
+            navigateRequestLazy(project, requestor)
             reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.FROM_POPUP, navigationProvider)
           }
           popup.showInBestPositionFor(editor)
@@ -74,7 +71,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
   override fun startInWriteAction(): Boolean = false
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    if (navigateToLookupItem(project, navigationHandler)) {
+    if (navigateToLookupItem(project)) {
       return
     }
     if (EditorUtil.isCaretInVirtualSpace(editor)) {
@@ -99,7 +96,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
       notifyNowhereToGo(project, editor, file, offset)
     }
     else {
-      gotoDeclaration(project, editor, actionResult, reporter, navigationHandler)
+      gotoDeclaration(project, editor, actionResult, reporter)
     }
   }
 }

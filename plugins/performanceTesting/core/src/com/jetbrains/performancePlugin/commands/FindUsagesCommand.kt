@@ -1,7 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
-import com.intellij.codeInsight.navigation.actions.NavigationRequestHandler
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.usages.impl.searchTargets
@@ -109,8 +108,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
           spanRef = spanBuilder.startSpan()
           scopeRef = spanRef!!.makeCurrent()
 
-          findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(project, target, popupPosition, editor, scope,
-                                                                        NavigationRequestHandler.DEFAULT)
+          findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(project, target, popupPosition, editor, scope)
         }
         else if (element != null) {
           LOG.info("Command find usages is called on element $element")
@@ -123,8 +121,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
           spanRef = spanBuilder.startSpan()
           scopeRef = spanRef!!.makeCurrent()
 
-          findUsagesFuture = writeIntentReadAction { ShowUsagesAction.startFindUsagesWithResult(element, popupPosition, editor, scope,
-                                                                                                NavigationRequestHandler.DEFAULT) }
+          findUsagesFuture = writeIntentReadAction { ShowUsagesAction.startFindUsagesWithResult(element, popupPosition, editor, scope) }
         }
 
         if (findUsagesFuture == null) {

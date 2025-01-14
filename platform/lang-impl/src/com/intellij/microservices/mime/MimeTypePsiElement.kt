@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.microservices.mime
 
-import com.intellij.codeInsight.navigation.actions.NavigationRequestHandler
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.icons.AllIcons
 import com.intellij.microservices.MicroservicesBundle
@@ -45,7 +44,7 @@ internal class MimeTypePsiElement(private val parent: PsiElement,
 
     val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
     val popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
-    ShowUsagesAction.startFindUsages(this, popupPosition, editor, NavigationRequestHandler.DEFAULT)
+    ShowUsagesAction.startFindUsages(this, popupPosition, editor)
   }
 
   override fun equals(other: Any?): Boolean {

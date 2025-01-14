@@ -10,11 +10,11 @@ import com.intellij.psi.PsiFile
 class GotoDeclarationOnlyAction : GotoDeclarationAction() {
 
   override fun getHandler(): CodeInsightActionHandler {
-    return GotoDeclarationOnlyHandler2(null, NavigationRequestHandler.DEFAULT)
+    return GotoDeclarationOnlyHandler2(null)
   }
 
   override fun getHandler(dataContext: DataContext): CodeInsightActionHandler {
-    return GotoDeclarationOnlyHandler2(getReporter(dataContext), getNavigationHandler(dataContext))
+    return GotoDeclarationOnlyHandler2(getReporter(dataContext))
   }
 
   override fun getCtrlMouseData(editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {
