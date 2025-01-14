@@ -1594,7 +1594,7 @@ public final class IncProjectBuilder {
       fsState.clearContextChunk(context);
 
       if (doneSomething) {
-        BuildOperations.markTargetsUpToDate(context, chunk);
+        BuildOperations.markTargetsUpToDate(context, chunk.getTargets());
       }
     }
     catch (BuildDataCorruptedException | ProjectBuildException e) {

@@ -2072,7 +2072,7 @@ f:org.jetbrains.jps.incremental.BuildOperations
 - s:deleteRecursively(java.lang.String,java.util.Collection,java.util.Set):Z
 - s:deleteRecursivelyAndCollectDeleted(java.nio.file.Path,java.util.Collection,java.util.Set):Z
 - s:ensureFSStateInitialized(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,Z):V
-- s:markTargetsUpToDate(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.impl.BuildTargetChunk):V
+- s:markTargetsUpToDate(org.jetbrains.jps.incremental.CompileContext,java.util.Collection):V
 a:org.jetbrains.jps.incremental.BuildTask
 - <init>():V
 - a:build(org.jetbrains.jps.incremental.CompileContext):V

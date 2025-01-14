@@ -9,7 +9,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
-import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
@@ -89,11 +88,11 @@ public final class BuildOperations {
     projectDescriptor.fsState.markInitialScanPerformed(target);
   }
 
-  public static void markTargetsUpToDate(CompileContext context, BuildTargetChunk chunk) throws IOException {
+  public static void markTargetsUpToDate(@NotNull CompileContext context, @NotNull Collection<? extends BuildTarget<?>> targets) throws IOException {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     final BuildFSState fsState = projectDescriptor.fsState;
     BuildDataManager dataManager = projectDescriptor.dataManager;
-    for (BuildTarget<?> target : chunk.getTargets()) {
+    for (BuildTarget<?> target : targets) {
       dataManager.getTargetStateManager().storeNonExistentOutputRoots(target, context);
     }
 
@@ -101,8 +100,8 @@ public final class BuildOperations {
       return;
     }
 
-    boolean marked = dropRemovedPaths(context, chunk);
-    for (BuildTarget<?> target : chunk.getTargets()) {
+    boolean marked = dropRemovedPaths(context, targets);
+    for (BuildTarget<?> target : targets) {
       if (target instanceof ModuleBuildTarget) {
         context.clearNonIncrementalMark((ModuleBuildTarget)target);
       }
@@ -119,19 +118,21 @@ public final class BuildOperations {
     }
   }
 
-  private static boolean dropRemovedPaths(CompileContext context, BuildTargetChunk chunk) throws IOException {
+  private static boolean dropRemovedPaths(@NotNull CompileContext context, @NotNull Collection<? extends BuildTarget<?>> targets) throws IOException {
     Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    if (map == null) {
+      return false;
+    }
+
     boolean dropped = false;
-    if (map != null) {
-      for (BuildTarget<?> target : chunk.getTargets()) {
-        Collection<String> paths = map.remove(target);
-        if (paths != null) {
-          SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-          for (String path : paths) {
-            storage.remove(path);
-          }
-          dropped = true;
+    for (BuildTarget<?> target : targets) {
+      Collection<String> paths = map.remove(target);
+      if (paths != null) {
+        SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+        for (String path : paths) {
+          storage.remove(path);
         }
+        dropped = true;
       }
     }
     return dropped;
