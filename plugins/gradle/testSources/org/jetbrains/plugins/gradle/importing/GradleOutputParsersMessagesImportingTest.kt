@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
@@ -445,20 +444,25 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
   @Test
   @TargetVersions("8.8+")
   fun `test build output project using Daemon Jvm criteria`() {
-    val jdks = ProjectJdkTable.getInstance().allJdks
-    check(jdks.size == 1)
+    val jdkHome = requireJdkHome()
+    val jdkVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkHome)!!.version.feature
+    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=$jdkHome")
+    createProjectSubFile("gradle/gradle-daemon-jvm.properties", "toolchainVersion=$jdkVersion")
 
-    val jdkPath = jdks.first().homePath!!
-    val jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkPath)
-    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=$jdkPath")
-    createProjectSubFile("gradle/gradle-daemon-jvm.properties", "toolchainVersion=${jdkVersionInfo?.version?.feature}")
+    overrideGradleUserHome(".gradle")
+
     importProject()
     assertSyncViewSelectedNode("finished", false) {
-      val text = it!!.lineSequence()
-        .takeWhile { s -> s == "Starting Gradle Daemon..." || s.startsWith("Gradle Daemon started in") }
-        .joinToString(separator = "\n")
+      assertThat(it)
+        .containsOnlyOnce("Starting Gradle Daemon...")
+        .containsOnlyOnce("Gradle Daemon started in")
+    }
 
-      assertEquals(2, text.lines().size)
+    importProject()
+    assertSyncViewSelectedNode("finished", false) {
+      assertThat(it)
+        .doesNotContain("Starting Gradle Daemon...")
+        .doesNotContain("Gradle Daemon started in")
     }
   }
 
