@@ -45,10 +45,10 @@ abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionB
     fun testNotImportedTypeAlias() = doTest()
     fun testKT12077() = doTest()
     fun testClassInRootPackage() = doTest()
-    fun testInImportEscaped() = if (isFirPlugin) doTest(tailText = " (`foo bar`)") else Unit
-    fun testPackageDirective() = if (isFirPlugin) doTest() else Unit
-    fun testPackageInImportDirective() = if (isFirPlugin) doTest() else Unit
-    fun testJavaEnumCompletionEntry() = if (isFirPlugin) doTest(extraFileNames = arrayOf("JavaEnum.java")) else Unit
+    fun testInImportEscaped() = doTest(tailText = " (`foo bar`)")
+    fun testPackageDirective() = doTest()
+    fun testPackageInImportDirective() = doTest()
+    fun testJavaEnumCompletionEntry() = doTest(extraFileNames = arrayOf("JavaEnum.java"))
 
     protected fun getTestFileName(): String = "${getTestName(false)}-1.kt"
 
