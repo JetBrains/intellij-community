@@ -8,7 +8,7 @@ import com.intellij.cce.evaluable.AIA_TEST_LINE_COVERAGE
 import com.intellij.cce.execution.manager.CodeExecutionManager
 import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.cce.python.execution.coverage.PythonTestCoverageProcessor
-import com.intellij.cce.python.execution.output.PythonErrorLogProcessor
+import com.intellij.cce.python.execution.output.PythonErrorLogProcessorFactory
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.sdk.PythonSdkType
 import java.io.File
@@ -57,7 +57,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog("", "", 0)
   }
 
-  override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?): ProcessExecutionLog {
+  override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, testingFramework: String?): ProcessExecutionLog {
     if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
 
     val runFile = File("$basePath/run_tests.sh")
@@ -75,7 +75,8 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     try {
       val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", runFile.path.toString(), testName, target), sdk)
       // Collect Test Success Ratio, different testing frameworks outputs information about tests into different streams
-      val successRatio = PythonErrorLogProcessor(executionLog).getTestExecutionSuccessRate()
+      val errorLogProcessor = PythonErrorLogProcessorFactory().createProcessor(testingFramework)
+      val successRatio = errorLogProcessor.getTestExecutionSuccessRate(executionLog)
       collectedInfo.put(AIA_EXECUTION_SUCCESS_RATIO, successRatio)
       // Collect Coverage
       val coverageProcessor = PythonTestCoverageProcessor(coverageFilePath)

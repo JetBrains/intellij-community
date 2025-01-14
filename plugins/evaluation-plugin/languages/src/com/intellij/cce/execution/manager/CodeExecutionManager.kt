@@ -32,7 +32,7 @@ abstract class CodeExecutionManager {
   protected abstract fun getGeneratedCodeFile(basePath: String, code: String): File
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
   protected abstract fun setupEnvironment(basePath: String, sdk: Sdk?): ProcessExecutionLog
-  protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?): ProcessExecutionLog
+  protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, testingFramework: String?): ProcessExecutionLog
 
   // Protected since there can be language-specific metrics
   protected fun clear() {
@@ -42,7 +42,7 @@ abstract class CodeExecutionManager {
     }
   }
 
-  fun compileAndExecute(project: Project, code: String, target: String): ProcessExecutionLog {
+  fun compileAndExecute(project: Project, code: String, target: String, testingFramework: String?): ProcessExecutionLog {
     // Clear collectedInfo
     clear()
     val basePath = project.basePath
@@ -64,7 +64,7 @@ abstract class CodeExecutionManager {
     val compilationExecutionLog = compileGeneratedCode()
     if (compilationExecutionLog.exitCode != 0) return compilationExecutionLog
     // Execute
-    val executionLog = executeGeneratedCode(target, basePath, codeFile, sdk)
+    val executionLog = executeGeneratedCode(target, basePath, codeFile, sdk, testingFramework)
     // Clean the temp file containing the generated code
     codeFile.delete()
 
