@@ -22,6 +22,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import kotlinx.coroutines.runBlocking
@@ -29,6 +30,7 @@ import org.junit.Test
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.isWritable
 import kotlin.io.path.setPosixFilePermissions
@@ -110,7 +112,7 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
 
     // make sure the output file is readonly
     val outFile = projectPath.resolve("target/classes/dir1/file.properties")
-    outFile.setPosixFilePermissions(readOnly())
+    outFile.setReadOnly()
     assertFalse(outFile.isWritable())
 
     srcFile.writeText("Hello, \${name}")
@@ -744,7 +746,13 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
     assertCopied("target/classes/text.txt", "hello 2")
   }
 
-  private fun readOnly(): Set<PosixFilePermission> {
-    return setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
+  private fun Path.setReadOnly() {
+    if (SystemInfo.isWindows) {
+      Files.setAttribute(this, "dos:readonly", true)
+    }
+    else {
+      val readOnly = setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
+      this.setPosixFilePermissions(readOnly)
+    }
   }
 }
