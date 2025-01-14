@@ -372,7 +372,7 @@ public final class org/jetbrains/jewel/ui/component/FixedCursorPoint : androidx/
 }
 
 public final class org/jetbrains/jewel/ui/component/GroupHeaderKt {
-	public static final fun GroupHeader-cf5BqRc (Ljava/lang/String;Landroidx/compose/ui/Modifier;JLorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun GroupHeader (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/IconActionButtonKt {

@@ -44,13 +44,12 @@ internal fun Borders() {
     Spacer(Modifier.height(8.dp))
 
     var open by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
     GroupHeader(
         text = "Group header with startComponent",
         modifier =
-            Modifier.clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
-                open = !open
-            }
-                .hoverable(remember { MutableInteractionSource() })
+            Modifier.clickable(indication = null, interactionSource = interactionSource) { open = !open }
+                .hoverable(interactionSource)
                 .pointerHoverIcon(PointerIcon(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))),
         startComponent = {
             if (open) {
