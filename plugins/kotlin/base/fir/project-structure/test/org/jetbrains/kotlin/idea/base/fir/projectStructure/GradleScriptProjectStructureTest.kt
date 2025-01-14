@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.io.path.nameWithoutExtension
@@ -31,7 +31,7 @@ import kotlin.io.path.nameWithoutExtension
 class GradleScriptProjectStructureTest : AbstractGradleCodeInsightTest() {
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @GradleTestSource("8.11")
     @TestMetadata("fromWizard.test")
     fun testSimple(gradleVersion: GradleVersion) {
         checkProjectStructure(gradleVersion)

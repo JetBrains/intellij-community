@@ -6,7 +6,7 @@ KaScriptModule:
     KaLibraryModule(annotations-13.0.jar (with sources), scriptDependency)
     KaLibraryModule(build.gradle.kts accessors dependencies, scriptDependency)
     KaLibraryModule(build.gradle.kts groovy dependencies, scriptDependency)
-    KaLibraryModule(gradle-api-8.11-rc-1.jar, scriptDependency)
+    KaLibraryModule(gradle-api-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-api-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-installation-beacon-8.11.jar, scriptDependency)
@@ -347,9 +347,9 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library gradle-api-8.11-rc-1.jar
+  description: Library gradle-api-8.11.jar
   targetPlatform: JVM (1.8)
-  libraryName: gradle-api-8.11-rc-1.jar
+  libraryName: gradle-api-8.11.jar
   isSdk: false
   regularDependencies:
     <empty>
@@ -520,7 +520,7 @@ KaScriptModule:
   regularDependencies:
     KaLibraryModule(SDK)
     KaLibraryModule(build.gradle.kts groovy dependencies, scriptDependency)
-    KaLibraryModule(gradle-api-8.11-rc-1.jar, scriptDependency)
+    KaLibraryModule(gradle-api-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-api-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-installation-beacon-8.11.jar, scriptDependency)
