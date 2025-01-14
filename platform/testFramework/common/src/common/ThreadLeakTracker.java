@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.platform.ijent.spi.IjentStaticThreadMarkerKt;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FilePageCacheLockFree;
@@ -154,9 +153,6 @@ public final class ThreadLeakTracker {
     Map<String, Thread> all = getThreads();
     Map<String, Thread> after = new HashMap<>(all);
     after.keySet().removeAll(threadsBefore.keySet());
-    // Ijent has its own thread pool that starts new threads and manage their lifecycles (until the end of the app)
-    after.keySet().removeIf(t -> IjentStaticThreadMarkerKt.isIjentStaticThread(t));
-
     Map<Thread, StackTraceElement[]> stackTraces = ContainerUtil.map2Map(
       after.values(),
       thread -> new Pair<>(thread, thread.getStackTrace())
