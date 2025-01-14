@@ -23,4 +23,11 @@ public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter>  implem
   public @Nullable String getDefaultValueText() {
     return myDefaultValueText;
   }
+
+  @Override
+  public String toString() {
+    return "PyTupleParameterStubImpl{" +
+           "myDefaultValueText='" + myDefaultValueText + '\'' +
+           '}';
+  }
 }

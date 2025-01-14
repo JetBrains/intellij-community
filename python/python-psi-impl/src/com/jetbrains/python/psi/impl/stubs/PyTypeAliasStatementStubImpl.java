@@ -36,6 +36,9 @@ public class PyTypeAliasStatementStubImpl extends PyVersionSpecificStubBase<PyTy
 
   @Override
   public String toString() {
-    return "PyTypeAliasStatementStub(name=" + myName + ", type expression=" + myTypeExpressionText +")";
+    return "PyTypeAliasStatementStubImpl{" +
+           "myName='" + myName + '\'' +
+           ", myTypeExpressionText='" + myTypeExpressionText + '\'' +
+           '}';
   }
 }

@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
@@ -97,6 +98,17 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
 
   @Override
   public String toString() {
-    return "PyClassStub(" + myName + ")";
+    // @formatter:off
+    return "PyClassStubImpl{" +
+           "myName='" + myName + '\'' +
+           ", mySuperClasses=" + mySuperClasses +
+           ", myMetaClass=" + myMetaClass +
+           ", mySlots=" + mySlots +
+           ", myDocString='" + (myDocString != null ? StringUtil.escapeStringCharacters(myDocString) : null) + '\'' +
+           ", mySuperClassesText=" + mySuperClassesText +
+           ", myDeprecationMessage='" + (myDeprecationMessage != null ? StringUtil.escapeStringCharacters((myDeprecationMessage)) : null) + '\'' +
+           ", myCustomStub=" + myCustomStub +
+           '}';
+    // @formatter:on
   }
 }

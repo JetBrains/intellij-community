@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -84,6 +85,17 @@ public class PyFunctionStubImpl extends PyVersionSpecificStubBase<PyFunction> im
 
   @Override
   public String toString() {
-    return "PyFunctionStub(" + myName + ")";
+    // @formatter:off
+    return "PyFunctionStubImpl{" +
+           "myName='" + myName + '\'' +
+           ", myDocString='" + (myDocString != null ? StringUtil.escapeStringCharacters(myDocString) : null) + '\'' +
+           ", myDeprecationMessage='" + (myDeprecationMessage != null ? StringUtil.escapeStringCharacters(myDeprecationMessage) : null) + '\'' +
+           ", myAsync=" + myAsync +
+           ", myGenerator=" + myGenerator +
+           ", myOnlyRaisesNotImplementedError=" + myOnlyRaisesNotImplementedError +
+           ", myTypeComment='" + myTypeComment + '\'' +
+           ", myAnnotation='" + myAnnotation + '\'' +
+           '}';
+    // @formatter:on
   }
 }

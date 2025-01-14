@@ -65,6 +65,13 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
 
   @Override
   public String toString() {
-    return "PyNamedParameterStub(" + myName + ")";
+    return "PyNamedParameterStubImpl{" +
+           "myName='" + myName + '\'' +
+           ", myPositionalContainer=" + myPositionalContainer +
+           ", myKeywordContainer=" + myKeywordContainer +
+           ", myTypeCommentAnnotation='" + myTypeCommentAnnotation + '\'' +
+           ", myAnnotation='" + myAnnotation + '\'' +
+           ", myDefaultValueText='" + myDefaultValueText + '\'' +
+           '}';
   }
 }

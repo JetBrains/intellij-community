@@ -140,28 +140,17 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
 
   @Override
   public String toString() {
-    String result = "PyTargetExpressionStub(name=" + myName +
-                    ", hasAssignedValue=" + myHasAssignedValue;
-    if (myCustomStub == null) {
-      if (myInitializer != null) {
-        result += ", initializer=" + myInitializer;
-      }
-      result += ", initializerType=" + myInitializerType +
-                ", qualified=" + myQualified;
-    }
-    else {
-      result += ", customStub=" + myCustomStub;
-    }
-    if (myTypeComment != null) {
-      result += ", typeComment='" + myTypeComment + '\'';
-    }
-    if (myAnnotation != null) {
-      result += ", annotation='" + myAnnotation + '\'';
-    }
-    if (myDocString != null) {
-      result += ", docString='" + StringUtil.escapeStringCharacters(myDocString) + '\'';
-    }
-    result += ")";
-    return result;
+    return "PyTargetExpressionStubImpl{" +
+           "myName='" + myName + '\'' +
+           ", myInitializerType=" + myInitializerType +
+           ", myInitializer=" + myInitializer +
+           ", myAssignedLiteralKind=" + myAssignedLiteralKind +
+           ", myQualified=" + myQualified +
+           ", myTypeComment='" + myTypeComment + '\'' +
+           ", myAnnotation='" + myAnnotation + '\'' +
+           ", myHasAssignedValue=" + myHasAssignedValue +
+           ", myDocString='" + (myDocString != null ? StringUtil.escapeStringCharacters(myDocString) : null) + '\'' +
+           ", myCustomStub=" + myCustomStub +
+           '}';
   }
 }
