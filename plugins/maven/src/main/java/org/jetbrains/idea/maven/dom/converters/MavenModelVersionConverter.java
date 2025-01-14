@@ -20,21 +20,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4;
+
 public class MavenModelVersionConverter extends MavenConstantListConverter {
-  private static final String VERSION = "4.0.0";
-  private static final List<String> VALUES = Collections.singletonList(VERSION);
+  private static final String VERSION_4_0 = "4.0.0";
+  private static final String VERSION_4_1 = "4.1.0";
+  private static final List<String> VALUES_MAVEN_3 = Collections.singletonList(VERSION_4_0);
+  private static final List<String> VALUES_MAVEN_4 = Arrays.asList(VERSION_4_0, VERSION_4_1);
 
   @Override
   protected Collection<String> getValues(@NotNull ConvertContext context) {
-    return VALUES;
+    if (isAtLeastMaven4(context.getFile().getVirtualFile(), context.getProject())) {
+      return VALUES_MAVEN_4;
+    } else {
+      return VALUES_MAVEN_3;
+    }
   }
 
   @Override
   public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
-    return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", VERSION);
+    return MavenDomBundle.message("inspection.message.unsupported.model.version.only.version.supported", getValues(context));
   }
 }
