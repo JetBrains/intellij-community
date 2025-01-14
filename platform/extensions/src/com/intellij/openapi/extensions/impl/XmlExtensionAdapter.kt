@@ -98,27 +98,25 @@ internal class SimpleConstructorInjectionAdapter(
   implementationClassResolver = implementationClassResolver,
 ) {
   override fun <T> instantiateClass(aClass: Class<T>, componentManager: ComponentManager): T {
-    if (aClass.name != "org.jetbrains.kotlin.asJava.finder.JavaElementFinder") {
-      try {
-        return componentManager.instantiateClass(aClass, pluginDescriptor.pluginId)
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: ExtensionNotApplicableException) {
-        throw e
-      }
-      catch (e: RuntimeException) {
-        val cause = e.cause
-        if (!(cause is NoSuchMethodException || cause is IllegalArgumentException)) {
-          throw e
-        }
-        logger<ExtensionPointImpl<*>>().error(
-          "Cannot create extension without pico container " +
-          "(class=${aClass.name}, constructors=${aClass.declaredConstructors.contentToString()}), " +
-          "please remove extra constructor parameters", e)
-      }
+    try {
+      return componentManager.instantiateClass(aClass, pluginDescriptor.pluginId)
     }
-    return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.pluginId)
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: ExtensionNotApplicableException) {
+      throw e
+    }
+    catch (e: RuntimeException) {
+      val cause = e.cause
+      if (!(cause is NoSuchMethodException || cause is IllegalArgumentException)) {
+        throw e
+      }
+      logger<ExtensionPointImpl<*>>().error(
+        "Cannot create extension without pico container " +
+        "(class=${aClass.name}, constructors=${aClass.declaredConstructors.contentToString()}), " +
+        "please remove extra constructor parameters", e)
+      return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.pluginId)
+    }
   }
 }
