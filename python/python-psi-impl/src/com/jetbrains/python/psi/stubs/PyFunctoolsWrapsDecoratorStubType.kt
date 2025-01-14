@@ -26,6 +26,10 @@ class PyFunctoolsWrapsDecoratorStub(val wrapped: String) : PyCustomDecoratorStub
     stream.writeName(wrapped)
   }
 
+  override fun toString(): String {
+    return "PyFunctoolsWrapsDecoratorStub(wrapped='$wrapped')"
+  }
+
   companion object {
     fun create(psi: PyDecorator): PyFunctoolsWrapsDecoratorStub? {
       val qName = psi.qualifiedName ?: return null

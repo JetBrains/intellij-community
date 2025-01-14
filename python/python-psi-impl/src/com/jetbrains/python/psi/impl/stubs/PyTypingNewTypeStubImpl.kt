@@ -34,7 +34,7 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
   override fun getClassType(): String = baseClassName
 
   override fun toString(): String {
-    return "PyTypingNewTypeStub(qualifiedName=$qualifiedName, baseClass=$baseClassName)"
+    return "PyTypingNewTypeStub(qualifiedName='$qualifiedName', baseClass='$baseClassName')"
   }
 
   companion object {

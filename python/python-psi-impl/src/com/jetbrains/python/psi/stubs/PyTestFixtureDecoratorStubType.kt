@@ -29,4 +29,8 @@ private class PyTestFixtureDecoratorStubImpl(override val name: String) : PyTest
   override fun serialize(stream: StubOutputStream) {
     stream.writeName(name)
   }
+
+  override fun toString(): String {
+    return "PyTestFixtureDecoratorStub(name='$name')"
+  }
 }
