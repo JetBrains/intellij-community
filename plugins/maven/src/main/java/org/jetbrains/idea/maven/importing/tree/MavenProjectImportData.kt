@@ -10,10 +10,11 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges
 internal class ModuleData(
   val moduleName: String,
   val type: StandardMavenModuleType,
-  private val javaVersionHolder: MavenJavaVersionHolder,
+  private val sourceLevel: LanguageLevel?,
+  private val testSourceLevel: LanguageLevel?,
 ) {
   val sourceLanguageLevel: LanguageLevel?
-    get() = if (type == StandardMavenModuleType.TEST_ONLY) javaVersionHolder.testSourceLevel else javaVersionHolder.sourceLevel
+    get() = if (type == StandardMavenModuleType.TEST_ONLY) testSourceLevel else sourceLevel
 
   override fun toString(): String {
     return moduleName

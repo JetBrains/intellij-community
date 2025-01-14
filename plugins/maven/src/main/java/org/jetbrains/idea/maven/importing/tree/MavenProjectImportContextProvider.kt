@@ -90,18 +90,20 @@ internal class MavenProjectImportContextProvider(
   private fun getModuleImportData(project: MavenProject, moduleName: String, changes: MavenProjectChanges): MavenProjectImportData {
     val setUpJavaVersions = MavenImportUtil.getMavenJavaVersions(project)
     val javaVersions = adjustJavaVersions(setUpJavaVersions)
+    val sourceLevel = javaVersions.sourceLevel
+    val testSourceLevel = javaVersions.testSourceLevel
 
     val type = MavenImportUtil.getModuleType(project, javaVersions)
 
-    val moduleData = ModuleData(moduleName, type, javaVersions)
+    val moduleData = ModuleData(moduleName, type, sourceLevel, testSourceLevel)
     if (type != StandardMavenModuleType.COMPOUND_MODULE) {
       return MavenProjectImportData(project, moduleData, changes, listOf())
     }
     val moduleMainName = moduleName + MavenImportUtil.MAIN_SUFFIX
-    val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, javaVersions)
+    val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, sourceLevel, testSourceLevel)
 
     val moduleTestName = moduleName + MavenImportUtil.TEST_SUFFIX
-    val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, javaVersions)
+    val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, sourceLevel, testSourceLevel)
 
     return MavenProjectImportData(project, moduleData, changes, listOf(mainData, testData))
   }
