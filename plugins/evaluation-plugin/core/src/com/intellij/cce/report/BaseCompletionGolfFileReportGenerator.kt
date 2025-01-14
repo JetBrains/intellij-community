@@ -239,7 +239,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
     div("line-code") {
       style = "min-width: calc(7.8 * ${maxLineLength}px);"
       lookups.forEachIndexed { i, lookup ->
-        if (lookup.offset != offset && offset < lookup.offset) {
+        if (offset < lookup.offset) {
           span("code-span") { +expectedText.substring(offset, lookup.offset) }
           offset = lookup.offset
         }
