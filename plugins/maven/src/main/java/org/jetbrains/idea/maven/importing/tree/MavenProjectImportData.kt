@@ -7,9 +7,11 @@ import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 
-open class ModuleData(val moduleName: String,
-                      val type: StandardMavenModuleType,
-                      private val javaVersionHolder: MavenJavaVersionHolder) {
+internal class ModuleData(
+  val moduleName: String,
+  val type: StandardMavenModuleType,
+  private val javaVersionHolder: MavenJavaVersionHolder,
+) {
   val sourceLanguageLevel: LanguageLevel?
     get() = if (type == StandardMavenModuleType.TEST_ONLY) javaVersionHolder.testSourceLevel else javaVersionHolder.sourceLevel
 
@@ -18,8 +20,7 @@ open class ModuleData(val moduleName: String,
   }
 }
 
-open class MavenModuleImportData(val mavenProject: MavenProject,
-                                 val moduleData: ModuleData) {
+internal open class MavenModuleImportData(val mavenProject: MavenProject, val moduleData: ModuleData) {
   override fun toString(): String {
     return moduleData.moduleName
   }
@@ -36,11 +37,12 @@ open class MavenModuleImportData(val mavenProject: MavenProject,
   }
 }
 
-open class MavenTreeModuleImportData(mavenProject: MavenProject,
-                                     moduleData: ModuleData,
-                                     val dependencies: List<MavenImportDependency<*>>,
-                                     val changes: MavenProjectChanges) : MavenModuleImportData(mavenProject, moduleData) {
-}
+internal open class MavenTreeModuleImportData(
+  mavenProject: MavenProject,
+  moduleData: ModuleData,
+  val dependencies: List<MavenImportDependency<*>>,
+  val changes: MavenProjectChanges,
+) : MavenModuleImportData(mavenProject, moduleData)
 
 internal class MavenProjectImportData(
   val mavenProject: MavenProject,

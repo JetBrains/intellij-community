@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.importing.tree
 
 import com.intellij.pom.java.LanguageLevel
 
-class MavenJavaVersionHolder(
+internal class MavenJavaVersionHolder(
   @JvmField val sourceLevel: LanguageLevel?,
   @JvmField val targetLevel: LanguageLevel?,
   @JvmField val testSourceLevel: LanguageLevel?,

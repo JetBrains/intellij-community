@@ -83,11 +83,11 @@ object MavenImportUtil {
     if (level.isAtLeast(LanguageLevel.JDK_11)) {
       level = adjustPreviewLanguageLevel(mavenProject, level)
     }
-    return level!!
+    return level
   }
 
   @Deprecated("Maven project can have multiple source/target versions if multiReleaseOutput is used")
-  fun getMavenJavaVersions(mavenProject: MavenProject): MavenJavaVersionHolder {
+  internal fun getMavenJavaVersions(mavenProject: MavenProject): MavenJavaVersionHolder {
     val useReleaseCompilerProp = isReleaseCompilerProp(mavenProject)
     val sourceVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, false)
     val sourceTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, true)
@@ -207,7 +207,7 @@ object MavenImportUtil {
     return LanguageLevel.JDK_1_5
   }
 
-  private fun adjustPreviewLanguageLevel(mavenProject: MavenProject, level: LanguageLevel): LanguageLevel? {
+  private fun adjustPreviewLanguageLevel(mavenProject: MavenProject, level: LanguageLevel): LanguageLevel {
     val enablePreviewProperty = mavenProject.properties.getProperty("maven.compiler.enablePreview")
     if (enablePreviewProperty.toBoolean()) {
       return level.getPreviewLevel() ?: level
@@ -238,7 +238,7 @@ object MavenImportUtil {
     return JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY == child.textTrim
   }
 
-  fun isReleaseCompilerProp(mavenProject: MavenProject): Boolean {
+  private fun isReleaseCompilerProp(mavenProject: MavenProject): Boolean {
     return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") >= 0
   }
 
@@ -289,9 +289,7 @@ object MavenImportUtil {
     return !project.isAggregator && mavenJavaVersions.needSeparateTestModule() && isCompilerTestSupport(project)
   }
 
-  @JvmStatic
-  @ApiStatus.Internal
-  fun getModuleType(project: MavenProject, mavenJavaVersions: MavenJavaVersionHolder): StandardMavenModuleType {
+  internal fun getModuleType(project: MavenProject, mavenJavaVersions: MavenJavaVersionHolder): StandardMavenModuleType {
     if (needSplitMainAndTest(project, mavenJavaVersions)) {
       return StandardMavenModuleType.COMPOUND_MODULE
     }
