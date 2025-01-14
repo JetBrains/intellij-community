@@ -301,8 +301,9 @@ public final class ScopeEditorPanel implements Disposable {
     if (provider == null) return;
     final var nodes = new ArrayList<PackageDependenciesNode>(paths.length);
     for (var path : paths) {
-      final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
-      nodes.add(node);
+      if (path.getLastPathComponent() instanceof PackageDependenciesNode node) {
+        nodes.add(node);
+      }
     }
     computeSelection(invoker, nodes, provider, false).onSuccess(result -> {
       myInclude.setSelection(result);
