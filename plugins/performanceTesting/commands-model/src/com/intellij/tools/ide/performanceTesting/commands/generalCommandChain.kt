@@ -1256,3 +1256,7 @@ enum class MassVfsRefreshSpan(val spanName: String) {
 fun <T : CommandChain> T.refreshVfsAfterMassChange(span: MassVfsRefreshSpan): T = apply {
   addCommand("${CMD_PREFIX}measureVfsMassUpdate REFRESH ${span.spanName}")
 }
+
+fun <T : CommandChain> T.waitForVfsRefresh(): T = apply {
+  addCommand("${CMD_PREFIX}waitForVfsRefresh")
+}
