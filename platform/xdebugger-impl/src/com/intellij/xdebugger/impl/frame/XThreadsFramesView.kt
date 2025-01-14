@@ -5,7 +5,7 @@ import com.intellij.ide.OccurenceNavigator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.PopupHandler
@@ -21,6 +21,7 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.frame.XFramesView.addFramesNavigationAd
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab3
 import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
@@ -35,11 +36,11 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 
-class XThreadsFramesView(val project: Project) : XDebugView() {
+class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private val myPauseDisposables = SequentialDisposables(this)
 
   private val myThreadsList = XDebuggerThreadsList.createDefault()
-  private val myFramesList = XDebuggerFramesList(project)
+  private val myFramesList = XDebuggerFramesList(debugTab.project)
 
   private val mySplitter: NonProportionalOnePixelSplitter
 
@@ -60,8 +61,8 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
   val defaultFocusedComponent: JComponent = myFramesList
 
   companion object {
-    private const val splitterProportionKey = "XThreadsFramesViewSplitterKey"
-    private const val splitterProportionDefaultValue = 0.5f
+    private const val SPLITTER_PROPORTION_KEY: String = "XThreadsFramesViewSplitterKey"
+    private const val SPLITTER_PROPORTION_DEFAULT_VALUE: Float = 0.5f
 
     private fun Component.toScrollPane(): JScrollPane {
       return ScrollPaneFactory.createScrollPane(this)
@@ -112,19 +113,19 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     mySplitter.repaint()
   }
 
-  fun isThreadsViewVisible() = mySplitter.firstComponent.isVisible
+  fun isThreadsViewVisible(): Boolean = mySplitter.firstComponent.isVisible
 
   init {
     val disposable = myPauseDisposables.next()
     myFramesManager = FramesManager(myFramesList, disposable)
-    myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable)
+    myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable, debugTab)
     myPauseDisposables.terminateCurrent()
 
     val splitter = object : NonProportionalOnePixelSplitter(
       false,
-      splitterProportionKey,
-      splitterProportionDefaultValue,
-      this@XThreadsFramesView, project), OccurenceNavigator by myFramesList {}
+      SPLITTER_PROPORTION_KEY,
+      SPLITTER_PROPORTION_DEFAULT_VALUE,
+      debugTab, debugTab.project), OccurenceNavigator by myFramesList {}
 
     val minimumDimension = Dimension(JBUI.scale(26), 0)
     splitter.firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
@@ -208,11 +209,6 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     })
   }
 
-  fun saveUiState() {
-    if (mySplitter.width < mySplitter.minimumSize.width) return
-    mySplitter.saveProportion()
-  }
-
   override fun processSessionEvent(event: SessionEvent, session: XDebugSession) {
     if (event == SessionEvent.BEFORE_RESUME) {
       return
@@ -235,7 +231,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
       if (event == SessionEvent.FRAME_CHANGED) {
         val currentExecutionStack = (session as XDebugSessionImpl).currentExecutionStack
-        val currentStackFrame = session.getCurrentStackFrame()
+        val currentStackFrame = session.currentStackFrame
 
         var selectedStack = threads.selectedValue?.stack
         if (selectedStack != currentExecutionStack) {
@@ -269,7 +265,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     val activeStack = suspendContext.activeExecutionStack
     activeStack?.setActive(session)
 
-    myThreadsContainer = ThreadsContainer(myThreadsList, activeStack, disposable)
+    myThreadsContainer = ThreadsContainer(myThreadsList, activeStack, disposable, debugTab)
     myThreadsContainer.start(suspendContext)
   }
 
@@ -297,7 +293,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     myFramesPresentationCache.clear()
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {}
 
   private class FramesContainer(
     private val myDisposable: Disposable,
@@ -434,19 +430,22 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
   private class ThreadsContainer(
     private val myThreadsList: XDebuggerThreadsList,
     private val myActiveStack: XExecutionStack?,
-    private val myDisposable: Disposable
-  ) : XSuspendContext.XExecutionStackContainer {
+    private val myDisposable: Disposable,
+    private val debugTab: XDebugSessionTab3) : XSuspendContext.XExecutionStackContainer {
     private var isProcessed = false
     private var isStarted = false
 
     companion object {
       private val loading = listOf(StackInfo.LOADING)
+
+      private val logger = Logger.getInstance(ThreadsContainer::class.java)
     }
 
     fun start(suspendContext: XSuspendContext) {
       UIUtil.invokeLaterIfNeeded {
         if (isStarted) return@invokeLaterIfNeeded
-        val session = getSession(myThreadsList) ?: return@invokeLaterIfNeeded
+
+        val session = getSession() ?: return@invokeLaterIfNeeded
 
         if (myActiveStack != null) {
           myThreadsList.model.replaceAll(listOf(StackInfo.from(myActiveStack, session), StackInfo.LOADING))
@@ -462,7 +461,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
     override fun errorOccurred(errorMessage: String) {
       invokeIfNeeded {
-        val session = getSession(myThreadsList) ?: return@invokeIfNeeded
+        val session = getSession() ?: return@invokeIfNeeded
         val model = myThreadsList.model
         // remove loading
         model.remove(model.size - 1)
@@ -473,7 +472,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
 
     override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
       invokeIfNeeded {
-        val session = getSession(myThreadsList) ?: return@invokeIfNeeded
+        val session = getSession() ?: return@invokeIfNeeded
         val model = myThreadsList.model
         val insertIndex = model.size - 1
 
@@ -492,8 +491,12 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       }
     }
 
-    fun addExecutionStack(executionStack: XExecutionStack, last: Boolean) {
-      addExecutionStack(mutableListOf(executionStack), last)
+    private fun getSession(): XDebugSessionImpl? {
+      val session = debugTab.session
+      if (session == null) {
+        logger.error("Session is expected to be attach to an instance of ${XDebugSessionTab3::class.java.simpleName}")
+      }
+      return session
     }
 
     private fun getThreadsList(executionStacks: List<XExecutionStack>, session: XDebugSession): List<StackInfo> {

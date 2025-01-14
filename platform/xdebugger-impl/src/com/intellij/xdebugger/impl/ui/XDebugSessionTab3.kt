@@ -9,6 +9,7 @@ import com.intellij.execution.ui.layout.actions.CustomContentLayoutSettings
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.customization.CustomActionsListener
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.OnePixelSplitter
@@ -29,12 +30,14 @@ class XDebugSessionTab3(
 ) : XDebugSessionTabNewUI(session, icon, environment) {
 
   companion object {
-    private const val viewProportionKey = "debugger.layout.watches.defaultThreadsProportion"
+    private const val VIEW_PROPORTION_KEY = "debugger.layout.watches.defaultThreadsProportion"
     //is used by plugins
-    const val debuggerContentId = "DebuggerView"
+    const val debuggerContentId: String = "DebuggerView"
   }
 
-  private val splitter = OnePixelSplitter(viewProportionKey, 0.35f).apply {
+  val project: Project = session.project
+
+  private val splitter = OnePixelSplitter(VIEW_PROPORTION_KEY, 0.35f).apply {
     addPropertyChangeListener {
       if ("ancestor" == it.propertyName && it.newValue != null) {
         updateSplitterOrientation()
@@ -42,8 +45,8 @@ class XDebugSessionTab3(
     }
   }
 
-  override fun getWatchesContentId() = debuggerContentId
-  override fun getFramesContentId() = debuggerContentId
+  override fun getWatchesContentId(): String = debuggerContentId
+  override fun getFramesContentId(): String = debuggerContentId
 
   private fun getWatchesViewImpl(session: XDebugSessionImpl, watchesIsVariables: Boolean): XWatchesViewImpl {
     val useSplitterView = session.debugProcess.getBottomLocalsComponentProvider() != null
@@ -79,15 +82,15 @@ class XDebugSessionTab3(
     }
 
     val customLayoutOptions = if (session.debugProcess.allowFramesViewCustomization()) {
-      val optionsCollection = XDebugTabLayoutSettings(session, content, this)
+      val optionsCollection = XDebugTabLayoutSettings(content, this)
       content.putUserData(CustomContentLayoutSettings.KEY, optionsCollection)
       optionsCollection.threadsAndFramesOptions
     }
     else
       null
 
-    val framesView = (customLayoutOptions?.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView() ?: XFramesView(session)
-    registerThreadsView(session, content, framesView, true)
+    val framesView = (customLayoutOptions?.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView(session) ?: XFramesView(session)
+    registerThreadsView(content, framesView, true)
     framesView.mainComponent?.isVisible = customLayoutOptions?.isHidden?.not() ?: true
     addVariablesAndWatches(session)
 
@@ -131,9 +134,12 @@ class XDebugSessionTab3(
     splitter.orientation = toolWindow?.anchor?.let { it == ToolWindowAnchor.LEFT || it == ToolWindowAnchor.RIGHT } == true
   }
 
-  internal fun registerThreadsView(session: XDebugSessionImpl, content: Content, view: XDebugView) = registerThreadsView(session, content, view, false)
+  internal val session: XDebugSessionImpl?
+    get() = mySession
 
-  private fun registerThreadsView(session: XDebugSessionImpl, content: Content, view: XDebugView, isInitialization: Boolean) {
+  internal fun registerThreadsView(content: Content, view: XDebugView) = registerThreadsView(content, view, false)
+
+  private fun registerThreadsView(content: Content, view: XDebugView, isInitialization: Boolean) {
 
     unregisterView(DebuggerContentInfo.FRAME_CONTENT)
     registerView(DebuggerContentInfo.FRAME_CONTENT, view)
@@ -142,11 +148,13 @@ class XDebugSessionTab3(
       minimumSize = Dimension(20, 0)
     }
 
-    content.setPreferredFocusedComponent { view.mainComponent }
+    content.preferredFocusableComponent = view.mainComponent
 
     if (!isInitialization) {
-      attachViewToSession(session, view)
-      view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, session)
+      mySession?.let {
+        attachViewToSession(it, view)
+        view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, it)
+      }
       initFocusingVariablesFromFramesView()
     }
     UIUtil.removeScrollBorder(splitter)

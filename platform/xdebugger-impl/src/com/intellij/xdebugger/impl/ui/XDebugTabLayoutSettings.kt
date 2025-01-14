@@ -16,19 +16,17 @@ import com.intellij.ui.content.custom.options.CustomContentLayoutOption
 import com.intellij.ui.content.custom.options.PersistentContentCustomLayoutOption
 import com.intellij.ui.content.custom.options.PersistentContentCustomLayoutOptions
 import com.intellij.xdebugger.XDebuggerBundle
-import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XDebugView
 import com.intellij.xdebugger.impl.frame.XVariablesView
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class XDebugTabLayoutSettings(
-  session: XDebugSessionImpl,
   private val content: Content,
   private val debugTab: XDebugSessionTab3) : CustomContentLayoutSettings {
 
   companion object {
-    const val THREADS_VIEW_SETTINGS_KEY = "ThreadsFramesSelectedView"
+    const val THREADS_VIEW_SETTINGS_KEY: String = "ThreadsFramesSelectedView"
 
     private const val VARIABLES_VIEW_SETTINGS_KEY = "VariablesViewMinimized"
 
@@ -37,8 +35,8 @@ class XDebugTabLayoutSettings(
     }
   }
 
-  val threadsAndFramesOptions = XDebugFramesAndThreadsLayoutOptions(session, content, debugTab)
-  val variablesLayoutSettings = XDebugVariablesLayoutSettings(content, debugTab)
+  val threadsAndFramesOptions: XDebugFramesAndThreadsLayoutOptions = XDebugFramesAndThreadsLayoutOptions(content, debugTab)
+  val variablesLayoutSettings: XDebugVariablesLayoutSettings = XDebugVariablesLayoutSettings(content)
 
   private var myContentUI: RunnerContentUi? = null
 
@@ -90,10 +88,9 @@ class XDebugTabLayoutSettings(
     contentUi.minimize(content, null)
   }
 
-  inner class XDebugFramesAndThreadsLayoutOptions(
-    val session: XDebugSessionImpl,
-    val content: Content,
-    private val debugTab: XDebugSessionTab3) : PersistentContentCustomLayoutOptions(content, THREADS_VIEW_SETTINGS_KEY) {
+  inner class XDebugFramesAndThreadsLayoutOptions(val content: Content,
+                                                  val debugTab: XDebugSessionTab3
+  ) : PersistentContentCustomLayoutOptions(content, THREADS_VIEW_SETTINGS_KEY) {
 
     private val options = arrayOf<PersistentContentCustomLayoutOption>(
       DefaultLayoutOption(this),
@@ -105,8 +102,11 @@ class XDebugTabLayoutSettings(
     override fun doSelect(option: CustomContentLayoutOption) {
       option as? FramesAndThreadsLayoutOptionBase ?: throw IllegalStateException("Unexpected option type: ${option::class.java}")
       if (!option.isSelected) {
-        val newView = option.createView()
-        debugTab.registerThreadsView(session, content, newView)
+        debugTab.mySession?.let {
+          //TODO [chernyaev] passing session here make it impossible to update presentation of a tab that does not have a running debug session
+          val newView = option.createView(it)
+          debugTab.registerThreadsView(content, newView)
+        }
         XDebugThreadsFramesViewChangeCollector.framesViewSelected(option.getOptionKey())
         debugTab.getView(DebuggerContentInfo.FRAME_CONTENT, XDebugView::class.java)?.mainComponent?.isVisible = true
       }
@@ -115,10 +115,10 @@ class XDebugTabLayoutSettings(
     }
 
     override fun getDefaultOptionKey(): String =
-      (session.debugProcess as? XDebugSessionTabCustomizer)?.getDefaultFramesViewKey()
+      (debugTab.mySession?.debugProcess as? XDebugSessionTabCustomizer)?.getDefaultFramesViewKey()
       ?: Registry.stringValue("debugger.default.selected.view.key")
 
-    override fun getAvailableOptions() = options
+    override fun getAvailableOptions(): Array<PersistentContentCustomLayoutOption> = options
 
     override fun onHide() {
       super.onHide()
@@ -139,13 +139,10 @@ class XDebugTabLayoutSettings(
     }
   }
 
-  inner class XDebugVariablesLayoutSettings(
-    val content: Content,
-    private val debugTab: XDebugSessionTab3
-  ) : ContentLayoutStateSettings {
+  inner class XDebugVariablesLayoutSettings(val content: Content) : ContentLayoutStateSettings {
 
     override fun isSelected(): Boolean = debugTab.getView(DebuggerContentInfo.VARIABLES_CONTENT,
-                                                          XVariablesView::class.java)?.mainComponent?.isVisible ?: false
+                                                          XVariablesView::class.java)?.mainComponent?.isVisible == true
 
     override fun setSelected(state: Boolean) {
       debugTab.getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesView::class.java)?.mainComponent?.isVisible = state
