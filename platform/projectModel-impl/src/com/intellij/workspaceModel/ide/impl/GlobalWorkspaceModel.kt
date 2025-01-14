@@ -52,7 +52,7 @@ class GlobalWorkspaceModel : Disposable {
   internal var isFromGlobalWorkspaceModel: Boolean = false
   private var virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
   private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()?.apply { setVirtualFileUrlManager(virtualFileManager) }
-  private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is JpsGlobalFileEntitySource
+  private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is GlobalStorageEntitySource
                                                                      || entitySource is LegacyCustomLibraryEntitySource }
 
   val entityStorage: VersionedEntityStorageImpl

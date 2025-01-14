@@ -47,6 +47,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.createProjectSerializers
 import com.intellij.platform.workspace.storage.DummyParentEntitySource
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GlobalStorageEntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
@@ -420,7 +421,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     val description = "Apply JPS storage (iml files)"
     val sourceFilter = { entitySource: EntitySource ->
-      entitySource is JpsFileEntitySource // covers all global SDK and libraries
+      entitySource is GlobalStorageEntitySource // covers all global SDK and libraries
       || entitySource is JpsFileDependentEntitySource
       || entitySource is CustomModuleEntitySource || entitySource is DummyParentEntitySource // covers CIDR related entities
       || entitySource is LegacyCustomLibraryEntitySource // covers custom libraries

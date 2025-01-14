@@ -7,6 +7,7 @@ import com.esotericsoftware.kryo.kryo5.Serializer
 import com.esotericsoftware.kryo.kryo5.io.Input
 import com.esotericsoftware.kryo.kryo5.io.Output
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GlobalStorageEntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Represents an xml file containing configuration of IntelliJ Platform project in JPS format (*.ipr file or *.xml file under .idea directory)
  */
-sealed class JpsFileEntitySource : EntitySource
+sealed class JpsFileEntitySource : GlobalStorageEntitySource
 
 /**
  * Entity source with the information about project location. Our serialization mechanism relies on it.
