@@ -6,7 +6,9 @@ import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
-import com.intellij.grazie.utils.*
+import com.intellij.grazie.utils.html
+import com.intellij.grazie.utils.messageSanitized
+import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -18,7 +20,8 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
-import kotlinx.html.*
+import kotlinx.html.p
+import kotlinx.html.style
 import org.jetbrains.annotations.ApiStatus
 import org.languagetool.JLanguageTool
 import org.languagetool.Languages
@@ -263,56 +266,8 @@ private fun isPathPart(startOffset: Int, endOffset: Int, text: TextContent): Boo
 @NlsSafe
 private fun toTooltipTemplate(match: RuleMatch): String {
   val html = html {
-    val withCorrections = match.rule.incorrectExamples.filter { it.corrections.isNotEmpty() }.takeIf { it.isNotEmpty() }
-    val incorrectExample = (withCorrections ?: match.rule.incorrectExamples).minByOrNull { it.example.length }
     p {
-      incorrectExample?.let {
-        style = "padding-bottom: 8px;"
-      }
-
       +match.messageSanitized
-      nbsp()
-    }
-
-    table {
-      cellpading = "0"
-      cellspacing = "0"
-
-      incorrectExample?.let {
-        tr {
-          td {
-            valign = "top"
-            style = "padding-right: 5px; color: gray; vertical-align: top; white-space: nowrap;"
-            +" "
-            +GrazieBundle.message("grazie.settings.grammar.rule.incorrect")
-            +" "
-            nbsp()
-          }
-          td {
-            style = "width: 100%;"
-            toIncorrectHtml(it)
-            nbsp()
-          }
-        }
-
-        if (it.corrections.isNotEmpty()) {
-          tr {
-            td {
-              valign = "top"
-              style = "padding-top: 5px; padding-right: 5px; color: gray; vertical-align: top; white-space: nowrap;"
-              +" "
-              +GrazieBundle.message("grazie.settings.grammar.rule.correct")
-              +" "
-              nbsp()
-            }
-            td {
-              style = "padding-top: 5px; width: 100%;"
-              toCorrectHtml(it)
-              nbsp()
-            }
-          }
-        }
-      }
     }
 
     p {
