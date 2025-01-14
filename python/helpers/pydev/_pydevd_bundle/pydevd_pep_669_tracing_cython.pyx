@@ -41,6 +41,10 @@ try:
 except AttributeError:
     pass
 
+_EVENT_ACTIONS = {
+    "ADD": lambda x, y: x | y,
+    "REMOVE": lambda x, y: x & ~y,
+}
 
 def _make_frame_cache_key(code):
     return code.co_firstlineno, code.co_name, code.co_filename
@@ -127,6 +131,10 @@ def _should_enable_line_events_for_code(frame, code, filename, info):
                 # will match either global or some function
                 if breakpoint.func_name in ('None', curr_func_name):
                     has_breakpoint_in_frame = True
+                    # New breakpoint was processed -> stop tracing monitoring.events.INSTRUCTION
+                    if getattr(breakpoint, '_not_processed', None):
+                        breakpoint._not_processed = False
+                        _modify_global_events(_EVENT_ACTIONS["REMOVE"], monitoring.events.INSTRUCTION)
                     break
 
                 # Check is f_back has a breakpoint => need register return event
@@ -206,12 +214,27 @@ def enable_pep669_monitoring():
             (monitoring.events.LINE, py_line_callback),
             (monitoring.events.PY_RETURN, py_return_callback),
             (monitoring.events.RAISE, py_raise_callback),
+            (monitoring.events.INSTRUCTION, instruction_callback),
         ):
             monitoring.register_callback(DEBUGGER_ID, event_type, callback)
 
     debugger = GlobalDebuggerHolder.global_dbg
     if debugger:
         debugger.is_pep669_monitoring_enabled = True
+
+
+def process_new_breakpoint(breakpoint):
+    breakpoint._not_processed = True
+    _modify_global_events(_EVENT_ACTIONS["ADD"], monitoring.events.INSTRUCTION)
+
+
+def _modify_global_events(action, event):
+    DEBUGGER_ID = monitoring.DEBUGGER_ID
+    if not monitoring.get_tool(DEBUGGER_ID):
+        return
+
+    current_events = monitoring.get_events(DEBUGGER_ID)
+    monitoring.set_events(DEBUGGER_ID, action(current_events, event))
 
 
 def _enable_return_tracing(code):
@@ -224,6 +247,57 @@ def _enable_line_tracing(code):
     local_events = monitoring.get_local_events(monitoring.DEBUGGER_ID, code)
     monitoring.set_local_events(monitoring.DEBUGGER_ID, code,
                                 local_events | monitoring.events.LINE)
+
+
+def instruction_callback(code, instruction_offset):
+    try:
+        py_db = GlobalDebuggerHolder.global_dbg
+    except AttributeError:
+        return
+    if py_db is None:
+        return monitoring.DISABLE
+
+    frame = _getframe(1)
+    # print('ENTER: INSTRUCTION ', code.co_filename, frame.f_lineno, code.co_name)
+
+    try:
+        if py_db._finish_debugging_session:
+            return monitoring.DISABLE
+
+        thread = get_current_thread()
+
+        if not is_thread_alive(thread):
+            return
+
+        frame_cache_key = _make_frame_cache_key(code)
+
+        info = _get_additional_info(thread)
+        pydev_step_cmd = info.pydev_step_cmd
+        is_stepping = pydev_step_cmd != -1
+
+        if not is_stepping and frame_cache_key in global_cache_skips:
+            return
+
+        abs_path_real_path_and_base = _get_abs_path_real_path_and_base_from_frame(frame)
+        filename = abs_path_real_path_and_base[1]
+
+        breakpoints_for_file = (py_db.breakpoints.get(filename)
+                                or py_db.has_plugin_line_breaks)
+        if not breakpoints_for_file and not is_stepping:
+            return
+
+        if _should_enable_line_events_for_code(frame, code, filename, info):
+            _enable_line_tracing(code)
+            _enable_return_tracing(code)
+    except SystemExit:
+        return monitoring.DISABLE
+    except Exception:
+        try:
+            if traceback is not None:
+                traceback.print_exc()
+        except:
+            pass
+        return monitoring.DISABLE
 
 
 def py_start_callback(code, instruction_offset):
