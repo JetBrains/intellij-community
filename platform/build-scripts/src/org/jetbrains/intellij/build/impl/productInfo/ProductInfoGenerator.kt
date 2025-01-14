@@ -71,7 +71,7 @@ internal fun generateProductInfoJson(
 private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? {
   val gitRoot = context.paths.projectHome
   if (!gitRoot.resolve(".git").isDirectory) {
-    if (!context.options.isInDevelopmentMode) {
+    if (!context.options.isInDevelopmentMode && !context.options.isTestBuild) {
       context.messages.error("Cannot find Git repository root in '$gitRoot'")
     }
     return null

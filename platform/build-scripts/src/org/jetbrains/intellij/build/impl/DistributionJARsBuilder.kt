@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -88,10 +88,7 @@ internal suspend fun buildDistribution(
         if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
           scramble(state.platform, context)
         }
-
-        val distAllDir = context.paths.distAllDir
-        val libDir = distAllDir.resolve("lib")
-        context.bootClassPathJarNames = if (context.useModularLoader) listOf(PLATFORM_LOADER_JAR) else generateClasspath(homeDir = distAllDir, libDir = libDir)
+        context.bootClassPathJarNames = if (context.useModularLoader) listOf(PLATFORM_LOADER_JAR) else generateClasspath(context)
         result
       }
     }

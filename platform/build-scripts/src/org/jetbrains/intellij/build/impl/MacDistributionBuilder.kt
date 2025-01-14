@@ -182,9 +182,11 @@ class MacDistributionBuilder(
     }
   }
 
-  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
+  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path {
     val json = generateProductJson(context, arch, withRuntime = true)
-    writeProductInfoJson(targetDir.resolve("Resources/${PRODUCT_INFO_FILE_NAME}"), json, context)
+    val file = targetDir.resolve("Resources/${PRODUCT_INFO_FILE_NAME}")
+    writeProductInfoJson(file, json, context)
+    return file
   }
 
   private suspend fun signMacBinaries(osAndArchSpecificDistPath: Path, runtimeDist: Path, arch: JvmArchitecture) {

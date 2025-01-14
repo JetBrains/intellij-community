@@ -1,9 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
 
 import com.dynatrace.hash4j.hashing.HashStream64
+import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
+import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
@@ -13,6 +16,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
@@ -79,9 +83,6 @@ class BuildContextImpl internal constructor(
   override suspend fun cleanupJarCache() {
     jarCacheManager.cleanup()
   }
-
-  override val xBootClassPathJarNames: List<String>
-    get() = productProperties.xBootClassPathJarNames
 
   override var bootClassPathJarNames: List<String> = java.util.List.of(PLATFORM_LOADER_JAR)
 
@@ -316,8 +317,21 @@ class BuildContextImpl internal constructor(
   }
 
   @Suppress("SpellCheckingInspection")
-  override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean): List<String> {
+  override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean, isQodana: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
+    val macroName = when (os) {
+      OsFamily.WINDOWS -> "%IDE_HOME%"
+      OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"
+      OsFamily.LINUX -> "\$IDE_HOME"
+    }
+    val useMultiRoutingFs = !isQodana && isIjentWslFsEnabledByDefaultForProduct(productProperties.platformPrefix)
+
+    val bcpJarNames = productProperties.xBootClassPathJarNames + if (useMultiRoutingFs) listOf(PLATFORM_CORE_NIO_FS) else emptyList()
+    if (bcpJarNames.isNotEmpty()) {
+      val separator = if (os == OsFamily.WINDOWS) ";" else ":"
+      val bootCp = bcpJarNames.joinToString(separator) { "${macroName}/lib/${it}" }
+      jvmArgs += "-Xbootclasspath/a:${bootCp}".let { if (isScript) '"' + it + '"' else it }
+    }
 
     if (productProperties.enableCds) {
       val cacheDir = if (os == OsFamily.WINDOWS) "%IDE_CACHE_DIR%\\" else "\$IDE_CACHE_DIR/"
@@ -333,11 +347,6 @@ class BuildContextImpl internal constructor(
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
     jvmArgs.add("-Didea.paths.selector=${systemSelector}")
 
-    val macroName = when (os) {
-      OsFamily.WINDOWS -> "%IDE_HOME%"
-      OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"
-      OsFamily.LINUX -> "\$IDE_HOME"
-    }
     jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
     jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
     // require bundled JNA dispatcher lib
@@ -355,6 +364,13 @@ class BuildContextImpl internal constructor(
 
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
+    }
+
+    if (os == OsFamily.WINDOWS) {
+      jvmArgs += "-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=${useMultiRoutingFs}"
+      if (useMultiRoutingFs) {
+        jvmArgs += MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+      }
     }
 
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)

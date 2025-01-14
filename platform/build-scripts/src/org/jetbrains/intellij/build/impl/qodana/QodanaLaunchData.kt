@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.qodana
 
 import org.jetbrains.intellij.build.BuildContext
@@ -13,7 +13,7 @@ internal fun generateQodanaLaunchData(
   os: OsFamily,
 ): CustomCommandLaunchData? {
   val qodanaProductProperties = ideContext.productProperties.qodanaProductProperties ?: return null
-  val vmOptions = ideContext.getAdditionalJvmArguments(os, arch) + qodanaProductProperties.getAdditionalVmOptions(ideContext)
+  val vmOptions = ideContext.getAdditionalJvmArguments(os, arch, isQodana = true) + qodanaProductProperties.getAdditionalVmOptions(ideContext)
   return CustomCommandLaunchData(
     commands = listOf("qodana"),
     additionalJvmArguments = vmOptions

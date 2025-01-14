@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -26,6 +26,7 @@ import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 
 private const val NO_RUNTIME_SUFFIX = "-no-jbr"
@@ -130,9 +131,7 @@ class LinuxDistributionBuilder(
     }
   }
 
-  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture) {
-    generateProductJson(targetDir, arch)
-  }
+  override suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path = writeProductJsonFile(targetDir, arch)
 
   override fun writeVmOptions(distBinDir: Path): Path = writeLinuxVmOptions(distBinDir, context)
 
@@ -173,7 +172,7 @@ class LinuxDistributionBuilder(
     }
 
     val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json${suffix}")
-    generateProductJson(productJsonDir, arch, withRuntime = runtimeDir != null)
+    writeProductJsonFile(productJsonDir, arch, withRuntime = runtimeDir != null)
     dirs.add(productJsonDir)
 
     spanBuilder("build Linux tar.gz")
@@ -270,14 +269,9 @@ class LinuxDistributionBuilder(
         """.trimMargin()
         )
         val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.product-info.json.$architecture")
-        val jsonText = generateProductJson(productJsonDir, arch)
-        validateProductJson(
-          jsonText,
-          relativePathToProductJson = "",
-          installationDirectories = listOf(context.paths.distAllDir, unixDistPath, runtimeDir),
-          installationArchives = listOf(),
-          context
-        )
+        val productJsonFile = writeProductJsonFile(productJsonDir, arch)
+        val installationDirectories = listOf(context.paths.distAllDir, unixDistPath, runtimeDir)
+        validateProductJson(jsonText = productJsonFile.readText(), relativePathToProductJson = "", installationDirectories, installationArchives = emptyList(), context)
         val resultDir = snapDir.resolve("result")
         Files.createDirectories(resultDir)
 
@@ -330,7 +324,7 @@ class LinuxDistributionBuilder(
 
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
-  private suspend fun generateProductJson(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+  private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean = true): Path {
     val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch, OsFamily.LINUX, context) {
       "bin/${it.productProperties.baseFileName}64.vmoptions"
     }
@@ -354,8 +348,9 @@ class LinuxDistributionBuilder(
       ),
       context
     )
-    writeProductInfoJson(targetFile = targetDir.resolve(PRODUCT_INFO_FILE_NAME), json = json, context = context)
-    return json
+    val file = targetDir.resolve(PRODUCT_INFO_FILE_NAME)
+    writeProductInfoJson(file, json, context)
+    return file
   }
 
   private fun generateVersionMarker(unixDistPath: Path) {
@@ -405,17 +400,11 @@ class LinuxDistributionBuilder(
       classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars[i]}\""
     }
 
-    val additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isScript = true).toMutableList()
-    additionalJvmArguments.addAll(nonCustomizableJvmArgs)
-    if (!context.xBootClassPathJarNames.isEmpty()) {
-      val bootCp = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$IDE_HOME/lib/${it}" }
-      additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
-    }
-    val additionalJvmArgs = additionalJvmArguments.joinToString(separator = " ")
+    val additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isScript = true) + nonCustomizableJvmArgs
     val additionalTemplateValues = listOf(
       Pair("vm_options", context.productProperties.baseFileName),
       Pair("system_selector", context.systemSelector),
-      Pair("ide_jvm_args", additionalJvmArgs),
+      Pair("ide_jvm_args", additionalJvmArguments.joinToString(separator = " ")),
       Pair("ide_default_xmx", defaultXmxParameter.trim()),
       Pair("class_path", classPath),
       Pair("main_class_name", context.ideMainClassName),

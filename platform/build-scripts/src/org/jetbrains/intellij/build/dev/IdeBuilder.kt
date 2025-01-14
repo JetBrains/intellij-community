@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.dev
@@ -23,6 +23,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildOptions.Companion.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
@@ -42,6 +43,8 @@ import java.time.DayOfWeek
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
+import kotlin.io.path.createDirectories
+import kotlin.io.path.moveTo
 import kotlin.time.Duration.Companion.seconds
 
 data class BuildRequest(
@@ -55,7 +58,7 @@ data class BuildRequest(
   @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
   /**
    * If `true`, the dev build will include a [runtime module repository](psi_element://com.intellij.platform.runtime.repository). 
-   * It's currently used only to run an instance of JetBrains Client from IDE's installation, 
+   * It's currently used only to run an instance of JetBrains Client from IDE's installation,
    * and its generation makes build a little longer, so it should be enabled only if needed.
    */
   @JvmField val generateRuntimeModuleRepository: Boolean = false,
@@ -134,11 +137,16 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         val binDir = Files.createDirectories(runDir.resolve("bin"))
-        val oldFiles = Files.newDirectoryStream(binDir).use { it -> it.toCollection(HashSet()) }
+        val oldFiles = Files.newDirectoryStream(binDir).use { it.toCollection(HashSet()) }
 
         val osDistributionBuilder = getOsDistributionBuilder(os = OsFamily.currentOs, context = context)
         if (osDistributionBuilder != null) {
           oldFiles.remove(osDistributionBuilder.writeVmOptions(binDir))
+          // the file cannot be placed right into the distribution as it throws off home dir detection in `PathManager#getHomeDirFor`
+          val productInfoDir = context.paths.tempDir.resolve("product-info").createDirectories()
+          val productInfoFile = osDistributionBuilder.writeProductInfoFile(productInfoDir, JvmArchitecture.currentJvmArch)
+          oldFiles.remove(productInfoFile.moveTo(binDir.resolve(PRODUCT_INFO_FILE_NAME), overwrite = true))
+          NioFiles.deleteRecursively(productInfoDir)
         }
 
         val ideaPropertyFile = binDir.resolve(PathManager.PROPERTIES_FILE_NAME)
@@ -164,9 +172,10 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
       if (request.writeCoreClasspath) {
         launch(Dispatchers.IO) {
+          val excluded = excludedLibJars(context)
           val classPathString = classPath
             .asSequence()
-            .filter { !excludedLibJars.contains(it.fileName.toString()) }
+            .filter { it.fileName.toString() !in excluded }
             .joinToString(separator = "\n")
           Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
         }
@@ -464,6 +473,7 @@ private suspend fun createBuildContext(
           BuildOptions.PREBUILD_SHARED_INDEXES,
           BuildOptions.GENERATE_JAR_ORDER_STEP,
           BuildOptions.FUS_METADATA_BUNDLE_STEP,
+          BuildOptions.PROVIDED_MODULES_LIST_STEP,
         )
 
         if (request.isUnpackedDist && options.enableEmbeddedFrontend) {
@@ -471,6 +481,11 @@ private suspend fun createBuildContext(
         }
 
         options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
+
+        buildOptionsTemplate?.let { template ->
+          options.isInDevelopmentMode = template.isInDevelopmentMode
+          options.isTestBuild = template.isTestBuild
+        }
 
         val tempDir = buildDir.resolve("temp")
         val result = BuildPaths(
