@@ -365,7 +365,7 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
-                Code(block.content, mimeType, styling)
+                render(block, mimeType, styling)
 
                 if (styling.infoPosition.verticalAlignment == Alignment.Bottom) {
                     FencedBlockInfo(
@@ -381,16 +381,12 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    private fun Code(content: String, mimeType: MimeType, styling: MarkdownStyling.Code.Fenced) {
-        val annotatedCode by
+    public open fun render(block: FencedCodeBlock, mimeType: MimeType, styling: MarkdownStyling.Code.Fenced) {
+        val content = block.content
+        val highlightedCode by
             LocalCodeHighlighter.current.highlight(content, mimeType).collectAsState(AnnotatedString(content))
-        CodeText(annotatedCode, styling)
-    }
-
-    @Composable
-    private fun CodeText(annotatedCode: AnnotatedString, styling: MarkdownStyling.Code.Fenced) {
         Text(
-            text = annotatedCode,
+            text = highlightedCode,
             style = styling.editorTextStyle,
             modifier =
                 Modifier.focusProperties { canFocus = false }
@@ -444,7 +440,7 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
-    private fun MaybeScrollingContainer(
+    protected fun MaybeScrollingContainer(
         isScrollable: Boolean,
         modifier: Modifier = Modifier,
         content: @Composable () -> Unit,

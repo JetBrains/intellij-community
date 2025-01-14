@@ -6,8 +6,8 @@ public final class org/jetbrains/jewel/intui/markdown/standalone/IntUiMarkdownBl
 }
 
 public final class org/jetbrains/jewel/intui/markdown/standalone/IntUiProvideMarkdownStylingKt {
-	public static final fun ProvideMarkdownStyling (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/foundation/code/highlighting/CodeHighlighter;Lorg/jetbrains/jewel/markdown/processing/MarkdownProcessor;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun ProvideMarkdownStyling (ZLorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/processing/MarkdownProcessor;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/foundation/code/highlighting/CodeHighlighter;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ProvideMarkdownStyling (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/foundation/code/highlighting/CodeHighlighter;Lorg/jetbrains/jewel/markdown/MarkdownMode;Lorg/jetbrains/jewel/markdown/processing/MarkdownProcessor;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ProvideMarkdownStyling (ZLorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/MarkdownMode;Lorg/jetbrains/jewel/markdown/processing/MarkdownProcessor;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/foundation/code/highlighting/CodeHighlighter;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/intui/markdown/standalone/styling/IntUiMarkdownStylingKt {

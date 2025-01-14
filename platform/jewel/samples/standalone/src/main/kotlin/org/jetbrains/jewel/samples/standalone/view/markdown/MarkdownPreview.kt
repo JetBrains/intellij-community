@@ -28,6 +28,7 @@ import org.jetbrains.jewel.intui.markdown.standalone.styling.light
 import org.jetbrains.jewel.markdown.LazyMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extension.autolink.AutolinkProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.LocalMarkdownMode
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertRendererExtension
@@ -45,11 +46,11 @@ internal fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeq
 
     var markdownBlocks by remember { mutableStateOf(emptyList<MarkdownBlock>()) }
     val extensions = remember { listOf(GitHubAlertProcessorExtension, AutolinkProcessorExtension) }
-
+    val markdownMode = LocalMarkdownMode.current
     // We are doing this here for the sake of simplicity.
     // In a real-world scenario you would be doing this outside your Composables,
     // potentially involving ViewModels, dependency injection, etc.
-    val processor = remember { MarkdownProcessor(extensions, editorMode = true) }
+    val processor = remember { MarkdownProcessor(extensions, markdownMode = markdownMode) }
 
     LaunchedEffect(rawMarkdown) {
         // TODO you may want to debounce or drop on backpressure, in real usages. You should also
