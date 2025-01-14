@@ -97,6 +97,9 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   }
 
   protected static class SearchField extends ExtendableSearchTextField {
+    public SearchField() {
+      super();
+    }
   }
 
   protected @NotNull ExtendableTextField createSearchField() {
