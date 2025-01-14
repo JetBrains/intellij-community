@@ -50,7 +50,9 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
             val body = declaration.bodyExpression ?: return null
 
             val returnType = declaration.returnType() ?: return null
-            if (returnType.isError && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) return null
+            if (returnType.isError && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType())  {
+                return null
+            }
 
             val bodyType = body.analyze().getType(body)
 

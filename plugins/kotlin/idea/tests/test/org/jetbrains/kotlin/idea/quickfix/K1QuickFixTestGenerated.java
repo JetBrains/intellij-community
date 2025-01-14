@@ -6767,6 +6767,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/localVariable/inFunWithExpressionBody.kt");
                 }
 
+                @TestMetadata("inFunWithExpressionBodyNoExplicitType.kt")
+                public void testInFunWithExpressionBodyNoExplicitType() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/localVariable/inFunWithExpressionBodyNoExplicitType.kt");
+                }
+
                 @TestMetadata("inLabelRef.kt")
                 public void testInLabelRef() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/localVariable/inLabelRef.kt");
