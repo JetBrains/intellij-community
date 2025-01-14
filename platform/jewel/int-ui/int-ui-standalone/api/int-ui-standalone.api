@@ -42,14 +42,19 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUIBannerStyli
 	public static final fun default-3ABfNKs (Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics$Companion;F)Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;
 	public static synthetic fun default-3ABfNKs$default (Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics$Companion;FILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;
 	public static final fun getDefault (Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyles$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultBannerStylesFactory;
-	public static final fun getError (Lorg/jetbrains/jewel/ui/component/styling/BannerColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultErrorBannerColorFactory;
+	public static final fun getDefault (Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyles$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineBannerStylesFactory;
+	public static final fun getError (Lorg/jetbrains/jewel/ui/component/styling/BannerColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiErrorBannerColorFactory;
 	public static final fun getError (Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultErrorBannerStyleFactory;
-	public static final fun getInformation (Lorg/jetbrains/jewel/ui/component/styling/BannerColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultInformationBannerColorFactory;
+	public static final fun getError (Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineErrorBannerStyleFactory;
+	public static final fun getInformation (Lorg/jetbrains/jewel/ui/component/styling/BannerColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInformationBannerColorFactory;
 	public static final fun getInformation (Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultInformationBannerStyleFactory;
-	public static final fun getSuccess (Lorg/jetbrains/jewel/ui/component/styling/BannerColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultSuccessBannerColorFactory;
+	public static final fun getInformation (Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineInformationBannerStyleFactory;
+	public static final fun getSuccess (Lorg/jetbrains/jewel/ui/component/styling/BannerColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiSuccessBannerColorFactory;
 	public static final fun getSuccess (Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultSuccessBannerStyleFactory;
-	public static final fun getWarning (Lorg/jetbrains/jewel/ui/component/styling/BannerColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultWarningBannerColorFactory;
+	public static final fun getSuccess (Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineSuccessBannerStyleFactory;
+	public static final fun getWarning (Lorg/jetbrains/jewel/ui/component/styling/BannerColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiWarningBannerColorFactory;
 	public static final fun getWarning (Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultWarningBannerStyleFactory;
+	public static final fun getWarning (Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineWarningBannerStyleFactory;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiButtonStylingKt {
@@ -152,25 +157,11 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultDrop
 	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/DropdownColors;Lorg/jetbrains/jewel/ui/component/styling/DropdownMetrics;Lorg/jetbrains/jewel/ui/component/styling/DropdownIcons;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;
 }
 
-public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultErrorBannerColorFactory {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultErrorBannerColorFactory;
-	public final fun dark-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
-	public final fun light-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
-}
-
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultErrorBannerStyleFactory {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultErrorBannerStyleFactory;
 	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;
 	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;
-}
-
-public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultInformationBannerColorFactory {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultInformationBannerColorFactory;
-	public final fun dark-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
-	public final fun light-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultInformationBannerStyleFactory {
@@ -185,13 +176,6 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultSimp
 	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultSimpleListItemLazyTreeStyleFactory;
 	public final fun dark-69fazGs (JJJJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemColors;
 	public final fun light-69fazGs (JJJJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemColors;
-}
-
-public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultSuccessBannerColorFactory {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultSuccessBannerColorFactory;
-	public final fun dark-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
-	public final fun light-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultSuccessBannerStyleFactory {
@@ -216,13 +200,6 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultTabS
 	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/TabColors;Lorg/jetbrains/jewel/ui/component/styling/TabMetrics;Lorg/jetbrains/jewel/ui/component/styling/TabIcons;Lorg/jetbrains/jewel/ui/component/styling/TabContentAlpha;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/TabStyle;
 	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/TabColors;Lorg/jetbrains/jewel/ui/component/styling/TabMetrics;Lorg/jetbrains/jewel/ui/component/styling/TabIcons;Lorg/jetbrains/jewel/ui/component/styling/TabContentAlpha;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;)Lorg/jetbrains/jewel/ui/component/styling/TabStyle;
 	public static synthetic fun light$default (Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultTabStyleFactory;Lorg/jetbrains/jewel/ui/component/styling/TabColors;Lorg/jetbrains/jewel/ui/component/styling/TabMetrics;Lorg/jetbrains/jewel/ui/component/styling/TabIcons;Lorg/jetbrains/jewel/ui/component/styling/TabContentAlpha;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/TabStyle;
-}
-
-public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultWarningBannerColorFactory {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultWarningBannerColorFactory;
-	public final fun dark-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
-	public final fun light-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultWarningBannerStyleFactory {
@@ -266,6 +243,13 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiEditorTabSt
 	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/TabColors;Lorg/jetbrains/jewel/ui/component/styling/TabMetrics;Lorg/jetbrains/jewel/ui/component/styling/TabIcons;Lorg/jetbrains/jewel/ui/component/styling/TabContentAlpha;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/TabStyle;
 }
 
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiErrorBannerColorFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiErrorBannerColorFactory;
+	public final fun dark-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
+	public final fun light-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
+}
+
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiGroupHeaderStylingKt {
 	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderColors;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;
 	public static final fun dark-iJQMabo (Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderColors$Companion;JLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderColors;
@@ -291,6 +275,48 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiIconButtonS
 	public static synthetic fun defaults-ij7-PLE$default (Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;FLandroidx/compose/foundation/layout/PaddingValues;JILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics;
 	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;
 	public static final fun light-8v1krLo (Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion;JJJJJJJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiInformationBannerColorFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInformationBannerColorFactory;
+	public final fun dark-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
+	public final fun light-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiInlineBannerStylesFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineBannerStylesFactory;
+	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyles;
+	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyles;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiInlineErrorBannerStyleFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineErrorBannerStyleFactory;
+	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;
+	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiInlineInformationBannerStyleFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineInformationBannerStyleFactory;
+	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;
+	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiInlineSuccessBannerStyleFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineSuccessBannerStyleFactory;
+	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;
+	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiInlineWarningBannerStyleFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiInlineWarningBannerStyleFactory;
+	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;
+	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/BannerColors;Lorg/jetbrains/jewel/ui/component/styling/BannerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiLazyTreeStylingKt {
@@ -444,6 +470,13 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiSliderStyli
 	public static final fun light-8v1krLo (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
 }
 
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiSuccessBannerColorFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiSuccessBannerColorFactory;
+	public final fun dark-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
+	public final fun light-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
+}
+
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiTabStripScrollbarStylingKt {
 	public static final fun tabStrip-ziNgDLE (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;FLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
 	public static synthetic fun tabStrip-ziNgDLE$default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;FLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
@@ -531,6 +564,13 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiUndecorated
 	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/DropdownColors;Lorg/jetbrains/jewel/ui/component/styling/DropdownMetrics;Lorg/jetbrains/jewel/ui/component/styling/DropdownIcons;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;
 }
 
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiWarningBannerColorFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiWarningBannerColorFactory;
+	public final fun dark-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
+	public final fun light-dgg9oW8 (JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/BannerColors;
+}
+
 public final class org/jetbrains/jewel/intui/standalone/theme/IntUiGlobalColorsKt {
 	public static final fun dark-GyCwops (Lorg/jetbrains/jewel/foundation/BorderColors$Companion;JJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/BorderColors;
 	public static final fun dark-Hformbs (Lorg/jetbrains/jewel/foundation/OutlineColors$Companion;JJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/OutlineColors;
@@ -550,10 +590,10 @@ public final class org/jetbrains/jewel/intui/standalone/theme/IntUiGlobalMetrics
 public final class org/jetbrains/jewel/intui/standalone/theme/IntUiThemeKt {
 	public static final fun IntUiTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lorg/jetbrains/jewel/ui/ComponentStyling;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun IntUiTheme (ZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun dark (Lorg/jetbrains/jewel/ui/ComponentStyling;Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyles;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Landroidx/compose/runtime/Composer;IIII)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public static final fun dark (Lorg/jetbrains/jewel/ui/ComponentStyling;Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyles;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyles;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Landroidx/compose/runtime/Composer;IIIII)Lorg/jetbrains/jewel/ui/ComponentStyling;
 	public static final fun darkThemeDefinition-VRxQTpk (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Lorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;JLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;
 	public static final fun default (Lorg/jetbrains/jewel/ui/ComponentStyling;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/ComponentStyling;
-	public static final fun light (Lorg/jetbrains/jewel/ui/ComponentStyling;Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyles;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Landroidx/compose/runtime/Composer;IIII)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public static final fun light (Lorg/jetbrains/jewel/ui/ComponentStyling;Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyles;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyles;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Landroidx/compose/runtime/Composer;IIIII)Lorg/jetbrains/jewel/ui/ComponentStyling;
 	public static final fun lightThemeDefinition-VRxQTpk (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Lorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;JLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;
 }
 
