@@ -26,10 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
@@ -68,6 +65,8 @@ import java.util.*;
 import java.util.List;
 
 public abstract class XDebuggerEditorBase implements Expandable {
+  public static final Key<Boolean> XDEBUGGER_EDITOR_KEY = Key.create("is.xdebugger.editor");
+
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
   private final @NotNull EvaluationMode myMode;
@@ -373,6 +372,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   protected void prepareEditor(EditorEx editor) {
     editor.putUserData(EditorImpl.DISABLE_REMOVE_ON_DROP, Boolean.TRUE);
+    editor.putUserData(XDEBUGGER_EDITOR_KEY, Boolean.TRUE);
   }
 
   protected final void setExpandable(Editor editor) {

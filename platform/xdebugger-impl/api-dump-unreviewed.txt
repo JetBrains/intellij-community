@@ -1026,6 +1026,7 @@ f:com.intellij.xdebugger.impl.ui.XDebugSessionTabNewUIKt
 - sf:addDebugToolwindowActions(com.intellij.openapi.project.Project):V
 a:com.intellij.xdebugger.impl.ui.XDebuggerEditorBase
 - com.intellij.ui.Expandable
+- sf:XDEBUGGER_EDITOR_KEY:com.intellij.openapi.util.Key
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.evaluation.EvaluationMode,java.lang.String,com.intellij.xdebugger.XSourcePosition):V
 - p:addChooser(javax.swing.JComponent):javax.swing.JComponent
 - addCollapseButton(java.lang.Runnable):V
