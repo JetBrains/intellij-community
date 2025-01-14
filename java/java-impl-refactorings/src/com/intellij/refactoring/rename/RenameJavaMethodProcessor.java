@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -114,7 +114,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     qualifyOuterMemberReferences(outerHides);
     qualifyStaticImportReferences(staticImportHides);
 
-    if (!method.isConstructor() && !(method instanceof LightElement) && method.findDeepestSuperMethods().length == 0) {
+    if (!method.isConstructor() && !(method instanceof LightElement) && JavaPsiRecordUtil.getRecordComponentForAccessor(method) == null
+        && method.findDeepestSuperMethods().length == 0) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, CommonClassNames.JAVA_LANG_OVERRIDE);
       if (annotation != null) {
         annotation.delete();

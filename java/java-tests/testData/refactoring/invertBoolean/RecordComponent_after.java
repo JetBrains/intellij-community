@@ -8,6 +8,7 @@ record MyRecord(boolean isArrayInverted) {
     this(isArray);
   }
 
+  @Override
   public boolean isArrayInverted() {
     System.out.println(!isArrayInverted);
     return (isArrayInverted);
