@@ -291,7 +291,16 @@ public final class JavaErrorKinds {
     error(PsiClass.class, "class.sealed.permits.on.non.sealed")
       .withAnchor(cls -> requireNonNull(cls.getPermitsList()).getFirstChild())
       .withRawDescription(cls -> message("class.sealed.permits.on.non.sealed", cls.getName()));
-  
+  public static final Parameterized<PsiElement, ClassStaticReferenceErrorContext> CLASS_NOT_ENCLOSING =
+    parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "class.not.enclosing")
+      .withRawDescription((psi, ctx) -> message("class.not.enclosing", formatClass(ctx.outerClass())));
+  public static final Parameterized<PsiElement, ClassStaticReferenceErrorContext> CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT =
+    parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "this.expression.cannot.be.referenced.from.static.context")
+      .withRawDescription((psi, ctx) -> message(
+        "class.cannot.be.referenced.from.static.context",
+        formatClass(ctx.outerClass()) + "." + (psi instanceof PsiSuperExpression ? PsiKeyword.SUPER : PsiKeyword.THIS)));
+
+
   public static final Simple<PsiJavaCodeReferenceElement> VALUE_CLASS_EXTENDS_NON_ABSTRACT = error("value.class.extends.non.abstract");
   
   public static final Simple<PsiExpression> INSTANTIATION_ENUM = error("instantiation.enum");
@@ -428,6 +437,14 @@ public final class JavaErrorKinds {
       boolean fromDefaultValue = PsiTreeUtil.isAncestor(method.getDefaultValue(), value, false);
       AnnotationValueErrorContext context = new AnnotationValueErrorContext(method, expectedType, fromDefaultValue);
       return context;
+    }
+  }
+
+  public record ClassStaticReferenceErrorContext(@NotNull PsiClass outerClass,
+                                                 @Nullable PsiClass innerClass, 
+                                                 @NotNull PsiElement place) {
+    public @Nullable PsiModifierListOwner enclosingStaticElement() {
+      return PsiUtil.getEnclosingStaticElement(place, outerClass);
     }
   }
 }

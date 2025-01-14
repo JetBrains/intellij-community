@@ -927,9 +927,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiType type = expression.getType();
     PsiClass aClass = PsiUtil.resolveClassInType(type);
     add(HighlightUtil.checkUnhandledExceptions(expression));
-    if (aClass != null && !hasErrorResults()) {
-      add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(expression, type, aClass));
-    }
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
     try {

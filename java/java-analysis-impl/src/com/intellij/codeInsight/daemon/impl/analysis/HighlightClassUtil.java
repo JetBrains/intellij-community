@@ -43,9 +43,11 @@ public final class HighlightClassUtil {
   }
 
   private static void registerMakeInnerClassStatic(@Nullable PsiClass aClass, @Nullable HighlightInfo.Builder result) {
-    if (aClass != null && aClass.getContainingClass() != null) {
-      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.STATIC, true, false);
-      if (result != null) {
+    if (result == null || aClass == null) return;
+    if (aClass.getContainingClass() != null) {
+      PsiModifierList modifierList = aClass.getModifierList();
+      if (modifierList != null && HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, modifierList) == null) {
+        IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.STATIC, true, false);
         result.registerFix(action, null, null, null, null);
       }
     }
@@ -142,17 +144,6 @@ public final class HighlightClassUtil {
     return info;
   }
 
-  static HighlightInfo.Builder checkCreateInnerClassFromStaticContext(@NotNull PsiNewExpression expression, @NotNull PsiType type, @NotNull PsiClass aClass) {
-    if (type instanceof PsiArrayType || type instanceof PsiPrimitiveType) return null;
-    if (aClass instanceof PsiAnonymousClass anonymousClass) {
-      aClass = anonymousClass.getBaseClassType().resolve();
-      if (aClass == null) return null;
-    }
-
-    PsiExpression qualifier = expression.getQualifier();
-    return checkCreateInnerClassFromStaticContext(expression, qualifier, aClass);
-  }
-
   public static HighlightInfo.Builder checkCreateInnerClassFromStaticContext(@NotNull PsiElement element,
                                                                      @Nullable PsiExpression qualifier,
                                                                      @NotNull PsiClass aClass) {
@@ -238,13 +229,7 @@ public final class HighlightClassUtil {
       // make context not static or referenced class static
       IntentionAction action1 = QuickFixFactory.getInstance().createModifierListFix(staticParent, PsiModifier.STATIC, false, false);
       builder.registerFix(action1, null, null, null, null);
-      PsiModifierList classModifierList;
-      if (aClass != null
-          && (classModifierList = aClass.getModifierList()) != null
-          && HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, classModifierList) == null) {
-        IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.STATIC, true, false);
-        builder.registerFix(action, null, null, null, null);
-      }
+      registerMakeInnerClassStatic(aClass, builder);
       return builder;
     }
     return null;

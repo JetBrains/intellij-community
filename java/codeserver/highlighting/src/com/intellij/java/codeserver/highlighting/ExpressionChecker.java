@@ -3,6 +3,8 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,53 @@ final class ExpressionChecker {
       if (refQualifier != null) {
         myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE.create(refQualifier));
       }
+    }
+  }
+
+  void checkCreateInnerClassFromStaticContext(@NotNull PsiNewExpression expression, @NotNull PsiClass aClass) {
+    if (aClass instanceof PsiAnonymousClass anonymousClass) {
+      aClass = anonymousClass.getBaseClassType().resolve();
+      if (aClass == null) return;
+    }
+
+    PsiExpression qualifier = expression.getQualifier();
+    PsiElement placeToSearchEnclosingFrom;
+    if (qualifier != null) {
+      placeToSearchEnclosingFrom = PsiUtil.resolveClassInType(qualifier.getType());
+    }
+    else {
+      placeToSearchEnclosingFrom = expression;
+    }
+    if (placeToSearchEnclosingFrom == null) {
+      return;
+    }
+    checkCreateInnerClassFromStaticContext(expression, placeToSearchEnclosingFrom, aClass);
+  }
+
+  void checkCreateInnerClassFromStaticContext(@NotNull PsiElement element,
+                                              @NotNull PsiElement placeToSearchEnclosingFrom,
+                                              @NotNull PsiClass aClass) {
+    if (!PsiUtil.isInnerClass(aClass)) return;
+    PsiClass outerClass = aClass.getContainingClass();
+    if (outerClass == null) return;
+
+    if (outerClass instanceof PsiSyntheticClass ||
+        InheritanceUtil.hasEnclosingInstanceInScope(outerClass, placeToSearchEnclosingFrom, true, false)) {
+      return;
+    }
+    checkIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, element);
+  }
+
+  void checkIllegalEnclosingUsage(@NotNull PsiElement place,
+                                  @Nullable PsiClass aClass,
+                                  @NotNull PsiClass outerClass,
+                                  @NotNull PsiElement elementToHighlight) {
+    var context = new JavaErrorKinds.ClassStaticReferenceErrorContext(outerClass, aClass, place);
+    if (!PsiTreeUtil.isContextAncestor(outerClass, place, false)) {
+      myVisitor.report(JavaErrorKinds.CLASS_NOT_ENCLOSING.create(elementToHighlight, context));
+    }
+    else if (context.enclosingStaticElement() != null) {
+      myVisitor.report(JavaErrorKinds.CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT.create(elementToHighlight, context));
     }
   }
 }

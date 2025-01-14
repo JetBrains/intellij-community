@@ -115,6 +115,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     PsiType type = expression.getType();
     PsiClass aClass = PsiUtil.resolveClassInType(type);
     if (aClass != null && !hasErrorResults()) myClassChecker.checkIllegalInstantiation(aClass, expression);
+    if (aClass != null && !(type instanceof PsiArrayType) && !(type instanceof PsiPrimitiveType) && !hasErrorResults()) {
+      myExpressionChecker.checkCreateInnerClassFromStaticContext(expression, aClass);
+    }
     if (!hasErrorResults()) myClassChecker.checkAnonymousInheritFinal(expression);
     if (!hasErrorResults()) myClassChecker.checkAnonymousInheritProhibited(expression);
     if (!hasErrorResults()) myClassChecker.checkAnonymousSealedProhibited(expression);

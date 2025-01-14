@@ -255,6 +255,15 @@ final class JavaErrorFixProvider {
     multi(CLASS_EXTENDS_FINAL, error ->
       JvmElementActionFactories.createModifierActions(error.context(), MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
     fix(CLASS_ANONYMOUS_EXTENDS_SEALED, error -> myFactory.createConvertAnonymousToInnerAction(error.psi()));
+    JavaFixProvider<PsiElement, ClassStaticReferenceErrorContext> makeInnerStatic = error -> {
+      PsiClass innerClass = error.context().innerClass();
+      return innerClass == null || innerClass.getContainingClass() == null ? null : addModifierFix(innerClass, PsiModifier.STATIC);
+    };
+    fix(CLASS_NOT_ENCLOSING, makeInnerStatic);
+    fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, makeInnerStatic);
+    fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, error -> 
+      myFactory.createModifierListFix(requireNonNull(error.context().enclosingStaticElement()), 
+                                      PsiModifier.STATIC, false, false));
   }
   
   private void createRecordFixes() {

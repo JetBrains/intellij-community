@@ -1723,7 +1723,7 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkThisOrSuperExpressionInIllegalContext(@NotNull PsiExpression expr,
+  static HighlightInfo.Builder checkThisOrSuperExpressionInIllegalContext(@NotNull PsiQualifiedExpression expr,
                                                                   @Nullable PsiJavaCodeReferenceElement qualifier,
                                                                   @NotNull LanguageLevel languageLevel) {
     if (expr instanceof PsiSuperExpression) {
