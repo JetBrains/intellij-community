@@ -21,8 +21,10 @@ internal abstract class ContentSource<T : ContentItem> {
         }
 }
 
-internal data class FilteredContentSource<T : ContentItem>(override val items: List<T>, val original: ContentSource<*>) :
-    ContentSource<T>() {
+internal data class FilteredContentSource<T : ContentItem>(
+    override val items: List<T>,
+    val original: ContentSource<*>,
+) : ContentSource<T>() {
     override val displayName: String
         get() = original.displayName
 }
