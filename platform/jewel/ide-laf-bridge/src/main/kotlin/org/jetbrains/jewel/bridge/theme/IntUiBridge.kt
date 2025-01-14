@@ -78,6 +78,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         groupHeaderStyle = readGroupHeaderStyle(),
         horizontalProgressBarStyle = readHorizontalProgressBarStyle(),
         iconButtonStyle = readIconButtonStyle(),
+        inlineBannerStyle = readInlineBannerStyle(),
         lazyTreeStyle = readLazyTreeStyle(),
         linkStyle = readLinkStyle(),
         menuStyle = menuStyle,

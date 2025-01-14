@@ -21,6 +21,7 @@ import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
@@ -36,6 +37,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalEditorTabStyle
 import org.jetbrains.jewel.ui.component.styling.LocalGroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalHorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalInlineBannerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
@@ -101,6 +103,9 @@ public val JewelTheme.Companion.comboBoxStyle: ComboBoxStyle
 
 public val JewelTheme.Companion.groupHeaderStyle: GroupHeaderStyle
     @Composable @ReadOnlyComposable get() = LocalGroupHeaderStyle.current
+
+public val JewelTheme.Companion.inlineBannerStyle: InlineBannerStyles
+    @Composable @ReadOnlyComposable get() = LocalInlineBannerStyle.current
 
 public val JewelTheme.Companion.linkStyle: LinkStyle
     @Composable @ReadOnlyComposable get() = LocalLinkStyle.current

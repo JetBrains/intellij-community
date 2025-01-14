@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalLayoutApi::class)
+
 package org.jetbrains.jewel.samples.ideplugin
 
 import androidx.compose.foundation.background
@@ -5,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -53,22 +56,27 @@ import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Dropdown
-import org.jetbrains.jewel.ui.component.ErrorBanner
+import org.jetbrains.jewel.ui.component.ErrorDefaultBanner
+import org.jetbrains.jewel.ui.component.ErrorInlineBanner
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconActionButton
 import org.jetbrains.jewel.ui.component.IconButton
-import org.jetbrains.jewel.ui.component.InformationBanner
+import org.jetbrains.jewel.ui.component.InformationDefaultBanner
+import org.jetbrains.jewel.ui.component.InformationInlineBanner
 import org.jetbrains.jewel.ui.component.LazyTree
+import org.jetbrains.jewel.ui.component.Link
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Slider
-import org.jetbrains.jewel.ui.component.SuccessBanner
+import org.jetbrains.jewel.ui.component.SuccessDefaultBanner
+import org.jetbrains.jewel.ui.component.SuccessInlineBanner
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
-import org.jetbrains.jewel.ui.component.WarningBanner
+import org.jetbrains.jewel.ui.component.WarningDefaultBanner
+import org.jetbrains.jewel.ui.component.WarningInlineBanner
 import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
@@ -76,6 +84,7 @@ import org.jetbrains.jewel.ui.painter.hints.Badge
 import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.colorPalette
+import org.jetbrains.jewel.ui.theme.inlineBannerStyle
 
 @Composable
 internal fun ComponentShowcaseTab(project: Project) {
@@ -213,14 +222,62 @@ private fun RowScope.ColumnOne() {
         Slider(sliderValue, { sliderValue = it }, steps = 5)
 
         var bannerStyle by remember { mutableIntStateOf(0) }
-        Column {
+        var clickLabel by remember { mutableStateOf("") }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton({ bannerStyle = (bannerStyle + 1) % 4 }) { Text("Give me a new banner!") }
             Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Clicked action: $clickLabel")
             when (bannerStyle) {
-                1 -> ErrorBanner("This is an error banner in Compose")
-                0 -> SuccessBanner("This is a success banner in Compose")
-                2 -> WarningBanner("This is a warning banner in Compose")
-                else -> InformationBanner("This is an information banner in Compose")
+                1 -> {
+                    ErrorDefaultBanner("This is an error banner in Compose")
+                    ErrorInlineBanner(
+                        style = JewelTheme.inlineBannerStyle.error,
+                        text =
+                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+                        actionIcons = {
+                            IconButton(onClick = { clickLabel = "Error Inline Action Icon clicked" }) {
+                                Icon(AllIconsKeys.General.Close, null)
+                            }
+                        },
+                    )
+                }
+
+                0 -> {
+                    SuccessDefaultBanner("This is a success banner in Compose")
+                    SuccessInlineBanner(
+                        style = JewelTheme.inlineBannerStyle.success,
+                        text =
+                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
+                                "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, " +
+                                "quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+                                "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu " +
+                                "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa " +
+                                "qui officia deserunt mollit anim id est laborum.",
+                        actions = {
+                            Link("Action A", onClick = { clickLabel = "Success Inline Action A clicked" })
+                            Link("Action B", onClick = { clickLabel = "Success Inline Action B clicked" })
+                        },
+                        actionIcons = {
+                            IconButton(onClick = { clickLabel = "Error Close Icon clicked" }) {
+                                Icon(AllIconsKeys.General.Close, null)
+                            }
+                            IconButton(onClick = { clickLabel = "Error Gear Icon clicked" }) {
+                                Icon(AllIconsKeys.General.Gear, null)
+                            }
+                        },
+                    )
+                }
+
+                2 -> {
+                    WarningDefaultBanner("This is a warning banner in Compose")
+                    WarningInlineBanner("This is a warning banner in Compose")
+                }
+
+                else -> {
+                    InformationDefaultBanner("This is an information banner in Compose")
+                    InformationInlineBanner("This is an information banner in Compose")
+                }
             }
         }
     }
