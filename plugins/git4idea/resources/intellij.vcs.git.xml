@@ -700,6 +700,10 @@
 
     <applicationService serviceImplementation="git4idea.index.ui.GitStageUiApplicationSettings"/>
 
+    <applicationService serviceInterface="git4idea.commit.signing.GpgAgentPathsLocatorFactory"
+                        serviceImplementation="git4idea.commit.signing.GpgAgentPathsLocatorFactoryImpl"
+                        testServiceImplementation="git4idea.commit.signing.GpgAgentPathsLocatorTestFactory"/>
+
     <recentProjectsBranchesProvider implementation="git4idea.repo.GitRecentProjectsBranchesProvider"/>
 
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>

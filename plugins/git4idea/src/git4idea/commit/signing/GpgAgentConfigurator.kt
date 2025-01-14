@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -31,7 +30,6 @@ import git4idea.commands.GitScriptGenerator
 import git4idea.commit.signing.GpgAgentConfig.Companion.readConfig
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_BACKUP_FILE_NAME
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_FILE_NAME
-import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_HOME_DIR
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.PINENTRY_LAUNCHER_FILE_NAME
 import git4idea.commit.signing.PinentryService.Companion.PINENTRY_USER_DATA_ENV
 import git4idea.commit.signing.PinentryService.PinentryData
@@ -53,9 +51,8 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.Paths
+import kotlin.Throws
 import kotlin.io.path.copyTo
 import kotlin.io.path.exists
 
@@ -102,7 +99,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   fun canBeConfigured(project: Project): Boolean {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
     if (!isEnabled(project, executable)) return false
-    val gpgAgentPaths = createPathLocator(executable).resolvePaths() ?: return false
+    val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: return false
     val config = readConfig(gpgAgentPaths.gpgAgentConf).getOrThrow() ?: return true
 
     return !isPinentryConfigured(gpgAgentPaths, config)
@@ -116,20 +113,13 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     cs.launch {
       val executable = GitExecutableManager.getInstance().getExecutable(project)
       if (!isEnabled(project, executable)) return@launch
-      val gpgAgentPaths = createPathLocator(executable).resolvePaths() ?: TODO()
+      val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: TODO()
       val defaultPinentry = readDefaultPinentryPathFromGpgConf(executable) ?: TODO()
       checkCanceled()
       if (showConfirmationDialog(defaultPinentry)) {
         withContext(Dispatchers.IO) { doConfigure(executable, gpgAgentPaths, defaultPinentry) }
       }
     }
-  }
-
-  private fun createPathLocator(executor: GitExecutable): GpgAgentPathsLocator {
-    if (executor is GitExecutable.Wsl) {
-      return WslGpgAgentPathsLocator(executor)
-    }
-    return MacAndUnixGpgAgentPathsLocator()
   }
 
   private fun createGpgAgentExecutor(executor: GitExecutable): GpgAgentCommandExecutor {
@@ -167,10 +157,11 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     })
   }
 
-  private fun updateExistingPinentryLauncher() {
+  @VisibleForTesting
+  internal fun updateExistingPinentryLauncher() {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
     if (isEnabled(project, executable)) {
-      val gpgAgentPaths = createPathLocator(executable).resolvePaths() ?: return
+      val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: return
       val config = readConfig(gpgAgentPaths.gpgAgentConf).getOrThrow() ?: return
       if (isPinentryConfigured(gpgAgentPaths, config)) {
         // There might be some previously created configurations before pinentry-program-fallback was introduced.
@@ -193,6 +184,9 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     LOG.info("Creating pinentry launcher with fallback: ${pinentryFallback ?: "-"}")
     PinentryShellScriptLauncherGenerator(executable).generate(project, gpgAgentPaths, pinentryFallback)
   }
+
+  private fun resolveGpgAgentPaths(executable: GitExecutable): GpgAgentPaths? =
+    application.service<GpgAgentPathsLocatorFactory>().createPathLocator(project, executable).resolvePaths()
 
   @Throws(IOException::class)
   private fun backupExistingConfig(gpgAgentPaths: GpgAgentPaths) {
@@ -296,31 +290,6 @@ private class LocalGpgAgentCommandExecutor : GpgAgentCommandExecutor {
   }
 }
 
-internal interface GpgAgentPathsLocator {
-  companion object {
-    const val GPG_HOME_DIR = ".gnupg"
-    const val GPG_AGENT_CONF_FILE_NAME = "gpg-agent.conf"
-    const val GPG_AGENT_CONF_BACKUP_FILE_NAME = "gpg-agent.conf.bak"
-    const val PINENTRY_LAUNCHER_FILE_NAME = "pinentry-ide.sh"
-  }
-  fun resolvePaths(): GpgAgentPaths?
-}
-
-private class MacAndUnixGpgAgentPathsLocator : GpgAgentPathsLocator {
-  override fun resolvePaths(): GpgAgentPaths? {
-    try {
-      val gpgAgentHome = Paths.get(SystemProperties.getUserHome(), GPG_HOME_DIR)
-      val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
-
-      return GpgAgentPaths(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())
-    }
-    catch (e: InvalidPathException) {
-      LOG.warn("Cannot resolve path", e)
-      return null
-    }
-  }
-}
-
 private class WslGpgAgentCommandExecutor(private val project: Project,
                                          private val executable: GitExecutable.Wsl) : GpgAgentCommandExecutor {
   override fun execute(command: String, vararg params: String): List<String> {
@@ -329,42 +298,6 @@ private class WslGpgAgentCommandExecutor(private val project: Project,
       .Silent(commandLine)
       .runProcess(10000, true)
     return processOutput.stdoutLines + processOutput.stderrLines
-  }
-}
-
-private class WslGpgAgentPathsLocator(private val executable: GitExecutable.Wsl) : GpgAgentPathsLocator {
-  override fun resolvePaths(): GpgAgentPaths? {
-    try {
-      val gpgAgentHome = getWindowsAccessibleGpgHome(executable) ?: return null
-      val wslUserHome = getPathInWslUserHome(executable) ?: return null
-      val pathToPinentryAppInWsl = "$wslUserHome/$GPG_HOME_DIR/$PINENTRY_LAUNCHER_FILE_NAME"
-      return GpgAgentPaths(gpgAgentHome, pathToPinentryAppInWsl)
-    }
-    catch (e: InvalidPathException) {
-      LOG.warn("Cannot resolve path", e)
-      return null
-    }
-  }
-
-  private fun getPathInWslUserHome(executable: GitExecutable.Wsl): String? {
-    val wslDistribution = executable.distribution
-    val wslUserHomePath = wslDistribution.userHome?.trimEnd('/')
-    if (wslUserHomePath == null) return null
-    LOG.debug("User home path in WSL = $wslUserHomePath")
-
-    return wslUserHomePath
-  }
-
-  private fun getWindowsAccessibleGpgHome(executable: GitExecutable.Wsl): Path? {
-    val wslDistribution = executable.distribution
-    val wslUserHomePath = getPathInWslUserHome(executable)
-    if (wslUserHomePath != null) {
-      return Path.of(wslDistribution.getWindowsPath(wslUserHomePath), GPG_HOME_DIR)
-    }
-    else {
-      LOG.warn("Cannot resolve wsl user home path")
-    }
-    return null
   }
 }
 
