@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QualifyMethodCallFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceAssignmentFromVoidWithStatementIntentionAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceGetClassWithClassLiteralFix;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
@@ -35,13 +36,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public final class HighlightFixUtil {
   private static final Logger LOG = Logger.getInstance(HighlightFixUtil.class);
   private static final CallMatcher COLLECTION_TO_ARRAY =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(0);
 
-  static void registerCollectionToArrayFixAction(@NotNull HighlightInfo.Builder info,
+  static void registerCollectionToArrayFixAction(@NotNull Consumer<? super CommonIntentionAction> info,
                                                  @Nullable PsiType fromType,
                                                  @Nullable PsiType toType,
                                                  @NotNull PsiExpression expression) {
@@ -60,8 +62,7 @@ public final class HighlightFixUtil {
             InheritanceUtil.isInheritor(fromType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(fromType, expression.getResolveScope());
           if (collectionItemType != null && arrayComponentType.isConvertibleFrom(collectionItemType)) {
-            IntentionAction action = QuickFixFactory.getInstance().createCollectionToArrayFix(collection, expression, (PsiArrayType)toType);
-            info.registerFix(action, null, null, null, null);
+            info.accept(QuickFixFactory.getInstance().createCollectionToArrayFix(collection, expression, (PsiArrayType)toType));
           }
         }
       }
@@ -234,25 +235,25 @@ public final class HighlightFixUtil {
                                                       @Nullable PsiType itemType,
                                                       @Nullable PsiExpression expr,
                                                       @Nullable HighlightInfo.Builder highlightInfo) {
+    if (highlightInfo == null) return;
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
-      if (highlightInfo != null) {
-        highlightInfo.registerFix(action, null, null, null, null);
-      }
+      highlightInfo.registerFix(action, null, null, null, null);
     }
-    registerChangeReturnTypeFix(highlightInfo, expr, parameter.getType());
+    IntentionAction fix = createChangeReturnTypeFix(expr, parameter.getType());
+    if (fix != null) {
+      highlightInfo.registerFix(fix, null, null, null, null);
+    }
   }
 
-  static void registerChangeReturnTypeFix(@Nullable HighlightInfo.Builder highlightInfo, @Nullable PsiExpression expr, @NotNull PsiType toType) {
+  static @Nullable IntentionAction createChangeReturnTypeFix(@Nullable PsiExpression expr, @NotNull PsiType toType) {
     if (expr instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
       if (method != null) {
-        IntentionAction action = PriorityIntentionActionWrapper
+        return PriorityIntentionActionWrapper
           .lowPriority(QuickFixFactory.getInstance().createMethodReturnFix(method, toType, true));
-        if (highlightInfo != null) {
-          highlightInfo.registerFix(action, null, null, null, null);
-        }
       }
     }
+    return null;
   }
 
   /**
@@ -331,11 +332,10 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerLambdaReturnTypeFixes(@Nullable HighlightInfo.Builder info, @NotNull TextRange range, PsiLambdaExpression lambda, PsiExpression expression) {
-    if (info == null) return;
+  static void registerLambdaReturnTypeFixes(@NotNull Consumer<? super CommonIntentionAction> info, PsiLambdaExpression lambda, PsiExpression expression) {
     PsiType type = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
     if (type != null) {
-      AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(info, range, expression, type);
+      AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(info, expression, type);
     }
   }
 

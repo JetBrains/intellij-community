@@ -408,6 +408,11 @@ public final class JavaErrorKinds {
     error(PsiLiteralExpression.class, "literal.text.block.unclosed").withRange(e -> TextRange.from(e.getTextLength(), 0));
   public static final Simple<PsiLiteralExpression> LITERAL_TEXT_BLOCK_NO_NEW_LINE = 
     error(PsiLiteralExpression.class, "literal.text.block.no.new.line").withRange(e -> TextRange.create(0, 3));
+  
+  public static final Simple<PsiMethodCallExpression> CALL_SUPER_ENUM_CONSTRUCTOR = error("call.super.enum.constructor");
+  public static final Parameterized<PsiExpression, PsiClass> CALL_SUPER_QUALIFIER_NOT_INNER_CLASS = 
+    parameterized(PsiExpression.class, PsiClass.class, "call.super.qualifier.not.inner.class")
+      .withRawDescription((psi, cls) -> message("call.super.qualifier.not.inner.class", formatClass(cls)));
 
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {

@@ -19,6 +19,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -457,7 +458,7 @@ public final class HighlightUtil {
     return highlightInfo;
   }
 
-  private static boolean isCastIntentionApplicable(@NotNull PsiExpression expression, @Nullable PsiType toType) {
+  static boolean isCastIntentionApplicable(@NotNull PsiExpression expression, @Nullable PsiType toType) {
     while (expression instanceof PsiTypeCastExpression || expression instanceof PsiParenthesizedExpression) {
       if (expression instanceof PsiTypeCastExpression castExpression) {
         expression = castExpression.getOperand();
@@ -610,19 +611,32 @@ public final class HighlightUtil {
       return null;
     }
     HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift);
-    AddTypeArgumentsConditionalFix.register(highlightInfo, expression, lType);
+    AddTypeArgumentsConditionalFix.register(asConsumer(highlightInfo), expression, lType);
     if (rType != null && expression != null && isCastIntentionApplicable(expression, lType)) {
       IntentionAction action = getFixFactory().createAddTypeCastFix(lType, expression);
       highlightInfo.registerFix(action, null, null, null, null);
     }
     if (expression != null) {
-      AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(highlightInfo, textRange, expression, lType, rType);
+      AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(asConsumer(highlightInfo), expression, lType, rType);
       if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(lType))) {
-        HighlightFixUtil.registerChangeReturnTypeFix(highlightInfo, expression, lType);
+        IntentionAction fix = HighlightFixUtil.createChangeReturnTypeFix(expression, lType);
+        if (fix != null) {
+          highlightInfo.registerFix(fix, null, null, null, null);
+        }
       }
     }
-    ChangeNewOperatorTypeFix.register(highlightInfo, expression, lType);
+    ModCommandAction fix = ChangeNewOperatorTypeFix.createFix(expression, lType);
+    if (fix != null) {
+      highlightInfo.registerFix(fix, null, null, null, null);
+    }
     return highlightInfo;
+  }
+
+  static @NotNull Consumer<CommonIntentionAction> asConsumer(HighlightInfo.Builder highlightInfo) {
+    if (highlightInfo == null) {
+      return fix -> {};
+    }
+    return fix -> highlightInfo.registerFix(fix.asIntention(), null, null, null, null);
   }
 
   static HighlightInfo.Builder checkReturnFromSwitchExpr(@NotNull PsiReturnStatement statement) {

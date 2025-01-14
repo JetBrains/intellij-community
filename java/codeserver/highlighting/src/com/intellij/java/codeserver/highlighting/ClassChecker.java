@@ -727,6 +727,51 @@ final class ClassChecker {
     checkBaseClassDefaultConstructorProblem(aClass, constructor, handledExceptions);
   }
 
+  void checkEnumSuperConstructorCall(@NotNull PsiMethodCallExpression expr) {
+    PsiReferenceExpression methodExpression = expr.getMethodExpression();
+    PsiElement refNameElement = methodExpression.getReferenceNameElement();
+    if (refNameElement != null && PsiKeyword.SUPER.equals(refNameElement.getText())) {
+      PsiMember constructor = PsiUtil.findEnclosingConstructorOrInitializer(expr);
+      if (constructor instanceof PsiMethod) {
+        PsiClass aClass = constructor.getContainingClass();
+        if (aClass != null && aClass.isEnum()) {
+          myVisitor.report(JavaErrorKinds.CALL_SUPER_ENUM_CONSTRUCTOR.create(expr));
+        }
+      }
+    }
+  }
+
+  void checkSuperQualifierType(@NotNull PsiMethodCallExpression superCall) {
+    if (!JavaPsiConstructorUtil.isSuperConstructorCall(superCall)) return;
+    PsiMethod ctr = PsiTreeUtil.getParentOfType(superCall, PsiMethod.class, true, PsiMember.class);
+    if (ctr == null) return;
+    PsiClass aClass = ctr.getContainingClass();
+    if (aClass == null) return;
+    PsiClass targetClass = aClass.getSuperClass();
+    if (targetClass == null) return;
+    PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
+    if (qualifier != null) {
+      if (isRealInnerClass(targetClass)) {
+        PsiClass outerClass = targetClass.getContainingClass();
+        if (outerClass != null) {
+          PsiClassType outerType = JavaPsiFacade.getElementFactory(myVisitor.project()).createType(outerClass);
+          myVisitor.myExpressionChecker.checkAssignability(outerType, null, qualifier, qualifier);
+        }
+      } else {
+        myVisitor.report(JavaErrorKinds.CALL_SUPER_QUALIFIER_NOT_INNER_CLASS.create(qualifier, targetClass));
+      }
+    }
+  }
+
+  /** JLS 8.1.3. Inner Classes and Enclosing Instances */
+  private static boolean isRealInnerClass(PsiClass aClass) {
+    if (PsiUtil.isInnerClass(aClass)) return true;
+    if (!PsiUtil.isLocalOrAnonymousClass(aClass)) return false;
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) return false; // check for implicit staticness
+    PsiMember member = PsiTreeUtil.getParentOfType(aClass, PsiMember.class, true);
+    return member != null && !member.hasModifierProperty(PsiModifier.STATIC);
+  }
+
   private static @Unmodifiable @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
     PsiReferenceList permitsList = psiClass.getPermitsList();
     if (permitsList == null) return Collections.emptyMap();

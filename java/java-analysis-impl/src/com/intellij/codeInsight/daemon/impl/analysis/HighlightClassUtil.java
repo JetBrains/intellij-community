@@ -7,13 +7,11 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
-import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,39 +72,6 @@ public final class HighlightClassUtil {
       return null;
     }
     return checkIllegalEnclosingUsage(placeToSearchEnclosingFrom, aClass, outerClass, element);
-  }
-
-  static HighlightInfo.Builder checkSuperQualifierType(@NotNull Project project, @NotNull PsiMethodCallExpression superCall) {
-    if (!JavaPsiConstructorUtil.isSuperConstructorCall(superCall)) return null;
-    PsiMethod ctr = PsiTreeUtil.getParentOfType(superCall, PsiMethod.class, true, PsiMember.class);
-    if (ctr == null) return null;
-    PsiClass aClass = ctr.getContainingClass();
-    if (aClass == null) return null;
-    PsiClass targetClass = aClass.getSuperClass();
-    if (targetClass == null) return null;
-    PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
-    if (qualifier != null) {
-      if (isRealInnerClass(targetClass)) {
-        PsiClass outerClass = targetClass.getContainingClass();
-        if (outerClass != null) {
-          PsiClassType outerType = JavaPsiFacade.getElementFactory(project).createType(outerClass);
-          return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
-        }
-      } else {
-        String description = JavaErrorBundle.message("not.inner.class", HighlightUtil.formatClass(targetClass));
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description);
-      }
-    }
-    return null;
-  }
-
-  /** JLS 8.1.3. Inner Classes and Enclosing Instances */
-  private static boolean isRealInnerClass(PsiClass aClass) {
-    if (PsiUtil.isInnerClass(aClass)) return true;
-    if (!PsiUtil.isLocalOrAnonymousClass(aClass)) return false;
-    if (aClass.hasModifierProperty(PsiModifier.STATIC)) return false; // check for implicit staticness
-    PsiMember member = PsiTreeUtil.getParentOfType(aClass, PsiMember.class, true);
-    return member != null && !member.hasModifierProperty(PsiModifier.STATIC);
   }
 
   static HighlightInfo.Builder checkIllegalEnclosingUsage(@NotNull PsiElement place,

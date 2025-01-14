@@ -1043,22 +1043,6 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkEnumSuperConstructorCall(@NotNull PsiMethodCallExpression expr) {
-    PsiReferenceExpression methodExpression = expr.getMethodExpression();
-    PsiElement refNameElement = methodExpression.getReferenceNameElement();
-    if (refNameElement != null && PsiKeyword.SUPER.equals(refNameElement.getText())) {
-      PsiMember constructor = PsiUtil.findEnclosingConstructorOrInitializer(expr);
-      if (constructor instanceof PsiMethod) {
-        PsiClass aClass = constructor.getContainingClass();
-        if (aClass != null && aClass.isEnum()) {
-          String message = JavaErrorBundle.message("call.to.super.is.not.allowed.in.enum.constructor");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(message);
-        }
-      }
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkVarArgParameterIsLast(@NotNull PsiParameter parameter) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod psiMethod) {

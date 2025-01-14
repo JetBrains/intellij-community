@@ -400,7 +400,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             info.registerFix(action, null, null, null, null);
           }
           if (element instanceof PsiExpression expr) {
-            HighlightFixUtil.registerLambdaReturnTypeFixes(info, element.getTextRange(), expression, expr);
+            HighlightFixUtil.registerLambdaReturnTypeFixes(HighlightUtil.asConsumer(info), expression, expr);
           }
           add(info);
         }
@@ -845,8 +845,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expression));
-    if (!hasErrorResults()) add(HighlightClassUtil.checkSuperQualifierType(myFile.getProject(), expression));
+    visitElement(expression);
     if (!hasErrorResults()) {
       try {
         HighlightMethodUtil.checkMethodCall(expression, getResolveHelper(), myLanguageLevel, myJavaSdkVersion, myFile,

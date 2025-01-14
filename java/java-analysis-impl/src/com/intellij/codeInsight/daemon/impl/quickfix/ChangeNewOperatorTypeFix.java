@@ -2,12 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
@@ -121,10 +117,10 @@ public final class ChangeNewOperatorTypeFix extends PsiUpdateModCommandAction<Ps
     updater.moveCaretTo(newExpression.getTextRange().getEndOffset() + caretOffset);
   }
 
-  public static void register(@NotNull HighlightInfo.Builder highlightInfo, PsiExpression expression, PsiType lType) {
-    if (PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass) return;
+  public static ModCommandAction createFix(PsiExpression expression, PsiType lType) {
+    if (PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass) return null;
     expression = PsiUtil.deparenthesizeExpression(expression);
-    if (!(expression instanceof PsiNewExpression newExpression)) return;
+    if (!(expression instanceof PsiNewExpression newExpression)) return null;
     final PsiType rType = expression.getType();
     PsiType newType = lType;
     if (rType instanceof PsiClassType rClassType && newType instanceof PsiClassType newClassType) {
@@ -144,10 +140,10 @@ public final class ChangeNewOperatorTypeFix extends PsiUpdateModCommandAction<Ps
         }
       }
     }
-    if (rType == null || newType.getCanonicalText().equals(rType.getCanonicalText())) return;
+    if (rType == null || newType.getCanonicalText().equals(rType.getCanonicalText())) return null;
     final PsiClass aClass = PsiTypesUtil.getPsiClass(newType);
-    if (aClass != null && (aClass.isEnum() || aClass.isAnnotationType())) return;
-    highlightInfo.registerFix(new ChangeNewOperatorTypeFix(newType, newExpression), null, null, null, null);
+    if (aClass != null && (aClass.isEnum() || aClass.isAnnotationType())) return null;
+    return new ChangeNewOperatorTypeFix(newType, newExpression);
   }
 
   /* Guesswork

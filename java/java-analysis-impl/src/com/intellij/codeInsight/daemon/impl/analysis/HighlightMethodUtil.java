@@ -455,7 +455,8 @@ public final class HighlightMethodUtil {
             PsiType actualType = ((PsiExpression)methodCall.copy()).getType();
             TextRange fixRange = getFixRange(list);
             if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
-              AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(builder, fixRange, methodCall, expectedTypeByParent, actualType);
+              AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(
+                HighlightUtil.asConsumer(builder), methodCall, expectedTypeByParent, actualType);
             }
             HighlightFixUtil.registerQualifyMethodCallFix(resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall,
                                                           list, builder);
@@ -647,7 +648,8 @@ public final class HighlightMethodUtil {
       builder = HighlightUtil.createIncompatibleTypeHighlightInfo(
         expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
       if (methodCall instanceof PsiExpression) {
-        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(builder, fixRange, (PsiExpression)methodCall, expectedTypeByParent, actualType);
+        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(HighlightUtil.asConsumer(builder), 
+                                                             (PsiExpression)methodCall, expectedTypeByParent, actualType);
       }
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
       if (parent instanceof PsiReturnStatement) {

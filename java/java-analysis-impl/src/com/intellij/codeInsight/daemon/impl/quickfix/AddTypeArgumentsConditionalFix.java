@@ -1,13 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -16,6 +13,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public class AddTypeArgumentsConditionalFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   private static final Logger LOG = Logger.getInstance(AddTypeArgumentsConditionalFix.class);
@@ -73,7 +72,7 @@ public class AddTypeArgumentsConditionalFix extends PsiUpdateModCommandAction<Ps
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
   }
 
-  public static void register(@NotNull HighlightInfo.Builder highlightInfo, @Nullable PsiExpression expression, @NotNull PsiType lType) {
+  public static void register(@NotNull Consumer<? super CommonIntentionAction> highlightInfo, @Nullable PsiExpression expression, @NotNull PsiType lType) {
     if (lType != PsiTypes.nullType() && expression instanceof PsiConditionalExpression) {
       final PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
       final PsiExpression elseExpression = ((PsiConditionalExpression)expression).getElseExpression();
@@ -94,8 +93,8 @@ public class AddTypeArgumentsConditionalFix extends PsiUpdateModCommandAction<Ps
     }
   }
 
-  private static void inferTypeArgs(@NotNull HighlightInfo.Builder highlightInfo, PsiType lType, PsiExpression thenExpression) {
-    final JavaResolveResult result = ((PsiMethodCallExpression)thenExpression).resolveMethodGenerics();
+  private static void inferTypeArgs(Consumer<? super ModCommandAction> fixConsumer, PsiType lType, PsiExpression expression) {
+    final JavaResolveResult result = ((PsiMethodCallExpression)expression).resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
     if (method != null) {
       final PsiType returnType = method.getReturnType();
@@ -103,19 +102,18 @@ public class AddTypeArgumentsConditionalFix extends PsiUpdateModCommandAction<Ps
       if (returnType != null && aClass != null && aClass.getQualifiedName() != null) {
         final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(method.getProject());
         final PsiDeclarationStatement variableDeclarationStatement =
-          javaPsiFacade.getElementFactory().createVariableDeclarationStatement("xxx", lType, thenExpression, thenExpression);
+          javaPsiFacade.getElementFactory().createVariableDeclarationStatement("xxx", lType, expression, expression);
         final PsiExpression initializer =
           ((PsiLocalVariable)variableDeclarationStatement.getDeclaredElements()[0]).getInitializer();
         LOG.assertTrue(initializer != null);
 
         final PsiSubstitutor substitutor = javaPsiFacade.getResolveHelper()
           .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
-                              ((PsiMethodCallExpression)thenExpression).getArgumentList().getExpressions(), PsiSubstitutor.EMPTY,
+                              ((PsiMethodCallExpression)expression).getArgumentList().getExpressions(), PsiSubstitutor.EMPTY,
                               initializer, DefaultParameterTypeInferencePolicy.INSTANCE);
         PsiType substitutedType = substitutor.substitute(returnType);
         if (substitutedType != null && TypeConversionUtil.isAssignable(lType, substitutedType)) {
-          highlightInfo.registerFix(new AddTypeArgumentsConditionalFix(substitutor, (PsiMethodCallExpression)thenExpression, method), null,
-                                    null, thenExpression.getTextRange(), null);
+          fixConsumer.accept(new AddTypeArgumentsConditionalFix(substitutor, (PsiMethodCallExpression)expression, method));
         }
       }
     }

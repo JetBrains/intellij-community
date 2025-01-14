@@ -2,10 +2,13 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeError;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,5 +90,29 @@ final class ExpressionChecker {
     else if (context.enclosingStaticElement() != null) {
       myVisitor.report(JavaErrorKinds.CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT.create(elementToHighlight, context));
     }
+  }
+
+  void checkAssignability(@Nullable PsiType lType,
+                          @Nullable PsiType rType,
+                          @Nullable PsiExpression expression,
+                          @NotNull PsiElement elementToHighlight) {
+    if (lType == rType) return;
+    if (expression == null) {
+      if (rType == null || lType == null || TypeConversionUtil.isAssignable(lType, rType)) return;
+    }
+    else if (TypeConversionUtil.areTypesAssignmentCompatible(lType, expression) || PsiTreeUtil.hasErrorElements(expression)) {
+      return;
+    }
+    if (rType == null) {
+      rType = expression.getType();
+    }
+    if (lType == null || lType == PsiTypes.nullType()) {
+      return;
+    }
+    if (expression != null && IncompleteModelUtil.isIncompleteModel(expression) &&
+        IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {
+      return;
+    }
+    myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(elementToHighlight, new JavaIncompatibleTypeError(lType, rType)));
   }
 }

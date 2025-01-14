@@ -37,7 +37,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
   private final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
-  private final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
+  final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private final @NotNull LiteralChecker myLiteralChecker = new LiteralChecker(this);
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
@@ -60,6 +60,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
   @NotNull PsiFile file() {
     return myFile;
+  }
+
+  @NotNull Project project() {
+    return myProject;
   }
 
   @NotNull LanguageLevel languageLevel() {
@@ -247,6 +251,13 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitField(@NotNull PsiField field) {
     super.visitField(field);
     if (!hasErrorResults()) myClassChecker.checkIllegalInstanceMemberInRecord(field);
+  }
+
+  @Override
+  public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+    if (!hasErrorResults()) myClassChecker.checkEnumSuperConstructorCall(expression);
+    if (!hasErrorResults()) myClassChecker.checkSuperQualifierType(expression);
+
   }
 
   @Override
