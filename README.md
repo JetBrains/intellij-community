@@ -77,6 +77,9 @@ To build installation packages inside a Docker container with preinstalled depen
 > Please remember to specify the `--user "$(id -u)"` argument for the container's user to match the host's user. 
 > This is required not to affect the permissions of the checked-out repository, the build output and the mounted Maven cache, if any.
 
+To reuse the existing Maven cache from the host system, add the following option to `docker run` command:
+`--volume "$HOME/.m2:/home/ide_builder/.m2"`
+
 ## Running IntelliJ IDEA
 To run the IntelliJ IDEA built from source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration "**IDEA**".
 

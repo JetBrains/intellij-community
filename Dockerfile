@@ -14,11 +14,13 @@ RUN apt-get update && \
     # IJPL-173242
     git \
     && rm -rf /var/lib/apt/lists/*
-# Maven cache to reuse
-VOLUME /root/.m2
+# optional volume to reuse Maven cache from the host
+VOLUME /home/ide_builder/.m2
 # the home directory should exist and be writable for any user used to launch a container because it is required for the IDE
 RUN useradd --create-home ide_builder && \
     chmod --recursive a+rwx /home/ide_builder
+# for jps-bootstrap itself
+ENV BOOTSTRAP_SYSTEM_PROPERTIES="-Duser.home=/home/ide_builder"
 # Community sources root
 VOLUME /community
 WORKDIR /community
