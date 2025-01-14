@@ -686,6 +686,39 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
     assertCopied("target/test-classes/file.properties")
   }
 
+
+  @Test
+  fun testCopyMainAndTestResourcesWhenBuilding() = runBlocking {
+    createProjectSubFile("src/main/resources/file.properties")
+    createProjectSubFile("src/test/resources/file-test.properties")
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <maven.compiler.release>8</maven.compiler.release>
+                      <maven.compiler.testRelease>11</maven.compiler.testRelease>
+                    </properties>
+                     <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent()
+    )
+
+    assertModules("project", "project.main", "project.test")
+    compileModules("project", "project.main", "project.test")
+    assertCopied("target/classes/file.properties")
+    assertNotCopied("target/classes/file-test.properties")
+    assertCopied("target/test-classes/file-test.properties")
+    assertNotCopied("target/test-classes/file.properties")
+  }
+
   @Test
   fun testAnnotationPathsInCompoundModules() = runBlocking {
     createProjectSubFile("src/main/java/Main.java", "class Main {}")
