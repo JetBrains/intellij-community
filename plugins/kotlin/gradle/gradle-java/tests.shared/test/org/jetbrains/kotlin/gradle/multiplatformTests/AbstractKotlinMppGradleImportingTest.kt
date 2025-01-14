@@ -103,7 +103,8 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         AllFilesAreUnderContentRootChecker,
         DocumentationChecker,
         ReferenceTargetChecker,
-        KotlinMppTestHooks
+        KotlinMppTestHooks,
+        LibraryKindsChecker,
     )
 
     private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl(installedFeatures)

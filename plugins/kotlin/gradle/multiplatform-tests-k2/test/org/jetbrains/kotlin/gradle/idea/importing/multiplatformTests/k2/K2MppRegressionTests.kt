@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 import com.intellij.ide.util.EditorHelper
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LibraryKindsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ReferenceTargetChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ReferenceTargetCheckerDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
@@ -47,6 +48,13 @@ class K2MppRegressionTests : AbstractKotlinMppGradleImportingTest(), ReferenceTa
                     /* canChangeDocument = */ false,
                 )
             }
+        }
+    }
+
+    @Test
+    fun testComposeApp() {
+        doTest {
+            onlyCheckers(LibraryKindsChecker)
         }
     }
 }
