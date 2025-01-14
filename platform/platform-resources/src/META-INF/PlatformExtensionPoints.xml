@@ -608,6 +608,9 @@
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.actionGroupCustomization" interface="com.intellij.ide.ui.customization.ActionGroupCustomizationExtension" dynamic="true"/>
+    <extensionPoint name="subprojectInfoProvider"
+                    interface="com.intellij.openapi.project.workspace.SubprojectInfoProvider"
+                    dynamic="true"/>
 
   </extensionPoints>
 </idea-plugin>
