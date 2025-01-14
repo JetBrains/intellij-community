@@ -3,7 +3,6 @@ package org.jetbrains.jewel.samples.ideplugin
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -129,7 +128,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         row("Long text (Swing)") { text(longText, maxLineLength = 100) }
         row("Long text (Compose)") {
             compose {
-                BoxWithConstraints {
+                Box {
                     Text(
                         longText,
                         modifier =
@@ -150,7 +149,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         }
         row("Titles (Compose)") {
             compose {
-                BoxWithConstraints {
+                Box {
                     val style = Typography.h1TextStyle()
                     Text(
                         "This will wrap over a couple rows",

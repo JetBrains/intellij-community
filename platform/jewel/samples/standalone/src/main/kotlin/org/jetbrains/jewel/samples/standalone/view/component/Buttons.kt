@@ -1,9 +1,13 @@
 package org.jetbrains.jewel.samples.standalone.view.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -12,21 +16,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.ActionButton
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.DefaultSplitButton
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconActionButton
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.OutlinedSplitButton
 import org.jetbrains.jewel.ui.component.SelectableIconActionButton
 import org.jetbrains.jewel.ui.component.SelectableIconButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.ToggleableIconActionButton
 import org.jetbrains.jewel.ui.component.ToggleableIconButton
 import org.jetbrains.jewel.ui.component.Typography
+import org.jetbrains.jewel.ui.component.items
+import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
+import org.jetbrains.jewel.ui.painter.hints.Badge
 import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.hints.Stroke
 
@@ -40,6 +52,8 @@ fun Buttons() {
         IconActionButtons(selectedIndex == 2) { selectedIndex = 2 }
 
         ActionButtons()
+
+        SplitButtons()
     }
 }
 
@@ -156,5 +170,80 @@ private fun ActionButtons() {
         Text("Without tooltip:")
 
         ActionButton(onClick = {}) { Text("Do something") }
+    }
+}
+
+@Composable
+private fun SplitButtons() {
+    val items = remember { listOf("This is", "---", "A menu", "---", "Item 3") }
+    var selected by remember { mutableStateOf(items.first()) }
+
+    Row(Modifier.height(150.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        OutlinedSplitButton(
+            onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+            secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+            content = { Text("Split button") },
+            menuContent = {
+                items.forEach {
+                    if (it == "---") {
+                        separator()
+                    } else {
+                        selectableItem(
+                            selected = selected == it,
+                            onClick = {
+                                selected = it
+                                JewelLogger.getInstance("Jewel").warn("Item clicked: $it")
+                            },
+                        ) {
+                            Text(it)
+                        }
+                    }
+                }
+            },
+        )
+        OutlinedSplitButton(
+            onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+            secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+            content = { Text("Split button") },
+            popupContainer = {
+                Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Generic popup content")
+                    Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                        Icon(
+                            key = AllIconsKeys.Nodes.ConfigFolder,
+                            contentDescription = "taskGroup",
+                            hint = Badge(Color.Red, DotBadgeShape.Default),
+                        )
+                    }
+                }
+            },
+        )
+        OutlinedSplitButton(
+            enabled = false,
+            onClick = {},
+            secondaryOnClick = {},
+            content = { Text("Disabled button") },
+            menuContent = {},
+        )
+        DefaultSplitButton(
+            onClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button clicked") },
+            secondaryOnClick = { JewelLogger.getInstance("Jewel").warn("Outlined split button chevron clicked") },
+            content = { Text("Split button") },
+            menuContent = {
+                items(
+                    items = listOf("Item 1", "Item 2", "Item 3"),
+                    isSelected = { false },
+                    onItemClick = { JewelLogger.getInstance("Jewel").warn("Item clicked: $it") },
+                    content = { Text(it) },
+                )
+            },
+        )
+        DefaultSplitButton(
+            enabled = false,
+            onClick = {},
+            secondaryOnClick = {},
+            content = { Text("Disabled button") },
+            menuContent = {},
+        )
     }
 }

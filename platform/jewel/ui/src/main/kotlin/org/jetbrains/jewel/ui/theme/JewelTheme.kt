@@ -31,6 +31,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalDefaultBannerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultComboBoxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultDropdownStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDividerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalEditorTabStyle
@@ -42,6 +43,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalLazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
@@ -62,6 +64,7 @@ import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
+import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
@@ -85,6 +88,12 @@ public val JewelTheme.Companion.defaultButtonStyle: ButtonStyle
 
 public val JewelTheme.Companion.outlinedButtonStyle: ButtonStyle
     @Composable @ReadOnlyComposable get() = LocalOutlinedButtonStyle.current
+
+public val JewelTheme.Companion.defaultSplitButtonStyle: SplitButtonStyle
+    @Composable @ReadOnlyComposable get() = LocalDefaultSplitButtonStyle.current
+
+public val JewelTheme.Companion.outlinedSplitButtonStyle: SplitButtonStyle
+    @Composable @ReadOnlyComposable get() = LocalOutlinedSplitButtonStyle.current
 
 public val JewelTheme.Companion.checkboxStyle: CheckboxStyle
     @Composable @ReadOnlyComposable get() = LocalCheckboxStyle.current
