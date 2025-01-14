@@ -25,6 +25,7 @@ import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.JBIterable.from
@@ -44,6 +45,12 @@ class SimpleRunMarkerCommandProvider : CommandProvider {
     isNonWritten: Boolean,
   ): List<CompletionCommand> {
     return runBlockingCancellable {
+      if (offset > 0){
+        val c = psiFile.fileDocument.immutableCharSequence[offset - 1]
+        if(StringUtil.isJavaIdentifierPart(c) || c in "])}>"){
+          return@runBlockingCancellable emptyList()
+        }
+      }
       val (currentElement, collectedActions) = collectActions(psiFile, offset, project)
       @Suppress("SENSELESS_COMPARISON")
       if (currentElement == null) return@runBlockingCancellable emptyList()
@@ -104,11 +111,8 @@ private fun collectActions(
   var currentElement = psiFile.findElementAt(offset)
   val dumbService = DumbService.getInstance(project)
   val collectedActions = mutableListOf<AnAction>()
-  val document = psiFile.fileDocument
-  val lineNumber = document.getLineNumber(offset)
   while (currentElement != null) {
     for (child in currentElement.children) {
-      if (document.getLineNumber(child.textRange.startOffset) != lineNumber) continue
       val lineMarkerInfo = runLineMarkerProvider.getLineMarkerInfo(child)
       if (lineMarkerInfo is MergeableLineMarkerInfo) {
         val r = lineMarkerInfo.createGutterRenderer()
