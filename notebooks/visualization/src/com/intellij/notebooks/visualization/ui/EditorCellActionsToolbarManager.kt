@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.ui.jupyterToolbar.JupyterCellActionsToolbar
 import com.intellij.openapi.Disposable
@@ -17,7 +17,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-class EditorCellActionsToolbarManager(private val editor: EditorEx): Disposable {
+class EditorCellActionsToolbarManager(private val editor: EditorEx, private val cell: EditorCell): Disposable {
   private var toolbar: JupyterCellActionsToolbar? = null
 
   fun showToolbar(targetComponent: JComponent, cellType: NotebookCellLines.CellType) {
@@ -33,7 +33,7 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx): Disposable 
 
   private fun updateToolbarPosition(targetComponent: JComponent) {
     toolbar?.let { toolbar ->
-      toolbar.bounds = calculateToolbarBounds(editor, targetComponent, toolbar)
+      toolbar.bounds = calculateToolbarBounds(editor, targetComponent, toolbar, cell.interval.ordinal)
     }
   }
 
@@ -79,13 +79,11 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx): Disposable 
     @Language("devkit-action-id")
     private const val ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar.Ellipsis"
 
-    private const val X_OFFSET_RATIO = 0.92
-    private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.distanceBetweenCells
-
     private fun calculateToolbarBounds(
       editor: Editor,
       panel: JComponent,
       toolbar: JPanel,
+      ordinal: Int
     ): Rectangle {
       // todo: maybe fuse with JupyterAboveCellToolbarManager.Companion.calculateToolbarBounds
       val toolbarHeight = toolbar.preferredSize.height
@@ -93,9 +91,20 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx): Disposable 
 
       val panelHeight = panel.height
       val panelWidth = panel.width
-      val panelRoofHeight = panelHeight - DELIMITER_SIZE
 
-      val xOffset = (panelWidth * X_OFFSET_RATIO - toolbarWidth / 2).toInt()
+      val delimiterSize = when(ordinal) {
+        0 -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
+        else -> editor.notebookAppearance.distanceBetweenCells
+      }
+
+      val panelRoofHeight = panelHeight - delimiterSize
+
+      val relativeOffsetRatio = when(ordinal) {
+        0 -> 0.12
+        else -> 0.05
+      }
+
+      val xOffset = (panelWidth - toolbarWidth - (panelWidth * relativeOffsetRatio)).toInt()
       val yOffset = panelHeight - panelRoofHeight - (toolbarHeight / 2)
 
       val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editor.contentComponent)

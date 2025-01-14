@@ -33,7 +33,7 @@ class EditorCellInput(
   val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this, ::getFoldingBounds)
 
   val cellActionsToolbar: EditorCellActionsToolbarManager? =
-    if (Registry.`is`("jupyter.per.cell.management.actions.toolbar")) EditorCellActionsToolbarManager(editor)
+    if (Registry.`is`("jupyter.per.cell.management.actions.toolbar")) EditorCellActionsToolbarManager(editor, cell)
     else null
 
   var folded: Boolean = false
