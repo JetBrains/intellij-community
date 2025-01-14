@@ -71,11 +71,23 @@ public abstract class ScrollingSynchronizer {
     /** Scroll the preview to the position that match the given [sourceLine] the best. */
     public abstract suspend fun scrollToLine(sourceLine: Int)
 
+    /**
+     * Called when [MarkdownProcessor] processes the raw markdown text. The processing itself is passed as an [action].
+     */
+    public fun <T> process(action: () -> T): T {
+        beforeProcessing()
+        return try {
+            action()
+        } finally {
+            afterProcessing()
+        }
+    }
+
     /** Called before [MarkdownProcessor] starts processing the raw markdown text. */
-    public abstract fun beforeProcessing()
+    protected abstract fun beforeProcessing()
 
     /** Called after [MarkdownProcessor] starts processing the raw markdown text. */
-    public abstract fun afterProcessing()
+    protected abstract fun afterProcessing()
 
     /**
      * Accept mapping between the markdown [block] and the [sourceRange] of lines containing this block. Called on every

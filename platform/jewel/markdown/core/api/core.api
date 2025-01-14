@@ -223,22 +223,17 @@ public final class org/jetbrains/jewel/markdown/MarkdownKt {
 }
 
 public abstract interface class org/jetbrains/jewel/markdown/MarkdownMode {
-	public abstract fun getScrollingSynchronizer ()Lorg/jetbrains/jewel/markdown/scrolling/ScrollingSynchronizer;
-	public abstract fun getWithEditor ()Z
 }
 
-public final class org/jetbrains/jewel/markdown/MarkdownMode$PreviewOnly : org/jetbrains/jewel/markdown/MarkdownMode {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/markdown/MarkdownMode$PreviewOnly;
-	public fun getScrollingSynchronizer ()Lorg/jetbrains/jewel/markdown/scrolling/ScrollingSynchronizer;
-	public fun getWithEditor ()Z
-}
-
-public final class org/jetbrains/jewel/markdown/MarkdownMode$WithEditor : org/jetbrains/jewel/markdown/MarkdownMode {
+public final class org/jetbrains/jewel/markdown/MarkdownMode$EditorPreview : org/jetbrains/jewel/markdown/MarkdownMode {
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/markdown/scrolling/ScrollingSynchronizer;)V
-	public fun getScrollingSynchronizer ()Lorg/jetbrains/jewel/markdown/scrolling/ScrollingSynchronizer;
-	public fun getWithEditor ()Z
+	public final fun getScrollingSynchronizer ()Lorg/jetbrains/jewel/markdown/scrolling/ScrollingSynchronizer;
+}
+
+public final class org/jetbrains/jewel/markdown/MarkdownMode$Standalone : org/jetbrains/jewel/markdown/MarkdownMode {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/markdown/MarkdownMode$Standalone;
 }
 
 public final class org/jetbrains/jewel/markdown/MarkdownModeKt {
@@ -798,8 +793,9 @@ public abstract class org/jetbrains/jewel/markdown/scrolling/ScrollingSynchroniz
 	public abstract fun acceptBlockSpans (Lorg/jetbrains/jewel/markdown/MarkdownBlock;Lkotlin/ranges/IntRange;)V
 	public abstract fun acceptGlobalPosition (Lorg/jetbrains/jewel/markdown/MarkdownBlock;Landroidx/compose/ui/layout/LayoutCoordinates;)V
 	public abstract fun acceptTextLayout (Lorg/jetbrains/jewel/markdown/MarkdownBlock;Landroidx/compose/ui/text/TextLayoutResult;)V
-	public abstract fun afterProcessing ()V
-	public abstract fun beforeProcessing ()V
+	protected abstract fun afterProcessing ()V
+	protected abstract fun beforeProcessing ()V
+	public final fun process (Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public abstract fun scrollToLine (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

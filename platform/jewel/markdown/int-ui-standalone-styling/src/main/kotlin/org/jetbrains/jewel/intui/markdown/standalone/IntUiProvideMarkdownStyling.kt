@@ -31,7 +31,7 @@ public fun ProvideMarkdownStyling(
                 MarkdownStyling.light()
             }
         },
-    markdownMode: MarkdownMode = remember { MarkdownMode.PreviewOnly },
+    markdownMode: MarkdownMode = remember { MarkdownMode.Standalone },
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) {
@@ -61,7 +61,7 @@ public fun ProvideMarkdownStyling(
     markdownStyling: MarkdownStyling,
     markdownBlockRenderer: MarkdownBlockRenderer,
     codeHighlighter: CodeHighlighter,
-    markdownMode: MarkdownMode = remember { MarkdownMode.PreviewOnly },
+    markdownMode: MarkdownMode = MarkdownMode.Standalone,
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
     content: @Composable () -> Unit,
 ) {

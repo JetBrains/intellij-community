@@ -26,7 +26,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 public fun ProvideMarkdownStyling(
     themeName: String = JewelTheme.name,
     markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
-    markdownMode: MarkdownMode = remember { MarkdownMode.PreviewOnly },
+    markdownMode: MarkdownMode = MarkdownMode.Standalone,
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
@@ -50,7 +50,7 @@ public fun ProvideMarkdownStyling(
     project: Project,
     themeName: String = JewelTheme.name,
     markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
-    markdownMode: MarkdownMode = remember { MarkdownMode.PreviewOnly },
+    markdownMode: MarkdownMode = remember { MarkdownMode.Standalone },
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },

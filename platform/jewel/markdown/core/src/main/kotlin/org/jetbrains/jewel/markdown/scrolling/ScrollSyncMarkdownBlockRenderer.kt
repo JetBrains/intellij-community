@@ -24,6 +24,7 @@ import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock
+import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 import org.jetbrains.jewel.markdown.extensions.markdownMode
 import org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer
@@ -47,7 +48,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
         onTextClick: () -> Unit,
     ) {
         val synchronizer =
-            JewelTheme.markdownMode.scrollingSynchronizer
+            (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
                     super.render(block, styling, enabled, onUrlClick, onTextClick)
                     return
@@ -64,7 +65,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
         onTextClick: () -> Unit,
     ) {
         val synchronizer =
-            JewelTheme.markdownMode.scrollingSynchronizer
+            (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
                     super.render(block, styling, enabled, onUrlClick, onTextClick)
                     return
@@ -75,7 +76,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
     @Composable
     override fun render(block: FencedCodeBlock, mimeType: MimeType, styling: MarkdownStyling.Code.Fenced) {
         val synchronizer =
-            JewelTheme.markdownMode.scrollingSynchronizer
+            (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
                     super.render(block, mimeType, styling)
                     return
@@ -101,7 +102,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
     @Composable
     override fun render(block: IndentedCodeBlock, styling: MarkdownStyling.Code.Indented) {
         val scrollingSynchronizer =
-            JewelTheme.markdownMode.scrollingSynchronizer
+            (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
                     super.render(block, styling)
                     return

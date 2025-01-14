@@ -31,7 +31,7 @@ public val JewelTheme.Companion.markdownBlockRenderer: MarkdownBlockRenderer
     @Composable get() = LocalMarkdownBlockRenderer.current
 
 public val LocalMarkdownMode: ProvidableCompositionLocal<MarkdownMode> = staticCompositionLocalOf {
-    MarkdownMode.PreviewOnly
+    MarkdownMode.Standalone
 }
 
 public val JewelTheme.Companion.markdownMode: MarkdownMode

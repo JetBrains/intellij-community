@@ -20,7 +20,7 @@ import org.jetbrains.jewel.ui.component.Divider
 @Composable
 internal fun MarkdownDemo() {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
-        WithMarkdownMode(MarkdownMode.WithEditor(scrollingSynchronizer = null)) {
+        WithMarkdownMode(MarkdownMode.EditorPreview(scrollingSynchronizer = null)) {
             val editorState = rememberTextFieldState(JewelReadme)
             MarkdownEditor(state = editorState, modifier = Modifier.fillMaxHeight().weight(1f))
 

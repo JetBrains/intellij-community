@@ -99,9 +99,9 @@ class ScrollingSynchronizerTest {
         val markdown =
             """
                             p1
-                            
+
                             p2
-                            
+
                             p3
                         """
                 .trimIndent()
@@ -134,7 +134,7 @@ class ScrollingSynchronizerTest {
 
 
                             # Heading 2
-                            
+
 
                             ## Heading 3
 
@@ -248,7 +248,7 @@ class ScrollingSynchronizerTest {
             """
                             ```kotlin
                             package my.awesome.pkg
-                            
+
                             fun main() {
                                 println("Hello world")
                             }
@@ -298,7 +298,7 @@ class ScrollingSynchronizerTest {
                             Here starts the indented code block.
 
                                 package my.awesome.pkg
-                                
+
                                 fun main() {
                                     println("Hello world")
                                 }
@@ -346,7 +346,7 @@ class ScrollingSynchronizerTest {
             """
                             ```kotlin
                             package my.awesome.pkg
-                            
+
                             fun main() {
                                 println("Hello world")
                             }
@@ -360,7 +360,7 @@ class ScrollingSynchronizerTest {
 
                             ```kotlin
                             package my.awesome.pkg
-                            
+
                             fun main() {
                                 println("Hello world")
                             }
@@ -412,7 +412,7 @@ class ScrollingSynchronizerTest {
 
                             ```kotlin
                             package my.awesome.pkg
-                            
+
                             fun main() {
                                 println("Hello world")
                             }
@@ -424,7 +424,7 @@ class ScrollingSynchronizerTest {
             """
                             ```kotlin
                             package my.awesome.pkg
-                            
+
                             fun main() {
                                 println("Hello world")
                             }
@@ -474,7 +474,7 @@ class ScrollingSynchronizerTest {
             """
                             ```kotlin
                             package my.awesome.pkg
-                            
+
                             fun main() {
                                 println("Hello world")
                             }
@@ -486,7 +486,7 @@ class ScrollingSynchronizerTest {
             """
                             ```kotlin
                             package my.awesome.pkg
-                            
+
                             fun main() {
                                 val name = "Steve"
                                 println("Hello " + name)
@@ -542,12 +542,12 @@ class ScrollingSynchronizerTest {
             """
                             ```kotlin
                             package my.awesome.pkg
-                            
+
                             fun main() {
                                 println("Hello world")
                             }
                             ```
-                            
+
                             ```kotlin
                             fun foo() {
                                 println("Foo")
@@ -560,7 +560,7 @@ class ScrollingSynchronizerTest {
             """
                             ```kotlin
                             package my.awesome.pkg
-                            
+
                             fun main() {
                                 println("Hello world")
                             }
@@ -663,14 +663,14 @@ class ScrollingSynchronizerTest {
         val markdownStyling: MarkdownStyling = createMarkdownStyling()
         val renderer =
             ScrollSyncMarkdownBlockRenderer(markdownStyling, emptyList(), DefaultInlineMarkdownRenderer(emptyList()))
-        val processor = MarkdownProcessor(markdownMode = MarkdownMode.WithEditor(synchronizer))
+        val processor = MarkdownProcessor(markdownMode = MarkdownMode.EditorPreview(synchronizer))
 
         runBlocking {
             suspendCancellableCoroutine { cont ->
                 setContent {
                     CompositionLocalProvider(
                         LocalMarkdownStyling provides markdownStyling,
-                        LocalMarkdownMode provides MarkdownMode.WithEditor(synchronizer),
+                        LocalMarkdownMode provides MarkdownMode.EditorPreview(synchronizer),
                         LocalMarkdownProcessor provides processor,
                         LocalMarkdownBlockRenderer provides renderer,
                         LocalCodeHighlighter provides NoOpCodeHighlighter,

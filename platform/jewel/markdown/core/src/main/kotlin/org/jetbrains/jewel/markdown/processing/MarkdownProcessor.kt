@@ -37,16 +37,17 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  *
  * @param extensions Extensions to use when processing the Markdown (e.g., to support parsing custom block-level
  *   Markdown).
- * @param markdownMode Indicates whether the processor should be optimized for an editor/preview scenario, where it
- *   assumes small incremental changes as performed by a user typing. This means it will only update the changed blocks
- *   by keeping state in memory.
+ * @param markdownMode Indicates a scenario of how the file is going to be presented. Default is
+ *   [MarkdownMode.Standalone]; set this to [MarkdownMode.EditorPreview] if this parser will be used in an editor
+ *   scenario, where the raw Markdown is only ever going to change slightly but frequently (e.g., as the user types).
+ *   This means it will only update the changed blocks by keeping state in memory.
  *
- *   Default is `false`; set this to `true` if this parser will be used in an editor scenario, where the raw Markdown is
- *   only ever going to change slightly but frequently (e.g., as the user types).
+ *   You can also pass a [ScrollingSynchronizer] to [MarkdownMode.EditorPreview] to enable auto-scrolling in the preview
+ *   according to the position in the editor.
  *
- *   **Attention:** do **not** reuse or share an instance of [MarkdownProcessor] that is in [markdownMode]. Processing
- *   entirely different Markdown strings will defeat the purpose of the optimization. When in editor mode, the instance
- *   of [MarkdownProcessor] is **not** thread-safe!
+ *   **Attention:** do **not** reuse or share an instance of [MarkdownProcessor] if [markdownMode] is
+ *   [MarkdownMode.EditorPreview]. Processing entirely different Markdown strings will defeat the purpose of the
+ *   optimization. When in editor mode, the instance of [MarkdownProcessor] is **not** thread-safe!
  *
  * @param commonMarkParser The CommonMark [Parser] used to parse the Markdown. By default it's a vanilla instance
  *   provided by the [MarkdownParserFactory], but you can provide your own if you need to customize the parser — e.g.,
@@ -56,14 +57,16 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
 @ExperimentalJewelApi
 public class MarkdownProcessor(
     private val extensions: List<MarkdownProcessorExtension> = emptyList(),
-    private val markdownMode: MarkdownMode = MarkdownMode.PreviewOnly,
-    private val commonMarkParser: Parser = MarkdownParserFactory.create(markdownMode.withEditor, extensions),
+    private val markdownMode: MarkdownMode = MarkdownMode.Standalone,
+    private val commonMarkParser: Parser =
+        MarkdownParserFactory.create(markdownMode is MarkdownMode.EditorPreview, extensions),
 ) {
     private var currentState = State(emptyList(), emptyList(), emptyList())
 
     @TestOnly internal fun getCurrentIndexesInTest() = currentState.indexes
 
-    private val scrollingSynchronizer: ScrollingSynchronizer? = markdownMode.scrollingSynchronizer
+    private val scrollingSynchronizer: ScrollingSynchronizer? =
+        (markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
 
     /**
      * Parses a Markdown document, translating from CommonMark 0.31.2 to a list of [MarkdownBlock]. Inline Markdown in
@@ -74,19 +77,21 @@ public class MarkdownProcessor(
      * @see DefaultInlineMarkdownRenderer
      */
     public fun processMarkdownDocument(@Language("Markdown") rawMarkdown: String): List<MarkdownBlock> {
-        scrollingSynchronizer?.beforeProcessing()
-        return try {
-            val blocks =
-                if (markdownMode.withEditor) {
-                    processWithQuickEdits(rawMarkdown)
-                } else {
-                    parseRawMarkdown(rawMarkdown)
-                }
-
-            blocks.mapNotNull { child -> child.tryProcessMarkdownBlock() }
-        } finally {
-            scrollingSynchronizer?.afterProcessing()
+        if (scrollingSynchronizer == null) {
+            return doProcess(rawMarkdown)
         }
+        return scrollingSynchronizer.process { doProcess(rawMarkdown) }
+    }
+
+    private fun doProcess(rawMarkdown: String): List<MarkdownBlock> {
+        val blocks =
+            if (markdownMode is MarkdownMode.EditorPreview) {
+                processWithQuickEdits(rawMarkdown)
+            } else {
+                parseRawMarkdown(rawMarkdown)
+            }
+
+        return blocks.mapNotNull { child -> child.tryProcessMarkdownBlock() }
     }
 
     @VisibleForTesting
@@ -257,10 +262,7 @@ public class MarkdownProcessor(
         }
 
     private fun postProcess(scrollingSynchronizer: ScrollingSynchronizer, block: Block, mdBlock: MarkdownBlock) {
-        val spans =
-            block.sourceSpans.ifEmpty {
-                return
-            }
+        val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return
         scrollingSynchronizer.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex)
     }
 
