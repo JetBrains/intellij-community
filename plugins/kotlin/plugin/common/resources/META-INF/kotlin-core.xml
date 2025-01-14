@@ -274,7 +274,7 @@
             id="kotlinSkipAutopopupInStrings"
             order="after propertyKeys"/>
 
-    <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.KotlinNotebookSuggestionProvider"/>
+    <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.JupyterNotebookSuggestionProvider"/>
   </extensions>
 
   <!-- Templates -->
