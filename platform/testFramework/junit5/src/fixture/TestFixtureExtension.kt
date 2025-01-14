@@ -38,7 +38,7 @@ internal class TestFixtureExtension : BeforeAllCallback,
     for (field in fields) {
       field.isAccessible = true
       val fixture = field.get(testInstance) as TestFixtureImpl<*>
-      pendingFixtures.add(fixture.init(testScope, context.uniqueId))
+      pendingFixtures.add(fixture.init(testScope, TestContextImpl(context)))
     }
     awaitFixtureInitialization(testScope, pendingFixtures)
     context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension", testScope)

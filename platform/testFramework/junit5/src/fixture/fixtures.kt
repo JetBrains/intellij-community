@@ -74,11 +74,11 @@ fun projectFixture(
 @TestOnly
 fun TestFixture<Project>.moduleFixture(
   name: String? = null,
-): TestFixture<Module> = testFixture(name ?: "unnamed module") { id ->
+): TestFixture<Module> = testFixture(name ?: "unnamed module") { context ->
   val project = this@moduleFixture.init()
   val manager = ModuleManager.getInstance(project)
   val module = writeAction {
-    manager.newNonPersistentModule(name ?: id, "")
+    manager.newNonPersistentModule(name ?: context.uniqueId, "")
   }
   initialized(module) {
     writeAction {
@@ -123,8 +123,8 @@ fun TestFixture<Project>.moduleFixture(
 }
 
 @TestOnly
-fun disposableFixture(): TestFixture<Disposable> = testFixture { debugString ->
-  val disposable = Disposer.newCheckedDisposable(debugString)
+fun disposableFixture(): TestFixture<Disposable> = testFixture { context ->
+  val disposable = Disposer.newCheckedDisposable(context.uniqueId)
   initialized(disposable) {
     Disposer.dispose(disposable)
   }

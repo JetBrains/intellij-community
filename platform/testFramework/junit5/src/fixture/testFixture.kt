@@ -38,18 +38,33 @@ sealed interface TestFixture<out T> {
   fun get(): T
 }
 
+sealed interface TestContext {
+  /**
+   * Unique test or container ID, for example [org.junit.jupiter.api.extension.ExtensionContext.getUniqueId]
+   */
+  val uniqueId: String
+
+  /**
+   * Display name for the current test or container, for example [org.junit.jupiter.api.extension.ExtensionContext.getDisplayName]
+   */
+  val testName: String
+
+  /**
+   * Returns the annotation with which a test or container is marked or null if there is none.
+   */
+  fun <T : Annotation> findAnnotation(clazz: Class<T>): T?
+}
+
 /**
  * Represents the business logic for building a fixture (or resource) and destroying it.
  */
 fun interface TestFixtureInitializer<T> {
 
   /**
-   * @param uniqueId unique test or container ID, same as [org.junit.jupiter.api.extension.ExtensionContext.getUniqueId]
-   *
-   * TODO consider passing whole ExtensionContext here
+   * @param context [TestContext] which provides information about the test and allows to query annotations
    */
   @OverrideOnly
-  suspend fun R<T>.initFixture(uniqueId: String): InitializedTestFixture<T>
+  suspend fun R<T>.initFixture(context: TestContext): InitializedTestFixture<T>
 
   sealed interface InitializedTestFixture<T>
 
