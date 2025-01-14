@@ -500,6 +500,7 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ActionIdReferenceContributor"/>
+    <referenceInjector implementation="org.jetbrains.idea.devkit.references.ActionOrGroupIdReferenceInjector"/>
     <psi.referenceContributor language="UAST"
                               implementation="org.jetbrains.idea.devkit.references.NotificationGroupIdReferenceContributor"/>
     <psi.referenceContributor language="UAST"
