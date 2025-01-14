@@ -82,5 +82,7 @@ private fun check(x: Int, y: Int) {
 
 fun test(x: Int, list: List<Int>, map: Map<String, String>) {
     10 in 0/*<# ≤ #>*/../*<# ≤ #>*/list.lastIndex
+    10 in list.lastIndex/*<# ≤ #>*/../*<# ≤ #>*/100
     10 in 0/*<# ≤ #>*/ .. /*<# ≤ #>*/map["foo"]
+    10 in map["foo"]/*<# ≤ #>*/ .. /*<# ≤ #>*/100
 }
