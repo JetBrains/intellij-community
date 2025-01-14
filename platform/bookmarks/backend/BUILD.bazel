@@ -22,6 +22,9 @@ jvm_library(
     "//platform/project/shared:project",
   ],
   exports = ["//platform/bookmarks"],
-  runtime_deps = [":backend_resources"]
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.platform.bookmarks.backend` end

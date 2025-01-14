@@ -3,6 +3,7 @@ load("@rules_java//java:defs.bzl", "java_library")
 
 java_library(
   name = "monolith",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.platform.monolith` end

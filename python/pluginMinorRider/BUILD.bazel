@@ -13,6 +13,9 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = ["//platform/analysis-impl"],
-  runtime_deps = [":community-plugin-minorRider_resources"]
+  runtime_deps = [
+    ":community-plugin-minorRider_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.python.community.plugin.minorRider` end

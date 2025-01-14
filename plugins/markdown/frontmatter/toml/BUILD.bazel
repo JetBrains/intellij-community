@@ -22,7 +22,7 @@ jvm_library(
     "//plugins/IntelliLang:langInjection",
     "//platform/lang-impl",
     "//plugins/markdown/core:markdown",
-    "//platform/monolith",
+    "//platform/backend",
     "@lib//:kotlin-stdlib",
     ":toml-core_provided",
   ],

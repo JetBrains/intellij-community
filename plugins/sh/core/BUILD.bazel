@@ -29,7 +29,10 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":core_resources"]
+  runtime_deps = [
+    ":core_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.sh.core` end
 

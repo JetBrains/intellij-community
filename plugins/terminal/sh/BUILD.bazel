@@ -21,7 +21,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":sh_resources",
-    "//platform/monolith",
+    "//platform/backend",
   ]
 )
 ### auto-generated section `build intellij.terminal.sh` end

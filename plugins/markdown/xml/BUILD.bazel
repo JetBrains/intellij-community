@@ -19,7 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/lang-impl",
-    "//platform/monolith",
+    "//platform/backend",
   ],
   runtime_deps = [":xml_resources"]
 )

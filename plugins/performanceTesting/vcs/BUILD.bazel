@@ -14,6 +14,6 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/core-api:core",
   ],
-  runtime_deps = ["//platform/monolith"]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.performanceTesting.vcs` end

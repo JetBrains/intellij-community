@@ -9398,8 +9398,8 @@ java_library(
 
 kt_jvm_import(
   name = "spellchecker-ai-grazie-spell-hunspell-en",
-  jar = "@hunspell-en-jvm-0_2_141_http//file",
-  srcjar = "@hunspell-en-jvm-0_2_141-sources_http//file",
+  jar = "@hunspell-en-jvm-0_2_246_http//file",
+  srcjar = "@hunspell-en-jvm-0_2_246-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

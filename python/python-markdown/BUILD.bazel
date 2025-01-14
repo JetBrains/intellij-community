@@ -19,7 +19,10 @@ jvm_library(
     "//python/python-psi-impl:psi-impl",
     "//python/python-psi-api:psi",
   ],
-  runtime_deps = [":markdown_resources"]
+  runtime_deps = [
+    ":markdown_resources",
+    "//platform/backend",
+  ]
 )
 
 jvm_library(

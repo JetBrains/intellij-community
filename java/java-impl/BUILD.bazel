@@ -73,6 +73,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/bookmarks",
     "//platform/todo",
+    "//java/codeserver/highlighting:java-codeserver-highlighting",
   ],
   exports = [
     "//platform/lang-impl",

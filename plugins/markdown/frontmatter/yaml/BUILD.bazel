@@ -19,7 +19,7 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/yaml",
     "//plugins/yaml/editing",
-    "//platform/monolith",
+    "//platform/backend",
   ],
   runtime_deps = [":markdown-frontmatter-yaml_resources"]
 )

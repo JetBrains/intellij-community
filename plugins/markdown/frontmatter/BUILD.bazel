@@ -20,7 +20,7 @@ jvm_library(
     "//plugins/markdown/frontmatter/toml:markdown-frontmatter-toml",
     "//plugins/markdown/frontmatter/yaml:markdown-frontmatter-yaml",
     "//json",
-    "//platform/monolith",
+    "//platform/backend",
     "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [":frontmatter_resources"]

@@ -20,6 +20,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:caffeine",
   ],
-  exports = ["//platform/vcs-api/vcs-api-core:vcs-core"]
+  exports = ["//platform/vcs-api/vcs-api-core:vcs-core"],
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.platform.vcs` end

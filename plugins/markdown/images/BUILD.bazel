@@ -19,7 +19,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//images",
-    "//platform/monolith",
+    "//platform/backend",
     "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [":images_resources"]
