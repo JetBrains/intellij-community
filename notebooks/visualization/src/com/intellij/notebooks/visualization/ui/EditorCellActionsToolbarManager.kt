@@ -83,7 +83,7 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
       editor: Editor,
       panel: JComponent,
       toolbar: JPanel,
-      ordinal: Int
+      ordinal: Int,
     ): Rectangle {
       // todo: maybe fuse with JupyterAboveCellToolbarManager.Companion.calculateToolbarBounds
       val toolbarHeight = toolbar.preferredSize.height
