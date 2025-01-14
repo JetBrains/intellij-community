@@ -95,7 +95,10 @@ public class TextMateSyntaxTableCore {
         }
         Constants.CaptureKey captureKey = Constants.CaptureKey.fromName(key);
         if (captureKey != null) {
-          result.setCaptures(captureKey, loadCaptures(pListValue.getPlist(), result, interner));
+          TextMateCapture[] captures = loadCaptures(pListValue.getPlist(), result, interner);
+          if (captures != null) {
+            result.setCaptures(captureKey, captures);
+          }
           continue;
         }
         if (Constants.REPOSITORY_KEY.equalsIgnoreCase(key)) {

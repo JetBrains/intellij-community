@@ -49,20 +49,6 @@ object PreferencesReadUtil {
     }
   }
 
-  @JvmStatic
-  fun <K, V> compactMap(map: Map<K, V>): Map<K, V> {
-    if (map.size <= 1) {
-      // kotlin return optimized map internally
-      return map.toMap()
-    }
-    if (map !is HashMap<*, *>) {
-      return map
-    }
-    val result = HashMap<K, V>(map.size, 1.0f)
-    result.putAll(map)
-    return result
-  }
-
   private fun getPattern(name: String, from: Plist): String? {
     val value = from.getPlistValue(name)
     if (value == null) return null

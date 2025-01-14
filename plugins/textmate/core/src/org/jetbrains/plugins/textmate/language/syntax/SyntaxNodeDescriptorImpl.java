@@ -5,18 +5,20 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private static final Logger LOG = LoggerFactory.getLogger(SyntaxNodeDescriptorImpl.class);
 
   private Int2ObjectMap<SyntaxNodeDescriptor> myRepository = new Int2ObjectOpenHashMap<>();
-  private Map<Constants.StringKey, CharSequence> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
-  private Map<Constants.CaptureKey, TextMateCapture[]> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
+
+  private @Nullable CharSequence @Nullable [] myStringAttributes = null;
+  private TextMateCapture @Nullable [] @Nullable [] myCaptures = null;
 
   private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
   private List<InjectionNodeDescriptor> myInjections = new ArrayList<>();
@@ -31,18 +33,24 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setStringAttribute(@NotNull Constants.StringKey key, @Nullable CharSequence value) {
-    myStringAttributes.put(key, value);
+  public void setStringAttribute(@NotNull Constants.StringKey key, @NotNull CharSequence value) {
+    if (myStringAttributes == null) {
+      myStringAttributes = new CharSequence[Constants.StringKey.getEntries().size()];
+    }
+    myStringAttributes[key.ordinal()] = value;
   }
 
   @Override
   public @Nullable CharSequence getStringAttribute(@NotNull Constants.StringKey key) {
-    return myStringAttributes.get(key);
+    return myStringAttributes != null ? myStringAttributes[key.ordinal()] : null;
   }
 
   @Override
-  public void setCaptures(@NotNull Constants.CaptureKey key, TextMateCapture @Nullable [] captures) {
-    myCaptures.put(key, captures);
+  public void setCaptures(@NotNull Constants.CaptureKey key, TextMateCapture @NotNull [] captures) {
+    if (myCaptures == null) {
+      myCaptures = new TextMateCapture[Constants.CaptureKey.getEntries().size()][];
+    }
+    myCaptures[key.ordinal()] = captures;
   }
 
   @Override
@@ -52,7 +60,7 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
 
   @Override
   public TextMateCapture[] getCaptureRules(Constants.@NotNull CaptureKey key) {
-    return myCaptures.get(key);
+    return myCaptures != null ? myCaptures[key.ordinal()] : null;
   }
 
   @Override
@@ -77,8 +85,6 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
 
   @Override
   public void compact() {
-    myStringAttributes = PreferencesReadUtil.compactMap(myStringAttributes);
-    myCaptures = PreferencesReadUtil.compactMap(myCaptures);
     myChildren = compactList(myChildren);
     myInjections = compactList(myInjections);
     myRepository = compactMap(myRepository);
@@ -142,7 +148,7 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
 
   @Override
   public String toString() {
-    CharSequence name = myStringAttributes.get(Constants.StringKey.NAME);
+    CharSequence name = myStringAttributes != null ? myStringAttributes[Constants.StringKey.NAME.ordinal()] : null;
     return name != null ? "Syntax rule: " + name : super.toString();
   }
 }

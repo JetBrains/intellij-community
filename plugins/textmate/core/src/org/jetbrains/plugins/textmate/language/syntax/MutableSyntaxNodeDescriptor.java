@@ -29,9 +29,9 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
 
   void addInjection(@NotNull InjectionNodeDescriptor injection);
 
-  void setStringAttribute(@NotNull Constants.StringKey key, @Nullable CharSequence value);
+  void setStringAttribute(@NotNull Constants.StringKey key, @NotNull CharSequence value);
 
-  void setCaptures(@NotNull Constants.CaptureKey key, TextMateCapture @Nullable [] captures);
+  void setCaptures(@NotNull Constants.CaptureKey key, TextMateCapture @NotNull [] captures);
 
   void appendRepository(int ruleId, SyntaxNodeDescriptor descriptor);
 
