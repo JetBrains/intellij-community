@@ -30,6 +30,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XRendererDecoratorPresentation;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,6 +103,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   protected boolean shouldUpdateInlineDebuggerData() {
     return XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline();
+  }
+
+  @ApiStatus.Internal
+  protected boolean isChanged() {
+    return myChanged;
   }
 
   private void updateInlineDebuggerData() {
@@ -197,7 +203,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private void appendName() {
     if (!StringUtil.isEmpty(myName)) {
       XCustomizableTextRenderer renderer = createTextRenderer(myText, myValuePresentation);
-      SimpleTextAttributes attributes = myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
+      SimpleTextAttributes attributes = isChanged() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
       XValuePresentationUtil.renderName(myName, MAX_NAME_LENGTH, s -> renderer.renderRaw(s, attributes));
     }
   }

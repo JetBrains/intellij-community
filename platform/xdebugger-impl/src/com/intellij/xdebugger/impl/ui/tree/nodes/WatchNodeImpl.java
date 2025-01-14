@@ -63,6 +63,13 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     return output.toString();
   }
 
+  @ApiStatus.Internal
+  @Override
+  protected boolean isChanged() {
+    // Do not show paused watches as changed
+    return super.isChanged() && !myWatch.isPaused();
+  }
+
   @Override
   public @NotNull XExpression getExpression() {
     return myWatch.getExpression();
