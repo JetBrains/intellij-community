@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.importing.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
@@ -96,7 +95,7 @@ internal class MavenProjectImportContextProvider(
 
     val moduleData = ModuleData(moduleName, type, javaVersions)
     if (type != StandardMavenModuleType.COMPOUND_MODULE) {
-      return MavenProjectImportData(project, moduleData, changes, null)
+      return MavenProjectImportData(project, moduleData, changes, listOf())
     }
     val moduleMainName = moduleName + MavenImportUtil.MAIN_SUFFIX
     val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, javaVersions)
@@ -104,8 +103,7 @@ internal class MavenProjectImportContextProvider(
     val moduleTestName = moduleName + MavenImportUtil.TEST_SUFFIX
     val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, javaVersions)
 
-    val mainAndTestModules = SplittedMainAndTestModules(mainData, testData)
-    return MavenProjectImportData(project, moduleData, changes, mainAndTestModules)
+    return MavenProjectImportData(project, moduleData, changes, listOf(mainData, testData))
   }
 
   private fun adjustJavaVersions(holder: MavenJavaVersionHolder): MavenJavaVersionHolder {
@@ -132,28 +130,33 @@ internal class MavenProjectImportContextProvider(
   )
 
   private fun splitToModules(dataWithDependencies: MavenModuleImportDataWithDependencies): List<MavenTreeModuleImportData> {
-    val mainAndTestModules = dataWithDependencies.moduleImportData.splittedMainAndTestModules
+    val otherModules = dataWithDependencies.moduleImportData.otherModules
     val project = dataWithDependencies.moduleImportData.mavenProject
     val moduleData = dataWithDependencies.moduleImportData.moduleData
     val changes = dataWithDependencies.moduleImportData.changes
 
-    if (mainAndTestModules != null) {
+    if (otherModules.isNotEmpty()) {
       val result = ArrayList<MavenTreeModuleImportData>(3)
       result.add(MavenTreeModuleImportData(
         project, moduleData, mutableListOf<MavenImportDependency<*>>(), dataWithDependencies.moduleImportData.changes
       ))
-      result.add(MavenTreeModuleImportData(
-        project, mainAndTestModules.mainData, dataWithDependencies.mainDependencies, changes
-      ))
       val dependencies = dataWithDependencies.testDependencies + dataWithDependencies.mainDependencies
-      result.add(MavenTreeModuleImportData(project, mainAndTestModules.testData, dependencies, changes
-      ))
+
+      for (anotherModuleData in otherModules) {
+        if (anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY) {
+          result.add(MavenTreeModuleImportData(project, anotherModuleData, dataWithDependencies.mainDependencies, changes))
+        }
+        if (anotherModuleData.type == StandardMavenModuleType.TEST_ONLY) {
+          result.add(MavenTreeModuleImportData(project, anotherModuleData, dependencies, changes))
+        }
+      }
+
       return result
     }
 
     return listOf(MavenTreeModuleImportData(
       project, moduleData,
-      ContainerUtil.concat<MavenImportDependency<*>>(dataWithDependencies.mainDependencies, dataWithDependencies.testDependencies),
+      dataWithDependencies.mainDependencies + dataWithDependencies.testDependencies,
       changes
     ))
   }

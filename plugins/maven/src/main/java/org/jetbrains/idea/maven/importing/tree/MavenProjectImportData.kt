@@ -42,26 +42,26 @@ open class MavenTreeModuleImportData(mavenProject: MavenProject,
                                      val changes: MavenProjectChanges) : MavenModuleImportData(mavenProject, moduleData) {
 }
 
-class MavenProjectImportData(val mavenProject: MavenProject,
-                             val moduleData: ModuleData,
-                             val changes: MavenProjectChanges,
-                             val splittedMainAndTestModules: SplittedMainAndTestModules?) {
+internal class MavenProjectImportData(
+  val mavenProject: MavenProject,
+  val moduleData: ModuleData,
+  val changes: MavenProjectChanges,
+  val otherModules: List<ModuleData>,
+) {
+
+  val otherMainModules = otherModules.filter { it.type == StandardMavenModuleType.MAIN_ONLY }
+  val otherTestModules = otherModules.filter { it.type == StandardMavenModuleType.TEST_ONLY }
 
   override fun toString(): String {
     return mavenProject.mavenId.toString()
   }
 }
 
-class SplittedMainAndTestModules(val mainData: ModuleData, val testData: ModuleData) {
-  override fun toString(): String {
-    return "SplittedMainAndTestModules(mainData=$mainData, testData=$testData)"
-  }
-}
-
-class MavenModuleImportDataWithDependencies @JvmOverloads constructor(val moduleImportData: MavenProjectImportData,
-                                                                      val mainDependencies: List<MavenImportDependency<*>>,
-                                                                      val testDependencies: List<MavenImportDependency<*>> = emptyList()) {
-
+internal class MavenModuleImportDataWithDependencies @JvmOverloads constructor(
+  val moduleImportData: MavenProjectImportData,
+  val mainDependencies: List<MavenImportDependency<*>>,
+  val testDependencies: List<MavenImportDependency<*>> = emptyList(),
+) {
   override fun toString(): String {
     return moduleImportData.mavenProject.mavenId.toString()
   }

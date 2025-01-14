@@ -86,7 +86,6 @@ object MavenImportUtil {
     return level!!
   }
 
-  @ApiStatus.Internal
   @Deprecated("Maven project can have multiple source/target versions if multiReleaseOutput is used")
   fun getMavenJavaVersions(mavenProject: MavenProject): MavenJavaVersionHolder {
     val useReleaseCompilerProp = isReleaseCompilerProp(mavenProject)

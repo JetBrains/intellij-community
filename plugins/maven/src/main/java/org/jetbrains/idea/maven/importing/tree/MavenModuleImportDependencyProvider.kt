@@ -24,7 +24,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 
 private const val INITIAL_CAPACITY_TEST_DEPENDENCY_LIST: Int = 4
 
-class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
+internal class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
                                           importingSettings: MavenImportingSettings,
                                           private val myProjectTree: MavenProjectsTree) {
   private val dependencyTypesFromSettings: Set<String> = importingSettings.dependencyTypesAsSet
@@ -38,10 +38,10 @@ class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId:
     val testDependencies: MutableList<MavenImportDependency<*>> = ArrayList(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST)
 
     addMainDependencyToTestModule(importData, testDependencies)
-    val hasSeparateTestModule = importData.splittedMainAndTestModules != null
+    val otherTestModules = importData.otherTestModules
     for (artifact in mavenProject.dependencies) {
       for (dependency in getDependency(artifact, mavenProject)) {
-        if (hasSeparateTestModule && dependency.scope == DependencyScope.TEST) {
+        if (otherTestModules.isNotEmpty() && dependency.scope == DependencyScope.TEST) {
           testDependencies.add(dependency)
         }
         else {
@@ -133,19 +133,16 @@ class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId:
 
   private fun addMainDependencyToTestModule(importData: MavenProjectImportData,
                                             testDependencies: MutableList<MavenImportDependency<*>>) {
-    if (importData.splittedMainAndTestModules != null) {
+    importData.otherMainModules.forEach {
       testDependencies.add(
-        ModuleDependency(importData.splittedMainAndTestModules.mainData.moduleName, DependencyScope.COMPILE, false)
+        ModuleDependency(it.moduleName, DependencyScope.COMPILE, false)
       )
     }
   }
 
   private fun getModuleName(data: MavenProjectImportData, isTestJar: Boolean): String {
-    val modules = data.splittedMainAndTestModules
-    if (modules == null) {
-      return data.moduleData.moduleName
-    }
-    return if (isTestJar) modules.testData.moduleName else modules.mainData.moduleName
+    val otherModule = if (isTestJar) data.otherTestModules.firstOrNull() else data.otherMainModules.firstOrNull()
+    return otherModule?.moduleName ?: data.moduleData.moduleName
   }
 
   private fun createAttachArtifactDependency(mavenProject: MavenProject,
