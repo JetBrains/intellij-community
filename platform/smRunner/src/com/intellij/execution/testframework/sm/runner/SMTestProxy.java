@@ -591,6 +591,9 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   public void setTestFailed(@Nullable String localizedMessage, @Nullable String stackTrace, boolean testError) {
+    if (myEndTime == null) {
+      myEndTime = System.currentTimeMillis();
+    }
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
     TestFailedState failedState = testError ? new TestErrorState(localizedMessage, stackTrace) 
