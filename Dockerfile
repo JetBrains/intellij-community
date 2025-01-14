@@ -18,6 +18,9 @@ RUN apt-get update && \
 VOLUME /home/ide_builder/.m2
 # the home directory should exist and be writable for any user used to launch a container because it is required for the IDE
 RUN useradd --create-home ide_builder && \
+    # the .m2 directory should be initialized with something \
+    # otherwise the `chmod` effect is discarded if no Maven cache volume is specified for `docker run`
+    mkdir -p /home/ide_builder/.m2/repository && \
     chmod --recursive a+rwx /home/ide_builder
 # for jps-bootstrap itself
 ENV BOOTSTRAP_SYSTEM_PROPERTIES="-Duser.home=/home/ide_builder"
