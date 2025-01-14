@@ -1023,3 +1023,4 @@ public final class org/jetbrains/jewel/foundation/util/JewelLogger$Companion {
 	public final fun getInstance (Ljava/lang/Class;)Lorg/jetbrains/jewel/foundation/util/JewelLogger;
 	public final fun getInstance (Ljava/lang/String;)Lorg/jetbrains/jewel/foundation/util/JewelLogger;
 }
+
