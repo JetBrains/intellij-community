@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -44,7 +44,9 @@ public final class OptimizeImportsRefactoringHelper implements RefactoringHelper
   }
 
   @Override
-  public void performOperation(final @NotNull Project project, final Set<PsiJavaFile> javaFiles) {
+  public void performOperation(@NotNull Project project, Set<PsiJavaFile> javaFiles) {
+    if (javaFiles.isEmpty()) return;
+
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
       (Runnable)() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
@@ -80,6 +82,7 @@ public final class OptimizeImportsRefactoringHelper implements RefactoringHelper
 
     String removingRedundantImportsTitle = JavaRefactoringBundle.message("removing.redundant.imports.progress.title");
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, removingRedundantImportsTitle, false, project)) return;
+    if (redundants.isEmpty()) return;
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, removingRedundantImportsTitle, false);
