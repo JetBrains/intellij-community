@@ -88,14 +88,17 @@ open class BasicFileReportGenerator(
 
         val textToInsert = textToInsert(session)
         val center = textToInsert.length / sessions.size
+        val promptText = session.properties.additionalProperty("prompt").orEmpty()
         var shift = 0
         for (j in 0 until sessionGroup.lastIndex) {
           val subToken = if (center == 0) textToInsert else textToInsert.substring(shift, shift + center)
-          append(getSpan(sessionGroup[j], subToken, lookupOrder))
+          val spanText = subToken.ifEmpty { promptText }
+          append(getSpan(sessionGroup[j], spanText, lookupOrder))
           append(delimiter)
           shift += center
         }
-        append(getSpan(sessionGroup.last(), textToInsert.substring(shift), lookupOrder))
+        val spanText = textToInsert.substring(shift).ifEmpty { promptText }
+        append(getSpan(sessionGroup.last(), spanText, lookupOrder))
         offset = session.offset + textToInsert.length
       }
       append(StringEscapeUtils.escapeHtml4(text.substring(offset)))
