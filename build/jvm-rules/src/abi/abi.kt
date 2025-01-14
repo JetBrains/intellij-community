@@ -1,14 +1,39 @@
-package org.jetbrains.bazel.jvm.jps
+package org.jetbrains.bazel.jvm.abi
 
+import kotlinx.coroutines.channels.Channel
+import org.jetbrains.intellij.build.io.writeZipUsingTempFile
 import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.tree.AnnotationNode
 import org.jetbrains.org.objectweb.asm.tree.FieldNode
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
+import java.nio.ByteBuffer
+import java.nio.file.Path
 import kotlin.metadata.*
 import kotlin.metadata.jvm.KotlinClassMetadata
 import kotlin.metadata.jvm.getterSignature
 import kotlin.metadata.jvm.localDelegatedProperties
 import kotlin.metadata.jvm.signature
+
+suspend fun writeAbi(abiJar: Path, classChannel: Channel<Pair<ByteArray, ByteArray>>) {
+  writeZipUsingTempFile(abiJar, indexWriter = null) { stream ->
+    val classesToBeDeleted = HashSet<String>()
+    for ((name, classData) in classChannel) {
+      val classWriter = ClassWriter(0)
+      val abiClassVisitor = AbiClassVisitor(
+        classVisitor = classWriter,
+        classesToBeDeleted = classesToBeDeleted,
+        treatInternalAsPrivate = false,
+      )
+      ClassReader(classData).accept(abiClassVisitor, ClassReader.SKIP_CODE or ClassReader.SKIP_FRAMES)
+      if (!abiClassVisitor.isApiClass) {
+        continue
+      }
+
+      val abiData = classWriter.toByteArray()
+      stream.writeDataRawEntryWithoutCrc(ByteBuffer.wrap(abiData), name)
+    }
+  }
+}
 
 /**
  * ClassVisitor that strips non-public methods/fields and Kotlin `internal` methods.
@@ -16,12 +41,15 @@ import kotlin.metadata.jvm.signature
 internal class AbiClassVisitor(
   classVisitor: ClassVisitor,
   private val classesToBeDeleted: MutableSet<String>,
+  private val treatInternalAsPrivate: Boolean,
 ) : ClassVisitor(Opcodes.API_VERSION, classVisitor) {
   // tracks if this class has any public API members
-  var isApiClass: Boolean = false
+  var isApiClass: Boolean = true
     private set
 
-  private val classAnnotations = mutableListOf<Pair<AnnotationNode, Boolean>>()
+  private val visibleAnnotations = ArrayList<AnnotationNode>()
+  private val invisibleAnnotations = ArrayList<AnnotationNode>()
+
   private val fields = mutableListOf<FieldNode>()
   private val methods = mutableListOf<MethodNode>()
   private var kotlinMetadata: Pair<String, KotlinClassMetadata>? = null
@@ -36,19 +64,25 @@ internal class AbiClassVisitor(
     }
     else {
       val annotationNode = AnnotationNode(api, descriptor)
-      classAnnotations.add(annotationNode to visible)
+      (if (visible) visibleAnnotations else invisibleAnnotations).add(annotationNode)
       return annotationNode
     }
   }
 
   override fun visit(version: Int, access: Int, name: String, signature: String?, superName: String?, interfaces: Array<String>?) {
-    if (access and Opcodes.ACC_PUBLIC == 0) {
-      classesToBeDeleted.add(name)
+    isApiClass = (access and Opcodes.ACC_PUBLIC) != 0
+    if (isApiClass) {
+      val visibility = getKotlinMetaClass()?.visibility
+      if (visibility == null || !isPrivateVisibility(visibility, treatInternalAsPrivate)) {
+        super.visit(version, access, name, signature, superName, interfaces)
+        return
+      }
+      else {
+        isApiClass = false
+      }
     }
-    else {
-      isApiClass = true
-      super.visit(version, access, name, signature, superName, interfaces)
-    }
+
+    classesToBeDeleted.add(name)
   }
 
   override fun visitField(
@@ -58,7 +92,10 @@ internal class AbiClassVisitor(
     signature: String?,
     value: Any?,
   ): FieldVisitor? {
-    if (access and Opcodes.ACC_PUBLIC == 0) {
+    if ((access and Opcodes.ACC_PUBLIC) == 0) {
+      return null
+    }
+    if (treatInternalAsPrivate && isFieldKotlinInternal(name)) {
       return null
     }
 
@@ -74,20 +111,23 @@ internal class AbiClassVisitor(
     signature: String?,
     exceptions: Array<String>?,
   ): MethodVisitor? {
-    // retain public methods and exclude Kotlin `internal` methods
-    val isPublic = access and Opcodes.ACC_PUBLIC != 0
-    val isInternal = isKotlinInternal(name)
-    if (!isPublic || isInternal) {
+    if ((access and Opcodes.ACC_PUBLIC) == 0) {
+      return null
+    }
+    if (treatInternalAsPrivate && isMethodKotlinInternal(name)) {
       return null
     }
 
-    val methodNode = MethodNode(api, access, name, descriptor, signature, exceptions)
-    methods.add(methodNode)
-    return methodNode
+    val method = MethodNode(api, access, name, descriptor, signature, exceptions)
+    methods.add(method)
+    //return ReplaceWithEmptyBody(method, (Type.getArgumentsAndReturnSizes(method.desc) shr 2) - 1)
+    return method
   }
 
   override fun visitEnd() {
-    classAnnotations.sortBy { it.first.desc }
+    visibleAnnotations.sortBy { it.desc }
+    invisibleAnnotations.sortBy { it.desc }
+
     fields.sortBy { it.name }
     methods.sortBy { it.name }
 
@@ -97,12 +137,16 @@ internal class AbiClassVisitor(
         descriptor = descriptor,
         classVisitor = cv,
         classesToBeDeleted = classesToBeDeleted,
+        treatInternalAsPrivate = treatInternalAsPrivate,
+
       )
     }
 
-    for ((annotation, visible) in classAnnotations) {
-      val annotationVisitor = cv.visitAnnotation(annotation.desc, visible)
-      annotation.accept(annotationVisitor)
+    for (annotation in visibleAnnotations) {
+      annotation.accept(cv.visitAnnotation(annotation.desc, true))
+    }
+    for (annotation in invisibleAnnotations) {
+      annotation.accept(cv.visitAnnotation(annotation.desc, false))
     }
 
     for (field in fields) {
@@ -110,28 +154,74 @@ internal class AbiClassVisitor(
     }
 
     for (method in methods) {
+      method.accept(cv)
       //val exceptionsArray = if (method.exceptions == null) null else method.exceptions.toTypedArray()
       //val methodVisitor = cv.visitMethod(method.access, method.name, method.desc, method.signature, exceptionsArray)
       //method.accept(methodVisitor)
 
-      val mv = cv.visitMethod(method.access, method.name, method.desc, method.signature, method.exceptions?.toTypedArray())
-      val stripper = MethodBodyStripper(mv)
-      stripper.visitCode()
-      stripper.visitMaxs(0, 0)
-      stripper.visitEnd()
+      //ReplaceWithEmptyBody(
+      //  targetWriter = method,
+      //  newMaxLocals = (Type.getArgumentsAndReturnSizes(method.desc) shr 2) - 1,
+      //)
+      //
+      //val mv = cv.visitMethod(method.access, method.name, method.desc, method.signature, method.exceptions?.toTypedArray())
+      //val stripper = MethodBodyStripper(mv)
+      //stripper.visitCode()
+      //stripper.visitMaxs(0, 0)
+      //stripper.visitEnd()
     }
 
     super.visitEnd()
   }
 
-  private fun isKotlinInternal(methodName: String?): Boolean {
-    val kClass = (kotlinMetadata?.second as? KotlinClassMetadata.Class)?.kmClass ?: return false
+  private fun isMethodKotlinInternal(methodName: String?): Boolean {
+    val kClass = getKotlinMetaClass() ?: return false
     for (function in kClass.functions) {
       if (function.visibility == Visibility.INTERNAL && function.name == methodName) {
         return true
       }
     }
     return false
+  }
+
+  private fun isFieldKotlinInternal(name: String?): Boolean {
+    val kClass = getKotlinMetaClass() ?: return false
+    for (property in kClass.properties) {
+      if (property.visibility == Visibility.INTERNAL && property.name == name) {
+        return true
+      }
+    }
+    return false
+  }
+
+  private fun getKotlinMetaClass(): KmClass? = (kotlinMetadata?.second as? KotlinClassMetadata.Class)?.kmClass
+}
+
+// now, we're not passing the writer to the superclass for our radical changes
+private class ReplaceWithEmptyBody(
+  private val targetWriter: MethodVisitor,
+  private val newMaxLocals: Int,
+) : MethodVisitor(Opcodes.API_VERSION) {
+  // we're only override the minimum to create a code attribute with a sole RETURN
+  override fun visitMaxs(maxStack: Int, maxLocals: Int) {
+    targetWriter.visitMaxs(0, newMaxLocals)
+  }
+
+  override fun visitCode() {
+    targetWriter.visitCode()
+    targetWriter.visitInsn(Opcodes.RETURN)
+  }
+
+  override fun visitEnd() {
+    targetWriter.visitEnd()
+  }
+
+  override fun visitAnnotation(desc: String?, visible: Boolean): AnnotationVisitor {
+    return targetWriter.visitAnnotation(desc, visible)
+  }
+
+  override fun visitParameter(name: String?, access: Int) {
+    targetWriter.visitParameter(name, access)
   }
 }
 
@@ -152,8 +242,8 @@ private fun transformAndWriteKotlinMetadata(
   descriptor: String,
   classVisitor: ClassVisitor,
   classesToBeDeleted: Set<String>,
+  treatInternalAsPrivate: Boolean,
 ) {
-  val treatInternalAsPrivate = false
   when (metadata) {
     is KotlinClassMetadata.Class -> {
       removePrivateDeclarationsForClass(
@@ -219,10 +309,10 @@ private fun removePrivateDeclarationsForClass(
   pruneClass: Boolean,
   treatInternalAsPrivate: Boolean,
 ) {
-  klass.constructors.removeIf { pruneClass || it.visibility.shouldRemove(treatInternalAsPrivate) }
+  klass.constructors.removeIf { pruneClass || isPrivateVisibility(it.visibility, treatInternalAsPrivate) }
   removePrivateDeclarationsForDeclarationContainer(
     container = klass as KmDeclarationContainer,
-    copyFunShouldBeDeleted = klass.copyFunShouldBeDeleted(removeDataClassCopy = removeCopyAlongWithConstructor),
+    copyFunShouldBeDeleted = copyFunShouldBeDeleted(klass = klass, removeDataClassCopy = removeCopyAlongWithConstructor),
     preserveDeclarationOrder = preserveDeclarationOrder,
     pruneClass = pruneClass,
     treatInternalAsPrivate = treatInternalAsPrivate,
@@ -232,12 +322,15 @@ private fun removePrivateDeclarationsForClass(
   klass.localDelegatedProperties.clear()
 }
 
-private fun KmClass.copyFunShouldBeDeleted(removeDataClassCopy: Boolean): Boolean {
-  return removeDataClassCopy && isData && constructors.none { !it.isSecondary }
+private fun copyFunShouldBeDeleted(klass: KmClass, removeDataClassCopy: Boolean): Boolean {
+  return removeDataClassCopy && klass.isData && klass.constructors.none { !it.isSecondary }
 }
 
-private fun Visibility.shouldRemove(treatInternalAsPrivate: Boolean): Boolean {
-  return this == Visibility.PRIVATE || this == Visibility.PRIVATE_TO_THIS || this == Visibility.LOCAL || (treatInternalAsPrivate && this == Visibility.INTERNAL)
+private fun isPrivateVisibility(visibility: Visibility, treatInternalAsPrivate: Boolean): Boolean {
+  return visibility == Visibility.PRIVATE ||
+    visibility == Visibility.PRIVATE_TO_THIS ||
+    visibility == Visibility.LOCAL ||
+    (treatInternalAsPrivate && visibility == Visibility.INTERNAL)
 }
 
 private fun removePrivateDeclarationsForDeclarationContainer(
@@ -248,10 +341,10 @@ private fun removePrivateDeclarationsForDeclarationContainer(
   treatInternalAsPrivate: Boolean,
 ) {
   container.functions.removeIf {
-    pruneClass || it.visibility.shouldRemove(treatInternalAsPrivate) || (copyFunShouldBeDeleted && it.name == "copy")
+    pruneClass || isPrivateVisibility(it.visibility, treatInternalAsPrivate) || (copyFunShouldBeDeleted && it.name == "copy")
   }
   container.properties.removeIf {
-    pruneClass || it.visibility.shouldRemove(treatInternalAsPrivate)
+    pruneClass || isPrivateVisibility(it.visibility, treatInternalAsPrivate)
   }
 
   if (!preserveDeclarationOrder) {

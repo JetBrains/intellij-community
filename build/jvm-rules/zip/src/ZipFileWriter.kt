@@ -22,7 +22,8 @@ import java.util.zip.ZipEntry
 import kotlin.math.min
 
 val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
-val WRITE: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE)
+@PublishedApi
+internal val WRITE: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE)
 private val READ = EnumSet.of(StandardOpenOption.READ)
 
 // 1 MB

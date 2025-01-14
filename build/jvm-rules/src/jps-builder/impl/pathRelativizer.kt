@@ -27,7 +27,7 @@ internal fun createPathRelativizer(baseDir: Path, classOutDir: Path): PathRelati
           return when {
             p.startsWith(baseDirPrefix) -> p.substring(baseDirPrefix.length)
             p.startsWith(parentOfBaseDirPrefix) -> "../" + p.substring(parentOfBaseDirPrefix.length)
-            else -> error("Unexpected path: $p")
+            else -> error("Unexpected path: $p (baseDirPrefix=$baseDirPrefix, parentOfBaseDirPrefix=$parentOfBaseDirPrefix)")
           }
         }
         RelativePathType.OUTPUT -> {

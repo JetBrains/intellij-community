@@ -47,7 +47,6 @@ internal fun loadJpsModel(
   classPathRootDir: Path,
   classOutDir: Path,
   dependencyFileToDigest: Map<Path, ByteArray>,
-  messageHandler: ConsoleMessageHandler,
 ): Pair<JpsModel, TargetConfigurationDigestContainer> {
   val model = jpsElementFactory.createModel()
 
@@ -61,7 +60,7 @@ internal fun loadJpsModel(
   // extension.loadModuleOptions not needed for us (not implemented for java)
   val module = JpsModuleImpl(
     JpsJavaModuleType.INSTANCE,
-    args.mandatorySingle(JvmBuilderFlags.TARGET_LABEL),
+    args.mandatorySingle(JvmBuilderFlags.KOTLIN_MODULE_NAME),
     jpsElementFactory.createDummyElement(),
   )
   val jpsJavaModuleExtension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module)
@@ -77,10 +76,6 @@ internal fun loadJpsModel(
     // used as a key - immutable instance cannot be used
     val properties = JavaSourceRootProperties("", false)
     module.addSourceRoot(JpsModuleSourceRootImpl(source.toUri().toString(), JavaSourceRootType.SOURCE, properties))
-  }
-
-  if (messageHandler.isDebugEnabled) {
-    messageHandler.info("sources:\n  ${sources.joinToString(separator = "\n  ") { it.invariantSeparatorsPathString }}\n")
   }
 
   configureKotlinCompiler(module = module, args = args, classPathRootDir = classPathRootDir, configHash = configHash)

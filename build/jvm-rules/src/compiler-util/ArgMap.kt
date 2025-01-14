@@ -4,7 +4,12 @@ package org.jetbrains.bazel.jvm.kotlin
 import java.util.*
 
 class ArgMap<T : Enum<T>> internal constructor(private val map: EnumMap<T, MutableList<String>>) {
-  fun mandatorySingle(key: T): String = requireNotNull(optionalSingle(key)) { "$key is not optional" }
+  fun mandatorySingle(key: T): String {
+    val value = optionalSingle(key)
+    requireNotNull(value) { "$key is not optional" }
+    require(value.isNotBlank()) { "--$key should not be blank" }
+    return value
+  }
 
   fun optionalSingle(key: T): String? {
     return map[key]?.let {

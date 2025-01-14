@@ -9,11 +9,11 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.createPhaseConfig
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
 import org.jetbrains.kotlin.cli.jvm.compiler.pipeline.compileModulesUsingFrontendIrAndLightTree
 import org.jetbrains.kotlin.cli.jvm.compiler.pipeline.createProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.configureJdkClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
-import org.jetbrains.kotlin.cli.jvm.configureModuleChunk
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginOptions
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.util.ServiceLoaderLite
 import java.io.File
 import java.net.URLClassLoader
@@ -52,19 +51,20 @@ private fun createCompilerConfigurationTemplate(): CompilerConfiguration {
 internal val configTemplate = createCompilerConfigurationTemplate()
 
 internal fun k2jvm(
-  args: K2JVMCompilerArguments,
   config: CompilerConfiguration,
   rootDisposable: Disposable,
+  module: ModuleBuilder,
+  messageCollector: MessageCollector,
 ): ExitCode {
-  val messageCollector = config.getNotNull(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+  val moduleBuilders = listOf(module)
 
-  val moduleName = args.moduleName ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME
-  config.put(CommonConfigurationKeys.MODULE_NAME, moduleName)
-  val chunk = config.configureModuleChunk(arguments = args, buildFile = null).modules
-  config.configureSourceRoots(chunk = chunk, buildFile = null)
-  val targetDescription = chunk
-    .map { input -> input.getModuleName() + "-" + input.getModuleType() }
-    .let { names -> names.singleOrNull() ?: names.joinToString() }
+  val modularJdkRoot = module.modularJdkRoot
+  if (modularJdkRoot != null) {
+    // We use the SDK of the first module in the chunk, which is not always correct because some other module in the chunk
+    // might depend on a different SDK
+    config.put(JVMConfigurationKeys.JDK_HOME, File(modularJdkRoot))
+  }
+
   require(config.getBoolean(CommonConfigurationKeys.USE_LIGHT_TREE))
   require(config.getBoolean(CommonConfigurationKeys.USE_FIR))
   if (messageCollector.hasErrors()) {
@@ -85,19 +85,19 @@ internal fun k2jvm(
     return ExitCode.COMPILATION_ERROR
   }
 
-  if (!compileModulesUsingFrontendIrAndLightTree(
+  if (compileModulesUsingFrontendIrAndLightTree(
       projectEnvironment = projectEnvironment,
       compilerConfiguration = config,
       messageCollector = messageCollector,
       buildFile = null,
-      chunk = chunk,
-      targetDescription = targetDescription,
+      chunk = moduleBuilders,
+      targetDescription = module.getModuleName() + "-" + module.getModuleType(),
       checkSourceFiles = false,
       isPrintingVersion = false,
     )) {
-    return ExitCode.COMPILATION_ERROR
+    return ExitCode.OK
   }
-  return ExitCode.OK
+  return ExitCode.COMPILATION_ERROR
 }
 
 @OptIn(ExperimentalCompilerApi::class)

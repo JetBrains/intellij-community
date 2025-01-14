@@ -30,7 +30,6 @@ import java.util.*
 import java.util.jar.Attributes
 import java.util.jar.JarFile
 import java.util.jar.Manifest
-import java.util.zip.ZipEntry
 
 private val MANIFEST_NAME_BYTES = JarFile.MANIFEST_NAME.toByteArray()
 
@@ -121,15 +120,7 @@ class JarCreator(
 
     val content = manifestContentImpl(existingFile = manifestFile)
 
-    val size = content.size
-    out.writeDataRawEntry(
-      data = ByteBuffer.wrap(content),
-      name = MANIFEST_NAME_BYTES,
-      size = size,
-      compressedSize = size,
-      method = ZipEntry.STORED,
-      crc = 0,
-    )
+    out.writeDataRawEntryWithoutCrc(data = ByteBuffer.wrap(content), name = MANIFEST_NAME_BYTES)
   }
 
   override fun close() {

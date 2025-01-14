@@ -6,6 +6,7 @@ package org.jetbrains.bazel.jvm.jps
 import com.intellij.openapi.util.io.FileUtilRt
 import kotlinx.coroutines.ensureActive
 import org.h2.mvstore.MVStore
+import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.loadJpsProject
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
@@ -33,7 +34,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
   var isCleanBuild: Boolean = false
     private set
 
-  fun clearAndInit(messageHandler: ConsoleMessageHandler): StorageManager {
+  fun clearAndInit(messageHandler: RequestLog): StorageManager {
     isCheckRebuildRequired = false
     wasCleared = true
     isCleanBuild = true
@@ -47,7 +48,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
       .also { storageManager = it }
   }
 
-  suspend fun init(messageHandler: ConsoleMessageHandler, targetDigests: TargetConfigurationDigestContainer): StorageManager {
+  suspend fun init(messageHandler: RequestLog, targetDigests: TargetConfigurationDigestContainer): StorageManager {
     val logger = createLogger(messageHandler)
     coroutineContext.ensureActive()
 
@@ -100,7 +101,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
     return tryOpenMvStore(file = cacheDbFile, readOnly = false, autoCommitDelay = 0, logger = logger)
   }
 
-  private fun createLogger(messageHandler: ConsoleMessageHandler): StoreLogger {
+  private fun createLogger(messageHandler: RequestLog): StoreLogger {
     return { m: String, e: Throwable, isWarn: Boolean ->
       val message = "$m: ${e.stackTraceToString()}"
       if (isWarn) {
@@ -113,10 +114,11 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
   }
 
   fun createProjectDescriptor(
-    messageHandler: ConsoleMessageHandler,
+    messageHandler: RequestLog,
     jpsModel: JpsModel,
     moduleTarget: BazelModuleBuildTarget,
     relativizer: PathRelativizerService,
+    buildDataProvider: BazelBuildDataProvider,
   ): ProjectDescriptor {
     try {
       return loadJpsProject(
@@ -128,6 +130,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
         moduleTarget = moduleTarget,
         relativizer = relativizer,
         storageManager = storageManager!!,
+        buildDataProvider = buildDataProvider,
       )
     }
     catch (e: Throwable) {
@@ -144,10 +147,11 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
       jpsModel = jpsModel,
       moduleTarget = moduleTarget,
       relativizer = relativizer,
+      buildDataProvider = buildDataProvider,
     )
   }
 
-  private fun clearStorage() {
+  fun clearStorage() {
     isCleanBuild = true
     wasCleared = true
     isCheckRebuildRequired = false

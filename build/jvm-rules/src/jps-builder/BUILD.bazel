@@ -1,6 +1,7 @@
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:src/jvm-args.bzl", "get_jvm_flags")
 
 kt_jvm_library(
     name = "worker-lib",
@@ -49,20 +50,12 @@ java_binary(
         "@kotlin-serialization-compiler-plugin//file",
     ],
     main_class = "org.jetbrains.bazel.jvm.jps.JpsBuildWorker",
-    jvm_flags = [
-        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED",
-        "--add-opens=java.base/java.nio=ALL-UNNAMED",
-        "-Xms1024m",
-        "-Xmx6144m",
-        "-Djava.awt.headless=true",
-        "-Dapple.awt.UIElement=true",
+    jvm_flags = get_jvm_flags([
         "-Dkotlin.environment.keepalive=true",
         "-Djps.use.experimental.storage=true",
         "-Djps.kotlin.home=$(rlocationpath @kotlinc//:kotlinc_dist)",
         "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
-    ],
+    ]),
     visibility = ["//visibility:public"],
 )
 
@@ -74,18 +67,10 @@ java_binary(
         "@kotlin-serialization-compiler-plugin//file",
     ],
     main_class = "org.jetbrains.bazel.jvm.jps.TestJpsBuildWorker",
-    jvm_flags = [
-        "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED",
-        "--add-opens=java.base/java.nio=ALL-UNNAMED",
-        "-Xms1024m",
-        "-Xmx6144m",
-        "-Djava.awt.headless=true",
-        "-Dapple.awt.UIElement=true",
+    jvm_flags = get_jvm_flags([
         "-Dkotlin.environment.keepalive=true",
         "-Djps.use.experimental.storage=true",
         "-Djps.kotlin.home=$(rlocationpath @kotlinc//:kotlinc_dist)",
         "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
-    ],
+    ]),
 )

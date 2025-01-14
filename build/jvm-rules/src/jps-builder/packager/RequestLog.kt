@@ -7,7 +7,7 @@ import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
 
-class ConsoleMessageHandler(
+class RequestLog(
   @PublishedApi @JvmField internal val out: Appendable,
   @JvmField val isDebugEnabled: Boolean,
 ) : MessageHandler {
@@ -24,6 +24,10 @@ class ConsoleMessageHandler(
 
   fun error(message: String) {
     out.appendLine("ERROR: $message")
+  }
+
+  fun error(message: String, error: Throwable) {
+    out.appendLine("ERROR: $message\n${error.stackTraceToString().prependIndent("  ")}")
   }
 
   fun info(message: String) {

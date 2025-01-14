@@ -1,4 +1,4 @@
-package org.jetbrains.bazel.jvm.jps
+package org.jetbrains.bazel.jvm.abi
 
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes

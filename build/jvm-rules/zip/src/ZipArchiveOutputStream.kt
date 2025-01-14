@@ -77,6 +77,11 @@ class ZipArchiveOutputStream(
     )
   }
 
+  fun writeDataRawEntryWithoutCrc(data: ByteBuffer, name: ByteArray) {
+    val size = data.remaining()
+    writeDataRawEntry(data = data, name = name, size = size, compressedSize = size, method = ZipEntry.STORED, crc = 0)
+  }
+
   // data contains only data - zip local file header will be generated
   fun writeDataRawEntry(
     data: ByteBuffer,

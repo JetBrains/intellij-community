@@ -1,0 +1,28 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "abi",
+    srcs = glob(["*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+        "@lib//:kotlin-stdlib",
+        "//:kotlinx-coroutines-core",
+        "@lib//:asm",
+        "//:kotlin-metadata",
+        "//zip:build-zip",
+    ],
+    visibility = ["//src/jps-builder/packager:__pkg__"],
+)
+
+java_binary(
+    name = "test-abi-generator",
+    runtime_deps = [":abi"],
+    main_class = "org.jetbrains.bazel.jvm.abi.TestAbiGenerator",
+    jvm_flags = [
+        "-Xms1024m",
+        "-Xmx6144m",
+        "-Djava.awt.headless=true",
+        "-Dapple.awt.UIElement=true",
+    ],
+)

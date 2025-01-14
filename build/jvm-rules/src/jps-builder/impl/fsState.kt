@@ -2,18 +2,21 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
-import org.jetbrains.bazel.jvm.jps.ConsoleMessageHandler
+import org.jetbrains.bazel.jvm.jps.RequestLog
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.FSOperations
 import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.fs.FilesDelta
 import org.jetbrains.jps.incremental.storage.RelativePathType
-import org.jetbrains.jps.incremental.storage.StampsStorage
 
-internal fun initTargetFsStateForNonInitialBuild(context: CompileContext, target: BuildTarget<*>, messageHandler: ConsoleMessageHandler) {
+internal fun initTargetFsStateForNonInitialBuild(
+  context: CompileContext,
+  target: BuildTarget<*>,
+  log: RequestLog,
+  dataManager: BazelBuildDataProvider,
+) {
   val projectDescriptor = context.projectDescriptor
-  val dataManager = projectDescriptor.dataManager
   val buildRootIndex = projectDescriptor.buildRootIndex as BazelBuildRootIndex
   val fsState = projectDescriptor.fsState
 
@@ -21,7 +24,7 @@ internal fun initTargetFsStateForNonInitialBuild(context: CompileContext, target
   val nextDelta = context.getUserData(BuildFSState.NEXT_ROUND_DELTA_KEY)
   val filesDelta = fsState.getDelta(target)
 
-  val stampStorage = dataManager.getFileStampStorage(target)!!
+  val stampStorage = dataManager.getFileStampStorage(target)
   markDirtyFiles(
     context = context,
     target = target,
@@ -29,19 +32,13 @@ internal fun initTargetFsStateForNonInitialBuild(context: CompileContext, target
     buildRootIndex = buildRootIndex,
     fsState = fsState,
     filesDelta = filesDelta,
-    messageHandler = messageHandler,
+    messageHandler = log,
   )
 
   val fileToDescriptors = buildRootIndex.fileToDescriptors
 
   // handle deleted paths
-  val sourceToOutputMap = dataManager.getSourceToOutputMap(target)
-
-  for (file in sourceToOutputMap.sourceFileIterator) {
-    if (fileToDescriptors.contains(file)) {
-      continue
-    }
-
+  for (file in dataManager.sourceToOutputMapping.findDeletedAndUnsetDigest(fileToDescriptors)) {
     currentDelta?.addDeleted(file)
     nextDelta?.addDeleted(file)
     filesDelta.addDeleted(file)
@@ -53,18 +50,18 @@ internal fun initTargetFsStateForNonInitialBuild(context: CompileContext, target
 private fun markDirtyFiles(
   context: CompileContext,
   target: BuildTarget<*>,
-  stampStorage: StampsStorage<*>,
+  stampStorage: BazelStampStorage,
   buildRootIndex: BazelBuildRootIndex,
   fsState: BuildFSState,
   filesDelta: FilesDelta,
-  messageHandler: ConsoleMessageHandler,
+  messageHandler: RequestLog,
 ) {
   var completelyMarkedDirty = true
   for (rootDescriptor in buildRootIndex.descriptors) {
     fsState.clearRecompile(rootDescriptor)
 
     val file = rootDescriptor.file
-    val markDirty = stampStorage.getCurrentStampIfUpToDate(file, rootDescriptor.target, null) == null
+    val markDirty = stampStorage.isDirty(file)
     if (!markDirty) {
       completelyMarkedDirty = false
       continue

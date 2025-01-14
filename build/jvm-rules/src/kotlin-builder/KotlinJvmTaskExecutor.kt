@@ -4,18 +4,27 @@ package org.jetbrains.bazel.jvm.kotlin
 import com.google.devtools.build.lib.view.proto.Deps
 import com.google.devtools.build.lib.view.proto.Deps.Dependencies
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.*
+import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
 import org.jetbrains.kotlin.cli.common.setupCommonArguments
 import org.jetbrains.kotlin.cli.jvm.compiler.configurePlugins
 import org.jetbrains.kotlin.cli.jvm.compiler.k2jvm
 import org.jetbrains.kotlin.cli.jvm.compiler.loadPlugins
+import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
+import org.jetbrains.kotlin.cli.jvm.config.JvmModulePathRoot
+import org.jetbrains.kotlin.cli.jvm.config.addJavaSourceRoot
 import org.jetbrains.kotlin.cli.jvm.setupJvmSpecificArguments
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
+import org.jetbrains.kotlin.modules.JavaRootPath
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.Writer
@@ -28,18 +37,21 @@ internal suspend fun compileKotlinForJvm(
   context: TraceHelper,
   sources: List<Path>,
   out: Writer,
-  workingDir: Path,
+  baseDir: Path,
   info: CompilationTaskInfo,
 ): Int {
   val kotlinArgs = K2JVMCompilerArguments()
-  configureCommonCompilerArgs(kotlinArgs, args, workingDir)
+  configureCommonCompilerArgs(kotlinArgs, args, baseDir)
 
-  kotlinArgs.classpath = createClasspath(args, workingDir)
+  val classPath = createClasspath(args, baseDir)
+  kotlinArgs.classpath = classPath.joinToString(File.pathSeparator) { it.toString() }
 
   kotlinArgs.moduleName = info.moduleName
-  kotlinArgs.destination = workingDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).toString()
+  val outFile = baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT))
+  val outFilePath = outFile.toString()
+  kotlinArgs.destination = outFilePath
 
-  val pluginConfigurations = configurePlugins(args = args, workingDir = workingDir, label = info.label)
+  val pluginConfigurations = configurePlugins(args = args, workingDir = baseDir, label = info.label)
 
   fun printOptions() {
     wrapOutput(out, info.label, classifier = "K2JVM Compiler Arguments") {
@@ -67,12 +79,63 @@ internal suspend fun compileKotlinForJvm(
     config.put(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE, true)
   }
 
+  config.put(JVMConfigurationKeys.OUTPUT_JAR, outFile.toFile())
+
   coroutineContext.ensureActive()
 
   val rootDisposable = Disposer.newDisposable("Disposable for Bazel Kotlin Compiler")
   var code = try {
     loadPlugins(configuration = config, pluginConfigurations = pluginConfigurations)
-    k2jvm(args = kotlinArgs, config = config, rootDisposable = rootDisposable).code
+
+    val moduleName = info.moduleName
+    config.put(CommonConfigurationKeys.MODULE_NAME, moduleName)
+
+    val module = ModuleBuilder(moduleName, outFilePath, "java-production")
+
+    args.optional(JvmBuilderFlags.FRIENDS)?.let { value ->
+      for (path in value) {
+        module.addFriendDir(baseDir.resolve(path).normalize().toString())
+      }
+    }
+
+    var isJava9Module =  false
+
+    val moduleInfoNameSuffix = File.separatorChar + MODULE_INFO_FILE
+    for (source in sources) {
+      val path = source.toString()
+      if (path.endsWith(".java")) {
+        module.addJavaSourceRoot(JavaRootPath(path, null))
+        config.addJavaSourceRoot(source.toFile(), null)
+        if (!isJava9Module) {
+          isJava9Module = path.endsWith(moduleInfoNameSuffix)
+        }
+      }
+      else {
+        module.addSourceFiles(path)
+        config.addKotlinSourceRoot(path = path, isCommon = false, hmppModuleName = null)
+      }
+    }
+
+    for (path in classPath) {
+      module.addClasspathEntry(path.toString())
+    }
+
+    for (file in classPath) {
+      val ioFile = file.toFile()
+      if (isJava9Module) {
+        config.add(CLIConfigurationKeys.CONTENT_ROOTS, JvmModulePathRoot(ioFile))
+      }
+      config.add(CLIConfigurationKeys.CONTENT_ROOTS, JvmClasspathRoot(ioFile))
+    }
+
+    config.addAll(JVMConfigurationKeys.MODULES, listOf(module))
+
+    k2jvm(
+      config = config,
+      rootDisposable = rootDisposable,
+      module = module,
+      messageCollector = messageCollector,
+    ).code
   }
   finally {
     Disposer.dispose(rootDisposable)
@@ -92,7 +155,7 @@ internal suspend fun compileKotlinForJvm(
 
   val renderer = object : PlainTextMessageRenderer(/* colorEnabled = */ true) {
     override fun getPath(location: CompilerMessageSourceLocation): String {
-      return workingDir.relativize(Path.of(location.path)).toString()
+      return baseDir.relativize(Path.of(location.path)).toString()
     }
 
     override fun getName(): String = "RelativePath"
@@ -111,14 +174,14 @@ private inline fun wrapOutput(out: Writer, label: String, classifier: String, ta
   out.appendLine("\u001B[1m=============== END of $classifier ($label) ===============\u001B[0m")
 }
 
-private fun createClasspath(args: ArgMap<JvmBuilderFlags>, baseDir: Path): String {
+private fun createClasspath(args: ArgMap<JvmBuilderFlags>, baseDir: Path): List<Path> {
   if (!args.boolFlag(JvmBuilderFlags.REDUCED_CLASSPATH_MODE)) {
-    return args.mandatory(JvmBuilderFlags.CLASSPATH).joinToString(File.pathSeparator) { baseDir.resolve(it).normalize().toString() }
+    return args.mandatory(JvmBuilderFlags.CLASSPATH).map { baseDir.resolve(it).normalize() }
   }
 
   val directDependencies = args.mandatory(JvmBuilderFlags.DIRECT_DEPENDENCIES)
 
-  val depsArtifacts = args.optional(JvmBuilderFlags.DEPS_ARTIFACTS) ?: return directDependencies.joinToString(File.pathSeparator)
+  val depsArtifacts = args.optional(JvmBuilderFlags.DEPS_ARTIFACTS) ?: return directDependencies.map { baseDir.resolve(it).normalize() }
   val transitiveDepsForCompile = LinkedHashSet<String>()
   for (jdepsPath in depsArtifacts) {
     BufferedInputStream(Files.newInputStream(Path.of(jdepsPath))).use {
@@ -131,7 +194,7 @@ private fun createClasspath(args: ArgMap<JvmBuilderFlags>, baseDir: Path): Strin
     }
   }
 
-  return (directDependencies.asSequence() + transitiveDepsForCompile).joinToString(File.pathSeparator)
+  return (directDependencies.asSequence() + transitiveDepsForCompile).map { baseDir.resolve(it).normalize() }.toList()
 }
 
 private data class LogMessage(

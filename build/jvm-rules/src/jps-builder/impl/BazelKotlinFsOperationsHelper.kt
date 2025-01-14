@@ -1,0 +1,148 @@
+@file:Suppress("HardCodedStringLiteral", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "DialogTitleCapitalization", "UnstableApiUsage", "ReplaceGetOrSet")
+package org.jetbrains.bazel.jvm.jps.impl
+
+import com.intellij.openapi.util.io.FileUtilRt
+import org.jetbrains.bazel.jvm.jps.RequestLog
+import org.jetbrains.jps.ModuleChunk
+import org.jetbrains.jps.builders.BuildRootDescriptor
+import org.jetbrains.jps.builders.FileProcessor
+import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
+import org.jetbrains.jps.builders.java.JavaBuilderUtil
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
+import org.jetbrains.jps.incremental.BuildOperations
+import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.incremental.FSOperations
+import org.jetbrains.jps.incremental.FSOperations.addCompletelyMarkedDirtyTarget
+import org.jetbrains.jps.incremental.ModuleBuildTarget
+import org.jetbrains.jps.incremental.fs.CompilationRound
+import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
+import java.io.File
+import java.nio.file.Path
+
+internal class BazelKotlinFsOperationsHelper(
+  private val context: CompileContext,
+  private val chunk: ModuleChunk,
+  private val dirtyFilesHolder: KotlinDirtySourceFilesHolder,
+  private val log: RequestLog,
+) {
+  internal var hasMarkedDirty = false
+    private set
+
+  fun markChunk(excludeFiles: Set<File>) {
+    val target = chunk.targets.single()
+    val filter = { file: Path ->
+      val filePath = file.toString()
+      when {
+        !(FileUtilRt.extensionEquals(filePath, "kt") || FileUtilRt.extensionEquals(filePath, "kts")) -> {
+          false
+        }
+        excludeFiles.contains(file.toFile()) -> {
+          false
+        }
+        else -> {
+          hasMarkedDirty = true
+          true
+        }
+      }
+    }
+
+    var completelyMarkedDirty = true
+    val stampStorage = context.projectDescriptor.dataManager.getFileStampStorage(target)
+    for (rootDescriptor in (context.projectDescriptor.buildRootIndex as BazelBuildRootIndex).descriptors) {
+      val file = rootDescriptor.rootFile
+      if (!filter(file)) {
+        completelyMarkedDirty = false
+        continue
+      }
+
+      // if it is a full project rebuild, all storages are already completely cleared;
+      // so passing null because there is no need to access the storage to clear non-existing data
+      val marker = if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) null else stampStorage
+      context.projectDescriptor.fsState.markDirty(context, CompilationRound.NEXT, file, rootDescriptor, marker, false)
+    }
+
+    if (completelyMarkedDirty) {
+      addCompletelyMarkedDirtyTarget(context, target)
+    }
+  }
+
+  internal fun markFilesForCurrentRound(files: Sequence<File>) {
+    val buildRootIndex = context.projectDescriptor.buildRootIndex as BazelBuildRootIndex
+    for (file in files) {
+      val root = buildRootIndex.fileToDescriptors.get(file.toPath())
+      if (root != null) {
+        dirtyFilesHolder.byTarget[root.target]?._markDirty(file, root)
+      }
+    }
+
+    markFilesImpl(files, currentRound = true) { it.exists() }
+  }
+
+  /**
+   * Marks given [files] as dirty for current round and given [target] of [chunk].
+   */
+  fun markFilesForCurrentRound(target: ModuleBuildTarget, files: Collection<File>) {
+    require(target in chunk.targets)
+
+    val targetDirtyFiles = dirtyFilesHolder.byTarget.getValue(target)
+    val dirtyFileToRoot = HashMap<File, JavaSourceRootDescriptor>()
+    for (file in files) {
+      val root = context.projectDescriptor.buildRootIndex
+        .findAllParentDescriptors<BuildRootDescriptor>(file, context)
+        .single { sourceRoot -> sourceRoot.target == target }
+
+      targetDirtyFiles._markDirty(file, root as JavaSourceRootDescriptor)
+      dirtyFileToRoot[file] = root
+    }
+
+    markFilesImpl(files.asSequence(), currentRound = true) { it.exists() }
+    cleanOutputsForNewDirtyFilesInCurrentRound(target, dirtyFileToRoot)
+  }
+
+  private fun cleanOutputsForNewDirtyFilesInCurrentRound(target: ModuleBuildTarget, dirtyFiles: Map<File, JavaSourceRootDescriptor>) {
+    val dirtyFilesHolder = object : DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
+      override fun processDirtyFiles(processor: FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>) {
+        for ((file, root) in dirtyFiles) {
+          processor.apply(target, file, root)
+        }
+      }
+
+      override fun hasDirtyFiles(): Boolean = dirtyFiles.isNotEmpty()
+    }
+    BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder)
+  }
+
+  fun markFiles(files: Sequence<File>) {
+    markFilesImpl(files, currentRound = false) { it.exists() }
+  }
+
+  fun markInChunkOrDependents(files: Sequence<File>, excludeFiles: Set<File>) {
+    markFilesImpl(files, currentRound = false) {
+      !excludeFiles.contains(it) && it.exists()
+    }
+  }
+
+  private inline fun markFilesImpl(
+    files: Sequence<File>,
+    currentRound: Boolean,
+    shouldMark: (File) -> Boolean
+  ) {
+    val filesToMark = files.filterTo(HashSet(), shouldMark)
+    if (filesToMark.isEmpty()) {
+      return
+    }
+
+    val compilationRound = if (currentRound) {
+      CompilationRound.CURRENT
+    }
+    else {
+      hasMarkedDirty = true
+      CompilationRound.NEXT
+    }
+
+    for (fileToMark in filesToMark) {
+      FSOperations.markDirty(context, compilationRound, fileToMark)
+    }
+    log.debug("Mark dirty: $filesToMark ($compilationRound)")
+  }
+}

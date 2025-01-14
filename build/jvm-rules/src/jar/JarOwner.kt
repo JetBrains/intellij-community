@@ -1,20 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
-import org.jetbrains.intellij.build.io.W_OVERWRITE
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
-import org.jetbrains.intellij.build.io.ZipIndexWriter
+import org.jetbrains.intellij.build.io.writeZipUsingTempFile
+import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
+import org.jetbrains.kotlin.name.FqName
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.Attributes
 import java.util.jar.JarFile
 import java.util.jar.Manifest
-import java.util.zip.ZipEntry
-import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
-import org.jetbrains.kotlin.name.FqName
-import java.nio.channels.FileChannel
-import java.nio.file.Files
 
 data class JarOwner(
   @JvmField val jar: Path,
@@ -22,8 +19,7 @@ data class JarOwner(
   @JvmField val aspect: String? = null,
 ) {
   companion object {
-    // These attributes are used by JavaBuilder, Turbine, and ijar.
-    // They must all be kept in sync.
+    // These attributes are used by JavaBuilder, Turbine, and `ijar`. They must all be kept in sync.
     @JvmField
     val TARGET_LABEL = Attributes.Name("Target-Label")
 
@@ -40,17 +36,7 @@ private fun writeManifest(manifest: Manifest, out: ZipArchiveOutputStream) {
 
   val manifestOut = ByteArrayOutputStream()
   manifest.write(manifestOut)
-
-  val data = manifestOut.toByteArray()
-  val size = data.size
-  out.writeDataRawEntry(
-    data = ByteBuffer.wrap(data),
-    name = MANIFEST_NAME_BYTES,
-    size = size,
-    compressedSize = size,
-    method = ZipEntry.STORED,
-    crc = 0,
-  )
+  out.writeDataRawEntryWithoutCrc(data = ByteBuffer.wrap(manifestOut.toByteArray()), name = MANIFEST_NAME_BYTES)
 }
 
 fun createJar(
@@ -63,11 +49,7 @@ fun createJar(
   outFile.parent?.let {
     Files.createDirectories(it)
   }
-  ZipArchiveOutputStream(
-    channel = FileChannel.open(outFile, W_OVERWRITE),
-    zipIndexWriter = ZipIndexWriter(indexWriter = null),
-  ).use { out ->
-
+  writeZipUsingTempFile(outFile, indexWriter = null) { out ->
     val manifest = Manifest()
     val attributes = manifest.mainAttributes
     attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0")
@@ -83,14 +65,7 @@ fun createJar(
 
     for (outputFile in outputFiles.asList()) {
       val data = outputFile.asByteArray()
-      out.writeDataRawEntry(
-        data = ByteBuffer.wrap(data),
-        name = outputFile.relativePath.toByteArray(),
-        size = data.size,
-        compressedSize = data.size,
-        method = ZipEntry.STORED,
-        crc = 0,
-      )
+      out.writeDataRawEntryWithoutCrc(data = ByteBuffer.wrap(data), name = outputFile.relativePath.toByteArray())
     }
   }
 }

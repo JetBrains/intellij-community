@@ -15,6 +15,7 @@ kt_jvm_library(
         "//zip:build-zip",
         "//src/jps-builder:jps-standalone",
         "//:kotlin-metadata",
+        "//src/abi"
     ],
     visibility = ["//visibility:public"],
 )

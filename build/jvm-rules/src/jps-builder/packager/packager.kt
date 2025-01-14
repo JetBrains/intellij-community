@@ -6,33 +6,35 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.bazel.jvm.abi.writeAbi
 import org.jetbrains.intellij.build.io.*
-import org.jetbrains.jps.incremental.storage.ExperimentalSourceToOutputMapping
-import org.jetbrains.org.objectweb.asm.ClassReader
-import org.jetbrains.org.objectweb.asm.ClassWriter
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
-import java.nio.file.*
-import java.nio.file.attribute.DosFileAttributeView
-import java.nio.file.attribute.PosixFileAttributeView
-import java.nio.file.attribute.PosixFilePermission
-import java.util.zip.ZipEntry
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+
+class SourceDescriptor(
+  // absolute and normalized
+  @JvmField var sourceFile: Path,
+  @JvmField var digest: ByteArray? = null,
+  @JvmField var outputs: List<String>? = null,
+) {
+  //fun isEmpty(): Boolean = digest == null && outputs.isNullOrEmpty()
+}
 
 suspend fun packageToJar(
   outJar: Path,
   abiJar: Path?,
-  sourceToOutputMap: ExperimentalSourceToOutputMapping,
+  sourceDescriptors: Array<SourceDescriptor>,
   classOutDir: Path,
-  messageHandler: ConsoleMessageHandler
+  log: RequestLog
 ) {
   if (abiJar == null) {
     withContext(Dispatchers.IO) {
       createJar(
         outJar = outJar,
-        sourceToOutputMap = sourceToOutputMap,
+        sourceDescriptors = sourceDescriptors,
         classOutDir = classOutDir,
         abiChannel = null,
-        messageHandler = messageHandler,
+        messageHandler = log,
       )
     }
     return
@@ -43,132 +45,59 @@ suspend fun packageToJar(
     launch {
       createJar(
         outJar = outJar,
-        sourceToOutputMap = sourceToOutputMap,
+        sourceDescriptors = sourceDescriptors,
         classOutDir = classOutDir,
         abiChannel = classChannel,
-        messageHandler = messageHandler,
+        messageHandler = log,
       )
       classChannel.close()
     }
 
-    writeZipUsingTempFile(abiJar, indexWriter = null) { stream ->
-      val classesToBeDeleted = HashSet<String>()
-      for ((name, classData) in classChannel) {
-        val classWriter = ClassWriter(0)
-        val abiClassVisitor = AbiClassVisitor(classVisitor = classWriter, classesToBeDeleted = classesToBeDeleted)
-        ClassReader(classData).accept(abiClassVisitor, 0)
-        if (!abiClassVisitor.isApiClass) {
-          continue
-        }
-
-        val abiData = classWriter.toByteArray()
-        stream.writeDataRawEntry(ByteBuffer.wrap(abiData), name, abiData.size, abiData.size, ZipEntry.STORED, 0)
-      }
-
-      if (classesToBeDeleted.isNotEmpty()) {
-        messageHandler.debug("Non-abi classes to be deleted: ${classesToBeDeleted.size}")
-      }
-    }
+    writeAbi(abiJar, classChannel)
+    //if (classesToBeDeleted.isNotEmpty()) {
+    //  messageHandler.debug("Non-abi classes to be deleted: ${classesToBeDeleted.size}")
+    //}
   }
 }
 
 private suspend fun createJar(
   outJar: Path,
-  sourceToOutputMap: ExperimentalSourceToOutputMapping,
+  sourceDescriptors: Array<SourceDescriptor>,
   classOutDir: Path,
   abiChannel: Channel<Pair<ByteArray, ByteArray>>?,
-  messageHandler: ConsoleMessageHandler,
+  messageHandler: RequestLog,
 ) {
   val packageIndexBuilder = PackageIndexBuilder()
   writeZipUsingTempFile(outJar, packageIndexBuilder.indexWriter) { stream ->
-    // MVStore like a TreeMap, keys already sorted
-    //val all = sourceToOutputMap.outputs().toList()
-    //val unique = LinkedHashSet(all)
-    //if (unique.size != all.size) {
-    //  messageHandler.out.appendLine("Duplicated outputs: ${all.groupingBy { it }
-    //          .eachCount()
-    //          .filter { it.value > 1 }
-    //          .keys
-    //  }")
-    //}
+    // output file maybe associated with more than one output file
+    val uniqueGuard = HashSet<String>(sourceDescriptors.size + 10)
 
-    for (path in sourceToOutputMap.outputs().toList()) {
-      // duplicated - ignore it
-      if (path.endsWith(".kotlin_module")) {
-        continue
-      }
+    for (sourceDescriptor in sourceDescriptors) {
+      for (path in sourceDescriptor.outputs ?: continue) {
+        // duplicated - ignore it
+        if (!uniqueGuard.add(path)) {
+          continue
+        }
 
-      packageIndexBuilder.addFile(name = path, addClassDir = false)
-      try {
-        val file = classOutDir.resolve(path)
-        if (abiChannel != null && path.endsWith(".class")) {
-          val name = path.toByteArray()
-          val classData = stream.fileAndGetData(name, file)
-          abiChannel.send(name to classData)
+        packageIndexBuilder.addFile(name = path, addClassDir = false)
+        try {
+          val file = classOutDir.resolve(path)
+          if (abiChannel != null && path.endsWith(".class")) {
+            val name = path.toByteArray()
+            val classData = stream.fileAndGetData(name, file)
+            abiChannel.send(name to classData)
+          }
+          else {
+            stream.file(nameString = path, file = file)
+          }
         }
-        else {
-          stream.file(nameString = path, file = file)
+        catch (_: NoSuchFileException) {
+          messageHandler.warn("output file exists in src-to-output mapping, but not found on disk: $path (classOutDir=$classOutDir)")
         }
-      }
-      catch (_: NoSuchFileException) {
-        messageHandler.warn("output file exists in src-to-output mapping, but not found on disk: $path (classOutDir=$classOutDir)")
       }
     }
     packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
   }
-}
-
-private inline fun writeZipUsingTempFile(file: Path, indexWriter: IkvIndexBuilder?, task: (ZipArchiveOutputStream) -> Unit) {
-  val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
-  var moved = false
-  try {
-    ZipArchiveOutputStream(
-      channel = FileChannel.open(tempFile, WRITE),
-      zipIndexWriter = ZipIndexWriter(indexWriter),
-    ).use {
-      task(it)
-    }
-
-    try {
-      moveAtomic(tempFile, file)
-    }
-    catch (e: AccessDeniedException) {
-      makeFileWritable(file, e)
-      moveAtomic(tempFile, file)
-    }
-    moved = true
-  }
-  finally {
-    if (!moved) {
-      Files.deleteIfExists(tempFile)
-    }
-  }
-}
-
-private fun moveAtomic(from: Path, to: Path) {
-  try {
-    Files.move(from, to, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-  }
-  catch (_: AtomicMoveNotSupportedException) {
-    Files.move(from, to, StandardCopyOption.REPLACE_EXISTING)
-  }
-}
-
-private fun makeFileWritable(file: Path, cause: Throwable) {
-  val posixView = Files.getFileAttributeView<PosixFileAttributeView?>(file, PosixFileAttributeView::class.java)
-  if (posixView != null) {
-    val permissions = posixView.readAttributes().permissions()
-    permissions.add(PosixFilePermission.OWNER_WRITE)
-    posixView.setPermissions(permissions)
-  }
-
-  val dosView = Files.getFileAttributeView<DosFileAttributeView?>(file, DosFileAttributeView::class.java)
-  @Suppress("IfThenToSafeAccess")
-  if (dosView != null) {
-    dosView.setReadOnly(false)
-  }
-
-  throw UnsupportedOperationException("Unable to modify file attributes. Unsupported platform.", cause)
 }
 
 

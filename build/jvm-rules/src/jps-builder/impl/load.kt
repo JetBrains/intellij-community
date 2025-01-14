@@ -30,6 +30,7 @@ internal fun loadJpsProject(
   jpsModel: JpsModel,
   moduleTarget: BazelModuleBuildTarget,
   relativizer: PathRelativizerService,
+  buildDataProvider: BazelBuildDataProvider,
 ): ProjectDescriptor {
   val dataPaths = BuildDataPathsImpl(dataStorageRoot)
   val dataManager = BuildDataManager.createSingleDb(
@@ -37,7 +38,7 @@ internal fun loadJpsProject(
     /* targetStateManager = */ BazelBuildTargetStateManager(loadTargetState(storageManager)),
     /* relativizer = */ relativizer,
     /* versionManager = */ NoopBuildDataVersionManager,
-    /* storageManager = */ storageManager,
+    /* buildDataProvider = */ buildDataProvider,
   )
   return ProjectDescriptor(
     /* model = */ jpsModel,

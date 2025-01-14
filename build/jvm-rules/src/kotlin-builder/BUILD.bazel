@@ -1,6 +1,7 @@
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:src/jvm-args.bzl", "get_jvm_flags")
 
 kt_jvm_library(
     name = "worker-lib",
@@ -24,19 +25,19 @@ kt_jvm_library(
     visibility = ["//visibility:public"],
 )
 
+
+
 java_binary(
     name = "worker-jvm",
     runtime_deps = [":worker-lib"],
     main_class = "org.jetbrains.bazel.jvm.kotlin.KotlinBuildWorker",
-    jvm_flags = [
-        "-Xms1000m",
-        "-Xmx6000m",
-        "-Djava.awt.headless=true",
-        "-Dapple.awt.UIElement=true",
-        "-Dkotlin.environment.keepalive=true",
-        # Kotlin Compiler sets it
-        "-Didea.io.use.nio2=true",
-        "-Dzip.handler.uses.crc.instead.of.timestamp=true",
-    ],
+    jvm_flags = get_jvm_flags([]),
     visibility = ["//visibility:public"],
+)
+
+java_binary(
+    name = "test-worker",
+    runtime_deps = [":worker-lib"],
+    main_class = "org.jetbrains.bazel.jvm.kotlin.TestKotlinBuildWorker",
+    jvm_flags = get_jvm_flags([]),
 )

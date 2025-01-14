@@ -4,6 +4,9 @@ package org.jetbrains.intellij.build.io
 import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.file.*
+import java.nio.file.attribute.DosFileAttributeView
+import java.nio.file.attribute.PosixFileAttributeView
+import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.zip.Deflater
 
@@ -198,4 +201,65 @@ inline fun archiveDir(startDir: Path, addFile: (file: Path) -> Unit, excludes: L
       }
     }
   }
+}
+
+inline fun writeZipUsingTempFile(file: Path, indexWriter: IkvIndexBuilder?, task: (ZipArchiveOutputStream) -> Unit) {
+  writeFileUsingTempFile(file) { tempFile ->
+    ZipArchiveOutputStream(
+      channel = FileChannel.open(tempFile, WRITE),
+      zipIndexWriter = ZipIndexWriter(indexWriter),
+    ).use {
+      task(it)
+    }
+  }
+}
+
+inline fun writeFileUsingTempFile(file: Path, task: (tempFile: Path) -> Unit) {
+  val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
+  var moved = false
+  try {
+    task(tempFile)
+
+    try {
+      moveAtomic(tempFile, file)
+    }
+    catch (e: AccessDeniedException) {
+      makeFileWritable(file, e)
+      moveAtomic(tempFile, file)
+    }
+    moved = true
+  }
+  finally {
+    if (!moved) {
+      Files.deleteIfExists(tempFile)
+    }
+  }
+}
+
+@PublishedApi
+internal fun moveAtomic(from: Path, to: Path) {
+  try {
+    Files.move(from, to, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+  }
+  catch (_: AtomicMoveNotSupportedException) {
+    Files.move(from, to, StandardCopyOption.REPLACE_EXISTING)
+  }
+}
+
+@PublishedApi
+internal fun makeFileWritable(file: Path, cause: Throwable) {
+  val posixView = Files.getFileAttributeView<PosixFileAttributeView?>(file, PosixFileAttributeView::class.java)
+  if (posixView != null) {
+    val permissions = posixView.readAttributes().permissions()
+    permissions.add(PosixFilePermission.OWNER_WRITE)
+    posixView.setPermissions(permissions)
+  }
+
+  val dosView = Files.getFileAttributeView<DosFileAttributeView?>(file, DosFileAttributeView::class.java)
+  @Suppress("IfThenToSafeAccess")
+  if (dosView != null) {
+    dosView.setReadOnly(false)
+  }
+
+  throw UnsupportedOperationException("Unable to modify file attributes. Unsupported platform.", cause)
 }

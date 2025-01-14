@@ -3,8 +3,6 @@
 
 package org.jetbrains.bazel.jvm.jps
 
-import org.jetbrains.bazel.jvm.jps.impl.BazelKotlinBuilder
-import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.builders.AdditionalRootsProviderService
 import org.jetbrains.jps.builders.PreloadedDataExtension
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool
@@ -13,11 +11,9 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.BuilderService
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
-import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.service.JpsServiceManager
 import org.jetbrains.jps.service.SharedThreadPool
-import org.jetbrains.kotlin.jps.incremental.KotlinCompilerReferenceIndexBuilder
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -117,14 +113,8 @@ private object BazelJavaBuilderService : BuilderService() {
   // remove ResourcesTargetType.ALL_TYPES and ProjectDependenciesResolver.ProjectDependenciesResolvingTargetType.INSTANCE
   override fun getTargetTypes() = listOf(JavaModuleBuildTargetType.PRODUCTION)
 
-// remove RmiStubsGenerator and DependencyResolvingBuilder
+  // remove RmiStubsGenerator and DependencyResolvingBuilder
   override fun createModuleLevelBuilders(): List<ModuleLevelBuilder> {
-    return listOf(
-      JavaBuilder(SharedThreadPool.getInstance()),
-      //NotNullInstrumentingBuilder(),
-      JavaBackwardReferenceIndexBuilder(),
-      BazelKotlinBuilder(),
-      KotlinCompilerReferenceIndexBuilder(),
-    )
+    throw IllegalStateException("must not be called")
   }
 }
