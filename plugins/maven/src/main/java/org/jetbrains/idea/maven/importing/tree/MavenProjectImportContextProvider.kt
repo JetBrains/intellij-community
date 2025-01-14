@@ -1,188 +1,161 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing.tree;
+package org.jetbrains.idea.maven.importing.tree
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.StandardMavenModuleType;
-import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.MavenImportingSettings;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectChanges;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.utils.MavenLog;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.idea.maven.importing.MavenImportUtil
+import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
+import org.jetbrains.idea.maven.importing.StandardMavenModuleType
+import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenImportingSettings
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectChanges
+import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.utils.MavenLog
+import java.util.*
+import java.util.function.Function
 
-import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.concat;
-import static org.jetbrains.idea.maven.importing.MavenImportUtil.*;
+internal class MavenProjectImportContextProvider(
+  private val myProject: Project,
+  private val myProjectsTree: MavenProjectsTree,
+  private val myImportingSettings: MavenImportingSettings,
+  private val myMavenProjectToModuleName: Map<MavenProject, String>,
+) {
 
-public class MavenProjectImportContextProvider {
-  protected final @NotNull Project myProject;
-  protected final @NotNull MavenProjectsTree myProjectsTree;
-  protected final @NotNull MavenImportingSettings myImportingSettings;
-  protected final @NotNull Map<MavenProject, String> myMavenProjectToModuleName;
+  fun getContext(projectsWithChanges: Map<MavenProject, MavenProjectChanges>): MavenModuleImportContext {
+    val importDataContext = getModuleImportDataContext(projectsWithChanges)
+    val importDataDependencyContext = getFlattenModuleDataDependencyContext(importDataContext)
 
-  public MavenProjectImportContextProvider(@NotNull Project project,
-                                           @NotNull MavenProjectsTree projectsTree,
-                                           @NotNull MavenImportingSettings importingSettings,
-                                           @NotNull Map<MavenProject, String> mavenProjectToModuleName) {
-    myProject = project;
-    myProjectsTree = projectsTree;
-    myImportingSettings = importingSettings;
-    myMavenProjectToModuleName = mavenProjectToModuleName;
-  }
-
-  public MavenModuleImportContext getContext(@NotNull Map<MavenProject, MavenProjectChanges> projectsWithChanges) {
-    ModuleImportDataContext importDataContext = getModuleImportDataContext(projectsWithChanges);
-    ModuleImportDataDependencyContext importDataDependencyContext = getFlattenModuleDataDependencyContext(importDataContext);
-
-    return new MavenModuleImportContext(
+    return MavenModuleImportContext(
       importDataDependencyContext.changedModuleDataWithDependencies,
       importDataDependencyContext.allModuleDataWithDependencies,
       importDataContext.moduleNameByProject,
       importDataContext.hasChanges
-    );
+    )
   }
 
-  private @NotNull ModuleImportDataContext getModuleImportDataContext(@NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges) {
-    boolean hasChanges = false;
-    List<MavenProjectImportData> allModules = new ArrayList<>();
-    Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId = new TreeMap<>(Comparator.comparing(MavenId::getKey));
+  private fun getModuleImportDataContext(projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>): ModuleImportDataContext {
+    var hasChanges = false
+    val allModules: MutableList<MavenProjectImportData> = ArrayList<MavenProjectImportData>()
+    val moduleImportDataByMavenId: MutableMap<MavenId, MavenProjectImportData> = TreeMap<MavenId, MavenProjectImportData>(
+      Comparator.comparing<MavenId?, String?>(Function { obj: MavenId? -> obj!!.getKey() }))
 
-    for (var each : projectsToImportWithChanges.entrySet()) {
-      MavenProject project = each.getKey();
-      MavenProjectChanges changes = each.getValue();
+    for (each in projectsToImportWithChanges.entries) {
+      val project = each.key
+      val changes = each.value
 
-      String moduleName = getModuleName(project);
+      val moduleName = getModuleName(project)
       if (StringUtil.isEmpty(moduleName)) {
-        MavenLog.LOG.warn("[import context] empty module name for project " + project);
-        continue;
+        MavenLog.LOG.warn("[import context] empty module name for project $project")
+        continue
       }
 
-      MavenProjectImportData mavenProjectImportData = getModuleImportData(project, moduleName, changes);
+      val mavenProjectImportData = getModuleImportData(project, moduleName!!, changes)
       if (changes.hasChanges()) {
-        hasChanges = true;
+        hasChanges = true
       }
-      moduleImportDataByMavenId.put(project.getMavenId(), mavenProjectImportData);
-      allModules.add(mavenProjectImportData);
+      moduleImportDataByMavenId.put(project.mavenId, mavenProjectImportData)
+      allModules.add(mavenProjectImportData)
     }
 
-    return new ModuleImportDataContext(allModules, myMavenProjectToModuleName, moduleImportDataByMavenId, hasChanges);
+    return ModuleImportDataContext(allModules, myMavenProjectToModuleName, moduleImportDataByMavenId, hasChanges)
   }
 
-  protected @Nullable String getModuleName(MavenProject project) {
-    return myMavenProjectToModuleName.get(project);
+  private fun getModuleName(project: MavenProject): String? {
+    return myMavenProjectToModuleName[project]
   }
 
-  private @NotNull MavenProjectImportContextProvider.ModuleImportDataDependencyContext getFlattenModuleDataDependencyContext(
-    ModuleImportDataContext context) {
-    List<MavenTreeModuleImportData> allModuleDataWithDependencies = new ArrayList<>();
-    List<MavenTreeModuleImportData> changedModuleDataWithDependencies = new ArrayList<>();
+  private fun getFlattenModuleDataDependencyContext(context: ModuleImportDataContext): ModuleImportDataDependencyContext {
+    val allModuleDataWithDependencies: MutableList<MavenTreeModuleImportData> = ArrayList<MavenTreeModuleImportData>()
+    val changedModuleDataWithDependencies: MutableList<MavenTreeModuleImportData> = ArrayList<MavenTreeModuleImportData>()
 
-    MavenModuleImportDependencyProvider dependencyProvider =
-      new MavenModuleImportDependencyProvider(context.moduleImportDataByMavenId, myImportingSettings, myProjectsTree);
+    val dependencyProvider =
+      MavenModuleImportDependencyProvider(context.moduleImportDataByMavenId, myImportingSettings, myProjectsTree)
 
-    for (MavenProjectImportData importData : context.importData) {
-      MavenModuleImportDataWithDependencies importDataWithDependencies = dependencyProvider.getDependencies(importData);
-      List<MavenTreeModuleImportData> mavenModuleImportDataList = splitToModules(importDataWithDependencies);
-      for (MavenTreeModuleImportData moduleImportData : mavenModuleImportDataList) {
-        if (moduleImportData.getChanges().hasChanges()) changedModuleDataWithDependencies.add(moduleImportData);
+    for (importData in context.importData) {
+      val importDataWithDependencies = dependencyProvider.getDependencies(importData)
+      val mavenModuleImportDataList = splitToModules(importDataWithDependencies)
+      for (moduleImportData in mavenModuleImportDataList) {
+        if (moduleImportData.changes.hasChanges()) changedModuleDataWithDependencies.add(moduleImportData)
 
-        allModuleDataWithDependencies.add(moduleImportData);
+        allModuleDataWithDependencies.add(moduleImportData)
       }
     }
 
-    return new ModuleImportDataDependencyContext(allModuleDataWithDependencies, changedModuleDataWithDependencies);
+    return ModuleImportDataDependencyContext(allModuleDataWithDependencies, changedModuleDataWithDependencies)
   }
 
-  protected static @NotNull List<MavenTreeModuleImportData> splitToModules(MavenModuleImportDataWithDependencies dataWithDependencies) {
-    SplittedMainAndTestModules mainAndTestModules = dataWithDependencies.getModuleImportData().getSplittedMainAndTestModules();
-    MavenProject project = dataWithDependencies.getModuleImportData().getMavenProject();
-    ModuleData moduleData = dataWithDependencies.getModuleImportData().getModuleData();
-    MavenProjectChanges changes = dataWithDependencies.getModuleImportData().getChanges();
+  private fun getModuleImportData(project: MavenProject, moduleName: String, changes: MavenProjectChanges): MavenProjectImportData {
+    val setUpJavaVersions = MavenImportUtil.getMavenJavaVersions(project)
+    val javaVersions = adjustJavaVersions(setUpJavaVersions)
 
-    if (mainAndTestModules != null) {
-      List<MavenTreeModuleImportData> result = new ArrayList<>(3);
-      result.add(new MavenTreeModuleImportData(
-        project, moduleData, Collections.emptyList(), dataWithDependencies.getModuleImportData().getChanges()
-      ));
-      result.add(new MavenTreeModuleImportData(
-        project, mainAndTestModules.getMainData(), dataWithDependencies.getMainDependencies(), changes
-      ));
-      List<MavenImportDependency<?>> dependencies = concat(dataWithDependencies.getTestDependencies(),
-                                                           dataWithDependencies.getMainDependencies());
-      result.add(new MavenTreeModuleImportData(project, mainAndTestModules.getTestData(), dependencies, changes
-      ));
-      return result;
-    }
+    val type = MavenImportUtil.getModuleType(project, javaVersions)
 
-    return List.of(new MavenTreeModuleImportData(
-      project, moduleData, concat(dataWithDependencies.getMainDependencies(), dataWithDependencies.getTestDependencies()), changes
-    ));
-  }
-
-  protected MavenProjectImportData getModuleImportData(MavenProject project,
-                                                       String moduleName,
-                                                       MavenProjectChanges changes) {
-    MavenJavaVersionHolder setUpJavaVersions = getMavenJavaVersions(project);
-    MavenJavaVersionHolder javaVersions = adjustJavaVersions(setUpJavaVersions);
-
-    StandardMavenModuleType type = getModuleType(project, javaVersions);
-
-    ModuleData moduleData = new ModuleData(moduleName, type, javaVersions);
+    val moduleData = ModuleData(moduleName, type, javaVersions)
     if (type != StandardMavenModuleType.COMPOUND_MODULE) {
-      return new MavenProjectImportData(project, moduleData, changes, null);
+      return MavenProjectImportData(project, moduleData, changes, null)
     }
-    String moduleMainName = moduleName + MAIN_SUFFIX;
-    ModuleData mainData = new ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, javaVersions);
+    val moduleMainName = moduleName + MavenImportUtil.MAIN_SUFFIX
+    val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, javaVersions)
 
-    String moduleTestName = moduleName + TEST_SUFFIX;
-    ModuleData testData = new ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, javaVersions);
+    val moduleTestName = moduleName + MavenImportUtil.TEST_SUFFIX
+    val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, javaVersions)
 
-    SplittedMainAndTestModules mainAndTestModules = new SplittedMainAndTestModules(mainData, testData);
-    return new MavenProjectImportData(project, moduleData, changes, mainAndTestModules);
+    val mainAndTestModules = SplittedMainAndTestModules(mainData, testData)
+    return MavenProjectImportData(project, moduleData, changes, mainAndTestModules)
   }
 
-  private MavenJavaVersionHolder adjustJavaVersions(MavenJavaVersionHolder holder) {
-    return new MavenJavaVersionHolder(
-      holder.sourceLevel == null ? null : adjustLevelAndNotify(myProject, holder.sourceLevel),
-      holder.targetLevel == null ? null : adjustLevelAndNotify(myProject, holder.targetLevel),
-      holder.testSourceLevel == null ? null : adjustLevelAndNotify(myProject, holder.testSourceLevel),
-      holder.testTargetLevel == null ? null : adjustLevelAndNotify(myProject, holder.testTargetLevel),
+  private fun adjustJavaVersions(holder: MavenJavaVersionHolder): MavenJavaVersionHolder {
+    return MavenJavaVersionHolder(
+      if (holder.sourceLevel == null) null else adjustLevelAndNotify(myProject, holder.sourceLevel),
+      if (holder.targetLevel == null) null else adjustLevelAndNotify(myProject, holder.targetLevel),
+      if (holder.testSourceLevel == null) null else adjustLevelAndNotify(myProject, holder.testSourceLevel),
+      if (holder.testTargetLevel == null) null else adjustLevelAndNotify(myProject, holder.testTargetLevel),
       holder.hasExecutionsForTests,
       holder.hasTestCompilerArgs
-    );
+    )
   }
 
-  private static class ModuleImportDataContext {
-    final @NotNull List<MavenProjectImportData> importData;
-    final @NotNull Map<MavenProject, String> moduleNameByProject;
-    final @NotNull Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;
-    final boolean hasChanges;
+  private class ModuleImportDataContext(
+    val importData: List<MavenProjectImportData>,
+    val moduleNameByProject: Map<MavenProject, String>,
+    val moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
+    val hasChanges: Boolean,
+  )
 
-    private ModuleImportDataContext(@NotNull List<MavenProjectImportData> importData,
-                                    @NotNull Map<MavenProject, String> moduleNameByProject,
-                                    @NotNull Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId,
-                                    boolean hasChanges) {
-      this.importData = importData;
-      this.moduleNameByProject = moduleNameByProject;
-      this.moduleImportDataByMavenId = moduleImportDataByMavenId;
-      this.hasChanges = hasChanges;
+  private class ModuleImportDataDependencyContext(
+    val allModuleDataWithDependencies: List<MavenTreeModuleImportData>,
+    val changedModuleDataWithDependencies: List<MavenTreeModuleImportData>,
+  )
+
+  private fun splitToModules(dataWithDependencies: MavenModuleImportDataWithDependencies): List<MavenTreeModuleImportData> {
+    val mainAndTestModules = dataWithDependencies.moduleImportData.splittedMainAndTestModules
+    val project = dataWithDependencies.moduleImportData.mavenProject
+    val moduleData = dataWithDependencies.moduleImportData.moduleData
+    val changes = dataWithDependencies.moduleImportData.changes
+
+    if (mainAndTestModules != null) {
+      val result = ArrayList<MavenTreeModuleImportData>(3)
+      result.add(MavenTreeModuleImportData(
+        project, moduleData, mutableListOf<MavenImportDependency<*>>(), dataWithDependencies.moduleImportData.changes
+      ))
+      result.add(MavenTreeModuleImportData(
+        project, mainAndTestModules.mainData, dataWithDependencies.mainDependencies, changes
+      ))
+      val dependencies = dataWithDependencies.testDependencies + dataWithDependencies.mainDependencies
+      result.add(MavenTreeModuleImportData(project, mainAndTestModules.testData, dependencies, changes
+      ))
+      return result
     }
-  }
 
-  private static class ModuleImportDataDependencyContext {
-    final @NotNull List<MavenTreeModuleImportData> allModuleDataWithDependencies;
-    final @NotNull List<MavenTreeModuleImportData> changedModuleDataWithDependencies;
-
-    private ModuleImportDataDependencyContext(@NotNull List<MavenTreeModuleImportData> allModuleDataWithDependencies,
-                                              @NotNull List<MavenTreeModuleImportData> changedModuleDataWithDependencies) {
-      this.allModuleDataWithDependencies = allModuleDataWithDependencies;
-      this.changedModuleDataWithDependencies = changedModuleDataWithDependencies;
-    }
+    return listOf(MavenTreeModuleImportData(
+      project, moduleData,
+      ContainerUtil.concat<MavenImportDependency<*>>(dataWithDependencies.mainDependencies, dataWithDependencies.testDependencies),
+      changes
+    ))
   }
 }
 
