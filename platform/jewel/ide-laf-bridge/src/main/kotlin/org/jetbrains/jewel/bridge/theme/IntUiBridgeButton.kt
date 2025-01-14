@@ -19,12 +19,6 @@ import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.ui.component.styling.ButtonColors
 import org.jetbrains.jewel.ui.component.styling.ButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
-import org.jetbrains.jewel.ui.component.styling.IconButtonColors
-import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
-import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
-import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonColors
-import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonMetrics
-import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 
 internal fun readDefaultButtonStyle(): ButtonStyle {
     val normalBackground =
@@ -127,78 +121,3 @@ internal fun readOutlinedButtonStyle(): ButtonStyle {
         focusOutlineAlignment = Stroke.Alignment.Center,
     )
 }
-
-internal fun readSegmentedControlButtonStyle(): SegmentedControlButtonStyle {
-    val selectedBackground = SolidColor(JBUI.CurrentTheme.SegmentedButton.SELECTED_BUTTON_COLOR.toComposeColor())
-
-    val normalBorder =
-        listOf(
-                JBUI.CurrentTheme.SegmentedButton.SELECTED_START_BORDER_COLOR.toComposeColor(),
-                JBUI.CurrentTheme.SegmentedButton.SELECTED_END_BORDER_COLOR.toComposeColor(),
-            )
-            .createVerticalBrush()
-
-    val selectedDisabledBorder =
-        listOf(
-                JBUI.CurrentTheme.Button.buttonOutlineColorStart(false).toComposeColor(),
-                JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false).toComposeColor(),
-            )
-            .createVerticalBrush()
-
-    val colors =
-        SegmentedControlButtonColors(
-            background = SolidColor(Color.Transparent),
-            backgroundPressed = selectedBackground,
-            backgroundHovered = SolidColor(JBUI.CurrentTheme.ActionButton.hoverBackground().toComposeColor()),
-            backgroundSelected = selectedBackground,
-            backgroundSelectedFocused =
-                SolidColor(JBUI.CurrentTheme.SegmentedButton.FOCUSED_SELECTED_BUTTON_COLOR.toComposeColor()),
-            content = retrieveColorOrUnspecified("Button.foreground"),
-            contentDisabled = retrieveColorOrUnspecified("Label.disabledForeground"),
-            border = normalBorder,
-            borderSelected = normalBorder,
-            borderSelectedDisabled = selectedDisabledBorder,
-            borderSelectedFocused = SolidColor(JBUI.CurrentTheme.Button.focusBorderColor(false).toComposeColor()),
-        )
-
-    val minimumSize = JBUI.CurrentTheme.Button.minimumSize().toDpSize()
-    return SegmentedControlButtonStyle(
-        colors = colors,
-        metrics =
-            SegmentedControlButtonMetrics(
-                cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
-                segmentedButtonPadding = PaddingValues(horizontal = 14.dp),
-                minSize = DpSize(minimumSize.width, minimumSize.height),
-                borderWidth = DarculaUIUtil.LW.dp,
-            ),
-    )
-}
-
-internal fun readIconButtonStyle(): IconButtonStyle =
-    IconButtonStyle(
-        metrics =
-            IconButtonMetrics(
-                cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
-                borderWidth = 1.dp,
-                padding = PaddingValues(0.dp),
-                minSize = DpSize(24.dp, 24.dp),
-            ),
-        colors =
-            IconButtonColors(
-                foregroundSelectedActivated = retrieveColorOrUnspecified("ToolWindow.Button.selectedForeground"),
-                background = Color.Unspecified,
-                backgroundDisabled = Color.Unspecified,
-                backgroundSelected = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
-                backgroundSelectedActivated = retrieveColorOrUnspecified("ToolWindow.Button.selectedBackground"),
-                backgroundPressed = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
-                backgroundHovered = retrieveColorOrUnspecified("ActionButton.hoverBackground"),
-                backgroundFocused = retrieveColorOrUnspecified("ActionButton.hoverBackground"),
-                border = Color.Unspecified,
-                borderDisabled = Color.Unspecified,
-                borderSelected = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
-                borderSelectedActivated = retrieveColorOrUnspecified("ToolWindow.Button.selectedBackground"),
-                borderFocused = Color.Unspecified,
-                borderPressed = retrieveColorOrUnspecified("ActionButton.pressedBorderColor"),
-                borderHovered = retrieveColorOrUnspecified("ActionButton.hoverBorderColor"),
-            ),
-    )
