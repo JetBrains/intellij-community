@@ -37,7 +37,7 @@ class XMixedModeSuspendContext(
 
   init {
     session.adviseOnFrameChanged { stack, _ ->
-      // we need to track when frame is changed to show the correct thread after rebuildAllViews
+      // we need to track when the current thread is changed to show the correct thread after rebuildAllViews
       setActiveThreadId(stack.nativeThreadId)
     }
   }
@@ -51,11 +51,13 @@ class XMixedModeSuspendContext(
       ?.also { logger.info("Active execution stack ${it.topFrame}") }
   }
 
-  override fun getExecutionStacks(): Array<out XExecutionStack?> {
-    return super.getExecutionStacks()
-  }
-
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
+    if (isStacksComputed.isCompleted) {
+      isStacksComputed.getCompleted().also { assert(it) }
+      container.addExecutionStack(stacksMap.values.toList(), true)
+      return
+    }
+
     mixedModeDebugCoroutineScope.launch(Dispatchers.Default) {
       try {
         computeExecutionStacksInternal(container)

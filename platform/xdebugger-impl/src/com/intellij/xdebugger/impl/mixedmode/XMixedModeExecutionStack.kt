@@ -9,7 +9,9 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStackWithNativeThreadId
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.nativeThreadId
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
+import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
 import com.intellij.xdebugger.mixedMode.MixedModeFramesBuilder
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import kotlinx.coroutines.CompletableDeferred
@@ -33,8 +35,17 @@ class XMixedModeExecutionStack(
   // TODO: If suspend context has been reset before computation of frames started, this deferred will never be completed
   // TODO: need to set it cancelled in this case to not block waiters forever
   val computedFramesMap: CompletableDeferred<Map</*low level frame*/XStackFrame, /*high level frame*/XStackFrame?>> = CompletableDeferred()
+  private var currentFrame: XStackFrame? = topFrame
 
   init {
+    // we need to track when the current frame is changed to show the correct thread after rebuildAllViews
+    (session as XDebugSessionImpl).adviseOnFrameChanged { stack, frame ->
+      if (stack !is XMixedModeExecutionStack) return@adviseOnFrameChanged
+      if (stack.getNativeThreadId() != getNativeThreadId()) return@adviseOnFrameChanged
+
+      currentFrame = frame
+    }
+
     assert((highLevelExecutionStack == null || lowLevelExecutionStack.nativeThreadId == highLevelExecutionStack.nativeThreadId))
   }
 
@@ -44,6 +55,13 @@ class XMixedModeExecutionStack(
   }
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
+    if (computedFramesMap.isCompleted) {
+      container as XStackFrameContainerEx
+      val combinedFrames = computedFramesMap.getCompleted().map { /*High frame*/it.value ?: /*Low frame*/it.key }
+      container.addStackFrames(combinedFrames, currentFrame, true)
+      return
+    }
+
     coroutineScope.launch(Dispatchers.Default) {
       try {
         computeStackFramesInternal(firstFrameIndex, container)
