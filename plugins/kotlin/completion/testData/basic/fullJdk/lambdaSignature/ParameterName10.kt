@@ -8,9 +8,9 @@ object Foo {
 }
 
 fun bar() {
-    Foo.let { foo<caret> }
+    Foo.let { <caret> }
 }
 
 // INVOCATION_COUNT: 0
 // EXIST: { itemText: "foo", tailText: " -> ", allLookupStrings: "foo", typeText: "Foo" }
-// NOTHING_ELSE
+// ABSENT: { tailText: " -> ", typeText: "(Int, String)" }

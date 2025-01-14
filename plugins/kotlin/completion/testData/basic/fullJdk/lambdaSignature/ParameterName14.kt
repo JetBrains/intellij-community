@@ -1,11 +1,10 @@
 // IGNORE_K1
 
-data object Foo {
+data object Foo
 
-    operator fun component1(): Int = 42
+operator fun Foo.component1(): Int = 42
 
-    operator fun component2(): String = ""
-}
+operator fun Foo.component2(): String = ""
 
 fun bar() {
     Foo.let { <caret> }

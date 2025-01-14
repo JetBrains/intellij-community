@@ -1,4 +1,5 @@
 // IGNORE_K1
+// IGNORE_K2
 
 sealed interface Foo {
 
@@ -18,7 +19,6 @@ sealed interface Foo {
 data class Bar(
     override val foo: Int = 42,
     override val bar: String = "",
-    override val baz: Double = 0.0,
 ) : Foo
 
 fun bar() {
@@ -26,5 +26,5 @@ fun bar() {
 }
 
 // INVOCATION_COUNT: 0
-// EXIST: { itemText: "bar", tailText: " -> ", allLookupStrings: "bar", typeText: "Bar" }
-// EXIST: { itemText: "(foo, bar, baz)", tailText: " -> ", allLookupStrings: "bar, baz, foo", typeText: "(Int, String, Double)" }
+// EXIST: { itemText: "foo", tailText: " -> ", allLookupStrings: "foo", typeText: "Foo" }
+// EXIST: { lookupString: "foo", itemText: "(foo, bar, i)", tailText: " -> ", allLookupStrings: "bar, i, foo", typeText: "(Int, String, Double)" }

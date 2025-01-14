@@ -58,9 +58,44 @@ public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK
             runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName13.kt");
         }
 
+        @TestMetadata("ParameterName14.kt")
+        public void testParameterName14() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName14.kt");
+        }
+
+        @TestMetadata("ParameterName15.kt")
+        public void testParameterName15() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName15.kt");
+        }
+
+        @TestMetadata("ParameterName16.kt")
+        public void testParameterName16() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName16.kt");
+        }
+
+        @TestMetadata("ParameterName17.kt")
+        public void testParameterName17() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName17.kt");
+        }
+
+        @TestMetadata("ParameterName18.kt")
+        public void testParameterName18() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName18.kt");
+        }
+
+        @TestMetadata("ParameterName19.kt")
+        public void testParameterName19() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName19.kt");
+        }
+
         @TestMetadata("ParameterName2.kt")
         public void testParameterName2() throws Exception {
             runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName2.kt");
+        }
+
+        @TestMetadata("ParameterName20.kt")
+        public void testParameterName20() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName20.kt");
         }
 
         @TestMetadata("ParameterName3.kt")
