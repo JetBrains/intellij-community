@@ -33,6 +33,7 @@ import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
@@ -121,6 +122,7 @@ public fun ComponentStyling.dark(
     groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.dark(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.dark(),
     iconButtonStyle: IconButtonStyle = IconButtonStyle.dark(),
+    inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.dark(),
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.dark(),
     linkStyle: LinkStyle = LinkStyle.dark(),
     menuStyle: MenuStyle = MenuStyle.dark(),
@@ -153,6 +155,7 @@ public fun ComponentStyling.dark(
             groupHeaderStyle = groupHeaderStyle,
             horizontalProgressBarStyle = horizontalProgressBarStyle,
             iconButtonStyle = iconButtonStyle,
+            inlineBannerStyle = inlineBannerStyle,
             lazyTreeStyle = lazyTreeStyle,
             linkStyle = linkStyle,
             menuStyle = menuStyle,
@@ -187,6 +190,7 @@ public fun ComponentStyling.light(
     groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.light(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.light(),
     iconButtonStyle: IconButtonStyle = IconButtonStyle.light(),
+    inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.light(),
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
     linkStyle: LinkStyle = LinkStyle.light(),
     menuStyle: MenuStyle = MenuStyle.light(),
@@ -219,6 +223,7 @@ public fun ComponentStyling.light(
             groupHeaderStyle = groupHeaderStyle,
             horizontalProgressBarStyle = horizontalProgressBarStyle,
             iconButtonStyle = iconButtonStyle,
+            inlineBannerStyle = inlineBannerStyle,
             lazyTreeStyle = lazyTreeStyle,
             linkStyle = linkStyle,
             menuStyle = menuStyle,

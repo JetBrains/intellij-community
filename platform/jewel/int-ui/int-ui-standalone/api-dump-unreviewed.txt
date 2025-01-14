@@ -31,14 +31,19 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUIBannerStylingKt
 - sf:default-3ABfNKs(org.jetbrains.jewel.ui.component.styling.BannerMetrics$Companion,F):org.jetbrains.jewel.ui.component.styling.BannerMetrics
 - bs:default-3ABfNKs$default(org.jetbrains.jewel.ui.component.styling.BannerMetrics$Companion,F,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.BannerMetrics
 - sf:getDefault(org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultBannerStylesFactory
-- sf:getError(org.jetbrains.jewel.ui.component.styling.BannerColors$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultErrorBannerColorFactory
+- sf:getDefault(org.jetbrains.jewel.ui.component.styling.InlineBannerStyles$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiInlineBannerStylesFactory
+- sf:getError(org.jetbrains.jewel.ui.component.styling.BannerColors$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiErrorBannerColorFactory
 - sf:getError(org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultErrorBannerStyleFactory
-- sf:getInformation(org.jetbrains.jewel.ui.component.styling.BannerColors$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultInformationBannerColorFactory
+- sf:getError(org.jetbrains.jewel.ui.component.styling.InlineBannerStyle$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiInlineErrorBannerStyleFactory
+- sf:getInformation(org.jetbrains.jewel.ui.component.styling.BannerColors$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiInformationBannerColorFactory
 - sf:getInformation(org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultInformationBannerStyleFactory
-- sf:getSuccess(org.jetbrains.jewel.ui.component.styling.BannerColors$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultSuccessBannerColorFactory
+- sf:getInformation(org.jetbrains.jewel.ui.component.styling.InlineBannerStyle$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiInlineInformationBannerStyleFactory
+- sf:getSuccess(org.jetbrains.jewel.ui.component.styling.BannerColors$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiSuccessBannerColorFactory
 - sf:getSuccess(org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultSuccessBannerStyleFactory
-- sf:getWarning(org.jetbrains.jewel.ui.component.styling.BannerColors$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultWarningBannerColorFactory
+- sf:getSuccess(org.jetbrains.jewel.ui.component.styling.InlineBannerStyle$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiInlineSuccessBannerStyleFactory
+- sf:getWarning(org.jetbrains.jewel.ui.component.styling.BannerColors$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiWarningBannerColorFactory
 - sf:getWarning(org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultWarningBannerStyleFactory
+- sf:getWarning(org.jetbrains.jewel.ui.component.styling.InlineBannerStyle$Companion):org.jetbrains.jewel.intui.standalone.styling.IntUiInlineWarningBannerStyleFactory
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiButtonStylingKt
 - sf:default-Kzyhx1A(org.jetbrains.jewel.ui.component.styling.ButtonMetrics$Companion,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,J,F,F):org.jetbrains.jewel.ui.component.styling.ButtonMetrics
 - bs:default-Kzyhx1A$default(org.jetbrains.jewel.ui.component.styling.ButtonMetrics$Companion,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,J,F,F,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.ButtonMetrics
@@ -115,21 +120,11 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultDropdownStyleFactory
 - sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultDropdownStyleFactory
 - f:dark(org.jetbrains.jewel.ui.component.styling.DropdownColors,org.jetbrains.jewel.ui.component.styling.DropdownMetrics,org.jetbrains.jewel.ui.component.styling.DropdownIcons,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.DropdownStyle
 - f:light(org.jetbrains.jewel.ui.component.styling.DropdownColors,org.jetbrains.jewel.ui.component.styling.DropdownMetrics,org.jetbrains.jewel.ui.component.styling.DropdownIcons,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.DropdownStyle
-f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultErrorBannerColorFactory
-- sf:$stable:I
-- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultErrorBannerColorFactory
-- f:dark-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
-- f:light-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultErrorBannerStyleFactory
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultErrorBannerStyleFactory
 - f:dark(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle
 - f:light(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.DefaultBannerStyle
-f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultInformationBannerColorFactory
-- sf:$stable:I
-- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultInformationBannerColorFactory
-- f:dark-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
-- f:light-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultInformationBannerStyleFactory
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultInformationBannerStyleFactory
@@ -140,11 +135,6 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultSimpleListItemLazyTre
 - sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultSimpleListItemLazyTreeStyleFactory
 - f:dark-69fazGs(J,J,J,J,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.SimpleListItemColors
 - f:light-69fazGs(J,J,J,J,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.SimpleListItemColors
-f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultSuccessBannerColorFactory
-- sf:$stable:I
-- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultSuccessBannerColorFactory
-- f:dark-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
-- f:light-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultSuccessBannerStyleFactory
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultSuccessBannerStyleFactory
@@ -163,11 +153,6 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultTabStyleFactory
 - f:dark(org.jetbrains.jewel.ui.component.styling.TabColors,org.jetbrains.jewel.ui.component.styling.TabMetrics,org.jetbrains.jewel.ui.component.styling.TabIcons,org.jetbrains.jewel.ui.component.styling.TabContentAlpha,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.TabStyle
 - f:light(org.jetbrains.jewel.ui.component.styling.TabColors,org.jetbrains.jewel.ui.component.styling.TabMetrics,org.jetbrains.jewel.ui.component.styling.TabIcons,org.jetbrains.jewel.ui.component.styling.TabContentAlpha,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle):org.jetbrains.jewel.ui.component.styling.TabStyle
 - bs:light$default(org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultTabStyleFactory,org.jetbrains.jewel.ui.component.styling.TabColors,org.jetbrains.jewel.ui.component.styling.TabMetrics,org.jetbrains.jewel.ui.component.styling.TabIcons,org.jetbrains.jewel.ui.component.styling.TabContentAlpha,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.TabStyle
-f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultWarningBannerColorFactory
-- sf:$stable:I
-- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultWarningBannerColorFactory
-- f:dark-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
-- f:light-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultWarningBannerStyleFactory
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiDefaultWarningBannerStyleFactory
@@ -199,6 +184,11 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiEditorTabStyleFactory
 - sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiEditorTabStyleFactory
 - f:dark(org.jetbrains.jewel.ui.component.styling.TabColors,org.jetbrains.jewel.ui.component.styling.TabMetrics,org.jetbrains.jewel.ui.component.styling.TabIcons,org.jetbrains.jewel.ui.component.styling.TabContentAlpha,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.TabStyle
 - f:light(org.jetbrains.jewel.ui.component.styling.TabColors,org.jetbrains.jewel.ui.component.styling.TabMetrics,org.jetbrains.jewel.ui.component.styling.TabIcons,org.jetbrains.jewel.ui.component.styling.TabContentAlpha,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.TabStyle
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiErrorBannerColorFactory
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiErrorBannerColorFactory
+- f:dark-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
+- f:light-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiGroupHeaderStylingKt
 - sf:dark(org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle$Companion,org.jetbrains.jewel.ui.component.styling.GroupHeaderColors,org.jetbrains.jewel.ui.component.styling.GroupHeaderMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 - sf:dark-iJQMabo(org.jetbrains.jewel.ui.component.styling.GroupHeaderColors$Companion,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.GroupHeaderColors
@@ -220,6 +210,36 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiIconButtonStylingKt
 - bs:defaults-ij7-PLE$default(org.jetbrains.jewel.ui.component.styling.IconButtonMetrics$Companion,androidx.compose.foundation.shape.CornerSize,F,androidx.compose.foundation.layout.PaddingValues,J,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 - sf:light(org.jetbrains.jewel.ui.component.styling.IconButtonStyle$Companion,org.jetbrains.jewel.ui.component.styling.IconButtonColors,org.jetbrains.jewel.ui.component.styling.IconButtonMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 - sf:light-8v1krLo(org.jetbrains.jewel.ui.component.styling.IconButtonColors$Companion,J,J,J,J,J,J,J,J,J,J,J,J,J,J,J,androidx.compose.runtime.Composer,I,I,I):org.jetbrains.jewel.ui.component.styling.IconButtonColors
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiInformationBannerColorFactory
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiInformationBannerColorFactory
+- f:dark-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
+- f:light-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineBannerStylesFactory
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineBannerStylesFactory
+- f:dark(org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
+- f:light(org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyle,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineErrorBannerStyleFactory
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineErrorBannerStyleFactory
+- f:dark(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
+- f:light(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineInformationBannerStyleFactory
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineInformationBannerStyleFactory
+- f:dark(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
+- f:light(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineSuccessBannerStyleFactory
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineSuccessBannerStyleFactory
+- f:dark(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
+- f:light(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineWarningBannerStyleFactory
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiInlineWarningBannerStyleFactory
+- f:dark(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
+- f:light(org.jetbrains.jewel.ui.component.styling.BannerColors,org.jetbrains.jewel.ui.component.styling.BannerMetrics,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.InlineBannerStyle
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiLazyTreeStylingKt
 - sf:dark(org.jetbrains.jewel.ui.component.styling.LazyTreeStyle$Companion,org.jetbrains.jewel.ui.component.styling.SimpleListItemColors,org.jetbrains.jewel.ui.component.styling.LazyTreeMetrics,org.jetbrains.jewel.ui.component.styling.LazyTreeIcons,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 - sf:defaults(org.jetbrains.jewel.ui.component.styling.LazyTreeIcons$Companion,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.icon.IconKey):org.jetbrains.jewel.ui.component.styling.LazyTreeIcons
@@ -345,6 +365,11 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiSliderStylingKt
 - sf:defaults-nDjVmYc(org.jetbrains.jewel.ui.component.styling.SliderMetrics$Companion,F,J,F,F,F,F,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.SliderMetrics
 - sf:light(org.jetbrains.jewel.ui.component.styling.SliderStyle$Companion,org.jetbrains.jewel.ui.component.styling.SliderColors,org.jetbrains.jewel.ui.component.styling.SliderMetrics,androidx.compose.ui.graphics.Shape,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.SliderStyle
 - sf:light-8v1krLo(org.jetbrains.jewel.ui.component.styling.SliderColors$Companion,J,J,J,J,J,J,J,J,J,J,J,J,J,J,J,androidx.compose.runtime.Composer,I,I,I):org.jetbrains.jewel.ui.component.styling.SliderColors
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiSuccessBannerColorFactory
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiSuccessBannerColorFactory
+- f:dark-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
+- f:light-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
 f:org.jetbrains.jewel.intui.standalone.styling.IntUiTabStripScrollbarStylingKt
 - sf:tabStrip-ziNgDLE(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion,F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
 - bs:tabStrip-ziNgDLE$default(org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion,F,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
@@ -414,6 +439,11 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiUndecoratedDropdownStyleFact
 - sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiUndecoratedDropdownStyleFactory
 - f:dark(org.jetbrains.jewel.ui.component.styling.DropdownColors,org.jetbrains.jewel.ui.component.styling.DropdownMetrics,org.jetbrains.jewel.ui.component.styling.DropdownIcons,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.DropdownStyle
 - f:light(org.jetbrains.jewel.ui.component.styling.DropdownColors,org.jetbrains.jewel.ui.component.styling.DropdownMetrics,org.jetbrains.jewel.ui.component.styling.DropdownIcons,org.jetbrains.jewel.ui.component.styling.MenuStyle,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.DropdownStyle
+f:org.jetbrains.jewel.intui.standalone.styling.IntUiWarningBannerColorFactory
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.styling.IntUiWarningBannerColorFactory
+- f:dark-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
+- f:light-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
 f:org.jetbrains.jewel.intui.standalone.theme.IntUiGlobalColorsKt
 - sf:dark-GyCwops(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.BorderColors
 - sf:dark-Hformbs(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.OutlineColors
@@ -429,10 +459,10 @@ f:org.jetbrains.jewel.intui.standalone.theme.IntUiGlobalMetricsKt
 f:org.jetbrains.jewel.intui.standalone.theme.IntUiThemeKt
 - sf:IntUiTheme(org.jetbrains.jewel.foundation.theme.ThemeDefinition,org.jetbrains.jewel.ui.ComponentStyling,Z,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:IntUiTheme(Z,Z,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:dark(org.jetbrains.jewel.ui.ComponentStyling,org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,androidx.compose.runtime.Composer,I,I,I,I):org.jetbrains.jewel.ui.ComponentStyling
+- sf:dark(org.jetbrains.jewel.ui.ComponentStyling,org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyles,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,androidx.compose.runtime.Composer,I,I,I,I,I):org.jetbrains.jewel.ui.ComponentStyling
 - sf:darkThemeDefinition-VRxQTpk(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,org.jetbrains.jewel.foundation.GlobalColors,org.jetbrains.jewel.foundation.GlobalMetrics,org.jetbrains.jewel.foundation.theme.ThemeColorPalette,org.jetbrains.jewel.foundation.theme.ThemeIconData,androidx.compose.ui.text.TextStyle,androidx.compose.ui.text.TextStyle,androidx.compose.ui.text.TextStyle,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.theme.ThemeDefinition
 - sf:default(org.jetbrains.jewel.ui.ComponentStyling,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.ComponentStyling
-- sf:light(org.jetbrains.jewel.ui.ComponentStyling,org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,androidx.compose.runtime.Composer,I,I,I,I):org.jetbrains.jewel.ui.ComponentStyling
+- sf:light(org.jetbrains.jewel.ui.ComponentStyling,org.jetbrains.jewel.ui.component.styling.CheckboxStyle,org.jetbrains.jewel.ui.component.styling.ChipStyle,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.DividerStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,org.jetbrains.jewel.ui.component.styling.TabStyle,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.InlineBannerStyles,org.jetbrains.jewel.ui.component.styling.LazyTreeStyle,org.jetbrains.jewel.ui.component.styling.LinkStyle,org.jetbrains.jewel.ui.component.styling.MenuStyle,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,org.jetbrains.jewel.ui.component.styling.ButtonStyle,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle,org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle,org.jetbrains.jewel.ui.component.styling.SliderStyle,org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,org.jetbrains.jewel.ui.component.styling.TextAreaStyle,org.jetbrains.jewel.ui.component.styling.TextFieldStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,org.jetbrains.jewel.ui.component.styling.DropdownStyle,androidx.compose.runtime.Composer,I,I,I,I,I):org.jetbrains.jewel.ui.ComponentStyling
 - sf:lightThemeDefinition-VRxQTpk(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,org.jetbrains.jewel.foundation.GlobalColors,org.jetbrains.jewel.foundation.GlobalMetrics,org.jetbrains.jewel.foundation.theme.ThemeColorPalette,org.jetbrains.jewel.foundation.theme.ThemeIconData,androidx.compose.ui.text.TextStyle,androidx.compose.ui.text.TextStyle,androidx.compose.ui.text.TextStyle,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.theme.ThemeDefinition
 f:org.jetbrains.jewel.intui.standalone.theme.TextStylesKt
 - sf:createDefaultTextStyle-8YS_zAE(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.ui.graphics.Brush,F,J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.ui.text.font.FontSynthesis,androidx.compose.ui.text.font.FontFamily,java.lang.String,J,androidx.compose.ui.text.style.BaselineShift,androidx.compose.ui.text.style.TextGeometricTransform,androidx.compose.ui.text.intl.LocaleList,J,androidx.compose.ui.text.style.TextDecoration,androidx.compose.ui.graphics.Shadow,androidx.compose.ui.graphics.drawscope.DrawStyle,I,I,J,androidx.compose.ui.text.style.TextIndent,androidx.compose.ui.text.PlatformTextStyle,androidx.compose.ui.text.style.LineHeightStyle,I,I,androidx.compose.ui.text.style.TextMotion):androidx.compose.ui.text.TextStyle
