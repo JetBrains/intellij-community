@@ -19,7 +19,7 @@ data class IdeLaunchContext(
   //val classPathArgFile: PathInLaunchEnvironment,
   val ideDebugOptions: IdeDebugOptions?,
 
-  val platformPrefix: String?,
+  val platformPrefix: String,
   val productMode: ProductMode? = null,
   val xmx: Int = 800,
   val javaArguments: List<String> = emptyList(),
