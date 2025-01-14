@@ -23,7 +23,6 @@ import java.io.File
 import java.net.URI
 
 open class StudioVersionsGenerationExtension(project: Project) {
-
     val targetDir: DirectoryProperty =
         project.objects
             .directoryProperty()
@@ -53,7 +52,6 @@ internal const val STUDIO_RELEASES_OUTPUT_CLASS_NAME =
     "org.jetbrains.jewel.samples.ideplugin.releasessample.AndroidStudioReleases"
 
 open class AndroidStudioReleasesGeneratorTask : DefaultTask() {
-
     @get:OutputFile val outputFile: RegularFileProperty = project.objects.fileProperty()
 
     @get:Input val dataUrl = project.objects.property<String>()
