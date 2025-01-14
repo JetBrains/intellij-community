@@ -202,7 +202,7 @@ public final class UndoManagerImpl extends UndoManager {
     ClientState state = getClientState();
     if (myProject == null || editor == null) return state;
 
-    try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(editor))) {
+    try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(editor))) {
       ClientState editorState = getClientState();
       LOG.assertTrue(state == editorState,
                      "Using editor belonging to '" + (editorState != null ? editorState.myClientId.getValue() : "null") +
