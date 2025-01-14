@@ -25,7 +25,7 @@ public final class org/jetbrains/jewel/ui/ComponentStyling$DefaultImpls {
 
 public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrains/jewel/ui/ComponentStyling {
 	public static final field $stable I
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyles;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyles;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCheckboxStyle ()Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;
 	public final fun getChipStyle ()Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;
@@ -34,6 +34,7 @@ public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrain
 	public final fun getDefaultBannerStyle ()Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyles;
 	public final fun getDefaultButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
 	public final fun getDefaultDropdownStyle ()Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;
+	public final fun getDefaultSplitButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;
 	public final fun getDefaultTabStyle ()Lorg/jetbrains/jewel/ui/component/styling/TabStyle;
 	public final fun getDividerStyle ()Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;
 	public final fun getEditorTabStyle ()Lorg/jetbrains/jewel/ui/component/styling/TabStyle;
@@ -44,6 +45,7 @@ public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrain
 	public final fun getLinkStyle ()Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
 	public final fun getMenuStyle ()Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;
 	public final fun getOutlinedButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
+	public final fun getOutlinedSplitButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;
 	public final fun getPopupContainerStyle ()Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;
 	public final fun getRadioButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;
 	public final fun getScrollbarStyle ()Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;
@@ -110,8 +112,12 @@ public final class org/jetbrains/jewel/ui/component/BannerKt {
 }
 
 public final class org/jetbrains/jewel/ui/component/ButtonKt {
-	public static final fun DefaultButton (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
-	public static final fun OutlinedButton (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun DefaultButton (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun DefaultSplitButton (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;Landroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun DefaultSplitButton (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;Landroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun OutlinedButton (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun OutlinedSplitButton (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;Landroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun OutlinedSplitButton (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;Landroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/ButtonState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
@@ -2523,6 +2529,55 @@ public final class org/jetbrains/jewel/ui/component/styling/SliderStylingKt {
 	public static final fun getLocalSliderStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
+public final class org/jetbrains/jewel/ui/component/styling/SplitButtonColors {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SplitButtonColors$Companion;
+	public synthetic fun <init> (JJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChevronColor-0d7_KjU ()J
+	public final fun getDividerColor-0d7_KjU ()J
+	public final fun getDividerDisabledColor-0d7_KjU ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SplitButtonColors$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SplitButtonMetrics {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SplitButtonMetrics$Companion;
+	public synthetic fun <init> (Lorg/jetbrains/jewel/ui/component/styling/DividerMetrics;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDividerMetrics ()Lorg/jetbrains/jewel/ui/component/styling/DividerMetrics;
+	public final fun getDividerPadding-D9Ej5fM ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SplitButtonMetrics$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SplitButtonStyle {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle$Companion;
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SplitButtonColors;Lorg/jetbrains/jewel/ui/component/styling/SplitButtonMetrics;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButton ()Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
+	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/SplitButtonColors;
+	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/SplitButtonMetrics;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SplitButtonStyle$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SplitButtonStylingKt {
+	public static final fun getLocalDefaultSplitButtonStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun getLocalOutlinedSplitButtonStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
 public final class org/jetbrains/jewel/ui/component/styling/SubmenuMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SubmenuMetrics$Companion;
@@ -4715,6 +4770,7 @@ public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
 	public static final fun getComboBoxStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;
 	public static final fun getDefaultBannerStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyles;
 	public static final fun getDefaultButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
+	public static final fun getDefaultSplitButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;
 	public static final fun getDefaultTabStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/TabStyle;
 	public static final fun getDividerStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;
 	public static final fun getDropdownStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;
@@ -4726,6 +4782,7 @@ public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
 	public static final fun getLinkStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
 	public static final fun getMenuStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;
 	public static final fun getOutlinedButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
+	public static final fun getOutlinedSplitButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;
 	public static final fun getPopupContainerStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;
 	public static final fun getRadioButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;
 	public static final fun getScrollbarStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;

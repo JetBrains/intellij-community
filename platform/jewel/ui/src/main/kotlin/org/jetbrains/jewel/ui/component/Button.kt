@@ -527,7 +527,7 @@ private fun ButtonImpl(
     secondaryContent: @Composable (() -> Unit)? = null,
 ) {
     var buttonState by
-    remember(interactionSource) { mutableStateOf(ButtonState.of(enabled = enabled, focused = forceFocused)) }
+        remember(interactionSource) { mutableStateOf(ButtonState.of(enabled = enabled, focused = forceFocused)) }
 
     remember(enabled) { buttonState = buttonState.copy(enabled = enabled) }
     // This helps with managing and keeping the button focus state in sync
@@ -633,7 +633,7 @@ public value class ButtonState(public val state: ULong) : FocusableComponentStat
 
     override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
-        "isPressed=$isPressed, isActive=$isActive)"
+            "isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
         public fun of(
