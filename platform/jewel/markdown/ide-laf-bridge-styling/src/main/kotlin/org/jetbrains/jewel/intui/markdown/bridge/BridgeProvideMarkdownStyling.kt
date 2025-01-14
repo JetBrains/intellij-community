@@ -12,7 +12,9 @@ import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
 import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.bridge.styling.create
+import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownBlockRenderer
+import org.jetbrains.jewel.markdown.extensions.LocalMarkdownMode
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownProcessor
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownStyling
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
@@ -24,7 +26,8 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 public fun ProvideMarkdownStyling(
     themeName: String = JewelTheme.name,
     markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
-    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
+    markdownMode: MarkdownMode = MarkdownMode.Standalone,
+    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
     codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
@@ -32,6 +35,7 @@ public fun ProvideMarkdownStyling(
 ) {
     CompositionLocalProvider(
         LocalMarkdownStyling provides markdownStyling,
+        LocalMarkdownMode provides markdownMode,
         LocalMarkdownProcessor provides markdownProcessor,
         LocalMarkdownBlockRenderer provides markdownBlockRenderer,
         LocalCodeHighlighter provides codeHighlighter,
@@ -46,7 +50,8 @@ public fun ProvideMarkdownStyling(
     project: Project,
     themeName: String = JewelTheme.name,
     markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
-    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
+    markdownMode: MarkdownMode = remember { MarkdownMode.Standalone },
+    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
     content: @Composable () -> Unit,
@@ -56,6 +61,7 @@ public fun ProvideMarkdownStyling(
     ProvideMarkdownStyling(
         themeName = themeName,
         markdownStyling = markdownStyling,
+        markdownMode = markdownMode,
         markdownProcessor = markdownProcessor,
         markdownBlockRenderer = markdownBlockRenderer,
         codeHighlighter = codeHighlighter,

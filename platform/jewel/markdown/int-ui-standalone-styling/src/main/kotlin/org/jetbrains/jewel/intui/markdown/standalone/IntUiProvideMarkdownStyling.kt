@@ -10,7 +10,9 @@ import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.standalone.styling.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
+import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownBlockRenderer
+import org.jetbrains.jewel.markdown.extensions.LocalMarkdownMode
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownProcessor
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownStyling
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
@@ -29,6 +31,7 @@ public fun ProvideMarkdownStyling(
                 MarkdownStyling.light()
             }
         },
+    markdownMode: MarkdownMode = remember { MarkdownMode.Standalone },
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) {
@@ -43,6 +46,7 @@ public fun ProvideMarkdownStyling(
 ) {
     CompositionLocalProvider(
         LocalMarkdownStyling provides markdownStyling,
+        LocalMarkdownMode provides markdownMode,
         LocalMarkdownProcessor provides markdownProcessor,
         LocalMarkdownBlockRenderer provides markdownBlockRenderer,
         LocalCodeHighlighter provides codeHighlighter,
@@ -57,11 +61,13 @@ public fun ProvideMarkdownStyling(
     markdownStyling: MarkdownStyling,
     markdownBlockRenderer: MarkdownBlockRenderer,
     codeHighlighter: CodeHighlighter,
-    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
+    markdownMode: MarkdownMode = MarkdownMode.Standalone,
+    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
         LocalMarkdownStyling provides markdownStyling,
+        LocalMarkdownMode provides markdownMode,
         LocalMarkdownProcessor provides markdownProcessor,
         LocalMarkdownBlockRenderer provides markdownBlockRenderer,
         LocalCodeHighlighter provides codeHighlighter,
