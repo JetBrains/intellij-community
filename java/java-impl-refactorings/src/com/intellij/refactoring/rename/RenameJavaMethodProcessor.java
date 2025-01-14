@@ -70,7 +70,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
       if (usage instanceof MemberHidesStaticImportUsageInfo hidesStatic) {
         staticImportHides.add(hidesStatic);
-      } else if (usage instanceof MemberHidesOuterMemberUsageInfo) {
+      }
+      else if (usage instanceof MemberHidesOuterMemberUsageInfo) {
         PsiReference reference = element.getReference();
         if (reference == null) continue;
         PsiMethod resolved = (PsiMethod)reference.resolve();
@@ -133,8 +134,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                                                             Set<PsiMethod> methodAndOverriders,
                                                             Set<PsiClass> containingClasses,
                                                             boolean isStatic) {
-    if (!(element instanceof PsiReferenceExpression) || ((PsiReferenceExpression)element).getQualifierExpression() != null) return;
-    PsiElement elem = ((PsiReferenceExpression)element).resolve();
+    if (!(element instanceof PsiReferenceExpression ref) || ref.getQualifierExpression() != null) return;
+    PsiElement elem = ref.resolve();
 
     if (elem instanceof PsiMethod actualMethod) {
       if (actualMethod instanceof LightRecordMethod || actualMethod instanceof LightRecordCanonicalConstructor) return;
@@ -203,15 +204,16 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
         for (UsageInfo info : result) {
           final PsiElement element = info.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            if (((PsiReferenceExpression)element).resolve() == methodToRename) {
+          if (element instanceof PsiReferenceExpression ref) {
+            if (ref.resolve() == methodToRename) {
               final PsiElement parent = element.getParent();
               final PsiReferenceExpression copyRef;
               if (parent instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression copy = (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(element.getProject())
                   .createExpressionFromText(parent.getText(), element);
                 copyRef = copy.getMethodExpression();
-              } else {
+              }
+              else {
                 LOG.assertTrue(element instanceof PsiMethodReferenceExpression, element.getText());
                 copyRef = (PsiReferenceExpression)element.copy();
               }
@@ -268,8 +270,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   @Override
   public void prepareRenaming(@NotNull PsiElement element,
-                              final @NotNull String newName,
-                              final @NotNull Map<PsiElement, String> allRenames,
+                              @NotNull String newName,
+                              @NotNull Map<PsiElement, String> allRenames,
                               @NotNull SearchScope scope) {
     final PsiMethod method = (PsiMethod) element;
     PsiMethod[] siblings = method.getUserData(SuperMethodWarningUtil.SIBLINGS);
@@ -290,11 +292,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       );
 
       for (PsiMethod overrider : allOverriders) {
-        if (overrider instanceof PsiMirrorElement) {
-          final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
-          if (prototype instanceof PsiMethod) {
-            overrider = (PsiMethod)prototype;
-          }
+        if (overrider instanceof PsiMirrorElement mirror && mirror.getPrototype() instanceof PsiMethod m) {
+          overrider = m;
         }
 
         PsiMember realMember = overrider instanceof LightRecordMethod lrm ? lrm.getRecordComponent() : overrider;
@@ -333,11 +332,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
       PsiClass containingClass = psiMethod.getContainingClass();
       if (containingClass == null) return null;
       if (Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
-        element = containingClass;
-        if (!PsiElementRenameHandler.canRename(element.getProject(), editor, element)) {
-          return null;
-        }
-        return element;
+        return !PsiElementRenameHandler.canRename(containingClass.getProject(), editor, containingClass) ? null : containingClass;
       }
     }
     PsiRecordComponent recordComponent = JavaPsiRecordUtil.getRecordComponentForAccessor(psiMethod);
@@ -391,8 +386,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                                                                              method.isConstructor());
     for (PsiClass inheritor : inheritors) {
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
-      final PsiMethod[] methodsByName = inheritor.findMethodsByName(newName, false);
-      for (PsiMethod conflictingMethod : methodsByName) {
+      for (PsiMethod conflictingMethod : inheritor.findMethodsByName(newName, false)) {
         if (newSignature.equals(conflictingMethod.getSignature(superSubstitutor))) {
           result.add(new SubmemberHidesMemberUsageInfo(conflictingMethod, method));
           break;
@@ -417,10 +411,10 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
                                    ref.getRangeInElement().getStartOffset(),
                                    ref.getRangeInElement().getEndOffset(),
                                    element,
-                                   ref.resolve() == null && !(ref instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)ref).multiResolve(true).length > 0)) {
+                                   ref.resolve() == null && !(ref instanceof PsiPolyVariantReference p && p.multiResolve(true).length > 0)) {
       @Override
       public boolean equals(Object o) {
-        return super.equals(o) && o instanceof MoveRenameUsageInfo && element.equals(((MoveRenameUsageInfo)o).getReferencedElement());
+        return super.equals(o) && o instanceof MoveRenameUsageInfo info && element.equals(info.getReferencedElement());
       }
 
       @Override
