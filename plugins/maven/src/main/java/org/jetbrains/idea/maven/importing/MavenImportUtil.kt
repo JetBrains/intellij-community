@@ -53,24 +53,6 @@ object MavenImportUtil {
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, newPath) + JarFileSystem.JAR_SEPARATOR
   }
 
-  fun getArtifactUrl(
-    artifact: MavenArtifact,
-    artifactType: MavenExtraArtifactType,
-    project: MavenProject,
-  ): String {
-    val result = project.getClassifierAndExtension(artifact, artifactType)
-    val classifier = result.first
-    val extension = result.second
-
-
-    return getArtifactUrlForClassifierAndExtension(artifact, classifier, extension)
-  }
-
-  fun getSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel {
-    return getLanguageLevel(mavenProject,
-                            Supplier { getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), true, false) })
-  }
-
   fun getTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
     return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, false)
   }
@@ -85,7 +67,7 @@ object MavenImportUtil {
     val cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin")
     if (cfg != null) {
       val key = cfg.getChildTextTrim("jdkLevel")
-      level = if (key == null) null else MAVEN_IDEA_PLUGIN_LEVELS.get(key)
+      level = if (key == null) null else MAVEN_IDEA_PLUGIN_LEVELS[key]
     }
 
     if (level == null) {
