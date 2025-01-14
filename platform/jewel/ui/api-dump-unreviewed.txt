@@ -286,7 +286,7 @@ f:org.jetbrains.jewel.ui.component.FixedCursorPoint
 - b:<init>(J,androidx.compose.ui.Alignment,F,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - positionProvider-9KIMszo(J,androidx.compose.runtime.Composer,I):androidx.compose.ui.window.PopupPositionProvider
 f:org.jetbrains.jewel.ui.component.GroupHeaderKt
-- sf:GroupHeader-cf5BqRc(java.lang.String,androidx.compose.ui.Modifier,J,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,androidx.compose.runtime.Composer,I,I):V
+- sf:GroupHeader(java.lang.String,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle,androidx.compose.ui.text.TextStyle,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.IconActionButtonKt
 - sf:IconActionButton(androidx.compose.ui.graphics.painter.Painter,java.lang.String,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.runtime.Composer,I,I):V
 - sf:IconActionButton(androidx.compose.ui.graphics.painter.Painter,java.lang.String,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,Z,org.jetbrains.jewel.ui.component.styling.IconButtonStyle,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.ui.Modifier,androidx.compose.foundation.TooltipPlacement,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
