@@ -45,7 +45,7 @@ class XSplitterWatchesViewImpl(
 
   override fun createMainPanel(localsPanelComponent: JComponent): JPanel {
     // Can't initialize the panel in the constructor because this function is called from a super constructor
-    customized = true
+    customized = getShowCustomized()
     localsPanel = localsPanelComponent
 
     addMixedModeListenerIfNeeded(checkNotNull(session))
@@ -86,19 +86,28 @@ class XSplitterWatchesViewImpl(
     val highSupportsCustomization = session.getDebugProcess(false).useSplitterView()
     if (lowSupportsCustomization == highSupportsCustomization) return
 
-    val low = session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess
     session.addSessionListener(object : XDebugSessionListener {
       override fun stackFrameChanged() {
-        val frame = session.currentStackFrame ?: return
-        val isLowFrame = low.belongsToMe(frame)
-        val isHighFrame = !isLowFrame
-
-        val showCustomizedView = isLowFrame && lowSupportsCustomization || isHighFrame && highSupportsCustomization
+        val showCustomizedView = getShowCustomized()
         if (customized == showCustomizedView) return
-
         customized = showCustomizedView
         updateMainPanel()
       }
     })
+  }
+
+  private fun getShowCustomized(): Boolean {
+    val session = session ?: return false
+    if (!session.isMixedMode) return true
+    val frame = session.currentStackFrame ?: return false
+
+    val low = session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess
+    val debugProcess = session.getDebugProcess(true)
+    val lowSupportsCustomization = debugProcess.useSplitterView()
+    val highSupportsCustomization = session.getDebugProcess(false).useSplitterView()
+
+    val isLowFrame = low.belongsToMe(frame)
+    val isHighFrame = !isLowFrame
+    return isLowFrame && lowSupportsCustomization || isHighFrame && highSupportsCustomization
   }
 }
