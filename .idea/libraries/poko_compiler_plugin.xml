@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="poko-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="dev.drewhamilton.poko:poko-compiler-plugin:0.18.0">
+    <properties include-transitive-deps="false" maven-id="dev.drewhamilton.poko:poko-compiler-plugin:0.18.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-compiler-plugin/0.18.0/poko-compiler-plugin-0.18.0.jar">
-          <sha256sum>3d3085d8bcbf956acb4483285e72138b45adfa30174444ee598e29eb1ed67a19</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-compiler-plugin/0.18.2/poko-compiler-plugin-0.18.2.jar">
+          <sha256sum>08edf341dfa4dd0a9e15b83a2a74850baad3a4a3ca2f93aed05ca6a481b1f394</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-compiler-plugin/0.18.0/poko-compiler-plugin-0.18.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-compiler-plugin/0.18.2/poko-compiler-plugin-0.18.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-compiler-plugin/0.18.0/poko-compiler-plugin-0.18.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-compiler-plugin/0.18.2/poko-compiler-plugin-0.18.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -16,7 +16,7 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.0/kotlin-compose-compiler-plugin-2.1.0.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-compiler-plugin/0.18.0/poko-compiler-plugin-0.18.0.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-compiler-plugin/0.18.2/poko-compiler-plugin-0.18.2.jar</arg>
               </args>
             </arrayArg>
           </arrayArguments>
