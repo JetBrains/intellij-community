@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package org.jetbrains.intellij.build.impl
 
 import com.dynatrace.hash4j.hashing.HashStream64
@@ -43,9 +41,7 @@ class BuildContextImpl internal constructor(
   override val macDistributionCustomizer: MacDistributionCustomizer?,
   override val proprietaryBuildTools: ProprietaryBuildTools,
   override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(
-    project = compilationContext.project,
-    productProperties = productProperties,
-    buildOptions = compilationContext.options,
+    compilationContext.project, productProperties, compilationContext.options
   ),
   @JvmField internal val jarCacheManager: JarCacheManager,
 ) : BuildContext, CompilationContext by compilationContext {
@@ -84,7 +80,7 @@ class BuildContextImpl internal constructor(
     jarCacheManager.cleanup()
   }
 
-  override var bootClassPathJarNames: List<String> = java.util.List.of(PLATFORM_LOADER_JAR)
+  override var bootClassPathJarNames: List<String> = listOf(PLATFORM_LOADER_JAR)
 
   override val ideMainClassName: String
     get() = if (useModularLoader) "com.intellij.platform.runtime.loader.IntellijLoader" else productProperties.mainClassName
@@ -118,9 +114,8 @@ class BuildContextImpl internal constructor(
     options.buildStepsToSkip += productProperties.incompatibleBuildSteps
     if (!options.buildStepsToSkip.isEmpty()) {
       Span.current().addEvent(
-        "build steps to be skipped", Attributes.of(
-        AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip)
-      )
+        "build steps to be skipped",
+        Attributes.of(AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip))
       )
     }
     if (!options.compatiblePluginsToIgnore.isEmpty()) {
@@ -141,12 +136,9 @@ class BuildContextImpl internal constructor(
       options: BuildOptions = BuildOptions(),
     ): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
-        projectHome = projectHome,
-        setupTracer = setupTracer,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome, productProperties = productProperties, buildOptions = options),
-        options = options,
+        projectHome, createBuildOutputRootEvaluator(projectHome, productProperties, options), options, setupTracer
       )
-      return createContext(compilationContext = compilationContext, projectHome = projectHome, productProperties = productProperties, proprietaryBuildTools = proprietaryBuildTools)
+      return createContext(compilationContext, projectHome, productProperties, proprietaryBuildTools)
     }
 
     fun createContext(
@@ -278,11 +270,7 @@ class BuildContextImpl internal constructor(
       options = options,
       paths = computeBuildPaths(
         options = options,
-        buildOut = options.outRootDir ?: createBuildOutputRootEvaluator(
-          projectHome = paths.projectHome,
-          productProperties = productProperties,
-          buildOptions = options,
-        )(project),
+        buildOut = options.outRootDir ?: createBuildOutputRootEvaluator(paths.projectHome, productProperties, options)(project),
         projectHome = paths.projectHome,
         artifactDir = if (prepareForBuild) {
           @Suppress("DEPRECATION")
@@ -309,7 +297,7 @@ class BuildContextImpl internal constructor(
     return copy
   }
 
-  override suspend fun includeBreakGenLibraries() = getBundledPluginModules().contains(JavaPluginLayout.MAIN_MODULE_NAME)
+  override suspend fun includeBreakGenLibraries(): Boolean = getBundledPluginModules().contains(JavaPluginLayout.MAIN_MODULE_NAME)
 
   override fun patchInspectScript(path: Path) {
     //todo use placeholder in inspect.sh/inspect.bat file instead
@@ -335,35 +323,35 @@ class BuildContextImpl internal constructor(
 
     if (productProperties.enableCds) {
       val cacheDir = if (os == OsFamily.WINDOWS) "%IDE_CACHE_DIR%\\" else "\$IDE_CACHE_DIR/"
-      jvmArgs.add("-XX:SharedArchiveFile=${cacheDir}${productProperties.baseFileName}${buildNumber}.jsa")
-      jvmArgs.add("-XX:+AutoCreateSharedArchive")
+      jvmArgs += "-XX:SharedArchiveFile=${cacheDir}${productProperties.baseFileName}${buildNumber}.jsa"
+      jvmArgs += "-XX:+AutoCreateSharedArchive"
     }
     else {
       productProperties.classLoader?.let {
-        jvmArgs.add("-Djava.system.class.loader=${it}")
+        jvmArgs += "-Djava.system.class.loader=${it}"
       }
     }
 
-    jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
-    jvmArgs.add("-Didea.paths.selector=${systemSelector}")
+    jvmArgs += "-Didea.vendor.name=${applicationInfo.shortCompanyName}"
+    jvmArgs += "-Didea.paths.selector=${systemSelector}"
 
-    jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
-    jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
     // require bundled JNA dispatcher lib
-    jvmArgs.add("-Djna.nosys=true")
-    jvmArgs.add("-Djna.noclasspath=true")
-    jvmArgs.add("-Dio.netty.allocator.type=pooled")
+    jvmArgs += "-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it }
+    jvmArgs += "-Djna.nosys=true"
+    jvmArgs += "-Djna.noclasspath=true"
+    jvmArgs += "-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it }
+    jvmArgs += "-Dio.netty.allocator.type=pooled"
 
     if (useModularLoader || generateRuntimeModuleRepository) {
-      jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_JAR_PATH}".let { if (isScript) '"' + it + '"' else it })
+      jvmArgs += "-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_JAR_PATH}".let { if (isScript) '"' + it + '"' else it }
     }
     if (useModularLoader) {
-      jvmArgs.add("-Dintellij.platform.root.module=${productProperties.rootModuleForModularLoader!!}")
-      jvmArgs.add("-Dintellij.platform.product.mode=${productProperties.productMode.id}")
+      jvmArgs += "-Dintellij.platform.root.module=${productProperties.rootModuleForModularLoader!!}"
+      jvmArgs += "-Dintellij.platform.product.mode=${productProperties.productMode.id}"
     }
 
     if (productProperties.platformPrefix != null) {
-      jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
+      jvmArgs += "-Didea.platform.prefix=${productProperties.platformPrefix}"
     }
 
     if (os == OsFamily.WINDOWS) {
@@ -373,31 +361,31 @@ class BuildContextImpl internal constructor(
       }
     }
 
-    jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
-    jvmArgs.addAll(productProperties.getAdditionalContextDependentIdeJvmArguments(this))
+    jvmArgs += productProperties.additionalIdeJvmArguments
+    jvmArgs += productProperties.getAdditionalContextDependentIdeJvmArguments(this)
 
     if (productProperties.useSplash) {
       @Suppress("SpellCheckingInspection", "RedundantSuppression")
-      jvmArgs.add("-Dsplash=true")
+      jvmArgs += ("-Dsplash=true")
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-269280
-    jvmArgs.add("-Daether.connector.resumeDownloads=false")
+    jvmArgs += "-Daether.connector.resumeDownloads=false"
 
-    jvmArgs.add("-Dcompose.swing.render.on.graphics=true")
+    jvmArgs += "-Dcompose.swing.render.on.graphics=true"
 
-    jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
+    jvmArgs += getCommandLineArgumentsForOpenPackages(context = this, os)
 
     return jvmArgs
   }
 
   override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
     extraExecutablePatterns.updateAndGet { prev ->
-      prev.with(os, (prev.get(os) ?: persistentListOf()).add(pattern))
+      prev.with(os, (prev[os] ?: persistentListOf()).add(pattern))
     }
   }
 
-  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: java.util.List.of()
+  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get()[os] ?: listOf()
 
   override suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean) {
     jarCacheManager.computeIfAbsent(
@@ -420,8 +408,8 @@ class BuildContextImpl internal constructor(
     )
   }
 
-  override val appInfoXml by lazy {
-    return@lazy computeAppInfoXml(context = this, appInfo = applicationInfo)
+  override val appInfoXml: String by lazy {
+    computeAppInfoXml(context = this, appInfo = applicationInfo)
   }
 
   @OptIn(DelicateCoroutinesApi::class)
@@ -462,7 +450,7 @@ class BuildContextImpl internal constructor(
 
 private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path {
   return { project ->
-    val appInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = buildOptions)
+    val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
     projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
   }
 }

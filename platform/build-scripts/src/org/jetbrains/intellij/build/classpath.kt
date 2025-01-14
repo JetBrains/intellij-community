@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
@@ -51,7 +49,7 @@ private val sourceToNames: Map<String, MutableList<String>> by lazy {
 }
 
 suspend fun reorderJar(relativePath: String, file: Path) {
-  val orderedNames = sourceToNames.get(relativePath) ?: return
+  val orderedNames = sourceToNames[relativePath] ?: return
   spanBuilder("reorder jar")
     .setAttribute("relativePath", relativePath)
     .setAttribute("file", file.toString())
@@ -186,8 +184,9 @@ internal fun writePluginClassPathHeader(out: DataOutputStream, isJarOnly: Boolea
   out.write(if (isJarOnly) 1 else 0)
 
   // main plugin
-  val mainDescriptor = moduleOutputPatcher.getPatchedContent(context.productProperties.applicationInfoModule)
-    .let { it.get("META-INF/plugin.xml") ?: it.get("META-INF/${context.productProperties.platformPrefix}Plugin.xml") }
+  val mainDescriptor = moduleOutputPatcher.getPatchedContent(context.productProperties.applicationInfoModule).let {
+    it["META-INF/plugin.xml"] ?: it["META-INF/${context.productProperties.platformPrefix}Plugin.xml"]
+  }
 
   val mainPluginDescriptorContent = requireNotNull(mainDescriptor) {
     "Cannot find core plugin descriptor (module=${context.productProperties.applicationInfoModule})"
@@ -278,7 +277,7 @@ internal fun generatePluginClassPathFromPrebuiltPluginFiles(pluginEntries: List<
       putMoreLikelyPluginJarsFirst(pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
     }
 
-    // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
+    // move a dir with "plugin.xml" to the top (it may not exist if for some reason the main module dir still being packed into JAR)
     writeEntry(out = out, files = files, pluginDir = pluginDir, pluginDescriptorContent = reorderPluginClassPath(files))
   }
 

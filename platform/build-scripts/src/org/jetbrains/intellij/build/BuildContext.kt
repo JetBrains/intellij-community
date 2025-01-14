@@ -222,7 +222,7 @@ sealed interface DistFileContent {
 }
 
 data class LocalDistFileContent(@JvmField val file: Path, val isExecutable: Boolean = false) : DistFileContent {
-  override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).decodeToString()
+  override fun readAsStringForDebug(): String = Files.newInputStream(file).readNBytes(1024).decodeToString()
 
   override fun toString(): String = "LocalDistFileContent(file=$file, isExecutable=$isExecutable)"
 }

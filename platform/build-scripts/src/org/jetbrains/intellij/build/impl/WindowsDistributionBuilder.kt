@@ -128,7 +128,7 @@ internal class WindowsDistributionBuilder(
         val productJsonDir = Files.createTempDirectory(context.paths.tempDir, "win-product-info")
         val productJsonFile = writeProductJsonFile(productJsonDir, arch)
         val installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
-        validateProductJson(jsonText = productJsonFile.readText(), relativePathToProductJson = "", installationDirectories, installationArchives = emptyList(), context)
+        validateProductJson(jsonText = productJsonFile.readText(), installationDirectories, installationArchives = emptyList(), context)
         launch(Dispatchers.IO + CoroutineName("build Windows ${arch.dirName} installer")) {
           exePath = buildNsisInstaller(osAndArchSpecificDistPath, additionalDirectoryToInclude = productJsonDir, suffix(arch), customizer, runtimeDir, context)
         }
@@ -263,7 +263,7 @@ internal class WindowsDistributionBuilder(
         else {
           zip(targetFile = targetFile, dirs = dirMap, addDirEntriesMode = AddDirEntriesMode.NONE)
         }
-        checkInArchive(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
+        validateProductJson(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
         context.notifyArtifactBuilt(targetFile)
         targetFile
       }

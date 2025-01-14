@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildData.productInfo
 
 import kotlinx.serialization.Serializable
@@ -30,12 +30,11 @@ class ProductInfoData private constructor(
   val launch: List<ProductInfoLaunchData>,
   val customProperties: List<CustomProperty> = emptyList(),
   val bundledPlugins: List<String> = emptyList(),
-  // it is not modules, but plugin aliases
-  val modules: List<String> = emptyList(),
+  val modules: List<String> = emptyList(),  // actually, it is not modules but plugin aliases
   val fileExtensions: List<String> = emptyList(),
   val flavors: List<ProductFlavorData> = emptyList(),
   
-  // not used by launcher, specify in the end
+  // not used by the launcher; must be at the end
   @ApiStatus.Internal
   val layout: List<ProductInfoLayoutItem> = emptyList(),
 ) {
@@ -64,26 +63,10 @@ class ProductInfoData private constructor(
       fileExtensions: List<String>,
       flavors: List<ProductFlavorData>,
       layout: List<ProductInfoLayoutItem>,
-    ): ProductInfoData {
-      return ProductInfoData(
-        name = name,
-        version = version,
-        versionSuffix = versionSuffix,
-        buildNumber = buildNumber,
-        productCode = productCode,
-        envVarBaseName = envVarBaseName,
-        dataDirectoryName = dataDirectoryName,
-        svgIconPath = svgIconPath,
-        productVendor = productVendor,
-        launch = launch,
-        customProperties = customProperties,
-        bundledPlugins = bundledPlugins,
-        modules = modules,
-        fileExtensions = fileExtensions,
-        flavors = flavors,
-        layout = layout,
-      )
-    }
+    ): ProductInfoData = ProductInfoData(
+      name, version, versionSuffix, buildNumber, productCode, envVarBaseName, dataDirectoryName, svgIconPath, productVendor, launch,
+      customProperties, bundledPlugins, modules, fileExtensions, flavors, layout
+    )
   }
 }
 
@@ -125,20 +108,10 @@ class ProductInfoLaunchData private constructor(
       mainClass: String,
       startupWmClass: String? = null,
       customCommands: List<CustomCommandLaunchData> = emptyList(),
-    ): ProductInfoLaunchData {
-      return ProductInfoLaunchData(
-        os = os,
-        arch = arch,
-        launcherPath = launcherPath,
-        javaExecutablePath = javaExecutablePath,
-        vmOptionsFilePath = vmOptionsFilePath,
-        startupWmClass = startupWmClass,
-        bootClassPathJarNames = bootClassPathJarNames,
-        additionalJvmArguments = additionalJvmArguments,
-        mainClass = mainClass,
-        customCommands = customCommands
-      )
-    }
+    ): ProductInfoLaunchData = ProductInfoLaunchData(
+      os, arch, launcherPath, javaExecutablePath, vmOptionsFilePath, startupWmClass, bootClassPathJarNames, additionalJvmArguments,
+      mainClass, customCommands
+    )
   }
 }
 

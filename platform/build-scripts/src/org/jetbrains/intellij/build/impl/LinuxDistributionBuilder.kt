@@ -180,7 +180,7 @@ class LinuxDistributionBuilder(
       .use(Dispatchers.IO) {
         val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = runtimeDir != null, arch).keys
         tar(tarPath, tarRoot, dirs, executableFileMatchers, context.options.buildDateInSeconds)
-        checkInArchive(tarPath, tarRoot, context)
+        validateProductJson(tarPath, tarRoot, context)
         context.notifyArtifactBuilt(tarPath)
         checkExecutablePermissions(tarPath, rootDirectoryName, includeRuntime = runtimeDir != null, arch)
       }
@@ -271,7 +271,7 @@ class LinuxDistributionBuilder(
         val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.product-info.json.$architecture")
         val productJsonFile = writeProductJsonFile(productJsonDir, arch)
         val installationDirectories = listOf(context.paths.distAllDir, unixDistPath, runtimeDir)
-        validateProductJson(jsonText = productJsonFile.readText(), relativePathToProductJson = "", installationDirectories, installationArchives = emptyList(), context)
+        validateProductJson(jsonText = productJsonFile.readText(), installationDirectories, installationArchives = emptyList(), context)
         val resultDir = snapDir.resolve("result")
         Files.createDirectories(resultDir)
 

@@ -123,19 +123,13 @@ private fun createConfiguration(productionClassOutput: Path, homePath: Path): Co
   return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
 }
 
-internal fun getProductPropertiesPath(homePath: Path): Path {
+internal fun getProductPropertiesPath(homePath: Path): Path =
   // handle a custom product properties path
-  val customPath = System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }
-  if (customPath != null && Files.exists(customPath)) {
-    return customPath
-  }
-  return homePath.resolve(PRODUCTS_PROPERTIES_PATH)
-}
+  System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }?.takeIf { Files.exists(it) }
+  ?: homePath.resolve(PRODUCTS_PROPERTIES_PATH)
 
-private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration {
-  return configuration.products.get(platformPrefix) ?: throw ConfigurationException(
-    "No production configuration for platform prefix `$platformPrefix` please add to `$PRODUCTS_PROPERTIES_PATH` if needed"
-  )
-}
+private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration =
+  configuration.products[platformPrefix]
+  ?: throw ConfigurationException("No production configuration for platform prefix `${platformPrefix}`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
 
 internal class ConfigurationException(message: String) : RuntimeException(message)

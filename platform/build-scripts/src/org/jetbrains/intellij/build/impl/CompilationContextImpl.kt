@@ -1,7 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
-@file:OptIn(ExperimentalPathApi::class)
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
@@ -61,10 +58,8 @@ fun createCompilationContextBlocking(
   projectHome: Path,
   defaultOutputRoot: Path,
   options: BuildOptions = BuildOptions(),
-): CompilationContextImpl {
-  return runBlocking(Dispatchers.Default) {
-    createCompilationContext(projectHome = projectHome, defaultOutputRoot = defaultOutputRoot, options = options)
-  }
+): CompilationContextImpl = runBlocking(Dispatchers.Default) {
+  createCompilationContext(projectHome, defaultOutputRoot, options)
 }
 
 suspend fun createCompilationContext(
@@ -74,15 +69,10 @@ suspend fun createCompilationContext(
 ): CompilationContextImpl {
   val logDir = options.logDir ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
   JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
-  return CompilationContextImpl.createCompilationContext(
-    projectHome = projectHome,
-    setupTracer = false,
-    buildOutputRootEvaluator = { defaultOutputRoot },
-    options = options,
-  )
+  return CompilationContextImpl.createCompilationContext(projectHome, { defaultOutputRoot }, options, setupTracer = false)
 }
 
-internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, artifactDir: Path? = null, projectHome: Path): BuildPaths {
+internal fun computeBuildPaths(options: BuildOptions, buildOut: Path, projectHome: Path, artifactDir: Path? = null): BuildPaths {
   val tempDir = buildOut.resolve("temp")
   val result = BuildPaths(
     communityHomeDirRoot = COMMUNITY_ROOT,
@@ -193,13 +183,9 @@ class CompilationContextImpl private constructor(
         logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       }
 
-      val model = loadProject(
-        projectHome = projectHome,
-        kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT),
-        isCompilationRequired = isCompilationRequired(options),
-      )
+      val model = loadProject(projectHome, KotlinBinaries(COMMUNITY_ROOT), isCompilationRequired(options))
 
-      val buildPaths = customBuildPaths ?: computeBuildPaths(buildOut = options.outRootDir ?: buildOutputRootEvaluator(model.project), options = options, projectHome = projectHome)
+      val buildPaths = customBuildPaths ?: computeBuildPaths(options, options.outRootDir ?: buildOutputRootEvaluator(model.project), projectHome)
 
       // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
       // (see createCopyForProduct)
@@ -232,17 +218,8 @@ class CompilationContextImpl private constructor(
     }
   }
 
-  override fun createCopy(
-    messages: BuildMessages,
-    options: BuildOptions,
-    paths: BuildPaths,
-  ): CompilationContext {
-    val copy = CompilationContextImpl(
-      model = projectModel,
-      messages = messages,
-      paths = paths,
-      options = options,
-    )
+  override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
+    val copy = CompilationContextImpl(projectModel, messages, paths, options)
     copy.compilationData = compilationData
     return copy
   }
@@ -256,7 +233,7 @@ class CompilationContextImpl private constructor(
         Files.newDirectoryStream(logDir).use { stream ->
           for (file in stream) {
             if (!file.endsWith("trace.json")) {
-              file.deleteRecursively()
+              NioFiles.deleteRecursively(file)
             }
           }
         }
@@ -281,7 +258,7 @@ class CompilationContextImpl private constructor(
     suppressWarnings(project)
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
     if (options.cleanOutDir || options.forceRebuild) {
-      cleanOutput(this@CompilationContextImpl, keepCompilationState = keepCompilationState(options))
+      cleanOutput(context = this@CompilationContextImpl, keepCompilationState(options))
     }
     else {
       Span.current().addEvent("skip output cleaning", Attributes.of(
@@ -300,7 +277,7 @@ class CompilationContextImpl private constructor(
     spanBuilder("resolve dependencies and compile modules").use { span ->
       compileMutex.withReentrantLock {
         resolveProjectDependencies(this@CompilationContextImpl)
-        reuseOrCompile(context = this@CompilationContextImpl, moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, span = span)
+        reuseOrCompile(context = this@CompilationContextImpl, moduleNames, includingTestsInModules, span)
       }
     }
   }
@@ -325,7 +302,7 @@ class CompilationContextImpl private constructor(
     return module
   }
 
-  override fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
+  override fun findModule(name: String): JpsModule? = nameToModule[name.removeSuffix("._test")]
 
   override suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(/* module = */ module, /* forTests = */ forTests)
@@ -345,7 +322,7 @@ class CompilationContextImpl private constructor(
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
     val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
-      // if a project requires different SDKs, they all shouldn't be added to test classpath
+      // if a project requires different SDKs, they all shouldn't be added to the test classpath
       .also { if (forTests) it.withoutSdk() }
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
     return enumerator.classes().paths.map { it.toString() }
@@ -517,16 +494,16 @@ internal suspend fun cleanOutput(context: CompilationContext, keepCompilationSta
 }
 
 private fun printEnvironmentDebugInfo() {
-  // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
+  // print it to the stdout since TeamCity will remove any sensitive fields from the build log automatically
   // don't write it to a debug log file!
   val env = System.getenv()
   for (key in env.keys.sorted()) {
-    println("ENV $key = ${env.get(key)}")
+    println("ENV $key = ${env[key]}")
   }
 
   val properties = System.getProperties()
   for (propertyName in properties.keys.sortedBy { it as String }) {
-    println("PROPERTY $propertyName = ${properties.get(propertyName).toString()}")
+    println("PROPERTY $propertyName = ${properties[propertyName].toString()}")
   }
 }
 

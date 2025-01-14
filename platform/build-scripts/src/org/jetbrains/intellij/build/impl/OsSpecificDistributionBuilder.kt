@@ -122,9 +122,8 @@ interface OsSpecificDistributionBuilder {
     }
   }
 
-
   private fun checkZip(distribution: Path, root: String, patterns: Collection<PathMatcher>): List<MatchedFile> {
-    return ZipFile(Files.newByteChannel(distribution)).use { zipFile ->
+    return ZipFile.Builder().setSeekableByteChannel(Files.newByteChannel(distribution)).get().use { zipFile ->
       zipFile.entries.asSequence().filter { !it.isDirectory }.mapNotNull { entry ->
         var entryPath = Path.of(entry.name)
         if (!root.isEmpty()) {
@@ -141,9 +140,7 @@ interface OsSpecificDistributionBuilder {
 
   companion object {
     @Internal
-    fun suffix(arch: JvmArchitecture): String = when (arch) {
-      JvmArchitecture.x64 -> ""
-      else -> "-${arch.fileSuffix}"
-    }
+    fun suffix(arch: JvmArchitecture): String =
+      if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
   }
 }

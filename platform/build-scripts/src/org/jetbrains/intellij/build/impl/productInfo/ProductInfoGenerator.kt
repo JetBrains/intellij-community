@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.intellij.platform.buildData.productInfo.*
@@ -6,7 +6,10 @@ import com.jetbrains.plugin.structure.base.utils.isDirectory
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuiltinModulesFileData
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.Git
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
@@ -28,7 +31,7 @@ internal val jsonEncoder: Json by lazy {
 }
 
 /**
- * Generates product-info.json file containing meta-information about product installation.
+ * Generates a `product-info.json` file describing product installation.
  */
 internal fun generateProductInfoJson(
   relativePathToBin: String,
@@ -59,10 +62,8 @@ internal fun generateProductInfoJson(
     customProperties = listOfNotNull(generateGitRevisionProperty(context)) + productProperties.generateCustomPropertiesForProductInfo(),
     bundledPlugins = builtinModules?.plugins ?: emptyList(),
     fileExtensions = builtinModules?.fileExtensions ?: emptyList(),
-
     modules = (builtinModules?.layout?.asSequence() ?: emptySequence()).filter { it.kind == ProductInfoLayoutItemKind.pluginAlias }.map { it.name }.toList(),
     layout = builtinModules?.layout ?: emptyList(),
-
     flavors = jbrFlavors + productFlavors,
   )
   return jsonEncoder.encodeToString<ProductInfoData>(json)
@@ -110,4 +111,3 @@ internal suspend fun generateEmbeddedFrontendLaunchData(
     )
   }
 }
-

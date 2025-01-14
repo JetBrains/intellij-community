@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("unused", "ReplaceJavaStaticMethodWithKotlinAnalog")
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("DevMainImpl")
 package org.jetbrains.intellij.build.devServer
 
@@ -8,17 +7,16 @@ import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
-import org.jetbrains.intellij.build.dev.getAdditionalPluginMainModules
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.telemetry.withTracer
-import java.io.File
 import java.nio.file.Path
 
+@Suppress("unused", "IO_FILE_USAGE")
 fun buildDevMain(): Collection<Path> {
   //TracerProviderManager.setOutput(Path.of(System.getProperty("user.home"), "trace.json"))
   @Suppress("TestOnlyProblems")
   val ideaProjectRoot = Path.of(PathManager.getHomePathFor(PathManager::class.java)!!)
-  System.setProperty("idea.dev.project.root", ideaProjectRoot.toString().replace(File.separator, "/"))
+  System.setProperty("idea.dev.project.root", ideaProjectRoot.toString().replace(java.io.File.separator, "/"))
 
   var homePath: String? = null
   var newClassPath: Collection<Path>? = null
@@ -31,7 +29,7 @@ fun buildDevMain(): Collection<Path> {
         keepHttpClient = false,
         platformClassPathConsumer = { classPath, runDir ->
           newClassPath = classPath
-          homePath = runDir.toString().replace(File.separator, "/")
+          homePath = runDir.toString().replace(java.io.File.separator, "/")
 
           @Suppress("SpellCheckingInspection")
           val exceptions = setOf("jna.boot.library.path", "pty4j.preferred.native.folder", "jna.nosys", "jna.noclasspath", "jb.vmOptionsFile")
@@ -52,3 +50,6 @@ fun buildDevMain(): Collection<Path> {
   }
   return newClassPath!!
 }
+
+private fun getAdditionalPluginMainModules(): List<String> =
+  System.getProperty("additional.modules")?.splitToSequence(',')?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList() ?: emptyList()

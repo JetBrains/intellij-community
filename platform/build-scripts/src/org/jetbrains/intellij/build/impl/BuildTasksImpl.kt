@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -17,8 +17,8 @@ import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.moduleBased.findProductModulesFile
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
-import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
+import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
 import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
@@ -83,7 +83,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     layoutShared(context)
     if (includeBinAndRuntime) {
       val propertiesFile = createIdeaPropertyFile(context)
-      val builder = getOsDistributionBuilder(currentOs, propertiesFile, context)!!
+      val builder = getOsDistributionBuilder(currentOs, context, propertiesFile)!!
       builder.copyFilesForOsDistribution(targetDirectory, arch)
       context.bundledRuntime.extractTo(currentOs, targetDirectory.resolve("jbr"), arch)
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch).keys)
@@ -243,7 +243,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
 
     spanBuilder("Adjust executable permissions on common dist").use {
       val matchers = SUPPORTED_DISTRIBUTIONS.mapNotNull {
-        getOsDistributionBuilder(it.os, null, context)
+        getOsDistributionBuilder(it.os, context)
       }.flatMap { builder ->
         JvmArchitecture.entries.flatMap { arch ->
           builder.generateExecutableFilesMatchers(includeRuntime = true, arch).keys
@@ -258,7 +258,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
           return@mapNotNull null
         }
 
-        val builder = getOsDistributionBuilder(os, ideaPropertyFileContent, context) ?: return@mapNotNull null
+        val builder = getOsDistributionBuilder(os, context, ideaPropertyFileContent) ?: return@mapNotNull null
 
         val stepId = "${os.osId} ${arch.name}"
         if (context.options.buildStepsToSkip.contains(stepId)) {
@@ -808,7 +808,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
   val extraFiles = mapOf("dependencies.txt" to copyDependenciesFile(context))
   crossPlatformZip(context, distResults, targetFile, executableName, productJson, extraFiles, runtimeModuleRepositoryPath)
 
-  checkInArchive(targetFile, pathInArchive = "", context)
+  validateProductJson(targetFile, pathInArchive = "", context)
 
   context.notifyArtifactBuilt(targetFile)
   return targetFile
@@ -850,7 +850,7 @@ private fun checkPlatformSpecificPluginResources(pluginLayouts: List<PluginLayou
   }
 }
 
-fun getOsDistributionBuilder(os: OsFamily, ideaProperties: CharSequence? = null, context: BuildContext): OsSpecificDistributionBuilder? = when (os) {
+fun getOsDistributionBuilder(os: OsFamily, context: BuildContext, ideaProperties: CharSequence? = null): OsSpecificDistributionBuilder? = when (os) {
   OsFamily.WINDOWS -> context.windowsDistributionCustomizer?.let {
     WindowsDistributionBuilder(context, customizer = it, ideaProperties)
   }

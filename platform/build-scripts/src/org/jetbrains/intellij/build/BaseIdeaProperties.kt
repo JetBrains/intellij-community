@@ -1,35 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.util.containers.withAll
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
-
-private val BASE_CLASS_VERSIONS: Map<String, String> = java.util.Map.copyOf(hashMapOf(
-  "" to "17",
-  "lib/idea_rt.jar" to "1.7",
-  "lib/forms_rt.jar" to "1.8",
-  "lib/annotations.jar" to "1.8",
-  "lib/util_rt.jar" to "1.7",
-  "lib/util-8.jar" to "1.8",
-  "lib/external-system-rt.jar" to "1.8",
-  "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.8",
-  "plugins/junit/lib/junit-rt.jar" to "1.7",
-  "plugins/junit/lib/junit5-rt.jar" to "1.8",
-  "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
-  "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.8",
-  "plugins/maven-server/lib/maven-server.jar" to "1.8",
-  "plugins/maven-model/lib/maven-model.jar" to "1.8",
-  "plugins/maven/lib/maven3-server-common.jar" to "1.8",
-  "plugins/maven/lib/maven3-server.jar" to "1.8",
-  "plugins/maven/lib/artifact-resolver-m31.jar" to "1.8",
-))
 
 /**
  * Default bundled plugins for all editions of IntelliJ IDEA.
@@ -94,13 +71,30 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.turboComplete",
 )
 
-val CE_CLASS_VERSIONS: Map<String, String> = BASE_CLASS_VERSIONS.withAll(hashMapOf(
+val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
+  "" to "17",
+  "lib/idea_rt.jar" to "1.7",
+  "lib/forms_rt.jar" to "1.8",
+  "lib/annotations.jar" to "1.8",
+  "lib/util_rt.jar" to "1.7",
+  "lib/util-8.jar" to "1.8",
+  "lib/external-system-rt.jar" to "1.8",
+  "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.8",
+  "plugins/junit/lib/junit-rt.jar" to "1.7",
+  "plugins/junit/lib/junit5-rt.jar" to "1.8",
+  "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
+  "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.8",
+  "plugins/maven-server/lib/maven-server.jar" to "1.8",
+  "plugins/maven-model/lib/maven-model.jar" to "1.8",
+  "plugins/maven/lib/maven3-server-common.jar" to "1.8",
+  "plugins/maven/lib/maven3-server.jar" to "1.8",
+  "plugins/maven/lib/artifact-resolver-m31.jar" to "1.8",
   "plugins/java/lib/jshell-frontend.jar" to "9",
   "plugins/java/lib/sa-jdwp" to "",  // ignored
   "plugins/java/lib/rt/debugger-agent.jar" to "1.7",
   "plugins/Groovy/lib/groovy-rt.jar" to "1.7",
   "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.7",
-))
+)
 
 val TEST_FRAMEWORK_LAYOUT_CUSTOMIZER: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
   for (name in listOf(
@@ -159,7 +153,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
       layout.withoutProjectLibrary("Gradle")
 
-      // this library is placed into subdirectory of the 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
+      // this library is placed into a subdirectory of the 'lib' directory in the Android plugin layout, so we need to exclude it from the platform layout explicitly
       layout.withoutProjectLibrary("layoutlib")
 
       layout.withoutProjectLibrary("jetbrains.qodana.cloud.kotlin.client")

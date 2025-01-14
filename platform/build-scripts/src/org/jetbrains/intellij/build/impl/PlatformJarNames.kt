@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.FrontendModuleFilter
 
 /**
- * Names of JAR files from IDE_HOME/lib directory. These names are implementation detail and may be changed in the future, code outside
- * the build scripts must not rely on them.
+ * Names of JAR files from `IDE_HOME/lib` directory.
+ * These names are implementation detail and may be changed in the future; code outside the build scripts must not rely on them.
  */
 object PlatformJarNames {
   /**
@@ -20,7 +20,7 @@ object PlatformJarNames {
   internal const val APP_CLIENT_JAR: String = "app-client.jar"
 
   /**
-   * Returns name of the default JAR for a platform module.
+   * Returns the name of the default JAR for a platform module.
    */
   internal fun getPlatformModuleJarName(moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
     return if (frontendModuleFilter.isModuleIncluded(moduleName)) APP_CLIENT_JAR else APP_JAR
@@ -53,9 +53,7 @@ object PlatformJarNames {
   const val TEST_FRAMEWORK_JAR: String = "testFramework.jar"
 
   /**
-   * The custom filesystem implementations for:
-   * * Fleet and FSD
-   * * IJent on WSL
+   * The custom filesystem implementations for Eel and Fleet/FSD.
    */
   const val PLATFORM_CORE_NIO_FS: String = "nio-fs.jar"
 }
