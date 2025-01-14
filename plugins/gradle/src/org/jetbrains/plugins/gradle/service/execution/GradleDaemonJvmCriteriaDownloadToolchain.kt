@@ -13,17 +13,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import org.jetbrains.plugins.gradle.util.toJvmVendor
+import org.jetbrains.plugins.gradle.util.toJvmCriteria
 import java.nio.file.Path
-import kotlin.io.path.Path
 
 object GradleDaemonJvmCriteriaDownloadToolchain {
 
   suspend fun downloadJdkMatchingCriteria(project: Project, externalProjectPath: String) {
-    val jvmProperties = GradleDaemonJvmPropertiesFile.getProperties(Path(externalProjectPath))
-    val version = jvmProperties?.version?.value
-    val vendor = jvmProperties?.vendor?.value
-    val (jdkItem, jdkHome) = pickJdkItemAndPathForMatchingCriteria(project, version, vendor) ?: return
+    val daemonJvmProperties = GradleDaemonJvmPropertiesFile.getProperties(Path.of(externalProjectPath))
+    val daemonJvmCriteria = daemonJvmProperties?.criteria ?: GradleDaemonJvmCriteria.ANY
+    val (jdkItem, jdkHome) = pickJdkItemAndPathForMatchingCriteria(project, daemonJvmCriteria) ?: return
     val downloadTask = JdkDownloadUtil.createDownloadTask(project, jdkItem, jdkHome) ?: return
     val sdk = JdkDownloadUtil.createDownloadSdk(ExternalSystemJdkUtil.getJavaSdkType(), downloadTask)
     JdkDownloadUtil.downloadSdk(sdk)
@@ -31,32 +29,19 @@ object GradleDaemonJvmCriteriaDownloadToolchain {
 
   @ApiStatus.Internal
   @VisibleForTesting
-  suspend fun pickJdkItemAndPathForMatchingCriteria(project: Project, version: String?, vendor: String?): Pair<JdkItem, Path>? {
+  suspend fun pickJdkItemAndPathForMatchingCriteria(project: Project, daemonJvmCriteria: GradleDaemonJvmCriteria): Pair<JdkItem, Path>? {
     val jdkItemAndPath = JdkDownloadUtil.pickJdkItemAndPath(project) { jdkItem ->
-      matchesVersion(jdkItem, version) && matchesVendor(jdkItem, vendor)
+      jdkItem.toJvmCriteria().matches(daemonJvmCriteria)
     }
     if (jdkItemAndPath == null) {
       withContext(Dispatchers.EDT) {
         val title = GradleBundle.message("gradle.toolchain.download.error.title")
-        val message = GradleBundle.message("gradle.toolchain.download.error.message",
-                                           version ?: GradleBundle.message("gradle.toolchain.download.error.message.any"),
-                                           vendor ?: GradleBundle.message("gradle.toolchain.download.error.message.any"))
+        val version = daemonJvmCriteria.version ?: GradleBundle.message("gradle.toolchain.download.error.message.any")
+        val vendor = daemonJvmCriteria.vendor?.displayName ?: GradleBundle.message("gradle.toolchain.download.error.message.any")
+        val message = GradleBundle.message("gradle.toolchain.download.error.message", version, vendor)
         Messages.showErrorDialog(project, message, title)
       }
     }
     return jdkItemAndPath
-  }
-
-  private fun matchesVersion(jdkItem: JdkItem, version: String?): Boolean {
-    return version == null || jdkItem.jdkMajorVersion.toString() == version
-  }
-
-  private fun matchesVendor(jdkItem: JdkItem, vendor: String?): Boolean {
-    if (vendor == null) return true
-    val adjustedVendor = vendor.toJvmVendor().displayName
-    val jdkItemVendorName = jdkItem.product.vendor
-    val jdkItemProductName = jdkItem.product.product?.split(" ")?.firstOrNull()
-    return adjustedVendor.startsWith(jdkItemVendorName, ignoreCase = true) ||
-           (jdkItemProductName != null && adjustedVendor.startsWith(jdkItemProductName, ignoreCase = true))
   }
 }

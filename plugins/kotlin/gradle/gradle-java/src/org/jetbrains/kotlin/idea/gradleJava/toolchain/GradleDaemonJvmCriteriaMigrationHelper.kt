@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import org.jetbrains.plugins.gradle.util.toJvmVendor
+import org.jetbrains.plugins.gradle.util.toJvmCriteria
 import java.util.concurrent.CompletableFuture
 
 object GradleDaemonJvmCriteriaMigrationHelper {
@@ -34,43 +34,40 @@ object GradleDaemonJvmCriteriaMigrationHelper {
     }
 
     private suspend fun migrateToDaemonJvmCriteriaImpl(project: Project, externalProjectPath: String): Boolean {
-        val gradleJvmPath = GradleInstallationManager.getInstance().getGradleJvmPath(project, externalProjectPath)
-        if (gradleJvmPath == null) {
+        val daemonJvmCriteria = resolveDaemonJvmCriteria(project, externalProjectPath)
+        if (daemonJvmCriteria == null) {
             displayMigrationFailureMessage(project)
             return false
         }
-        val gradleJvmInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(gradleJvmPath)
-        if (gradleJvmInfo == null) {
-            displayMigrationFailureMessage(project)
-            return false
-        }
-        val gradleJvmCriteria = GradleDaemonJvmCriteria(
-            version = gradleJvmInfo.version.feature.toString(),
-            vendor = gradleJvmInfo.variant.toJvmVendor()
-        )
 
-        applyDefaultToolchainResolverPlugin(project)
+        applyDefaultToolchainResolverPlugin(project, externalProjectPath)
 
-        val isSuccess = GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, gradleJvmCriteria)
-            .await()
-
-        if (!isSuccess) {
+        if (!GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, daemonJvmCriteria).await()) {
             displayMigrationFailureMessage(project)
             return false
         }
 
         overrideGradleJvmReferenceWithDefault(project, externalProjectPath)
+
         return true
     }
 
-    suspend fun applyDefaultToolchainResolverPlugin(project: Project) {
-        writeCommandAction(project, GradleBundle.message("gradle.notifications.daemon.toolchain.migration.apply.plugin.command.name")) {
-            project.getTopLevelBuildScriptSettingsPsiFile()?.let { topLevelBuildScript ->
-                val buildScriptSupport = GradleBuildScriptSupport.getManipulator(topLevelBuildScript)
-                buildScriptSupport.addFoojayPlugin(topLevelBuildScript)
-            } ?: run {
-                // TODO create settings.gradle file with Foojay Plugin
-            }
+    private fun resolveDaemonJvmCriteria(project: Project, externalProjectPath: String): GradleDaemonJvmCriteria? {
+        val gradleJvmPath = GradleInstallationManager.getInstance().getGradleJvmPath(project, externalProjectPath) ?: return null
+        val gradleJvmInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(gradleJvmPath) ?: return null
+        return gradleJvmInfo.toJvmCriteria()
+    }
+
+    suspend fun applyDefaultToolchainResolverPlugin(project: Project, externalProjectPath: String) {
+        configureSettingsFileWithAppliedFoojayPlugin(project, externalProjectPath)
+    }
+
+    private suspend fun configureSettingsFileWithAppliedFoojayPlugin(project: Project, externalProjectPath: String): Boolean {
+        return writeCommandAction(project, GradleBundle.message("gradle.notifications.daemon.toolchain.migration.apply.plugin.command.name")) {
+            val settingsFile = getTopLevelBuildScriptSettingsPsiFile(project, externalProjectPath) ?: return@writeCommandAction false
+            val buildScriptSupport = GradleBuildScriptSupport.getManipulator(settingsFile)
+            buildScriptSupport.addFoojayPlugin(settingsFile)
+            return@writeCommandAction true
         }
     }
 

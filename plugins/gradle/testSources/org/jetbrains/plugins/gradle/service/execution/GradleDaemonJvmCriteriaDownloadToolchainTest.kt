@@ -8,6 +8,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.toJvmCriteria
+import org.jetbrains.plugins.gradle.util.toJvmVendor
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -22,7 +24,8 @@ class  GradleDaemonJvmCriteriaDownloadToolchainTest : GradleDaemonJvmCriteriaDow
         Messages.OK
       }, disposable)
 
-      val actualJdkItemAndPath = GradleDaemonJvmCriteriaDownloadToolchain.pickJdkItemAndPathForMatchingCriteria(project, "0", "unknown")
+      val daemonJvmCriteria = GradleDaemonJvmCriteria("0", "unknown".toJvmVendor())
+      val actualJdkItemAndPath = GradleDaemonJvmCriteriaDownloadToolchain.pickJdkItemAndPathForMatchingCriteria(project, daemonJvmCriteria)
       Assertions.assertNull(actualJdkItemAndPath)
 
       Assertions.assertEquals(GradleBundle.message("gradle.toolchain.download.error.message", "0", "unknown"), exceptionMessage)
@@ -32,33 +35,30 @@ class  GradleDaemonJvmCriteriaDownloadToolchainTest : GradleDaemonJvmCriteriaDow
   @Test
   fun `test Given supported vendors When download matching JDK Then requested item contains expected values`() = timeoutRunBlocking {
     for (vendor in listOf("Oracle", "Amazon", "BellSoft", "Azul", "SAP", "Eclipse", "IBM", "GraalVM", "JetBrains")) {
-      val actualJdkItemAndPath = GradleDaemonJvmCriteriaDownloadToolchain.pickJdkItemAndPathForMatchingCriteria(project, "21", vendor)
+      val daemonJvmCriteria = GradleDaemonJvmCriteria("21", vendor.toJvmVendor())
+      val actualJdkItemAndPath = GradleDaemonJvmCriteriaDownloadToolchain.pickJdkItemAndPathForMatchingCriteria(project, daemonJvmCriteria)
       Assertions.assertNotNull(actualJdkItemAndPath)
-      val actualJdkItem = actualJdkItemAndPath!!.first
-      Assertions.assertEquals(21, actualJdkItem.jdkMajorVersion)
-      Assertions.assertEquals(vendor, actualJdkItem.product.vendor)
+      Assertions.assertEquals(daemonJvmCriteria, actualJdkItemAndPath!!.first.toJvmCriteria())
     }
   }
 
   @Test
   fun `test Given different formats Jetbrains JDK vendor When download matching JDK Then requested item contains expected values`() = timeoutRunBlocking {
     for (vendor in listOf("JetBrains", "jetbrains", "JETBRAINS", " JetBrains ")) {
-      val actualJdkItemAndPath = GradleDaemonJvmCriteriaDownloadToolchain.pickJdkItemAndPathForMatchingCriteria(project, "17", vendor)
+      val daemonJvmCriteria = GradleDaemonJvmCriteria("17", vendor.toJvmVendor())
+      val actualJdkItemAndPath = GradleDaemonJvmCriteriaDownloadToolchain.pickJdkItemAndPathForMatchingCriteria(project, daemonJvmCriteria)
       Assertions.assertNotNull(actualJdkItemAndPath)
-      val actualJdkItem = actualJdkItemAndPath!!.first
-      Assertions.assertEquals(17, actualJdkItem.jdkMajorVersion)
-      Assertions.assertEquals("JetBrains", actualJdkItem.product.vendor)
+      Assertions.assertEquals(daemonJvmCriteria, actualJdkItemAndPath!!.first.toJvmCriteria())
     }
   }
 
   @Test
   fun `test Given different formats of Azul JDK vendor When download matching JDK Then requested item contains expected values`() = timeoutRunBlocking {
     for (vendor in listOf("Azul Systems", "Azul Zulu", "Azul", "Zulu", "azul", "zulu")) {
-      val actualJdkItemAndPath = GradleDaemonJvmCriteriaDownloadToolchain.pickJdkItemAndPathForMatchingCriteria(project, "17", vendor)
+      val daemonJvmCriteria = GradleDaemonJvmCriteria("17", vendor.toJvmVendor())
+      val actualJdkItemAndPath = GradleDaemonJvmCriteriaDownloadToolchain.pickJdkItemAndPathForMatchingCriteria(project, daemonJvmCriteria)
       Assertions.assertNotNull(actualJdkItemAndPath)
-      val actualJdkItem = actualJdkItemAndPath!!.first
-      Assertions.assertEquals(17, actualJdkItem.jdkMajorVersion)
-      Assertions.assertEquals("Azul", actualJdkItem.product.vendor)
+      Assertions.assertEquals(daemonJvmCriteria, actualJdkItemAndPath!!.first.toJvmCriteria())
     }
   }
 }

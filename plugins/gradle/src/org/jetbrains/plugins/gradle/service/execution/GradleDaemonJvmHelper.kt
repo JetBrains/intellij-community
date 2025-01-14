@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -83,11 +83,12 @@ object GradleDaemonJvmHelper {
   fun updateProjectDaemonJvmCriteria(
     project: Project,
     externalProjectPath: String,
-    daemonJvmCriteria: GradleDaemonJvmCriteria,
+    daemonJvmCriteria: GradleDaemonJvmCriteria
   ): CompletableFuture<Boolean> {
     val taskSettings = ExternalSystemTaskExecutionSettings().apply {
       this.externalProjectPath = externalProjectPath
       externalSystemIdString = GradleConstants.SYSTEM_ID.id
+      executionName = GradleBundle.message("gradle.execution.name.config.daemon.jvm.criteria")
       taskNames = buildList {
         add(DaemonJvmPropertiesConfigurator.TASK_NAME)
         val version = daemonJvmCriteria.version
@@ -120,8 +121,6 @@ object GradleDaemonJvmHelper {
     }
 
     val executionSpec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, taskSettings)
-      .withProgressExecutionMode(ProgressExecutionMode.START_IN_FOREGROUND_ASYNC)
-      .withActivateToolWindowBeforeRun(true)
       .withUserData(taskUserData)
       .withCallback(taskCallback)
       .build()

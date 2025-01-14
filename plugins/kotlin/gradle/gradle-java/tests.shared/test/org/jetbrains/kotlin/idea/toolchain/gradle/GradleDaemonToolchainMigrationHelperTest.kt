@@ -4,17 +4,17 @@ package org.jetbrains.kotlin.idea.toolchain.gradle
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.withRegisteredSdks
-import com.intellij.util.lang.JavaVersion
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.java.JdkVersionDetector
-import org.jetbrains.jps.model.java.JdkVersionDetector.Variant
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getTopLevelBuildScriptSettingsPsiFile
 import org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonJvmCriteriaMigrationHelper
 import org.jetbrains.plugins.gradle.importing.GradleProjectSdkResolverTestCase
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.gradle.util.toJvmVendor
+import org.jetbrains.plugins.gradle.util.toJvmCriteria
 import org.junit.Test
+import org.junit.jupiter.api.Assertions
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 
@@ -37,20 +37,21 @@ class GradleDaemonToolchainMigrationHelperTest: GradleProjectSdkResolverTestCase
                     .get(1, TimeUnit.MINUTES)
 
                 assertFoojayPluginIsApplied()
-                assertDaemonJvmProperties(jdkInfo.version, jdkInfo.variant)
+                assertDaemonJvmProperties(jdkInfo.toJvmCriteria())
             }
         }
     }
 
     private suspend fun assertFoojayPluginIsApplied() {
         readAction {
-            project.getTopLevelBuildScriptSettingsPsiFile()!!.text.contains("org.gradle.toolchains.foojay-resolver-convention")
+            val settingsFile = getTopLevelBuildScriptSettingsPsiFile(project, projectPath)!!
+            settingsFile.text.contains("org.gradle.toolchains.foojay-resolver-convention")
         }
     }
 
-    private fun assertDaemonJvmProperties(expectedVersion: JavaVersion, expectedVendor: Variant) {
-        val properties = GradleDaemonJvmPropertiesFile.getProperties(Path(projectPath))!!
-        assertEquals(expectedVersion.feature.toString(), properties.version?.value)
-        assertEquals(expectedVendor.toJvmVendor().rawVendor, properties.vendor?.value?.toJvmVendor()?.rawVendor)
+    private fun assertDaemonJvmProperties(expectedCriteria: GradleDaemonJvmCriteria) {
+        val properties = GradleDaemonJvmPropertiesFile.getProperties(Path(projectPath))
+        Assertions.assertNotNull(properties)
+        Assertions.assertEquals(expectedCriteria, properties!!.criteria)
     }
 }
