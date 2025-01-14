@@ -32,19 +32,19 @@ public interface ADElementTypes {
   IElementType SUPER_TYPE = new ADElementType("SUPER_TYPE");
   IElementType TYPE_REFERENCE = new ADElementType("TYPE_REFERENCE");
 
-  IElementType ASTERISK = new ADTokenType("*");
-  IElementType AT = new ADTokenType("@");
-  IElementType COLON = new ADTokenType(":");
-  IElementType COMMA = new ADTokenType(",");
-  IElementType DOT = new ADTokenType(".");
+  IElementType ASTERISK = new ADTokenType("ASTERISK");
+  IElementType AT = new ADTokenType("AT");
+  IElementType COLON = new ADTokenType("COLON");
+  IElementType COMMA = new ADTokenType("COMMA");
+  IElementType DOT = new ADTokenType("DOT");
   IElementType IDENTIFIER = new ADTokenType("IDENTIFIER");
-  IElementType LBRACKET = new ADTokenType("[");
-  IElementType LESS = new ADTokenType("<");
-  IElementType LPAREN = new ADTokenType("(");
-  IElementType MINUS = new ADTokenType("-");
-  IElementType MORE = new ADTokenType(">");
-  IElementType RBRACKET = new ADTokenType("]");
-  IElementType RPAREN = new ADTokenType(")");
+  IElementType LBRACKET = new ADTokenType("LBRACKET");
+  IElementType LESS = new ADTokenType("LESS");
+  IElementType LPAREN = new ADTokenType("LPAREN");
+  IElementType MINUS = new ADTokenType("MINUS");
+  IElementType MORE = new ADTokenType("MORE");
+  IElementType RBRACKET = new ADTokenType("RBRACKET");
+  IElementType RPAREN = new ADTokenType("RPAREN");
 
   class Factory {
     public static CompositePsiElement createElement(IElementType type) {

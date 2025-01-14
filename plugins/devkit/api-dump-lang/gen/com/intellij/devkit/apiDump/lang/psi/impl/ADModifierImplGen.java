@@ -29,4 +29,16 @@ public class ADModifierImplGen extends ADPsiElementImpl implements ADModifier {
     else super.accept(visitor);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getAt() {
+    return findPsiChildByType(AT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getIdentifier() {
+    return findPsiChildByType(IDENTIFIER);
+  }
+
 }

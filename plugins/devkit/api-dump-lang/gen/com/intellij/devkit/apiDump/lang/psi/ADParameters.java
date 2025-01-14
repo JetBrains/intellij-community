@@ -12,4 +12,10 @@ public interface ADParameters extends ADPsiElement {
   @NotNull
   List<ADParameter> getParameterList();
 
+  @NotNull
+  PsiElement getLparen();
+
+  @Nullable
+  PsiElement getRparen();
+
 }

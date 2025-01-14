@@ -29,4 +29,10 @@ public class ADExperimentalImplGen extends ADPsiElementImpl implements ADExperim
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getAsterisk() {
+    return findPsiChildByType(ASTERISK);
+  }
+
 }

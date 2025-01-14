@@ -36,4 +36,10 @@ public class ADSuperTypeImplGen extends ADMemberImplGen implements ADSuperType {
     return PsiTreeUtil.getChildOfType(this, ADTypeReference.class);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getMinus() {
+    return findPsiChildByType(MINUS);
+  }
+
 }

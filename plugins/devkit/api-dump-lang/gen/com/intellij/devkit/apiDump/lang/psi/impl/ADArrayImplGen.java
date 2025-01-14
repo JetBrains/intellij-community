@@ -29,4 +29,16 @@ public class ADArrayImplGen extends ADPsiElementImpl implements ADArray {
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getLbracket() {
+    return findPsiChildByType(LBRACKET);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getRbracket() {
+    return findPsiChildByType(RBRACKET);
+  }
+
 }

@@ -9,4 +9,10 @@ import com.intellij.psi.PsiElement;
 
 public interface ADArray extends ADPsiElement {
 
+  @NotNull
+  PsiElement getLbracket();
+
+  @NotNull
+  PsiElement getRbracket();
+
 }

@@ -54,4 +54,16 @@ public class ADConstructorImplGen extends ADMemberImplGen implements ADConstruct
     return PsiTreeUtil.getChildOfType(this, ADTypeReference.class);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getColon() {
+    return findPsiChildByType(COLON);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getMinus() {
+    return findPsiChildByType(MINUS);
+  }
+
 }

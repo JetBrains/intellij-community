@@ -29,4 +29,10 @@ public class ADMethodReferenceImplGen extends ADMethodReferenceImpl implements A
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findPsiChildByType(IDENTIFIER);
+  }
+
 }

@@ -9,4 +9,7 @@ import com.intellij.psi.PsiElement;
 
 public interface ADMethodReference extends ADPsiElement {
 
+  @NotNull
+  PsiElement getIdentifier();
+
 }

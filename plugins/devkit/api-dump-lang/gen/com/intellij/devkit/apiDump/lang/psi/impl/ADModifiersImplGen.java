@@ -41,4 +41,10 @@ public class ADModifiersImplGen extends ADPsiElementImpl implements ADModifiers 
     return PsiTreeUtil.getChildOfType(this, ADModifier.class);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getColon() {
+    return findPsiChildByType(COLON);
+  }
+
 }

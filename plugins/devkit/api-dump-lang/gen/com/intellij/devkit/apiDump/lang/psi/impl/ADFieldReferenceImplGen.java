@@ -29,4 +29,10 @@ public class ADFieldReferenceImplGen extends ADFieldReferenceImpl implements ADF
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getIdentifier() {
+    return findPsiChildByType(IDENTIFIER);
+  }
+
 }

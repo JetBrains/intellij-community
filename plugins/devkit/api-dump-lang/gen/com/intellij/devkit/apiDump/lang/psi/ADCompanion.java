@@ -15,4 +15,10 @@ public interface ADCompanion extends ADMember {
   @NotNull
   ADTypeReference getTypeReference();
 
+  @NotNull
+  PsiElement getColon();
+
+  @NotNull
+  PsiElement getMinus();
+
 }

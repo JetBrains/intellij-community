@@ -29,4 +29,16 @@ public class ADConstructorReferenceImplGen extends ADConstructorReferenceImpl im
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getLess() {
+    return findPsiChildByType(LESS);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getMore() {
+    return findPsiChildByType(MORE);
+  }
+
 }

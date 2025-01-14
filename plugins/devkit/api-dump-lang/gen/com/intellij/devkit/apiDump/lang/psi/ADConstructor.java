@@ -21,4 +21,10 @@ public interface ADConstructor extends ADMember {
   @Nullable
   ADTypeReference getTypeReference();
 
+  @Nullable
+  PsiElement getColon();
+
+  @NotNull
+  PsiElement getMinus();
+
 }

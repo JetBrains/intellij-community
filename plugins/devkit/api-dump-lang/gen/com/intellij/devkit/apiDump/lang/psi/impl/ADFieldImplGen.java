@@ -48,4 +48,16 @@ public class ADFieldImplGen extends ADMemberImplGen implements ADField {
     return PsiTreeUtil.getChildOfType(this, ADTypeReference.class);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getColon() {
+    return findPsiChildByType(COLON);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getMinus() {
+    return findPsiChildByType(MINUS);
+  }
+
 }

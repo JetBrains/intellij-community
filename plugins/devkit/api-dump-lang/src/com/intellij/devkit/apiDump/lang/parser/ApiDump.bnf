@@ -22,19 +22,19 @@
   generateFirstCheck = 1
 
   tokens = [
-      IDENTIFIER='IDENTIFIER'
-      MINUS='-'
-      DOT='.'
-      ASTERISK='*'
-      LPAREN='('
-      RPAREN=')'
-      LBRACKET='['
-      RBRACKET=']'
-      COMMA=','
-      COLON=':'
-      AT='@'
-      LESS='<'
-      MORE='>'
+      IDENTIFIER
+      MINUS
+      DOT
+      ASTERISK
+      LPAREN
+      RPAREN
+      LBRACKET
+      RBRACKET
+      COMMA
+      COLON
+      AT
+      LESS
+      MORE
   ]
 
   extends("Method|Field|Constructor|Companion|SuperType") = Member

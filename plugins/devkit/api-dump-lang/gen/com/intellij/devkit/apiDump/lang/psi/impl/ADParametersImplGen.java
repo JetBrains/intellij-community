@@ -35,4 +35,16 @@ public class ADParametersImplGen extends ADPsiElementImpl implements ADParameter
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ADParameter.class);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getLparen() {
+    return findPsiChildByType(LPAREN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getRparen() {
+    return findPsiChildByType(RPAREN);
+  }
+
 }

@@ -9,4 +9,10 @@ import com.intellij.psi.PsiElement;
 
 public interface ADModifier extends ADPsiElement {
 
+  @Nullable
+  PsiElement getAt();
+
+  @Nullable
+  PsiElement getIdentifier();
+
 }

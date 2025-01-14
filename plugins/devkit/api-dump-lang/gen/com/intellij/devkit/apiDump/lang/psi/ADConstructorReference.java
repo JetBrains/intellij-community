@@ -9,4 +9,10 @@ import com.intellij.psi.PsiElement;
 
 public interface ADConstructorReference extends ADPsiElement {
 
+  @NotNull
+  PsiElement getLess();
+
+  @NotNull
+  PsiElement getMore();
+
 }

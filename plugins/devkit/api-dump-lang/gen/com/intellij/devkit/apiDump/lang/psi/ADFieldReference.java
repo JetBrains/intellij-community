@@ -9,4 +9,7 @@ import com.intellij.psi.PsiElement;
 
 public interface ADFieldReference extends ADPsiElement {
 
+  @NotNull
+  PsiElement getIdentifier();
+
 }

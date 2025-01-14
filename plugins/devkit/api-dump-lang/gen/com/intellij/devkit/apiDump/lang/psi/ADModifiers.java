@@ -15,4 +15,7 @@ public interface ADModifiers extends ADPsiElement {
   @Nullable
   ADModifier getModifier();
 
+  @NotNull
+  PsiElement getColon();
+
 }

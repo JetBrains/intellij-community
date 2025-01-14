@@ -42,4 +42,16 @@ public class ADCompanionImplGen extends ADMemberImplGen implements ADCompanion {
     return PsiTreeUtil.getChildOfType(this, ADTypeReference.class);
   }
 
+  @Override
+  @NotNull
+  public PsiElement getColon() {
+    return findPsiChildByType(COLON);
+  }
+
+  @Override
+  @NotNull
+  public PsiElement getMinus() {
+    return findPsiChildByType(MINUS);
+  }
+
 }

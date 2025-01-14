@@ -9,4 +9,7 @@ import com.intellij.psi.PsiElement;
 
 public interface ADExperimental extends ADPsiElement {
 
+  @NotNull
+  PsiElement getAsterisk();
+
 }

@@ -12,4 +12,7 @@ public interface ADSuperType extends ADMember {
   @NotNull
   ADTypeReference getTypeReference();
 
+  @NotNull
+  PsiElement getMinus();
+
 }
