@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.apiDump.lang.lexer;
 
 import com.intellij.psi.TokenType;
@@ -22,7 +22,7 @@ import com.intellij.psi.TokenType;
 %function advance
 %type IElementType
 
-IDENTIFIER = [:jletter:] [:jletterdigit:]*
+IDENTIFIER = [:jletter:] ([:jletterdigit:] | [-])*
 EOL=[\n\r]
 SPACE=[ \u0009\u000B\u000C\u0000]
 WHITE_SPACE={EOL}|{SPACE}
