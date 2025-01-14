@@ -61,6 +61,7 @@ Modifier ::= IDENTIFIER | AT
 TypeReference ::= IDENTIFIER (DOT IDENTIFIER)* Array*
 {
   mixin = 'com.intellij.devkit.apiDump.lang.psi.impl.ADTypeReferenceImpl'
+  methods = [getIdentifierList]
 }
 
 Array ::= LBRACKET RBRACKET

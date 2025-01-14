@@ -23,6 +23,7 @@
     <registryKey defaultValue="false" description="Enable find usages for references in api dump" key="intellij.devkit.api.dump.find.usages"/>
 
     <lang.foldingBuilder language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.folding.ADFoldingBuilder"/>
+    <lang.psiStructureViewFactory language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.structure.ADFileStructureFactory"/>
   </extensions>
 
 </idea-plugin>

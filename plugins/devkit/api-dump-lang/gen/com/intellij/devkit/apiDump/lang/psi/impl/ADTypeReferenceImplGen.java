@@ -35,4 +35,9 @@ public class ADTypeReferenceImplGen extends ADTypeReferenceImpl implements ADTyp
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ADArray.class);
   }
 
+  @Override
+  public @NotNull List<@NotNull PsiElement> getIdentifierList() {
+    return ADPsiImplUtil.getIdentifierList(this);
+  }
+
 }

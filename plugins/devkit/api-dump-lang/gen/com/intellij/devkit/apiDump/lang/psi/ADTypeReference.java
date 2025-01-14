@@ -12,4 +12,6 @@ public interface ADTypeReference extends ADPsiElement {
   @NotNull
   List<ADArray> getArrayList();
 
+  @NotNull List<@NotNull PsiElement> getIdentifierList();
+
 }
