@@ -20,6 +20,7 @@ import org.jetbrains.plugins.terminal.block.reworked.session.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.output.*
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -87,8 +88,16 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     assertEquals(expectedEvents, shellIntegrationEvents)
   }
 
+  /**
+   * This case is specific only for Zsh.
+   * By default, in Zsh prompt is not redrawn after showing the completion results.
+   * But it is redrawn if completion results occupy the whole screen.
+   * It is the exact case we are testing there.
+   */
   @Test
   fun `prompt events received after prompt is redrawn because of long completion output`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.toString().contains("zsh"))
+
     val events = startSessionAndCollectOutputEvents { inputChannel ->
       inputChannel.send(TerminalWriteBytesEvent("g".toByteArray() + TAB_BYTES))
       // Shell can ask "do you wish to see all N possibilities? (y/n)"
@@ -102,6 +111,43 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
+      TerminalPromptStartedEvent,
+      TerminalPromptFinishedEvent
+    )
+
+    assertEquals(expectedEvents, shellIntegrationEvents)
+  }
+
+  /**
+   * This case is specific only for Bash.
+   * Be default, in Bash prompt is redrawn after showing of completion items.
+   * So, we are testing this case here.
+   */
+  @Test
+  fun `prompt events received after prompt is redrawn because of showing completion items`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.toString().contains("bash"))
+
+    val bindCommand = "bind 'set show-all-if-ambiguous on'"
+
+    val events = startSessionAndCollectOutputEvents(TermSize(80, 100)) { inputChannel ->
+      // Configure the shell to show completion items on the first Tab key press.
+      inputChannel.send(TerminalWriteBytesEvent(bindCommand.toByteArray() + keyEncoder.enterBytes()))
+      delay(1000)
+      inputChannel.send(TerminalWriteBytesEvent("gi".toByteArray() + TAB_BYTES))
+    }
+
+    val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
+    val expectedEvents = listOf(
+      // Initialization
+      TerminalShellIntegrationInitializedEvent,
+      TerminalPromptStartedEvent,
+      TerminalPromptFinishedEvent,
+      // Bind command execution
+      TerminalCommandStartedEvent(bindCommand),
+      TerminalCommandFinishedEvent(bindCommand, 0),
+      TerminalPromptStartedEvent,
+      TerminalPromptFinishedEvent,
+      // Prompt redraw after completion
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent
     )
@@ -149,9 +195,12 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     assertEquals(expectedEvents, shellIntegrationEvents)
   }
 
-  private suspend fun startSessionAndCollectOutputEvents(block: suspend (SendChannel<TerminalInputEvent>) -> Unit): List<TerminalOutputEvent> {
+  private suspend fun startSessionAndCollectOutputEvents(
+    size: TermSize = TermSize(80, 24),
+    block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
+  ): List<TerminalOutputEvent> {
     return coroutineScope {
-      val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, childScope("TerminalSession"))
+      val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, childScope("TerminalSession"), size)
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()
       launch {

@@ -52,6 +52,8 @@ internal object TerminalSessionTestUtil {
       "/urs/bin/zsh",
       "/urs/local/bin/zsh",
       "/opt/homebrew/bin/zsh",
+      "/bin/bash",
+      "/opt/homebrew/bin/bash",
     ).mapNotNull {
       val path = Path.of(it)
       if (Files.isRegularFile(path)) path else PathEnvironmentVariableUtil.findInPath(it)?.toPath()
