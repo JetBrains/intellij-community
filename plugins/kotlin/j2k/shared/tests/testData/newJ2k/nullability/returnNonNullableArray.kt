@@ -1,4 +1,4 @@
-// ERROR: Return type mismatch: expected 'kotlin.Array<kotlin.String?>', actual 'kotlin.Array<kotlin.String>'.
+// ERROR: Return type mismatch: expected 'Array<String?>', actual 'Array<String>'.
 internal class Test {
     fun someFoo(): Array<String?> {
         return arrayOf<String>("a")

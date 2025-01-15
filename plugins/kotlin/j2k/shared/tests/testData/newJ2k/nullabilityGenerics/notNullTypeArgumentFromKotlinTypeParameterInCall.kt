@@ -1,5 +1,5 @@
-// ERROR: Argument type mismatch: actual type is 'Topic<kotlin.String?>', but 'Topic<T (of fun <T : Any> f)>' was expected.
-// ERROR: Argument type mismatch: actual type is 'Topic<kotlin.String?>', but 'Topic<T (of fun <T : Any> f)>' was expected.
+// ERROR: Argument type mismatch: actual type is 'Topic<String?>', but 'Topic<String>' was expected.
+// ERROR: Argument type mismatch: actual type is 'Topic<String?>', but 'Topic<String>' was expected.
 internal class J {
     var topic: Topic<String?> = Topic<String?>()
 

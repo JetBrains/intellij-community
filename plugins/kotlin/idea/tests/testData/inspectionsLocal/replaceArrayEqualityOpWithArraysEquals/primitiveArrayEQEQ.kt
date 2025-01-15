@@ -6,6 +6,3 @@ fun foo() {
     if (a <caret>== b) {
     }
 }
-
-// KT-73352
-// IGNORE_K2

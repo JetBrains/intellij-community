@@ -28,4 +28,3 @@ A("hoho").sum(12)
 // IGNORE_LOG_ERRORS
 
 // See KT-74004
-// IGNORE_K1

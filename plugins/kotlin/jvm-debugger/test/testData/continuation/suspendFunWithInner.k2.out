@@ -1,0 +1,51 @@
+LineBreakpoint created at suspendFunWithInner.kt:41
+Run Java
+Connected to the target VM
+suspendFunWithInner.kt:41
+Thread stack trace:
+	CoroutinePreflightFrame c:!LINE_NUMBER!, TestSuspendA$InClassB$InClassC (continuation)
+		($completion, $continuation, $result, inClassCMethodVal, this)
+	CoroutineStackFrame b:!LINE_NUMBER!, TestSuspendA$InClassB (continuation)
+		(inClassBMethodVal)
+	CoroutineStackFrame a:!LINE_NUMBER!, TestSuspendA (continuation)
+		(methodVal)
+	CoroutineStackFrame invokeSuspend:!LINE_NUMBER!, SuspendFunWithInnerKt$main$1 (continuation)
+		(rootCoroutineVal)
+	InlineStackFrame lambda 'with' in 'resumeWith':!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	KotlinStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	InlineStackFrame lambda 'withCoroutineContext' in 'run':!LINE_NUMBER!, DispatchedTask (kotlinx.coroutines)
+		($i$a$-withCoroutineContext-DispatchedTask$run$1, $i$f$withCoroutineContext, context, continuation, countOrElement$iv, delegate, exception, fatalException, job, oldValue$iv, state, taskContext, this)
+	InlineStackFrame withCoroutineContext:!LINE_NUMBER!, DispatchedTask (kotlinx.coroutines)
+		($i$a$-withCoroutineContext-DispatchedTask$run$1, $i$f$withCoroutineContext, context, continuation, countOrElement$iv, delegate, exception, fatalException, job, oldValue$iv, state, taskContext, this)
+	KotlinStackFrame run:!LINE_NUMBER!, DispatchedTask (kotlinx.coroutines)
+		($i$a$-withCoroutineContext-DispatchedTask$run$1, $i$f$withCoroutineContext, context, continuation, countOrElement$iv, delegate, exception, fatalException, job, oldValue$iv, state, taskContext, this)
+	KotlinStackFrame processNextEvent:!LINE_NUMBER!, EventLoopImplBase (kotlinx.coroutines)
+		(delayed, task, this)
+	KotlinStackFrame joinBlocking:!LINE_NUMBER!, BlockingCoroutine (kotlinx.coroutines)
+		(this)
+	KotlinStackFrame runBlocking:!LINE_NUMBER!, BuildersKt__BuildersKt (kotlinx.coroutines)
+		(block, context, contextInterceptor, coroutine, currentThread, eventLoop, newContext)
+	JavaStackFrame runBlocking:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
+		(block, context)
+	KotlinStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt__BuildersKt (kotlinx.coroutines)
+		()
+	JavaStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
+		()
+	KotlinStackFrame main:!LINE_NUMBER!, SuspendFunWithInnerKt (continuation)
+		(mainTestVal)
+Coroutine Creation Stack Trace
+	CreationCoroutineStackFrame createCoroutineUnintercepted:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt (kotlin.coroutines.intrinsics)
+		($completion, $continuation, $result, inClassCMethodVal, this)
+	CreationCoroutineStackFrame startCoroutineCancellable:!LINE_NUMBER!, CancellableKt (kotlinx.coroutines.intrinsics)
+		($completion, $continuation, $result, inClassCMethodVal, this)
+	CreationCoroutineStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
+		($completion, $continuation, $result, inClassCMethodVal, this)
+	CreationCoroutineStackFrame main:!LINE_NUMBER!, SuspendFunWithInnerKt (continuation)
+		($completion, $continuation, $result, inClassCMethodVal, this)
+	CreationCoroutineStackFrame FRAME:main:-1, SuspendFunWithInnerKt (continuation)
+		($completion, $continuation, $result, inClassCMethodVal, this)
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,0 +1,30 @@
+LineBreakpoint created at suspendFun.kt:28
+Run Java
+Connected to the target VM
+suspendFun.kt:28
+Thread stack trace:
+	KotlinStackFrame b:!LINE_NUMBER!, SuspendFunKt (coroutine1)
+		($completion, b, bParam)
+	CoroutinePreflightFrame a:!LINE_NUMBER!, SuspendFunKt (coroutine1)
+		($completion, $continuation, $result, a, aParam)
+	CoroutineStackFrame test1:!LINE_NUMBER!, SuspendFunKt (coroutine1)
+		(i, test1)
+	KotlinStackFrame invoke:!LINE_NUMBER!, SuspendFunKt$main$result$1 (coroutine1)
+		($completion, p0, this)
+	KotlinStackFrame invoke:!LINE_NUMBER!, SuspendFunKt$main$result$1 (coroutine1)
+		($completion, p1, this)
+	InlineStackFrame lambda 'createCoroutineFromSuspendFunction' in 'createCoroutineUnintercepted':!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt$createCoroutineUnintercepted$$inlined$createCoroutineFromSuspendFunction$IntrinsicsKt__IntrinsicsJvmKt$3 (kotlin.coroutines.intrinsics)
+		($i$a$-createCoroutineFromSuspendFunction-IntrinsicsKt__IntrinsicsJvmKt$createCoroutineUnintercepted$2, it, result, this)
+	KotlinStackFrame invokeSuspend:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt$createCoroutineUnintercepted$$inlined$createCoroutineFromSuspendFunction$IntrinsicsKt__IntrinsicsJvmKt$3 (kotlin.coroutines.intrinsics)
+		($i$a$-createCoroutineFromSuspendFunction-IntrinsicsKt__IntrinsicsJvmKt$createCoroutineUnintercepted$2, it, result, this)
+	InlineStackFrame lambda 'with' in 'resumeWith':!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	KotlinStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	KotlinStackFrame startCoroutine:!LINE_NUMBER!, ContinuationKt (kotlin.coroutines)
+		($this$startCoroutine, completion, receiver)
+	KotlinStackFrame main:!LINE_NUMBER!, SuspendFunKt (coroutine1)
+		(cnt)
+Disconnected from the target VM
+
+Process finished with exit code 0
