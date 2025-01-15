@@ -47,7 +47,7 @@ internal class StructureViewFloatingToolbar(
     minimumButtonSize = Dimension(oneDimension, oneDimension)
     showingTime = 150
     hidingTime = 50
-    backgroundAlpha = 1F
+    backgroundAlpha = 0F
     border = BorderFactory.createEmptyBorder()
     layoutStrategy = MyToolbarLayoutStrategy()
   }

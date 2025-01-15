@@ -175,8 +175,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       myTreeModelWrapper.removeModelListener(modelListener);
     });
 
+    boolean isLogical = structureViewModel instanceof LogicalStructureViewModel;
+    myTree.setBorder(BorderFactory.createEmptyBorder(0, isLogical ? 2 * UIUtil.getTreeFont().getSize() : 0, 0, 0));
     JScrollPane content = ScrollPaneFactory.createScrollPane(myTree);
-    setContent(new MyLayeredPane(content, structureViewModel instanceof LogicalStructureViewModel));
+    setContent(new MyLayeredPane(content));
 
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
@@ -684,8 +686,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     protected boolean isAutoScrollMode() {
       return myShouldAutoScroll && !myProject.isDisposed()
-             && getSettings().AUTOSCROLL_MODE
-             && !Registry.is("logical.structure.actions.on.hover", false);
+             && getSettings().AUTOSCROLL_MODE;
     }
 
     @Override
@@ -1021,16 +1022,30 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (e instanceof MouseEvent event) {
         if (!(getContent() instanceof MyLayeredPane myLayeredPane)) return;
         TreePath path = getPathForLocation(event.getX(), event.getY());
-        if (path == null) return;
+        if (path == null || path.equals(lastHoveredPath)) return;
         Rectangle pathBounds = getPathBounds(path);
+        if (pathBounds == null) return;
         lastHoveredPath = path;
         myLayeredPane.repaintFloatingToolbar(pathBounds.y);
-        getSelectionModel().setSelectionPath(path);
+        repaint();
       }
     }
 
     public TreePath getLastHoveredPath() {
       return lastHoveredPath;
+    }
+
+    @Override
+    public boolean isFileColorsEnabled() {
+      return Registry.is("logical.structure.actions.on.hover", false);
+    }
+
+    @Override
+    public @Nullable Color getFileColorForPath(@NotNull TreePath path) {
+      if (lastHoveredPath != null && lastHoveredPath.equals(path)) {
+        return UIUtil.getTreeSelectionBackground(false);
+      }
+      return super.getFileColorForPath(path);
     }
 
     private boolean processCustomEventHandler(StructureViewModel.ActionHandler actionHandler, MouseEvent event) {
@@ -1236,11 +1251,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     private final JScrollPane mainComponent;
     private final StructureViewFloatingToolbar floatingToolbar;
-    private final boolean isLogical;
 
-    MyLayeredPane(JScrollPane mainComponent, boolean isLogical) {
+    MyLayeredPane(JScrollPane mainComponent) {
       this.mainComponent = mainComponent;
-      this.isLogical = isLogical;
 
       add(mainComponent, DEFAULT_LAYER);
       if (Registry.is("logical.structure.actions.enabled", true)) {
@@ -1258,7 +1271,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       Rectangle bounds = getBounds();
       for (Component component : getComponents()) {
         if (component == mainComponent) {
-          component.setBounds(isLogical && floatingToolbar != null ? UIUtil.getTreeFont().getSize() : 0, 0, bounds.width, bounds.height);
+          component.setBounds(0, 0, bounds.width, bounds.height);
         }
       }
     }
