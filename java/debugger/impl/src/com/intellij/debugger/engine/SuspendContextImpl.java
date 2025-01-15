@@ -114,7 +114,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myDebugId = debugId;
 
     CoroutineScope dmtScope = myDebuggerManagerThread.getCoroutineScope();
-    myCoroutineScope = CoroutineScopeKt.childScope(dmtScope, "Suspend context " + this, EmptyCoroutineContext.INSTANCE, true);
+    myCoroutineScope = CoroutineScopeKt.childScope(dmtScope, "SuspendContextImpl " + debugId, EmptyCoroutineContext.INSTANCE, true);
     CheckedDisposable disposable = debugProcess.disposable;
     if (disposable.isDisposed()) {
       // could be due to VM death
