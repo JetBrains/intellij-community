@@ -5,7 +5,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
-import com.intellij.notebook.editor.BackFileViewProvider;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -73,25 +72,18 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
 
     final CharSequence chars;
     FileViewProvider viewProvider = file.getViewProvider();
-    if (viewProvider instanceof BackFileViewProvider) {
-      file = ((BackFileViewProvider)viewProvider).getFrontPsiFile();
-      if (file == null) {
-        return;
-      }
-      viewProvider = file.getViewProvider();
-    }
 
     chars = viewProvider.getContents();
     boolean multiLine = queryParameters.isMultiLine();
     List<CommentRange> commentRanges = findCommentTokenRanges(file, chars, queryParameters.getRange(), multiLine);
     IntList occurrences = new IntArrayList(1);
     IndexPattern[] patterns = patternProvider != null ? patternProvider.getIndexPatterns()
-                                                      : new IndexPattern[] {queryParameters.getPattern()};
+                                                      : new IndexPattern[]{queryParameters.getPattern()};
 
     for (int i = 0; i < commentRanges.size(); i++) {
       occurrences.clear();
 
-      for (int j = patterns.length - 1; j >=0; --j) {
+      for (int j = patterns.length - 1; j >= 0; --j) {
         if (!collectPatternMatches(patterns, patterns[j], chars, commentRanges, i, file, queryParameters.getRange(), consumer,
                                    occurrences, multiLine)) {
           return;
@@ -175,7 +167,9 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       if (range != null) {
         if (lexer.getTokenEnd() <= range.getStartOffset()) continue;
         if (lexer.getTokenStart() >= range.getEndOffset() &&
-            (!multiLine || lastEndOffset < 0 || !containsOneLineBreak(chars, lastEndOffset, lexer.getTokenStart()))) break;
+            (!multiLine || lastEndOffset < 0 || !containsOneLineBreak(chars, lastEndOffset, lexer.getTokenStart()))) {
+          break;
+        }
       }
 
       boolean isComment = commentTokens.contains(tokenType) || CacheUtil.isInComments(tokenType);
@@ -219,7 +213,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
                                                Processor<? super IndexPatternOccurrence> consumer,
                                                IntList matches,
                                                boolean multiLine
-                                               ) {
+  ) {
     CommentRange commentRange = commentRanges.get(commentNum);
     int commentStart = commentRange.startOffset;
     int commentEnd = commentRange.endOffset;
@@ -293,7 +287,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         break;
       }
       CharSequence commentText = StringPattern.newBombedCharSequence(text.subSequence(commentStartOffset, continuationEndOffset));
-      for (IndexPattern pattern: allIndexPatterns) {
+      for (IndexPattern pattern : allIndexPatterns) {
         Pattern p = pattern.getPattern();
         if (p != null && p.matcher(commentText).find()) break outer;
       }

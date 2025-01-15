@@ -6,7 +6,6 @@ import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.find.ngrams.TrigramIndex;
-import com.intellij.notebook.editor.BackFileViewProvider;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
@@ -334,17 +333,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (Comparing.equal(file, virtualFileToIgnoreOccurrencesIn)) return true;
         int currentFilesCount = filesCount.incrementAndGet();
 
-        //noinspection deprecation
-        VirtualFile frontFile = file.getUserData(BackFileViewProvider.FRONT_FILE_KEY);
-        file = frontFile != null ? frontFile : file;
-
         assert file != null;
-        long fileLength = file.isDirectory() ? 0 : file.getLength();
-        //Backed files can have different front file and back file size.
-        // For instance, notebook can be 1mb but there jsut 2 short lines inside where we will search.
-        //noinspection deprecation
-        Float ratio = file.getCopyableUserData(BackFileViewProvider.FRONT_FILE_SIZE_RATIO_KEY);
-        long estimatedLength = ratio != null ? Math.round(fileLength * ratio) : fileLength;
+        long estimatedLength = file.isDirectory() ? 0 : file.getLength();
 
         long accumulatedFileSizeToProcess = filesSizeToProcess.addAndGet(estimatedLength);
         return currentFilesCount < maxFilesToProcess && accumulatedFileSizeToProcess < maxFilesSizeToProcess;
@@ -617,12 +607,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
       PsiFile psiFile = vfile.isValid() ? myManager.findFile(vfile) : null;
-
-      //noinspection deprecation
-      if (psiFile != null && psiFile.getViewProvider() instanceof BackFileViewProvider) {
-        //noinspection deprecation
-        psiFile = ((BackFileViewProvider)psiFile.getViewProvider()).getFrontPsiFile();
-      }
 
       if (psiFile instanceof PsiBinaryFile binaryFile) {
         PsiFile originalPsiFile = findOriginalPsiFile(binaryFile);

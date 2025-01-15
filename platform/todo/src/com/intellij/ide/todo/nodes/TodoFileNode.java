@@ -12,7 +12,6 @@ import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.notebook.editor.BackFileViewProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -44,16 +43,6 @@ public final class TodoFileNode extends PsiFileNode {
     try {
       PsiFile psiFile = getValue();
       assert psiFile != null;
-
-      FileViewProvider viewProvider = psiFile.getViewProvider();
-      //noinspection deprecation
-      if (viewProvider instanceof BackFileViewProvider) {
-        //noinspection deprecation
-        psiFile = ((BackFileViewProvider)viewProvider).getFrontPsiFile();
-        if (psiFile == null) {
-          return List.of();
-        }
-      }
 
       List<? extends TodoItem> items = findAllTodos(psiFile, myBuilder.getTodoTreeStructure().getSearchHelper());
       List<TodoItemNode> children = new ArrayList<>(items.size());
