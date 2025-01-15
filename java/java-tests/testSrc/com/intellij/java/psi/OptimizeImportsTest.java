@@ -328,7 +328,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                          package one;
                          public interface Super {
                            class Result {}
-                           
+                         
                            Result x();
                          }
                          """);
@@ -412,7 +412,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     }
   }
 
-  public void testNoStubPsiMismatchOnRecordInsideImportList() throws Exception {
+  public void testNoStubPsiMismatchOnRecordInsideImportList() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", """
       import java.ut<caret>il.List;
@@ -446,12 +446,42 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testOptimizeImportNotOnTheFly() {
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImport() {
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImport2() {
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImportNoIntention() {
+    checkOptimizeImportNoIntention();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImportOnDemand() {
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImportOnDemandNoIntention() {
+    checkOptimizeImportNoIntention();
+  }
+
+  private void checkOptimizeImport() {
     myFixture.enableInspections(new MissortedImportsInspection(), new UnusedImportInspection());
     myFixture.testHighlighting(getTestName(false) + ".java");
     IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("optimize.imports.fix"));
-    assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  private void checkOptimizeImportNoIntention() {
+    myFixture.enableInspections(new MissortedImportsInspection(), new UnusedImportInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+    IntentionAction intention = myFixture.getAvailableIntention(QuickFixBundle.message("optimize.imports.fix"));
+    assertNull(intention);
   }
 
   public void testRemovingAllUnusedImports() throws Exception {
@@ -669,7 +699,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                          package one;
                          public interface Super {
                            class List {}
-                           
+                         
                            List x();
                          }
                          """);
