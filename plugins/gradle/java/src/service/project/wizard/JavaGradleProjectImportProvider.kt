@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.service.project.open.canOpenGradleProject
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -12,8 +13,11 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 
 /**
  * Do not use this import provider directly.
+ *
  * @see JavaGradleProjectImportBuilder
  */
+@ApiStatus.Internal
+@Deprecated("Use the open and link project utility functions")
 class JavaGradleProjectImportProvider : AbstractExternalProjectImportProvider(JavaGradleProjectImportBuilder(), SYSTEM_ID) {
 
   override fun createSteps(context: WizardContext): Array<ModuleWizardStep> {

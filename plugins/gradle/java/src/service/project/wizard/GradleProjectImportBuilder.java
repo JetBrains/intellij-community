@@ -46,9 +46,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * @deprecated Use {@link JavaGradleProjectImportBuilder} instead
+ * @deprecated Use the open and link project utility function
+ *
+ * @see JavaGradleProjectImportBuilder
  */
 @Deprecated
+@ApiStatus.Internal
 public final class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
   private static final Logger LOG = Logger.getInstance(GradleProjectImportBuilder.class);
 
