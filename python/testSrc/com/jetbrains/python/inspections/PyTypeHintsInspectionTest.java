@@ -758,6 +758,31 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    A3 = '<error descr="Generics should be specified through square brackets">Union(int, str)</error>'  # type: TypeAlias""");
   }
 
+  // PY-57155
+  public void testParenthesesInAnnotated() {
+    doTestByText("""
+                   from typing import Annotated
+                   from typing_extensions import Annotated as AnnotatedExt
+
+                   def a(x: Annotated[str, dict(key="value")]):
+                       pass
+
+                   def b(x: Annotated[Annotated[str, dict(key="value")], ""]):
+                       pass
+
+                   def c(x: AnnotatedExt[str, dict(key="value")]):
+                       pass
+
+                   def d(x: AnnotatedExt[AnnotatedExt[str, dict(key="value")], ""]):
+                       pass
+                   
+                   def e(x: Annotated[str, list[<warning descr="Invalid type argument">dict(key="value")</warning>]]):
+                      pass
+                   
+                   def f(x: Annotated[<warning descr="Generics should be specified through square brackets">dict(key="value")</warning>, ""]):
+                      pass""");
+  }
+
   // PY-16853
   public void testParenthesesAndCustom() {
     doTestByText("""

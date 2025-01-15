@@ -19,6 +19,8 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.parentsOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
@@ -657,9 +659,27 @@ class PyTypeHintsInspection : PyInspection() {
                       ProblemHighlightType.GENERIC_ERROR)
     }
 
+    private fun isInsideTypingAnnotatedMetadata(expr: PyExpression): Boolean {
+      for (parent in expr.parentsOfType<PySubscriptionExpression>()) {
+        val operand = parent.operand
+        if (
+          operand is PyReferenceExpression
+          && resolvesToAnyOfQualifiedNames(operand, PyTypingTypeProvider.ANNOTATED, PyTypingTypeProvider.ANNOTATED_EXT)
+        ) {
+          val tuple = parent.indexExpression as? PyTupleExpression
+          if (tuple != null && tuple.elements.drop(1).any { it.isAncestor(expr) }) return true
+          break  // only check the immediate Annotated parent
+        }
+      }
+      return false
+    }
+
     private fun checkParenthesesOnGenerics(call: PyCallExpression) {
       val callee = call.callee
       if (callee is PyReferenceExpression) {
+        // Bail out if we're inside an Annotated[...] expression, and we're not the first argument
+        if (isInsideTypingAnnotatedMetadata(call)) return
+
         if (PyResolveUtil.resolveImportedElementQNameLocally(callee).any { PyTypingTypeProvider.GENERIC_CLASSES.contains(it.toString()) }) {
           registerProblem(call,
                           PyPsiBundle.message("INSP.type.hints.generics.should.be.specified.through.square.brackets"),
