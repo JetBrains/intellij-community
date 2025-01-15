@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * This class verifies that delegate lexer generates a continuous sequence of tokens (without gaps), and that it
  * does not stall during iteration (generating empty tokens for the same offset continuously).
  */
-public class ValidatingLexerWrapper extends Lexer {
+final class ValidatingLexerWrapper extends Lexer {
   private final Lexer myDelegate;
   private int myLastStartOffset;
   private int myLastEndOffset;
@@ -21,7 +21,7 @@ public class ValidatingLexerWrapper extends Lexer {
   private IElementType myLastTokenType;
   private boolean myLastValuesActual;
 
-  public ValidatingLexerWrapper(@NotNull Lexer delegate) {myDelegate = delegate;}
+  ValidatingLexerWrapper(@NotNull Lexer delegate) { myDelegate = delegate;}
 
   @Override
   public @NotNull CharSequence getTokenSequence() {
