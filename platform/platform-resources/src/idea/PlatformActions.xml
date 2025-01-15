@@ -173,7 +173,7 @@
             icon="AllIcons.Actions.Find"
             use-shortcut-of="Find"/>
 
-    <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
+    <action id="RunAnything" icon="AllIcons.Actions.RunAnything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
 
     <action id="SmartSelect" class="com.intellij.ide.actions.SmartSelect" use-shortcut-of="EditorSelectWord"/>
     <action id="SmartUnSelect" class="com.intellij.ide.actions.SmartUnSelect" use-shortcut-of="EditorUnSelectWord"/>
