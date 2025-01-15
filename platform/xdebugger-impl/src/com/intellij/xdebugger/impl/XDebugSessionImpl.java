@@ -694,7 +694,19 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (ignoreBreakpoints) {
       setBreakpointsDisabledTemporarily(true);
     }
-    myDebugProcess.runToPosition(position, doResume());
+
+    var suspendContext = doResume();
+    var debugProcess = myDebugProcess;
+    if (isMixedMode()) {
+      if (isMixedModeHighProcessReady()) {
+        assert suspendContext != null;
+        myMixedModeExtension.runToPosition(position, (XMixedModeSuspendContext)suspendContext);
+        return;
+      }
+      debugProcess = getDebugProcess(true);
+    }
+
+    debugProcess.runToPosition(position, doResume());
   }
 
   @Override

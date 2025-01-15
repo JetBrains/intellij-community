@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.mixedmode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
@@ -20,10 +21,11 @@ class MixedModeProcessTransitionStateMachine(
   private val coroutineScope: CoroutineScope,
 ) {
   interface State
+  open class WithHighLevelDebugSuspendContextState(val high: XSuspendContext): State
   object OnlyLowStarted : State
   object BothRunning : State
-  class ResumeLowResumeStarted(val high: XSuspendContext) : State
-  class ResumeLowRunHighResumeStarted(val high: XSuspendContext) : State
+  class ResumeLowResumeStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
+  object ResumeLowRunHighResumeStarted : State
   class ResumeLowStoppedAfterRunWhileHighResuming(val low: XSuspendContext) : State
   object WaitingForHighProcessPositionReached : State
   object LeaveHighRunningWaitingForLowStop : State
@@ -34,10 +36,13 @@ class MixedModeProcessTransitionStateMachine(
   class HighLevelDebuggerStoppedAfterStepWaitingForLowStop(val highLevelSuspendContext : XSuspendContext) : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
   class ManagedStepStarted(val low: XSuspendContext) : State
-  class HighLevelDebuggerResumedForStepOnlyLowStopped(val low: XSuspendContext) : State
+  object HighLevelDebuggerResumedForStepOnlyLowStopped : State
   class MixedStepIntoStartedWaitingForHighDebuggerToBeResumed(val nativeBreakpointId: Int) : State
   class MixedStepIntoStartedHighDebuggerResumed(val nativeBreakpointId: Int) : State
-  class LowLevelStepStarted(val high: XSuspendContext) : State
+  class LowLevelStepStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
+  class LowLevelRunToAddressStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
+  class HighLevelRunToAddressStarted(val sourcePosition: XSourcePosition, val high : XSuspendContext) : State
+  class HighLevelRunToAddressStartedLowRun : State
 
   interface Event
   object HighStarted : Event
@@ -45,10 +50,10 @@ class MixedModeProcessTransitionStateMachine(
   object ResumeRequested : Event
   class HighLevelPositionReached(val suspendContext: XSuspendContext) : Event
   class LowLevelPositionReached(val suspendContext: XSuspendContext) : Event
-  object LowStop : Event
   object HighRun : Event
   object LowRun : Event
-  class HighStop(val highSuspendContext: XSuspendContext?) : Event
+  class LowLevelRunToAddress(val sourcePosition: XSourcePosition, val low: XSuspendContext) : Event
+  class HighLevelRunToAddress(val sourcePosition: XSourcePosition, val high: XSuspendContext) : Event
 
   private val nullObjectHighLevelSuspendContext: XSuspendContext = object : XSuspendContext() {}
 
@@ -248,7 +253,7 @@ class MixedModeProcessTransitionStateMachine(
 
       is LowRun -> {
         when (currentState) {
-          is ResumeLowResumeStarted -> {
+          is ResumeLowResumeStarted, is LowLevelRunToAddressStarted -> {
             if (currentState.high == nullObjectHighLevelSuspendContext) {
               // The high-level debug process was unable to stop there, and we used null object suspend context,
               // so the high process is still resumed, we don't need to do anything with it
@@ -258,7 +263,7 @@ class MixedModeProcessTransitionStateMachine(
               runBlocking(stateMachineHelperScope.coroutineContext) {
                 high.asXDebugProcess.resume(currentState.high)
               }
-              changeState(ResumeLowRunHighResumeStarted(currentState.high))
+              changeState(ResumeLowRunHighResumeStarted)
             }
           }
           is BothStopped -> {
@@ -266,6 +271,10 @@ class MixedModeProcessTransitionStateMachine(
           }
           is LowLevelStepStarted -> {
             changeState(OnlyHighStoppedWaitingForLowStepToComplete(currentState.high))
+          }
+          is HighLevelRunToAddressStarted -> {
+            high.asXDebugProcess.runToPosition(currentState.sourcePosition, currentState.high)
+            changeState(HighLevelRunToAddressStartedLowRun())
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -344,11 +353,11 @@ class MixedModeProcessTransitionStateMachine(
       }
       is HighRun -> {
         when (currentState) {
-          is OnlyHighStopped, is ResumeLowRunHighResumeStarted -> {
+          is OnlyHighStopped, is ResumeLowRunHighResumeStarted, is HighLevelRunToAddressStartedLowRun -> {
             changeState(BothRunning)
           }
           is ManagedStepStarted -> {
-            changeState(HighLevelDebuggerResumedForStepOnlyLowStopped(currentState.low))
+            changeState(HighLevelDebuggerResumedForStepOnlyLowStopped)
           }
           is MixedStepIntoStartedWaitingForHighDebuggerToBeResumed -> {
             // Now run all threads letting the stepping thread reach its destination
@@ -375,6 +384,26 @@ class MixedModeProcessTransitionStateMachine(
             }
           }
           else -> throwTransitionIsNotImplemented(event)
+        }
+      }
+      is LowLevelRunToAddress -> {
+        when (currentState) {
+          is BothStopped -> {
+            // Can firstly run to position in a low-level debug process and resume the high-level process afterward
+            low.asXDebugProcess.runToPosition(event.sourcePosition, event.low)
+            changeState(LowLevelRunToAddressStarted(currentState.high))
+          }
+        }
+      }
+      is HighLevelRunToAddress -> {
+        when (currentState) {
+          is BothStopped -> {
+            // As we do for resume, first let the low-level debug process run and secondly do runToPosition for a high-debug process
+            changeState(HighLevelRunToAddressStarted(event.sourcePosition, event.high))
+            runBlocking(stateMachineHelperScope.coroutineContext) {
+              low.continueAllThreads(emptySet(), silent = false)
+            }
+          }
         }
       }
     }

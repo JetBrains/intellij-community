@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -81,6 +82,13 @@ class XDebugSessionMixedModeExtension(
     val stepType = StepType.Out
     val newState = if (isLowLevelStep) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext.highLevelDebugSuspendContext, stepType)
     this.stateMachine.set(newState)
+  }
+
+  fun runToPosition(position: XSourcePosition, suspendContext: XMixedModeSuspendContext) {
+    val isLowLevelStep = low.belongsToMe(position)
+    val actionSuspendContext = if (isLowLevelStep) suspendContext.lowLevelDebugSuspendContext else suspendContext.highLevelDebugSuspendContext
+    val state = if (isLowLevelStep) LowLevelRunToAddress(position, actionSuspendContext) else HighLevelRunToAddress(position, actionSuspendContext)
+    this.stateMachine.set(state)
   }
 
   fun onResumed(isLowLevel: Boolean) {
