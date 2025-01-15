@@ -230,6 +230,7 @@ public abstract class WslDistributionManager implements Disposable {
    * Tracks installed WSL distributions via Windows Registry.
    */
   private static class WSLDistributionWatcher extends SimpleModificationTracker {
+    private final static String DISTRO_KEY = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss";
     private final Set<String> myCurrentGuids = new HashSet<>();
     private final Object LOCK = new Object();
 
@@ -252,12 +253,14 @@ public abstract class WslDistributionManager implements Disposable {
     }
 
     public void updateDistroInfo() {
-      Set<String> guids = Set.of(Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss"));
-      synchronized (LOCK) {
-        if (!myCurrentGuids.equals(guids)) {
-          incModificationCount();
-          myCurrentGuids.clear();
-          myCurrentGuids.addAll(guids);
+      if (Advapi32Util.registryKeyExists(WinReg.HKEY_CURRENT_USER, DISTRO_KEY)) {
+        Set<String> guids = Set.of(Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, DISTRO_KEY));
+        synchronized (LOCK) {
+          if (!myCurrentGuids.equals(guids)) {
+            incModificationCount();
+            myCurrentGuids.clear();
+            myCurrentGuids.addAll(guids);
+          }
         }
       }
     }
