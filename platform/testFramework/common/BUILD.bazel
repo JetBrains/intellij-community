@@ -43,7 +43,6 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/diagnostic/telemetry",
     "@lib//:jetbrains-annotations",
-    "//platform/ijent",
   ],
   runtime_deps = [":common_resources"]
 )
