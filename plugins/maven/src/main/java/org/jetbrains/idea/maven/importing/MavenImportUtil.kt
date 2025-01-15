@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -84,6 +85,14 @@ object MavenImportUtil {
       level = adjustPreviewLanguageLevel(mavenProject, level)
     }
     return level
+  }
+
+  internal fun getMaxMavenJavaVersion(projects: List<MavenProject>): LanguageLevel? {
+    val maxLevel = projects.flatMap {
+      val javaVersions = getMavenJavaVersions(it)
+      listOf(javaVersions.sourceLevel, javaVersions.testSourceLevel, javaVersions.targetLevel, javaVersions.testTargetLevel)
+    }.filterNotNull().maxWithOrNull(Comparator.naturalOrder()) ?: HIGHEST
+    return maxLevel
   }
 
   @Deprecated("Maven project can have multiple source/target versions if multiReleaseOutput is used")
