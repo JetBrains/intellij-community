@@ -507,7 +507,8 @@ elements:
                         #language=Markdown
                         description: |
                           Unique extension identifier.
-                          It allows for referencing an extension in the [`order`](#attribute:idea-plugin__extensions__*__order) attribute.
+                          It allows for referencing an extension in other attributes, for example, in
+                          [`order`](#attribute:idea-plugin__extensions__*__order).
                           <br/>
                           To not clash with other plugins defining extensions with the same identifier,
                           consider prepending the identifier with a prefix related to the plugin [`<id>`](#element:idea-plugin__id) or 
