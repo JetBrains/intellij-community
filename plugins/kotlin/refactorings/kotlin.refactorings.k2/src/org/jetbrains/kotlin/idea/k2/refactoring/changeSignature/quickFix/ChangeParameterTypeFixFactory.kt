@@ -60,8 +60,7 @@ object ChangeParameterTypeFixFactory {
         val (argumentKey, callElement) = if (psiParent is KtOperationExpression) {
             psi to psiParent
         } else {
-            val (valueArgument, argumentKey) = psiParent.getValueArgumentAndArgumentExpression()
-                ?: return emptyList()
+            val (valueArgument, argumentKey) = psiParent.getValueArgumentAndArgumentExpression() ?: return emptyList()
             val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
             argumentKey to callElement
         }
@@ -76,15 +75,21 @@ object ChangeParameterTypeFixFactory {
 
     context(KaSession)
     private fun createTypeMismatchFixesForDefinitelyNonNullable(
-        psi: PsiElement,
+        psi: KtExpression,
         targetType: KaDefinitelyNotNullType
     ): List<KotlinQuickFixAction<*>> {
         val psiParent = psi.getOutermostParenthesizedExpressionOrThis().parent
-        val (_, argumentExpression) = psiParent.getValueArgumentAndArgumentExpression() ?: return emptyList()
-        val argumentOrSelectorExpression = if (argumentExpression is KtDotQualifiedExpression) {
-            argumentExpression.selectorExpression
+
+        val reference = if (psiParent is KtOperationExpression) {
+            psi
         } else {
+            val (_, argumentExpression) = psiParent.getValueArgumentAndArgumentExpression() ?: return emptyList()
             argumentExpression
+        }
+        val argumentOrSelectorExpression = if (reference is KtDotQualifiedExpression) {
+            reference.selectorExpression
+        } else {
+            reference
         }
         val referencedSymbol = argumentOrSelectorExpression?.mainReference?.resolveToSymbol()?.let { symbol ->
             if (symbol is KaPropertySymbol) {
