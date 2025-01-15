@@ -19,9 +19,9 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.settingsSync.*
-import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
-import com.intellij.settingsSync.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
+import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -144,7 +144,8 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
   private class TroubleshootingDialog(val project: Project?,
                                       val remoteCommunicator: CloudConfigServerCommunicator,
-                                      val rootNode: TreeNode.Branch) : DialogWrapper(project, true) {
+                                      val rootNode: TreeNode.Branch
+  ) : DialogWrapper(project, true) {
 
     val userData = RemoteCommunicatorHolder.getCurrentUserData()
 

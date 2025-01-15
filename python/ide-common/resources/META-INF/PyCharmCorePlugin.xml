@@ -6,6 +6,7 @@
   <content>
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
+    <module name="intellij.settingsSync.core"/>
     <module name="intellij.platform.tips"/>
   </content>
 

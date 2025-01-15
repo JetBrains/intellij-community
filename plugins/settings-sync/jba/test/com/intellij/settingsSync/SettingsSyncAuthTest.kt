@@ -3,7 +3,9 @@ package com.intellij.settingsSync
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.core.SettingsSyncMain
+import com.intellij.settingsSync.core.SettingsSyncSettings
+import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.jba.CloudConfigServerCommunicator
 import com.intellij.settingsSync.jba.CloudConfigVersionContext
 import com.intellij.settingsSync.jba.auth.JBAAuthService

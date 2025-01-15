@@ -1,7 +1,7 @@
 package com.intellij.settingsSync.jba.auth
 
 import com.intellij.ide.gdpr.Version
-import com.intellij.settingsSync.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncEvents
 import com.intellij.ui.JBAccountInfoService
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer

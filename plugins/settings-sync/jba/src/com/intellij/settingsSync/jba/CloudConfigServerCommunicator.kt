@@ -3,10 +3,10 @@ package com.intellij.settingsSync.jba
 import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.settingsSync.AbstractServerCommunicator
-import com.intellij.settingsSync.SettingsSyncEventListener
-import com.intellij.settingsSync.SettingsSyncEvents
-import com.intellij.settingsSync.SettingsSyncSettings
+import com.intellij.settingsSync.core.AbstractServerCommunicator
+import com.intellij.settingsSync.core.SettingsSyncEventListener
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.SettingsSyncSettings
 import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.HttpRequests
@@ -27,7 +27,8 @@ private const val CONNECTION_TIMEOUT_MS = 10000
 private const val READ_TIMEOUT_MS = 50000
 
 internal open class CloudConfigServerCommunicator(serverUrl: String? = null,
-  private val jbaAuthService: JBAAuthService) : AbstractServerCommunicator() {
+  private val jbaAuthService: JBAAuthService
+) : AbstractServerCommunicator() {
 
   protected val clientVersionContext = CloudConfigVersionContext()
 

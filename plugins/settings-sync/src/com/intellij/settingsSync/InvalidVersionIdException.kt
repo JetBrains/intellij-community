@@ -1,2 +1,0 @@
-package com.intellij.settingsSync
-
