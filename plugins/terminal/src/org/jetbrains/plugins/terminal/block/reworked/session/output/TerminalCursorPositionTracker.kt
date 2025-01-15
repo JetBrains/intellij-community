@@ -18,6 +18,9 @@ internal class TerminalCursorPositionTracker(
         cursorX = x
         cursorY = y
         cursorPositionChanged = true
+
+        // Make sure that line with cursor is created in the text buffer.
+        textBuffer.getLine(y)
       }
     })
   }
