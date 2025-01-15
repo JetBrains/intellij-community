@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark
 
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -77,6 +77,8 @@ internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : Dum
     }
   }
 
+  // synthetic Action IDs
+  @Suppress("UnresolvedPluginConfigReference")
   private fun getShortcut(mnemonic: Char): String? {
     val toggle = getFirstKeyboardShortcutText("ToggleBookmark$mnemonic")
     val jump = getFirstKeyboardShortcutText("GotoBookmark$mnemonic")

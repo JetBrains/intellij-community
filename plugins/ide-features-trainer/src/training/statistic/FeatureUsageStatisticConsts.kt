@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
 object FeatureUsageStatisticConsts {
@@ -16,6 +16,7 @@ object FeatureUsageStatisticConsts {
   const val LEARN_PROJECT_OPENED_FIRST_TIME = "learn_project_opened_first_time"
   const val NON_LEARNING_PROJECT_OPENED = "non_learning_project_opened"
   const val LEARN_PROJECT_OPENING_WAY = "learn_opening_way"
+  @Suppress("UnresolvedPluginConfigReference")
   const val ACTION_ID = "action_id"
   const val TASK_ID = "task_id"
   const val KEYMAP_SCHEME = "keymap_scheme"

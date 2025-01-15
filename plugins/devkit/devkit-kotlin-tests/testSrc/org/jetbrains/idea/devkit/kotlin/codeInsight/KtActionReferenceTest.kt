@@ -4,15 +4,25 @@ package org.jetbrains.idea.devkit.kotlin.codeInsight
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.options.Scheme
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.ui.components.JBList
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection
+import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import kotlin.jvm.java
 
+@TestDataPath("\$CONTENT_ROOT/testData/codeInsight/actionReference")
 class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
 
+  override fun getBasePath(): String {
+    return DevkitKtTestsUtil.TESTDATA_PATH + "codeInsight/actionReference"
+  }
+
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
+    moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(Scheme::class.java))
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList::class.java))
     moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(ActionManager::class.java))
     moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP::class.java, "/idea/PlatformActions.xml")!!)
@@ -101,24 +111,19 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
     assertSameElements(myFixture.getCompletionVariants("Caller.kt").orEmpty(), "myAction", "myGroup")
   }
 
-  fun testInvalidActionOrGroupReference() {
+  fun testActionReferenceHighlighting() {
     myFixture.enableInspections(UnresolvedPluginConfigReferenceInspection::class.java)
     myFixture.createFile("plugin.xml", pluginXmlActions("""
               <group id="myGroup"></group>
               <action id="myAction" class="foo.bar.BarAction"></action>
-              <action id="${DLR}myActionDollar" class="foo.bar.BarAction"></action>
               """
-    ));
-    myFixture.configureByText("Caller.kt", """
-      fun usage(actionManager: com.intellij.openapi.actionSystem.ActionManager){
-      
-         actionManager.getAction("myAction")
-         actionManager.getAction("$DLR{"\$DLR"}myActionDollar")
-         actionManager.getAction("<error descr="Cannot resolve action id 'someUndefinedAction'">someUndefinedAction</error>")
-      
-      }
+    ))
+    myFixture.addClass("""
+      package java.awt.event;
+      public class KeyEvent {}
     """.trimIndent())
-    myFixture.testHighlighting()
+
+    myFixture.testHighlighting("ActionReferenceHighlighting.kt")
   }
 
   fun testRenameGroup() {
