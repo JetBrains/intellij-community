@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.platform.project.ProjectId
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerManagerApi : RemoteApi<Unit> {
-  suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionId?>
+  suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionDto?>
 
   companion object {
     @JvmStatic

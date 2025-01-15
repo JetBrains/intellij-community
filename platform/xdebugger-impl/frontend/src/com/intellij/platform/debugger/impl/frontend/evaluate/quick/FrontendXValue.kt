@@ -38,7 +38,7 @@ internal class FrontendXValue(private val project: Project, private val xValueDt
   init {
     cs.launch {
       val canBeModified = xValueDto.canBeModified.await()
-      if (canBeModified && Registry.`is`("debugger.frontendValuesModification")) {
+      if (canBeModified) {
         modifier = FrontendXValueModifier(project, xValueDto)
       }
     }

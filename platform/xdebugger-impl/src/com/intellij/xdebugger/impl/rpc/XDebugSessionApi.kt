@@ -2,12 +2,14 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -26,3 +28,11 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 @ApiStatus.Internal
 @Serializable
 data class XDebugSessionId(val id: EID)
+
+@ApiStatus.Internal
+@Serializable
+data class XDebugSessionDto(
+  val id: XDebugSessionId,
+  // TODO[IJPL-160146]: support [XDebuggerEditorsProvider] for local case in the same way as for remote
+  @Transient val editorsProvider: XDebuggerEditorsProvider? = null,
+)
