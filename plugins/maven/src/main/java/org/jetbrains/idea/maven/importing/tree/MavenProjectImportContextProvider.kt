@@ -16,6 +16,8 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import java.util.*
 import java.util.function.Function
 
+private const val MAIN_SUFFIX: String = ".main"
+private const val TEST_SUFFIX: String = ".test"
 
 internal class MavenProjectImportContextProvider(
   private val myProject: Project,
@@ -99,10 +101,10 @@ internal class MavenProjectImportContextProvider(
     if (type != StandardMavenModuleType.COMPOUND_MODULE) {
       return MavenProjectImportData(project, moduleData, changes, listOf())
     }
-    val moduleMainName = moduleName + MavenImportUtil.MAIN_SUFFIX
+    val moduleMainName = moduleName + MAIN_SUFFIX
     val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, sourceLevel, testSourceLevel)
 
-    val moduleTestName = moduleName + MavenImportUtil.TEST_SUFFIX
+    val moduleTestName = moduleName + TEST_SUFFIX
     val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, sourceLevel, testSourceLevel)
 
     return MavenProjectImportData(project, moduleData, changes, listOf(mainData, testData))

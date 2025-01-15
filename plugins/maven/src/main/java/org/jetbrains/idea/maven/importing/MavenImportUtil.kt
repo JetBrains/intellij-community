@@ -42,9 +42,6 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 object MavenImportUtil {
-  const val TEST_SUFFIX: String = ".test"
-  const val MAIN_SUFFIX: String = ".main"
-
   private val MAVEN_IDEA_PLUGIN_LEVELS = mapOf(
     "JDK_1_3" to LanguageLevel.JDK_1_3,
     "JDK_1_4" to LanguageLevel.JDK_1_4,
@@ -263,17 +260,14 @@ object MavenImportUtil {
     return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
   }
 
-  @JvmStatic
-  fun isMainOrTestSubmodule(moduleName: String): Boolean {
-    return isMainModule(moduleName) || isTestModule(moduleName)
+  fun isMainOrTestModule(project: Project, moduleName: String): Boolean {
+    val type = getMavenModuleType(project, moduleName)
+    return type == StandardMavenModuleType.MAIN_ONLY || type == StandardMavenModuleType.TEST_ONLY
   }
 
-  private fun isMainModule(moduleName: String): Boolean {
-    return moduleName.length > 5 && moduleName.endsWith(MAIN_SUFFIX)
-  }
-
-  fun isTestModule(moduleName: String): Boolean {
-    return moduleName.length > 5 && moduleName.endsWith(TEST_SUFFIX)
+  fun isTestModule(project: Project, moduleName: String): Boolean {
+    val type = getMavenModuleType(project, moduleName)
+    return type == StandardMavenModuleType.TEST_ONLY
   }
 
   @JvmStatic

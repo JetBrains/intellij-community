@@ -116,7 +116,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
                                                   module: Module,
                                                   ideCompilerConfiguration: CompilerConfigurationImpl,
                                                   defaultCompilerExtension: MavenCompilerExtension?) {
-    val isTestModule = MavenImportUtil.isTestModule(module.name)
+    val isTestModule = MavenImportUtil.isTestModule(module.project, module.name)
     val mavenConfiguration = collectRawMavenData(mavenProject, isTestModule)
     val projectCompilerId = if (mavenProject.packaging == "pom") {
       null
@@ -166,7 +166,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
     MavenLog.LOG.debug("Bytecode target level $targetLevel in module ${module.name}, compiler extension = ${defaultCompilerExtension?.mavenCompilerId}")
     if (targetLevel == null) {
       var level: LanguageLevel?
-      if (MavenImportUtil.isTestModule(module.name)) {
+      if (MavenImportUtil.isTestModule(module.project, module.name)) {
         level = MavenImportUtil.getTargetTestLanguageLevel(mavenProject)
       }
       else {
