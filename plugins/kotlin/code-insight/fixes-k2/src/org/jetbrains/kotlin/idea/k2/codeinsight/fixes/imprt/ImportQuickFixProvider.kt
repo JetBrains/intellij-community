@@ -158,16 +158,20 @@ object ImportQuickFixProvider {
             ImportFixHelper.ImportInfo(kind, name, priority)
         }
 
+        // for each distinct fqName, leave only the variant with the best priority to show in the popup 
+        val uniqueFqNameSortedImportCandidateSymbols =
+            sortedImportCandidateSymbolsWithPriorities.distinctBy { (symbol, _) -> symbol.getFqName() }
+
         val text = ImportFixHelper.calculateTextForFix(
             sortedImportInfos,
-            suggestions = sortedImportCandidateSymbolsWithPriorities.map { (symbol, _) -> symbol.getFqName() }.distinct()
+            suggestions = uniqueFqNameSortedImportCandidateSymbols.map { (symbol, _) -> symbol.getFqName() }
         )
 
         val implicitReceiverTypes = containingKtFile.scopeContext(position).implicitReceivers.map { it.type }
         // don't import callable on the fly as it might be unresolved because of an erroneous implicit receiver
         val doNotImportCallablesOnFly = implicitReceiverTypes.any { it is KaErrorType }
 
-        val sortedImportVariants = sortedImportCandidateSymbolsWithPriorities
+        val sortedImportVariants = uniqueFqNameSortedImportCandidateSymbols
             .map { (symbol, priority) ->
                 SymbolBasedAutoImportVariant(
                     symbol.getFqName(),
