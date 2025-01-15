@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector
 
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorToken.PriorityToken
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorToken.SelectorToken
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -25,93 +27,99 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
 
   private fun parseSelectorList(): Node? {
     val node = parseConjunction()
-    if (node == null || this.token !== TextMateSelectorToken.COMMA) {
+    if (node == null || getCurrentToken() != TextMateSelectorToken.COMMA) {
       return node
     }
-    val children: MutableList<Node> = ArrayList<Node>()
-    children.add(node)
-    while (this.token === TextMateSelectorToken.COMMA) {
-      advance()
-      val child = parseConjunction()
-      if (child == null) break
-      children.add(child)
-    }
-    return SelectorList(children)
+    return SelectorList(buildList {
+      add(node)
+      while (getCurrentToken() == TextMateSelectorToken.COMMA) {
+        advance()
+        val child = parseConjunction()
+        if (child == null) break
+        add(child)
+      }
+    })
   }
 
   private fun parseConjunction(): Node? {
     val node = parseScopeSelector()
-    if (node == null || this.token !== TextMateSelectorToken.PIPE) {
+    if (node == null || getCurrentToken() != TextMateSelectorToken.PIPE) {
       return node
     }
-    val children: MutableList<Node> = ArrayList<Node>()
-    children.add(node)
-    while (this.token === TextMateSelectorToken.PIPE) {
-      advance()
-      val child = parseScopeSelector()
-      if (child == null) break
-      children.add(child)
-    }
-    return Conjunction(children)
+    return Conjunction(buildList {
+      add(node)
+      while (getCurrentToken() == TextMateSelectorToken.PIPE) {
+        advance()
+        val child = parseScopeSelector()
+        if (child == null) break
+        add(child)
+      }
+    })
   }
 
   private fun parseScopeSelector(): Node? {
-    var priority = TextMateWeigh.Priority.NORMAL
-    val token = this.token
-    if (token is TextMateSelectorLexer.PriorityToken) {
+    val token = getCurrentToken()
+    val priority = if (token is PriorityToken) {
       advance()
-      priority = token.priority
+      token.priority
     }
-    var startMatch = false
-    if (this.token === TextMateSelectorToken.HAT) {
+    else {
+      TextMateWeigh.Priority.NORMAL
+    }
+    val startMatch = getCurrentToken() == TextMateSelectorToken.HAT
+    if (startMatch) {
       advance()
-      startMatch = true
     }
-    val children: MutableList<Node?> = ArrayList<Node?>()
-    val exclusions: MutableList<Node> = ArrayList<Node>()
+    val children = mutableListOf<Node>()
+    val exclusions = mutableListOf<Node>()
     var next = parseSelector()
     while (next != null) {
       children.add(next)
       next = parseSelector()
     }
 
-    while (this.token === TextMateSelectorToken.MINUS) {
+    while (getCurrentToken() == TextMateSelectorToken.MINUS) {
       advance()
       val exclusion = parseScopeSelector()
       if (exclusion != null) {
         exclusions.add(exclusion)
       }
     }
-    if (children.isEmpty() && exclusions.isEmpty()) {
-      return null
+    return if (children.isNotEmpty() || exclusions.isNotEmpty()) {
+      ScopeSelector(children, exclusions, startMatch, priority)
     }
-    return ScopeSelector(children, exclusions, startMatch, priority)
+    else {
+      null
+    }
   }
 
   private fun parseSelector(): Node? {
-    val token = this.token
-    if (token === TextMateSelectorToken.LPAREN) {
+    val token = getCurrentToken()
+    if (token == TextMateSelectorToken.LPAREN) {
       advance()
       val result = parseSelectorList()
-      if (this.token === TextMateSelectorToken.RPAREN) {
+      if (getCurrentToken() == TextMateSelectorToken.RPAREN) {
         advance()
       }
       return result
     }
-    if (token is TextMateSelectorLexer.SelectorToken) {
+    return if (token is SelectorToken) {
       advance()
-      return Selector(token.text)
+      Selector(token.text)
     }
-    return null
+    else {
+      null
+    }
   }
 
-  private val token: TextMateSelectorToken?
-    get() {
-      if (myIndex < myTokens.size) {
-        return myTokens[myIndex]
-      }
-      return null
+  private fun getCurrentToken(): TextMateSelectorToken? {
+    return if (myIndex < myTokens.size) {
+      myTokens[myIndex]
     }
+    else {
+      null
+    }
+  }
 
   private fun advance() {
     myIndex++
@@ -141,8 +149,8 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
   }
 
   private class ScopeSelector(
-    private val children: MutableList<Node?>,
-    private val exclusions: MutableList<Node>,
+    private val children: List<Node>,
+    private val exclusions: List<Node>,
     private val startMatch: Boolean,
     private val priority: TextMateWeigh.Priority
   ) : Node {
@@ -157,7 +165,7 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
         return TextMateWeigh.ZERO
       }
 
-      val highlightingSelectors: Deque<Node> = LinkedList<Node>()
+      val highlightingSelectors = ArrayDeque<Node>()
       for (child in children) {
         highlightingSelectors.push(child)
       }
@@ -171,10 +179,12 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
       var nestingWeigh: Int = NESTING_WEIGH_INITIAL
       var result = 0
       while (!highlightingSelectors.isEmpty() && currentTargetSelector != null) {
-        val weigh = if (currentHighlightingSelector is Selector)
+        val weigh = if (currentHighlightingSelector is Selector) {
           currentHighlightingSelector.weigh(currentTargetSelector)
-        else
+        }
+        else {
           currentHighlightingSelector.weigh(scope)
+        }
         if (weigh.weigh > 0) {
           result += weigh.weigh * nestingWeigh
           highlightingSelectors.pop()
@@ -188,32 +198,23 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
       if (!highlightingSelectors.isEmpty()) {
         return TextMateWeigh.ZERO
       }
-      return TextMateWeigh(if (!startMatch || currentTargetSelector == null || currentTargetSelector.isEmpty) result else 0, priority)
+      return TextMateWeigh(if (!startMatch || currentTargetSelector == null || currentTargetSelector.isEmpty) {
+        result
+      } else {
+        0
+      }, priority)
     }
   }
 
-  internal class SelectorList(private val children: MutableList<Node>) : Node {
+  private class SelectorList(private val children: List<Node>) : Node {
     override fun weigh(scope: TextMateScope): TextMateWeigh {
-      var result = TextMateWeigh.ZERO
-      for (child in children) {
-        val weigh = child.weigh(scope)
-        if (weigh > result) {
-          result = weigh
-        }
-      }
-      return result
+      return children.maxOfOrNull { it.weigh(scope) } ?: TextMateWeigh.ZERO
     }
   }
 
-  internal class Conjunction(private val children: MutableList<Node>) : Node {
+  private class Conjunction(private val children: List<Node>) : Node {
     override fun weigh(scope: TextMateScope): TextMateWeigh {
-      for (child in children) {
-        val weigh = child.weigh(scope)
-        if (weigh.weigh > 0) {
-          return weigh
-        }
-      }
-      return TextMateWeigh.ZERO
+      return children.map { it.weigh(scope) }.firstOrNull { it.weigh > 0 } ?: TextMateWeigh.ZERO
     }
   }
 }

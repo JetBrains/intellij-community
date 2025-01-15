@@ -1,114 +1,68 @@
-package org.jetbrains.plugins.textmate.language.syntax.selector;
+package org.jetbrains.plugins.textmate.language.syntax.selector
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorToken.PriorityToken
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorToken.SelectorToken
 
-import java.util.ArrayList;
-import java.util.List;
-
-public final class TextMateSelectorLexer {
-  public static List<TextMateSelectorToken> tokenize(@NotNull CharSequence selector) {
-    ArrayList<TextMateSelectorToken> result = new ArrayList<>();
-    StringBuilder currentSelector = new StringBuilder();
-    for (int i = 0; i < selector.length(); i++) {
-      char c = selector.charAt(i);
-      if (c == '(') {
-        currentSelector = addPendingToken(result, currentSelector);
-        result.add(TextMateSelectorToken.LPAREN);
-      }
-      else if (c == ')') {
-        currentSelector = addPendingToken(result, currentSelector);
-        result.add(TextMateSelectorToken.RPAREN);
-      }
-      else if (c == ',') {
-        currentSelector = addPendingToken(result, currentSelector);
-        result.add(TextMateSelectorToken.COMMA);
-      }
-      else if (c == '|') {
-        currentSelector = addPendingToken(result, currentSelector);
-        result.add(TextMateSelectorToken.PIPE);
-      }
-      else if (c == '^') {
-        currentSelector = addPendingToken(result, currentSelector);
-        result.add(TextMateSelectorToken.HAT);
-      }
-      else if (c == '-' && currentSelector.isEmpty()) {
-        currentSelector = addPendingToken(result, currentSelector);
-        result.add(TextMateSelectorToken.MINUS);
-      }
-      else if (c == ' ') {
-        currentSelector = addPendingToken(result, currentSelector);
-      }
-      else if ((c == 'R' || c == 'L' || c == 'B') && i + 1 < selector.length() && selector.charAt(i+1) == ':') {
-        currentSelector = addPendingToken(result, currentSelector);
-        //noinspection AssignmentToForLoopParameter
-        i++;
-        if (c == 'R') {
-          result.add(new PriorityToken(TextMateWeigh.Priority.LOW));
+object TextMateSelectorLexer {
+  fun tokenize(selector: CharSequence): List<TextMateSelectorToken> {
+    val result = mutableListOf<TextMateSelectorToken>()
+    var currentSelector = StringBuilder()
+    var i = 0
+    while (i < selector.length) {
+      val c = selector[i]
+      when {
+        c == '(' -> {
+          currentSelector = addPendingToken(result, currentSelector)
+          result.add(TextMateSelectorToken.LPAREN)
         }
-        else if (c == 'L') {
-          result.add(new PriorityToken(TextMateWeigh.Priority.HIGH));
+        c == ')' -> {
+          currentSelector = addPendingToken(result, currentSelector)
+          result.add(TextMateSelectorToken.RPAREN)
+        }
+        c == ',' -> {
+          currentSelector = addPendingToken(result, currentSelector)
+          result.add(TextMateSelectorToken.COMMA)
+        }
+        c == '|' -> {
+          currentSelector = addPendingToken(result, currentSelector)
+          result.add(TextMateSelectorToken.PIPE)
+        }
+        c == '^' -> {
+          currentSelector = addPendingToken(result, currentSelector)
+          result.add(TextMateSelectorToken.HAT)
+        }
+        c == '-' && currentSelector.isEmpty() -> {
+          currentSelector = addPendingToken(result, currentSelector)
+          result.add(TextMateSelectorToken.MINUS)
+        }
+        c == ' ' -> {
+          currentSelector = addPendingToken(result, currentSelector)
+        }
+        (c == 'R' || c == 'L' || c == 'B') && i + 1 < selector.length && selector[i + 1] == ':' -> {
+          currentSelector = addPendingToken(result, currentSelector)
+          i++
+          if (c == 'R') {
+            result.add(PriorityToken(TextMateWeigh.Priority.LOW))
+          }
+          else if (c == 'L') {
+            result.add(PriorityToken(TextMateWeigh.Priority.HIGH))
+          }
+        }
+        else -> {
+          currentSelector.append(c)
         }
       }
-      else {
-        currentSelector.append(c);
-      }
+      i++
     }
-    addPendingToken(result, currentSelector);
-    return result;
+    addPendingToken(result, currentSelector)
+    return result
   }
 
-  private static @NotNull StringBuilder addPendingToken(ArrayList<TextMateSelectorToken> result, StringBuilder currentSelector) {
+  private fun addPendingToken(result: MutableList<TextMateSelectorToken>, currentSelector: StringBuilder): StringBuilder {
     if (!currentSelector.isEmpty()) {
-      result.add(new SelectorToken(currentSelector.toString()));
-      return new StringBuilder();
+      result.add(SelectorToken(currentSelector.toString()))
+      return StringBuilder()
     }
-    return currentSelector;
-  }
-
-  public static final class SignToken implements TextMateSelectorToken {
-    private final char mySign;
-
-    public SignToken(char c) {
-      mySign = c;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(mySign);
-    }
-  }
-
-  public static final class PriorityToken implements TextMateSelectorToken {
-    private final TextMateWeigh.Priority myPriority;
-
-    public PriorityToken(TextMateWeigh.Priority priority) {
-      myPriority = priority;
-    }
-
-    public TextMateWeigh.Priority getPriority() {
-      return myPriority;
-    }
-
-    @Override
-    public String toString() {
-      return myPriority.name();
-    }
-  }
-
-  public static final class SelectorToken implements TextMateSelectorToken {
-    private final String myText;
-
-    public SelectorToken(String text) {
-      myText = text;
-    }
-
-    public String getText() {
-      return myText;
-    }
-
-    @Override
-    public String toString() {
-      return myText;
-    }
+    return currentSelector
   }
 }
