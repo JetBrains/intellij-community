@@ -40,9 +40,7 @@ internal class MavenProjectImportContextProvider(
     val importDataDependencyContext = getFlattenModuleDataDependencyContext(importDataContext)
 
     return MavenModuleImportContext(
-      importDataDependencyContext.changedModuleDataWithDependencies,
       importDataDependencyContext.allModuleDataWithDependencies,
-      importDataContext.moduleNameByProject,
       importDataContext.hasChanges
     )
   }
@@ -57,7 +55,7 @@ internal class MavenProjectImportContextProvider(
       val project = each.key
       val changes = each.value
 
-      val moduleName = getModuleName(project)
+      val moduleName = myMavenProjectToModuleName[project]
       if (StringUtil.isEmpty(moduleName)) {
         MavenLog.LOG.warn("[import context] empty module name for project $project")
         continue
@@ -71,16 +69,11 @@ internal class MavenProjectImportContextProvider(
       allModules.add(mavenProjectImportData)
     }
 
-    return ModuleImportDataContext(allModules, myMavenProjectToModuleName, moduleImportDataByMavenId, hasChanges)
-  }
-
-  private fun getModuleName(project: MavenProject): String? {
-    return myMavenProjectToModuleName[project]
+    return ModuleImportDataContext(allModules, moduleImportDataByMavenId, hasChanges)
   }
 
   private fun getFlattenModuleDataDependencyContext(context: ModuleImportDataContext): ModuleImportDataDependencyContext {
     val allModuleDataWithDependencies: MutableList<MavenTreeModuleImportData> = ArrayList<MavenTreeModuleImportData>()
-    val changedModuleDataWithDependencies: MutableList<MavenTreeModuleImportData> = ArrayList<MavenTreeModuleImportData>()
 
     val dependencyProvider =
       MavenModuleImportDependencyProvider(context.moduleImportDataByMavenId, myImportingSettings, myProjectsTree)
@@ -89,13 +82,11 @@ internal class MavenProjectImportContextProvider(
       val importDataWithDependencies = dependencyProvider.getDependencies(importData)
       val mavenModuleImportDataList = splitToModules(importDataWithDependencies)
       for (moduleImportData in mavenModuleImportDataList) {
-        if (moduleImportData.changes.hasChanges()) changedModuleDataWithDependencies.add(moduleImportData)
-
         allModuleDataWithDependencies.add(moduleImportData)
       }
     }
 
-    return ModuleImportDataDependencyContext(allModuleDataWithDependencies, changedModuleDataWithDependencies)
+    return ModuleImportDataDependencyContext(allModuleDataWithDependencies)
   }
 
   private data class LanguageLevels(
@@ -192,14 +183,12 @@ internal class MavenProjectImportContextProvider(
 
   private class ModuleImportDataContext(
     val importData: List<MavenProjectImportData>,
-    val moduleNameByProject: Map<MavenProject, String>,
     val moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
     val hasChanges: Boolean,
   )
 
   private class ModuleImportDataDependencyContext(
     val allModuleDataWithDependencies: List<MavenTreeModuleImportData>,
-    val changedModuleDataWithDependencies: List<MavenTreeModuleImportData>,
   )
 
   private fun splitToModules(dataWithDependencies: MavenModuleImportDataWithDependencies): List<MavenTreeModuleImportData> {
