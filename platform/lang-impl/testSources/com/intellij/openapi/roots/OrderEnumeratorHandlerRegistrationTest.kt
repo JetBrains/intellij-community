@@ -44,10 +44,19 @@ class OrderEnumeratorHandlerRegistrationTest : HeavyPlatformTestCase() {
     ModuleRootModificationUtil.addDependency(moduleA, moduleB, DependencyScope.TEST, false)
     val moduleBTestSources = runWriteAction { dummyRoot.createChildDirectory(this, "project-model").createChildDirectory(this, "bTests") }
     PsiTestUtil.addSourceRoot(moduleB, moduleBTestSources, true)
+
+    // recursive
     runWithRegisteredExtension(MockOrderEnumerationHandlerFactory(includeTestsFromDependentModulesToTestClasspath = false)) {
       val enumerator = ModuleRootManager.getInstance(moduleA).orderEntries().recursively().roots(OrderRootType.SOURCES).usingCache()
       assertEmpty(enumerator.roots)
     }
+
+    // non-recursive
+    runWithRegisteredExtension(MockOrderEnumerationHandlerFactory(includeTestsFromDependentModulesToTestClasspath = false)) {
+      val enumerator = ModuleRootManager.getInstance(moduleA).orderEntries().roots(OrderRootType.SOURCES).usingCache()
+      assertEmpty(enumerator.roots)
+    }
+
     val enumerator = ModuleRootManager.getInstance(moduleA).orderEntries().recursively().roots(OrderRootType.SOURCES).usingCache()
     assertEquals(moduleBTestSources, assertOneElement(enumerator.roots))
   }
