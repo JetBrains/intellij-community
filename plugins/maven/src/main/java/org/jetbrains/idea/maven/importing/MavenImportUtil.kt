@@ -141,7 +141,6 @@ object MavenImportUtil {
     return checkExecution(e, "test-compile", "test-compile", "default-testCompile")
   }
 
-
   private fun isCompileExecution(e: MavenPlugin.Execution): Boolean {
     return checkExecution(e, "compile", "compile", "default-compile")
   }
@@ -152,6 +151,18 @@ object MavenImportUtil {
             (e.goals != null && e.goals.contains(goal)) ||
             (defaultExecId == e.executionId)
            )
+  }
+
+  internal fun hasMultireleaseOutput(project: MavenProject): Boolean {
+    val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin") ?: return false
+    val executions = plugin.executions ?: return false
+    return executions.any { isMultireleaseExecution(it) }
+  }
+
+  private fun isMultireleaseExecution(e: MavenPlugin.Execution): Boolean {
+    val config = e.configurationElement ?: return false
+    config.getChild("multiReleaseOutput") ?: return false
+    return true
   }
 
   private fun getMavenLanguageLevel(
