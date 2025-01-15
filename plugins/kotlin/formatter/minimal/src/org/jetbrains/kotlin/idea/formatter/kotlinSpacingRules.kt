@@ -333,7 +333,19 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         before(KtTokens.ELVIS).spaceIf(kotlinCustomSettings.SPACE_AROUND_ELVIS)
         after(KtTokens.ELVIS).spacesNoLineBreak(spacesAroundElvis)
 
-        around(KtTokens.RANGE).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
+        custom {
+          // For the range operator, we have to require a space after it if the next node starts with a `.`.
+          // Otherwise, the `..` operator becomes `...` and the code is changed semantically.
+          inPosition(left = KtTokens.RANGE).customRule { parent, left, right ->
+              if (right.node?.text?.startsWith(".") == true) {
+                  createSpacing(minSpaces = 1, keepLineBreaks = commonCodeStyleSettings.KEEP_LINE_BREAKS, keepBlankLines = commonCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE)
+              } else {
+                  val minSpaces = if (kotlinCustomSettings.SPACE_AROUND_RANGE) 1 else 0
+                  createSpacing(minSpaces = minSpaces, keepLineBreaks = commonCodeStyleSettings.KEEP_LINE_BREAKS, keepBlankLines = commonCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE)
+              }
+          }
+        }
+        before(KtTokens.RANGE).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
         around(KtTokens.RANGE_UNTIL).spaceIf(kotlinCustomSettings.SPACE_AROUND_RANGE)
 
         after(KtNodeTypes.MODIFIER_LIST).spaces(1)
