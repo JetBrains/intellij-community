@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.high
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import kotlin.test.Test
 
 /**
@@ -52,6 +53,7 @@ class K2MppRegressionTests : AbstractKotlinMppGradleImportingTest(), ReferenceTa
     }
 
     @Test
+    @PluginTargetVersions(gradleVersion = "7.6.3+")
     fun testComposeApp() {
         doTest {
             onlyCheckers(LibraryKindsChecker)
