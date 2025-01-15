@@ -457,13 +457,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public @Nullable MavenProject findProject(@NotNull Module module) {
-    MavenProject mavenProject = getMavenProject(module);
-    String moduleName = module.getName();
-    if (mavenProject == null && MavenImportUtil.isMainOrTestSubmodule(moduleName)) {
-      Module parentModule = ModuleManager.getInstance(myProject).findModuleByName(MavenImportUtil.getParentModuleName(moduleName));
-      mavenProject = parentModule != null ? getMavenProject(parentModule) : null;
-    }
-    return mavenProject;
+    var pomXml = MavenImportUtil.findPomXml(module);
+    if (null == pomXml) return null;
+    return findProject(pomXml);
   }
 
   private MavenProject getMavenProject(@NotNull Module module) {

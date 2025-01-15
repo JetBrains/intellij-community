@@ -13,11 +13,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
@@ -269,14 +273,11 @@ object MavenImportUtil {
   }
 
   @JvmStatic
-  fun getParentModuleName(moduleName: String): String {
-    if (isMainModule(moduleName)) {
-      return moduleName.removeSuffix(MAIN_SUFFIX)
-    }
-    if (isTestModule(moduleName)) {
-      return moduleName.removeSuffix(TEST_SUFFIX)
-    }
-    return moduleName
+  fun findPomXml(module: Module): VirtualFile? {
+    val project = module.project
+    val storage = project.workspaceModel.currentSnapshot
+    val pomPath = storage.resolve(ModuleId(module.name))?.exModuleOptions?.linkedProjectId?.toNioPathOrNull() ?: return null
+    return VirtualFileManager.getInstance().findFileByNioPath(pomPath)
   }
 
   fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {
