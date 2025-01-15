@@ -63,8 +63,10 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.getInstance
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
-import com.intellij.openapi.util.Pair as OpenApiPair
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Expirable
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.Navigatable
@@ -100,6 +102,7 @@ import javax.swing.JPanel
 import javax.swing.event.AncestorEvent
 import kotlin.math.max
 import kotlin.math.min
+import com.intellij.openapi.util.Pair as OpenApiPair
 
 open class ConsoleViewImpl protected constructor(
   project: Project,
@@ -818,7 +821,7 @@ open class ConsoleViewImpl protected constructor(
   private fun getPopupGroup(event: EditorMouseEvent): ActionGroup {
     ThreadingAssertions.assertEventDispatchThread()
     val actionManager = ActionManager.getInstance()
-    val info = if (getHyperlinks() != null) getHyperlinks()!!.getHyperlinkInfoByEvent(event) else null
+    val info = getHyperlinks()?.getHyperlinkInfoByEvent(event)
     var group: ActionGroup? = null
     if (info is HyperlinkWithPopupMenuInfo) {
       group = info.getPopupMenuGroup(event.mouseEvent)
@@ -826,13 +829,18 @@ open class ConsoleViewImpl protected constructor(
     if (group == null) {
       group = actionManager.getAction(CONSOLE_VIEW_POPUP_MENU) as ActionGroup
     }
-    val postProcessors = ConsoleActionsPostProcessor.EP_NAME.extensionList
-    var result = group.getChildren(null)
-
-    for (postProcessor in postProcessors) {
-      result = postProcessor.postProcessPopupActions(this, result)
+    return object : ActionGroupWrapper(group) {
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+        val children = super.getChildren(e)
+        val postProcessors = ConsoleActionsPostProcessor.EP_NAME.extensionList
+        if (postProcessors.isEmpty()) return children
+        var result = children
+        for (postProcessor in postProcessors) {
+          result = postProcessor.postProcessPopupActions(this@ConsoleViewImpl, result)
+        }
+        return result
+      }
     }
-    return DefaultActionGroup(*result)
   }
 
   private fun highlightHyperlinksAndFoldings(startLine: Int, expirableToken: Expirable) {
