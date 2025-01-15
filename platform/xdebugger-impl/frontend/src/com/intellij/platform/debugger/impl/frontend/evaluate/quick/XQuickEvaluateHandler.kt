@@ -31,10 +31,6 @@ private val LOG = Logger.getInstance(XQuickEvaluateHandler::class.java)
 
 internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
   override fun isEnabled(project: Project): Boolean {
-    val frontendType = FrontendApplicationInfo.getFrontendType()
-    if (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported) {
-      return false
-    }
     val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession.value
     return currentSession != null && currentSession.evaluator.value != null
   }
@@ -65,14 +61,15 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         LOG.error("invalid range: $range, text length = $textLength")
         return@async null
       }
-      if (Registry.`is`("debugger.valueLookupFrontendBackend")) {
+      val frontendType = FrontendApplicationInfo.getFrontendType()
+      if (Registry.`is`("debugger.valueLookupFrontendBackend") || (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported)) {
         val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession.value ?: return@async null
         val frontendEvaluator = currentSession.evaluator.value ?: return@async null
         val editorsProvider = currentSession.editorsProvider
         // TODO[IJPL-160146]: support passing session: basically valueMarkers and currentPosition
         XValueHint(project, editorsProvider, editor, point, type, offset, expressionInfo, frontendEvaluator, false)
       }
-      else if (FrontendApplicationInfo.getFrontendType() is FrontendType.RemoteDev) {
+      else if (frontendType is FrontendType.RemoteDev) {
         RemoteValueHint(project, projectId, editor, point, type, offset, expressionInfo, fromPlugins = false)
       }
       else {
