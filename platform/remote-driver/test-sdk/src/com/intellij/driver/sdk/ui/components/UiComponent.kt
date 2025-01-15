@@ -415,9 +415,13 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun hasVisibleComponent(component: UiComponent): Boolean {
+    return hasComponent(component, Component::isVisible)
+  }
+
+  fun hasComponent(component: UiComponent, check: (Component) -> Boolean): Boolean {
     val components = searchContext.findAll(component.data.xpath)
     if (components.isEmpty()) return false
-    return components.any { it.isVisible() }
+    return components.any { check(it) }
   }
 
   fun getParent(): UiComponent {
