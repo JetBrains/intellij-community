@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
@@ -290,6 +291,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myPauseDisposables.terminateCurrent()
     myThreadsList.clear()
     myFramesList.clear()
+    myThreadsContainer.clear()
     myFramesPresentationCache.clear()
   }
 
@@ -401,9 +403,16 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private class FramesManager(
     private val myFramesList: XDebuggerFramesList,
     private val disposable: Disposable) {
+
     private val myMap = mutableMapOf<StackInfo, FramesContainer>()
     private val myActiveStackDisposables = SequentialDisposables(disposable)
     private var myActiveStack: XExecutionStack? = null
+
+    init {
+      Disposer.register(disposable, Disposable {
+        myActiveStack = null
+      })
+    }
 
     private fun XExecutionStack.getContainer(session: XDebugSession): FramesContainer {
       return myMap.getOrPut(StackInfo.from(this, session)) {
@@ -429,7 +438,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private class ThreadsContainer(
     private val myThreadsList: XDebuggerThreadsList,
-    private val myActiveStack: XExecutionStack?,
+    private var myActiveStack: XExecutionStack?,
     private val myDisposable: Disposable,
     private val debugTab: XDebugSessionTab3) : XSuspendContext.XExecutionStackContainer {
     private var isProcessed = false
@@ -447,8 +456,9 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
         val session = getSession() ?: return@invokeLaterIfNeeded
 
-        if (myActiveStack != null) {
-          myThreadsList.model.replaceAll(listOf(StackInfo.from(myActiveStack, session), StackInfo.LOADING))
+        val activeStack = myActiveStack
+        if (activeStack != null) {
+          myThreadsList.model.replaceAll(listOf(StackInfo.from(activeStack, session), StackInfo.LOADING))
         } else {
           myThreadsList.model.replaceAll(loading)
         }
@@ -489,6 +499,10 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
         myThreadsList.repaint()
       }
+    }
+
+    fun clear() {
+      myActiveStack = null
     }
 
     private fun getSession(): XDebugSessionImpl? {
