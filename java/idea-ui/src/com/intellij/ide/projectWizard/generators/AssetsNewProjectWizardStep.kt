@@ -48,11 +48,6 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   private val templateProperties = HashMap<String, Any>()
   private val filesToOpen = HashSet<String>()
 
-  @ApiStatus.Internal
-  internal fun getTemplateProperties(): Map<String, Any> {
-    return templateProperties
-  }
-
   fun addAssets(vararg assets: GeneratorAsset) =
     addAssets(assets.toList())
 
