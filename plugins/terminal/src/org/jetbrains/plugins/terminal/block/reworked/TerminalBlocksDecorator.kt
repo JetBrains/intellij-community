@@ -2,14 +2,12 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -103,7 +101,7 @@ internal class TerminalBlocksDecorator(
   }
 
   private fun createTopInlay(block: TerminalOutputBlock): Inlay<*> {
-    val topRenderer = EmptyWidthInlayRenderer {
+    val topRenderer = VerticalSpaceInlayRenderer {
       // Reserve the place for the separator if it is not a first block
       val separatorHeight = if (blocksModel.blocks.firstOrNull()?.id == block.id) 0 else 1
       TerminalUi.blockTopInset + separatorHeight
@@ -112,7 +110,7 @@ internal class TerminalBlocksDecorator(
   }
 
   private fun createBottomInlay(offset: Int): Inlay<*> {
-    val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset)
+    val bottomRenderer = VerticalSpaceInlayRenderer(TerminalUi.blockBottomInset)
     return editor.inlayModel.addBlockElement(offset, true, false, 0, bottomRenderer)!!
   }
 
@@ -143,13 +141,4 @@ internal class TerminalBlocksDecorator(
     val topInlay: Inlay<*>,
     val bottomInlay: Inlay<*>,
   )
-
-  /** Inlay to just create the space between lines */
-  private class EmptyWidthInlayRenderer(private val heightSupplier: () -> Int) : EditorCustomElementRenderer {
-    constructor(height: Int) : this({ height })
-
-    override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
-
-    override fun calcHeightInPixels(inlay: Inlay<*>): Int = JBUI.scale(heightSupplier())
-  }
 }

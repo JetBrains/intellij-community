@@ -23,6 +23,7 @@ import org.jetbrains.plugins.terminal.block.output.TerminalSelectionModel.Termin
 import org.jetbrains.plugins.terminal.block.ui.GradientTextureCache
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.getAwtForegroundByIndex
+import org.jetbrains.plugins.terminal.block.ui.VerticalSpaceInlayRenderer
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -132,15 +133,15 @@ internal class TerminalBlocksDecorator(
     }
 
     // add additional empty space on top of the block if it is the first block
-    val topRenderer = EmptyWidthInlayRenderer {
+    val topRenderer = VerticalSpaceInlayRenderer {
       val additionalInset = if (outputModel.blocks[0] === block) 0 else 1
       TerminalUi.blockTopInset + additionalInset
     }
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
-    val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
+    val bottomRenderer = VerticalSpaceInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!
     val commandToOutputInlay = if (block.withCommand) {
-      val renderer = EmptyWidthInlayRenderer(TerminalUi.commandToOutputInset)
+      val renderer = VerticalSpaceInlayRenderer(TerminalUi.commandToOutputInset)
       editor.inlayModel.addBlockElement(block.outputStartOffset, false, false, 0, renderer)!!
     }
     else null
@@ -271,15 +272,6 @@ internal class TerminalBlocksDecorator(
         g2.dispose()
       }
     }
-  }
-
-  /** Inlay to just create the space between lines */
-  private class EmptyWidthInlayRenderer(private val heightSupplier: () -> Int) : EditorCustomElementRenderer {
-    constructor(height: Int) : this({ height })
-
-    override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
-
-    override fun calcHeightInPixels(inlay: Inlay<*>): Int = JBUI.scale(heightSupplier())
   }
 
   /**
