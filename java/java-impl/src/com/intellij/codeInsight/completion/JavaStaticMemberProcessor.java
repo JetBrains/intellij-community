@@ -1,11 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -30,6 +33,16 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
             importMembersOf(aClass);
           }
         }
+      }
+    }
+    Project project = parameters.getPosition().getProject();
+    JavaProjectCodeInsightSettings codeInsightSettings = JavaProjectCodeInsightSettings.getSettings(project);
+    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+    GlobalSearchScope resolveScope = parameters.getOriginalFile().getResolveScope();
+    for (String classNames : codeInsightSettings.getAllIncludedAutoStaticNames()) {
+      PsiClass aClass = javaPsiFacade.findClass(classNames, resolveScope);
+      if (aClass != null) {
+        importMembersOf(aClass);
       }
     }
   }

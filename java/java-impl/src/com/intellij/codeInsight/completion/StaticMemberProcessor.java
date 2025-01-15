@@ -28,12 +28,13 @@ public abstract class StaticMemberProcessor {
   private final PsiResolveHelper myResolveHelper;
   private boolean myHintShown;
   private final boolean myPackagedContext;
-
+  private final JavaProjectCodeInsightSettings codeInsightSettings;
   protected StaticMemberProcessor(@NotNull PsiElement position) {
     myPosition = position;
     myProject = myPosition.getProject();
     myResolveHelper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
     myPackagedContext = JavaCompletionUtil.inSomePackage(position);
+    codeInsightSettings = JavaProjectCodeInsightSettings.getSettings(position.getProject());
   }
 
   public void importMembersOf(@NotNull PsiClass psiClass) {
@@ -60,7 +61,12 @@ public abstract class StaticMemberProcessor {
         if (member instanceof PsiMethod && !classesToSkip.add(containingClass)) return;
         if(!additionalFilter(member)) return;
         boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-        showHint(shouldImport);
+        if (!shouldImport && codeInsightSettings.isStaticAutoImportClass(containingClass.getQualifiedName())) {
+          shouldImport = true;
+        }
+        else {
+          showHint(shouldImport);
+        }
         LookupElement item = member instanceof PsiMethod ? createItemWithOverloads((PsiMethod)member, containingClass, shouldImport) :
                              member instanceof PsiField ? createLookupElement(member, containingClass, shouldImport) :
                              null;

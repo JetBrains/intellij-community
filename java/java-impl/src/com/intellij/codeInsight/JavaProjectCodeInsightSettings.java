@@ -28,9 +28,23 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
 
   @XCollection(propertyElementName = "excluded-names", elementName = "name", valueAttributeName = "")
   public List<String> excludedNames = new ArrayList<>();
+  @XCollection(propertyElementName = "included-static-names", elementName = "name", valueAttributeName = "")
+  public List<String> includedAutoStaticNames = new ArrayList<>();
 
   public static JavaProjectCodeInsightSettings getSettings(@NotNull Project project) {
     return project.getService(JavaProjectCodeInsightSettings.class);
+  }
+
+  public List<String> getAllIncludedAutoStaticNames() {
+    List<String> names = new ArrayList<>(includedAutoStaticNames);
+    names.addAll(JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames);
+    return names;
+  }
+
+  public boolean isStaticAutoImportClass(@Nullable String name) {
+    if (name == null) return false;
+    return includedAutoStaticNames.contains(name) ||
+           JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames.contains(name);
   }
 
   public boolean isExcluded(@NotNull String name) {

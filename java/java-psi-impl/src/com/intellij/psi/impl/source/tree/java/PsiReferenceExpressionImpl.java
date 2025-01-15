@@ -105,8 +105,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     String qualifiedName  = qualifierClass.getQualifiedName();
     List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
     JavaFileCodeStyleFacade javaCodeStyleSettingsFacade = JavaFileCodeStyleFacade.forContext(importList.getContainingFile());
-    if (!javaCodeStyleSettingsFacade.isToImportOnDemand(qualifiedName) && refs.size() + 1 < javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand() ||
-        JavaCodeStyleManager.getInstance(qualifierClass.getProject()).hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
+    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(qualifierClass.getProject());
+    if ((!javaCodeStyleSettingsFacade.isToImportOnDemand(qualifiedName) &&
+         !javaCodeStyleManager.isStaticAutoImportClass(qualifiedName) &&
+        refs.size() + 1 < javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand()) ||
+        javaCodeStyleManager.hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
       importList.add(JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createImportStaticStatement(qualifierClass, staticName));
     } else {
       for (PsiJavaCodeReferenceElement ref : refs) {

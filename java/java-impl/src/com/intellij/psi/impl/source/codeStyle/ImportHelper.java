@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ImportFilter;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.jsp.JspSpiUtil;
@@ -103,7 +104,8 @@ public final class ImportHelper {
     Map<String, Boolean> classesOrPackagesToImportOnDemand = new HashMap<>();
     List<PsiImportModuleStatement> previousModuleStatements = collectModuleImports(file, mySettings);
     Map<String, PsiImportModuleStatement> moduleStatementMap = collectNamesImportedByModules(file, previousModuleStatements, resultList);
-    collectOnDemandImports(resultList, mySettings, classesOrPackagesToImportOnDemand, moduleStatementMap);
+    JavaProjectCodeInsightSettings javaProjectCodeInsightSettings = JavaProjectCodeInsightSettings.getSettings(file.getProject());
+    collectOnDemandImports(resultList, mySettings, javaProjectCodeInsightSettings, classesOrPackagesToImportOnDemand, moduleStatementMap);
 
     MultiMap<String, String> conflictingMemberNames = new MultiMap<>();
     for (Import anImport : resultList) {
@@ -211,7 +213,8 @@ public final class ImportHelper {
   }
 
   public static void collectOnDemandImports(@NotNull List<Import> resultList,
-                                            @NotNull JavaCodeStyleSettings settings,
+                                            @NotNull JavaCodeStyleSettings javaCodeStyleSettings,
+                                            @NotNull JavaProjectCodeInsightSettings javaProjectCodeInsightSettings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand,
                                             @NotNull Map<String, PsiImportModuleStatement> moduleStatementMap) {
     Object2IntMap<String> packageToCountMap = new Object2IntOpenHashMap<>();
@@ -225,12 +228,13 @@ public final class ImportHelper {
     }
 
     classToCountMap.forEach((className, count) -> {
-      if (isToUseImportOnDemand(className, count, true, settings)) {
+      if (isToUseImportOnDemand(className, count, true, javaCodeStyleSettings) ||
+          javaProjectCodeInsightSettings.isStaticAutoImportClass(className)) {
         outClassesOrPackagesToImportOnDemand.put(className, true);
       }
     });
     packageToCountMap.forEach((packageName, count) -> {
-      if (isToUseImportOnDemand(packageName, count, false, settings)) {
+      if (isToUseImportOnDemand(packageName, count, false, javaCodeStyleSettings)) {
         outClassesOrPackagesToImportOnDemand.put(packageName, false);
       }
     });
@@ -930,7 +934,7 @@ public final class ImportHelper {
     return maxSpace;
   }
 
-  private static boolean isToUseImportOnDemand(@NotNull String packageName,
+  private static boolean isToUseImportOnDemand(@NotNull String packageOrClassName,
                                                int classCount,
                                                boolean isStaticImportNeeded,
                                                @NotNull JavaCodeStyleSettings settings) {
@@ -938,9 +942,9 @@ public final class ImportHelper {
     int limitCount = isStaticImportNeeded ? settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND :
                      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
     if (classCount >= limitCount) return true;
-    if (packageName.isEmpty()) return false;
+    if (packageOrClassName.isEmpty()) return false;
     PackageEntryTable table = settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
-    return table.contains(packageName);
+    return table.contains(packageOrClassName);
   }
 
   private static int findEntryIndex(@NotNull String packageName, boolean isStatic, boolean isModule, PackageEntry @NotNull [] entries) {
