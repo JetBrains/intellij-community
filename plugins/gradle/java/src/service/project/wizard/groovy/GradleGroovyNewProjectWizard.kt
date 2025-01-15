@@ -6,7 +6,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsJava
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
-import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
@@ -18,6 +17,7 @@ import com.intellij.ui.dsl.builder.*
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
+import org.jetbrains.plugins.gradle.service.project.wizard.addGradleGitIgnoreAsset
 import org.jetbrains.plugins.groovy.config.GroovyHomeKind
 import org.jetbrains.plugins.groovy.config.wizard.*
 
@@ -97,7 +97,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
     override fun setupAssets(project: Project) {
       if (context.isCreatingNewProject) {
-        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+        addGradleGitIgnoreAsset()
       }
 
       addEmptyDirectoryAsset("src/main/groovy")

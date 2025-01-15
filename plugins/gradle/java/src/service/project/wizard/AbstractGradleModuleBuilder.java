@@ -110,6 +110,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private DistributionType gradleDistributionType;
   private @Nullable String gradleHome;
 
+  private boolean isCreatingWrapper = true;
   private boolean isCreatingBuildScriptFile = true;
   private boolean isCreatingSettingsScriptFile = true;
   private VirtualFile buildScriptFile;
@@ -239,7 +240,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       preImportConfigurators.forEach(c -> c.accept(buildScriptFile, settingsScriptFile));
       openBuildScriptFile(project, buildScriptFile);
     }
-    if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
+    if (isCreatingWrapper && isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
       generateGradleWrapper(project);
     }
     reloadProject(project);
@@ -532,6 +533,14 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   public void setCreatingSettingsScriptFile(boolean creatingSettingsScriptFile) {
     this.isCreatingSettingsScriptFile = creatingSettingsScriptFile;
+  }
+
+  public boolean isCreatingWrapper() {
+    return isCreatingWrapper;
+  }
+
+  public void setCreatingWrapper(boolean creatingWrapper) {
+    isCreatingWrapper = creatingWrapper;
   }
 
   public boolean isCreatingSettingsScriptFile() {

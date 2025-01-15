@@ -29,6 +29,7 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
 
     val builder = object : AbstractGradleModuleBuilder() {}
 
+    builder.isCreatingWrapper = false
     builder.isCreatingSettingsScriptFile = false
     builder.isCreatingBuildScriptFile = false
 
