@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -23,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.OverrideText;
@@ -125,6 +125,7 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
       LookupElementBuilder builder = LookupElementBuilder.create(psiClass, id)
         .bold()
         .withIcon(computeIcon(id, psiClass))
+        .withTailText(computeTailText(id), true)
         .withTypeText(psiClass.getQualifiedName(), true);
       executorLookupElements.add(builder);
       return true;
@@ -154,10 +155,25 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
     final ProjectIconsAccessor iconsAccessor = ProjectIconsAccessor.getInstance(executor.getProject());
     final UExpression icon = ActionOrGroupIdResolveUtil.getReturnExpression(executor, "getIcon");
     if (icon == null) {
-      Executor executorById = ExecutorRegistry.getInstance().getExecutorById(id);
+      Executor executorById = findExecutor(id);
       return executorById != null ? executorById.getIcon() : null;
     }
     final VirtualFile iconFile = iconsAccessor.resolveIconFile(icon);
     return iconFile == null ? null : iconsAccessor.getIcon(iconFile);
+  }
+
+  private static String computeTailText(@NotNull String id) {
+    Executor executorById = findExecutor(id);
+    return executorById != null ? " \"" + executorById.getActionName() + "\"" : "";
+  }
+
+  private static @Nullable Executor findExecutor(String id) {
+    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
+      if (executor.getId().equals(id) ||
+          executor.getContextActionId().equals(id)) {
+        return executor;
+      }
+    }
+    return null;
   }
 }
