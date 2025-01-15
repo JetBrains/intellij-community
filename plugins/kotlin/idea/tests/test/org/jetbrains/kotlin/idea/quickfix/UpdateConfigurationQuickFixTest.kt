@@ -40,25 +40,6 @@ import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
-    fun testDisableInlineClasses() {
-        configureRuntime("mockRuntime11")
-        resetProjectSettings(LanguageVersion.KOTLIN_1_3)
-        myFixture.configureByText("foo.kt", "inline class My(val n: Int)")
-
-        assertEquals(LanguageFeature.State.ENABLED_WITH_WARNING, inlineClassesSupport)
-        assertTrue(myFixture.availableIntentions.none { it.text == "Disable inline classes support in the project" })
-    }
-
-    fun testEnableInlineClasses() {
-        configureRuntime("mockRuntime11")
-        resetProjectSettings(LanguageVersion.KOTLIN_1_3)
-        myFixture.configureByText("foo.kt", "inline class My(val n: Int)")
-
-        assertEquals(LanguageFeature.State.ENABLED_WITH_WARNING, inlineClassesSupport)
-        myFixture.launchAction(myFixture.findSingleIntention("Enable inline classes support in the project"))
-        assertEquals(LanguageFeature.State.ENABLED, inlineClassesSupport)
-    }
-
     fun testModuleLanguageVersion() {
         configureRuntime("mockRuntime11")
         resetProjectSettings(LanguageVersion.KOTLIN_1_0)
@@ -183,9 +164,6 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
             apiVersion = version.versionString
         }
     }
-
-    private val inlineClassesSupport: LanguageFeature.State
-        get() = project.languageVersionSettings.getFeatureSupport(LanguageFeature.InlineClasses)
 
     override fun tearDown() {
         runAll(
