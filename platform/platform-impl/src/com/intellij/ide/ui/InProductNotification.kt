@@ -209,11 +209,11 @@ private class InProductNotificationAction(val days: Int) : LastAction(), CustomC
 }
 
 private fun renewLicense() {
-  BrowserUtil.browse("https://account.jetbrains.com")
+  BrowserUtil.browse("https://www.jetbrains.com/shop/eform/students/prolong")
 }
 
 private fun getDiscount() {
-  BrowserUtil.browse("https://www.jetbrains.com/community/education/#students/renewal/")
+  BrowserUtil.browse("https://www.jetbrains.com/community/education/#students/renewal")
 }
 
 @Internal
