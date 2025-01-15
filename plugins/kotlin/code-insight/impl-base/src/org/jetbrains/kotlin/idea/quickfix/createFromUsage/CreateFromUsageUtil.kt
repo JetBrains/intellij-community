@@ -116,11 +116,13 @@ object CreateFromUsageUtil {
             }
             !is KtPrimaryConstructor -> {
                 val parent = declarationInPlace.parent
-                calcNecessaryEmptyLines(declarationInPlace, false).let {
-                    if (it > 0) parent.addBefore(psiFactory.createNewLine(it), declarationInPlace)
-                }
-                calcNecessaryEmptyLines(declarationInPlace, true).let {
-                    if (it > 0) parent.addAfter(psiFactory.createNewLine(it), declarationInPlace)
+                if (parent !is KtParameterList) {
+                    calcNecessaryEmptyLines(declarationInPlace, false).let {
+                        if (it > 0) parent.addBefore(psiFactory.createNewLine(it), declarationInPlace)
+                    }
+                    calcNecessaryEmptyLines(declarationInPlace, true).let {
+                        if (it > 0) parent.addAfter(psiFactory.createNewLine(it), declarationInPlace)
+                    }
                 }
             }
         }
