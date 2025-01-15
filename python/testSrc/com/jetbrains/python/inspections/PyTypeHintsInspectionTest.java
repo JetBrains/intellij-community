@@ -2245,10 +2245,10 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    a3: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
                    a4: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int</warning>]
                    
-                   a21: alias[int]
-                   a22: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str</warning>]
-                   a23: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
-                   a24: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int</warning>]
+                   a21: alias2[int]
+                   a22: alias2[<warning descr="Passed type arguments do not match type parameters of type alias 'alias2'">int, str</warning>]
+                   a23: alias2[<warning descr="Passed type arguments do not match type parameters of type alias 'alias2'">int, str, bool</warning>]
+                   a24: alias2[<warning descr="Passed type arguments do not match type parameters of type alias 'alias2'">int, str, bool, int</warning>]
                    """);
   }
 
@@ -2391,7 +2391,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-76820
-  public void testExplicitTypeAliasInvalidValues() {
+  public void testExplicitTypeAliasInvalidValuesConformanceTests() {
     doTestByText("""
                    from typing import TypeAlias as TA
                    
@@ -2420,7 +2420,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-76820
-  public void testExplicitTypeAliasValidValues() {
+  public void testExplicitTypeAliasValidValuesConformanceTests() {
     doTestByText("""
                    from typing import TypeAlias as TA
                    from typing import Any, Callable, Concatenate, Literal, ParamSpec, TypeVar, Union
@@ -2449,6 +2449,54 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-76820 Duplicates the test from conformance test suite but in multi-file context
+  public void testExplicitTypeAliasesMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-76839 Duplicates the test from conformance test suite but in multi-file context
+  public void testImplicitTypeAliasesMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasAssignmentChain() {
+    doTestByText("""
+                 a1 = 3
+                 a2 = a1
+                 a3 = a2
+                 def foo(p: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">a3</warning>): ...
+                 """);
+  }
+
+  public void testMultiLineTypeHint() {
+    doTestByText("""
+                 value: ""\"
+                     int |
+                     str |
+                     list[int]
+                 ""\"
+                 """);
+  }
+
+  public void testParamSpecArgsKwargsIsValid() {
+    doTestByText("""
+                   from typing import ParamSpec, Protocol
+                   P = ParamSpec("P")
+                   class Proto4(Protocol[P]):
+                       def __call__(self, a: int, *args: P.args, **kwargs: P.kwargs) -> None: ...
+                   """);
+  }
+
+  // PY-76834
+  public void testTypeExprValidAnnotationsConformanceTestsSuite() {
+    doTest();
+  }
+
+  // PY-76834
+  public void testTypeExprInvalidAnnotationsConformanceTestsSuite() {
+    doTest();
+  }
 
   @NotNull
   @Override
