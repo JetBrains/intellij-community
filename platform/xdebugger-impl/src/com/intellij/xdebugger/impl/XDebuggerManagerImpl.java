@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
@@ -289,11 +289,15 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     // Perform custom configuration of session data for XDebugProcessConfiguratorStarter classes
     if (processStarter instanceof XDebugProcessConfiguratorStarter) {
-      session.activateSession(false);
       ((XDebugProcessConfiguratorStarter)processStarter).configure(session.getSessionData());
     }
 
     session.init(process, contentToReuse);
+
+    // TODO: may be this session activation is not needed?
+    if (processStarter instanceof XDebugProcessConfiguratorStarter) {
+      session.activateSession(false);
+    }
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       session.addSessionListener(new XDebugSessionListener() {
