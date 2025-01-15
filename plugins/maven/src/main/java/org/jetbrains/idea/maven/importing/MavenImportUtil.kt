@@ -111,17 +111,6 @@ object MavenImportUtil {
     return maxLevel
   }
 
-  // Maven project can have multiple source/target versions if multiReleaseOutput is used
-  private fun getMavenJavaVersions(mavenProject: MavenProject): MavenJavaVersionHolder {
-    val sourceLevel = getSourceLanguageLevel(mavenProject)
-    val testSourceLevel = getTestSourceLanguageLevel(mavenProject)
-    val targetLevel = getTargetLanguageLevel(mavenProject)
-    val testTargetLevel = getTestTargetLanguageLevel(mavenProject)
-    return MavenJavaVersionHolder(sourceLevel, targetLevel, testSourceLevel, testTargetLevel,
-                                  hasExecutionsForTests(mavenProject),
-                                  hasTestCompilerArgs(mavenProject))
-  }
-
   private fun hasTestCompilerArgs(project: MavenProject): Boolean {
     val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin") ?: return false
     val executions = plugin.executions
@@ -324,14 +313,24 @@ object MavenImportUtil {
     })
   }
 
-  private fun needSplitMainAndTest(project: MavenProject, mavenJavaVersions: MavenJavaVersionHolder): Boolean {
-    if (!`is`("maven.import.separate.main.and.test.modules.when.needed")) return false
-    return !project.isAggregator && mavenJavaVersions.needSeparateTestModule() && isCompilerTestSupport(project)
-  }
-
   internal fun getModuleTypeToBeImported(project: MavenProject): StandardMavenModuleType {
-    val mavenJavaVersions = getMavenJavaVersions(project)
-    if (needSplitMainAndTest(project, mavenJavaVersions)) {
+    val sourceLevel = getSourceLanguageLevel(project)
+    val testSourceLevel = getTestSourceLanguageLevel(project)
+    val targetLevel = getTargetLanguageLevel(project)
+    val testTargetLevel = getTestTargetLanguageLevel(project)
+    val hasExecutionsForTests = hasExecutionsForTests(project)
+    val hasTestCompilerArgs = hasTestCompilerArgs(project)
+
+    val needSeparateTestModule =
+      hasTestCompilerArgs
+      || hasExecutionsForTests
+      || (testSourceLevel != null && testSourceLevel != sourceLevel)
+      || (testTargetLevel != null && testTargetLevel != targetLevel)
+
+    val needSplitMainAndTest = if (!`is`("maven.import.separate.main.and.test.modules.when.needed")) false
+    else !project.isAggregator && needSeparateTestModule && isCompilerTestSupport(project)
+
+    if (needSplitMainAndTest) {
       return StandardMavenModuleType.COMPOUND_MODULE
     }
     else if (project.isAggregator) {
@@ -339,20 +338,6 @@ object MavenImportUtil {
     }
     else {
       return StandardMavenModuleType.SINGLE_MODULE
-    }
-  }
-
-  private class MavenJavaVersionHolder(
-    @JvmField val sourceLevel: LanguageLevel?,
-    @JvmField val targetLevel: LanguageLevel?,
-    @JvmField val testSourceLevel: LanguageLevel?,
-    @JvmField val testTargetLevel: LanguageLevel?,
-    @JvmField val hasExecutionsForTests: Boolean,
-    @JvmField val hasTestCompilerArgs: Boolean,
-  ) {
-    fun needSeparateTestModule(): Boolean {
-      return hasTestCompilerArgs || hasExecutionsForTests || (testSourceLevel != null && testSourceLevel != sourceLevel)
-             || (testTargetLevel != null && testTargetLevel != targetLevel)
     }
   }
 }
