@@ -47,7 +47,7 @@ class TextMateSyntaxMatcherImpl(
     checkCancelledCallback: Runnable?,
   ): TextMateLexerState {
     var resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor)
-    val children = syntaxNodeDescriptor.getChildren()
+    val children = syntaxNodeDescriptor.children
     for (child in children) {
       resultState = moreImportantState(resultState,
                                        matchFirstChild(child, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope))
@@ -141,7 +141,7 @@ class TextMateSyntaxMatcherImpl(
     checkCancelledCallback: Runnable?,
   ): TextMateLexerState {
     var resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor)
-    val injections = syntaxNodeDescriptor.getInjections()
+    val injections = syntaxNodeDescriptor.injections
 
     for (injection in injections) {
       val selectorWeigh = mySelectorWeigher.weigh(injection.selector, currentScope)

@@ -1,58 +1,45 @@
-package org.jetbrains.plugins.textmate.language.syntax;
+package org.jetbrains.plugins.textmate.language.syntax
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.Constants;
-
-import java.util.List;
+import org.jetbrains.plugins.textmate.Constants
 
 /**
  * Syntax rule of languages from TextMate bundle.
+ *
  * Consists of:
- * <ul>
- * <li>
- * String attributes - string attributes of syntax node {@link Constants.StringKey}
- * </li>
- * <li>
- * Captures attributes - captures attributes of syntax node {@link Constants.CaptureKey}
- * </li>
- * <li>
- * Repository - set of named syntax rules (nodes) which can be included from other places in the grammar.
- * </li>
- * <li>
- * Children rules - set of nested syntax rules (from 'patterns' node)
- * </li>
- * </ul>
- * <p/>
- * User: zolotov
+ *  - String attributes - string attributes of syntax node [Constants.StringKey]
+ *  - Captures attributes - captures attributes of syntax node [Constants.CaptureKey]
+ *  - Children rules - set of nested syntax rules (from 'patterns' node)
  */
-public interface SyntaxNodeDescriptor {
-  SyntaxNodeDescriptor EMPTY_NODE = new SyntaxNodeDescriptorImpl(null, null);
+interface SyntaxNodeDescriptor {
+  fun getStringAttribute(key: Constants.StringKey): CharSequence?
 
-  @Nullable
-  CharSequence getStringAttribute(@NotNull Constants.StringKey key);
+  fun hasBackReference(key: Constants.StringKey): Boolean
 
-  boolean hasBackReference(@NotNull Constants.StringKey key);
+  fun getCaptureRules(key: Constants.CaptureKey): Array<TextMateCapture?>?
 
-  TextMateCapture @Nullable [] getCaptureRules(@NotNull Constants.CaptureKey key);
+  fun hasBackReference(key: Constants.CaptureKey, group: Int): Boolean
 
-  boolean hasBackReference(@NotNull Constants.CaptureKey key, int group);
+  val children: List<SyntaxNodeDescriptor>
 
-  @NotNull
-  List<SyntaxNodeDescriptor> getChildren();
+  val injections: List<InjectionNodeDescriptor>
 
-  @NotNull
-  List<InjectionNodeDescriptor> getInjections();
-
-  @NotNull
-  SyntaxNodeDescriptor findInRepository(int ruleId);
+  @Deprecated("node doesn't hold repository anymore")
+  fun findInRepository(ruleId: Int): SyntaxNodeDescriptor
 
   /**
    * @return scope name if node is root for language or null otherwise
    */
-  @Nullable
-  CharSequence getScopeName();
+  val scopeName: CharSequence?
 
-  @Nullable
-  SyntaxNodeDescriptor getParentNode();
+  @get:Deprecated("node doesn't hold parent reference anymore")
+  val parentNode: SyntaxNodeDescriptor?
+
+  companion object {
+    @JvmField
+    val EMPTY_NODE: SyntaxNodeDescriptor = SyntaxNodeDescriptorImpl(null,
+                                                                    emptyList(),
+                                                                    emptyList(),
+                                                                    emptyArray(),
+                                                                    emptyArray())
+  }
 }

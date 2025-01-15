@@ -7,8 +7,9 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.jetbrains.plugins.textmate.TestUtil
 import org.jetbrains.plugins.textmate.findScopeByFileName
+import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
 import org.jetbrains.plugins.textmate.loadBundle
@@ -19,10 +20,10 @@ import java.nio.charset.StandardCharsets
 
 class TextMateLexerPerformanceTest : UsefulTestCase() {
   fun testPerformance() {
-    val syntaxTable = TextMateSyntaxTableCore()
-    val matchers = syntaxTable.loadBundle(TestUtil.JAVA)
+    val builder = TextMateSyntaxTableBuilder(TextMateConcurrentMapInterner())
+    val matchers = builder.loadBundle(TestUtil.JAVA)
     val myFile = File(PlatformTestUtil.getCommunityPath() + "/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java")
-    syntaxTable.compact()
+    val syntaxTable = builder.build()
 
     val scopeName = findScopeByFileName(matchers, myFile.name)
     val text = StringUtil.convertLineSeparators(FileUtil.loadFile(myFile, StandardCharsets.UTF_8))

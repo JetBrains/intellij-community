@@ -2,15 +2,15 @@ package org.jetbrains.plugins.textmate
 
 import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher
 import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 
-fun TextMateSyntaxTableCore.loadBundle(bundleName: String): Map<TextMateFileNameMatcher, CharSequence> {
+fun TextMateSyntaxTableBuilder.loadBundle(bundleName: String): Map<TextMateFileNameMatcher, CharSequence> {
   val matchers = HashMap<TextMateFileNameMatcher, CharSequence>()
-  val myInterner = TextMateConcurrentMapInterner()
   val grammars = TestUtil.readBundle(bundleName).readGrammars().iterator()
   while (grammars.hasNext()) {
     val grammar = grammars.next()
-    addSyntax(grammar.plist.value, myInterner)?.let { rootScope ->
+    addSyntax(grammar.plist.value)?.let { rootScope ->
       grammar.fileNameMatchers.forEach { matcher ->
         matchers[matcher] = rootScope
       }
@@ -18,6 +18,7 @@ fun TextMateSyntaxTableCore.loadBundle(bundleName: String): Map<TextMateFileName
   }
   return matchers
 }
+
 
 fun findScopeByFileName(
   matchers: Map<TextMateFileNameMatcher, CharSequence>,
