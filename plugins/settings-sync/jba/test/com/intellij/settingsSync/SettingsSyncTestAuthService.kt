@@ -1,11 +1,9 @@
 package com.intellij.settingsSync
 
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.jba.auth.DummyJBAccountInfoService
 import com.intellij.ui.JBAccountInfoService
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
 import java.awt.Component
 import javax.swing.Icon
 

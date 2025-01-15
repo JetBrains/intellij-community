@@ -1,9 +1,9 @@
 package com.intellij.settingsSync.jba
 
 import com.intellij.openapi.Disposable
-import com.intellij.settingsSync.SettingsSyncRemoteCommunicator
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.communicator.SettingsSyncCommunicatorProvider
+import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
+import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
 import com.intellij.settingsSync.jba.auth.JBAAuthService
 
 class JbaCommunicatorProvider : SettingsSyncCommunicatorProvider, Disposable {

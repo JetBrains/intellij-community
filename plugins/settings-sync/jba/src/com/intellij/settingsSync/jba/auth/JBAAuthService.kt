@@ -6,9 +6,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.settingsSync.SettingsSyncEvents
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.core.SettingsSyncEvents
+import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.jba.SettingsSyncJbaBundle
 import com.intellij.settingsSync.jba.SettingsSyncPromotion
 import com.intellij.ui.JBAccountInfoService

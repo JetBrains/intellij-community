@@ -19,17 +19,10 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.settingsSync.SettingsSnapshot
-import com.intellij.settingsSync.SettingsSyncBundle
-import com.intellij.settingsSync.SettingsSyncLocalSettings
-import com.intellij.settingsSync.SettingsSyncMain
-import com.intellij.settingsSync.SettingsSyncSettings
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
-import com.intellij.settingsSync.communicator.SettingsSyncUserData
-import com.intellij.settingsSync.getLocalApplicationInfo
-import com.intellij.settingsSync.isSettingsSyncEnabledByKey
-import com.intellij.ui.JBAccountInfoService
+import com.intellij.settingsSync.core.*
+import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
+import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Panel
@@ -60,7 +53,8 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isSettingsSyncEnabledByKey()
+    e.presentation.isEnabledAndVisible = isSettingsSyncEnabledInSettings() &&
+                                         RemoteCommunicatorHolder.getAuthService() is JBAAuthService
   }
 
   override fun actionPerformed(e: AnActionEvent) {
