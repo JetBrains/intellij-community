@@ -5,6 +5,7 @@ import com.jetbrains.rhizomedb.EID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
@@ -26,7 +27,7 @@ fun <T : Any> Flow<T>.asIDsFlow(): Flow<EID> {
         send(valueEntity.id)
         awaitCancellation()
       }
-      catch (_: CancellationException) {
+      finally {
         valueEntity.delete()
       }
     }
@@ -69,7 +70,7 @@ fun <T : Any?, K : Any?> Flow<T>.withNullableIDsFlow(mapFunction: (EID?, T) -> K
         send(mapFunction(valueEntity.id, value))
         awaitCancellation()
       }
-      catch (_: CancellationException) {
+      finally {
         valueEntity.delete()
       }
     }
