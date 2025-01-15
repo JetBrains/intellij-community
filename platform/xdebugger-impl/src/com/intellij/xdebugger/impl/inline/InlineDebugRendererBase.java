@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -89,10 +90,10 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     }
 
     curX += (2 * margin);
-    if (isCustomNode()) {
-      Icon watchIcon = AllIcons.Debugger.Watch;
-      watchIcon.paintIcon(inlay.getEditor().getComponent(), g, curX, getIconY(watchIcon, r));
-      curX += watchIcon.getIconWidth() + margin * 2;
+    Icon nodeIcon = getIcon();
+    if (nodeIcon != null) {
+      nodeIcon.paintIcon(inlay.getEditor().getComponent(), g, curX, getIconY(nodeIcon, r));
+      curX += nodeIcon.getIconWidth() + margin * 2;
     }
     myTextStartXCoordinate = curX;
     for (int i = 0; i < getPresentation().getTexts().size(); i++) {
@@ -125,12 +126,17 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
     paintEffects(g, r, editor, inlineAttributes, font, metrics);
   }
 
+  protected @Nullable Icon getIcon() {
+    return isCustomNode() ? AllIcons.Debugger.Watch : null;
+  }
+
   @Override
   public int calcWidthInPixels(@NotNull Inlay inlay) {
     int width = getInlayTextWidth(inlay);
     width += isCustomNode() ? AllIcons.Actions.Close.getIconWidth() : AllIcons.General.LinkDropTriangle.getIconWidth();
-    if (isCustomNode()) {
-      width += AllIcons.Debugger.Watch.getIconWidth();
+    Icon icon = getIcon();
+    if (icon != null) {
+      width += icon.getIconWidth();
     }
     return width;
   }

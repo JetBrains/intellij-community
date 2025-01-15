@@ -53,6 +53,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private final @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> myAdditionalHyperLinks = new ArrayList<>();
   private boolean myChanged;
   private XValuePresentation myValuePresentation;
+  private @Nullable Icon myInlayIcon;
 
   //todo annotate 'name' with @NotNull
   public XValueNodeImpl(XDebuggerTree tree, @Nullable XDebuggerTreeNode parent, String name, @NotNull XValue value) {
@@ -108,6 +109,15 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @ApiStatus.Internal
   protected boolean isChanged() {
     return myChanged;
+  }
+
+  public void setInlayIcon(@Nullable Icon icon) {
+    myInlayIcon = icon;
+  }
+
+  @Nullable
+  public Icon getInlayIcon() {
+    return myInlayIcon;
   }
 
   private void updateInlineDebuggerData() {

@@ -184,6 +184,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                             ? myValueDescriptor.getValueIcon()
                             : DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
 
+            Icon inlayIcon = myValueDescriptor.getInlayIcon();
+            if (inlayIcon != null && node instanceof XValueNodeImpl xValueNode) {
+              xValueNode.setInlayIcon(inlayIcon);
+            }
             XValuePresentation presentation = createPresentation(myValueDescriptor);
             node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
             scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(suspendContext) {

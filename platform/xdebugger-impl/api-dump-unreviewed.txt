@@ -1678,6 +1678,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - clearFullValueEvaluator():V
 - getFullValueEvaluator():com.intellij.xdebugger.frame.XFullValueEvaluator
 - getIconTag():java.lang.Object
+- getInlayIcon():javax.swing.Icon
 - getLink():com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 - getName():java.lang.String
 - getRawValue():java.lang.String
@@ -1686,6 +1687,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - isComputed():Z
 - markChanged():V
 - setFullValueEvaluator(com.intellij.xdebugger.frame.XFullValueEvaluator):V
+- setInlayIcon(javax.swing.Icon):V
 - setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
 - setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
 - setValueModificationStarted():V

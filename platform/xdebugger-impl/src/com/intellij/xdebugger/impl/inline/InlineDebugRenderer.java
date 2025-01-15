@@ -45,6 +45,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -161,6 +162,12 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
 
   XSourcePosition getPosition() {
     return myPosition;
+  }
+
+  @Override
+  protected @Nullable Icon getIcon() {
+    Icon icon = myValueNode.getInlayIcon();
+    return icon == null ? super.getIcon() : icon;
   }
 
   /**

@@ -113,6 +113,15 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     return null;
   }
 
+  @Override
+  public @Nullable Icon calcInlayIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+    throws EvaluateException {
+    if (myIconRenderer != null) {
+      return myIconRenderer.calcInlayIcon(descriptor, evaluationContext, listener);
+    }
+    return null;
+  }
+
   void setIconRenderer(ValueIconRenderer iconRenderer) {
     myIconRenderer = iconRenderer;
   }

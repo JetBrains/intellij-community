@@ -74,6 +74,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private boolean myFullValue = false;
 
   private @Nullable Icon myValueIcon;
+  private @Nullable Icon myInlayIcon;
 
   protected boolean myIsNew = true;
   private boolean myIsDirty = false;
@@ -358,6 +359,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         LOG.info(e);
         setValueIcon(null);
       }
+      try {
+        setInlayIcon(renderer.calcInlayIcon(this, context, labelListener));
+      }
+      catch (EvaluateException e) {
+        LOG.info(e);
+        setInlayIcon(null);
+      }
     }
 
     //set label id
@@ -462,6 +470,14 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public @Nullable Icon getValueIcon() {
     return myValueIcon;
+  }
+
+  public @Nullable Icon getInlayIcon() {
+    return myInlayIcon;
+  }
+
+  public void setInlayIcon(@Nullable Icon icon) {
+    myInlayIcon = icon;
   }
 
   public String calcValueName() {
