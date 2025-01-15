@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +44,7 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -218,7 +220,7 @@ public class ReplaceInProjectManager {
         public void findingUsagesFinished(final UsageView usageView) {
           if (context[0] != null && !processPresentation.isShowFindOptionsPrompt()) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              replaceUsagesUnderCommand(context[0], usageView.getUsages(), true);
+              replaceUsagesUnderCommand(context[0], usageView.getUsages(), true, true);
             }, myProject.getDisposed());
           }
         }
@@ -264,7 +266,7 @@ public class ReplaceInProjectManager {
           replaceContext.getFindModel().getStringToFind(),
           String.valueOf(files.size()),
           replaceContext.getFindModel().getStringToReplace())) {
-          replaceUsagesUnderCommand(replaceContext, usages, true);
+          replaceUsagesUnderCommand(replaceContext, usages, true, false);
         }
       }
 
@@ -285,7 +287,7 @@ public class ReplaceInProjectManager {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        replaceUsagesUnderCommand(replaceContext, getSelectedUsages(), false);
+        replaceUsagesUnderCommand(replaceContext, getSelectedUsages(), false, false);
       }
 
       @Override
@@ -311,7 +313,7 @@ public class ReplaceInProjectManager {
     replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedAction);
   }
 
-  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<? extends Usage> usages) {
+  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<? extends Usage> usages, boolean disposeUsageView) {
     int[] replacedCount = {0};
     boolean[] success = {true};
     boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
@@ -352,7 +354,20 @@ public class ReplaceInProjectManager {
       }
     );
     success[0] &= result;
-    replaceContext.getUsageView().removeUsagesBulk(usages);
+    var usageView = replaceContext.getUsageView();
+    if (disposeUsageView) {
+      // This code is invoked when replacing all usages directly from the popup,
+      // skipping the tool window.
+      // The usage view isn't needed in this case, and updating it (removing the replaced usages)
+      // is costly and causes freezes (IJPL-45211).
+      // Dispose it instead.
+      UIUtil.invokeLaterIfNeeded(() -> {
+        Disposer.dispose(usageView);
+      });
+    }
+    else {
+      usageView.removeUsagesBulk(usages);
+    }
     reportNumberReplacedOccurrences(myProject, replacedCount[0]);
     return success[0];
   }
@@ -438,7 +453,7 @@ public class ReplaceInProjectManager {
   }
 
   private void replaceUsagesUnderCommand(@NotNull ReplaceContext replaceContext, @NotNull Set<? extends Usage> usagesSet,
-                                         boolean replaceAll) {
+                                         boolean replaceAll, boolean disposeUsageView) {
     if (usagesSet.isEmpty()) {
       return;
     }
@@ -449,7 +464,7 @@ public class ReplaceInProjectManager {
     if (!ensureUsagesWritable(usages)) return;
 
     Runnable runnable = () -> {
-      final boolean success = replaceUsages(replaceContext, usages);
+      final boolean success = replaceUsages(replaceContext, usages, disposeUsageView);
       final UsageView usageView = replaceContext.getUsageView();
 
       if (closeUsageViewIfEmpty(usageView, success)) return;
