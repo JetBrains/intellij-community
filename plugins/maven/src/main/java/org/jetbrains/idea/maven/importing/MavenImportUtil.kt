@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
@@ -20,8 +21,10 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
@@ -33,6 +36,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.function.Supplier
 
@@ -278,6 +282,28 @@ object MavenImportUtil {
     val storage = project.workspaceModel.currentSnapshot
     val pomPath = storage.resolve(ModuleId(module.name))?.exModuleOptions?.linkedProjectId?.toNioPathOrNull() ?: return null
     return VirtualFileManager.getInstance().findFileByNioPath(pomPath)
+  }
+
+  fun getMavenModuleType(project: Project, moduleName: @NlsSafe String): StandardMavenModuleType {
+    val storage = project.workspaceModel.currentSnapshot
+    val default = StandardMavenModuleType.SINGLE_MODULE
+    val moduleTypeString = storage.resolve(ModuleId(moduleName))?.exModuleOptions?.externalSystemModuleType ?: return default
+    return try {
+      enumValueOf<StandardMavenModuleType>(moduleTypeString)
+    }
+    catch (_: IllegalArgumentException) {
+      MavenLog.LOG.warn("Unknown module type: $moduleTypeString")
+      default
+    }
+  }
+
+  fun getModuleNames(project: Project, pomXml: VirtualFile): List<String> {
+    val storage = project.workspaceModel.currentSnapshot
+    val pomXmlPath = pomXml.toNioPath()
+    return storage.entities<ModuleEntity>()
+      .filter { it.exModuleOptions?.linkedProjectId?.toNioPathOrNull() == pomXmlPath }
+      .map { it.name }
+      .toList()
   }
 
   fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {

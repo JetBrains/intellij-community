@@ -6,21 +6,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.exModuleOptions
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.entities
 import com.intellij.util.io.UnsyncByteArrayOutputStream
 import org.jdom.Element
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getMavenModuleType
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getModuleNames
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.model.MavenResource
 import org.jetbrains.idea.maven.project.MavenProject
@@ -54,24 +48,19 @@ internal class ResourceConfigGenerator(
 
     if (mavenProject.directoryFile != fileIndex.getContentRootForFile(pomXml)) return
 
-    val workspaceModel = module.project.workspaceModel
-    val urlManager = workspaceModel.getVirtualFileUrlManager()
-    val storage = workspaceModel.currentSnapshot
+    val project = module.project
     val moduleName = module.name
-    val moduleType = getModuleTypeFromWorkspaceModel(storage, moduleName)
+    val moduleType = getMavenModuleType(project, moduleName)
 
     generate(module, moduleType)
 
     if (moduleType == StandardMavenModuleType.COMPOUND_MODULE) {
-      val virtualFileUrl = pomXml.parent.toVirtualFileUrl(urlManager)
-      val otherModuleNames = storage.entities<ModuleEntity>()
-        .filter { it.name != moduleName && it.entitySource.virtualFileUrl == virtualFileUrl }
-        .map { it.name }
+      val otherModuleNames = getModuleNames(project, pomXml).filter { it != moduleName }
 
-      val moduleManager = ModuleManager.getInstance(module.project)
+      val moduleManager = ModuleManager.getInstance(project)
       otherModuleNames.forEach {
         val aModule = moduleManager.findModuleByName(it)
-        val aModuleType = getModuleTypeFromWorkspaceModel(storage, it)
+        val aModuleType = getMavenModuleType(project, it)
         generate(aModule, aModuleType)
       }
     }
@@ -136,18 +125,6 @@ internal class ResourceConfigGenerator(
 
     projectConfig.moduleConfigurations.put(moduleName, resourceConfig)
     generateManifest(mavenProject, module, resourceConfig)
-  }
-
-  private fun getModuleTypeFromWorkspaceModel(storage: EntityStorage, moduleName: @NlsSafe String): StandardMavenModuleType {
-    val default = StandardMavenModuleType.SINGLE_MODULE
-    val moduleTypeString = storage.resolve(ModuleId(moduleName))?.exModuleOptions?.externalSystemModuleType ?: return default
-    return try {
-      enumValueOf<StandardMavenModuleType>(moduleTypeString)
-    }
-    catch (_: IllegalArgumentException) {
-      LOG.warn("Unknown module type: $moduleTypeString")
-      default
-    }
   }
 
   companion object {
