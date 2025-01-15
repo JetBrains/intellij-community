@@ -48,6 +48,12 @@
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider
+- *sf:Companion:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider$Companion
+- s:computeHyperlink(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
+- a:provideHyperlink(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider$Companion
+- f:computeHyperlink(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
 *e:com.intellij.xdebugger.impl.dfaassist.DfaHint
 - java.lang.Enum
 - sf:AIOOBE:com.intellij.xdebugger.impl.dfaassist.DfaHint

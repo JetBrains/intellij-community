@@ -188,6 +188,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     });
   }
 
+  public boolean hasLinks() {
+    return myFullValueEvaluator != null && myFullValueEvaluator.isEnabled() || !myAdditionalHyperLinks.isEmpty();
+  }
+
   @Override
   public void clearFullValueEvaluator() {
     myFullValueEvaluator = null;

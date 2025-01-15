@@ -70,8 +70,6 @@
     <extensionPoint qualifiedName="com.intellij.debugger.additionalContextProvider"
                     interface="com.intellij.debugger.engine.evaluation.AdditionalContextProvider" dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.debugger.collectionVisualizer"
-                    interface="com.intellij.debugger.collections.visualizer.CollectionVisualizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
@@ -173,8 +171,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.statistics.DebuggerStatistics"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector"/>
-    <statistics.counterUsagesCollector
-      implementationClass="com.intellij.debugger.collections.visualizer.CollectionVisualizerStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.ui.breakpoints.JavaBreakpointsUsageCollector"/>
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>

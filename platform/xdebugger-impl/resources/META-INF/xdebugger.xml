@@ -12,6 +12,7 @@
     <extensionPoint name="xdebugger.breakpointGroupingRule" interface="com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule" dynamic="true"/>
     <extensionPoint name="xdebugger.debuggerSupport" interface="com.intellij.xdebugger.impl.DebuggerSupport" dynamic="true"/>
     <extensionPoint name="xdebugger.configurableProvider" interface="com.intellij.xdebugger.settings.DebuggerConfigurableProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.nodeLinkActionProvider" interface="com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider" dynamic="true"/>
 
     <extensionPoint name="xdebugger.attachHostProvider" interface="com.intellij.xdebugger.attach.XAttachHostProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.attachDebuggerProvider" interface="com.intellij.xdebugger.attach.XAttachDebuggerProvider" dynamic="true"/>

@@ -27,6 +27,7 @@ import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -242,6 +243,16 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
       }
     };
     addTreeExpansionListener(myTreeExpansionListener);
+
+    addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
+        if (!(node instanceof XValueNodeImpl) || ((XValueNodeImpl)node).isObsolete()) {
+          return;
+        }
+        XDebuggerNodeLinkActionProvider.computeHyperlink(myProject, (XValueNodeImpl)node);
+      }
+    });
   }
 
   /**

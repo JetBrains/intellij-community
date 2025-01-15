@@ -567,7 +567,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  private static class ListObjectRenderer extends CollectionReferenceRenderer {
+  private static class ListObjectRenderer extends CompoundReferenceRenderer {
     ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
       super(rendererSettings,
             "List",
