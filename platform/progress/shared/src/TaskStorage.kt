@@ -124,7 +124,7 @@ abstract class TaskStorage {
    *
    * @param updater A lambda provided with a [ChangeScope] receiver to modify the task information.
    */
-  protected abstract suspend fun updateTaskInfoEntity(updater: ChangeScope.() -> Unit)
+  abstract suspend fun updateTaskInfoEntity(updater: ChangeScope.() -> Unit)
 
   companion object {
     @JvmStatic

@@ -165,13 +165,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
     launch {
       taskSuspender.isSuspendable.collectLatest { suspension ->
-        change {
-          shared {
-            // in case of a replay, the existence has to be checked manually
-            if (!taskInfo.exists()) return@shared
+        TaskStorage.getInstance().updateTaskInfoEntity {
+          // in case of a replay, the existence has to be checked manually
+          if (!taskInfo.exists()) return@updateTaskInfoEntity
 
-            taskInfo[TaskInfoEntity.TaskSuspensionType] = suspension
-          }
+          taskInfo[TaskInfoEntity.TaskSuspensionType] = suspension
         }
       }
     }
