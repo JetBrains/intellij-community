@@ -81,7 +81,7 @@ fun loadIconCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
 }
 
 @ApiStatus.Internal
-fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boolean? = null): Icon {
+fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boolean? = null, isDarkForScale: Boolean? = null): Icon {
   if (icon.iconWidth == JBUIScale.scale(size)) {
     return if (isDark == null) icon else icon.getDarkIcon(isDark)
   }
@@ -89,5 +89,5 @@ fun loadIconCustomVersionOrScale(icon: CachedImageIcon, size: Int, isDark: Boole
   loadIconCustomVersion(icon = icon, width = size, height = size, isDark = isDark)?.let {
     return it
   }
-  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDark ?: false)
+  return icon.scale(scale = (JBUIScale.scale(1.0f) * size) / icon.getRawIconWidth(), isDark = isDarkForScale)
 }
