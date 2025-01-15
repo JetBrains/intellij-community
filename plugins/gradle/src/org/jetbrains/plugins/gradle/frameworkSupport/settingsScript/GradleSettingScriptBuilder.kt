@@ -7,15 +7,20 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statem
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import java.nio.file.Path
 
 @ApiStatus.NonExtendable
 interface GradleSettingScriptBuilder<Self: GradleSettingScriptBuilder<Self>> : ScriptElementBuilder {
 
   fun setProjectName(projectName: String): Self
 
+  fun setProjectDir(name: String, relativePath: String): Self
+
   fun include(vararg name: String): Self
 
   fun includeFlat(vararg name: String): Self
+
+  fun include(relativePath: Path): Self
 
   fun includeBuild(name: String): Self
 

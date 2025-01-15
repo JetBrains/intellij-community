@@ -6,6 +6,8 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractScriptElemen
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import java.nio.file.Path
+import kotlin.io.path.name
 
 @ApiStatus.NonExtendable
 abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingScriptBuilder<Self>>
@@ -28,6 +30,24 @@ abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingSc
 
   override fun includeFlat(vararg name: String): Self = apply {
     script.call("includeFlat", *name)
+  }
+
+  override fun include(relativePath: Path): Self = apply {
+    val projectName = relativePath
+      .dropWhile { it.name == ".." }
+      .joinToString(":") { it.name }
+    when {
+      relativePath.startsWith("..") && relativePath.nameCount == 2 -> {
+        includeFlat(projectName)
+      }
+      relativePath.startsWith("..") -> {
+        include(projectName)
+        setProjectDir(":$projectName", relativePath.toString())
+      }
+      else -> {
+        include(projectName)
+      }
+    }
   }
 
   override fun includeBuild(name: String): Self = apply {

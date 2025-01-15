@@ -10,6 +10,9 @@ import kotlin.apply as applyKt
 abstract class GroovyDslGradleSettingScriptBuilder<Self : GroovyDslGradleSettingScriptBuilder<Self>>
   : AbstractGradleSettingScriptBuilder<Self>() {
 
+  override fun setProjectDir(name: String, relativePath: String): Self =
+    addCode("""project('$name').projectDir = file('$relativePath')""")
+
   override fun generate(): String {
     return GroovyScriptBuilder().generate(generateTree())
   }
