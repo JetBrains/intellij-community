@@ -14,6 +14,8 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.event.AWTEventListener
 import java.awt.event.ActionEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
@@ -90,6 +92,13 @@ internal fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon? = n
       }
     }
   }
+  btn.addKeyListener(object : KeyAdapter() {
+    override fun keyPressed(e: KeyEvent) {
+      if (e.keyCode == KeyEvent.VK_ENTER) {
+        onClick.invoke(btn)
+      }
+    }
+  })
   btn.icon = icon
   btn.horizontalTextPosition = SwingConstants.LEFT
   return btn
