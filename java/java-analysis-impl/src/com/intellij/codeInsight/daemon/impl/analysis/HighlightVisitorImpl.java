@@ -869,7 +869,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitModifierList(list);
     PsiElement parent = list.getParent();
     if (parent instanceof PsiMethod method) {
-      if (!hasErrorResults()) add(HighlightMethodUtil.checkMethodCanHaveBody(method, myLanguageLevel));
       MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       PsiClass aClass = method.getContainingClass();
       if (!method.isConstructor()) {
@@ -893,8 +892,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         catch (IndexNotReadyException ignored) {
         }
       }
-      if (!hasErrorResults()) add(HighlightMethodUtil.checkMethodMustHaveBody(method, aClass));
-      if (!hasErrorResults()) add(HighlightMethodUtil.checkStaticMethodOverride(method, myFile));
       if (!hasErrorResults() && aClass != null) {
         GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
         myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(method));

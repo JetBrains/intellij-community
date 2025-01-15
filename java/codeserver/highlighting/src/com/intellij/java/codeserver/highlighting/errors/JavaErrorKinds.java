@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,11 +177,6 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiAnnotation, PsiMethod> OVERRIDE_ON_NON_OVERRIDING_METHOD =
     parameterized("override.on.non-overriding.method");
 
-  public static final Simple<PsiMethod> METHOD_DUPLICATE =
-    error(PsiMethod.class, "method.duplicate")
-      .withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange)
-      .withRawDescription(
-        method -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
   public static final Simple<PsiReceiverParameter> RECEIVER_WRONG_CONTEXT =
     error(PsiReceiverParameter.class, "receiver.wrong.context").withAnchor(PsiReceiverParameter::getIdentifier);
   public static final Simple<PsiReceiverParameter> RECEIVER_STATIC_CONTEXT =
@@ -351,9 +347,78 @@ public final class JavaErrorKinds {
     error(PsiTypeParameter.class, "type.parameter.on.annotation.member")
       .withRawDescription(typeParameter -> message("type.parameter.duplicate", typeParameter.getName()));
 
+  public static final Simple<PsiMethod> METHOD_DUPLICATE =
+    error(PsiMethod.class, "method.duplicate")
+      .withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange)
+      .withRawDescription(
+        method -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
   public static final Simple<PsiJavaCodeReferenceElement> METHOD_THROWS_CLASS_NAME_EXPECTED =
     error("method.throws.class.name.expected");
-  
+  public static final Simple<PsiMethod> METHOD_INTERFACE_BODY =
+    error(PsiMethod.class, "method.interface.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Simple<PsiMethod> METHOD_ABSTRACT_BODY =
+    error(PsiMethod.class, "method.abstract.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Simple<PsiMethod> METHOD_NATIVE_BODY =
+    error(PsiMethod.class, "method.native.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Simple<PsiMethod> METHOD_STATIC_IN_INTERFACE_SHOULD_HAVE_BODY =
+    error(PsiMethod.class, "method.static.in.interface.should.have.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Simple<PsiMethod> METHOD_PRIVATE_IN_INTERFACE_SHOULD_HAVE_BODY =
+    error(PsiMethod.class, "method.private.in.interface.should.have.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Simple<PsiMethod> METHOD_DEFAULT_SHOULD_HAVE_BODY =
+    error(PsiMethod.class, "method.default.should.have.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Simple<PsiMethod> METHOD_DEFAULT_IN_CLASS =
+    error(PsiMethod.class, "method.default.in.class").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Simple<PsiMethod> METHOD_SHOULD_HAVE_BODY =
+    error(PsiMethod.class, "method.should.have.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Simple<PsiMethod> METHOD_SHOULD_HAVE_BODY_OR_ABSTRACT =
+    error(PsiMethod.class, "method.should.have.body.or.abstract").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Parameterized<PsiMethod, PsiMethod> METHOD_STATIC_OVERRIDES_INSTANCE =
+    parameterized(PsiMethod.class, PsiMethod.class, "method.static.overrides.instance")
+      .withRange((method, superMethod) -> getMethodDeclarationTextRange(method))
+      .withRawDescription((method, superMethod) -> message("method.static.overrides.instance",
+                                                           formatMethod(method),
+                                                           formatClass(requireNonNull(method.getContainingClass())),
+                                                           formatMethod(superMethod),
+                                                           formatClass(requireNonNull(superMethod.getContainingClass()))));
+  public static final Parameterized<PsiMethod, PsiMethod> METHOD_INSTANCE_OVERRIDES_STATIC =
+    parameterized(PsiMethod.class, PsiMethod.class, "method.instance.overrides.static")
+      .withRange((method, superMethod) -> getMethodDeclarationTextRange(method))
+      .withRawDescription((method, superMethod) -> message("method.instance.overrides.static",
+                                                           formatMethod(method),
+                                                           formatClass(requireNonNull(method.getContainingClass())),
+                                                           formatMethod(superMethod),
+                                                           formatClass(requireNonNull(superMethod.getContainingClass()))));
+  public static final Parameterized<PsiMethod, PsiMethod> METHOD_OVERRIDES_FINAL =
+    parameterized(PsiMethod.class, PsiMethod.class, "method.overrides.final")
+      .withRange((method, superMethod) -> getMethodDeclarationTextRange(method))
+      .withRawDescription((method, superMethod) -> {
+        PsiClass superClass = superMethod.getContainingClass();
+        return message("method.overrides.final",
+                       formatMethod(method),
+                       formatMethod(superMethod),
+                       superClass != null ? formatClass(superClass) : "<unknown>");
+      });
+  public static final Parameterized<PsiMethod, PsiMethod> METHOD_INHERITANCE_WEAKER_PRIVILEGES =
+    parameterized(PsiMethod.class, PsiMethod.class, "method.inheritance.weaker.privileges")
+      .withRange((method, superMethod) -> {
+        PsiModifierList modifierList = method.getModifierList();
+        PsiElement keyword = PsiUtil.findModifierInList(modifierList, PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(modifierList)));
+        if (keyword != null) {
+          return keyword.getTextRange().shiftLeft(method.getTextRange().getStartOffset());
+        }
+        // in case of package-private or some crazy third-party plugin where some access modifier implied even if it's absent
+        PsiIdentifier identifier = method.getNameIdentifier();
+        if (identifier != null) {
+          return identifier.getTextRangeInParent();
+        }
+        return getMethodDeclarationTextRange(method);
+      })
+      .withRawDescription((method, superMethod) -> message(
+        "method.inheritance.weaker.privileges",
+        formatClashMethodMessage(method, superMethod, true),
+        VisibilityUtil.toPresentableText(PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()))),
+        VisibilityUtil.toPresentableText(PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(superMethod.getModifierList())))));
+
   public static final Parameterized<PsiMember, AmbiguousImplicitConstructorCallContext> CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL =
     parameterized(PsiMember.class, AmbiguousImplicitConstructorCallContext.class, "constructor.ambiguous.implicit.call")
       .withRawDescription((member, ctx) -> ctx.description())

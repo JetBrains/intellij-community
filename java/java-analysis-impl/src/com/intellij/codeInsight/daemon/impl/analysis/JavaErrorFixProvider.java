@@ -5,14 +5,17 @@ import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeError;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,14 +27,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.isCastIntentionApplicable;
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
@@ -77,6 +77,7 @@ final class JavaErrorFixProvider {
     
     createClassFixes();
     createConstructorFixes();
+    createMethodFixes();
     createExpressionFixes();
     createGenericFixes();
     createRecordFixes();
@@ -87,6 +88,42 @@ final class JavaErrorFixProvider {
 
   public static JavaErrorFixProvider getInstance() {
     return ApplicationManager.getApplication().getService(JavaErrorFixProvider.class);
+  }
+
+  private void createMethodFixes() {
+    JavaFixProvider<PsiMethod, Void> addBody = error -> myFactory.createAddMethodBodyFix(error.psi());
+    fix(METHOD_DEFAULT_SHOULD_HAVE_BODY, addBody);
+    fix(METHOD_STATIC_IN_INTERFACE_SHOULD_HAVE_BODY, addBody);
+    fix(METHOD_PRIVATE_IN_INTERFACE_SHOULD_HAVE_BODY, addBody);
+    fix(METHOD_SHOULD_HAVE_BODY, addBody);
+    fix(METHOD_SHOULD_HAVE_BODY_OR_ABSTRACT, addBody);
+    fix(METHOD_DEFAULT_IN_CLASS, error -> removeModifierFix(error.psi(), PsiModifier.DEFAULT));
+    fix(METHOD_ABSTRACT_BODY, error -> removeModifierFix(error.psi(), PsiModifier.ABSTRACT));
+    fix(METHOD_SHOULD_HAVE_BODY_OR_ABSTRACT, error -> maybeAddModifierFix(error.psi(), PsiModifier.ABSTRACT));
+    JavaFixProvider<PsiMethod, Void> deleteBody = error -> myFactory.createDeleteMethodBodyFix(error.psi());
+    fix(METHOD_ABSTRACT_BODY, deleteBody);
+    fix(METHOD_INTERFACE_BODY, deleteBody);
+    fix(METHOD_NATIVE_BODY, deleteBody);
+    multi(METHOD_INTERFACE_BODY, error -> {
+      PsiMethod method = error.psi();
+      if (PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method) && Stream.of(method.findDeepestSuperMethods())
+        .map(PsiMethod::getContainingClass)
+        .filter(Objects::nonNull)
+        .map(PsiClass::getQualifiedName)
+        .noneMatch(CommonClassNames.JAVA_LANG_OBJECT::equals)) {
+        return List.of(PriorityIntentionActionWrapper.highPriority(addModifierFix(method, PsiModifier.DEFAULT)), 
+                       addModifierFix(method, PsiModifier.STATIC));
+      }
+      return List.of();
+    });
+    fix(METHOD_ABSTRACT_BODY, error -> myFactory.createPushDownMethodFix());
+    fix(METHOD_NATIVE_BODY, error -> myFactory.createPushDownMethodFix());
+    fix(METHOD_STATIC_OVERRIDES_INSTANCE, error -> removeModifierFix(error.psi(), PsiModifier.STATIC));
+    fix(METHOD_INSTANCE_OVERRIDES_STATIC, error -> maybeAddModifierFix(error.psi(), PsiModifier.STATIC));
+    fix(METHOD_STATIC_OVERRIDES_INSTANCE, error -> maybeAddModifierFix(error.context(), PsiModifier.STATIC));
+    fix(METHOD_INSTANCE_OVERRIDES_STATIC, error -> removeModifierFix(error.context(), PsiModifier.STATIC));
+    fix(METHOD_OVERRIDES_FINAL, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(METHOD_INHERITANCE_WEAKER_PRIVILEGES, error -> myFactory.createChangeModifierFix());
   }
   
   private void createConstructorFixes() {
@@ -120,9 +157,8 @@ final class JavaErrorFixProvider {
 
   private void createExpressionFixes() {
     fix(NEW_EXPRESSION_QUALIFIED_MALFORMED, error -> myFactory.createRemoveNewQualifierFix(error.psi(), null));
-    multi(NEW_EXPRESSION_QUALIFIED_STATIC_CLASS, 
-          error -> error.context().isEnum() ? List.of() : JvmElementActionFactories.createModifierActions(
-            error.context(), MemberRequestsKt.modifierRequest(JvmModifier.STATIC, false)));
+    fix(NEW_EXPRESSION_QUALIFIED_STATIC_CLASS, 
+        error -> error.context().isEnum() ? null : removeModifierFix(error.context(), PsiModifier.STATIC));
     fix(NEW_EXPRESSION_QUALIFIED_STATIC_CLASS, error -> myFactory.createRemoveNewQualifierFix(error.psi(), error.context()));
     fix(NEW_EXPRESSION_QUALIFIED_ANONYMOUS_IMPLEMENTS_INTERFACE, error -> myFactory.createRemoveNewQualifierFix(error.psi(), null));
     fix(NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE,
@@ -175,10 +211,8 @@ final class JavaErrorFixProvider {
 
   private void createClassFixes() {
     fix(CLASS_NO_ABSTRACT_METHOD, error -> {
-      if (error.psi() instanceof PsiClass aClass && !(aClass instanceof PsiAnonymousClass) && !aClass.isEnum()
-          && aClass.getModifierList() != null
-          && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
-        return addModifierFix(aClass, PsiModifier.ABSTRACT);
+      if (error.psi() instanceof PsiClass aClass && !(aClass instanceof PsiAnonymousClass) && !aClass.isEnum()) {
+        return maybeAddModifierFix(aClass, PsiModifier.ABSTRACT);
       }
       return null;
     });
@@ -195,10 +229,8 @@ final class JavaErrorFixProvider {
         return List.of(myFactory.createImplementMethodsFix(member));
       }
       else {
-        return StreamEx.of(JvmModifier.PROTECTED, JvmModifier.PUBLIC)
-          .flatCollection(modifier ->
-          JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(modifier, true)))
-          .toList();
+        return List.of(addModifierFix(anyMethodToImplement, PsiModifier.PROTECTED),
+                       addModifierFix(anyMethodToImplement, PsiModifier.PUBLIC));
       }
     });
     fix(CLASS_REFERENCE_LIST_DUPLICATE,
@@ -215,8 +247,7 @@ final class JavaErrorFixProvider {
       PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
       List<CommonIntentionAction> registrar = new ArrayList<>();
       if (!aClass.isInterface() && anyAbstractMethod == null) {
-        registrar.addAll(JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(
-          JvmModifier.ABSTRACT, false)));
+        registrar.add(removeModifierFix(aClass, PsiModifier.ABSTRACT));
       }
       if (anyAbstractMethod != null && error.psi() instanceof PsiNewExpression newExpression && newExpression.getClassReference() != null) {
         registrar.add(myFactory.createImplementAbstractClassMethodsFix(newExpression));
@@ -267,7 +298,7 @@ final class JavaErrorFixProvider {
       if (member == null) return List.of();
       List<CommonIntentionAction> registrar = new ArrayList<>();
       if (PsiUtil.isJavaToken(error.psi(), JavaTokenType.STATIC_KEYWORD)) {
-        registrar.add(myFactory.createModifierListFix(member, PsiModifier.STATIC, false, false));
+        registrar.add(removeModifierFix(member, PsiModifier.STATIC));
       }
       PsiClass containingClass = member.getContainingClass();
       if (containingClass != null && containingClass.getContainingClass() != null) {
@@ -293,8 +324,7 @@ final class JavaErrorFixProvider {
     fix(CLASS_IMPLEMENTS_CLASS, extendsToImplementsFix);
     fix(INTERFACE_EXTENDS_CLASS, extendsToImplementsFix);
     fix(CLASS_SEALED_PERMITS_ON_NON_SEALED, error -> addModifierFix(error.psi(), PsiModifier.SEALED));
-    multi(CLASS_EXTENDS_FINAL, error ->
-      JvmElementActionFactories.createModifierActions(error.context(), MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
+    fix(CLASS_EXTENDS_FINAL, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
     fix(CLASS_ANONYMOUS_EXTENDS_SEALED, error -> myFactory.createConvertAnonymousToInnerAction(error.psi()));
     JavaFixProvider<PsiElement, ClassStaticReferenceErrorContext> makeInnerStatic = error -> {
       PsiClass innerClass = error.context().innerClass();
@@ -302,9 +332,8 @@ final class JavaErrorFixProvider {
     };
     fix(CLASS_NOT_ENCLOSING, makeInnerStatic);
     fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, makeInnerStatic);
-    fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, error -> 
-      myFactory.createModifierListFix(requireNonNull(error.context().enclosingStaticElement()), 
-                                      PsiModifier.STATIC, false, false));
+    fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, 
+        error -> removeModifierFix(requireNonNull(error.context().enclosingStaticElement()), PsiModifier.STATIC));
   }
   
   private void createRecordFixes() {
@@ -318,8 +347,7 @@ final class JavaErrorFixProvider {
     fix(RECEIVER_NAME_MISMATCH,
         error -> error.context() == null ? null : myFactory.createReceiverParameterNameFix(error.psi(), error.context()));
     fix(RECEIVER_STATIC_CONTEXT,
-           error -> error.psi().getParent().getParent() instanceof PsiMethod method ?
-                    myFactory.createModifierListFix(method.getModifierList(), PsiModifier.STATIC, false, false) : null);
+           error -> error.psi().getParent().getParent() instanceof PsiMethod method ? removeModifierFix(method, PsiModifier.STATIC) : null);
     fix(RECEIVER_WRONG_POSITION, error -> {
       if (error.psi().getParent().getParent() instanceof PsiMethod method) {
         PsiReceiverParameter firstReceiverParameter = PsiTreeUtil.getChildOfType(method.getParameterList(), PsiReceiverParameter.class);
@@ -417,8 +445,34 @@ final class JavaErrorFixProvider {
     fix(ANNOTATION_DUPLICATE_NON_REPEATABLE, error -> myFactory.createCollapseAnnotationsFix(error.psi()));
   }
 
-  private @NotNull CommonIntentionAction addModifierFix(PsiModifierListOwner owner, @PsiModifier.ModifierConstant String modifier) {
+  private @NotNull IntentionAction addModifierFix(@NotNull PsiModifierListOwner owner, @PsiModifier.ModifierConstant String modifier) {
+    JvmModifier jvmModifier = JvmModifier.fromPsiModifier(modifier);
+    if (jvmModifier != null && owner instanceof JvmModifiersOwner jvmModifiersOwner) {
+      IntentionAction action = ContainerUtil.getFirstItem(JvmElementActionFactories.createModifierActions(
+        jvmModifiersOwner, MemberRequestsKt.modifierRequest(jvmModifier, true)));
+      if (action != null) {
+        return action;
+      }
+    }
     return myFactory.createModifierListFix(owner, modifier, true, false);
+  }
+
+  private @Nullable IntentionAction maybeAddModifierFix(@NotNull PsiModifierListOwner owner, @PsiModifier.ModifierConstant String modifier) {
+    PsiModifierList modifierList = owner.getModifierList();
+    if (modifierList != null && HighlightUtil.getIncompatibleModifier(modifier, modifierList) != null) return null;
+    return addModifierFix(owner, modifier);
+  }
+
+  private @NotNull IntentionAction removeModifierFix(@NotNull PsiModifierListOwner owner, @PsiModifier.ModifierConstant String modifier) {
+    JvmModifier jvmModifier = JvmModifier.fromPsiModifier(modifier);
+    if (jvmModifier != null && owner instanceof JvmModifiersOwner jvmModifiersOwner) {
+      IntentionAction action = ContainerUtil.getFirstItem(JvmElementActionFactories.createModifierActions(
+        jvmModifiersOwner, MemberRequestsKt.modifierRequest(jvmModifier, false)));
+      if (action != null) {
+        return action;
+      }
+    }
+    return myFactory.createModifierListFix(owner, modifier, false, false);
   }
 
   private <Psi extends PsiElement, Context> void fix(@NotNull JavaErrorKind<Psi, Context> kind,

@@ -2,7 +2,9 @@
 package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
+import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,6 +20,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 final class JavaErrorFormatUtil {
+  static @NotNull @NlsContexts.DetailedDescription String formatClashMethodMessage(@NotNull PsiMethod method1, @NotNull PsiMethod method2, boolean showContainingClasses) {
+    if (showContainingClasses) {
+      PsiClass class1 = method1.getContainingClass();
+      PsiClass class2 = method2.getContainingClass();
+      if (class1 != null && class2 != null) {
+        return JavaCompilationErrorBundle.message("clash.methods.message.show.classes",
+                                                  formatMethod(method1), formatMethod(method2),
+                                                  formatClass(class1), formatClass(class2));
+      }
+    }
+    return JavaCompilationErrorBundle.message("clash.methods.message", formatMethod(method1), formatMethod(method2));
+  }
+
   static @NotNull @NlsSafe String formatMethod(@NotNull PsiMethod method) {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                       PsiFormatUtilBase.SHOW_TYPE);
@@ -39,8 +54,12 @@ final class JavaErrorFormatUtil {
   static @NotNull TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
     if (method instanceof SyntheticElement) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
-    TextRange throwsRange = method.getThrowsList().getTextRange();
-    int end = throwsRange.getEndOffset();
+    int end;
+    if (method.getBody() == null) {
+      end = method.getTextRange().getEndOffset();
+    } else {
+      end = method.getThrowsList().getTextRange().getEndOffset();
+    }
     return new TextRange(start, end).shiftLeft(method.getTextRange().getStartOffset());
   }
 

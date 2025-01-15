@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.core.JavaPsiBundle;
@@ -32,7 +31,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
-import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
@@ -57,7 +55,6 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 public final class HighlightMethodUtil {
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
@@ -89,26 +86,23 @@ public final class HighlightMethodUtil {
     PsiMethod method = methodSignature.getMethod();
     PsiModifierList modifierList = method.getModifierList();
     if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) return null;
-    int accessLevel = PsiUtil.getAccessLevel(modifierList);
-    String accessModifier = PsiUtil.getAccessModifier(accessLevel);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
       if (!PsiUtil.isAccessible(containingFile.getProject(), superMethod, method, null)) continue;
       if (!includeRealPositionInfo && MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
-      HighlightInfo.Builder info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, includeRealPositionInfo,
-                                            description);
+      HighlightInfo.Builder info = isWeaker(method, superMethod, includeRealPositionInfo, description);
       if (info != null) return info;
     }
     return null;
   }
 
   private static HighlightInfo.Builder isWeaker(@NotNull PsiMethod method,
-                                                @NotNull PsiModifierList modifierList,
-                                                @NotNull String accessModifier,
-                                                int accessLevel,
                                                 @NotNull PsiMethod superMethod,
                                                 boolean includeRealPositionInfo, @Nullable Ref<? super String> descriptionH) {
+    PsiModifierList modifierList = method.getModifierList();
+    int accessLevel = PsiUtil.getAccessLevel(modifierList);
+    String accessModifier = PsiUtil.getAccessModifier(accessLevel);
     int superAccessLevel = PsiUtil.getAccessLevel(superMethod.getModifierList());
     if (accessLevel < superAccessLevel) {
       String description = JavaErrorBundle.message("weaker.privileges",
@@ -453,7 +447,6 @@ public final class HighlightMethodUtil {
           if (builder != null) {
             PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
             PsiType actualType = ((PsiExpression)methodCall.copy()).getType();
-            TextRange fixRange = getFixRange(list);
             if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
               AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(
                 HighlightUtil.asConsumer(builder), methodCall, expectedTypeByParent, actualType);
@@ -1283,33 +1276,6 @@ public final class HighlightMethodUtil {
            IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.isPotentiallyConvertible(paramType, expression);
   }
 
-  static HighlightInfo.Builder checkMethodMustHaveBody(@NotNull PsiMethod method, @Nullable PsiClass aClass) {
-    HighlightInfo.Builder errorResult = null;
-    if (method.getBody() == null
-        && !method.hasModifierProperty(PsiModifier.ABSTRACT)
-        && !method.hasModifierProperty(PsiModifier.NATIVE)
-        && aClass != null
-        && !aClass.isInterface()
-        && !PsiUtilCore.hasErrorElementChild(method)) {
-      int start = method.getModifierList().getTextRange().getStartOffset();
-      int end = Math.max(start, method.getTextRange().getEndOffset());
-
-      boolean abstractAllowed = !aClass.isRecord() && !method.isConstructor() && !(aClass instanceof PsiAnonymousClass);
-      String description = abstractAllowed
-                           ? JavaErrorBundle.message("missing.method.body.or.declare.abstract")
-                           : JavaErrorBundle.message("missing.method.body");
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description);
-      IntentionAction action = QuickFixFactory.getInstance().createAddMethodBodyFix(method);
-      errorResult.registerFix(action, null, null, null, null);
-      if (abstractAllowed && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, method.getModifierList()) == null) {
-        final List<IntentionAction> actions =
-          JvmElementActionFactories.createModifierActions(method, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, true));
-        QuickFixAction.registerQuickFixActions(errorResult, null, actions);
-      }
-    }
-    return errorResult;
-  }
-
   static HighlightInfo.Builder checkAbstractMethodInConcreteClass(@NotNull PsiMethod method, @NotNull PsiElement elementToHighlight) {
     HighlightInfo.Builder errorResult = null;
     PsiClass aClass = method.getContainingClass();
@@ -1354,81 +1320,6 @@ public final class HighlightMethodUtil {
     }
 
     return null;
-  }
-
-  static HighlightInfo.Builder checkMethodCanHaveBody(@NotNull PsiMethod method, @NotNull LanguageLevel languageLevel) {
-    PsiClass aClass = method.getContainingClass();
-    boolean hasNoBody = method.getBody() == null;
-    boolean isInterface = aClass != null && aClass.isInterface();
-    boolean isExtension = method.hasModifierProperty(PsiModifier.DEFAULT);
-    boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
-    boolean isConstructor = method.isConstructor();
-
-    List<IntentionAction> additionalFixes = new ArrayList<>();
-    String description = null;
-    if (hasNoBody) {
-      if (isExtension) {
-        description = JavaErrorBundle.message("extension.method.should.have.a.body");
-      }
-      else if (isInterface) {
-        if (isStatic && JavaFeature.STATIC_INTERFACE_CALLS.isSufficient(languageLevel)) {
-          description = JavaErrorBundle.message("static.methods.in.interfaces.should.have.body");
-        }
-        else if (isPrivate && JavaFeature.PRIVATE_INTERFACE_METHODS.isSufficient(languageLevel)) {
-          description = JavaErrorBundle.message("private.methods.in.interfaces.should.have.body");
-        }
-      }
-      if (description != null) {
-        additionalFixes.add(QuickFixFactory.getInstance().createAddMethodBodyFix(method));
-      }
-    }
-    else if (isInterface) {
-      if (!isExtension && !isStatic && !isPrivate && !isConstructor) {
-        description = JavaErrorBundle.message("interface.methods.cannot.have.body");
-        if (JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel)) {
-          if (Stream.of(method.findDeepestSuperMethods())
-            .map(PsiMethod::getContainingClass)
-            .filter(Objects::nonNull)
-            .map(PsiClass::getQualifiedName)
-            .noneMatch(CommonClassNames.JAVA_LANG_OBJECT::equals)) {
-            IntentionAction makeDefaultFix = QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.DEFAULT, true, false);
-            additionalFixes.add(PriorityIntentionActionWrapper.highPriority(makeDefaultFix));
-            additionalFixes.add(QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.STATIC, true, false));
-          }
-        }
-      }
-    }
-    else if (isExtension) {
-      description = JavaErrorBundle.message("extension.method.in.class");
-      additionalFixes.add(QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.DEFAULT, false, false));
-    }
-    else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      description = JavaErrorBundle.message("abstract.methods.cannot.have.a.body");
-    }
-    else if (method.hasModifierProperty(PsiModifier.NATIVE)) {
-      description = JavaErrorBundle.message("native.methods.cannot.have.a.body");
-    }
-    if (description == null) return null;
-
-    TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
-    HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !isInterface) {
-      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.ABSTRACT, false, false);
-      info.registerFix(action, null, null, null, null);
-    }
-    for (IntentionAction intentionAction : additionalFixes) {
-      info.registerFix(intentionAction, null, null, null, null);
-    }
-    if (!hasNoBody) {
-      if (!isExtension) {
-        IntentionAction action = QuickFixFactory.getInstance().createDeleteMethodBodyFix(method);
-        info.registerFix(action, null, null, null, null);
-      }
-      IntentionAction action = QuickFixFactory.getInstance().createPushDownMethodFix();
-      info.registerFix(action, null, null, null, null);
-    }
-    return info;
   }
 
   static HighlightInfo.Builder checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
@@ -1490,89 +1381,6 @@ public final class HighlightMethodUtil {
     return null;
   }
 
-
-  /**
-   * @return error if static method overrides instance method or
-   *         instance method overrides static. see JLS 8.4.6.1, 8.4.6.2
-   */
-  static HighlightInfo.Builder checkStaticMethodOverride(@NotNull PsiMethod method, @NotNull PsiFile containingFile) {
-    // constructors are not members and therefore don't override class methods
-    if (method.isConstructor()) {
-      return null;
-    }
-
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
-    HierarchicalMethodSignature methodSignature = PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method);
-    List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
-    if (superSignatures.isEmpty()) {
-      return null;
-    }
-
-    boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    for (HierarchicalMethodSignature signature : superSignatures) {
-      PsiMethod superMethod = signature.getMethod();
-      PsiClass superClass = superMethod.getContainingClass();
-      if (superClass == null) continue;
-      HighlightInfo.Builder highlightInfo = checkStaticMethodOverride(aClass, method, isStatic, superClass, superMethod, containingFile);
-      if (highlightInfo != null) {
-        return highlightInfo;
-      }
-    }
-
-    return null;
-  }
-
-  private static HighlightInfo.Builder checkStaticMethodOverride(@NotNull PsiClass aClass,
-                                                         @NotNull PsiMethod method,
-                                                         boolean isMethodStatic,
-                                                         @NotNull PsiClass superClass,
-                                                         @NotNull PsiMethod superMethod,
-                                                         @NotNull PsiFile containingFile) {
-    PsiManager manager = containingFile.getManager();
-    PsiModifierList superModifierList = superMethod.getModifierList();
-    PsiModifierList modifierList = method.getModifierList();
-    if (superModifierList.hasModifierProperty(PsiModifier.PRIVATE)) return null;
-    if (superModifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
-        && !JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(aClass, superClass)) {
-      return null;
-    }
-    boolean isSuperMethodStatic = superModifierList.hasModifierProperty(PsiModifier.STATIC);
-    if (isMethodStatic != isSuperMethodStatic) {
-      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
-      String messageKey = isMethodStatic
-                                ? "static.method.cannot.override.instance.method"
-                                : "instance.method.cannot.override.static.method";
-
-      String description = JavaErrorBundle.message(messageKey,
-                                                   JavaHighlightUtil.formatMethod(method),
-                                                   HighlightUtil.formatClass(aClass),
-                                                   JavaHighlightUtil.formatMethod(superMethod),
-                                                   HighlightUtil.formatClass(superClass));
-
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
-      if (!isSuperMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, modifierList) == null) {
-        IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.STATIC, isSuperMethodStatic, false);
-        info.registerFix(action, null, null, null, null);
-      }
-      if (manager.isInProject(superMethod) &&
-          (!isMethodStatic || HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, superModifierList) == null)) {
-        QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(superMethod, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, isMethodStatic)));
-      }
-      return info;
-    }
-
-    if (isMethodStatic) {
-      if (superClass.isInterface()) return null;
-      int accessLevel = PsiUtil.getAccessLevel(modifierList);
-      String accessModifier = PsiUtil.getAccessModifier(accessLevel);
-      HighlightInfo.Builder info = isWeaker(method, modifierList, accessModifier, accessLevel, superMethod, true, null);
-      if (info != null) return info;
-      info = checkSuperMethodIsFinal(method, superMethod);
-      return info;
-    }
-    return null;
-  }
 
   private static String checkInterfaceInheritedMethodsReturnTypesDescription(@NotNull List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,
                                                                              @NotNull LanguageLevel languageLevel) {

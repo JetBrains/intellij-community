@@ -3,7 +3,7 @@ interface A {
 }
 
 interface B {
-    <error descr="Private methods in interfaces should have a body">private void m()</error>;
+    <error descr="Private methods in interfaces should have a body">private void m();</error>
 }
 
 interface C {

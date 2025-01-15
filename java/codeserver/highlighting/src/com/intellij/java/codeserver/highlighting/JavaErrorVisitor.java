@@ -211,7 +211,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults()) {
         myClassChecker.checkConstructorCallsBaseClassConstructor(method);
       }
-      
+      if (!hasErrorResults()) myMethodChecker.checkMethodCanHaveBody(method);
+      if (!hasErrorResults()) myMethodChecker.checkMethodMustHaveBody(method);
+      if (!hasErrorResults()) myMethodChecker.checkStaticMethodOverride(method);
     }
     else if (parent instanceof PsiClass aClass) {
       if (!hasErrorResults()) myClassChecker.checkDuplicateNestedClass(aClass);
