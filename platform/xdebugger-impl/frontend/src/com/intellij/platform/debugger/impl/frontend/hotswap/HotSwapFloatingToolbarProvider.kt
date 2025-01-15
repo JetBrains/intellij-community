@@ -205,11 +205,10 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     }
     val manager = FrontendHotSwapManager.getInstance(project)
     manager.coroutineScope.launch {
-      coroutineContext.job.cancelOnDispose(parentDisposable, disposeOnCompletion = false)
       manager.currentStatusFlow.collectLatest { status ->
         onStatusChanged(component, status?.status)
       }
-    }
+    }.cancelOnDispose(parentDisposable, disposeOnCompletion = false)
   }
 
   suspend fun onStatusChanged(component: FloatingToolbarComponent, status: HotSwapVisibleStatus?) = withContext(Dispatchers.EDT) {
