@@ -2,9 +2,16 @@
 package org.jetbrains.idea.maven.importing.tree
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getSourceLanguageLevel
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getTargetLanguageLevel
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestSourceLanguageLevel
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestTargetLanguageLevel
+import org.jetbrains.idea.maven.importing.MavenImportUtil.hasExecutionsForTests
+import org.jetbrains.idea.maven.importing.MavenImportUtil.hasTestCompilerArgs
+import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompilerTestSupport
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
 import org.jetbrains.idea.maven.model.MavenId
@@ -90,13 +97,36 @@ internal class MavenProjectImportContextProvider(
   }
 
   private fun getModuleImportData(project: MavenProject, moduleName: String, changes: MavenProjectChanges): MavenProjectImportData {
-    val setUpSourceLevel = MavenImportUtil.getSourceLanguageLevel(project)
-    val setUpTestSourceLevel = MavenImportUtil.getTestSourceLanguageLevel(project)
+    val setUpSourceLevel = getSourceLanguageLevel(project)
+    val setUpTestSourceLevel = getTestSourceLanguageLevel(project)
+    val setUpTargetLevel = getTargetLanguageLevel(project)
+    val setUpTestTargetLevel = getTestTargetLanguageLevel(project)
 
     val sourceLevel = if (setUpSourceLevel == null) null else adjustLevelAndNotify(myProject, setUpSourceLevel)
     val testSourceLevel = if (setUpTestSourceLevel == null) null else adjustLevelAndNotify(myProject, setUpTestSourceLevel)
+    val targetLevel = if (setUpTargetLevel == null) null else adjustLevelAndNotify(myProject, setUpTargetLevel)
+    val testTargetLevel = if (setUpTestTargetLevel == null) null else adjustLevelAndNotify(myProject, setUpTestTargetLevel)
+    val hasExecutionsForTests = hasExecutionsForTests(project)
+    val hasTestCompilerArgs = hasTestCompilerArgs(project)
 
-    val type = MavenImportUtil.getModuleTypeToBeImported(project)
+    val needSeparateTestModule =
+      hasTestCompilerArgs
+      || hasExecutionsForTests
+      || (testSourceLevel != null && testSourceLevel != sourceLevel)
+      || (testTargetLevel != null && testTargetLevel != targetLevel)
+
+    val needSplitMainAndTest = if (!`is`("maven.import.separate.main.and.test.modules.when.needed")) false
+    else !project.isAggregator && needSeparateTestModule && isCompilerTestSupport(project)
+
+    val type = if (needSplitMainAndTest) {
+      StandardMavenModuleType.COMPOUND_MODULE
+    }
+    else if (project.isAggregator) {
+      StandardMavenModuleType.AGGREGATOR
+    }
+    else {
+      StandardMavenModuleType.SINGLE_MODULE
+    }
 
     val moduleData = ModuleData(moduleName, type, sourceLevel, testSourceLevel)
     if (type != StandardMavenModuleType.COMPOUND_MODULE) {

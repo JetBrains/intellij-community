@@ -15,7 +15,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -111,7 +110,7 @@ object MavenImportUtil {
     return maxLevel
   }
 
-  private fun hasTestCompilerArgs(project: MavenProject): Boolean {
+  internal fun hasTestCompilerArgs(project: MavenProject): Boolean {
     val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin") ?: return false
     val executions = plugin.executions
     if (executions == null || executions.isEmpty()) {
@@ -126,7 +125,7 @@ object MavenImportUtil {
                               config.getChild("testCompilerArguments") != null)
   }
 
-  private fun hasExecutionsForTests(project: MavenProject): Boolean {
+  internal fun hasExecutionsForTests(project: MavenProject): Boolean {
     val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
     if (plugin == null) return false
     val executions = plugin.executions
@@ -311,33 +310,5 @@ object MavenImportUtil {
       ExternalSystemUtil.markModuleAsMaven(module, null, true)
       module
     })
-  }
-
-  internal fun getModuleTypeToBeImported(project: MavenProject): StandardMavenModuleType {
-    val sourceLevel = getSourceLanguageLevel(project)
-    val testSourceLevel = getTestSourceLanguageLevel(project)
-    val targetLevel = getTargetLanguageLevel(project)
-    val testTargetLevel = getTestTargetLanguageLevel(project)
-    val hasExecutionsForTests = hasExecutionsForTests(project)
-    val hasTestCompilerArgs = hasTestCompilerArgs(project)
-
-    val needSeparateTestModule =
-      hasTestCompilerArgs
-      || hasExecutionsForTests
-      || (testSourceLevel != null && testSourceLevel != sourceLevel)
-      || (testTargetLevel != null && testTargetLevel != targetLevel)
-
-    val needSplitMainAndTest = if (!`is`("maven.import.separate.main.and.test.modules.when.needed")) false
-    else !project.isAggregator && needSeparateTestModule && isCompilerTestSupport(project)
-
-    if (needSplitMainAndTest) {
-      return StandardMavenModuleType.COMPOUND_MODULE
-    }
-    else if (project.isAggregator) {
-      return StandardMavenModuleType.AGGREGATOR
-    }
-    else {
-      return StandardMavenModuleType.SINGLE_MODULE
-    }
   }
 }
