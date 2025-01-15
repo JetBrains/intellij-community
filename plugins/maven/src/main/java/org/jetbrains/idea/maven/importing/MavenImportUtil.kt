@@ -268,7 +268,7 @@ object MavenImportUtil {
     return isMainModule(moduleName) || isTestModule(moduleName)
   }
 
-  fun isMainModule(moduleName: String): Boolean {
+  private fun isMainModule(moduleName: String): Boolean {
     return moduleName.length > 5 && moduleName.endsWith(MAIN_SUFFIX)
   }
 

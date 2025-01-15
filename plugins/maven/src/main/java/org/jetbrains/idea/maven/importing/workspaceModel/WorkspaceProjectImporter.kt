@@ -292,10 +292,10 @@ internal open class WorkspaceProjectImporter(
         // if both projects reside in the same folder, then:
 
         // 'project' before 'project.main'/'project.test'
-        .then(compareBy { MavenImportUtil.isMainOrTestSubmodule(it.moduleData.moduleName) })
+        .then(compareBy { it.moduleData.isMainOrTestModule() })
 
         // '.main' before '.test'
-        .then(compareBy { !MavenImportUtil.isMainModule(it.moduleData.moduleName) })
+        .then(compareBy { !it.moduleData.isMainModule() })
 
         // 'pom.*' files before custom named files (e.g. 'custom.xml')
         .then(compareBy { !FileUtil.namesEqual("pom", it.mavenProject.file.nameWithoutExtension) })
