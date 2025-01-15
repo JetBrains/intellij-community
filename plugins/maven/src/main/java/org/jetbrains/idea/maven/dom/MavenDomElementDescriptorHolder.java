@@ -30,10 +30,16 @@ public final class MavenDomElementDescriptorHolder {
   private static final Logger LOG = Logger.getInstance(MavenDomElementDescriptorHolder.class);
 
   private enum FileKind {
-    PROJECT_FILE {
+    PROJECT_FILE_4_0 {
       @Override
       public String getSchemaUrl() {
-        return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL;
+        return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_0_URL;
+      }
+    },
+    PROJECT_FILE_4_1 {
+      @Override
+      public String getSchemaUrl() {
+        return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_1_URL;
       }
     },
     PROFILES_FILE {
@@ -123,10 +129,16 @@ public final class MavenDomElementDescriptorHolder {
   }
 
   private static @Nullable FileKind getFileKind(PsiFile file) {
-    if (MavenDomUtil.isProjectFile(file)) return FileKind.PROJECT_FILE;
+    if (MavenDomUtil.isProjectFile(file)) return getProjectFileKind(file);
     if (MavenDomUtil.isProfilesFile(file)) return FileKind.PROFILES_FILE;
     if (MavenDomUtil.isSettingsFile(file)) return getSettingsFileKind(file);
     return null;
+  }
+
+  private static @NotNull FileKind getProjectFileKind(PsiFile file) {
+    String modelVersion = MavenDomUtil.getXmlProjectModelVersion(file);
+    if ("4.1.0".equals(modelVersion)) return FileKind.PROJECT_FILE_4_1;
+    return FileKind.PROJECT_FILE_4_0;
   }
 
   private static @NotNull FileKind getSettingsFileKind(PsiFile file) {

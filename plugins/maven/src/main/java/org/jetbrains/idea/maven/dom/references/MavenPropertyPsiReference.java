@@ -56,6 +56,7 @@ import javax.swing.*;
 import java.util.*;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
+import static org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4;
 
 public class MavenPropertyPsiReference extends MavenPsiReference implements LocalQuickFixProvider {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
@@ -330,7 +331,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
 
     if (!MavenModelClassesProperties.isPathValid(MavenModelClassesProperties.MAVEN_PROJECT_CLASS, path)
       && !MavenModelClassesProperties.isPathValid(MavenModelClassesProperties.MAVEN_MODEL_CLASS, path)) {
-      if (!schemaHasProperty(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, pathWithProjectPrefix)) return null;
+      if (!schemaHasProperty(getSchemaUrl(), pathWithProjectPrefix)) return null;
     }
 
     PsiElement result = MavenDomUtil.findTag(projectDom, pathWithProjectPrefix);
@@ -405,7 +406,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       }
     }
 
-    processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, (property, descriptor) -> {
+    processSchema(getSchemaUrl(), (property, descriptor) -> {
       if (property.startsWith("project.")) {
         addVariant(result, property.substring("project.".length()), descriptor, prefix, RepositoryLibraryLogo);
       }
@@ -520,6 +521,18 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     return LookupElementBuilder.create(element, name)
       .withIcon(icon)
       .withPresentableText(name);
+  }
+
+  private @NotNull String getSchemaUrl() {
+    if (isAtLeastMaven4(myVirtualFile, myProject)
+        && myProjectDom != null
+        && "4.1.0".equals(myProjectDom.getModelVersion().getValue())
+    ) {
+      return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_1_URL;
+    }
+    else {
+      return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_0_URL;
+    }
   }
 
   private @Nullable <T> T processSchema(String schema, SchemaProcessor<T> processor) {

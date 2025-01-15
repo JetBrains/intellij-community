@@ -10,7 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public final class MavenSchemaProvider implements StandardResourceProvider {
-  public static final String MAVEN_PROJECT_SCHEMA_URL = "http://maven.apache.org/xsd/maven-4.0.0.xsd";
+  public static final String MAVEN_PROJECT_SCHEMA_4_0_URL = "http://maven.apache.org/xsd/maven-4.0.0.xsd";
+  public static final String MAVEN_PROJECT_SCHEMA_4_1_URL = "https://maven.apache.org/xsd/maven-4.1.0.xsd";
   public static final String MAVEN_PROFILES_SCHEMA_URL = "http://maven.apache.org/xsd/profiles-1.0.0.xsd";
   public static final String MAVEN_SETTINGS_SCHEMA_URL = "http://maven.apache.org/xsd/settings-1.0.0.xsd";
   public static final String MAVEN_SETTINGS_SCHEMA_URL_1_1 = "http://maven.apache.org/xsd/settings-1.1.0.xsd";
@@ -19,7 +20,8 @@ public final class MavenSchemaProvider implements StandardResourceProvider {
   @Override
   public void registerResources(ResourceRegistrar registrar) {
     @SuppressWarnings("HttpUrlsUsage") String[] urls = new String[]{
-      MAVEN_PROJECT_SCHEMA_URL, "schemas/maven-4.0.0.xsd",
+      MAVEN_PROJECT_SCHEMA_4_0_URL, "schemas/maven-4.0.0.xsd",
+      MAVEN_PROJECT_SCHEMA_4_1_URL, "schemas/maven-4.1.0.xsd",
       "http://maven.apache.org/maven-v4_0_0.xsd", "schemas/maven-4.0.0.xsd",
       MAVEN_PROFILES_SCHEMA_URL, "schemas/profiles-1.0.0.xsd",
       MAVEN_SETTINGS_SCHEMA_URL, "schemas/settings-1.0.0.xsd",
