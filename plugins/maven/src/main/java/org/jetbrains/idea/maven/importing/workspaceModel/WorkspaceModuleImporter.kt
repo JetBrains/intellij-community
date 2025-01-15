@@ -339,10 +339,6 @@ internal class WorkspaceModuleImporter(
     companion object {
       const val VERSION = "223-2"
 
-      fun isFromLegacyImport(entity: ExternalSystemModuleOptionsEntity): Boolean {
-        return entity.externalSystem == EXTERNAL_SOURCE_ID && entity.externalSystemModuleVersion == null
-      }
-
       fun tryRead(entity: ExternalSystemModuleOptionsEntity): ExternalSystemData? {
         if (entity.externalSystem != EXTERNAL_SOURCE_ID || entity.externalSystemModuleVersion != VERSION) return null
 

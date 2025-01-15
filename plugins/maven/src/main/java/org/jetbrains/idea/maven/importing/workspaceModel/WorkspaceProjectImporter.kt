@@ -56,7 +56,7 @@ internal val AFTER_IMPORT_CONFIGURATOR_EP: ExtensionPointName<MavenAfterImportCo
 
 @TestOnly
 @Internal
-var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
+var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE: Boolean = false
 
 internal open class WorkspaceProjectImporter(
   protected val myProjectsTree: MavenProjectsTree,
@@ -331,13 +331,6 @@ internal open class WorkspaceProjectImporter(
     currentStorage: MutableEntityStorage,
     newStorage: MutableEntityStorage,
   ) {
-    // remove modules which should be replaced with Maven modules, in order to clean them from pre-existing sources, dependencies etc.
-    // It's needed since otherwise 'replaceBySource' will merge pre-existing Module content with imported module content, resulting in
-    // unexpected module configuration.
-    val importedModuleNames by lazy {
-      mavenProjectsWithModules.flatMapTo(mutableSetOf()) { it.modules.asSequence().map { it.module.name } }
-    }
-
     // also remove non-Maven modules that has clashing content roots, otherwise we might end up with a situation:
     //  * A user opens a project with existing non-maven module 'A', with a single content root(==project root), and a pom.xml in the root.
     //  * The user asks the IDE to import pom.xml artifactId 'B'.
@@ -563,10 +556,6 @@ internal open class WorkspaceProjectImporter(
       importedEntities(storage, ExternalSystemModuleOptionsEntity::class.java)
         .mapNotNull { WorkspaceModuleImporter.ExternalSystemData.tryRead(it) }
 
-    private fun hasLegacyImportedModules(storage: EntityStorage) =
-      importedEntities(storage, ExternalSystemModuleOptionsEntity::class.java)
-        .any { WorkspaceModuleImporter.ExternalSystemData.isFromLegacyImport(it) }
-
     @JvmStatic
     fun updateTargetFolders(project: Project) {
       val stats = WorkspaceImportStats.startFoldersUpdate(project)
@@ -638,7 +627,7 @@ internal open class WorkspaceProjectImporter(
               updated = true
             }
             else {
-              updated = (workspaceModel as WorkspaceModelInternal).replaceProjectModel(snapshot.getStorageReplacement())
+              updated = workspaceModel.replaceProjectModel(snapshot.getStorageReplacement())
               durationOfWorkspaceUpdate = System.nanoTime() - beforeWA
             }
             if (updated) afterApplyInWriteAction(workspaceModel.currentSnapshot)
