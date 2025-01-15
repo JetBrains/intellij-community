@@ -143,7 +143,7 @@ internal class RuntimeModuleRepositoryBuilder
 
     for (module in project.modules) {
       //if a module doesn't have production sources, it still makes sense to generate a descriptor for it, because it may be used from code
-      if (!module.isTestOnly) {
+      if (!module.isTestOnly || module.hasProductionSources) {
         descriptors.add(createProductionPartDescriptor(module, ::getRuntimeModuleName))
       }
       if (GENERATE_DESCRIPTORS_FOR_TEST_MODULES && module.hasTestSources) {
