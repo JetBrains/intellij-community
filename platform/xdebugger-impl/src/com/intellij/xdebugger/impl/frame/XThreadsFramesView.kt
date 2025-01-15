@@ -26,6 +26,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab3
 import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -37,6 +38,7 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 
+@Internal
 class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private val myPauseDisposables = SequentialDisposables(this)
 
