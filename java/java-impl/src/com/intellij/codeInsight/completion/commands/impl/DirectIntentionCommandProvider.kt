@@ -64,7 +64,7 @@ class DirectIntentionCommandProvider : CommandProvider {
     originalEditor: Editor,
     originalOffset: Int,
     originalFile: PsiFile,
-    isNonWritten: Boolean,
+    isReadOnly: Boolean,
   ): List<CompletionCommand> {
     return runBlockingCancellable {
       val result: MutableList<CompletionCommand> = ArrayList()

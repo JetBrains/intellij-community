@@ -42,7 +42,7 @@ class SimpleRunMarkerCommandProvider : CommandProvider {
     originalEditor: Editor,
     originalOffset: Int,
     originalFile: PsiFile,
-    isNonWritten: Boolean,
+    isReadOnly: Boolean,
   ): List<CompletionCommand> {
     return runBlockingCancellable {
       if (offset > 0){

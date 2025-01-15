@@ -27,7 +27,7 @@ class GenerateCommandProvider : CommandProvider, DumbAware {
     originalEditor: Editor,
     originalOffset: Int,
     originalFile: PsiFile,
-    isNonWritten: Boolean,
+    isReadOnly: Boolean,
   ): List<CompletionCommand> {
     if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
     val element = psiFile.findElementAt(offset)
