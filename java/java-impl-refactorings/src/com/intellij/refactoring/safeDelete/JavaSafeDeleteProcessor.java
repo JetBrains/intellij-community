@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -884,31 +884,20 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return null;
   }
 
-  static boolean canBePrivate(@NotNull PsiMethod method,
-                              @NotNull Collection<? extends PsiReference> references,
-                              @NotNull Collection<? extends PsiElement> deleted,
-                              PsiElement @NotNull [] allElementsToDelete) {
+  static boolean canBePrivate(@NotNull PsiMethod method, PsiElement @NotNull [] allElementsToDelete) {
     PsiClass containingClass = method.getContainingClass();
-    if(containingClass == null) {
+    if (containingClass == null) {
       return false;
     }
 
-    PsiManager manager = method.getManager();
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(method.getProject());
+    PsiResolveHelper resolveHelper = facade.getResolveHelper();
     PsiElementFactory factory = facade.getElementFactory();
-    PsiModifierList privateModifierList;
-    try {
-      PsiMethod newMethod = factory.createMethod("x3", PsiTypes.voidType());
-      privateModifierList = newMethod.getModifierList();
-      privateModifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return false;
-    }
-    for (PsiReference reference : references) {
+    PsiModifierList privateModifierList = factory.createMethod("x3", PsiTypes.voidType()).getModifierList();
+    privateModifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+    for (PsiReference reference : ReferencesSearch.search(method).findAll()) {
       PsiElement element = reference.getElement();
-      if (!isInside(element, allElementsToDelete) && !isInside(element, deleted)
-          && !facade.getResolveHelper().isAccessible(method, privateModifierList, element, null, null)) {
+      if (!isInside(element, allElementsToDelete) && !resolveHelper.isAccessible(method, privateModifierList, element, null, null)) {
         return false;
       }
     }

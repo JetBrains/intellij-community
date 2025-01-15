@@ -3,9 +3,9 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
@@ -15,7 +15,6 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -123,13 +122,17 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
   }
 
   @Override
-  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement @NotNull [] elements2Delete, @NotNull List<? super UsageInfo> result) {
-    if (overriddenFunction instanceof PsiMethod &&
-      JavaSafeDeleteProcessor.canBePrivate((PsiMethod)overriddenFunction, ReferencesSearch.search(overriddenFunction).findAll(), Collections.emptyList(), elements2Delete)) {
-      result.add(new SafeDeletePrivatizeMethod((PsiMethod)overriddenFunction, (PsiMethod)overriddenFunction));
-    } else {
-      result.add(new SafeDeleteOverrideAnnotation(overriddenFunction, overriddenFunction));
+  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement @NotNull [] elements2Delete,
+                                      @NotNull List<? super UsageInfo> result) {
+    if (overriddenFunction instanceof PsiMethod method) {
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null || method.findSuperMethods().length > 1) return;
+
+      if (JavaSafeDeleteProcessor.canBePrivate(method, elements2Delete)) {
+        result.add(new SafeDeletePrivatizeMethod(method, method));
+        return;
+      }
     }
+    result.add(new SafeDeleteOverrideAnnotation(overriddenFunction, overriddenFunction));
   }
 
   @Override
