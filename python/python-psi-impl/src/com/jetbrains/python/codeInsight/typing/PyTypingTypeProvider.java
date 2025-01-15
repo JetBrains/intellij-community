@@ -1473,32 +1473,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return parametersExpr instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)parametersExpr).isEllipsis();
   }
 
-  public static boolean isParamSpec(@NotNull PyExpression parametersExpr, @NotNull TypeEvalContext context) {
-    final var resolveContext = PyResolveContext.defaultContext(context);
-    return PyUtil.multiResolveTopPriority(parametersExpr, resolveContext).stream().anyMatch(it -> {
-      if (!(it instanceof PyTypedElement)) return false;
-      final var type = context.getType((PyTypedElement)it);
-      return isParamSpec(type);
-    });
-  }
-
-  private static boolean isParamSpec(@Nullable PyType type) {
-    if (type instanceof PyClassLikeType) {
-      String classQName = ((PyClassLikeType)type).getClassQName();
-      return TYPING_PARAM_SPEC.equals(classQName) || TYPING_EXTENSIONS_PARAM_SPEC.equals(classQName);
-    }
-    else if (type instanceof PyUnionType) {
-      return ((PyUnionType)type).getMembers().stream().anyMatch(it -> isParamSpec(it));
-    }
-    return false;
-  }
-
-  public static boolean isConcatenate(@NotNull PyExpression parametersExpr, @NotNull TypeEvalContext context) {
-    if (!(parametersExpr instanceof PySubscriptionExpression)) return false;
-    final var type = Ref.deref(getType(parametersExpr, context));
-    return type instanceof PyConcatenateType;
-  }
-
   private static @Nullable PyType getUnionType(@NotNull PsiElement element, @NotNull Context context) {
     if (element instanceof PySubscriptionExpression subscriptionExpr) {
       final PyExpression operand = subscriptionExpr.getOperand();

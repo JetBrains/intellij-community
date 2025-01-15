@@ -1008,8 +1008,11 @@ class PyTypeHintsInspection : PyInspection() {
     private fun isSdkAvailable(element: PsiElement): Boolean =
       PythonSdkUtil.findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element)) != null
 
-    private fun isParamSpecOrConcatenate(expression: PyExpression, context: TypeEvalContext) : Boolean =
-      PyTypingTypeProvider.isConcatenate(expression, context) || PyTypingTypeProvider.isParamSpec(expression, context)
+    private fun isParamSpecOrConcatenate(expression: PyExpression, context: TypeEvalContext): Boolean {
+      if (expression !is PyReferenceExpression) return false
+      val parametersType = Ref.deref(PyTypingTypeProvider.getType(expression, context))
+      return parametersType is PyParamSpecType || parametersType is PyConcatenateType
+    } 
 
     private fun checkTypingMemberParameters(index: PyExpression, isCallable: Boolean) {
       val parameters = if (index is PyTupleExpression) index.elements else arrayOf(index)
