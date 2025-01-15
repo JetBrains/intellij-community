@@ -21,7 +21,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 7);
   private static final StringEventField DIFF_PLACE_FIELD = EventFields.String("diff_place",
                                                                               List.of(DiffPlaces.DEFAULT, DiffPlaces.CHANGES_VIEW,
                                                                                       DiffPlaces.VCS_LOG_VIEW, DiffPlaces.COMMIT_DIALOG,
@@ -45,6 +45,8 @@ public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
 
   private static final BooleanEventField IS_MERGE = EventFields.Boolean("is_merge");
   private static final EventId1<Boolean> SHOW_EXTERNAL_DIFF_TOOL = GROUP.registerEvent("show.external.diff.tool", IS_MERGE);
+
+  private static final EventId MARKER_POPUP_SHOWN = GROUP.registerEvent("marker.popup.shown");
 
   @Override
   public EventLogGroup getGroup() {
@@ -83,6 +85,10 @@ public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
 
   public static void logToggleCombinedDiffBlockCollapse(@Nullable Project project) {
     TOGGLE_COMBINED_DIFF_BLOCK_COLLAPSE.log(project);
+  }
+
+  public static void logShowMarkerPopup(@Nullable Project project) {
+    MARKER_POPUP_SHOWN.log(project);
   }
 
   private static @NotNull String getPlaceName(@NonNls @Nullable String place) {
