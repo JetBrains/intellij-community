@@ -5,10 +5,8 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.lang.Language;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
-public interface MacroTokenType {
+interface MacroTokenType {
   IElementType WHITE_SPACE = TokenType.WHITE_SPACE;
   IElementType IDENTIFIER = new IElementType("IDENTIFIER", Language.ANY);
   IElementType STRING_LITERAL = new IElementType("STRING_LITERAL", Language.ANY);
