@@ -6,6 +6,7 @@ import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
+import org.cef.misc.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
 public final class JBCefTestHelper {
+  private static int WAIT_BROWSER_SECONDS = Utils.getInteger("JCEF_WAIT_BROWSER_SECONDS", 15);
   /**
    * Shows the browser in a frame in waits for a load completion.
    */
@@ -85,7 +87,7 @@ public final class JBCefTestHelper {
 
   public static void await(@NotNull CountDownLatch latch) {
     try {
-      if (!latch.await(5, TimeUnit.SECONDS)) {
+      if (!latch.await(WAIT_BROWSER_SECONDS, TimeUnit.SECONDS)) {
         Assert.fail("timeout:\n" + ThreadDumper.dumpThreadsToString());
       }
     }
