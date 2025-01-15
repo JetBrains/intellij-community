@@ -20,6 +20,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
@@ -492,17 +493,28 @@ public class Invoker implements InvokerMBean {
     Object[] args = new Object[call.getArgs().length];
     for (int i = 0; i < args.length; i++) {
       var arg = call.getArgs()[i];
-
-      if (arg instanceof Ref) {
-        Object reference = getReference(call.getSessionId(), ((Ref)arg).id());
-        args[i] = reference;
-      }
-      else {
-        args[i] = arg;
-      }
+      args[i] = transformArg(call, arg);
     }
 
     return args;
+  }
+
+  private Object transformArg(@NotNull RemoteCall call, Object arg) {
+    if (arg != null && arg.getClass().isArray() && Array.getLength(arg) > 0 && ContainerUtil.and((Object[])arg, item -> item instanceof Ref)) {
+      var componentType = getReference(call.getSessionId(), ((Ref)Array.get(arg, 0)).id()).getClass();
+      var result = Array.newInstance(componentType, Array.getLength(arg));
+      for (int i = 0; i < Array.getLength(arg); i++) {
+        Array.set(result, i, getReference(call.getSessionId(), ((Ref)Array.get(arg, i)).id()));
+      }
+      return result;
+    }
+    if (arg instanceof List<?> && !((List<?>)arg).isEmpty() && ContainerUtil.and(((List<?>)arg), item -> item instanceof Ref)) {
+      return ContainerUtil.map(((List<?>) arg), item -> getReference(call.getSessionId(), ((Ref)item).id()));
+    }
+    if (arg instanceof Ref) {
+      return getReference(call.getSessionId(), ((Ref)arg).id());
+    }
+    return arg;
   }
 
   private static @NotNull RemoteCallResult getRemoteCallResult(@NotNull Session session, @NotNull CallTarget callTarget, Object result) {
