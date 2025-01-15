@@ -185,4 +185,4 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
 }
 
 @ApiStatus.Internal
-data class LegacyCustomLibraryEntitySource(private val levelId: String): EntitySource
+data class LegacyCustomLibraryEntitySource(private val levelId: String): GlobalStorageEntitySource
