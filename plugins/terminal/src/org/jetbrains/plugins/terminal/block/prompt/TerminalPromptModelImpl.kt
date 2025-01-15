@@ -24,6 +24,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
@@ -81,11 +82,13 @@ internal class TerminalPromptModelImpl(
     editor.project!!.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       doUpdatePrompt(renderingInfo)
     })
-    BlockTerminalOptions.getInstance().addListener(this) {
-      renderer = createPromptRenderer()
-      placeholderPromptRenderer = createPlaceholderPromptRenderer()
-      updatePrompt(promptState)
-    }
+    BlockTerminalOptions.getInstance().addListener(this, object : BlockTerminalOptionsListener {
+      override fun promptStyleChanged(promptStyle: TerminalPromptStyle) {
+        renderer = createPromptRenderer()
+        placeholderPromptRenderer = createPlaceholderPromptRenderer()
+        updatePrompt(promptState)
+      }
+    })
   }
 
   @RequiresEdt
