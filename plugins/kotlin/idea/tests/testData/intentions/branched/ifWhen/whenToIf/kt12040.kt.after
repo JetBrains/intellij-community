@@ -11,5 +11,3 @@ fun foo(a: Int) {
 }
 
 fun bar(p: Int){}
-
-// IGNORE_K2

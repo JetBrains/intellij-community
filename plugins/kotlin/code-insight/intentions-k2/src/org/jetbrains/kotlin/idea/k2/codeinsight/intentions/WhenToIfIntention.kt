@@ -124,6 +124,7 @@ internal class WhenToIfIntention :
       elementContext: Context,
       updater: ModPsiUpdater,
     ) {
+        val commentSaver = CommentSaver(element)
         val subject = element.subjectExpression
         val temporaryNameForWhenSubject =
             elementContext.nameCandidatesForWhenSubject.ifNotEmpty { elementContext.nameCandidatesForWhenSubject.last() } ?: ""
@@ -137,16 +138,11 @@ internal class WhenToIfIntention :
             element, propertyForWhenSubject?.referenceToProperty ?: subject, elementContext.hasNullableSubject
         ) ?: return
 
-        val commentSaver = CommentSaver(element)
-        //val result = tracker.replaceAndRestoreComments(element, ifExpressionToReplaceWhen)
         val result = element.replace(ifExpressionToReplaceWhen)
         val addedProperty = propertyForWhenSubject?.property?.let { property ->
             val newLineForNewProperty = result.parent.addBefore(KtPsiFactory(element.project).createNewLine(), result)
             result.parent.addBefore(property, newLineForNewProperty) as? KtProperty
         }
-        /**
-         * TODO: CommentSaver behavior is different from FE1.0. Revisit this part of code after fixing it.
-         */
         commentSaver.restore(result)
 
         addedProperty?.let {
@@ -154,7 +150,6 @@ internal class WhenToIfIntention :
             /**
              * TODO: Let renamer provide candidate names. Currently, it allows a user to change the name but it does not provide candidates.
              */
-            //KotlinVariableInplaceRenameHandler().doRename(addedPropertyForWhenSubject, editor, null)
             updater.rename(it, listOf(temporaryNameForWhenSubject))
         }
     }

@@ -5969,6 +5969,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardOrOrParentheses.kt");
         }
 
+        @TestMetadata("whenWithGuardOrOrParenthesesComments.kt")
+        public void testWhenWithGuardOrOrParenthesesComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardOrOrParenthesesComments.kt");
+        }
+
         @TestMetadata("whenWithGuardParentheses.kt")
         public void testWhenWithGuardParentheses() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardParentheses.kt");
