@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -799,7 +799,8 @@ public final class FindManagerImpl extends FindManager {
   }
 
   private static MalformedReplacementStringException createMalformedReplacementException(FindModel model, Exception e) {
-    return new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
+    String message = FindBundle.message("find.replace.invalid.replacement.string", e.getMessage());
+    return new MalformedReplacementStringException(message, e);
   }
 
   @Override
