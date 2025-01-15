@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -52,8 +53,11 @@ internal class ChangeMethodParameters(
                     val convertType = helper.convertType(it)
 
                     analyze(target) {
-                        val kaType = convertType.asKaType(target)?.lowerBoundIfFlexible() ?: error("Can't convert type $it")
-                        kaType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
+                        val kaType = convertType.asKaType(target)?.let {
+                            KaRendererTypeApproximator.TO_DENOTABLE.approximateType(this, it, Variance.IN_VARIANCE)
+                        } ?: error("Can't convert type $it")
+                        val render = kaType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
+                        render
                     }
                 } ?: KotlinBundle.message("fix.change.signature.error")
             "$parameterName: $renderedType"
@@ -207,8 +211,11 @@ internal class ChangeMethodParameters(
                 allowAnalysisOnEdt {
                     allowAnalysisFromWriteAction {
                         analyze(namedFunction) {
-                            val kaType = convertType.asKaType(namedFunction)?.lowerBoundIfFlexible() ?: error("Can't convert type $jvmType")
-                            append(kaType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT))
+                            val kaType = convertType.asKaType(namedFunction)?.let {
+                                KaRendererTypeApproximator.TO_DENOTABLE.approximateType(this, it, Variance.IN_VARIANCE)
+                            } ?: error("Can't convert type $jvmType")
+                            val render = kaType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+                            append(render)
                         }
                     }
                 }

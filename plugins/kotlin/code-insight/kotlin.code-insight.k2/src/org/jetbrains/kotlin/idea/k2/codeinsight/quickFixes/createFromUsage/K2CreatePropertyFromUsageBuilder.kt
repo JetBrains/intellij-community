@@ -25,9 +25,9 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaRendererTypeApproximator
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasApplicableAllowedTarget
@@ -115,11 +115,11 @@ object K2CreatePropertyFromUsageBuilder {
 
                 analyze(container) {
                     val psiType = request.fieldType.firstOrNull()?.theType as? PsiType
-                    val type =
-                        psiType?.asKaType(container)?.let {
-                            if (it.nullability == KaTypeNullability.UNKNOWN) it.withNullability(KaTypeNullability.NON_NULLABLE) else it
-                        }
-                    type?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+                    val type = psiType?.asKaType(container)
+                    val approximateType = type?.let {
+                        KaRendererTypeApproximator.TO_DENOTABLE.approximateType(this, it, Variance.IN_VARIANCE)
+                    }
+                    approximateType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
                 }?.let { append(it) }
 
                 val requestInitializer = request.initializer
