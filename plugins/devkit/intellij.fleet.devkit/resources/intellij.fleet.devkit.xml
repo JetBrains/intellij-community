@@ -7,11 +7,14 @@
   <resource-bundle>messages.DevKitFleetBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection language="kotlin" id="SettingIsDocumentedInspection"
+    <localInspection language="kotlin" id="SettingRegistrationDocumentationInspection"
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="ERROR"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.fleet.inspections.SettingRegistrationDocumentationInspection"
                      key="inspections.plugin.fleet.setting.is.documented"/>
+    <codeInsight.lineMarkerProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.fleet.inspections.NavigateToDocumentationLineMarkerProvider"/>
   </extensions>
 </idea-plugin>

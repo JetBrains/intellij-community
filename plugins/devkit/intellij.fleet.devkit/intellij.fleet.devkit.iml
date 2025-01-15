@@ -42,5 +42,6 @@
     <orderEntry type="module" module-name="fleet.frontend" />
     <orderEntry type="library" name="snakeyaml" level="project" />
     <orderEntry type="module" module-name="kotlin.idea" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>
