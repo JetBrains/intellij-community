@@ -838,9 +838,9 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        pass
                       \s
                    A1: TypeAlias = <error descr="Generics should be specified through square brackets">Union(int, str)</error>
-                   A2: TypeAlias = '<error descr="Generics should be specified through square brackets">Union(int, str)</error>'
+                   A2: TypeAlias = <warning descr="Assigned value of type alias must be a correct type">'<error descr="Generics should be specified through square brackets">Union(int, str)</error>'</warning>
                    A3 = <error descr="Generics should be specified through square brackets">Union(int, str)</error>  # type: TypeAlias
-                   A3 = '<error descr="Generics should be specified through square brackets">Union(int, str)</error>'  # type: TypeAlias""");
+                   A3 = <warning descr="Assigned value of type alias must be a correct type">'<error descr="Generics should be specified through square brackets">Union(int, str)</error>'</warning>  # type: TypeAlias""");
   }
 
   // PY-57155
@@ -892,14 +892,14 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        def __init__(self, v):
                            pass
 
-                   def a(b: <warning descr="Generics should be specified through square brackets">A(int)</warning>):
+                   def a(b: <warning descr="Generics should be specified through square brackets"><warning descr="Type hint is invalid or refers to the expression which is not a correct type">A(int)</warning></warning>):
                        pass
 
                    def c(d):
                        # type: (<warning descr="Generics should be specified through square brackets">A(int)</warning>) -> None
                        pass
 
-                   def e(f: <warning descr="Generics should be specified through square brackets">A()</warning>):
+                   def e(f: <warning descr="Generics should be specified through square brackets"><warning descr="Type hint is invalid or refers to the expression which is not a correct type">A()</warning></warning>):
                        pass
 
                    def g(h):
@@ -910,15 +910,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    v2 = None  # type: <warning descr="Generics should be specified through square brackets">A(int)</warning>
 
                    U = A
-                   def i(j: <warning descr="Generics should be specified through square brackets">U(int)</warning>):
+                   def i(j: <warning descr="Generics should be specified through square brackets"><warning descr="Type hint is invalid or refers to the expression which is not a correct type">U(int)</warning></warning>):
                        pass
                       \s
                    v3 = None  # type: <warning descr="Generics should be specified through square brackets">U(int)</warning>
 
-                   A1: TypeAlias = <warning descr="Generics should be specified through square brackets">A(int)</warning>
-                   A2: TypeAlias = '<warning descr="Generics should be specified through square brackets">A(int)</warning>'
-                   A3 = <warning descr="Generics should be specified through square brackets">A(int)</warning>  # type: TypeAlias
-                   A4 = '<warning descr="Generics should be specified through square brackets">A(int)</warning>'  # type: TypeAlias""");
+                   A1: TypeAlias = <warning descr="Assigned value of type alias must be a correct type"><warning descr="Generics should be specified through square brackets">A(int)</warning></warning>
+                   A2: TypeAlias = <warning descr="Assigned value of type alias must be a correct type">'<warning descr="Generics should be specified through square brackets">A(int)</warning>'</warning>
+                   A3 = <warning descr="Assigned value of type alias must be a correct type"><warning descr="Generics should be specified through square brackets">A(int)</warning></warning>  # type: TypeAlias
+                   A4 = <warning descr="Assigned value of type alias must be a correct type">'<warning descr="Generics should be specified through square brackets">A(int)</warning>'</warning>  # type: TypeAlias""");
   }
 
   // PY-20530
@@ -1465,7 +1465,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import Self
 
-                   something: <warning descr="Cannot use 'Self' outside class">Self</warning> | None = None
+                   something: <warning descr="Type hint is invalid or refers to the expression which is not a correct type"><warning descr="Cannot use 'Self' outside class">Self</warning> | None</warning> = None
                    """);
   }
 
