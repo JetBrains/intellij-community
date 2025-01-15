@@ -26,9 +26,7 @@ class ModuleGraph internal constructor(
 
   override fun getIn(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependencies(descriptor).iterator()
 
-  fun getDependents(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> = directDependents.getOrDefault(descriptor, emptyList())
-
-  override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependents(descriptor).iterator()
+  override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = directDependents.getOrDefault(descriptor, emptyList()).iterator()
 
   internal fun sorted(topologicalComparator: Comparator<IdeaPluginDescriptorImpl>): ModuleGraph {
     return ModuleGraph(
