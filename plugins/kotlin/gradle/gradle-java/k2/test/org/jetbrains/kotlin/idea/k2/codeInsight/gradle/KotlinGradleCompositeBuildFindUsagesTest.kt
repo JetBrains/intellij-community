@@ -13,9 +13,6 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionS
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.params.ParameterizedTest
 
-/**
- * @see org.jetbrains.kotlin.idea.gradle.versionCatalog.toml.KotlinGradleTomlVersionCatalogReferencesSearcher
- */
 @UseK2PluginMode
 @GradleProjectTestApplication
 @AssertKotlinPluginMode
