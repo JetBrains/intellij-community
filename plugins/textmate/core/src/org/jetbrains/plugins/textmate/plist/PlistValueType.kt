@@ -6,7 +6,6 @@ enum class PlistValueType {
   STRING, INTEGER, REAL, BOOLEAN, DATE, ARRAY, DICT;
 
   companion object {
-    @JvmStatic
     fun fromObject(o: Any?): PlistValueType {
       when (o) {
         is String -> {

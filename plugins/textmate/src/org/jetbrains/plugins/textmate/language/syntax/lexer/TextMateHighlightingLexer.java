@@ -20,7 +20,7 @@ import java.util.Queue;
 
 public class TextMateHighlightingLexer extends LexerBase {
   private final TextMateLexerCore myLexer;
-  private final Queue<TextMateLexerCore.Token> currentLineTokens = new LinkedList<>();
+  private final Queue<TextmateToken> currentLineTokens = new LinkedList<>();
 
   private CharSequence myBuffer;
   private int myEndOffset;
@@ -104,13 +104,13 @@ public class TextMateHighlightingLexer extends LexerBase {
     updateState(currentLineTokens.poll(), myLexer.getCurrentOffset());
   }
 
-  protected void updateState(@Nullable TextMateLexerCore.Token token, int fallbackOffset) {
+  protected void updateState(@Nullable TextmateToken token, int fallbackOffset) {
     if (token != null) {
-      myTokenType = token.scope == TextMateScope.WHITESPACE ? TokenType.WHITE_SPACE : new TextMateElementType(token.scope);
-      myTokenStart = token.startOffset;
-      myTokenEnd = Math.min(token.endOffset, myEndOffset);
-      myCurrentOffset = token.endOffset;
-      myRestartable = token.restartable;
+      myTokenType = token.getScope() == TextMateScope.WHITESPACE ? TokenType.WHITE_SPACE : new TextMateElementType(token.getScope());
+      myTokenStart = token.getStartOffset();
+      myTokenEnd = Math.min(token.getEndOffset(), myEndOffset);
+      myCurrentOffset = token.getEndOffset();
+      myRestartable = token.getRestartable();
     }
     else {
       myTokenType = null;

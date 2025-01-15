@@ -48,7 +48,7 @@ public class TextMateLexer {
   @Deprecated
   public void advanceLine(@NotNull Queue<Token> output) {
     output.addAll(ContainerUtil.map(myLexerCore.advanceLine(null),
-                                    token -> new Token(token.scope, token.startOffset, token.endOffset, token.restartable)));
+                                    token -> new Token(token.getScope(), token.getStartOffset(), token.getEndOffset(), token.getRestartable())));
   }
 
   /**

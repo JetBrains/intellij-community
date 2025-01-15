@@ -1,85 +1,76 @@
-package org.jetbrains.plugins.textmate;
+package org.jetbrains.plugins.textmate
 
-import com.intellij.openapi.application.PathManager;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.textmate.bundles.BundleType;
-import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
-import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+import com.intellij.openapi.application.PathManager
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.plugins.textmate.bundles.*
+import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleType
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+object TestUtil {
+  const val BAT: @NonNls String = "bat"
+  const val GO: @NonNls String = "go"
+  const val TERRAFORM: @NonNls String = "terraform"
+  const val MAKE: @NonNls String = "make"
+  const val JAVA: @NonNls String = "java"
+  const val LOG: @NonNls String = "log"
+  const val JAVASCRIPT: @NonNls String = "javascript"
+  const val CHEF: @NonNls String = "chef"
+  const val HTML: @NonNls String = "html"
+  const val HTML_VSC: @NonNls String = "html_vsc"
+  const val CSS_VSC: @NonNls String = "css_vsc"
+  const val DOCKER: @NonNls String = "docker"
+  const val MARKDOWN_SUBLIME: @NonNls String = "markdown_sublime"
+  const val MARKDOWN_TEXTMATE: @NonNls String = "markdown_textmate"
+  const val MARKDOWN_VSC: @NonNls String = "markdown-basics"
+  const val FSHARP: @NonNls String = "fsharp"
+  const val LARAVEL_BLADE: @NonNls String = "laravel-blade"
+  const val INVALID_BUNDLE: @NonNls String = "invalid_bundle"
+  const val LATEX: @NonNls String = "latex"
+  const val PERL: @NonNls String = "perl"
+  const val SHELLSCRIPT: @NonNls String = "shellscript"
+  const val ELIXIR: @NonNls String = "elixir"
+  const val COLD_FUSION: @NonNls String = "coldfusion"
+  const val PREFERENCES_TEST_BUNDLE: @NonNls String = "preferences_test"
+  const val MARKDOWN_BLOGGING: @NonNls String = "markdown_blogging"
+  const val PYTHON: @NonNls String = "python"
+  const val RUBY: @NonNls String = "ruby"
+  const val PHP: @NonNls String = "php"
+  const val PHP_VSC: @NonNls String = "php_vsc"
+  const val SMARTY: @NonNls String = "smarty"
+  const val TURTLE: @NonNls String = "turtle"
+  const val GIT: @NonNls String = "git"
+  const val RESTRUCTURED_TEXT: @NonNls String = "restructuredtext"
 
-import static org.jetbrains.plugins.textmate.bundles.BundleReaderKt.readSublimeBundle;
-import static org.jetbrains.plugins.textmate.bundles.BundleReaderKt.readTextMateBundle;
-import static org.jetbrains.plugins.textmate.bundles.VSCBundleReaderKt.readVSCBundle;
-
-public final class TestUtil {
-  @NonNls public static final String BAT = "bat";
-  @NonNls public static final String GO = "go";
-  @NonNls public static final String TERRAFORM = "terraform";
-  @NonNls public static final String MAKE = "make";
-  @NonNls public static final String JAVA = "java";
-  @NonNls public static final String LOG = "log";
-  @NonNls public static final String JAVASCRIPT = "javascript";
-  @NonNls public static final String CHEF = "chef";
-  @NonNls public static final String HTML = "html";
-  @NonNls public static final String HTML_VSC = "html_vsc";
-  @NonNls public static final String CSS_VSC = "css_vsc";
-  @NonNls public static final String DOCKER = "docker";
-  @NonNls public static final String MARKDOWN_SUBLIME = "markdown_sublime";
-  @NonNls public static final String MARKDOWN_TEXTMATE = "markdown_textmate";
-  @NonNls public static final String MARKDOWN_VSC = "markdown-basics";
-  @NonNls public static final String FSHARP = "fsharp";
-  @NonNls public static final String LARAVEL_BLADE = "laravel-blade";
-  @NonNls public static final String INVALID_BUNDLE = "invalid_bundle";
-  @NonNls public static final String LATEX = "latex";
-  @NonNls public static final String PERL = "perl";
-  @NonNls public static final String SHELLSCRIPT = "shellscript";
-  @NonNls public static final String ELIXIR = "elixir";
-  @NonNls public static final String COLD_FUSION = "coldfusion";
-  @NonNls public static final String PREFERENCES_TEST_BUNDLE = "preferences_test";
-  @NonNls public static final String MARKDOWN_BLOGGING = "markdown_blogging";
-  @NonNls public static final String PYTHON = "python";
-  @NonNls public static final String RUBY = "ruby";
-  @NonNls public static final String PHP = "php";
-  @NonNls public static final String PHP_VSC = "php_vsc";
-  @NonNls public static final String SMARTY = "smarty";
-  @NonNls public static final String TURTLE = "turtle";
-  @NonNls public static final String GIT = "git";
-  @NonNls public static final String RESTRUCTURED_TEXT = "restructuredtext";
-
-  public static Path getBundleDirectory(String bundleName) {
-    Path bundleDirectory = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/textmate/testData/bundles").resolve(bundleName);
-    if (Files.exists(bundleDirectory)) {
-      return bundleDirectory;
+  @JvmStatic
+  fun getBundleDirectory(bundleName: String): Path {
+    val bundleDirectory = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/textmate/testData/bundles").resolve(bundleName)
+    return if (bundleDirectory.exists()) {
+      bundleDirectory
     }
-    return Path.of(PathManager.getCommunityHomePath()).resolve("plugins/textmate/lib/bundles").resolve(bundleName);
+    else {
+      return Path.of(PathManager.getCommunityHomePath()).resolve("plugins/textmate/lib/bundles").resolve(bundleName)
+    }
   }
 
-  public static TextMateBundleReader readBundle(String bundleName) {
-    Path bundleDirectory = getBundleDirectory(bundleName);
-    BundleType bundleType = BundleType.detectBundleType(bundleDirectory);
-    return switch (bundleType) {
-      case TEXTMATE -> readTextMateBundle(bundleDirectory);
-      case SUBLIME -> readSublimeBundle(bundleDirectory);
-      case VSCODE -> readVSCBundle(relativePath -> {
-        try {
-          return Files.newInputStream(bundleDirectory.resolve(relativePath));
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
-      case UNDEFINED -> throw new RuntimeException("Unknown bundle type: " + bundleName);
-    };
+  @JvmStatic
+  fun readBundle(bundleName: String): TextMateBundleReader {
+    val bundleDirectory = getBundleDirectory(bundleName)
+    val bundleType = detectBundleType(bundleDirectory)
+    return when (bundleType) {
+      BundleType.TEXTMATE -> readTextMateBundle(bundleDirectory)
+      BundleType.SUBLIME -> readSublimeBundle(bundleDirectory)
+      BundleType.VSCODE -> readVSCBundle { relativePath ->
+        bundleDirectory.resolve(relativePath).inputStream()
+      } ?: error("Cannot read VSCBundle from $bundleDirectory")
+      BundleType.UNDEFINED -> error("Unknown bundle type: $bundleName")
+    }
   }
 
-  public static TextMateScope scopeFromString(String scopeString) {
-    TextMateScope scope = TextMateScope.EMPTY;
-    for (String scopeName : scopeString.split(" ")) {
-      scope = scope.add(scopeName);
-    }
-    return scope;
+  @JvmStatic
+  fun scopeFromString(scopeString: String): TextMateScope {
+    return scopeString.split(' ').dropLastWhile { it.isEmpty() }.fold(TextMateScope.EMPTY) { acc, i -> acc.add(i) }
   }
 }

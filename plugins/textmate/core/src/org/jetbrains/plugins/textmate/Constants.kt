@@ -5,7 +5,7 @@ import org.jetbrains.plugins.textmate.language.preferences.TextMateAutoClosingPa
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair
 
 interface Constants {
-  enum class StringKey(@JvmField val value: String) {
+  enum class StringKey(val value: String) {
     CONTENT("content"),
     NAME("name"),
     CONTENT_NAME("contentName"),
@@ -16,7 +16,6 @@ interface Constants {
     BEGIN("begin");
 
     companion object {
-      @JvmStatic
       fun fromName(name: String): StringKey? {
         for (v in StringKey.entries) {
           if (v.value == name) {
@@ -34,7 +33,6 @@ interface Constants {
     END_CAPTURES("endCaptures");
 
     companion object {
-      @JvmStatic
       fun fromName(name: String): CaptureKey? {
         for (v in CaptureKey.entries) {
           if (v.value == name) {

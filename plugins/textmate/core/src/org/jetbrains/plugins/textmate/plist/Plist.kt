@@ -24,7 +24,6 @@ data class Plist(private val myMap: Map<String, PListValue>) {
     @JvmField
     val EMPTY_PLIST: Plist = Plist(emptyMap())
 
-    @JvmStatic
     fun dateFormatter(): SimpleDateFormat {
       return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     }

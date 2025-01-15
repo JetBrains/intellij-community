@@ -7,24 +7,19 @@ import org.jetbrains.plugins.textmate.regex.TextMateString
 import java.util.*
 
 class TextMateLexerState(
-  @JvmField
   val syntaxRule: SyntaxNodeDescriptor,
-  @JvmField
   val matchData: MatchData,
   val priorityMatch: TextMateWeigh.Priority,
   /**
    * offset in the line where state was emitted. used for local loop protection only
    */
-  @JvmField
   val enterByteOffset: Int,
   line: TextMateString?,
 ) {
 
   private val hashcode: Int = Objects.hash(syntaxRule, matchData, priorityMatch, stringId())
-  @JvmField
   val matchedEOL: Boolean = matchData.matched && line != null && matchData.byteOffset().end == line.bytes.size
 
-  @JvmField
   val string: TextMateString? = if (matchData.matched) line else null
 
   override fun toString(): String {
@@ -51,7 +46,6 @@ class TextMateLexerState(
   }
 
   companion object {
-    @JvmStatic
     fun notMatched(syntaxRule: SyntaxNodeDescriptor): TextMateLexerState {
       return TextMateLexerState(syntaxRule, MatchData.NOT_MATCHED, TextMateWeigh.Priority.NORMAL, 0, null)
     }

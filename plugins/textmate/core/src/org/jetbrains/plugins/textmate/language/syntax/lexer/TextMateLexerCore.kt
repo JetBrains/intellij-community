@@ -1,392 +1,429 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import kotlin.text.StringsKt;
-import kotlinx.collections.immutable.ExtensionsKt;
-import kotlinx.collections.immutable.PersistentList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
-import org.jetbrains.plugins.textmate.language.syntax.TextMateCapture;
-import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
-import org.jetbrains.plugins.textmate.regex.MatchData;
-import org.jetbrains.plugins.textmate.regex.RegexUtil;
-import org.jetbrains.plugins.textmate.regex.TextMateRange;
-import org.jetbrains.plugins.textmate.regex.TextMateString;
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.plugins.textmate.Constants
+import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
+import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor
+import org.jetbrains.plugins.textmate.language.syntax.TextMateCapture
+import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.replaceGroupsWithMatchDataInCaptures
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateLexerState.Companion.notMatched
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
+import org.jetbrains.plugins.textmate.regex.MatchData
+import org.jetbrains.plugins.textmate.regex.RegexUtil.byteOffsetByCharOffset
+import org.jetbrains.plugins.textmate.regex.TextMateRange
+import org.jetbrains.plugins.textmate.regex.TextMateString
+import org.jetbrains.plugins.textmate.regex.TextMateString.Companion.fromCharSequence
+import kotlin.math.min
 
-import java.util.*;
+class TextMateLexerCore(
+  private val languageDescriptor: TextMateLanguageDescriptor,
+  private val mySyntaxMatcher: TextMateSyntaxMatcher,
+  private val myLineLimit: Int,
+  private val myStripWhitespaces: Boolean,
+) {
 
-public final class TextMateLexerCore {
-  /**
-   * Count of `lastSuccessState` that can be occurred again without offset changing.
-   * If `lastSuccessStateOccursCount` reaches {@code MAX_LOOPS_COUNT}
-   * then lexing of current line stops and lexer moved to the EOL.
-   */
-  private static final int MAX_LOOPS_COUNT = 10;
+  private var myCurrentOffset: Int = 0
+  private var myText: CharSequence = ""
+  private var myCurrentScope: TextMateScope = TextMateScope.EMPTY
+  private var myNestedScope: IntList = IntArrayList.of()
+  private var myStates = persistentListOf<TextMateLexerState>()
 
-  private int myCurrentOffset = 0;
-
-  private CharSequence myText = "";
-
-  private @NotNull TextMateScope myCurrentScope = TextMateScope.EMPTY;
-  private IntList myNestedScope = IntArrayList.of();
-  private PersistentList<TextMateLexerState> myStates = ExtensionsKt.persistentListOf();
-
-  private final CharSequence myLanguageScopeName;
-  private final TextMateSyntaxMatcher mySyntaxMatcher;
-  private final int myLineLimit;
-  private final boolean myStripWhitespaces;
-  private final TextMateLexerState myLanguageInitialState;
-
-  public TextMateLexerCore(@NotNull TextMateLanguageDescriptor languageDescriptor,
-                           @NotNull TextMateSyntaxMatcher syntaxMatcher,
-                           int lineLimit,
-                           boolean stripWhitespaces) {
-    myLanguageScopeName = languageDescriptor.getScopeName();
-    myLanguageInitialState = TextMateLexerState.notMatched(languageDescriptor.getRootSyntaxNode());
-    mySyntaxMatcher = syntaxMatcher;
-    myLineLimit = lineLimit;
-    myStripWhitespaces = stripWhitespaces;
+  fun getCurrentOffset(): Int {
+    return myCurrentOffset
   }
 
-  public void init(CharSequence text, int startOffset) {
-    myText = text;
-    myCurrentOffset = startOffset;
+  fun init(text: CharSequence, startOffset: Int) {
+    myText = text
+    myCurrentOffset = startOffset
 
-    myStates = ExtensionsKt.persistentListOf(myLanguageInitialState);
-    myCurrentScope = new TextMateScope(myLanguageScopeName, null);
-    myNestedScope = IntArrayList.of(1);
+    myStates = persistentListOf<TextMateLexerState>(notMatched(languageDescriptor.rootSyntaxNode))
+    myCurrentScope = TextMateScope(languageDescriptor.scopeName, null)
+    myNestedScope = IntArrayList.of(1)
   }
 
-  public int getCurrentOffset() {
-    return myCurrentOffset;
-  }
-
-  public List<Token> advanceLine(@Nullable Runnable checkCancelledCallback) {
-    int startLineOffset = myCurrentOffset;
-    int endLineOffset = startLineOffset;
-    while (endLineOffset < myText.length()) {
-      if (myText.charAt(endLineOffset) == '\n') {
-        endLineOffset++;
-        break;
-      }
-      endLineOffset++;
+  fun advanceLine(checkCancelledCallback: Runnable?): MutableList<TextmateToken> {
+    val startLineOffset = myCurrentOffset
+    val endLineOffset = myText.indexOf('\n', startIndex = startLineOffset).let {
+      if (it == -1) myText.length else it + 1
     }
 
-    List<Token> output = new ArrayList<>();
-    CharSequence lineCharSequence = myText.subSequence(startLineOffset, endLineOffset);
-    if (myLineLimit >= 0 && lineCharSequence.length() > myLineLimit) {
-      myStates = parseLine(lineCharSequence.subSequence(0, myLineLimit), output, myStates, startLineOffset, 0, 0, checkCancelledCallback);
-      addToken(output, endLineOffset);
+    val lineCharSequence = myText.subSequence(startLineOffset, endLineOffset)
+    return if (myLineLimit >= 0 && lineCharSequence.length > myLineLimit) {
+      val output = mutableListOf<TextmateToken>()
+      myStates = parseLine(line = lineCharSequence.subSequence(0, myLineLimit),
+                           output = output,
+                           states = myStates,
+                           lineStartOffset = startLineOffset,
+                           linePosition = 0,
+                           lineByteOffset = 0,
+                           checkCancelledCallback = checkCancelledCallback)
+      addToken(output, endLineOffset)
+      output
     }
     else {
-      myStates = parseLine(lineCharSequence, output, myStates, startLineOffset, 0, 0, checkCancelledCallback);
+      val output = mutableListOf<TextmateToken>()
+      myStates = parseLine(line = lineCharSequence,
+                           output = output,
+                           states = myStates,
+                           lineStartOffset = startLineOffset,
+                           linePosition = 0,
+                           lineByteOffset = 0,
+                           checkCancelledCallback = checkCancelledCallback)
+      output
     }
-    return output;
   }
 
-  private PersistentList<TextMateLexerState> parseLine(@NotNull CharSequence line,
-                                                       @NotNull List<Token> output,
-                                                       @NotNull PersistentList<TextMateLexerState> states,
-                                                       int lineStartOffset,
-                                                       int linePosition,
-                                                       int lineByteOffset,
-                                                       @Nullable Runnable checkCancelledCallback) {
-    PersistentList<TextMateLexerState> lastSuccessState = states;
-    int lastSuccessStateOccursCount = 0;
-    int lastMovedOffset = lineStartOffset;
+  private fun parseLine(
+    line: CharSequence,
+    output: MutableList<TextmateToken>,
+    states: PersistentList<TextMateLexerState>,
+    lineStartOffset: Int,
+    linePosition: Int,
+    lineByteOffset: Int,
+    checkCancelledCallback: Runnable?,
+  ): PersistentList<TextMateLexerState> {
+    var states = states
+    var linePosition = linePosition
+    var lineByteOffset = lineByteOffset
+    var lastSuccessState = states
+    var lastSuccessStateOccursCount = 0
+    var lastMovedOffset = lineStartOffset
 
-    boolean matchBeginOfString = lineStartOffset == 0;
-    int anchorByteOffset = -1; // makes sense only for a line, cannot be used across lines
+    val matchBeginOfString = lineStartOffset == 0
+    var anchorByteOffset = -1 // makes sense only for a line, cannot be used across lines
 
-    TextMateString string = TextMateString.fromCharSequence(line);
+    val string = fromCharSequence(line)
 
-    PersistentList<TextMateLexerState> whileStates = states;
+    var whileStates = states
     while (!whileStates.isEmpty()) {
-      final TextMateLexerState whileState = whileStates.get(whileStates.size() - 1);
-      whileStates = whileStates.removeAt(whileStates.size() - 1);
+      val whileState = whileStates.last()
+      whileStates = whileStates.removeAt(whileStates.size - 1)
       if (whileState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
-        MatchData matchWhile = mySyntaxMatcher.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, anchorByteOffset,
-                                                                matchBeginOfString, whileState, checkCancelledCallback);
+        val matchWhile = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.WHILE,
+                                                          string = string,
+                                                          byteOffset = lineByteOffset,
+                                                          anchorOffset = anchorByteOffset,
+                                                          matchBeginOfString = matchBeginOfString,
+                                                          lexerState = whileState,
+                                                          checkCancelledCallback = checkCancelledCallback)
         if (matchWhile.matched) {
           // todo: support whileCaptures
           if (anchorByteOffset == -1) {
-            anchorByteOffset = matchWhile.byteOffset().end;
+            anchorByteOffset = matchWhile.byteOffset().end
           }
         }
         else {
-          closeScopeSelector(output, linePosition + lineStartOffset);
-          closeScopeSelector(output, linePosition + lineStartOffset);
-          states = whileStates;
-          anchorByteOffset = -1;
+          closeScopeSelector(output, linePosition + lineStartOffset)
+          closeScopeSelector(output, linePosition + lineStartOffset)
+          states = whileStates
+          anchorByteOffset = -1
         }
       }
     }
 
-    Set<TextMateLexerState> localStates = new HashSet<>();
+    val localStates = mutableSetOf<TextMateLexerState>()
     while (true) {
-      TextMateLexerState lastState = states.get(states.size() - 1);
-      SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
+      val lastState = states.last()
+      val lastRule = lastState.syntaxRule
 
-      TextMateLexerState currentState = mySyntaxMatcher.matchRule(lastRule, string, lineByteOffset, anchorByteOffset, matchBeginOfString,
-                                                                  TextMateWeigh.Priority.NORMAL, myCurrentScope, checkCancelledCallback);
-      SyntaxNodeDescriptor currentRule = currentState.syntaxRule;
-      MatchData currentMatch = currentState.matchData;
+      val currentState = mySyntaxMatcher.matchRule(syntaxNodeDescriptor = lastRule,
+                                                   string = string,
+                                                   byteOffset = lineByteOffset,
+                                                   gosOffset = anchorByteOffset,
+                                                   matchBeginOfString = matchBeginOfString,
+                                                   priority = TextMateWeigh.Priority.NORMAL,
+                                                   currentScope = myCurrentScope,
+                                                   checkCancelledCallback = checkCancelledCallback)
+      val currentRule = currentState.syntaxRule
+      val currentMatch = currentState.matchData
 
-      int endPosition;
-      MatchData endMatch = mySyntaxMatcher.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, anchorByteOffset, matchBeginOfString, lastState, checkCancelledCallback);
-      if (endMatch.matched && (!currentMatch.matched ||
-                                 currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
-                                 lastState.equals(currentState))) {
+      var endPosition: Int
+      val endMatch = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.END,
+                                                      string = string,
+                                                      byteOffset = lineByteOffset,
+                                                      anchorOffset = anchorByteOffset,
+                                                      matchBeginOfString = matchBeginOfString,
+                                                      lexerState = lastState,
+                                                      checkCancelledCallback = checkCancelledCallback)
+      if (endMatch.matched && (!currentMatch.matched || currentMatch.byteOffset().start >= endMatch.byteOffset().start || lastState == currentState)) {
         // todo: applyEndPatternLast
-        TextMateLexerState poppedState = states.get(states.size() - 1);
+        val poppedState = states.last()
         if (poppedState.matchData.matched && !poppedState.matchedEOL) {
           // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
-          anchorByteOffset = poppedState.matchData.byteOffset().end;
+          anchorByteOffset = poppedState.matchData.byteOffset().end
         }
-        states = states.removeAt(states.size() - 1);
+        states = states.removeAt(states.size - 1)
 
-        TextMateRange endRange = endMatch.charRange(line, string.bytes);
-        int startPosition = endPosition = endRange.start;
-        closeScopeSelector(output, startPosition + lineStartOffset); // closing content scope
-        if (lastRule.getCaptureRules(Constants.CaptureKey.END_CAPTURES) == null
-            && lastRule.getCaptureRules(Constants.CaptureKey.CAPTURES) == null
-            ||
-            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states, checkCancelledCallback)
-            ||
+        val endRange = endMatch.charRange(line, string.bytes)
+        endPosition = endRange.start
+        val startPosition = endPosition
+        closeScopeSelector(output, startPosition + lineStartOffset) // closing content scope
+        if (lastRule.getCaptureRules(Constants.CaptureKey.END_CAPTURES) == null && lastRule.getCaptureRules(Constants.CaptureKey.CAPTURES) == null ||
+            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states, checkCancelledCallback) ||
             parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states, checkCancelledCallback)) {
           // move line position only if anything was captured or if there is nothing to capture at all
-          endPosition = endRange.end;
+          endPosition = endRange.end
         }
-        closeScopeSelector(output, endPosition + lineStartOffset); // closing basic scope
+        closeScopeSelector(output, endPosition + lineStartOffset) // closing basic scope
 
         if (linePosition == endPosition && containsLexerState(localStates, poppedState) && poppedState.enterByteOffset == lineByteOffset) {
-          addToken(output, line.length() + lineStartOffset);
-          break;
+          addToken(output, line.length + lineStartOffset)
+          break
         }
-        localStates.remove(poppedState);
+        localStates.remove(poppedState)
       }
       else if (currentMatch.matched) {
-        anchorByteOffset = currentMatch.byteOffset().end;
+        anchorByteOffset = currentMatch.byteOffset().end
 
-        TextMateRange currentRange = currentMatch.charRange(line, string.bytes);
-        int startPosition = currentRange.start;
-        endPosition = currentRange.end;
+        val currentRange = currentMatch.charRange(line, string.bytes)
+        val startPosition = currentRange.start
+        endPosition = currentRange.end
 
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
-          states = states.add(currentState);
+          states = states.add(currentState)
 
-          CharSequence name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
-          openScopeSelector(output, name, startPosition + lineStartOffset);
+          val name = getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch)
+          openScopeSelector(output, name, startPosition + lineStartOffset)
 
-          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states, checkCancelledCallback);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states, checkCancelledCallback);
+          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
+                        checkCancelledCallback)
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
+                        checkCancelledCallback)
 
-          CharSequence contentName = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch);
-          openScopeSelector(output, contentName, endPosition + lineStartOffset);
+          val contentName = getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch)
+          openScopeSelector(output, contentName, endPosition + lineStartOffset)
         }
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
-          CharSequence name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
-          openScopeSelector(output, name, startPosition + lineStartOffset);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states, checkCancelledCallback);
-          closeScopeSelector(output, endPosition + lineStartOffset);
+          val name = getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch)
+          openScopeSelector(output, name, startPosition + lineStartOffset)
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states,
+                        checkCancelledCallback)
+          closeScopeSelector(output, endPosition + lineStartOffset)
         }
 
         if (linePosition == endPosition && containsLexerState(localStates, currentState)) {
-          addToken(output, line.length() + lineStartOffset);
-          break;
+          addToken(output, line.length + lineStartOffset)
+          break
         }
-        localStates.add(currentState);
+        localStates.add(currentState)
       }
       else {
-        addToken(output, line.length() + lineStartOffset);
-        break;
+        addToken(output, line.length + lineStartOffset)
+        break
       }
 
       // global looping protection
       if (lastMovedOffset < myCurrentOffset) {
-        lastSuccessState = states;
-        lastSuccessStateOccursCount = 0;
-        lastMovedOffset = myCurrentOffset;
+        lastSuccessState = states
+        lastSuccessStateOccursCount = 0
+        lastMovedOffset = myCurrentOffset
       }
-      else if (lastSuccessState.equals(states)) {
+      else if (lastSuccessState == states) {
         if (lastSuccessStateOccursCount > MAX_LOOPS_COUNT) {
-          addToken(output, line.length() + lineStartOffset);
-          break;
+          addToken(output, line.length + lineStartOffset)
+          break
         }
-        lastSuccessStateOccursCount++;
+        lastSuccessStateOccursCount++
       }
 
       if (linePosition != endPosition) {
-        lineByteOffset = linePosition + RegexUtil.byteOffsetByCharOffset(line, linePosition, endPosition);
-        linePosition = endPosition;
+        lineByteOffset = linePosition + byteOffsetByCharOffset(line, linePosition, endPosition)
+        linePosition = endPosition
       }
 
-      if (checkCancelledCallback != null) {
-        checkCancelledCallback.run();
-      }
+      checkCancelledCallback?.run()
     }
-    return states;
+    return states
   }
 
-  private static boolean containsLexerState(Set<TextMateLexerState> states, TextMateLexerState state) {
-    for (TextMateLexerState s : states) {
-      if (s.enterByteOffset == state.enterByteOffset && s.syntaxRule.equals(state.syntaxRule)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean parseCaptures(@NotNull List<Token> output,
-                                Constants.CaptureKey captureKey,
-                                SyntaxNodeDescriptor rule,
-                                MatchData matchData,
-                                TextMateString string,
-                                CharSequence line,
-                                int startLineOffset,
-                                PersistentList<TextMateLexerState> states,
-                                @Nullable Runnable checkCancelledCallback) {
-    TextMateCapture @Nullable [] captures = rule.getCaptureRules(captureKey);
+  private fun parseCaptures(
+    output: MutableList<TextmateToken>,
+    captureKey: Constants.CaptureKey,
+    rule: SyntaxNodeDescriptor,
+    matchData: MatchData,
+    string: TextMateString,
+    line: CharSequence,
+    startLineOffset: Int,
+    states: PersistentList<TextMateLexerState>,
+    checkCancelledCallback: Runnable?,
+  ): Boolean {
+    val captures = rule.getCaptureRules(captureKey)
     if (captures == null) {
-      return false;
+      return false
     }
 
-    Deque<TextMateRange> activeCaptureRanges = new LinkedList<>();
-    for (int group = 0; group < matchData.count(); group++) {
-      TextMateCapture capture = group < captures.length ? captures[group] : null;
+    val activeCaptureRanges = ArrayDeque<TextMateRange>()
+    for (group in 0..<matchData.count()) {
+      val capture = if (group < captures.size) captures[group] else null
       if (capture == null) {
-        continue;
+        continue
       }
 
-      TextMateRange byteRange = matchData.byteOffset(group);
-      if (byteRange.isEmpty()) {
-        continue;
+      val byteRange = matchData.byteOffset(group)
+      if (byteRange.isEmpty) {
+        continue
       }
 
-      TextMateRange captureRange = matchData.charRange(line, string.bytes, group);
+      val captureRange = matchData.charRange(line, string.bytes, group)
 
-      while (!activeCaptureRanges.isEmpty() && activeCaptureRanges.peek().end <= captureRange.start) {
-        closeScopeSelector(output, startLineOffset + activeCaptureRanges.pop().end);
+      while (!activeCaptureRanges.isEmpty() && activeCaptureRanges.last().end <= captureRange.start) {
+        closeScopeSelector(output, startLineOffset + activeCaptureRanges.removeLast().end)
       }
 
-      if (capture instanceof TextMateCapture.Name) {
-        CharSequence captureName = ((TextMateCapture.Name)capture).getName();
-        CharSequence scopeName = rule.hasBackReference(captureKey, group)
-                                    ? SyntaxMatchUtils.replaceGroupsWithMatchDataInCaptures(captureName, string, matchData)
-                                    : captureName;
-        int selectorStartOffset = 0;
-        int indexOfSpace = StringsKt.indexOf(scopeName, ' ', selectorStartOffset, false);
+      if (capture is TextMateCapture.Name) {
+        val captureName = capture.name
+        val scopeName = if (rule.hasBackReference(captureKey, group)) {
+          replaceGroupsWithMatchDataInCaptures(captureName, string, matchData)
+        }
+        else {
+          captureName
+        }
+        var selectorStartOffset = 0
+        var indexOfSpace = scopeName.indexOf(char = ' ', startIndex = selectorStartOffset, ignoreCase = false)
         if (indexOfSpace == -1) {
-          openScopeSelector(output, scopeName, startLineOffset + captureRange.start);
-          activeCaptureRanges.push(captureRange);
+          openScopeSelector(output, scopeName, startLineOffset + captureRange.start)
+          activeCaptureRanges.addLast(captureRange)
         }
         else {
           while (indexOfSpace >= 0) {
-            openScopeSelector(output, scopeName.subSequence(selectorStartOffset, indexOfSpace), startLineOffset + captureRange.start);
-            selectorStartOffset = indexOfSpace + 1;
-            indexOfSpace = StringsKt.indexOf(scopeName, ' ', selectorStartOffset, false);
-            activeCaptureRanges.push(captureRange);
+            openScopeSelector(output, scopeName.subSequence(selectorStartOffset, indexOfSpace), startLineOffset + captureRange.start)
+            selectorStartOffset = indexOfSpace + 1
+            indexOfSpace = scopeName.indexOf(char = ' ', startIndex = selectorStartOffset, ignoreCase = false)
+            activeCaptureRanges.addLast(captureRange)
           }
-          openScopeSelector(output, scopeName.subSequence(selectorStartOffset, scopeName.length()), startLineOffset + captureRange.start);
-          activeCaptureRanges.push(captureRange);
+          openScopeSelector(output, scopeName.subSequence(selectorStartOffset, scopeName.length), startLineOffset + captureRange.start)
+          activeCaptureRanges.addLast(captureRange)
         }
       }
-      else if (capture instanceof TextMateCapture.Rule) {
-        CharSequence capturedString = line.subSequence(0, captureRange.end);
-        TextMateString capturedTextMateString = TextMateString.fromCharSequence(capturedString);
-        TextMateLexerState captureState = new TextMateLexerState(((TextMateCapture.Rule)capture).getNode(),
-                                                                 matchData,
-                                                                 TextMateWeigh.Priority.NORMAL,
-                                                                 byteRange.start,
-                                                                 capturedTextMateString);
-        parseLine(capturedString, output, states.add(captureState), startLineOffset, captureRange.start, byteRange.start, checkCancelledCallback);
+      else if (capture is TextMateCapture.Rule) {
+        val capturedString = line.subSequence(0, captureRange.end)
+        val capturedTextMateString = fromCharSequence(capturedString)
+        val captureState = TextMateLexerState(syntaxRule = capture.node,
+                                              matchData = matchData,
+                                              priorityMatch = TextMateWeigh.Priority.NORMAL,
+                                              enterByteOffset = byteRange.start,
+                                              line = capturedTextMateString)
+        parseLine(line = capturedString,
+                  output = output,
+                  states = states.add(captureState),
+                  lineStartOffset = startLineOffset,
+                  linePosition = captureRange.start,
+                  lineByteOffset = byteRange.start,
+                  checkCancelledCallback = checkCancelledCallback)
       }
       else {
-        throw new IllegalStateException("unknown capture type: " + capture);
+        error("unknown capture type: $capture")
       }
     }
     while (!activeCaptureRanges.isEmpty()) {
-      closeScopeSelector(output, startLineOffset + activeCaptureRanges.pop().end);
+      closeScopeSelector(output, startLineOffset + activeCaptureRanges.removeLast().end)
     }
-    return true;
+    return true
   }
 
-  private void openScopeSelector(@NotNull List<Token> output, @Nullable CharSequence name, int position) {
-    addToken(output, position);
-    int indexOfSpace = name != null ? StringsKt.indexOf(name, ' ', 0, false) : -1;
-    int prevIndexOfSpace = 0;
-    int count = 0;
-    while (indexOfSpace >= 0) {
-      myCurrentScope = myCurrentScope.add(name.subSequence(prevIndexOfSpace, indexOfSpace));
-      prevIndexOfSpace = indexOfSpace + 1;
-      indexOfSpace = StringsKt.indexOf(name, ' ', prevIndexOfSpace, false);
-      count++;
+  private fun openScopeSelector(output: MutableList<TextmateToken>, name: CharSequence?, position: Int) {
+    addToken(output, position)
+    var count = 0
+    var prevIndexOfSpace = 0
+    if (name != null) {
+      var indexOfSpace = name.indexOf(char = ' ', startIndex = 0, ignoreCase = false)
+      while (indexOfSpace >= 0) {
+        myCurrentScope = myCurrentScope.add(name.subSequence(prevIndexOfSpace, indexOfSpace))
+        prevIndexOfSpace = indexOfSpace + 1
+        indexOfSpace = name.indexOf(char = ' ', startIndex = prevIndexOfSpace, ignoreCase = false)
+        count++
+      }
     }
-    myCurrentScope = myCurrentScope.add(name != null ? name.subSequence(prevIndexOfSpace, name.length()) : null);
-    myNestedScope.add(count + 1);
+    myCurrentScope = myCurrentScope.add(name?.subSequence(prevIndexOfSpace, name.length))
+    myNestedScope.add(count + 1)
   }
 
-  private void closeScopeSelector(@NotNull List<Token> output, int position) {
-    CharSequence lastOpenedName = myCurrentScope.getScopeName();
+  private fun closeScopeSelector(output: MutableList<TextmateToken>, position: Int) {
+    val lastOpenedName = myCurrentScope.scopeName
     if (lastOpenedName != null && !lastOpenedName.isEmpty()) {
-      addToken(output, position);
+      addToken(output, position)
     }
     if (!myNestedScope.isEmpty()) {
-      int nested = myNestedScope.getInt(myNestedScope.size() - 1);
-      myNestedScope.removeInt(myNestedScope.size() - 1);
-      for (int i = 0; i < nested; i++) {
-        myCurrentScope = myCurrentScope.getParentOrSelf();
+      val nested = myNestedScope.getInt(myNestedScope.size - 1)
+      myNestedScope.removeInt(myNestedScope.size - 1)
+      repeat(nested) {
+        myCurrentScope = myCurrentScope.parent ?: myCurrentScope
       }
     }
   }
 
-
-  private void addToken(@NotNull List<Token> output, int position) {
-    position = Math.min(position, myText.length());
+  private fun addToken(output: MutableList<TextmateToken>, position: Int) {
+    val position = min(position, myText.length)
     if (position > myCurrentOffset) {
-      boolean newState = myCurrentScope.getParent() == null;
-      int wsStart = myCurrentOffset;
-      while (myStripWhitespaces && position > myCurrentOffset && Character.isWhitespace(myText.charAt(myCurrentOffset))) {
-        myCurrentOffset++;
+      var restartable = myCurrentScope.parent == null
+      val wsStart = myCurrentOffset
+      while (myStripWhitespaces && position > myCurrentOffset && Character.isWhitespace(myText[myCurrentOffset])) {
+        myCurrentOffset++
       }
 
       if (wsStart < myCurrentOffset) {
-        output.add(new Token(TextMateScope.WHITESPACE, wsStart, myCurrentOffset, newState));
-        newState = false;
+        output.add(TextmateToken(scope = TextMateScope.WHITESPACE,
+                                 startOffset = wsStart,
+                                 endOffset = myCurrentOffset,
+                                 restartable = restartable))
+        restartable = false
       }
 
-      int wsEnd = position;
-      while (myStripWhitespaces && wsEnd > myCurrentOffset && Character.isWhitespace(myText.charAt(wsEnd - 1))) {
-        wsEnd--;
+      var wsEnd = position
+      while (myStripWhitespaces && wsEnd > myCurrentOffset && Character.isWhitespace(myText[wsEnd - 1])) {
+        wsEnd--
       }
 
       if (myCurrentOffset < wsEnd) {
-        output.add(new Token(myCurrentScope, myCurrentOffset, wsEnd, newState));
+        output.add(TextmateToken(scope = myCurrentScope,
+                                 startOffset = myCurrentOffset,
+                                 endOffset = wsEnd,
+                                 restartable = restartable))
       }
 
       if (wsEnd < position) {
-        output.add(new Token(TextMateScope.WHITESPACE, wsEnd, position, newState));
+        output.add(TextmateToken(scope = TextMateScope.WHITESPACE,
+                                 startOffset = wsEnd,
+                                 endOffset = position,
+                                 restartable = restartable))
       }
 
-      myCurrentOffset = position;
+      myCurrentOffset = position
     }
   }
 
-  public static final class Token {
-    public final TextMateScope scope;
-    public final int startOffset;
-    public final int endOffset;
-    public final boolean restartable;
+  companion object {
+    /**
+     * Count of `lastSuccessState` that can be occurred again without offset changing.
+     * If `lastSuccessStateOccursCount` reaches `MAX_LOOPS_COUNT`
+     * then lexing of current line stops and lexer moved to the EOL.
+     */
+    private const val MAX_LOOPS_COUNT = 10
 
-    private Token(TextMateScope scope, int startOffset, int endOffset, boolean restartable) {
-      this.scope = scope;
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-      this.restartable = restartable;
+    private fun containsLexerState(states: MutableSet<TextMateLexerState>, state: TextMateLexerState): Boolean {
+      for (s in states) {
+        if (s.enterByteOffset == state.enterByteOffset && s.syntaxRule == state.syntaxRule) {
+          return true
+        }
+      }
+      return false
+    }
+
+    private fun getStringAttribute(
+      keyName: Constants.StringKey,
+      syntaxRule: SyntaxNodeDescriptor,
+      string: TextMateString,
+      matchData: MatchData
+    ): CharSequence? {
+      val stringAttribute = syntaxRule.getStringAttribute(keyName)
+      return when {
+        stringAttribute == null -> null
+        syntaxRule.hasBackReference(keyName) -> replaceGroupsWithMatchDataInCaptures(stringAttribute, string, matchData)
+        else -> stringAttribute
+      }
     }
   }
 }

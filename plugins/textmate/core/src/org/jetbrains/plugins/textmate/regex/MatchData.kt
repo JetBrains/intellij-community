@@ -4,26 +4,23 @@ import org.jetbrains.plugins.textmate.regex.RegexUtil.codePointsRangeByByteRange
 import org.joni.Region
 import kotlin.math.max
 
-class MatchData private constructor(@JvmField val matched: Boolean,
+class MatchData private constructor(val matched: Boolean,
                                     private val offsets: IntArray) {
   fun count(): Int {
     return offsets.size / 2
   }
 
-  @JvmOverloads
   fun byteOffset(group: Int = 0): TextMateRange {
     val endIndex = group * 2 + 1
     return TextMateRange(offsets[endIndex - 1], offsets[endIndex])
   }
 
-  @JvmOverloads
   fun charRange(s: CharSequence, stringBytes: ByteArray?, group: Int = 0): TextMateRange {
     val range = codePointRange(stringBytes, group)
     return TextMateRange(Character.offsetByCodePoints(s, 0, range.start),
                          Character.offsetByCodePoints(s, 0, range.end))
   }
 
-  @JvmOverloads
   fun codePointRange(stringBytes: ByteArray?, group: Int = 0): TextMateRange {
     return codePointsRangeByByteRange(stringBytes, byteOffset(group))
   }
@@ -49,10 +46,8 @@ class MatchData private constructor(@JvmField val matched: Boolean,
   }
 
   companion object {
-    @JvmField
     val NOT_MATCHED: MatchData = MatchData(false, IntArray(0))
 
-    @JvmStatic
     fun fromRegion(matchedRegion: Region?): MatchData {
       if (matchedRegion != null) {
         val offsets = IntArray(matchedRegion.numRegs * 2)
