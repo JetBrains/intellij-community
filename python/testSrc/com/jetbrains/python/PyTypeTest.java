@@ -3452,14 +3452,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-28227
   public void testTypeVarTargetAST() {
-    doTest("T",
+    doTest("TypeVar",
            "from typing import TypeVar\n" +
            "expr = TypeVar('T')");
   }
 
   // PY-28227
   public void testTypeVarTargetStub() {
-    doMultiFileTest("T",
+    doMultiFileTest("TypeVar",
                     "from a import T\n" +
                     "expr = T");
   }

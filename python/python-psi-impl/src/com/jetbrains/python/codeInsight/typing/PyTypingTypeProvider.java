@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyCustomType;
@@ -119,6 +120,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String READONLY = "typing.ReadOnly";
   public static final String READONLY_EXT = "typing_extensions.ReadOnly";
 
+  public static final Set<String> TYPE_PARAMETER_FACTORIES = Set.of(
+    TYPE_VAR, TYPE_VAR_EXT,
+    TYPING_PARAM_SPEC, TYPING_EXTENSIONS_PARAM_SPEC,
+    TYPE_VAR_TUPLE, TYPE_VAR_TUPLE_EXT
+  );
+  
   public static final Set<String> TYPE_DICT_QUALIFIERS = Set.of(REQUIRED, REQUIRED_EXT, NOT_REQUIRED, NOT_REQUIRED_EXT, READONLY, READONLY_EXT);
 
   public static final String UNPACK = "typing.Unpack";
@@ -396,16 +403,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         .orElse(null);
     }
 
-    final PyClass initializedClass = PyUtil.turnConstructorIntoClass(function);
-    if (initializedClass != null && (TYPE_VAR.equals(initializedClass.getQualifiedName()) ||
-                                     TYPE_VAR_EXT.equals(initializedClass.getQualifiedName()) ||
-                                     TYPE_VAR_TUPLE.equals(initializedClass.getQualifiedName()) ||
-                                     TYPE_VAR_TUPLE_EXT.equals(initializedClass.getQualifiedName()))) {
-      // `typing.TypeVar` call should be assigned to a target and hence should be processed by [getReferenceType]
-      // but the corresponding type is also returned here to suppress type checker on `T = TypeVar("T")` assignment.
-      return Ref.create(getTypeParameterTypeFromDeclaration(callSite, context));
-    }
-
     if (functionReturningCallSiteAsAType(function)) {
       return getAsClassObjectType(callSite, context);
     }
@@ -465,11 +462,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         return Ref.create(typedDictType);
       }
 
-      final PyExpression assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(target);
-      if (assignedValue != null) {
-        final PyType type = getTypeParameterTypeFromDeclaration(assignedValue, context);
-        if (type != null) {
-          return Ref.create(setTypeParameterDeclarationElement(target, type));
+      PyExpression assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(target);
+      if (assignedValue instanceof PyCallExpression callExpression && callExpression.isCalleeText("TypeVar", "TypeVarTuple", "ParamSpec")) {
+        for (PsiElement element : tryResolving(Objects.requireNonNull(callExpression.getCallee()), context.myContext)) {
+          if (element instanceof PyClass pyClass &&
+              TYPE_PARAMETER_FACTORIES.contains(ObjectUtils.notNull(pyClass.getQualifiedName(), "")) &&
+              context.myContext.getType(pyClass) instanceof PyClassType pyClassType) {
+            return Ref.create(pyClassType.toInstance());
+          }
         }
       }
 
@@ -1030,20 +1030,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
     if (type instanceof PyTypeVarTupleTypeImpl typeVarTuple) {
       return typeVarTuple.withScopeOwner(getTypeParameterScope(typeVarTuple.getName(), typeHint, context)).withDeclarationElement(targetExpr);
-    }
-    return type;
-  }
-
-  private static @NotNull PyType setTypeParameterDeclarationElement(@Nullable PyExpression expression, @NotNull PyType type) {
-    PyQualifiedNameOwner declarationElement = as(expression, PyQualifiedNameOwner.class);
-    if (type instanceof PyTypeVarTypeImpl typeVar) {
-      return typeVar.withDeclarationElement(declarationElement);
-    }
-    if (type instanceof PyParamSpecType paramSpec) {
-      return paramSpec.withDeclarationElement(declarationElement);
-    }
-    if (type instanceof PyTypeVarTupleTypeImpl typeVarTuple) {
-      return typeVarTuple.withDeclarationElement(declarationElement);
     }
     return type;
   }

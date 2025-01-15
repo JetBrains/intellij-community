@@ -156,7 +156,7 @@ class PyTypeHintsInspection : PyInspection() {
         return
       }
 
-      if (myTypeEvalContext.getType(node) is PyPositionalVariadicType) {
+      if (Ref.deref(PyTypingTypeProvider.getType(node, myTypeEvalContext)) is PyPositionalVariadicType) {
         checkTypeVarTupleUnpacked(node)
       }
 
@@ -524,8 +524,15 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkInstanceAndClassChecksOnExpression(base: PyExpression) {
       val type = myTypeEvalContext.getType(base)
-      if (type is PyTypeVarType && !type.isDefinition ||
-          type is PyCollectionType && type.elementTypes.any { it is PyTypeVarType } && !type.isDefinition) {
+      if (
+      // T = TypeVar("T"); isinstance(x, T)
+        type is PyClassType && !type.isDefinition && type.classQName.orEmpty() in PyTypingTypeProvider.TYPE_PARAMETER_FACTORIES ||
+        // TODO should be caught by the type checker relying on the type hints for `isinstance`
+        // p: T; isinstance(x, p)
+        type is PyTypeVarType && !type.isDefinition ||
+        // T = TypeVar("T"); isinstance(x, list[T])
+        type is PyCollectionType && type.elementTypes.any { it is PyTypeVarType } && !type.isDefinition
+      ) {
         registerProblem(base,
                         PyPsiBundle.message("INSP.type.hints.type.variables.cannot.be.used.with.instance.class.checks"),
                         ProblemHighlightType.GENERIC_ERROR)
@@ -793,7 +800,11 @@ class PyTypeHintsInspection : PyInspection() {
             .filterIsInstance<PyReferenceExpression>()
             .flatMap { multiFollowAssignmentsChain(it, this::followNotTypeVar).asSequence() }
             .filterIsInstance<PyTargetExpression>()
-            .filter { myTypeEvalContext.getType(it) is PyTypeVarType }
+            .filter {
+              val pyClassType = myTypeEvalContext.getType(it) as? PyClassType
+              if (pyClassType == null || pyClassType.isDefinition) return@filter false
+              return@filter pyClassType.classQName.orEmpty() in PyTypingTypeProvider.TYPE_PARAMETER_FACTORIES
+            }
             .toSet()
 
           if (generic) genericTypeVars.addAll(superClassTypeVars) else nonGenericTypeVars.addAll(superClassTypeVars)
