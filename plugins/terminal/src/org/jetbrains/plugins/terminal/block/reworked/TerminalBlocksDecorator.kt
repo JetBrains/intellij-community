@@ -59,7 +59,6 @@ internal class TerminalBlocksDecorator(
     val endOffset = block.endOffset
 
     val topInlay = createTopInlay(block)
-    val bottomInlay = createBottomInlay(endOffset)
 
     val bgHighlighter = createBackgroundHighlighter(startOffset, endOffset)
     bgHighlighter.isGreedyToRight = true
@@ -70,7 +69,7 @@ internal class TerminalBlocksDecorator(
       it.lineMarkerRenderer = TerminalPromptLeftAreaRenderer()
     }
 
-    return BlockDecoration(block.id, bgHighlighter, cornersHighlighter, topInlay, bottomInlay)
+    return BlockDecoration(block.id, bgHighlighter, cornersHighlighter, topInlay, bottomInlay = null)
   }
 
   private fun createFinishedBlockDecoration(block: TerminalOutputBlock): BlockDecoration {
@@ -97,21 +96,25 @@ internal class TerminalBlocksDecorator(
     decoration.backgroundHighlighter.dispose()
     decoration.cornersHighlighter.dispose()
     Disposer.dispose(decoration.topInlay)
-    Disposer.dispose(decoration.bottomInlay)
+    decoration.bottomInlay?.let { Disposer.dispose(it) }
   }
 
   private fun createTopInlay(block: TerminalOutputBlock): Inlay<*> {
     val topRenderer = VerticalSpaceInlayRenderer {
-      // Reserve the place for the separator if it is not a first block
-      val separatorHeight = if (blocksModel.blocks.firstOrNull()?.id == block.id) 0 else 1
-      TerminalUi.blockTopInset + separatorHeight
+      val isFirstBlock = blocksModel.blocks.firstOrNull()?.id == block.id
+      if (isFirstBlock) {
+        0  // Do not add space if it is the first block
+      }
+      else {
+        TerminalUi.blockTopInset + 1 // Add 1 to reserve the place for the separator
+      }
     }
-    return editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
+    return editor.inlayModel.addBlockElement(block.startOffset, false, true, TerminalUi.blockTopInlayPriority, topRenderer)!!
   }
 
   private fun createBottomInlay(offset: Int): Inlay<*> {
     val bottomRenderer = VerticalSpaceInlayRenderer(TerminalUi.blockBottomInset)
-    return editor.inlayModel.addBlockElement(offset, true, false, 0, bottomRenderer)!!
+    return editor.inlayModel.addBlockElement(offset, true, false, TerminalUi.blockBottomInlayPriority, bottomRenderer)!!
   }
 
   private fun createBackgroundHighlighter(startOffset: Int, endOffset: Int): RangeHighlighter {
@@ -139,6 +142,6 @@ internal class TerminalBlocksDecorator(
     val backgroundHighlighter: RangeHighlighter,
     val cornersHighlighter: RangeHighlighter,
     val topInlay: Inlay<*>,
-    val bottomInlay: Inlay<*>,
+    val bottomInlay: Inlay<*>?,
   )
 }

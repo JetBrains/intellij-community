@@ -44,6 +44,11 @@ internal object TerminalUi {
 
   const val searchComponentWidth = 500
 
+  const val blockTopInlayPriority = 300
+  const val terminalTopInlayPriority = 200
+  const val blockBottomInlayPriority = 100
+  const val terminalBottomInlayPriority = 0
+
   fun defaultBackground(editor: Editor? = null): JBColor {
     return JBColor.lazy {
       val colorsScheme = editor?.colorsScheme ?: EditorColorsManager.getInstance().globalScheme

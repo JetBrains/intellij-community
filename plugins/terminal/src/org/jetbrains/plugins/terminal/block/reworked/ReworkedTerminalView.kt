@@ -33,8 +33,10 @@ import org.jetbrains.plugins.terminal.block.reworked.session.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
+import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.VerticalSpaceInlayRenderer
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.event.ComponentAdapter
@@ -98,7 +100,8 @@ internal class ReworkedTerminalView(
       encodingManager,
       terminalSessionFuture,
       coroutineScope.childScope("TerminalOutputModel"),
-      withVerticalScroll = true
+      withVerticalScroll = true,
+      withTopAndBottomInsets = true
     )
 
     alternateBufferModel = createOutputModel(
@@ -109,7 +112,8 @@ internal class ReworkedTerminalView(
       encodingManager,
       terminalSessionFuture,
       coroutineScope.childScope("TerminalAlternateBufferModel"),
-      withVerticalScroll = false
+      withVerticalScroll = false,
+      withTopAndBottomInsets = false
     )
 
     val blocksModel = TerminalBlocksModelImpl(outputModel)
@@ -201,6 +205,7 @@ internal class ReworkedTerminalView(
     terminalSessionFuture: CompletableFuture<TerminalSession>,
     coroutineScope: CoroutineScope,
     withVerticalScroll: Boolean,
+    withTopAndBottomInsets: Boolean,
   ): TerminalOutputModel {
     val model = TerminalOutputModelImpl(editor, maxOutputLength)
 
@@ -211,12 +216,26 @@ internal class ReworkedTerminalView(
     }
     else null
 
+    if (withTopAndBottomInsets) {
+      addTopAndBottomInsets(model.editor)
+    }
+
     val eventsHandler = TerminalEventsHandlerImpl(sessionModel, model, encodingManager, terminalSessionFuture, settings, scrollingModel)
     val parentDisposable = coroutineScope.asDisposable()
     setupKeyEventDispatcher(model.editor, eventsHandler, parentDisposable)
     setupMouseListener(model.editor, sessionModel, settings, eventsHandler, parentDisposable)
 
     return model
+  }
+
+  private fun addTopAndBottomInsets(editor: Editor) {
+    val inlayModel = editor.inlayModel
+
+    val topRenderer = VerticalSpaceInlayRenderer(TerminalUi.blockTopInset)
+    inlayModel.addBlockElement(0, false, true, TerminalUi.terminalTopInlayPriority, topRenderer)!!
+
+    val bottomRenderer = VerticalSpaceInlayRenderer(TerminalUi.blockBottomInset)
+    inlayModel.addBlockElement(editor.document.textLength, true, false, TerminalUi.terminalBottomInlayPriority, bottomRenderer)
   }
 
   private fun createOutputEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
