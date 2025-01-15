@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="jetbrains.mlapi.ml.api" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:ml-api:75">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/75/ml-api-75.jar">
+          <sha256sum>6a2e1b17c275995c256826dc746bc22a132b6b9348e46241d8fe0015c8791709</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="com.jetbrains.mlapi:ml-api" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/75/ml-api-75.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/75/ml-api-75-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/75/ml-api-75-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

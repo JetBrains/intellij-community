@@ -12,7 +12,7 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" exported="" name="jetbrains.mlapi.ml.feature.api" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="library" exported="" name="jetbrains.mlapi.ml.api" level="project" />
   </component>
 </module>

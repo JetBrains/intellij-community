@@ -6,6 +6,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.impl.logs.MLEventLoggerProvider.Companion.ML_RECORDER_ID
+import com.intellij.python.ml.features.imports.FinalImportRankingStatusService.RegistryOption
+import com.jetbrains.ml.api.model.MLModel
 
 @Service
 internal class FinalImportRankingStatusService {
@@ -27,15 +29,21 @@ internal class FinalImportRankingStatusService {
 
   val status: FinalImportRankingStatus
     get() {
-      return when (getRegistryOption()) {
-        RegistryOption.IN_EXPERIMENT -> FinalImportRankingStatus(mlEnabledOnBucket, true)
-        RegistryOption.ENABLED -> FinalImportRankingStatus(true, false)
-        RegistryOption.DISABLED -> FinalImportRankingStatus(false, false)
-      }
+      val mlModel = service<ImportsRankingModelService>().getModelOwnership()
+      val registryOption = getRegistryOption()
+      val registryOptionAllowsEnabling = registryOption == RegistryOption.ENABLED || (registryOption == RegistryOption.IN_EXPERIMENT && mlEnabledOnBucket)
+      return if (mlModel != null && registryOptionAllowsEnabling)
+        FinalImportRankingStatus.Enabled(mlModel, registryOption)
+      else
+        FinalImportRankingStatus.Disabled(mlModel == null, registryOption)
     }
 }
 
-internal class FinalImportRankingStatus(
+internal sealed class FinalImportRankingStatus(
   val mlEnabled: Boolean,
-  val mlStatusCorrespondsToBucket: Boolean,
-)
+  val mlModelUnavailable: Boolean,
+  val registryOption: RegistryOption,
+) {
+  class Enabled(val mlModel: MLModel<Double>, registryOption: RegistryOption) : FinalImportRankingStatus(true, false, registryOption)
+  class Disabled(mlModelUnavailable: Boolean, registryOption: RegistryOption) : FinalImportRankingStatus(false, mlModelUnavailable, registryOption)
+}

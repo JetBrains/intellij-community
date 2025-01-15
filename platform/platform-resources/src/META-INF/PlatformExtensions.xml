@@ -1689,10 +1689,6 @@
     <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
 
-    <!-- ML API -->
-    <platform.ml.descriptor implementation="com.intellij.codeInsight.inline.completion.ml.TypingFeatures"/>
-    <platform.ml.environmentExtender implementation="com.intellij.codeInsight.inline.completion.ml.TypingSpeedProvider"/>
-
     <!-- Presentation Assistant -->
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>
     <applicationConfigurable groupId="appearance"

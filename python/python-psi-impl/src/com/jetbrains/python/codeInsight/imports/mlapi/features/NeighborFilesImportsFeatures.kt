@@ -5,7 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.jetbrains.ml.features.api.feature.*
+import com.jetbrains.ml.api.feature.*
 import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
 import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
 import com.jetbrains.python.psi.PyFile
@@ -16,25 +16,20 @@ private const val FILES_TO_WATCH = 8
 
 object NeighborFilesImportsFeatures : ImportCandidateFeatures() {
   object Features {
-    val NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX = FeatureDeclaration.int("neighbor_files_existing_import_from_prefix") { "A maximal prefix for which there exists some import from" }.nullable()
-    val NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX = FeatureDeclaration.int("neighbor_files_existing_import_prefix") { "A maximal prefix for which there exists some import" }.nullable()
-    val NEIGHBOR_FILES_NEEDED_IMPORT_FROM_PREFIX = FeatureDeclaration.int("neighbor_files_needed_import_from_prefix") { "COMPONENT_COUNT - NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX" }.nullable()
-    val NEIGHBOR_FILES_NEEDED_IMPORT_PREFIX = FeatureDeclaration.int("neighbor_files_needed_import_prefix") { "COMPONENT_COUNT - NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX" }.nullable()
+    val NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_existing_import_from_prefix") { "A maximal prefix for which there exists some import from" }.nullable()
+    val NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_existing_import_prefix") { "A maximal prefix for which there exists some import" }.nullable()
+    val NEIGHBOR_FILES_NEEDED_IMPORT_FROM_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_needed_import_from_prefix") { "COMPONENT_COUNT - NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX" }.nullable()
+    val NEIGHBOR_FILES_NEEDED_IMPORT_PREFIX: FeatureDeclaration<Int?> = FeatureDeclaration.int("neighbor_files_needed_import_prefix") { "COMPONENT_COUNT - NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX" }.nullable()
   }
 
-  override val featureComputationPolicy = FeatureComputationPolicy(false, true)
+  override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(true, true)
 
-  override val featureDeclarations = extractFeatureDeclarations(Features)
+  override val namespaceFeatureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(Features)
 
-  override suspend fun computeFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = coroutineScope {
+  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = coroutineScope {
     val importCandidate = instance.candidate
     if (importCandidate.path == null) {
-      return@coroutineScope buildList<Feature> {
-        add(Features.NEIGHBOR_FILES_EXISTING_IMPORT_FROM_PREFIX with 0)
-        add(Features.NEIGHBOR_FILES_EXISTING_IMPORT_PREFIX with 0)
-        add(Features.NEIGHBOR_FILES_NEEDED_IMPORT_FROM_PREFIX with 0)
-        add(Features.NEIGHBOR_FILES_NEEDED_IMPORT_PREFIX with 0)
-      }
+      return@coroutineScope emptyList()
     }
 
     val path = importCandidate.path ?: return@coroutineScope emptyList()

@@ -3,24 +3,22 @@ package com.jetbrains.python.codeInsight.imports.mlapi.features
 
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiElement
-import com.jetbrains.ml.features.api.feature.Feature
-import com.jetbrains.ml.features.api.feature.FeatureDeclaration
-import com.jetbrains.ml.features.api.feature.FeatureFilter
-import com.jetbrains.ml.features.api.feature.extractFeatureDeclarations
+import com.jetbrains.ml.api.feature.*
 import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
 import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateFeatures
 
 
 object PsiStructureFeatures : ImportCandidateFeatures() {
   object Features {
-    val PSI_CLASS = FeatureDeclaration.aClass("importable_class") { "PSI class of the imported element" }.nullable()
-    val PSI_PARENT = (1..4).map { i -> FeatureDeclaration.aClass("psi_parent_$i") { "PSI parent #$i" }.nullable() }
+    val PSI_CLASS: FeatureDeclaration<Class<*>?> = FeatureDeclaration.aClass("importable_class") { "PSI class of the imported element" }.nullable()
+    val PSI_PARENT: List<FeatureDeclaration<Class<*>?>> = (1..4).map { i -> FeatureDeclaration.aClass("psi_parent_$i") { "PSI parent #$i" }.nullable() }
   }
 
-  override val featureDeclarations = extractFeatureDeclarations(Features)
+  override val namespaceFeatureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(Features)
 
+  override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(tolerateRedundantFeatures = true, putNullImplicitly = true)
 
-  override suspend fun computeFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = buildList {
+  override suspend fun computeNamespaceFeatures(instance: ImportCandidateContext, filter: FeatureFilter): List<Feature> = buildList {
     readAction {
       add(Features.PSI_CLASS with (instance.candidate.importable?.javaClass))
       Features.PSI_PARENT.withIndex().forEach { (i, featureDeclaration) ->

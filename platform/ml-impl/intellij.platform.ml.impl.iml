@@ -49,8 +49,9 @@
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
-    <orderEntry type="library" exported="" name="jetbrains.mlapi.ml.building.blocks" level="project" />
     <orderEntry type="library" exported="" name="jetbrains.mlapi.catboost.shadow.need.slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="library" exported="" name="jetbrains.mlapi.ml.tools" level="project" />
+    <orderEntry type="library" exported="" name="jetbrains.mlapi.ml.tools.suspendable" level="project" />
   </component>
 </module>

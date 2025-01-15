@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="jetbrains.mlapi.ml.tools.suspendable" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:ml-tools-suspendable:75">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools-suspendable/75/ml-tools-suspendable-75.jar">
+          <sha256sum>b9aec2e3ec938718a4e6478b11e56ff8625fdd9beeaa5038e8aa560395f52771</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools-suspendable/75/ml-tools-suspendable-75.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools-suspendable/75/ml-tools-suspendable-75-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools-suspendable/75/ml-tools-suspendable-75-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

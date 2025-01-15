@@ -10,7 +10,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.ml.features.api.feature.*
+import com.jetbrains.ml.api.feature.*
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContext
 import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContextFeatures
@@ -24,6 +24,7 @@ private val interestingClasses = arrayOf(
   PyArgumentList::class.java,
   PyBinaryExpression::class.java,
 )
+
 enum class FileExtensionType {
   PY,     // .py files
   IPYNB,  // .ipynb files
@@ -34,17 +35,18 @@ enum class FileExtensionType {
 
 object BaseProjectFeatures : ImportRankingContextFeatures() {
   object Features {
-    val NUM_PYTHON_FILES_IN_PROJECT = FeatureDeclaration.int("num_python_files_in_project") {
+    val NUM_PYTHON_FILES_IN_PROJECT: FeatureDeclaration<Int?> = FeatureDeclaration.int("num_python_files_in_project") {
       "The estimated amount of files in the project (by a power of 2)"
     }.nullable()
-    val PSI_PARENT_OF_ORIG = (1..5).map { i -> FeatureDeclaration.aClass("psi_parent_of_orig_$i") { "PSI parent of original element #$i" }.nullable() }
-    val FILE_EXTENSION_TYPE = FeatureDeclaration.enum<FileExtensionType>("file_extension_type") { "extension of the original python file" }.nullable()
+    val PSI_PARENT_OF_ORIG: List<FeatureDeclaration<Class<*>?>> = (1..5).map { i -> FeatureDeclaration.aClass("psi_parent_of_orig_$i") { "PSI parent of original element #$i" }.nullable() }
+    val FILE_EXTENSION_TYPE: FeatureDeclaration<FileExtensionType?> = FeatureDeclaration.enum<FileExtensionType>("file_extension_type") { "extension of the original python file" }.nullable()
   }
 
-  override val featureComputationPolicy = FeatureComputationPolicy(false, true)
-  override val featureDeclarations = extractFeatureDeclarations(Features)
+  override val featureComputationPolicy: FeatureComputationPolicy = FeatureComputationPolicy(true, true)
 
-  override suspend fun computeFeatures(instance: ImportRankingContext, filter: FeatureFilter): List<Feature>? = buildList {
+  override val namespaceFeatureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(Features)
+
+  override suspend fun computeNamespaceFeatures(instance: ImportRankingContext, filter: FeatureFilter): List<Feature> = buildList {
     val candidates = instance.candidates
     if (candidates.isEmpty()) return@buildList
 
@@ -71,12 +73,15 @@ object BaseProjectFeatures : ImportRankingContextFeatures() {
       }
     }
   }
+
+
   private fun getFileExtensionType(fileName: String): FileExtensionType? {
     val extension = fileName.substringAfterLast('.', "").uppercase()
 
     return try {
       FileExtensionType.valueOf(extension)
-    } catch (_: IllegalArgumentException) {
+    }
+    catch (_: IllegalArgumentException) {
       null
     }
   }

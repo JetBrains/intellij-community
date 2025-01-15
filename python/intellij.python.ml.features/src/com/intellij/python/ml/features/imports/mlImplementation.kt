@@ -7,18 +7,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.application
-import com.jetbrains.ml.building.blocks.model.MLModel
-import com.jetbrains.ml.building.blocks.task.MLFeaturesTree
-import com.jetbrains.ml.features.api.logs.EventPair
+import com.jetbrains.ml.api.feature.Feature
+import com.jetbrains.ml.api.logs.EventPair
+import com.jetbrains.ml.api.model.MLModel
+import com.jetbrains.ml.tools.logs.MLLogsTree
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder
 import com.jetbrains.python.codeInsight.imports.mlapi.ImportCandidateContext
 import com.jetbrains.python.codeInsight.imports.mlapi.ImportRankingContext
-import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportCandidate
-import com.jetbrains.python.codeInsight.imports.mlapi.MLUnitImportRankingContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
@@ -29,8 +25,8 @@ internal class MLApiComputations(
 )
 
 internal sealed class FinalCandidatesRanker(
-  protected val contextFeatures: MLFeaturesTree,
-  protected val contextLogs: MutableList<EventPair<*>>,
+  protected val contextFeatures: MutableList<Feature>,
+  protected val contextAnalysis: MutableList<EventPair<*>>,
   protected val timestampStarted: Long,
 ) {
 
@@ -40,37 +36,23 @@ internal sealed class FinalCandidatesRanker(
 }
 
 private class ExperimentalMLRanker(
-  mlContextFeatures: MLFeaturesTree,
-  mlContextLogs: MutableList<EventPair<*>>,
+  contextFeatures: MutableList<Feature>,
+  contextAnalysis: MutableList<EventPair<*>>,
   timestampStarted: Long,
   private val mlModel: MLModel<Double>,
-) : FinalCandidatesRanker(mlContextFeatures, mlContextLogs, timestampStarted) {
+) : FinalCandidatesRanker(contextFeatures, contextAnalysis, timestampStarted) {
 
   override val mlEnabled = true
 
   override fun launchMLRanking(initialCandidatesOrder: MutableList<out ImportCandidateHolder>, displayResult: (RateableRankingResult) -> Unit) {
     service<MLApiComputations>().coroutineScope.launch(Dispatchers.Default) {
-      contextFeatures.computeFeaturesFromProviders(
-        MLUnitImportRankingContext with ImportRankingContext(initialCandidatesOrder),
-      )
+      contextFeatures.addAll(FeaturesRegistry.computeContextFeatures(ImportRankingContext(initialCandidatesOrder), mlModel.knownFeatures))
 
       val importCandidatesFeatures = initialCandidatesOrder.associateWith { candidate ->
-        val candidateFeatures = contextFeatures.addChild()
-        candidateFeatures.computeFeaturesFromProviders(
-          MLUnitImportCandidate with ImportCandidateContext(initialCandidatesOrder, candidate)
-        )
-        candidateFeatures
-      }
+        async { FeaturesRegistry.computeCandidateFeatures(ImportCandidateContext(initialCandidatesOrder, candidate), mlModel.knownFeatures) }
+      }.mapValues { it.value.await() }
 
-      val predictionsByCandidateTree = contextFeatures
-        .predictForChildren(mlModel, emptyMap())
-        .toMap()
-
-      val scoreByCandidate = initialCandidatesOrder.associateWith { candidate ->
-        val candidateTree = importCandidatesFeatures.getValue(candidate)
-        val score = predictionsByCandidateTree.getValue(candidateTree)
-        score
-      }
+      val scoreByCandidate = mlModel.predictBatch(contextFeatures, importCandidatesFeatures)
 
       val relevanceCandidateOrder = scoreByCandidate.toList()
         .sortedByDescending { it.second }
@@ -86,14 +68,14 @@ private class ExperimentalMLRanker(
       }
 
       writeAction {
-        displayResult(RateableRankingResult(contextFeatures, contextLogs, importCandidatesFeatures, initialCandidatesOrder, relevanceCandidateOrder, timestampStarted))
+        displayResult(RateableRankingResult(this@ExperimentalMLRanker.contextFeatures, contextAnalysis, importCandidatesFeatures, initialCandidatesOrder, relevanceCandidateOrder, timestampStarted))
       }
     }
   }
 }
 
 private class InitialOrderKeepingRanker(
-  contextFeatures: MLFeaturesTree,
+  contextFeatures: MutableList<Feature>,
   contextLogs: MutableList<EventPair<*>>,
   timestampStarted: Long,
 ) : FinalCandidatesRanker(contextFeatures, contextLogs, timestampStarted) {
@@ -102,9 +84,9 @@ private class InitialOrderKeepingRanker(
   override fun launchMLRanking(initialCandidatesOrder: MutableList<out ImportCandidateHolder>, displayResult: (RateableRankingResult) -> Unit) {
     application.runWriteAction {
       val importCandidatesFeatures = initialCandidatesOrder.associateWith { candidate ->
-        contextFeatures.addChild()
+        emptyList<Feature>()
       }
-      displayResult(RateableRankingResult(contextFeatures, contextLogs, importCandidatesFeatures, initialCandidatesOrder, initialCandidatesOrder, timestampStarted))
+      displayResult(RateableRankingResult(contextFeatures, contextAnalysis, importCandidatesFeatures, initialCandidatesOrder, initialCandidatesOrder, timestampStarted))
     }
   }
 }
@@ -114,48 +96,39 @@ internal fun launchMLRanking(initialCandidatesOrder: MutableList<out ImportCandi
   // In EDT
 
   val timestampStarted = System.currentTimeMillis()
-  return MLTaskPyCharmImportStatementsRanking.lifetime {
-    val mlContextFeatures = newMLFeaturesTree()
-    val mlContextLogs = mutableListOf<EventPair<*>>()
-    val rankingStatus = service<FinalImportRankingStatusService>().status
-    var modelWasReady = true
-    val ranker = if (rankingStatus.mlEnabled) {
-      val mlModel = service<MLModelService>().getModel(MLTaskPyCharmImportStatementsRanking)
-      if (mlModel != null) {
-        ExperimentalMLRanker(mlContextFeatures, mlContextLogs, timestampStarted, mlModel)
-      } else {
-        modelWasReady = false
-        mlContextLogs.add(ContextAnalysis.MODEL_UNAVAILABLE with true)
-        InitialOrderKeepingRanker(mlContextFeatures, mlContextLogs, timestampStarted)
-      }
-    }
-    else {
+  val mlContextFeatures = mutableListOf<Feature>()
+  val mlContextLogs = mutableListOf<EventPair<*>>()
+  val rankingStatus = service<FinalImportRankingStatusService>().status
+  val ranker = when (rankingStatus) {
+    is FinalImportRankingStatus.Disabled -> {
       InitialOrderKeepingRanker(mlContextFeatures, mlContextLogs, timestampStarted)
     }
-
-    mlContextLogs.add(ContextAnalysis.ML_STATUS_CORRESPONDS_TO_BUCKET with (rankingStatus.mlStatusCorrespondsToBucket && modelWasReady))
-    mlContextLogs.add(ContextAnalysis.ML_ENABLED with (rankingStatus.mlEnabled && modelWasReady))
-
-    ranker.launchMLRanking(initialCandidatesOrder) { result ->
-      val timestampDisplayed = System.currentTimeMillis()
-      displayResult(result)
-      mlContextLogs.add(ContextAnalysis.TIME_MS_TO_DISPLAY with (timestampDisplayed - timestampStarted))
+    is FinalImportRankingStatus.Enabled -> {
+      ExperimentalMLRanker(mlContextFeatures, mlContextLogs, timestampStarted, rankingStatus.mlModel)
     }
+  }
+
+  mlContextLogs.add(ContextAnalysis.MODEL_UNAVAILABLE with (!rankingStatus.mlModelUnavailable))
+  mlContextLogs.add(ContextAnalysis.ML_ENABLED with rankingStatus.mlEnabled)
+  mlContextLogs.add(ContextAnalysis.REGISTRY_OPTION with rankingStatus.registryOption)
+
+  ranker.launchMLRanking(initialCandidatesOrder) { result ->
+    val timestampDisplayed = System.currentTimeMillis()
+    displayResult(result)
+    mlContextLogs.add(ContextAnalysis.TIME_MS_TO_DISPLAY with (timestampDisplayed - timestampStarted))
   }
 }
 
 internal class RateableRankingResult(
-  private val mlContextFeatures: MLFeaturesTree,
+  private val contextFeatures: List<Feature>,
   private val contextAnalysis: MutableList<EventPair<*>>,
-  private val importCandidates: Map<ImportCandidateHolder, MLFeaturesTree>,
+  private val importCandidates: Map<ImportCandidateHolder, List<Feature>>,
   val orderInitial: List<ImportCandidateHolder>,
   val order: List<ImportCandidateHolder>,
   private val timestampStarted: Long,
 ) {
   private var submitted = AtomicBoolean(false)
-  private val analysis: MutableMap<MLFeaturesTree, MutableList<EventPair<*>>> = mutableMapOf(
-    mlContextFeatures to contextAnalysis
-  )
+  private val candidateAnalysis: MutableMap<ImportCandidateHolder, EventPair<*>> = mutableMapOf()
 
   fun submitPopUpClosed() {
     val timestampClosed = System.currentTimeMillis()
@@ -174,27 +147,29 @@ internal class RateableRankingResult(
   fun submitSelectedItem(selected: ImportCandidateHolder) = synchronized(this) {
     // In EDT
     require(submitted.compareAndSet(false, true)) { "Some feedback to the ml ranker was already submitted" }
-    analysis[requireNotNull(importCandidates[selected])] = mutableListOf(CandidateAnalysis.MLFieldCorrectElement with true)
+    candidateAnalysis[selected] = CandidateAnalysis.MLFieldCorrectElement with true
     val selectedIndex = order.indexOf(selected)
     val selectedIndexOriginal = orderInitial.indexOf(selected)
     require(selectedIndex >= 0 && selectedIndexOriginal >= 0)
     contextAnalysis.add(ContextAnalysis.SELECTED_POSITION with selectedIndex)
     contextAnalysis.add(ContextAnalysis.SELECTED_POSITION_INITIAL with selectedIndexOriginal)
-    service<MLApiComputations>().coroutineScope.launch(Dispatchers.IO) {
-      submitLogs()
-    }
+    submitLogs()
   }
 
-  private suspend fun submitLogs() {
+  private fun submitLogs() {
     val logger = PyCharmImportsRankingLogs.mlLogger
-    val loggingOption = getLoggingOption(mlContextFeatures)
+    val loggingOption = getLoggingOption()
     contextAnalysis.add(ContextAnalysis.ML_LOGGING_STATE with loggingOption)
     when (loggingOption) {
-      LoggingOption.FULL -> logger.log(mlContextFeatures, analysis)
-        LoggingOption.NO_TREE -> {
-        val treeStem = logger.newMLLogsTree()
-        treeStem.addAnalysis(contextAnalysis)
-        logger.log(mlContextFeatures.sessionId, treeStem)
+      LoggingOption.FULL -> {
+        val logsTree = MLLogsTree(contextFeatures, contextAnalysis, importCandidates.map { (candidate, features) ->
+          MLLogsTree(features, candidateAnalysis[candidate]?.let { listOf(it) } ?: emptyList())
+        })
+        logger.log(logsTree)
+      }
+      LoggingOption.NO_TREE -> {
+        val logsTree = MLLogsTree(contextFeatures, contextAnalysis)
+        logger.log(logsTree)
       }
       LoggingOption.SKIP -> Unit
     }

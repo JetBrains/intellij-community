@@ -380,6 +380,16 @@ data class IntListEventField @JvmOverloads constructor(@NonNls @EventFieldName o
   }
 }
 
+data class FloatListEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+                                                         @NonNls override val description: String? = null) : ListEventField<Float>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#float}")
+
+  override fun addData(fuData: FeatureUsageData, value: List<Float>) {
+    fuData.addListNumberData(name, value)
+  }
+}
+
 data class EnumListEventField<T : Enum<*>>(@NonNls @EventFieldName override val name: String,
                                             @NonNls override val description: String? = null,
                                             private val enumClass: Class<T>,

@@ -1,15 +1,16 @@
-package com.intellij.platform.ml.impl.logs.fus
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ml.impl.fus
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.lang.Language
 import com.intellij.openapi.util.Version
-import com.intellij.platform.ml.impl.logs.fus.ConverterObjectDescription.Companion.asIJObjectDescription
-import com.intellij.platform.ml.impl.logs.fus.ConverterOfEnum.Companion.toIJConverter
-import com.intellij.platform.ml.impl.logs.fus.IJEventPairConverter.Companion.typedBuild
-import com.jetbrains.ml.building.blocks.logs.FusEventLogger
-import com.jetbrains.ml.building.blocks.logs.FusEventRegister
+import com.intellij.platform.ml.impl.fus.ConverterObjectDescription.Companion.asIJObjectDescription
+import com.intellij.platform.ml.impl.fus.ConverterOfEnum.Companion.toIJConverter
+import com.intellij.platform.ml.impl.fus.IJEventPairConverter.Companion.typedBuild
+import com.jetbrains.ml.tools.logs.FusEventLogger
+import com.jetbrains.ml.tools.logs.FusEventRegister
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.internal.statistic.eventLog.EventLogGroup as IJEventLogGroup
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField as IJBooleanEventField
@@ -20,27 +21,33 @@ import com.intellij.internal.statistic.eventLog.events.EventField as IJEventFiel
 import com.intellij.internal.statistic.eventLog.events.EventFields as IJEventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair as IJEventPair
 import com.intellij.internal.statistic.eventLog.events.FloatEventField as IJFloatEventField1
+import com.intellij.internal.statistic.eventLog.events.FloatListEventField as IJFloatListEventField
 import com.intellij.internal.statistic.eventLog.events.IntEventField as IJIntEventField
+import com.intellij.internal.statistic.eventLog.events.IntListEventField as IJIntListEventField
 import com.intellij.internal.statistic.eventLog.events.LongEventField as IJLongEventField
+import com.intellij.internal.statistic.eventLog.events.LongListEventField as IJLongListEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectDescription as IJObjectDescription
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData as IJObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField as IJObjectEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField as IJObjectListEventField
 import com.intellij.internal.statistic.eventLog.events.StringEventField as IJStringEventField
-import com.jetbrains.ml.features.api.logs.BooleanEventField as MLBooleanEventField
-import com.jetbrains.ml.features.api.logs.ClassEventField as MLClassEventField
-import com.jetbrains.ml.features.api.logs.DoubleEventField as MLDoubleEventField
-import com.jetbrains.ml.features.api.logs.EnumEventField as MLEnumEventField
-import com.jetbrains.ml.features.api.logs.EventField as MLEventField
-import com.jetbrains.ml.features.api.logs.EventPair as MLEventPair
-import com.jetbrains.ml.features.api.logs.FloatEventField as MLFloatEventField
-import com.jetbrains.ml.features.api.logs.IntEventField as MLIntEventField
-import com.jetbrains.ml.features.api.logs.LongEventField as MLLongEventField
-import com.jetbrains.ml.features.api.logs.ObjectDescription as MLObjectDescription
-import com.jetbrains.ml.features.api.logs.ObjectEventData as MLObjectEventData
-import com.jetbrains.ml.features.api.logs.ObjectEventField as MLObjectEventField
-import com.jetbrains.ml.features.api.logs.ObjectListEventField as MLObjectListEventField
-import com.jetbrains.ml.features.api.logs.StringEventField as MLStringEventField
+import com.jetbrains.ml.api.logs.BooleanEventField as MLBooleanEventField
+import com.jetbrains.ml.api.logs.ClassEventField as MLClassEventField
+import com.jetbrains.ml.api.logs.DoubleEventField as MLDoubleEventField
+import com.jetbrains.ml.api.logs.EnumEventField as MLEnumEventField
+import com.jetbrains.ml.api.logs.EventField as MLEventField
+import com.jetbrains.ml.api.logs.EventPair as MLEventPair
+import com.jetbrains.ml.api.logs.FloatEventField as MLFloatEventField
+import com.jetbrains.ml.api.logs.FloatListEventField as MLFloatListEventField
+import com.jetbrains.ml.api.logs.IntEventField as MLIntEventField
+import com.jetbrains.ml.api.logs.IntListEventField as MLIntListEventField
+import com.jetbrains.ml.api.logs.LongEventField as MLLongEventField
+import com.jetbrains.ml.api.logs.LongListEventField as MLLongListEventField
+import com.jetbrains.ml.api.logs.ObjectDescription as MLObjectDescription
+import com.jetbrains.ml.api.logs.ObjectEventData as MLObjectEventData
+import com.jetbrains.ml.api.logs.ObjectEventField as MLObjectEventField
+import com.jetbrains.ml.api.logs.ObjectListEventField as MLObjectListEventField
+import com.jetbrains.ml.api.logs.StringEventField as MLStringEventField
 
 
 @ApiStatus.Internal
@@ -49,7 +56,7 @@ class IntelliJFusEventRegister(private val baseEventGroup: IJEventLogGroup) : Fu
     private val varargEventId: VarargEventId,
     private val objectDescription: ConverterObjectDescription
   ) : FusEventLogger {
-    override suspend fun log(eventPairs: List<MLEventPair<*>>) {
+    override fun log(eventPairs: List<MLEventPair<*>>) {
       val ijEventPairs = objectDescription.buildEventPairs(eventPairs)
       varargEventId.log(*ijEventPairs.toTypedArray())
     }
@@ -77,33 +84,27 @@ private fun <L> createConverter(mlEventField: MLEventField<L>): IJEventPairConve
   is MLClassEventField -> ConverterOfClass(mlEventField) as IJEventPairConverter<L, *>
   is MLObjectListEventField -> ConvertObjectList(mlEventField) as IJEventPairConverter<L, *>
   is MLDoubleEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJDoubleEventField(n, d) } as IJEventPairConverter<L, *>
+  is MLStringEventField -> ConverterOfString(mlEventField) as IJEventPairConverter<L, *>
+  is MLFloatListEventField -> object : IJEventPairConverter<List<Float>, List<Float>> {
+    override val ijEventField: IJEventField<List<Float>> = IJFloatListEventField(mlEventField.name, mlEventField.lazyDescription())
+    override fun buildEventPair(mlEventPair: MLEventPair<List<Float>>): IJEventPair<List<Float>> = ijEventField with mlEventPair.data
+  } as IJEventPairConverter<L, *>
+  is MLIntListEventField -> object : IJEventPairConverter<List<Int>, List<Int>> {
+    override val ijEventField: IJEventField<List<Int>> = IJIntListEventField(mlEventField.name, mlEventField.lazyDescription())
+    override fun buildEventPair(mlEventPair: MLEventPair<List<Int>>): IJEventPair<List<Int>> = ijEventField with mlEventPair.data
+  } as IJEventPairConverter<L, *>
+  is MLLongListEventField -> object : IJEventPairConverter<List<Long>, List<Long>> {
+    override val ijEventField: IJEventField<List<Long>> = IJLongListEventField(mlEventField.name, mlEventField.lazyDescription())
+    override fun buildEventPair(mlEventPair: MLEventPair<List<Long>>): IJEventPair<List<Long>> = ijEventField with mlEventPair.data
+  } as IJEventPairConverter<L, *>
+
   is VersionEventField -> ConverterOfVersion(mlEventField) as IJEventPairConverter<L, *>
   is LanguageEventField -> ConverterOfLanguage(mlEventField) as IJEventPairConverter<L, *>
-  is MLStringEventField -> ConverterOfString(mlEventField) as IJEventPairConverter<L, *>
 
-  is IJSpecificEventField<*> -> {
-    when (mlEventField) {
-      is IJCustomEventField -> ConverterOfCustom(mlEventField)
-      is LanguageEventField -> ConverterOfLanguage(mlEventField) as IJEventPairConverter<L, *>
-      is VersionEventField -> ConverterOfVersion(mlEventField) as IJEventPairConverter<L, *>
-    }
-  }
-  else -> throw IllegalArgumentException(
-    """
-    Conversion of ${mlEventField.javaClass.simpleName} is not possible.
-    If you want to create your own field, you must add an inheritor of
-    ${IJCustomEventField::class.qualifiedName}
-    """.trimIndent()
-  )
+  else -> throw NotImplementedError("Please implement converter for $mlEventField from ML to IJ event fields")
 }
 
-private class ConverterOfCustom<T>(mlEventField: IJCustomEventField<T>) : IJEventPairConverter<T, T> {
-  override val ijEventField: IJEventField<T> = mlEventField.baseIJEventField
 
-  override fun buildEventPair(mlEventPair: MLEventPair<T>): IJEventPair<T> {
-    return ijEventField with mlEventPair.data
-  }
-}
 
 private class ConverterOfString(mlEventField: MLStringEventField) : IJEventPairConverter<String, String?> {
   override val ijEventField: IJEventField<String?> = IJStringEventField.ValidatedByAllowedValues(
@@ -125,7 +126,7 @@ private class ConverterOfLanguage(mlEventField: LanguageEventField) : IJEventPai
   }
 }
 
-private class ConverterOfVersion(mlEventField: com.intellij.platform.ml.impl.logs.fus.VersionEventField) : IJEventPairConverter<Version, Version?> {
+private class ConverterOfVersion(mlEventField: com.intellij.platform.ml.impl.fus.VersionEventField) : IJEventPairConverter<Version, Version?> {
   private class VersionEventField(override val name: String, override val description: String?) : PrimitiveEventField<Version?>() {
     override val validationRule: List<String>
       get() = listOf("{regexp#version}")

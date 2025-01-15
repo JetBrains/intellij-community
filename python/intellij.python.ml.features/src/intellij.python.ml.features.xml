@@ -2,11 +2,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.ml.features.imports.PyCharmImportsRankingLogs"/>
     <registryKey
-      key="quickfix.ranking.ml.model.path"
-      defaultValue=""
-      restartRequired="true"
-      description="Absolute path to a custom ML model used for ranking missing imports"/>
-    <registryKey
       key="quickfix.ranking.ml"
       defaultValue="[IN_EXPERIMENT*|ENABLED|DISABLED]"
       description="Enable ML ranking in quick fix for missing imports"/>
