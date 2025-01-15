@@ -87,16 +87,16 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   final override var gradleDsl by gradleDslProperty
 
   private val distributionTypeProperty = propertyGraph.lazyProperty { suggestDistributionType() }
-  protected val gradleVersionProperty = propertyGraph.lazyProperty { suggestGradleVersion() }
+  private val gradleVersionProperty = propertyGraph.lazyProperty { suggestGradleVersion() }
   private val gradleVersionsProperty = propertyGraph.lazyProperty { suggestGradleVersions() }
   private val autoSelectGradleVersionProperty = propertyGraph.lazyProperty { suggestAutoSelectGradleVersion() }
   private val gradleHomeProperty = propertyGraph.lazyProperty { suggestGradleHome() }
   private val updateDefaultProjectSettingsProperty = propertyGraph.lazyProperty { true }
 
-  protected var distributionType by distributionTypeProperty
-  protected var gradleVersion by gradleVersionProperty
+  private var distributionType by distributionTypeProperty
+  private var gradleVersion by gradleVersionProperty
   private var autoSelectGradleVersion by autoSelectGradleVersionProperty
-  protected var gradleHome by gradleHomeProperty
+  private var gradleHome by gradleHomeProperty
   private var updateDefaultProjectSettings by updateDefaultProjectSettingsProperty
 
   init {
@@ -309,7 +309,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   /**
    * Is the language of this wizard compatible with the [gradleVersion].
    */
-  protected open fun validateLanguageCompatibility(gradleVersion: GradleVersion): Boolean {
+  protected open fun validateGradleVersion(gradleVersion: GradleVersion): Boolean {
     return true
   }
 
@@ -317,7 +317,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
    * Validate that the language is compatible with Gradle and return
    * an appropriate error message if not.
    */
-  protected open fun validateLanguageCompatibility(
+  protected open fun validateGradleVersion(
     builder: ValidationInfoBuilder,
     gradleVersion: GradleVersion,
     withDialog: Boolean
@@ -365,7 +365,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
     return validateIdeaGradleCompatibility(withDialog, gradleVersion)
            ?: validateJdkCompatibility(gradleVersion, withDialog)
-           ?: validateLanguageCompatibility(this, gradleVersion, withDialog)
+           ?: validateGradleVersion(this, gradleVersion, withDialog)
   }
 
   protected fun ValidationInfoBuilder.validationWithDialog(
@@ -385,7 +385,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return error(message)
   }
 
-  private fun ValidationInfoBuilder.errorWithDialog(
+  protected fun ValidationInfoBuilder.errorWithDialog(
     withDialog: Boolean, // dialog shouldn't be shown on text input
     message: @NlsContexts.DialogMessage String,
     dialogTitle: @NlsContexts.DialogTitle String,
@@ -432,7 +432,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       withProject(context.project)
       withJavaVersionFilter(getJdkVersion())
       withFilter {
-        validateJdkCompatibility(it) && validateLanguageCompatibility(it)
+        validateJdkCompatibility(it) && validateGradleVersion(it)
       }
       if (autoSelectGradleVersion) {
         dontCheckDefaultProjectSettingsVersion()
@@ -443,7 +443,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected open fun suggestGradleVersions(): List<String> {
     return GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea().filter {
-      validateJdkCompatibility(it) && validateLanguageCompatibility(it)
+      validateJdkCompatibility(it) && validateGradleVersion(it)
     }.map { it.version }
   }
 

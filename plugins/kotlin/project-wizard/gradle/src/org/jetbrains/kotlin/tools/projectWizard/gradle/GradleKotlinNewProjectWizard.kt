@@ -16,7 +16,6 @@ import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.equalsTo
 import com.intellij.openapi.project.Project
@@ -59,6 +58,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleAssetsNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.addGradleWrapperAsset
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
 
@@ -102,18 +102,11 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         override var generateMultipleModules by generateMultipleModulesProperty
 
-        private val gradleVersionSupportsConventionPlugins = propertyGraph.property(false)
-
-        init {
-            propertyGraph.dependsOn(gradleVersionSupportsConventionPlugins, gradleVersionProperty) {
-                val selectedGradleVersion = runCatching { GradleVersion.version(gradleVersion) }.getOrNull() ?: return@dependsOn false
-                selectedGradleVersion >= MIN_GRADLE_VERSION_BUILD_SRC
-            }
-        }
-
         internal val shouldGenerateMultipleModules
-            get() = generateMultipleModules && gradleDsl == GradleDsl.KOTLIN && context.isCreatingNewProject &&
-                    gradleVersionSupportsConventionPlugins.get()
+            get() = generateMultipleModules &&
+                    gradleDsl == GradleDsl.KOTLIN &&
+                    context.isCreatingNewProject &&
+                    gradleVersionToUse >= MIN_GRADLE_VERSION_BUILD_SRC
 
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
@@ -144,7 +137,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                     .onApply { logGenerateMultipleModulesFinished(generateMultipleModules) }
 
                 contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.generate.multiple.modules"))
-            }.visibleIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN).and(gradleVersionSupportsConventionPlugins))
+            }.visibleIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN))
         }
 
         override fun setupSettingsUI(builder: Panel) {
@@ -159,33 +152,69 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
         }
 
-        override fun validateLanguageCompatibility(gradleVersion: GradleVersion): Boolean {
+        override fun validateGradleVersion(gradleVersion: GradleVersion): Boolean {
+            return validateLanguageCompatibility(gradleVersion) && validateMultiModuleSupport(gradleVersion)
+        }
+
+        override fun validateGradleVersion(
+            builder: ValidationInfoBuilder,
+            gradleVersion: GradleVersion,
+            withDialog: Boolean
+        ): ValidationInfo? {
+            return builder.validateLanguageCompatibility(gradleVersion, withDialog)
+                ?: builder.validateMultiModuleSupport(gradleVersion, withDialog)
+        }
+
+        private fun validateLanguageCompatibility(gradleVersion: GradleVersion): Boolean {
             val kotlinVersion = IdeaKotlinVersionProviderService().getKotlinVersion(ProjectKind.Singleplatform).version.text
             return KotlinGradleCompatibilityStore.kotlinVersionSupportsGradle(IdeKotlinVersion.get(kotlinVersion), gradleVersion)
         }
 
-        override fun validateLanguageCompatibility(
-            builder: ValidationInfoBuilder,
+        private fun ValidationInfoBuilder.validateLanguageCompatibility(
             gradleVersion: GradleVersion,
             withDialog: Boolean
         ): ValidationInfo? {
             if (validateLanguageCompatibility(gradleVersion)) return null
             val kotlinVersion = IdeaKotlinVersionProviderService().getKotlinVersion(ProjectKind.Singleplatform).version.text
-            return builder.validationWithDialog(
+            return validationWithDialog(
                 withDialog = withDialog,
                 message = KotlinNewProjectWizardBundle.message(
                     "gradle.project.settings.distribution.version.kotlin.unsupported",
                     kotlinVersion,
                     gradleVersion.version
                 ),
-                dialogTitle = KotlinNewProjectWizardBundle.message(
-                    "gradle.settings.wizard.unsupported.kotlin.title",
-                    context.isCreatingNewProjectInt
+                dialogTitle = GradleBundle.message(
+                    "gradle.settings.wizard.gradle.unsupported.title"
                 ),
                 dialogMessage = KotlinNewProjectWizardBundle.message(
                     "gradle.settings.wizard.unsupported.kotlin.message",
                     kotlinVersion,
                     gradleVersion.version
+                )
+            )
+        }
+
+        private fun validateMultiModuleSupport(gradleVersion: GradleVersion): Boolean {
+            return !generateMultipleModules || gradleVersion >= MIN_GRADLE_VERSION_BUILD_SRC
+        }
+
+        private fun ValidationInfoBuilder.validateMultiModuleSupport(
+            gradleVersion: GradleVersion,
+            withDialog: Boolean
+        ): ValidationInfo? {
+            if (validateMultiModuleSupport(gradleVersion)) return null
+            return errorWithDialog(
+                withDialog = withDialog,
+                message = KotlinNewProjectWizardBundle.message(
+                    "gradle.settings.wizard.unsupported.multi.module.message",
+                    gradleVersion.version,
+                ),
+                dialogTitle = GradleBundle.message(
+                    "gradle.settings.wizard.gradle.unsupported.title"
+                ),
+                dialogMessage = KotlinNewProjectWizardBundle.message(
+                    "gradle.settings.wizard.unsupported.multi.module.message",
+                    gradleVersion.version,
                 )
             )
         }
