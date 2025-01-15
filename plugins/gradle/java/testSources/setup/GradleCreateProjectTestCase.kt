@@ -34,9 +34,9 @@ import com.intellij.testFramework.withProjectAsync
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
@@ -83,10 +83,7 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     step.baseData!!.name = moduleInfo.name
     step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
     step.javaBuildSystemData!!.buildSystem = GRADLE
-    step.javaGradleData!!.gradleDsl = when (moduleInfo.useKotlinDsl) {
-      true -> GradleNewProjectWizardStep.GradleDsl.KOTLIN
-      else -> GradleNewProjectWizardStep.GradleDsl.GROOVY
-    }
+    step.javaGradleData!!.gradleDsl = GradleDsl.valueOf(moduleInfo.useKotlinDsl)
     step.javaGradleData!!.parentData = parentData
     step.javaGradleData!!.groupId = moduleInfo.groupId
     step.javaGradleData!!.artifactId = moduleInfo.artifactId

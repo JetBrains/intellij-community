@@ -48,6 +48,7 @@ import com.intellij.util.ui.UIUtil
 import icons.GradleIcons
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -126,7 +127,13 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected fun setupGradleDslUI(builder: Panel) {
     builder.row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
-      segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY)) { text = it.text }
+      val renderer: SegmentedButton.ItemPresentation.(GradleDsl) -> Unit = {
+        text = when (it) {
+          GradleDsl.GROOVY -> GradleBundle.message("gradle.dsl.new.project.wizard.groovy")
+          GradleDsl.KOTLIN -> GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")
+        }
+      }
+      segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY), renderer)
         .bind(gradleDslProperty)
         .whenItemSelectedFromUi { logGradleDslChanged(gradleDsl) }
     }.bottomGap(BottomGap.SMALL)
@@ -498,11 +505,6 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     override val presentationName: String = data.externalName
     override val groupId: String = data.group ?: ""
     override val version: String = data.version ?: ""
-  }
-
-  enum class GradleDsl(val text: @Nls String) {
-    KOTLIN(GradleBundle.message("gradle.dsl.new.project.wizard.kotlin")),
-    GROOVY(GradleBundle.message("gradle.dsl.new.project.wizard.groovy"))
   }
 
   protected enum class DistributionTypeItem(val value: DistributionType, val text: @Nls String) {

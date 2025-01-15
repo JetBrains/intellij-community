@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.groovy.config.GroovyHomeKind

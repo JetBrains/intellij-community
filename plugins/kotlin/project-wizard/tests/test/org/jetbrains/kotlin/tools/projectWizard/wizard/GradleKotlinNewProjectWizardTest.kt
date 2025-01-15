@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.gradle.GradleKotlinNewProjectWizardData.Companion.kotlinGradleData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.setup.GradleCreateProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -136,7 +136,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         kotlinBuildSystemData!!.buildSystem = GRADLE
         kotlinGradleData!!.parentData = parentData
         kotlinGradleData!!.generateMultipleModules = generateMultipleModules
-        kotlinGradleData!!.gradleDsl = if (useKotlinDsl) GradleDsl.KOTLIN else GradleDsl.GROOVY
+        kotlinGradleData!!.gradleDsl = GradleDsl.valueOf(useKotlinDsl)
         kotlinGradleData!!.groupId = groupId
         kotlinGradleData!!.artifactId = name
         kotlinGradleData!!.version = version

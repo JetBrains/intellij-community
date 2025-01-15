@@ -63,6 +63,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIB
 import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersionProviderService
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME

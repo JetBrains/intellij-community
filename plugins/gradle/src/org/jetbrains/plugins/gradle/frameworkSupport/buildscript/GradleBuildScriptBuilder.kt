@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 
@@ -98,9 +99,14 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
 
     @JvmStatic
     fun create(gradleVersion: GradleVersion, useKotlinDsl: Boolean): GradleBuildScriptBuilder<*> {
-      return when (useKotlinDsl) {
-        true -> KotlinDslGradleBuildScriptBuilder.Impl(gradleVersion)
-        else -> GroovyDslGradleBuildScriptBuilder.Impl(gradleVersion)
+      return create(gradleVersion, GradleDsl.valueOf(useKotlinDsl))
+    }
+
+    @JvmStatic
+    fun create(gradleVersion: GradleVersion, gradleDsl: GradleDsl): GradleBuildScriptBuilder<*> {
+      return when (gradleDsl) {
+        GradleDsl.GROOVY -> GroovyDslGradleBuildScriptBuilder.Impl(gradleVersion)
+        GradleDsl.KOTLIN -> KotlinDslGradleBuildScriptBuilder.Impl(gradleVersion)
       }
     }
   }

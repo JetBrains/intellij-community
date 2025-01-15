@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
@@ -36,9 +37,14 @@ interface GradleSettingScriptBuilder<Self: GradleSettingScriptBuilder<Self>> : S
 
     @JvmStatic
     fun create(useKotlinDsl: Boolean): GradleSettingScriptBuilder<*> {
-      return when (useKotlinDsl) {
-        true -> KotlinDslGradleSettingScriptBuilder.Impl()
-        else -> GroovyDslGradleSettingScriptBuilder.Impl()
+      return create(GradleDsl.valueOf(useKotlinDsl))
+    }
+
+    @JvmStatic
+    fun create(gradleDsl: GradleDsl): GradleSettingScriptBuilder<*> {
+      return when (gradleDsl) {
+        GradleDsl.GROOVY -> GroovyDslGradleSettingScriptBuilder.Impl()
+        GradleDsl.KOTLIN -> KotlinDslGradleSettingScriptBuilder.Impl()
       }
     }
   }

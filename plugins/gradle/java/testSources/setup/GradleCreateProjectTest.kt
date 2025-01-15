@@ -12,8 +12,8 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAsser
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

@@ -51,8 +51,8 @@ import org.gradle.wrapper.WrapperConfiguration;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GroovyDslGradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
@@ -445,7 +445,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   public @NotNull String settingsScript(@NotNull Consumer<GradleSettingScriptBuilder<?>> configure) {
-    var builder = new GroovyDslGradleSettingScriptBuilder();
+    var builder = GradleSettingScriptBuilder.create(GradleDsl.GROOVY);
     configure.accept(builder);
     return builder.generate();
   }
