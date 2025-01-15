@@ -43,6 +43,7 @@ import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
+import com.jetbrains.rhizomedb.exists
 import fleet.kernel.change
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.filter
@@ -166,6 +167,9 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       taskSuspender.isSuspendable.collectLatest { suspension ->
         change {
           shared {
+            // in case of a replay, the existence has to be checked manually
+            if (!taskInfo.exists()) return@shared
+
             taskInfo[TaskInfoEntity.TaskSuspensionType] = suspension
           }
         }

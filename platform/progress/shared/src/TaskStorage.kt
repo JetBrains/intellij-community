@@ -6,10 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
-import com.intellij.platform.project.asEntityOrNull
 import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.ChangeScope
-import fleet.kernel.tryWithEntities
+import com.jetbrains.rhizomedb.exists
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -107,10 +106,10 @@ abstract class TaskStorage {
    * @return Unit
    */
   suspend fun updateTask(taskInfoEntity: TaskInfoEntity, state: ProgressState): Unit = withKernel {
-    tryWithEntities(taskInfoEntity) {
-      updateTaskInfoEntity {
-        taskInfoEntity[TaskInfoEntity.ProgressStateType] = state
-      }
+    updateTaskInfoEntity {
+      if (!taskInfoEntity.exists()) return@updateTaskInfoEntity
+
+      taskInfoEntity[TaskInfoEntity.ProgressStateType] = state
     }
   }
 

@@ -126,6 +126,8 @@ suspend fun <T> waitForNotNull(p: () -> T?): T {
 /**
  * guarantees that [entities] exist in the current db for all operations, including suspend [change]
  * see [withCondition]
+ *
+ * NOTE that in the [shared] blocks the existence has to be checked manually
  */
 suspend fun <T> withEntities(vararg entities: Entity, body: suspend CoroutineScope.() -> T): T =
   tryWithEntities(entities = entities, body).getOrThrow()
@@ -140,6 +142,8 @@ suspend fun <T> tryWithEntities(vararg entities: Entity, body: suspend Coroutine
 /**
  * guarantees that [condition] is true in the current db for all operations, including suspend [change]
  * if the condition is invalidated, [body] will be cancelled
+ *
+ * NOTE that in the [shared] blocks the condition has to be checked manually
  */
 suspend fun <T> tryWithCondition(condition: () -> Boolean, body: suspend CoroutineScope.() -> T): WithMatchResult<T> =
   predicateQuery(condition).withPredicate(body)
