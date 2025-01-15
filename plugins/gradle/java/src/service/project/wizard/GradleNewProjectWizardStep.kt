@@ -52,7 +52,6 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.WRAPPER
@@ -68,6 +67,7 @@ import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.suggestGradleVersion
+import java.nio.file.Path
 import javax.swing.Icon
 
 abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
@@ -200,7 +200,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .bindSelected(updateDefaultProjectSettingsProperty)
           .onApply {
             if (updateDefaultProjectSettings) {
-              GradleDefaultProjectSettings.setInstance(getCurrentDefaultProjectSettings())
+              GradleDefaultProjectSettings.setInstance(getDefaultProjectSettings())
             }
           }
       }.bottomGap(BottomGap.SMALL)
@@ -216,13 +216,13 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
   }
 
-  private fun getCurrentDefaultProjectSettings(): GradleDefaultProjectSettings {
+  private fun getDefaultProjectSettings(): GradleDefaultProjectSettings {
     val settings = GradleDefaultProjectSettings.getInstance().copy()
     settings.distributionType = distributionType.value
     when (distributionType) {
       WRAPPER -> when (autoSelectGradleVersion) {
         true -> settings.gradleVersion = null
-        else -> settings.gradleVersion = getGradleVersionSafe(gradleVersion)
+        else -> settings.gradleVersion = GradleVersion.version(gradleVersion)
       }
       LOCAL -> settings.gradleVersion = null
     }
@@ -402,11 +402,10 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun ValidationInfoBuilder.validateGradleHome(withDialog: Boolean): ValidationInfo? {
-    val installationManager = GradleInstallationManager.getInstance()
-    if (!installationManager.isGradleSdkHome(context.project, gradleHome)) {
+    if (!GradleInstallationManager.getInstance().isGradleSdkHome(context.project, gradleHome)) {
       return error(GradleBundle.message("gradle.project.settings.distribution.invalid"))
     }
-    val gradleVersion = GradleInstallationManager.getGradleVersion(gradleHome)
+    val gradleVersion = GradleInstallationManager.getGradleVersion(Path.of(gradleHome))
     if (gradleVersion == null) {
       return error(GradleBundle.message("gradle.project.settings.distribution.version.invalid"))
     }
@@ -463,6 +462,14 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
   }
 
+  val gradleVersionToUse: GradleVersion by lazy {
+    val rawGradleVersion = when (distributionType) {
+      WRAPPER -> gradleVersion
+      LOCAL -> GradleInstallationManager.getGradleVersion(Path.of(gradleHome))!!
+    }
+    GradleVersion.version(rawGradleVersion)
+  }
+
   fun setupBuilder(builder: AbstractGradleModuleBuilder) {
     builder.moduleJdk = sdk
     builder.name = parentStep.name
@@ -478,14 +485,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.isUseKotlinDsl = gradleDsl == GradleDsl.KOTLIN
 
     builder.setCreateEmptyContentRoots(false)
-    builder.setGradleVersion(
-      GradleVersion.version(
-        when (distributionType) {
-          WRAPPER -> gradleVersion
-          LOCAL -> GradleInstallationManager.getGradleVersion(gradleHome)!!
-        }
-      )
-    )
+    builder.setGradleVersion(gradleVersionToUse)
     builder.setGradleDistributionType(distributionType.value)
     builder.setGradleHome(gradleHome)
   }

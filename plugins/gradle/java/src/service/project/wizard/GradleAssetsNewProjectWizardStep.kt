@@ -39,13 +39,13 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
 
   fun addBuildScript(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     val name = getBuildScriptName(parent.gradleDsl)
-    val content = buildScript(parent.getGradleVersion(), parent.gradleDsl, configure)
+    val content = buildScript(parent.gradleVersionToUse, parent.gradleDsl, configure)
     addAssets(GeneratorFile(name, content))
   }
 
   fun addSettingsScript(configure: GradleSettingScriptBuilder<*>.() -> Unit) {
     val name = getSettingsScriptName(parent.gradleDsl)
-    val content = settingsScript(parent.getGradleVersion(), parent.gradleDsl, configure)
+    val content = settingsScript(parent.gradleVersionToUse, parent.gradleDsl, configure)
     addAssets(GeneratorFile(name, content))
   }
 
@@ -72,7 +72,7 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
 
     val name = getSettingsScriptName(parent.gradleDsl)
     val path = projectPath.resolve(name)
-    val content = settingsScript(parent.getGradleVersion(), parent.gradleDsl) {
+    val content = settingsScript(parent.gradleVersionToUse, parent.gradleDsl) {
       setProjectName(parent.artifactId)
       configure()
     }
@@ -88,7 +88,7 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
     val name = getSettingsScriptName(gradleDsl)
     val path = projectPath.resolve(name)
     val oldContent = runCatching { path.readText() }.getOrNull() ?: return false
-    val content = settingsScript(parent.getGradleVersion(), gradleDsl) {
+    val content = settingsScript(parent.gradleVersionToUse, gradleDsl) {
       addCode(oldContent)
       configure()
     }

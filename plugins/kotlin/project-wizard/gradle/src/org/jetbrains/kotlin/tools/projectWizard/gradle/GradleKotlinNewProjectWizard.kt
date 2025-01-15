@@ -234,8 +234,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                     return
                 }
             }
-            val currentGradleVersion = GradleVersion.version(gradleVersion)
-            canUseFoojay = currentGradleVersion >= minGradleFoojayVersion
+            canUseFoojay = gradleVersionToUse >= minGradleFoojayVersion
         }
 
         // The default value is actually never used, it is just here to avoid the variable being nullable.
@@ -249,9 +248,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
 
             val parentModule = project.findParentModule()?.baseModule ?: return
-            val parsedGradleVersion = GradleVersion.version(gradleVersion) ?: return
-            kotlinVersionToUse =
-                KotlinWithGradleConfigurator.findBestKotlinVersion(parentModule, parsedGradleVersion)?.rawVersion ?: latestKotlinVersion
+            val bestKotlinVersion = KotlinWithGradleConfigurator.findBestKotlinVersion(parentModule, gradleVersionToUse)
+            kotlinVersionToUse = bestKotlinVersion?.rawVersion ?: latestKotlinVersion
         }
 
         private fun initializeProjectValues(project: Project) {
@@ -327,6 +325,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
 
         override fun setupProject(project: Project) {
+            super.setupProject(project)
+
             initializeProjectValues(project)
 
             if (shouldGenerateMultipleModules) return
