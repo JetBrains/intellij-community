@@ -33,6 +33,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.ExceptionUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.importing.*
@@ -42,6 +43,7 @@ import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.telemetry.tracer
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -116,7 +118,7 @@ internal open class WorkspaceProjectImporter(
       }
     }
 
-    MavenProjectImporterUtil.scheduleRefreshResolvedArtifacts(postTasks, projectChangesInfo.changedProjectsOnly)
+    scheduleRefreshResolvedArtifacts(postTasks, projectChangesInfo.changedProjectsOnly)
 
     createdModulesList.addAll(appliedProjectsWithModules.flatMap { it.modules.asSequence().map { it.module } })
 
@@ -125,7 +127,6 @@ internal open class WorkspaceProjectImporter(
     addAfterImportTask(postTasks, contextData, appliedProjectsWithModules)
 
     return postTasks
-
   }
 
   protected open fun addAfterImportTask(
@@ -667,6 +668,50 @@ internal open class WorkspaceProjectImporter(
                                    attempts = attempts)
       val newStorageVersion = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage.version
       LOG.info("Project model updated to version ${newStorageVersion} (attempts: $attempts, previous version: $prevStorageVersion)")
+    }
+
+    private fun scheduleRefreshResolvedArtifacts(
+      postTasks: MutableList<MavenProjectsProcessorTask>,
+      projectsToRefresh: Iterable<MavenProject>,
+    ) {
+      if (!Registry.`is`("maven.sync.refresh.resolved.artifacts", false)) return
+
+      // We have to refresh all the resolved artifacts manually in order to
+      // update all the VirtualFilePointers. It is not enough to call
+      // VirtualFileManager.refresh() since the newly created files will be only
+      // picked by FS when FileWatcher finishes its work. And in the case of import
+      // it doesn't finish in time.
+      // I couldn't manage to write a test for this since behaviour of VirtualFileManager
+      // and FileWatcher differs from real-life execution.
+      val files = HashSet<Path>()
+      for (project in projectsToRefresh) {
+        for (dependency in project.dependencies) {
+          files.add(dependency.file.toPath())
+        }
+      }
+      if (MavenUtil.isMavenUnitTestModeEnabled()) {
+        doRefreshFiles(files)
+      }
+      else {
+        postTasks.add(RefreshingFilesTask(files))
+      }
+    }
+
+    private class RefreshingFilesTask(private val myFiles: Set<Path>) : MavenProjectsProcessorTask {
+      override fun perform(
+        project: Project,
+        embeddersManager: MavenEmbeddersManager,
+        indicator: ProgressIndicator,
+      ) {
+        val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+        cs.launch {
+          doRefreshFiles(myFiles)
+        }
+      }
+    }
+
+    private fun doRefreshFiles(files: Set<Path>) {
+      LocalFileSystem.getInstance().refreshNioFiles(files)
     }
 
     private val LOG = Logger.getInstance(WorkspaceProjectImporter::class.java)

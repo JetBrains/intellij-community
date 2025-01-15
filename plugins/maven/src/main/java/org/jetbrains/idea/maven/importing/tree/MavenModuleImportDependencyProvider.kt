@@ -7,9 +7,6 @@ import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.COMPILED
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.SOURCES
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil
-import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.createCopyForLocalRepo
-import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.getAttachedJarsLibName
 import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.selectScope
 import org.jetbrains.idea.maven.importing.tree.dependency.*
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter.Companion.JAVADOC_TYPE
@@ -23,6 +20,7 @@ import org.jetbrains.idea.maven.project.SupportedRequestType
 import org.jetbrains.idea.maven.utils.MavenLog
 
 private const val INITIAL_CAPACITY_TEST_DEPENDENCY_LIST: Int = 4
+private val IMPORTED_CLASSIFIERS = setOf("client")
 
 internal class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
                                           importingSettings: MavenImportingSettings,
@@ -89,7 +87,7 @@ internal class MavenModuleImportDependencyProvider(private val moduleImportDataB
         ContainerUtil.addIfNotNull(result, createAttachArtifactDependency(depProject, scope, artifact))
 
         val classifier = artifact.classifier
-        if (classifier != null && MavenProjectImporterUtil.IMPORTED_CLASSIFIERS.contains(classifier)
+        if (classifier != null && IMPORTED_CLASSIFIERS.contains(classifier)
             && !isTestJar
             && "system" != artifact.scope
             && "false" != System.getProperty("idea.maven.classifier.dep")) {
@@ -129,6 +127,23 @@ internal class MavenModuleImportDependencyProvider(private val moduleImportDataB
       MavenLog.LOG.trace("Created base dependency, bundle: $isBundle")
       return listOf<MavenImportDependency<*>>(BaseDependency(finalArtifact, scope))
     }
+  }
+
+  private fun createCopyForLocalRepo(artifact: MavenArtifact, project: MavenProject): MavenArtifact {
+    return MavenArtifact(
+      artifact.groupId,
+      artifact.artifactId,
+      artifact.version,
+      artifact.baseVersion,
+      artifact.type,
+      artifact.classifier,
+      artifact.scope,
+      artifact.isOptional,
+      artifact.extension,
+      null,
+      project.localRepositoryPath.toFile(),
+      false, false
+    )
   }
 
   private fun addMainDependencyToTestModule(importData: MavenProjectImportData,
@@ -181,4 +196,12 @@ internal class MavenModuleImportDependencyProvider(private val moduleImportDataB
 
     return if (create) AttachedJarDependency(getAttachedJarsLibName(artifact), roots, scope) else null
   }
+
+  private fun getAttachedJarsLibName(artifact: MavenArtifact): String {
+    var libraryName = artifact.getLibraryName()
+    assert(libraryName.startsWith(MavenArtifact.MAVEN_LIB_PREFIX))
+    libraryName = MavenArtifact.MAVEN_LIB_PREFIX + "ATTACHED-JAR: " + libraryName.substring(MavenArtifact.MAVEN_LIB_PREFIX.length)
+    return libraryName
+  }
+
 }

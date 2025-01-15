@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -63,7 +65,15 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
     }
     configureModules(context.project, data, ideCompilerConfiguration, defaultCompilerExtension)
 
-    MavenProjectImporterUtil.removeOutdatedCompilerConfigSettings(context.project)
+    removeOutdatedCompilerConfigSettings(context.project)
+  }
+
+  private fun removeOutdatedCompilerConfigSettings(project: Project) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    val javacOptions = JavacConfiguration.getOptions(project, JavacConfiguration::class.java)
+    var options = javacOptions.ADDITIONAL_OPTIONS_STRING
+    options = options.replaceFirst("(-target (\\S+))".toRegex(), "") // Old IDEAs saved
+    javacOptions.ADDITIONAL_OPTIONS_STRING = options
   }
 
   private fun getCompilerConfigurationWhenApplicable(project: Project, mavenProject: MavenProject): Element? {
