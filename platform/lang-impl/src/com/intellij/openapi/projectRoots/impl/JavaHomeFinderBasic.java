@@ -281,9 +281,7 @@ public class JavaHomeFinderBasic {
     Path installsDir = findMiseInstallsDir();
     if (installsDir == null) return Collections.emptySet();
     Path jdks = installsDir.resolve("java");
-    return scanAll(jdks, true).stream()
-      .filter(path -> !Files.isSymbolicLink(Path.of(path)))
-      .collect(Collectors.toSet());
+    return scanAll(jdks, true);
   }
 
   private @Nullable Path findMiseInstallsDir() {
