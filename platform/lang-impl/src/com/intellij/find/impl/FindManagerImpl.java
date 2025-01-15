@@ -124,14 +124,14 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @Override
-  public int showPromptDialog(final @NotNull FindModel model, String title) {
+  public int showPromptDialog(@NotNull FindModel model, String title) {
     return showPromptDialogImpl(model, title, null);
   }
 
   @PromptResultValue
-  private int showPromptDialogImpl(final @NotNull FindModel model,
+  private int showPromptDialogImpl(@NotNull FindModel model,
                                    @NlsContexts.DialogTitle String title,
-                                   final @Nullable MalformedReplacementStringException exception) {
+                                   @Nullable MalformedReplacementStringException exception) {
     ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject, exception) {
       @Override
       public @Nullable Point getInitialLocation() {
@@ -177,7 +177,7 @@ public final class FindManagerImpl extends FindManager {
   public void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler) {
     if (myHelper == null || Disposer.isDisposed(myHelper)) {
       myHelper = new FindUIHelper(myProject, model, okHandler);
-        Disposer.register(myHelper, () -> myHelper = null);
+      Disposer.register(myHelper, () -> myHelper = null);
     }
     else {
       myHelper.setModel(model);
@@ -235,7 +235,7 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @Override
-  public FindModel getFindNextModel(final @NotNull Editor editor) {
+  public FindModel getFindNextModel(@NotNull Editor editor) {
     if (myFindNextModel == null) return null;
 
     EditorSearchSession search = EditorSearchSession.get(editor);
@@ -505,7 +505,7 @@ public final class FindManagerImpl extends FindManager {
                                                         char[] textArray,
                                                         int offset,
                                                         @NotNull FindModel model,
-                                                        final @NotNull VirtualFile file) {
+                                                        @NotNull VirtualFile file) {
     ThreadLocal<SoftReference<CommentsLiteralsSearchData>> data;
     synchronized (model) {
       data = model.getUserData(ourCommentsLiteralsSearchDataKey);
@@ -697,10 +697,7 @@ public final class FindManagerImpl extends FindManager {
     return syntaxHighlighter;
   }
 
-  private FindResult findStringByRegularExpression(CharSequence text,
-                                                   int startOffset,
-                                                   FindModel model,
-                                                   VirtualFile file) {
+  private FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model, VirtualFile file) {
     Matcher matcher = compileRegExp(model, text);
     if (matcher == null) {
       return NOT_FOUND_RESULT;
@@ -726,14 +723,16 @@ public final class FindManagerImpl extends FindManager {
         }
         return new FindResultImpl(start, end);
       }
-    } catch (StackOverflowError soe) {
+    }
+    catch (StackOverflowError soe) {
       String stringToFind = model.getStringToFind();
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
           ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
         String content = FindBundle.message("notification.content.regular.expression.soe", stringToFind, file.getPresentableUrl());
         LOG.info(content);
-        GROUP.createNotification(FindBundle.message("notification.title.regular.expression.failed.to.match"), content, NotificationType.ERROR).notify(myProject);
+        String message = FindBundle.message("notification.title.regular.expression.failed.to.match");
+        GROUP.createNotification(message, content, NotificationType.ERROR).notify(myProject);
       }
       return NOT_FOUND_RESULT;
     }
@@ -741,9 +740,7 @@ public final class FindManagerImpl extends FindManager {
 
   private static Matcher compileRegExp(FindModel model, CharSequence text) {
     Pattern pattern = model.compileRegExp();
-    return pattern == null ?
-           null :
-           pattern.matcher( StringPattern.newBombedCharSequence(text) );
+    return pattern == null ? null : pattern.matcher(StringPattern.newBombedCharSequence(text));
   }
 
   @Override
@@ -761,16 +758,16 @@ public final class FindManagerImpl extends FindManager {
     return replacement;
   }
 
-  private static String getStringToReplaceByRegexp(final @NotNull FindModel model, @NotNull CharSequence text, int startOffset) throws MalformedReplacementStringException {
-    Matcher matcher = compileRegexAndFindFirst(model, text, startOffset);
-    return getStringToReplaceByRegexp(model, matcher);
+  private static String getStringToReplaceByRegexp(@NotNull FindModel model, @NotNull CharSequence text, int startOffset)
+    throws MalformedReplacementStringException {
+    return getStringToReplaceByRegexp(model, compileRegexAndFindFirst(model, text, startOffset));
   }
 
-  private static String getStringToReplaceByRegexp(final @NotNull FindModel model, Matcher matcher) throws MalformedReplacementStringException{
+  private static String getStringToReplaceByRegexp(@NotNull FindModel model, Matcher matcher)
+    throws MalformedReplacementStringException {
     if (matcher == null) return null;
     try {
-      String toReplace = model.getStringToReplace();
-      return new RegExReplacementBuilder(matcher).createReplacement(toReplace);
+      return new RegExReplacementBuilder(matcher).createReplacement(model.getStringToReplace());
     }
     catch (Exception e) {
       throw createMalformedReplacementException(model, e);
@@ -838,8 +835,7 @@ public final class FindManagerImpl extends FindManager {
   @Override
   public void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor textEditor) {
-      Editor editor = textEditor.getEditor();
-      Document document = editor.getDocument();
+      Document document = textEditor.getEditor().getDocument();
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
 
       myFindUsagesManager.findUsages(element, psiFile, fileEditor, false, null);
@@ -848,18 +844,16 @@ public final class FindManagerImpl extends FindManager {
 
   private static boolean tryToFindNextUsageViaEditorSearchComponent(Editor editor, SearchResults.Direction forwardOrBackward) {
     EditorSearchSession search = EditorSearchSession.get(editor);
-    if (search != null && search.hasMatches()) {
-      if (!search.isSearchInProgress()) {
-        if (forwardOrBackward == SearchResults.Direction.UP) {
-          search.searchBackward();
-        }
-        else {
-          search.searchForward();
-        }
+    if (search == null || !search.hasMatches()) return false;
+    if (!search.isSearchInProgress()) {
+      if (forwardOrBackward == SearchResults.Direction.UP) {
+        search.searchBackward();
       }
-      return true;
+      else {
+        search.searchForward();
+      }
     }
-    return false;
+    return true;
   }
 
   @Override
@@ -889,7 +883,8 @@ public final class FindManagerImpl extends FindManager {
     return myFindUsagesManager.findPreviousUsageInFile(editor);
   }
 
-  private static boolean highlightNextHighlighter(RangeHighlighter[] highlighters, Editor editor, int offset, boolean isForward, boolean secondPass) {
+  private static boolean highlightNextHighlighter(RangeHighlighter[] highlighters, Editor editor, int offset,
+                                                  boolean isForward, boolean secondPass) {
     RangeHighlighter highlighterToSelect = null;
     Object wasNotFound = editor.getUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY);
     for (RangeHighlighter highlighter : highlighters) {
@@ -946,8 +941,8 @@ public final class FindManagerImpl extends FindManager {
       }
       JComponent component = HintUtil.createInformationLabel(message);
       final LightweightHint hint = new LightweightHint(component);
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER, HintManager.HIDE_BY_ANY_KEY |
-                                                                                        HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false);
+      int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER, flags, 0, false);
       return true;
     }
     if (!secondPass) {
@@ -958,11 +953,11 @@ public final class FindManagerImpl extends FindManager {
     return false;
   }
 
-  private static void expandFoldRegionsIfNecessary(@NotNull Editor editor, final int startOffset, int endOffset) {
+  private static void expandFoldRegionsIfNecessary(@NotNull Editor editor, int startOffset, int endOffset) {
     final FoldingModel foldingModel = editor.getFoldingModel();
     final FoldRegion[] regions;
-    if (foldingModel instanceof FoldingModelEx) {
-      regions = ((FoldingModelEx)foldingModel).fetchTopLevel();
+    if (foldingModel instanceof FoldingModelEx ex) {
+      regions = ex.fetchTopLevel();
     }
     else {
       regions = foldingModel.getAllFoldRegions();
