@@ -48,6 +48,15 @@ object MavenImportUtil {
     "JDK_1_7" to LanguageLevel.JDK_1_7
   )
 
+  private const val PHASE_COMPILE = "compile"
+  private const val PHASE_TEST_COMPILE = "test-compile"
+
+  private const val GOAL_COMPILE = "compile"
+  private const val GOAL_TEST_COMPILE = "test-compile"
+
+  private const val EXECUTION_COMPILE = "default-compile"
+  private const val EXECUTION_TEST_COMPILE = "default-testCompile"
+
   fun getArtifactUrlForClassifierAndExtension(
     artifact: MavenArtifact,
     classifier: String?,
@@ -138,14 +147,14 @@ object MavenImportUtil {
   }
 
   fun isTestExecution(e: MavenPlugin.Execution): Boolean {
-    return checkExecution(e, "test-compile", "test-compile", "default-testCompile")
+    return checkExecution(e, PHASE_TEST_COMPILE, GOAL_TEST_COMPILE, EXECUTION_TEST_COMPILE)
   }
 
   private fun isCompileExecution(e: MavenPlugin.Execution): Boolean {
-    return checkExecution(e, "compile", "compile", "default-compile")
+    return checkExecution(e, PHASE_COMPILE, GOAL_COMPILE, EXECUTION_COMPILE)
   }
 
-  private fun checkExecution(e: MavenPlugin.Execution, phase: String, goal: String?, defaultExecId: String): Boolean {
+  private fun checkExecution(e: MavenPlugin.Execution, phase: String, goal: String, defaultExecId: String): Boolean {
     return "none" != e.phase &&
            (phase == e.phase ||
             (e.goals != null && e.goals.contains(goal)) ||
