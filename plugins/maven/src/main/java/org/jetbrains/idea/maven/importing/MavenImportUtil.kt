@@ -31,7 +31,6 @@ import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.importing.tree.MavenJavaVersionHolder
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProject
@@ -59,11 +58,19 @@ object MavenImportUtil {
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, newPath) + JarFileSystem.JAR_SEPARATOR
   }
 
+  fun getSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
+    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), true, false)
+  }
+
+  fun getTestSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
+    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), true, true)
+  }
+
   fun getTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
     return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, false)
   }
 
-  fun getTargetTestLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
+  fun getTestTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
     return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, true)
   }
 
@@ -94,21 +101,24 @@ object MavenImportUtil {
 
   internal fun getMaxMavenJavaVersion(projects: List<MavenProject>): LanguageLevel? {
     val maxLevel = projects.flatMap {
-      val javaVersions = getMavenJavaVersions(it)
-      listOf(javaVersions.sourceLevel, javaVersions.testSourceLevel, javaVersions.targetLevel, javaVersions.testTargetLevel)
+      listOf(
+        getSourceLanguageLevel(it),
+        getTestSourceLanguageLevel(it),
+        getTargetLanguageLevel(it),
+        getTestTargetLanguageLevel(it)
+      )
     }.filterNotNull().maxWithOrNull(Comparator.naturalOrder()) ?: HIGHEST
     return maxLevel
   }
 
-  @Deprecated("Maven project can have multiple source/target versions if multiReleaseOutput is used")
-  internal fun getMavenJavaVersions(mavenProject: MavenProject): MavenJavaVersionHolder {
-    val useReleaseCompilerProp = isReleaseCompilerProp(mavenProject)
-    val sourceVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, false)
-    val sourceTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, true)
-    val targetVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, false)
-    val targetTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, false, true)
-    return MavenJavaVersionHolder(sourceVersion, targetVersion, sourceTestVersion, targetTestVersion,
-                                  hasAnotherTestExecution(mavenProject),
+  // Maven project can have multiple source/target versions if multiReleaseOutput is used
+  private fun getMavenJavaVersions(mavenProject: MavenProject): MavenJavaVersionHolder {
+    val sourceLevel = getSourceLanguageLevel(mavenProject)
+    val testSourceLevel = getTestSourceLanguageLevel(mavenProject)
+    val targetLevel = getTargetLanguageLevel(mavenProject)
+    val testTargetLevel = getTestTargetLanguageLevel(mavenProject)
+    return MavenJavaVersionHolder(sourceLevel, targetLevel, testSourceLevel, testTargetLevel,
+                                  hasExecutionsForTests(mavenProject),
                                   hasTestCompilerArgs(mavenProject))
   }
 
@@ -127,7 +137,7 @@ object MavenImportUtil {
                               config.getChild("testCompilerArguments") != null)
   }
 
-  private fun hasAnotherTestExecution(project: MavenProject): Boolean {
+  private fun hasExecutionsForTests(project: MavenProject): Boolean {
     val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
     if (plugin == null) return false
     val executions = plugin.executions
@@ -319,7 +329,8 @@ object MavenImportUtil {
     return !project.isAggregator && mavenJavaVersions.needSeparateTestModule() && isCompilerTestSupport(project)
   }
 
-  internal fun getModuleType(project: MavenProject, mavenJavaVersions: MavenJavaVersionHolder): StandardMavenModuleType {
+  internal fun getModuleTypeToBeImported(project: MavenProject): StandardMavenModuleType {
+    val mavenJavaVersions = getMavenJavaVersions(project)
     if (needSplitMainAndTest(project, mavenJavaVersions)) {
       return StandardMavenModuleType.COMPOUND_MODULE
     }
@@ -328,6 +339,20 @@ object MavenImportUtil {
     }
     else {
       return StandardMavenModuleType.SINGLE_MODULE
+    }
+  }
+
+  private class MavenJavaVersionHolder(
+    @JvmField val sourceLevel: LanguageLevel?,
+    @JvmField val targetLevel: LanguageLevel?,
+    @JvmField val testSourceLevel: LanguageLevel?,
+    @JvmField val testTargetLevel: LanguageLevel?,
+    @JvmField val hasExecutionsForTests: Boolean,
+    @JvmField val hasTestCompilerArgs: Boolean,
+  ) {
+    fun needSeparateTestModule(): Boolean {
+      return hasTestCompilerArgs || hasExecutionsForTests || (testSourceLevel != null && testSourceLevel != sourceLevel)
+             || (testTargetLevel != null && testTargetLevel != targetLevel)
     }
   }
 }

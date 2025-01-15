@@ -90,12 +90,13 @@ internal class MavenProjectImportContextProvider(
   }
 
   private fun getModuleImportData(project: MavenProject, moduleName: String, changes: MavenProjectChanges): MavenProjectImportData {
-    val setUpJavaVersions = MavenImportUtil.getMavenJavaVersions(project)
-    val javaVersions = adjustJavaVersions(setUpJavaVersions)
-    val sourceLevel = javaVersions.sourceLevel
-    val testSourceLevel = javaVersions.testSourceLevel
+    val setUpSourceLevel = MavenImportUtil.getSourceLanguageLevel(project)
+    val setUpTestSourceLevel = MavenImportUtil.getTestSourceLanguageLevel(project)
 
-    val type = MavenImportUtil.getModuleType(project, javaVersions)
+    val sourceLevel = if (setUpSourceLevel == null) null else adjustLevelAndNotify(myProject, setUpSourceLevel)
+    val testSourceLevel = if (setUpTestSourceLevel == null) null else adjustLevelAndNotify(myProject, setUpTestSourceLevel)
+
+    val type = MavenImportUtil.getModuleTypeToBeImported(project)
 
     val moduleData = ModuleData(moduleName, type, sourceLevel, testSourceLevel)
     if (type != StandardMavenModuleType.COMPOUND_MODULE) {
@@ -108,17 +109,6 @@ internal class MavenProjectImportContextProvider(
     val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, sourceLevel, testSourceLevel)
 
     return MavenProjectImportData(project, moduleData, changes, listOf(mainData, testData))
-  }
-
-  private fun adjustJavaVersions(holder: MavenJavaVersionHolder): MavenJavaVersionHolder {
-    return MavenJavaVersionHolder(
-      if (holder.sourceLevel == null) null else adjustLevelAndNotify(myProject, holder.sourceLevel),
-      if (holder.targetLevel == null) null else adjustLevelAndNotify(myProject, holder.targetLevel),
-      if (holder.testSourceLevel == null) null else adjustLevelAndNotify(myProject, holder.testSourceLevel),
-      if (holder.testTargetLevel == null) null else adjustLevelAndNotify(myProject, holder.testTargetLevel),
-      holder.hasExecutionsForTests,
-      holder.hasTestCompilerArgs
-    )
   }
 
   private class ModuleImportDataContext(

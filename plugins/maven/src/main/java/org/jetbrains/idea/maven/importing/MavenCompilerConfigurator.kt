@@ -167,7 +167,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
     if (targetLevel == null) {
       var level: LanguageLevel?
       if (MavenImportUtil.isTestModule(module.project, module.name)) {
-        level = MavenImportUtil.getTargetTestLanguageLevel(mavenProject)
+        level = MavenImportUtil.getTestTargetLanguageLevel(mavenProject)
       }
       else {
         level = MavenImportUtil.getTargetLanguageLevel(mavenProject)
