@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 // EXPECT_VARIANT_IN_ORDER "public fun bar(): kotlin.Unit defined in root.q"
 // EXPECT_VARIANT_IN_ORDER "public fun bar(): kotlin.Unit defined in root.r"
 // EXPECT_VARIANT_IN_ORDER "public fun bar(): kotlin.Unit defined in root.p"
