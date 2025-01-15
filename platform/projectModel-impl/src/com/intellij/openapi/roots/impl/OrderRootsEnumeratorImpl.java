@@ -73,7 +73,10 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       OrderRootType type = getRootType(orderEntry);
 
       if (orderEntry instanceof ModuleSourceOrderEntry) {
-        collectModuleRoots(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, !myOrderEnumerator.isProductionOnly(),
+        ModuleRootModel rootModel = ((ModuleSourceOrderEntry)orderEntry).getRootModel();
+        boolean includeTests = !myOrderEnumerator.isProductionOnly() &&
+                               (OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers) || myOrderEnumerator.isRootModuleModel(rootModel));
+        collectModuleRoots(type, rootModel, result, true, includeTests,
                            customHandlers);
       }
       else if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
@@ -111,8 +114,10 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       OrderRootType type = getRootType(orderEntry);
 
       if (orderEntry instanceof ModuleSourceOrderEntry) {
-        boolean includeTests = !myOrderEnumerator.isProductionOnly();
-        collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, includeTests, customHandlers);
+        ModuleRootModel rootModel = ((ModuleSourceOrderEntry)orderEntry).getRootModel();
+        boolean includeTests = !myOrderEnumerator.isProductionOnly() 
+                               && (OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers) || myOrderEnumerator.isRootModuleModel(rootModel));
+        collectModuleRootsUrls(type, rootModel, result, true, includeTests, customHandlers);
       }
       else if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
         final Module module = moduleOrderEntry.getModule();
