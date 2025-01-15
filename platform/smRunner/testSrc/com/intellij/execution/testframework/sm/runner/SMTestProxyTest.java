@@ -1154,6 +1154,22 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertTrue(root.getEndTime() - root.getStartTime() != root.getDuration());
   }
 
+  public void testDisplayOwnTimeTerminated() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy child1 = createTestProxy("child1", root);
+    SMTestProxy child2 = createTestProxy("child12", root);
+
+    root.setStarted();
+
+    child1.setStarted();
+
+    root.setTerminated();
+
+    assertNotNull(root.getEndTime());
+    assertNotNull(child1.getEndTime());
+    assertNotNull(child2.getEndTime());
+  }
+
   private static void assertDisplayTimeEqualsToSumOfChildren(@NotNull SMTestProxy node) {
     List<? extends SMTestProxy> children = node.collectChildren(new Filter<>() {
       @Override

@@ -132,7 +132,8 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
     SMTestProxy test = getSelectedTest(location);
 
     if (test == null || test.isLeaf() || test.getDurationStrategy() != TestDurationStrategy.AUTOMATIC ||
-        test.getEndTime() == null || test.getStartTime() == null) {
+        test.getEndTime() == null || test.getStartTime() == null ||
+        test.getEndTime() <= test.getStartTime()) {
       return null;
     }
 

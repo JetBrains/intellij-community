@@ -883,7 +883,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     if (myState.isFinal()) {
       return;
     }
-    if (myEndTime != null) {
+    if (myEndTime == null) {
       myEndTime = endTime;
     }
     myState = TerminatedState.INSTANCE;
