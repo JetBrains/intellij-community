@@ -1,22 +1,33 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemDataProvider
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeItemDataLocalProvider(private val itemsProvider: SeItemsProvider): SeItemDataProvider {
+class SeItemDataLocalProvider(private val provider: SeItemsProvider): SeItemDataProvider {
   override val id: SeProviderId
-    get() = SeProviderId(itemsProvider.id)
+    get() = SeProviderId(provider.id)
 
   override fun getItems(sessionRef: DurableRef<SeSessionEntity>, params: SeParams): Flow<SeItemData> {
-    return itemsProvider.getItems(params).mapNotNull {
-      SeItemData.createItemData(sessionRef, it, id, it.weight(), it.presentation())
+    return channelFlow {
+      provider.collectItems(params, object : SeItemsProvider.Collector {
+        override suspend fun put(item: SeItem): Boolean {
+          val itemData = SeItemData.createItemData(sessionRef, item, id, item.weight(), item.presentation()) ?: return true
+          send(itemData)
+          return coroutineContext.isActive
+        }
+      })
     }
   }
 }

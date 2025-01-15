@@ -7,9 +7,10 @@ import com.intellij.platform.searchEverywhere.SeTextItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchParams
 import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,22 +23,29 @@ class SeItemsProviderMock(
   private val delayStep: Int = 0,
 ) : SeItemsProvider {
 
-  override fun getItems(params: SeParams): Flow<SeItem> {
-    val searchText = (params as? SeTextSearchParams)?.text ?: return emptyFlow()
+  override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
+    val searchText = (params as? SeTextSearchParams)?.text ?: return
 
-    return flow {
-      delay(delayMillis)
+    coroutineScope {
+      val flow: Flow<SeItemMock> = flow {
+        delay(delayMillis)
 
-      repeat(size) { index ->
-        val item = SeItemMock("$resultPrefix $index")
+        repeat(size) { index ->
+          val item = SeItemMock("$resultPrefix $index")
 
-        if (searchText.isEmpty() || item.text.contains(searchText, ignoreCase = true)) {
-          emit(item)
+          if (searchText.isEmpty() || item.text.contains(searchText, ignoreCase = true)) {
+            emit(item)
+          }
+
+          if (delayStep > 0 && delayMillis > 0 && (index + 1) % delayStep == 0) {
+            delay(delayMillis)
+          }
         }
+      }
 
-        if (delayStep > 0 && delayMillis > 0 && (index + 1) % delayStep == 0) {
-          delay(delayMillis)
-        }
+      flow.collect {
+        val shouldContinue = collector.put(it)
+        if (!shouldContinue) cancel("Canceled by collector")
       }
     }
   }

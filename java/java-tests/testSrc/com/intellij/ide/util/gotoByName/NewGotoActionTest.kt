@@ -7,6 +7,7 @@ package com.intellij.ide.util.gotoByName
 //import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereSessionHelperMock
 import com.intellij.platform.searchEverywhere.SeActionParams
 import com.intellij.platform.searchEverywhere.SeTextSearchParams
+import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.mocks.SeItemsProviderMock
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -22,9 +23,10 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
     runBlocking {
       val params = SeActionParams("apply patch", null, true)
 
-      SeActionsProvider(project, null, null).getItems(params).collect {
-        println(it.presentation().text)
-      }
+      SeActionsProvider(project, null, null).collectItems(params, Collector { item ->
+        println(item.presentation().text)
+        true
+      })
     }
   }
 
@@ -33,9 +35,10 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
     runBlocking {
       val params = SeTextSearchParams("it", null)
 
-      defaultProvider.getItems(params).collect {
-        println(it.presentation().text)
-      }
+      defaultProvider.collectItems(params, Collector { item ->
+        println(item.presentation().text)
+        true
+      })
     }
   }
 
@@ -119,4 +122,10 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   //    searchJob.join()
   //  }
   //}
+
+  private class Collector(val collect: suspend (SeItem) -> Boolean): SeItemsProvider.Collector {
+    override suspend fun put(item: SeItem): Boolean {
+      return collect(item)
+    }
+  }
 }

@@ -12,10 +12,6 @@ import com.intellij.platform.searchEverywhere.SeTextSearchParams
 import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.mocks.SeFilesFilterData
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -29,25 +25,20 @@ class SeFilesProvider(val project: Project, private val legacyContributor: Searc
   override val id: String
     get() = "com.intellij.FileSearchEverywhereItemProvider"
 
-  override fun getItems(params: SeParams): Flow<SeItem> {
-    val textSearchParams = params as? SeTextSearchParams ?: return emptyFlow()
+  override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
+    val textSearchParams = params as? SeTextSearchParams ?: return
     val text = textSearchParams.text
     val filter = SeFilesFilterData.fromTabData(textSearchParams.filterData)
 
-    return channelFlow {
-      val collector = this
+    coroutineToIndicator {
+      val indicator = ProgressManager.getGlobalProgressIndicator()
 
-      coroutineToIndicator {
-        val indicator = ProgressManager.getGlobalProgressIndicator()
-
-        legacyContributor.fetchElements(text, indicator, object: AsyncProcessor<Any?> {
-          override suspend fun process(t: Any?): Boolean {
-            val legacyItem = t as? ItemWithPresentation<*> ?: return true
-            collector.send(SeFileItem(legacyItem))
-            return coroutineContext.isActive
-          }
-        })
-      }
+      legacyContributor.fetchElements(text, indicator, object: AsyncProcessor<Any?> {
+        override suspend fun process(t: Any?): Boolean {
+          val legacyItem = t as? ItemWithPresentation<*> ?: return true
+          return collector.put(SeFileItem(legacyItem))
+        }
+      })
     }
   }
 }

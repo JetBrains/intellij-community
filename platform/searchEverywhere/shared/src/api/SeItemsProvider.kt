@@ -2,11 +2,15 @@
 package com.intellij.platform.searchEverywhere.api
 
 import com.intellij.platform.searchEverywhere.SeParams
-import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface SeItemsProvider {
   val id: String
-  fun getItems(params: SeParams): Flow<SeItem>
+
+  fun interface Collector {
+    suspend fun put(item: SeItem): Boolean
+  }
+
+  suspend fun collectItems(params: SeParams, collector: Collector)
 }
