@@ -87,7 +87,7 @@ public final class JavaExecutionUtil {
   public static @Nullable PsiClass findMainClass(final Project project, final String mainClassName, final GlobalSearchScope scope) {
     if (project.isDefault() ||
         (DumbService.isDumb(project) &&
-         FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null &&
+         FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) == null &&
          !DumbService.getInstance(project).isAlternativeResolveEnabled())) {
       return null;
     }

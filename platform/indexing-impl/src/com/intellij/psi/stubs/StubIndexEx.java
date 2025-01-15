@@ -144,7 +144,7 @@ public abstract class StubIndexEx extends StubIndex {
       boolean dumb = DumbService.isDumb(project);
       if (dumb) {
         if (project instanceof LightEditCompatible) return false;
-        DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType();
+        DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project);
         if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE &&
             Registry.is("ide.dumb.mode.check.awareness")) {
           throw new AssertionError("raw index data access is not available for StubIndex");

@@ -76,9 +76,19 @@ public abstract class FileBasedIndex {
 
   /**
    * Should be called only in dumb mode and only in a read action
+   * @deprecated Please use getCurrentDumbModeAccessType(Project)
    */
   @Internal
+  @Deprecated
   public @Nullable DumbModeAccessType getCurrentDumbModeAccessType() {
+    return getCurrentDumbModeAccessType(null);
+  }
+
+  /**
+   * Should be called only in dumb mode and only in a read action
+   */
+  @Internal
+  public @Nullable DumbModeAccessType getCurrentDumbModeAccessType(@Nullable Project project) {
     throw new UnsupportedOperationException();
   }
 

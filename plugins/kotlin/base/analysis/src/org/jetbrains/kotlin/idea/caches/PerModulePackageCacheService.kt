@@ -349,7 +349,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         val cacheForCurrentModuleInfo = perSourceInfoCache.getOrPut(moduleInfo) {
             if (useStrongMapForCaching) ConcurrentHashMap() else CollectionFactory.createConcurrentSoftMap()
         }
-        if (!DumbService.isDumb(project) || FileBasedIndex.getInstance().currentDumbModeAccessType == null) {
+        if (!DumbService.isDumb(project) || FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) == null) {
             try {
                 return cacheForCurrentModuleInfo.getOrPut(packageFqName) {
                     val packageExists = KotlinPackageIndexUtils.packageExists(packageFqName, moduleInfo.contentScope)

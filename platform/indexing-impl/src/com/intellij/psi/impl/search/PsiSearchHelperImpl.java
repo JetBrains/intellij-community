@@ -1233,7 +1233,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     if (ApplicationManager.getApplication().isReadAccessAllowed() &&
         (!DumbService.isDumb(project) ||
-         FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null)) {
+         FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) != null)) {
       return computeQueries(scope, processor, textIndexQueries);
     }
 
