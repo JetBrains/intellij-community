@@ -49,7 +49,10 @@ internal class GitRepositoryReader(private val project: Project, private val git
       // read branches via git executable
       val pair = readBranchesFromGit(remotes)
       branches = pair.first
-      headInfo = pair.second
+      val headInfoFromGit = pair.second
+      if (headInfo == null || headInfoFromGit != HeadInfo.Unknown) {
+        headInfo = headInfoFromGit
+      }
 
       if (headInfo is HeadInfo.Unknown) {
         // handle detached head in refrable repos
