@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.importing.MavenImportUtil.getTargetLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestSourceLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestTargetLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.hasExecutionsForTests
-import org.jetbrains.idea.maven.importing.MavenImportUtil.hasMultireleaseOutput
+import org.jetbrains.idea.maven.importing.MavenImportUtil.hasMultiReleaseOutput
 import org.jetbrains.idea.maven.importing.MavenImportUtil.hasTestCompilerArgs
 import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompilerTestSupport
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
@@ -132,7 +132,7 @@ internal class MavenProjectImportContextProvider(
     if (languageLevels.mainAndTestLevelsDiffer()) return true
     if (hasTestCompilerArgs(project)) return true
     if (hasExecutionsForTests(project)) return true
-    if (hasMultireleaseOutput(project)) return true
+    if (hasMultiReleaseOutput(project)) return true
 
     return false
   }

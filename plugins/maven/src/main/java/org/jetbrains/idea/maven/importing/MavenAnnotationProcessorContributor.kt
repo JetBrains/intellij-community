@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
-import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.getAllCompilerConfigs
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getAllCompilerConfigs
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject

@@ -48,6 +48,9 @@ object MavenImportUtil {
     "JDK_1_7" to LanguageLevel.JDK_1_7
   )
 
+  private const val COMPILER_PLUGIN_GROUP_ID = "org.apache.maven.plugins"
+  private const val COMPILER_PLUGIN_ARTIFACT_ID = "maven-compiler-plugin"
+
   private const val PHASE_COMPILE = "compile"
   private const val PHASE_TEST_COMPILE = "test-compile"
 
@@ -120,7 +123,7 @@ object MavenImportUtil {
   }
 
   internal fun hasTestCompilerArgs(project: MavenProject): Boolean {
-    val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin") ?: return false
+    val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID) ?: return false
     val executions = plugin.executions
     if (executions == null || executions.isEmpty()) {
       return hasTestCompilerArgs(plugin.configurationElement)
@@ -135,7 +138,7 @@ object MavenImportUtil {
   }
 
   internal fun hasExecutionsForTests(project: MavenProject): Boolean {
-    val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+    val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     if (plugin == null) return false
     val executions = plugin.executions
     if (executions == null || executions.isEmpty()) return false
@@ -162,13 +165,13 @@ object MavenImportUtil {
            )
   }
 
-  internal fun hasMultireleaseOutput(project: MavenProject): Boolean {
-    val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin") ?: return false
+  internal fun hasMultiReleaseOutput(project: MavenProject): Boolean {
+    val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID) ?: return false
     val executions = plugin.executions ?: return false
-    return executions.any { isMultireleaseExecution(it) }
+    return executions.any { isMultiReleaseExecution(it) }
   }
 
-  private fun isMultireleaseExecution(e: MavenPlugin.Execution): Boolean {
+  private fun isMultiReleaseExecution(e: MavenPlugin.Execution): Boolean {
     val config = e.configurationElement ?: return false
     config.getChild("multiReleaseOutput") ?: return false
     return true
@@ -218,7 +221,7 @@ object MavenImportUtil {
   }
 
   fun getDefaultLevel(mavenProject: MavenProject): LanguageLevel {
-    val plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+    val plugin = mavenProject.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     if (plugin != null && plugin.version != null) {
       //https://github.com/apache/maven-compiler-plugin/blob/master/src/main/java/org/apache/maven/plugin/compiler/AbstractCompilerMojo.java
       // consider "source" parameter documentation.
@@ -245,7 +248,7 @@ object MavenImportUtil {
       return level.getPreviewLevel() ?: level
     }
 
-    val compilerConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
+    val compilerConfiguration = mavenProject.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     if (compilerConfiguration != null) {
       val enablePreviewParameter = compilerConfiguration.getChildTextTrim("enablePreview")
       if (enablePreviewParameter.toBoolean()) {
@@ -330,5 +333,17 @@ object MavenImportUtil {
       ExternalSystemUtil.markModuleAsMaven(module, null, true)
       module
     })
+  }
+
+  fun MavenProject.getAllCompilerConfigs(): List<Element> {
+    val result = ArrayList<Element>(1)
+    this.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)?.let(result::add)
+
+    this.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+      ?.executions?.filter { it.goals.contains("compile") }
+      ?.filter { it.phase != "none" }
+      ?.mapNotNull { it.configurationElement }
+      ?.forEach(result::add)
+    return result
   }
 }
