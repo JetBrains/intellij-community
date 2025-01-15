@@ -36,9 +36,9 @@ object ChangeParameterTypeFixFactory {
 
     val typeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         val psi = diagnostic.psi
+        if (psi !is KtExpression) return@IntentionBased emptyList()
         val targetType = diagnostic.expectedType
         buildList {
-            if (psi !is KtExpression) return@buildList
             if (targetType is KaDefinitelyNotNullType) {
                 addAll(createTypeMismatchFixesForDefinitelyNonNullable(psi, targetType))
             }
@@ -48,12 +48,14 @@ object ChangeParameterTypeFixFactory {
     }
 
     val nullForNotNullTypeFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
-        createTypeMismatchFixes(diagnostic.psi, diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE))
+        val psi = diagnostic.psi
+        if (psi !is KtExpression) return@IntentionBased emptyList()
+        createTypeMismatchFixes(psi, diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE))
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun createTypeMismatchFixes(psi: PsiElement, targetType: KaType): List<KotlinQuickFixAction<*>> {
+    private fun createTypeMismatchFixes(psi: KtExpression, targetType: KaType): List<KotlinQuickFixAction<*>> {
         val outermostExpression = psi.getOutermostParenthesizedExpressionOrThis()
         val psiParent = outermostExpression.parent ?: return emptyList()
         // Support of overloaded operators and anonymous objects infix calls
@@ -70,7 +72,7 @@ object ChangeParameterTypeFixFactory {
         val paramSymbol = memberCall.argumentMapping[argumentKey]
         val parameter = paramSymbol?.symbol?.psi as? KtParameter ?: return emptyList()
 
-        createChangeParameterTypeFix(parameter, targetType, functionLikeSymbol)?.let { fix -> return listOf(fix) } ?: return emptyList()
+        return listOfNotNull(createChangeParameterTypeFix(parameter, targetType, functionLikeSymbol))
     }
 
     context(KaSession)
@@ -78,18 +80,10 @@ object ChangeParameterTypeFixFactory {
         psi: KtExpression,
         targetType: KaDefinitelyNotNullType
     ): List<KotlinQuickFixAction<*>> {
-        val psiParent = psi.getOutermostParenthesizedExpressionOrThis().parent
-
-        val reference = if (psiParent is KtOperationExpression) {
+        val argumentOrSelectorExpression = if (psi is KtDotQualifiedExpression) {
+            psi.selectorExpression
+        } else {
             psi
-        } else {
-            val (_, argumentExpression) = psiParent.getValueArgumentAndArgumentExpression() ?: return emptyList()
-            argumentExpression
-        }
-        val argumentOrSelectorExpression = if (reference is KtDotQualifiedExpression) {
-            reference.selectorExpression
-        } else {
-            reference
         }
         val referencedSymbol = argumentOrSelectorExpression?.mainReference?.resolveToSymbol()?.let { symbol ->
             if (symbol is KaPropertySymbol) {
@@ -103,8 +97,7 @@ object ChangeParameterTypeFixFactory {
         val containingFunctionSymbol = referencedSymbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
         val parameter = referencedSymbol.psi as? KtParameter ?: return emptyList()
 
-        createChangeParameterTypeFix(parameter, targetType, containingFunctionSymbol)?.let { fix -> return listOf(fix) }
-            ?: return emptyList()
+        return listOfNotNull(createChangeParameterTypeFix(parameter, targetType, containingFunctionSymbol))
     }
 
     private fun PsiElement.getValueArgumentAndArgumentExpression(): Pair<KtValueArgument, KtExpression?>? {
@@ -143,7 +136,7 @@ object ChangeParameterTypeFixFactory {
     }
 }
 
-private fun PsiElement.getOutermostParenthesizedExpressionOrThis(): PsiElement {
+private fun KtExpression.getOutermostParenthesizedExpressionOrThis(): PsiElement {
     val psiParent = this.parent
     return (psiParent as? KtParenthesizedExpression)?.getOutermostParenthesizedExpressionOrThis() ?: this
 }
