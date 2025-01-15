@@ -24,41 +24,45 @@ public object IntUiDefaultSimpleListItemLazyTreeStyleFactory {
     @Composable
     public fun light(
         content: Color = Color.Unspecified,
-        contentFocused: Color = content,
+        contentActive: Color = content,
         contentSelected: Color = content,
-        contentSelectedFocused: Color = content,
-        nodeBackgroundFocused: Color = Color.Unspecified,
+        contentSelectedActive: Color = content,
+        nodeBackground: Color = Color.Unspecified,
+        nodeBackgroundActive: Color = Color.Unspecified,
         nodeBackgroundSelected: Color = IntUiLightTheme.colors.gray(11),
-        nodeBackgroundSelectedFocused: Color = IntUiLightTheme.colors.blue(11),
+        nodeBackgroundSelectedActive: Color = IntUiLightTheme.colors.blue(11),
     ): SimpleListItemColors =
         SimpleListItemColors(
-            backgroundFocused = nodeBackgroundFocused,
+            background = nodeBackground,
+            backgroundActive = nodeBackgroundActive,
             backgroundSelected = nodeBackgroundSelected,
-            backgroundSelectedFocused = nodeBackgroundSelectedFocused,
+            backgroundSelectedActive = nodeBackgroundSelectedActive,
             content = content,
-            contentFocused = contentFocused,
+            contentActive = contentActive,
             contentSelected = contentSelected,
-            contentSelectedFocused = contentSelectedFocused,
+            contentSelectedActive = contentSelectedActive,
         )
 
     @Composable
     public fun dark(
         content: Color = Color.Unspecified,
-        contentFocused: Color = content,
+        contentActive: Color = content,
         contentSelected: Color = content,
-        contentSelectedFocused: Color = content,
-        nodeBackgroundFocused: Color = Color.Unspecified,
+        contentSelectedActive: Color = content,
+        nodeBackground: Color = Color.Unspecified,
+        nodeBackgroundActive: Color = Color.Unspecified,
         nodeBackgroundSelected: Color = IntUiDarkTheme.colors.gray(4),
-        nodeBackgroundSelectedFocused: Color = IntUiDarkTheme.colors.blue(2),
+        nodeBackgroundSelectedActive: Color = IntUiDarkTheme.colors.blue(2),
     ): SimpleListItemColors =
         SimpleListItemColors(
-            backgroundFocused = nodeBackgroundFocused,
+            background = nodeBackground,
+            backgroundActive = nodeBackgroundActive,
             backgroundSelected = nodeBackgroundSelected,
-            backgroundSelectedFocused = nodeBackgroundSelectedFocused,
+            backgroundSelectedActive = nodeBackgroundSelectedActive,
             content = content,
-            contentFocused = contentFocused,
+            contentActive = contentActive,
             contentSelected = contentSelected,
-            contentSelectedFocused = contentSelectedFocused,
+            contentSelectedActive = contentSelectedActive,
         )
 }
 
@@ -82,6 +86,7 @@ public fun LazyTreeMetrics.Companion.defaults(
     elementPadding: PaddingValues = PaddingValues(horizontal = 12.dp),
     elementContentPadding: PaddingValues = PaddingValues(4.dp),
     elementMinHeight: Dp = 24.dp,
+    elementIconTextGap: Dp = 4.dp,
     chevronContentGap: Dp = 2.dp,
 ): LazyTreeMetrics =
     LazyTreeMetrics(
@@ -93,6 +98,7 @@ public fun LazyTreeMetrics.Companion.defaults(
                 innerPadding = elementContentPadding,
                 outerPadding = elementPadding,
                 selectionBackgroundCornerSize = elementBackgroundCornerSize,
+                iconTextGap = elementIconTextGap,
             ),
     )
 

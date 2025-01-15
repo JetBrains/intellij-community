@@ -88,29 +88,15 @@ public fun EditableComboBox(
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
     onEnterPress: () -> Unit = {},
-    onPopupStateChange: (Boolean) -> Unit = {},
+    popupManager: PopupManager = PopupManager(),
     popupContent: @Composable () -> Unit,
 ) {
-    var popupExpanded by remember { mutableStateOf(false) }
+    var popupVisible by remember { mutableStateOf(false) }
     var chevronHovered by remember { mutableStateOf(false) }
     var textFieldHovered by remember { mutableStateOf(false) }
 
     val textFieldInteractionSource = remember { MutableInteractionSource() }
     val textFieldFocusRequester = remember { FocusRequester() }
-
-    fun setPopupExpanded(expanded: Boolean) {
-        popupExpanded = expanded
-        onPopupStateChange(expanded)
-    }
-
-    fun togglePopup() {
-        setPopupExpanded(!popupExpanded)
-    }
-
-    val onPressWhenEnabled = {
-        togglePopup()
-        textFieldFocusRequester.requestFocus()
-    }
 
     var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = isEnabled)) }
 
@@ -163,24 +149,24 @@ public fun EditableComboBox(
                     Modifier.onFocusChanged {
                         comboBoxState = comboBoxState.copy(focused = it.isFocused)
                         if (!it.isFocused) {
-                            setPopupExpanded(false)
+                            popupManager.setPopupVisible(false)
                         }
                     },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextInput(
+                TextField(
                     isEnabled = isEnabled,
                     inputTextFieldState = inputTextFieldState,
                     isFocused = comboBoxState.isFocused,
                     textFieldFocusRequester = textFieldFocusRequester,
                     style = style,
-                    popupExpanded = popupExpanded,
+                    popupExpanded = popupVisible,
                     textStyle = textStyle,
                     textFieldInteractionSource = textFieldInteractionSource,
                     onArrowDownPress = onArrowDownPress,
                     onArrowUpPress = onArrowUpPress,
                     onEnterPress = onEnterPress,
-                    onSetPopupExpanded = { popupExpanded = it },
+                    onSetPopupExpanded = { popupVisible = it },
                     onFocusedChange = { comboBoxState = comboBoxState.copy(focused = it) },
                     onHoveredChange = { textFieldHovered = it },
                     modifier = Modifier.fillMaxWidth().weight(1f),
@@ -191,17 +177,20 @@ public fun EditableComboBox(
                     style = style,
                     interactionSource = interactionSource,
                     onHoveredChange = { chevronHovered = it },
-                    setPopupExpanded = { popupExpanded = it },
-                    onPressWhenEnabled = onPressWhenEnabled,
+                    setPopupExpanded = { popupVisible = it },
+                    onPressWhenEnabled = {
+                        popupManager.togglePopupVisibility()
+                        textFieldFocusRequester.requestFocus()
+                    },
                 )
             }
         }
 
-        if (popupExpanded) {
+        if (popupVisible) {
             PopupContainer(
                 onDismissRequest = {
                     if (!chevronHovered && !textFieldHovered) {
-                        setPopupExpanded(false)
+                        popupManager.setPopupVisible(false)
                     }
                 },
                 modifier =
@@ -209,7 +198,7 @@ public fun EditableComboBox(
                         .testTag("Jewel.ComboBox.PopupMenu")
                         .semantics { contentDescription = "Jewel.ComboBox.PopupMenu" }
                         .width(comboBoxWidth)
-                        .onClick { setPopupExpanded(false) },
+                        .onClick { popupManager.setPopupVisible(false) },
                 horizontalAlignment = Alignment.Start,
                 popupProperties = PopupProperties(focusable = false),
                 content = popupContent,
@@ -218,9 +207,8 @@ public fun EditableComboBox(
     }
 }
 
-@Suppress("ktlint:compose:modifier-without-default-check")
 @Composable
-private fun TextInput(
+private fun TextField(
     modifier: Modifier,
     isEnabled: Boolean,
     inputTextFieldState: TextFieldState,
@@ -362,7 +350,7 @@ public value class ComboBoxState(public val state: ULong) : FocusableComponentSt
 
     override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, " +
-            "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
+        "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
         public fun of(
