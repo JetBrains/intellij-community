@@ -3890,11 +3890,6 @@ f:com.intellij.psi.text.BlockSupport$ReparsedSuccessfullyException
 - fillInStackTrace():java.lang.Throwable
 com.intellij.psi.tree.ChildRoleBase
 - sf:NONE:I
-c:com.intellij.psi.tree.DefaultRoleFinder
-- com.intellij.psi.tree.RoleFinder
-- <init>(java.util.function.Supplier):V
-- <init>(com.intellij.psi.tree.IElementType[]):V
-- findChild(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 a:com.intellij.psi.tree.IErrorCounterReparseableElementType
 - com.intellij.psi.tree.IReparseableElementType
 - sf:FATAL_ERROR:I
