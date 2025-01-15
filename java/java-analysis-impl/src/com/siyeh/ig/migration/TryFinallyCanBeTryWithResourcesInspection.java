@@ -237,7 +237,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     static @Nullable
     Context from(@NotNull PsiTryStatement tryStatement) {
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock == null || resourceVariablesUsedInFinally(finallyBlock)) return null;
+      if (finallyBlock == null) return null;
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (tryBlock == null) return null;
       PsiStatement[] tryStatements = tryBlock.getStatements();
@@ -250,6 +250,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       }
       if (collectedVariables.isEmpty()) return null;
       if (resourceVariableUsedInCatches(tryStatement, collectedVariables)) return null;
+      if (resourceVariablesUsedInFinally(finallyBlock, collectedVariables)) return null;
 
       List<ResourceVariable> resourceVariables = new ArrayList<>();
       List<PsiStatement> statementsToDelete = new ArrayList<>();
@@ -338,8 +339,8 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     return statements;
   }
 
-  private static boolean resourceVariablesUsedInFinally(@NotNull PsiCodeBlock finallyBlock) {
-    VariableUsedInsideContextVisitor visitor = new VariableUsedInsideContextVisitor();
+  private static boolean resourceVariablesUsedInFinally(@NotNull PsiCodeBlock finallyBlock, @NotNull Set<? extends PsiVariable> collectedVariables) {
+    VariableUsedInsideContextVisitor visitor = new VariableUsedInsideContextVisitor(collectedVariables);
     finallyBlock.accept(visitor);
     return visitor.isVariableUsed();
   }
@@ -587,17 +588,25 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
 
 
   private static class VariableUsedInsideContextVisitor extends VariableUsedWithContextVisitor {
+
+    private final @NotNull Set<? extends PsiVariable> collectedVariables;
+
+    public VariableUsedInsideContextVisitor(@NotNull Set<? extends PsiVariable> collectedVariables) {
+      this.collectedVariables = collectedVariables;
+    }
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
       if (used) return;
 
       super.visitReferenceExpression(referenceExpression);
 
-
       if (!(referenceExpression.getParent() instanceof PsiMethodCallExpression)) return;
       PsiExpression qualifier = referenceExpression.getQualifierExpression();
 
       PsiVariable variable = ExpressionUtils.resolveVariable(qualifier);
+
+      if (!collectedVariables.contains(variable)) return;
+
       if(variable != null && !isCloseMethodCalled(referenceExpression) && isAutoCloseable(variable)) {
         used = true;
       }
