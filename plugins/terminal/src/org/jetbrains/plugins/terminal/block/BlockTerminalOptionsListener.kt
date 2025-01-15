@@ -6,4 +6,6 @@ import java.util.*
 
 internal interface BlockTerminalOptionsListener : EventListener {
   fun promptStyleChanged(promptStyle: TerminalPromptStyle) {}
+
+  fun showSeparatorsBetweenBlocksChanged(shouldShow: Boolean) {}
 }

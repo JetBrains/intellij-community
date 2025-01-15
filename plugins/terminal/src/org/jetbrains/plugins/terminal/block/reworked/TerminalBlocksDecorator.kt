@@ -8,9 +8,12 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
 import org.jetbrains.plugins.terminal.block.ui.*
 import kotlin.math.max
 
@@ -33,9 +36,23 @@ internal class TerminalBlocksDecorator(
         }
       }
     }
+
+    BlockTerminalOptions.getInstance().addListener(coroutineScope.asDisposable(), object : BlockTerminalOptionsListener {
+      override fun showSeparatorsBetweenBlocksChanged(shouldShow: Boolean) {
+        if (shouldShow) {
+          createDecorationsForAllBlocks()
+        }
+        else disposeAllDecorations()
+      }
+    })
   }
 
   private fun handleBlocksModelEvent(event: TerminalBlocksModelEvent) {
+    if (!BlockTerminalOptions.getInstance().showSeparatorsBetweenBlocks) {
+      // Do not add decorations if it is disabled in the settings.
+      return
+    }
+
     val block = event.block
     when (event) {
       is TerminalBlockStartedEvent -> {
@@ -90,6 +107,28 @@ internal class TerminalBlocksDecorator(
     }
 
     return BlockDecoration(block.id, bgHighlighter, cornersHighlighter, topInlay, bottomInlay)
+  }
+
+  private fun createDecorationsForAllBlocks() {
+    check(decorations.isEmpty()) { "Decorations map should be empty" }
+
+    val blocks = blocksModel.blocks
+    for (ind in blocks.indices) {
+      val block = blocks[ind]
+      decorations[block.id] = if (ind < blocks.lastIndex) {
+        createFinishedBlockDecoration(block)
+      }
+      else {
+        createPromptDecoration(block)
+      }
+    }
+  }
+
+  private fun disposeAllDecorations() {
+    for (decoration in decorations.values) {
+      disposeDecoration(decoration)
+    }
+    decorations.clear()
   }
 
   private fun disposeDecoration(decoration: BlockDecoration) {

@@ -41,12 +41,22 @@ internal class BlockTerminalOptions : PersistentStateComponent<BlockTerminalOpti
       }
     }
 
+  var showSeparatorsBetweenBlocks: Boolean
+    get() = state.showSeparatorsBetweenBlocks
+    set(value) {
+      if (state.showSeparatorsBetweenBlocks != value) {
+        state.showSeparatorsBetweenBlocks = value
+        dispatcher.multicaster.showSeparatorsBetweenBlocksChanged(value)
+      }
+    }
+
   fun addListener(parentDisposable: Disposable, listener: BlockTerminalOptionsListener) {
     dispatcher.addListener(listener, parentDisposable)
   }
 
   class State {
     var promptStyle: TerminalPromptStyle = TerminalPromptStyle.DOUBLE_LINE
+    var showSeparatorsBetweenBlocks: Boolean = true
   }
 
   companion object {
