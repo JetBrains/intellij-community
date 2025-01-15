@@ -599,8 +599,9 @@ f:org.jetbrains.jewel.foundation.modifier.BorderKt
 - bs:border-QWjY48E$default(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.Stroke$Alignment,F,J,androidx.compose.ui.graphics.Shape,F,I,java.lang.Object):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.foundation.modifier.ModifierExtensionsKt
 - sf:thenIf(androidx.compose.ui.Modifier,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
-f:org.jetbrains.jewel.foundation.modifier.OnHoverModifierKt
+f:org.jetbrains.jewel.foundation.modifier.PointerModifiersKt
 - sf:onHover(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+- sf:onMove(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.foundation.state.CommonStateBitMask
 - sf:$stable:I
 - sf:FIRST_AVAILABLE_OFFSET:I

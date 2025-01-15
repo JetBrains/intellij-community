@@ -191,7 +191,7 @@ f:org.jetbrains.jewel.ui.component.CircularProgressIndicatorKt
 - sf:CircularProgressIndicator(androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,kotlinx.coroutines.CoroutineDispatcher,androidx.compose.runtime.Composer,I,I):V
 - sf:CircularProgressIndicatorBig(androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.CircularProgressStyle,kotlinx.coroutines.CoroutineDispatcher,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.ComboBoxKt
-- sf:ComboBox-xYaah8o(java.lang.String,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
+- sf:ComboBox-xYaah8o(java.lang.String,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,org.jetbrains.jewel.ui.component.PopupManager,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.ComboBoxState
 - org.jetbrains.jewel.foundation.state.FocusableComponentState
 - sf:Companion:org.jetbrains.jewel.ui.component.ComboBoxState$Companion
@@ -285,7 +285,7 @@ f:org.jetbrains.jewel.ui.component.DropdownState$Companion
 - f:of-17HSnUM(Z,Z,Z,Z,Z):J
 - bs:of-17HSnUM$default(org.jetbrains.jewel.ui.component.DropdownState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.EditableComboBoxKt
-- sf:EditableComboBox(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,androidx.compose.foundation.text.input.TextFieldState,org.jetbrains.jewel.ui.Outline,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
+- sf:EditableComboBox(androidx.compose.foundation.text.input.TextFieldState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,org.jetbrains.jewel.ui.component.PopupManager,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.FixedCursorPoint
 - androidx.compose.foundation.TooltipPlacement
 - sf:$stable:I
@@ -419,14 +419,15 @@ f:org.jetbrains.jewel.ui.component.LinkState$Companion
 - f:of-oSacjZw(Z,Z,Z,Z,Z,Z):J
 - bs:of-oSacjZw$default(org.jetbrains.jewel.ui.component.LinkState$Companion,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.ListComboBoxKt
-- sf:ListComboBox-Fsagccs(java.util.List,androidx.compose.ui.Modifier,Z,Z,F,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function7,androidx.compose.runtime.Composer,I,I):V
+- sf:EditableListComboBox-lYrZsNM(java.util.List,androidx.compose.ui.Modifier,Z,I,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
+- sf:ListComboBox-lYrZsNM(java.util.List,androidx.compose.ui.Modifier,Z,I,org.jetbrains.jewel.ui.Outline,F,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ComboBoxStyle,androidx.compose.ui.text.TextStyle,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function5,androidx.compose.runtime.Composer,I,I,I):V
 f:org.jetbrains.jewel.ui.component.ListItemState
 - sf:$stable:I
-- <init>(Z,Z,Z):V
+- <init>(Z,Z):V
+- b:<init>(Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
-- f:getPreviewSelection():Z
 - hashCode():I
-- f:isHovered():Z
+- f:isActive():Z
 - f:isSelected():Z
 f:org.jetbrains.jewel.ui.component.MenuItemState
 - org.jetbrains.jewel.foundation.state.FocusableComponentState
@@ -490,6 +491,18 @@ f:org.jetbrains.jewel.ui.component.PlatformIconKt
 - sf:PlatformIcon-uDo3WH8(org.jetbrains.jewel.ui.icon.IntelliJIconKey,java.lang.String,androidx.compose.ui.Modifier,J,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.PopupContainerKt
 - sf:PopupContainer(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.ui.component.PopupManager
+- sf:$stable:I
+- <init>():V
+- <init>(kotlin.jvm.functions.Function1,java.lang.String):V
+- b:<init>(kotlin.jvm.functions.Function1,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- f:getOnPopupVisibleChange():kotlin.jvm.functions.Function1
+- hashCode():I
+- f:isPopupVisible():androidx.compose.runtime.State
+- f:setPopupVisible(Z):V
+- f:togglePopupVisibility():V
 f:org.jetbrains.jewel.ui.component.RadioButtonKt
 - sf:RadioButton(Z,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,androidx.compose.ui.text.TextStyle,androidx.compose.ui.Alignment$Vertical,androidx.compose.runtime.Composer,I,I):V
 - sf:RadioButtonRow(java.lang.String,Z,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.Outline,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.RadioButtonStyle,androidx.compose.ui.text.TextStyle,androidx.compose.ui.Alignment$Vertical,androidx.compose.runtime.Composer,I,I):V
@@ -643,7 +656,10 @@ f:org.jetbrains.jewel.ui.component.SelectableIconButtonState$Companion
 - f:of-z9lnavA(Z,Z,Z,Z,Z,Z):J
 - bs:of-z9lnavA$default(org.jetbrains.jewel.ui.component.SelectableIconButtonState$Companion,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.SimpleListItemKt
-- sf:SimpleListItem-iHT-50w(java.lang.String,org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,androidx.compose.runtime.Composer,I,I):V
+- sf:SimpleListItem-0vH8DBg(org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:SimpleListItem-aqv2aB4(java.lang.String,Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.runtime.Composer,I,I):V
+- sf:SimpleListItem-eKw1uXw(java.lang.String,org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,androidx.compose.runtime.Composer,I,I):V
+- sf:SimpleListItem-gMrHQkA(Z,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.icon.IconKey,java.lang.String,org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle,F,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.SliderKt
 - sf:Slider(F,kotlin.jvm.functions.Function1,androidx.compose.ui.Modifier,Z,kotlin.ranges.ClosedFloatingPointRange,I,kotlin.jvm.functions.Function0,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.SliderStyle,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.SliderState
@@ -1774,23 +1790,24 @@ f:org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyleKt
 f:org.jetbrains.jewel.ui.component.styling.SimpleListItemColors
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.SimpleListItemColors$Companion
-- b:<init>(J,J,J,J,J,J,J,J,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:backgroundFor(org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.runtime.Composer,I):androidx.compose.runtime.State
+- f:contentFor(org.jetbrains.jewel.ui.component.ListItemState,androidx.compose.runtime.Composer,I):androidx.compose.runtime.State
 - equals(java.lang.Object):Z
 - f:getBackground-0d7_KjU():J
-- f:getBackgroundFocused-0d7_KjU():J
+- f:getBackgroundActive-0d7_KjU():J
 - f:getBackgroundSelected-0d7_KjU():J
-- f:getBackgroundSelectedFocused-0d7_KjU():J
+- f:getBackgroundSelectedActive-0d7_KjU():J
 - f:getContent-0d7_KjU():J
-- f:getContentFocused-0d7_KjU():J
+- f:getContentActive-0d7_KjU():J
 - f:getContentSelected-0d7_KjU():J
-- f:getContentSelectedFocused-0d7_KjU():J
+- f:getContentSelectedActive-0d7_KjU():J
 - hashCode():I
 f:org.jetbrains.jewel.ui.component.styling.SimpleListItemColors$Companion
 f:org.jetbrains.jewel.ui.component.styling.SimpleListItemMetrics
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.SimpleListItemMetrics$Companion
-- <init>(androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.shape.CornerSize):V
 - equals(java.lang.Object):Z
+- f:getIconTextGap-D9Ej5fM():F
 - f:getInnerPadding():androidx.compose.foundation.layout.PaddingValues
 - f:getOuterPadding():androidx.compose.foundation.layout.PaddingValues
 - f:getSelectionBackgroundCornerSize():androidx.compose.foundation.shape.CornerSize
