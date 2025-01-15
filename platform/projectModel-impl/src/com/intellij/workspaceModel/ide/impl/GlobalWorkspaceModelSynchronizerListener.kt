@@ -3,10 +3,9 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.storage.GlobalStorageEntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 
 internal class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
@@ -22,7 +21,7 @@ internal class GlobalWorkspaceModelSynchronizerListener(private val project: Pro
   private fun isContainingGlobalEntities(event: VersionedStorageChange): Boolean {
     return (event as VersionedStorageChangeInternal).getAllChanges().any {
       val entity = it.newEntity ?: it.oldEntity!!
-      entity.entitySource is JpsGlobalFileEntitySource || entity.entitySource is LegacyCustomLibraryEntitySource
+      entity.entitySource is GlobalStorageEntitySource
     }
   }
 }
