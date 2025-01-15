@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl
 
 import com.intellij.find.FindBundle
@@ -478,9 +478,13 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         if (infos.size == 1 && infoRange != null) {
           var balloonText: String? = null
           if (findModel != null) {
-            val replacementText =
+            val replacementText = try {
               FindManager.getInstance(project).getStringToReplace(editor.document.getText(rangeToHighlight), findModel,
                                                                   rangeToHighlight.startOffset, editor.document.text) ?: return
+            }
+            catch (_: MalformedReplacementStringException) {
+              return
+            }
             val previewText = createPreviewHtml(replacementText)
             if (previewText != findModel.stringToReplace || Registry.`is`("ide.find.show.replacement.hint.for.simple.regexp")) {
               balloonText = previewText
