@@ -92,6 +92,11 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun removeSelection() {
+    return interact {
+      getSelectionModel().removeSelection()
+    }
+  }
 
   fun deleteFile() {
     driver.withWriteAction {

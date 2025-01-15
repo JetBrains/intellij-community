@@ -116,6 +116,7 @@ interface EditorColorsScheme {
 interface SelectionModel {
   fun setSelection(startOffset: Int, endOffset: Int)
   fun getSelectedText(): String?
+  fun removeSelection()
 }
 
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
