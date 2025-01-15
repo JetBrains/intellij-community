@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Represents an xml file containing configuration of IntelliJ Platform project in JPS format (*.ipr file or *.xml file under .idea directory)
  */
-sealed class JpsFileEntitySource : GlobalStorageEntitySource
+sealed class JpsFileEntitySource : EntitySource
 
 /**
  * Entity source with the information about project location. Our serialization mechanism relies on it.
@@ -89,7 +89,7 @@ sealed class JpsProjectFileEntitySource : JpsFileEntitySource() {
 /**
  * Represents a specific xml file containing configuration of global IntelliJ IDEA entities.
  */
-data class JpsGlobalFileEntitySource(val file: VirtualFileUrl) : JpsFileEntitySource()
+data class JpsGlobalFileEntitySource(val file: VirtualFileUrl) : JpsFileEntitySource(), GlobalStorageEntitySource
 
 /**
  * Represents entities which configuration is loaded from an JPS format configuration file (e.g. *.iml, stored in [originalSource]) and some additional configuration
