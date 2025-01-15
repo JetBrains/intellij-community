@@ -138,6 +138,7 @@ class RegistryKeyBeanPluginTest {
       loadPlugins(testDisposable, plugin1, plugin2)
     }
     message.shouldStartWith("Conflicting registry key definition for key my.key: it was defined by plugin plugin1 but redefined by plugin plugin2.")
+    @Suppress("UnresolvedPluginConfigReference")
     Registry.get("my.key").asBoolean().shouldBe(false)
   }
 
