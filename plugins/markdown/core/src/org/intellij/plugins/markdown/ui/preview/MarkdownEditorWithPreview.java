@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -94,13 +96,13 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
 
       final Editor editor = event.getEditor();
       int y = editor.getScrollingModel().getVerticalScrollOffset();
-      int currentLine = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
+      int currentLine = editor instanceof EditorImpl ? editor.xyToLogicalPosition(new Point(0, y)).getLine() : y / editor.getLineHeight();
       if (currentLine == previousLine) {
         return;
       }
 
       previousLine = currentLine;
-      ((MarkdownPreviewFileEditor)myPreview).scrollToSrcOffset(EditorUtil.getVisualLineEndOffset(editor, currentLine));
+      ((MarkdownPreviewFileEditor)myPreview).scrollToLine(editor, currentLine);
     }
   }
 }

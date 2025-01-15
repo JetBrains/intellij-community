@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.compose.preview
 
 import androidx.compose.foundation.*
@@ -6,19 +6,25 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.compose.JBComposePanel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelEx
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
@@ -31,7 +37,12 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import org.jetbrains.jewel.markdown.Markdown
+import org.jetbrains.jewel.markdown.MarkdownMode
+import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
+import org.jetbrains.jewel.markdown.scrolling.ScrollSyncMarkdownBlockRenderer
+import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
 import javax.swing.JComponent
+import kotlin.time.Duration.Companion.milliseconds
 
 @ExperimentalJewelApi
 internal class MarkdownComposePanel(
@@ -41,6 +52,8 @@ internal class MarkdownComposePanel(
 ) : MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
 
   constructor() : this(null, null)
+
+  private val scrollToLineFlow = MutableSharedFlow<Int>()
 
   private val panelComponent by lazy {
     JBComposePanel {
@@ -54,21 +67,26 @@ internal class MarkdownComposePanel(
   private fun MarkdownPanel() {
     val scheme = PreviewStyleScheme.fromCurrentTheme()
     val fontSize = scheme.fontSize.sp / scheme.scale
+    val scrollState = rememberScrollState(0)
+    val scrollingSynchronizer = remember(scrollState) { ScrollingSynchronizer.create(scrollState) }
+    val markdownStyling = JcefLikeMarkdownStyling(scheme, fontSize)
+    val blockRenderer = ScrollSyncMarkdownBlockRenderer(markdownStyling, emptyList(), DefaultInlineMarkdownRenderer(emptyList()))
     ProvideMarkdownStyling(
-      markdownStyling = JcefLikeMarkdownStyling(scheme, fontSize),
+      markdownMode = MarkdownMode.EditorPreview(scrollingSynchronizer),
+      markdownStyling = markdownStyling,
       codeHighlighter = remember(project) {
         project?.let {
           CodeHighlighterFactory.getInstance(project).createHighlighter()
         } ?: NoOpCodeHighlighter
       },
+      markdownBlockRenderer = blockRenderer
     ) {
       Box(
         modifier = Modifier
           .background(scheme.backgroundColor.toComposeColor())
           .padding(horizontal = fontSize.value.dp * 2)
       ) {
-        val scrollState = rememberScrollState(0)
-        MarkdownPreviewPanel(scrollState)
+        MarkdownPreviewPanel(scrollState, scrollingSynchronizer, blockRenderer)
         VerticalScrollbar(
           modifier = Modifier
             .align(Alignment.CenterEnd),
@@ -80,9 +98,19 @@ internal class MarkdownComposePanel(
 
   @Suppress("FunctionName")
   @Composable
-  private fun MarkdownPreviewPanel(scrollState: ScrollState) {
+  private fun MarkdownPreviewPanel(scrollState: ScrollState, scrollingSynchronizer: ScrollingSynchronizer?, blockRenderer: ScrollSyncMarkdownBlockRenderer) {
     val request by updateHandler.requests.collectAsState(null)
     (request as? PreviewRequest.Update)?.let {
+      if (scrollingSynchronizer != null) {
+        val coroutineScope = rememberCoroutineScope()
+        LaunchedEffect(Unit) {
+          coroutineScope.launch {
+            scrollToLineFlow.debounce(16.milliseconds).collect { scrollToLine ->
+              scrollingSynchronizer.scrollToLine(scrollToLine)
+            }
+          }
+        }
+      }
       Markdown(
         it.content,
         modifier = Modifier
@@ -91,6 +119,7 @@ internal class MarkdownComposePanel(
         enabled = true,
         selectable = true,
         onUrlClick = { url -> BrowserUtil.open(url) },
+        blockRenderer = blockRenderer,
       )
     }
   }
@@ -122,7 +151,8 @@ internal class MarkdownComposePanel(
   override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {
   }
 
-  override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
+  override suspend fun scrollTo(editor: Editor, line: Int) {
+    scrollToLineFlow.emit(line)
   }
 
   override fun scrollBy(horizontalUnits: Int, verticalUnits: Int) {

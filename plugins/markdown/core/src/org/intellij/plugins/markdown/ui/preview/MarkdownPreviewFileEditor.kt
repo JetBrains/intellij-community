@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.CommonBundle
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -136,8 +137,10 @@ class MarkdownPreviewFileEditor(
     }
   }
 
-  fun scrollToSrcOffset(offset: Int) {
-    panel?.scrollToMarkdownSrcOffset(offset, true)
+  fun scrollToLine(editor: Editor, line: Int) {
+    coroutineScope.launch(Dispatchers.EDT) {
+      panel?.scrollTo(editor, line)
+    }
   }
 
   override fun getComponent(): JComponent {

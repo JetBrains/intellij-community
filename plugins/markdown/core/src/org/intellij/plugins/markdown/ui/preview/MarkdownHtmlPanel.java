@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +17,7 @@ import javax.swing.*;
 import java.nio.file.Path;
 import java.util.EventListener;
 
-public interface MarkdownHtmlPanel extends Disposable {
+public interface MarkdownHtmlPanel extends ScrollableMarkdownPreview, Disposable {
   @NotNull JComponent getComponent();
 
   /**
@@ -64,7 +68,18 @@ public interface MarkdownHtmlPanel extends Disposable {
 
   void reloadWithOffset(int offset);
 
-  void scrollToMarkdownSrcOffset(int offset, boolean smooth);
+   /**
+   * @deprecated implement {@code scrollTo(editor, line, $completion)} instead
+   */
+  @Deprecated
+  default void scrollToMarkdownSrcOffset(int offset, boolean smooth) {}
+
+  @Override
+  @Nullable
+  default Object scrollTo(@NotNull Editor editor, int line, @NotNull Continuation<? super @NotNull Unit> $completion) {
+    scrollToMarkdownSrcOffset(EditorUtil.getVisualLineEndOffset(editor, line), true);
+    return null;
+  }
 
   interface ScrollListener extends EventListener {
     void onScroll(int offset);
