@@ -104,4 +104,14 @@
 
   <actions resource-bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
+
+  <!-- Executor -->
+  <actions>
+    <action class="foo.bar.BarAction" use-shortcut-of="MyExecutorId"/>
+    <action class="foo.bar.BarAction" use-shortcut-of="MyExecutorContextActionId"/>
+
+    <action class="foo.bar.BarAction">
+      <add-to-group group-id="<error descr="Cannot resolve group 'MyExecutorId'">MyExecutorId</error>"/>
+    </action>
+  </actions>
 </idea-plugin>

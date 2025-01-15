@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.kotlin.codeInsight
 
 import com.intellij.codeInspection.LocalInspectionEP
+import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.Scheme
@@ -25,6 +26,7 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
     moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(Scheme::class.java))
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList::class.java))
     moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(ActionManager::class.java))
+    moduleBuilder.addLibrary("execution", PathUtil.getJarPathForClass(DefaultRunExecutor::class.java))
     moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP::class.java, "/idea/PlatformActions.xml")!!)
   }
 

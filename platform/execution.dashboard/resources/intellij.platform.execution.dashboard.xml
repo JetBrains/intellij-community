@@ -28,16 +28,12 @@
   </extensionPoints>
   <actions>
     <group id="RunDashboardContentToolbar">
-      <!-- IDEA-356383 RunClass -> com.intellij.execution.executors.DefaultRunExecutor.getContextActionId() -->
-      <!--suppress PluginXmlValidity -->
       <action id="RunDashboard.Run" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass"
               class="com.intellij.platform.execution.dashboard.actions.RunAction">
         <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
         <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
         <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
       </action>
-      <!-- IDEA-356383 DebugClass -> com.intellij.execution.executors.DefaultDebugExecutor.getContextActionId() -->
-      <!--suppress PluginXmlValidity -->
       <action id="RunDashboard.Debug" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"
               class="com.intellij.platform.execution.dashboard.actions.DebugAction">
         <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>

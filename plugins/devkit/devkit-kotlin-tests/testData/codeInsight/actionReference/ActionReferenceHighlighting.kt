@@ -161,4 +161,10 @@ object ActionReferenceHighlighting {
     abbreviationManager.remove("text", "<error descr="Cannot resolve action id 'INVALID_VALUE'">INVALID_VALUE</error>")
   }
 
+  fun testExecutorActions() {
+    ActionUtil.getAction("Run")
+    ActionUtil.getAction("RunClass")
+
+    ActionUtil.getActionGroup("<error descr="Cannot resolve group id 'Run'">Run</error>")
+  }
 }

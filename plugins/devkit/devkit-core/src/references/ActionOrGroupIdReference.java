@@ -1,20 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PairProcessor;
@@ -24,16 +23,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UastUtils;
 
 import javax.swing.*;
 import java.util.List;
@@ -60,16 +56,17 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
     collectDomResults(myId, domSearchScope, processor);
 
     if (myIsAction != ThreeState.NO && processor.getResults().isEmpty()) {
-      List<PsiElement> executors = new SmartList<>();
+      Ref<PsiElement> executor = Ref.create();
       PairProcessor<String, PsiClass> pairProcessor = (id, psiClass) -> {
-        if (StringUtil.equals(id, getValue())) {
-          executors.add(psiClass);
+        if (StringUtil.equals(id, myId)) {
+          executor.set(psiClass);
+          return false;
         }
         return true;
       };
-      processExecutors(pairProcessor);
-      if (!executors.isEmpty()) {
-        return PsiElementResolveResult.createResults(executors);
+      ActionOrGroupIdResolveUtil.processExecutors(getElement().getProject(), pairProcessor);
+      if (!executor.isNull()) {
+        return PsiElementResolveResult.createResults(executor.get());
       }
     }
 
@@ -124,14 +121,12 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
     }
 
     List<LookupElement> executorLookupElements = new SmartList<>();
-    processExecutors((id, psiClass) -> {
-      if (id != null) {
-        LookupElementBuilder builder = LookupElementBuilder.create(psiClass, id)
-          .bold()
-          .withIcon(computeIcon(psiClass))
-          .withTypeText(psiClass.getQualifiedName(), true);
-        executorLookupElements.add(builder);
-      }
+    ActionOrGroupIdResolveUtil.processExecutors(getElement().getProject(), (id, psiClass) -> {
+      LookupElementBuilder builder = LookupElementBuilder.create(psiClass, id)
+        .bold()
+        .withIcon(computeIcon(id, psiClass))
+        .withTypeText(psiClass.getQualifiedName(), true);
+      executorLookupElements.add(builder);
       return true;
     });
     return ContainerUtil.concat(domLookupElements, executorLookupElements).toArray();
@@ -155,47 +150,14 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
     }
   }
 
-  private void processExecutors(PairProcessor<String, PsiClass> processor) {
-    Project project = getElement().getProject();
-    // not necessarily in the element's resolve scope
-    GlobalSearchScope scope = getProductionWithLibrariesScope(project);
-    PsiClass executorClass = JavaPsiFacade.getInstance(project).findClass(Executor.class.getName(), scope);
-    if (executorClass == null) return;
-
-    for (PsiClass inheritor : ClassInheritorsSearch.search(executorClass, scope, true)) {
-      String id = computeConstantReturnValue(inheritor, "getId");
-      if (!processor.process(id, inheritor)) return;
-
-      String contextActionId = computeConstantReturnValue(inheritor, "getContextActionId");
-      if (!processor.process(contextActionId, inheritor)) return;
-    }
-  }
-
-  private static Icon computeIcon(PsiClass executor) {
+  private static Icon computeIcon(String id, PsiClass executor) {
     final ProjectIconsAccessor iconsAccessor = ProjectIconsAccessor.getInstance(executor.getProject());
-    final UExpression icon = getReturnExpression(executor, "getIcon");
+    final UExpression icon = ActionOrGroupIdResolveUtil.getReturnExpression(executor, "getIcon");
+    if (icon == null) {
+      Executor executorById = ExecutorRegistry.getInstance().getExecutorById(id);
+      return executorById != null ? executorById.getIcon() : null;
+    }
     final VirtualFile iconFile = iconsAccessor.resolveIconFile(icon);
     return iconFile == null ? null : iconsAccessor.getIcon(iconFile);
-  }
-
-  private static @Nullable String computeConstantReturnValue(PsiClass psiClass,
-                                                             String methodName) {
-    final UExpression expression = getReturnExpression(psiClass, methodName);
-    if (expression == null) return null;
-
-    return UastUtils.evaluateString(expression);
-  }
-
-  private static @Nullable UExpression getReturnExpression(PsiClass psiClass, String methodName) {
-    final PsiMethod[] methods = psiClass.findMethodsByName(methodName, false);
-    if (methods.length != 1) {
-      return null;
-    }
-
-    return PsiUtil.getReturnedExpression(methods[0]);
-  }
-
-  private static @NotNull GlobalSearchScope getProductionWithLibrariesScope(Project project) {
-    return GlobalSearchScopesCore.projectProductionScope(project).union(ProjectScope.getLibrariesScope(project));
   }
 }

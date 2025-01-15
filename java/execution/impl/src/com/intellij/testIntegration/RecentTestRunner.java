@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.execution.Executor;
@@ -26,10 +26,9 @@ public interface RecentTestRunner {
 }
 
 class RecentTestRunnerImpl implements RecentTestRunner {
-  // false positives IDEA-356383
-  @SuppressWarnings("UnresolvedPluginConfigReference")
+
   private static final AnAction RUN = ActionManager.getInstance().getAction("RunClass");
-  @SuppressWarnings("UnresolvedPluginConfigReference")
+
   private static final AnAction DEBUG = ActionManager.getInstance().getAction("DebugClass");
 
   private final TestLocator myTestLocator;
