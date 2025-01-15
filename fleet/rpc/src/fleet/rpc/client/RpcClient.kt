@@ -43,7 +43,7 @@ private data class OutgoingRequest(
 private data class OngoingRequest(val request: OutgoingRequest, val span: Span)
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
-suspend fun<T> rpcClient(
+suspend fun <T> rpcClient(
   transport: Transport<TransportMessage>,
   origin: UID,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
@@ -621,7 +621,7 @@ class RpcClient internal constructor(
   }
 
   private fun registerStream(descriptor: StreamDescriptor, route: UID, prefetchStrategy: PrefetchStrategy): InternalStreamDescriptor {
-    return InternalStreamDescriptor.fromDescriptor(descriptor, route, prefetchStrategy).also {
+    return InternalStreamDescriptor.fromDescriptor(descriptor, route, prefetchStrategy, coroutineScope).also {
       streams[descriptor.uid] = it
     }
   }

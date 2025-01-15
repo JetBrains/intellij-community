@@ -188,7 +188,7 @@ private val RpcJson: Json by lazy {
   }
 }
 
-fun rpcJsonImplementationDetail(): Json = 
+fun rpcJsonImplementationDetail(): Json =
   RpcJson
 
 /**
