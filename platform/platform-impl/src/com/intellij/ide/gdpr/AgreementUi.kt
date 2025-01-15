@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
+import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
 import javax.swing.*
@@ -140,6 +141,7 @@ class AgreementUiBuilder internal constructor() {
       val html = SwingHelper.createHtmlLabel(text, null, null)
       html.border = JBUI.Borders.empty(10, 16, 10, 0)
       html.isOpaque = true
+      html.isFocusable = ScreenReader.isActive()
       val eapLabelStyleSheet = (html.document as HTMLDocument).styleSheet
       eapLabelStyleSheet.addRule("a {text-decoration:none;}")
       eapPanel.add(html, BorderLayout.CENTER)
