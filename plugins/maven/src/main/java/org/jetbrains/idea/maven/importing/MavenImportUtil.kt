@@ -15,6 +15,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -165,7 +166,12 @@ object MavenImportUtil {
            )
   }
 
+  internal fun multiReleaseOutputSyncEnabled(): Boolean {
+    return `is`("maven.sync.compileSourceRoots.and.multiReleaseOutput")
+  }
+
   internal fun hasMultiReleaseOutput(project: MavenProject): Boolean {
+    if (!multiReleaseOutputSyncEnabled()) return false
     val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID) ?: return false
     val executions = plugin.executions ?: return false
     return executions.any { isMultiReleaseExecution(it) }

@@ -406,6 +406,9 @@
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
                  description="During incremental sync, resolve dependencies incrementally"/>
 
+    <registryKey key="maven.sync.compileSourceRoots.and.multiReleaseOutput" defaultValue="false"
+                 description="Create source roots corresponding to compileSourceRoots and multireleaseOutput during Maven sync"/>
+
     <registryKey key="maven.delegate.trust.ssl.to.ide" defaultValue="true"
                  description="Use IDEA confirming trust manager for maven importer"/>
 
