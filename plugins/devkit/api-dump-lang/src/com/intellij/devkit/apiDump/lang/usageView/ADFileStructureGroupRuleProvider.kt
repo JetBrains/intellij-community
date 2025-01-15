@@ -39,6 +39,7 @@ private class ADClassRule : SingleParentUsageGroupingRule() {
 private class ADClassDeclarationUsageGroup(psi: ADClassDeclaration) : UsageGroup {
   private val pointer = psi.createSmartPointer()
   private val text = psi.classHeader.typeReference.identifierList.lastOrNull()?.text ?: "Unknown"
+  private val icon = ADIcons.getIcon(psi)
 
   override fun getPresentableGroupText(): @NlsContexts.ListItem String =
     text
@@ -50,7 +51,7 @@ private class ADClassDeclarationUsageGroup(psi: ADClassDeclaration) : UsageGroup
     presentableGroupText.compareTo(other.presentableGroupText, ignoreCase = true)
 
   override fun getIcon(): Icon? =
-    pointer.element?.let { ADIcons.getIcon(it) } ?: ADIcons.classIcon
+    icon
 
   override fun getFileStatus(): FileStatus? {
     if (pointer.getProject().isDisposed()) return null
