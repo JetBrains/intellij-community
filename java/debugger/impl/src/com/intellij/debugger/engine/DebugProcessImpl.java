@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -110,6 +110,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
+import static com.intellij.debugger.impl.DebuggerUtilsImpl.forEachSafe;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
@@ -685,7 +686,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myConnection.setDebuggerAddress(listeningAddress);
       myConnection.setApplicationAddress(listeningAddress);
 
-      myDebugProcessListeners.forEach(it -> it.connectorIsReady());
+      forEachSafe(myDebugProcessListeners, it -> it.connectorIsReady());
 
       return connector.accept(myArguments);
     }
@@ -706,7 +707,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private VirtualMachine attachConnector(AttachingConnector connector)
     throws IOException, IllegalConnectorArgumentsException, CantRunException {
-    myDebugProcessListeners.forEach(it -> it.connectorIsReady());
+    forEachSafe(myDebugProcessListeners, it -> it.connectorIsReady());
     try {
       return connector.attach(myArguments);
     }
@@ -981,7 +982,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           DebuggerUtils.cleanupAfterProcessFinish(this);
           myState.compareAndSet(State.DETACHING, State.DETACHED);
           try {
-            myDebugProcessListeners.forEach(it -> it.processDetached(this, closedByUser));
+            forEachSafe(myDebugProcessListeners, it -> it.processDetached(this, closedByUser));
           }
           finally {
             callback.accept(vmData);
@@ -2190,7 +2191,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       resumeAction();
 
-      myDebugProcessListeners.forEach(it -> it.resumed(suspendContext));
+      forEachSafe(myDebugProcessListeners, it -> it.resumed(suspendContext));
     }
 
     protected void resumeAction() {
@@ -2238,7 +2239,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myPredefinedThread != null && !myPredefinedThread.isCollected()) {
         suspendContext.setThread(myPredefinedThread.getThreadReference());
       }
-      myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
+      forEachSafe(myDebugProcessListeners, it -> it.paused(suspendContext));
 
       myDebuggerManagerThread.schedule(new SuspendContextCommandImpl(suspendContext) {
         @Override
@@ -2325,7 +2326,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         mySuspendManager.freezeThread(myThread);
         SuspendContextImpl suspendContext = mySuspendManager.pushSuspendContext(EventRequest.SUSPEND_EVENT_THREAD, 0);
         suspendContext.setThread(myThread.getThreadReference());
-        myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
+        forEachSafe(myDebugProcessListeners, it -> it.paused(suspendContext));
       }
     }
   }
@@ -2575,7 +2576,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                   processHandler != null && (processHandler.isProcessTerminating() || processHandler.isProcessTerminated());
 
                 try {
-                  myDebugProcessListeners.forEach(it -> it.attachException(null, e, myConnection));
+                  forEachSafe(myDebugProcessListeners, it -> it.attachException(null, e, myConnection));
                 }
                 catch (Exception ex) {
                   LOG.debug(ex);

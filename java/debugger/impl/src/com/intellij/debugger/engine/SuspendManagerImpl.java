@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -22,6 +22,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.debugger.impl.DebuggerUtilsImpl.forEachSafe;
 
 public class SuspendManagerImpl implements SuspendManager {
   private static final Logger LOG = Logger.getInstance(SuspendManager.class);
@@ -355,7 +357,7 @@ public class SuspendManagerImpl implements SuspendManager {
     if (pushPaused) {
       pushPausedContext(suspendContext);
     }
-    myDebugProcess.myDebugProcessListeners.forEach(it -> it.paused(suspendContext));
+    forEachSafe(myDebugProcess.myDebugProcessListeners, it -> it.paused(suspendContext));
   }
 
   @Override
