@@ -396,28 +396,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         .orElse(null);
     }
 
-    if (callSite instanceof PyCallExpression callExpression) {
-      //var typeGuardKind = getTypeGuardKind(function, context.myContext);
-      //if (typeGuardKind != TypeGuardKind.None) {
-      //  var arguments = callSite.getArguments(function);
-      //  if (!arguments.isEmpty() && arguments.get(0) instanceof PyReferenceExpression refExpr) {
-      //    var qname = PyPsiUtilsCore.asQualifiedName(refExpr);
-      //    if (qname != null) {
-      //      var narrowedType = getTypeFromTypeGuardLikeType(function, context.myContext);
-      //      if (narrowedType != null) {
-      //        return Ref.create(PyNarrowedType.Companion.create(callSite,
-      //                                                          qname.toString(),
-      //                                                          narrowedType,
-      //                                                          callExpression,
-      //                                                          false,
-      //                                                          TypeGuardKind.TypeIs.equals(typeGuardKind)));
-      //      }
-      //    }
-      //  }
-      //  return Ref.create(PyBuiltinCache.getInstance(function).getBoolType());
-      //}
-    }
-
     final PyClass initializedClass = PyUtil.turnConstructorIntoClass(function);
     if (initializedClass != null && (TYPE_VAR.equals(initializedClass.getQualifiedName()) ||
                                      TYPE_VAR_EXT.equals(initializedClass.getQualifiedName()) ||
