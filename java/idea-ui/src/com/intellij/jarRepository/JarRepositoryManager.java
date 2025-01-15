@@ -216,7 +216,8 @@ public final class JarRepositoryManager {
   }
 
   @TestOnly
-  static void setLocalRepositoryPath(File localRepo) {
+  @ApiStatus.Internal
+  public static void setLocalRepositoryPath(File localRepo) {
     ourLocalRepositoryPath = localRepo;
   }
 

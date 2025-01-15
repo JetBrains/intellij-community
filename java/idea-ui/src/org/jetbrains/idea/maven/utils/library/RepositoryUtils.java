@@ -18,7 +18,6 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -83,8 +83,33 @@ public final class RepositoryUtils {
 
     String firstPath = getOnDiskParentPath(urls[0]);
     for (String root : urls) {
-      if (!StringUtil.equals(firstPath, getOnDiskParentPath(root))) {
+      if (!FileUtil.pathsEqual(firstPath, getOnDiskParentPath(root))) {
         return null;
+      }
+    }
+
+    if (urls.length == 1) {
+      // IJPL-175157 Only one file in the library, so we can't decide on storage root without looking into cache location
+      // It's worse with symlinks where we may have a non-canonical path in `firstPath`
+      // and canonical path in JarRepositoryManager.getLocalRepositoryPath
+      var localRepositoryPath = JarRepositoryManager.getLocalRepositoryPath();
+
+      // happy case, no symlinks, so canonical localRepositoryPath is the same is firstPath
+      if (FileUtil.startsWith(firstPath, localRepositoryPath.getPath())) {
+        return null;
+      }
+
+      // non-happy case, symlinks, let's try to get as much canonical as we can.
+      // covered by tests
+      try {
+        var canonicalFirstPath = new File(firstPath).getCanonicalPath();
+        var canonicalLocalRepositoryPath = localRepositoryPath.getCanonicalPath();
+        if (FileUtil.startsWith(canonicalFirstPath, canonicalLocalRepositoryPath)) {
+          return null;
+        }
+      }
+      catch (IOException ignored) {
+        // IOError, can't decide
       }
     }
 

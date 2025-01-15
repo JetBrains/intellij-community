@@ -5,10 +5,12 @@ import com.intellij.jarRepository.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -136,6 +138,54 @@ public class RepositoryUtilsTest extends LibraryTest {
         }
       )
     );
+  }
+
+  public void testGetStorageRootWithSymlinks() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+
+    var temp = Files.createTempDirectory("storage-root").toRealPath();
+    var dir = temp.resolve("dir");
+    var dir2 = temp.resolve("dir2");
+    var symlinkToDir = temp.resolve("symlink");
+
+    Files.createDirectory(dir);
+    Files.createSymbolicLink(symlinkToDir, dir);
+
+    var oldLocalRepositoryPath = JarRepositoryManager.getLocalRepositoryPath();
+    JarRepositoryManager.setLocalRepositoryPath(dir.toFile());
+
+    try {
+      // IJPL-175157 one url, should return null since it's under local repository, request symlinks resolve
+      assertNull(
+        RepositoryUtils.getStorageRoot(
+          new String[]{
+            JpsPathUtil.pathToUrl(symlinkToDir.toString()) + "/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2.jar",
+          }
+        )
+      );
+
+      // IJPL-175157 one url, should return null since it's under local repository
+      assertNull(
+        RepositoryUtils.getStorageRoot(
+          new String[]{
+            JpsPathUtil.pathToUrl(dir.toString()) + "/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2.jar",
+          }
+        )
+      );
+
+      // Another directory; should return it
+      assertEquals(
+        FileUtil.toSystemDependentName(dir2 + "/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2"),
+        RepositoryUtils.getStorageRoot(
+          new String[]{
+            JpsPathUtil.pathToUrl(dir2.toString()) + "/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2.jar",
+          }
+        )
+      );
+    } finally {
+      JarRepositoryManager.setLocalRepositoryPath(oldLocalRepositoryPath);
+      FileUtil.deleteRecursively(temp);
+    }
   }
 
   private static String fileContent(Path path) {
