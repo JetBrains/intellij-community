@@ -8,6 +8,7 @@ import com.intellij.devkit.apiDump.lang.psi.ADConstructor
 import com.intellij.devkit.apiDump.lang.psi.ADTypeReference
 import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.project.IntelliJProjectUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.PsiSearchScopeUtil
@@ -22,6 +23,8 @@ import com.intellij.util.Processor
  */
 internal class ADConstructorReferenceSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>(true) {
   override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
+    if (!(Registry.`is`("intellij.devkit.api.dump.find.usages"))) return
+
     val targetConstructor = queryParameters.method.takeIf { it.isConstructor } ?: return
     if (!IntelliJProjectUtil.isIntelliJPlatformProject(queryParameters.project)) return
 
