@@ -251,7 +251,7 @@ public final class org/jetbrains/jewel/ui/component/CircularProgressIndicatorKt 
 }
 
 public final class org/jetbrains/jewel/ui/component/ComboBoxKt {
-	public static final fun ComboBox-xYaah8o (Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ComboBox-xYaah8o (Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/jetbrains/jewel/ui/component/ComboBoxState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
@@ -381,7 +381,7 @@ public final class org/jetbrains/jewel/ui/component/DropdownState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/EditableComboBoxKt {
-	public static final fun EditableComboBox (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/text/input/TextFieldState;Lorg/jetbrains/jewel/ui/Outline;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun EditableComboBox (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/jetbrains/jewel/ui/component/FixedCursorPoint : androidx/compose/foundation/TooltipPlacement {
@@ -553,16 +553,17 @@ public final class org/jetbrains/jewel/ui/component/LinkState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/ListComboBoxKt {
-	public static final fun ListComboBox-Fsagccs (Ljava/util/List;Landroidx/compose/ui/Modifier;ZZFLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function7;Landroidx/compose/runtime/Composer;II)V
+	public static final fun EditableListComboBox-lYrZsNM (Ljava/util/List;Landroidx/compose/ui/Modifier;ZILorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ListComboBox-lYrZsNM (Ljava/util/List;Landroidx/compose/ui/Modifier;ZILorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/jetbrains/jewel/ui/component/ListItemState {
 	public static final field $stable I
-	public fun <init> (ZZZ)V
+	public fun <init> (ZZ)V
+	public synthetic fun <init> (ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getPreviewSelection ()Z
 	public fun hashCode ()I
-	public final fun isHovered ()Z
+	public final fun isActive ()Z
 	public final fun isSelected ()Z
 	public fun toString ()Ljava/lang/String;
 }
@@ -647,6 +648,21 @@ public final class org/jetbrains/jewel/ui/component/PlatformIconKt {
 
 public final class org/jetbrains/jewel/ui/component/PopupContainerKt {
 	public static final fun PopupContainer (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Landroidx/compose/ui/window/PopupProperties;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class org/jetbrains/jewel/ui/component/PopupManager {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/String;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getOnPopupVisibleChange ()Lkotlin/jvm/functions/Function1;
+	public fun hashCode ()I
+	public final fun isPopupVisible ()Landroidx/compose/runtime/State;
+	public final fun setPopupVisible (Z)V
+	public fun toString ()Ljava/lang/String;
+	public final fun togglePopupVisibility ()V
 }
 
 public final class org/jetbrains/jewel/ui/component/RadioButtonKt {
@@ -837,7 +853,10 @@ public final class org/jetbrains/jewel/ui/component/SelectableIconButtonState$Co
 }
 
 public final class org/jetbrains/jewel/ui/component/SimpleListItemKt {
-	public static final fun SimpleListItem-iHT-50w (Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleListItem-0vH8DBg (Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleListItem-aqv2aB4 (Ljava/lang/String;ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleListItem-eKw1uXw (Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleListItem-gMrHQkA (ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/SliderKt {
@@ -2464,17 +2483,18 @@ public final class org/jetbrains/jewel/ui/component/styling/SelectableLazyColumn
 public final class org/jetbrains/jewel/ui/component/styling/SimpleListItemColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemColors$Companion;
-	public synthetic fun <init> (JJJJJJJJILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJJJJJJJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun backgroundFor (Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun contentFor (Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBackground-0d7_KjU ()J
-	public final fun getBackgroundFocused-0d7_KjU ()J
+	public final fun getBackgroundActive-0d7_KjU ()J
 	public final fun getBackgroundSelected-0d7_KjU ()J
-	public final fun getBackgroundSelectedFocused-0d7_KjU ()J
+	public final fun getBackgroundSelectedActive-0d7_KjU ()J
 	public final fun getContent-0d7_KjU ()J
-	public final fun getContentFocused-0d7_KjU ()J
+	public final fun getContentActive-0d7_KjU ()J
 	public final fun getContentSelected-0d7_KjU ()J
-	public final fun getContentSelectedFocused-0d7_KjU ()J
+	public final fun getContentSelectedActive-0d7_KjU ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -2485,8 +2505,9 @@ public final class org/jetbrains/jewel/ui/component/styling/SimpleListItemColors
 public final class org/jetbrains/jewel/ui/component/styling/SimpleListItemMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemMetrics$Companion;
-	public fun <init> (Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/shape/CornerSize;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/shape/CornerSize;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIconTextGap-D9Ej5fM ()F
 	public final fun getInnerPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getOuterPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getSelectionBackgroundCornerSize ()Landroidx/compose/foundation/shape/CornerSize;

@@ -28,8 +28,8 @@ public class LazyTreeStyle(
 public fun SimpleListItemColors.contentFor(state: TreeElementState): State<Color> =
     rememberUpdatedState(
         when {
-            state.isSelected && state.isFocused -> contentSelectedFocused
-            state.isFocused -> contentFocused
+            state.isSelected && state.isFocused -> contentSelectedActive
+            state.isFocused -> contentActive
             state.isSelected -> contentSelected
             else -> content
         }

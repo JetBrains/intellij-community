@@ -53,7 +53,7 @@ internal fun readDefaultComboBoxStyle(): ComboBoxStyle {
                 minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
                 cornerSize = componentArc,
                 contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
-                popupContentPadding = PaddingValues(6.dp),
+                popupContentPadding = PaddingValues(vertical = 6.dp),
                 borderWidth = DarculaUIUtil.LW.dp,
                 maxPopupHeight = Dp.Unspecified,
             ),

@@ -26,12 +26,10 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.ListComboBox
-import org.jetbrains.jewel.ui.component.ListItemState
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
-import org.jetbrains.jewel.ui.theme.simpleListItemStyle
 
 @Composable
 internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
@@ -77,20 +75,13 @@ private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) 
         ListComboBox(
             items = comboBoxItems,
             modifier = Modifier.width(170.dp).padding(end = 2.dp),
-            isEditable = false,
             maxPopupHeight = 150.dp,
-            onSelectedItemChange = {
-                selected = it
+            onSelectedItemChange = { _, text ->
+                selected = text
                 onLoadMarkdown(if (selected == "Jewel readme") JewelReadme else MarkdownCatalog)
             },
-            listItemContent = { item, isSelected, _, isItemHovered, isPreviewSelection ->
-                SimpleListItem(
-                    text = item,
-                    state = ListItemState(isSelected, isItemHovered, isPreviewSelection),
-                    modifier = Modifier,
-                    style = JewelTheme.simpleListItemStyle,
-                    contentDescription = item,
-                )
+            itemContent = { item, isSelected, isActive ->
+                SimpleListItem(text = item, isSelected = isSelected, isActive = isActive)
             },
         )
     }

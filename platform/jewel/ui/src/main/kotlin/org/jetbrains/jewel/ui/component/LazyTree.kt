@@ -38,8 +38,8 @@ public fun <T> LazyTree(
     BasicLazyTree(
         tree = tree,
         onElementClick = onElementClick,
-        elementBackgroundFocused = colors.backgroundFocused,
-        elementBackgroundSelectedFocused = colors.backgroundSelectedFocused,
+        elementBackgroundFocused = colors.backgroundActive,
+        elementBackgroundSelectedFocused = colors.backgroundSelectedActive,
         elementBackgroundSelected = colors.backgroundSelected,
         indentSize = metrics.indentSize,
         elementBackgroundCornerSize = metrics.simpleListItemMetrics.selectionBackgroundCornerSize,
