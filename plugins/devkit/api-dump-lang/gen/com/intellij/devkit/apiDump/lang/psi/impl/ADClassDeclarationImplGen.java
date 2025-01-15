@@ -47,4 +47,9 @@ public class ADClassDeclarationImplGen extends ADPsiElementImpl implements ADCla
     return ADPsiImplUtil.resolvePsiClass(this);
   }
 
+  @Override
+  public @NotNull PsiElement getNavigationElement() {
+    return ADPsiImplUtil.getNavigationElement(this);
+  }
+
 }

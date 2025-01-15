@@ -45,7 +45,7 @@
 File ::= ClassDeclaration*
 
 ClassDeclaration ::= ClassHeader Member* {
-  methods = [ resolvePsiClass ]
+  methods = [ resolvePsiClass getNavigationElement ]
 }
 
 Member ::= Method | Constructor | Field | Companion | SuperType
@@ -71,6 +71,7 @@ private MemberStart ::= MINUS (Modifiers &(IDENTIFIER (LPAREN | COLON) | LESS))?
 Method ::= MemberStart MethodReference Parameters TypeAnnotation
 {
   pin = 'Parameters'
+  methods = [ getNavigationElement ]
 }
 
 MethodReference ::= IDENTIFIER
@@ -91,6 +92,9 @@ private TypeAnnotation ::= COLON TypeReference
 }
 
 Field ::= MemberStart FieldReference TypeAnnotation
+{
+  methods = [ getNavigationElement ]
+}
 
 FieldReference ::= IDENTIFIER
 {
@@ -100,6 +104,7 @@ FieldReference ::= IDENTIFIER
 Constructor ::= MemberStart ConstructorReference Parameters TypeAnnotation
 {
   pin = 'Parameters'
+  methods = [ getNavigationElement ]
 }
 
 ConstructorReference ::= LESS 'init' MORE

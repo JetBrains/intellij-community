@@ -66,4 +66,9 @@ public class ADMethodImplGen extends ADMemberImplGen implements ADMethod {
     return findPsiChildByType(MINUS);
   }
 
+  @Override
+  public @NotNull PsiElement getNavigationElement() {
+    return ADPsiImplUtil.getNavigationElement(this);
+  }
+
 }

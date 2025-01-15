@@ -24,4 +24,6 @@ public interface ADField extends ADMember {
   @NotNull
   PsiElement getMinus();
 
+  @NotNull PsiElement getNavigationElement();
+
 }

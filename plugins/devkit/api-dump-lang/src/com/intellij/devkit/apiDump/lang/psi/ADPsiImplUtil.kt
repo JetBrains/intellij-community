@@ -14,6 +14,18 @@ internal fun ADClassDeclaration.resolvePsiClass(): PsiClass? {
   return classRef.resolve() as? PsiClass
 }
 
+internal fun ADClassDeclaration.getNavigationElement(): PsiElement =
+  classHeader.typeReference.getIdentifierList().lastOrNull() ?: this
+
+internal fun ADMethod.getNavigationElement(): PsiElement =
+  methodReference
+
+internal fun ADField.getNavigationElement(): PsiElement =
+  fieldReference
+
+internal fun ADConstructor.getNavigationElement(): PsiElement =
+  constructorReference
+
 private val identifierSet = TokenSet.create(ADElementTypes.IDENTIFIER)
 
 internal fun ADTypeReference.getIdentifierList(): List<PsiElement> =

@@ -60,4 +60,9 @@ public class ADFieldImplGen extends ADMemberImplGen implements ADField {
     return findPsiChildByType(MINUS);
   }
 
+  @Override
+  public @NotNull PsiElement getNavigationElement() {
+    return ADPsiImplUtil.getNavigationElement(this);
+  }
+
 }

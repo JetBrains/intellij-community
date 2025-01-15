@@ -27,4 +27,6 @@ public interface ADConstructor extends ADMember {
   @NotNull
   PsiElement getMinus();
 
+  @NotNull PsiElement getNavigationElement();
+
 }

@@ -18,4 +18,6 @@ public interface ADClassDeclaration extends ADPsiElement {
 
   @Nullable PsiClass resolvePsiClass();
 
+  @NotNull PsiElement getNavigationElement();
+
 }

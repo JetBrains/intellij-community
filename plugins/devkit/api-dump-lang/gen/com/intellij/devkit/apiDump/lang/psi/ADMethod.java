@@ -27,4 +27,6 @@ public interface ADMethod extends ADMember {
   @NotNull
   PsiElement getMinus();
 
+  @NotNull PsiElement getNavigationElement();
+
 }

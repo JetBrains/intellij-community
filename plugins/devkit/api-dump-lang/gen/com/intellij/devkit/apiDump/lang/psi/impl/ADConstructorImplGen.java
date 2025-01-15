@@ -66,4 +66,9 @@ public class ADConstructorImplGen extends ADMemberImplGen implements ADConstruct
     return findPsiChildByType(MINUS);
   }
 
+  @Override
+  public @NotNull PsiElement getNavigationElement() {
+    return ADPsiImplUtil.getNavigationElement(this);
+  }
+
 }
