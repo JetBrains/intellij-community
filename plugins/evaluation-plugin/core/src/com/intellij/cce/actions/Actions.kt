@@ -34,7 +34,7 @@ sealed interface Action {
   }
 }
 
-data class FileActions(val path: String, val checksum: String, val sessionsCount: Int, val actions: List<Action>)
+data class FileActions(val path: String, val checksum: String?, val sessionsCount: Int, val actions: List<Action>)
 
 data class MoveCaret internal constructor(override val sessionId: UUID, val offset: Int) : Action {
   override val type = Action.ActionType.MOVE_CARET

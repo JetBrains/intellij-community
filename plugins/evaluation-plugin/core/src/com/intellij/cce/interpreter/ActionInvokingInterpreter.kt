@@ -5,7 +5,7 @@ import com.intellij.cce.actions.*
 import com.intellij.cce.core.Session
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
-import java.util.UUID
+import java.util.*
 
 class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
                                 private val handler: InterpretationHandler,
@@ -19,7 +19,7 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
     val sessions = mutableListOf<Session>()
     val needToClose = !actionsInvoker.isOpen(fileActions.path)
     val text = actionsInvoker.openFile(fileActions.path)
-    if (fileActions.checksum != computeChecksum(text)) {
+    if (fileActions.checksum != null && fileActions.checksum != computeChecksum(text)) {
       handler.onErrorOccurred(IllegalStateException("File ${fileActions.path} has been modified."), fileActions.sessionsCount)
       return emptyList()
     }
