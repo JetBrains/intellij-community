@@ -12,12 +12,13 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveNestedDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 
 sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     val project: Project,
@@ -60,17 +61,18 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         }
     }
 
-    sealed class DeclarationsMoveDescriptor(
+    class Declarations(
         project: Project,
         moveDescriptors: List<K2MoveDescriptor.Declarations>,
         searchForText: Boolean,
         searchInComments: Boolean,
         searchReferences: Boolean,
         dirStructureMatchesPkg: Boolean,
+        internal val outerInstanceParameterNameProvider: (declaration: KtNamedDeclaration) -> String? = DefaultOuterInstanceParameterNameProvider,
         moveCallBack: MoveCallback? = null,
-        internal val preDeclarationMoved: (KtNamedDeclaration) -> Unit,
-        internal val postDeclarationMoved: (KtNamedDeclaration, KtNamedDeclaration) -> Unit
-    )  : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
+        internal val preDeclarationMoved: (KtNamedDeclaration) -> Unit = { },
+        internal val postDeclarationMoved: (KtNamedDeclaration, KtNamedDeclaration) -> Unit = { _, _ -> },
+    ) : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
         project,
         moveDescriptors,
         searchForText,
@@ -80,63 +82,44 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         moveCallBack
     ) {
         override val sourceElements: List<KtNamedDeclaration> get() = moveDescriptors.flatMap { it.source.elements }
-    }
 
-    class Declarations(
-        project: Project,
-        moveDescriptors: List<K2MoveDescriptor.Declarations>,
-        searchForText: Boolean,
-        searchInComments: Boolean,
-        searchReferences: Boolean,
-        dirStructureMatchesPkg: Boolean,
-        moveCallBack: MoveCallback? = null,
-        preDeclarationMoved: (KtNamedDeclaration) -> Unit = { },
-        postDeclarationMoved: (KtNamedDeclaration, KtNamedDeclaration) -> Unit = { _, _ -> },
-    ) : DeclarationsMoveDescriptor(
-        project,
-        moveDescriptors,
-        searchForText,
-        searchInComments,
-        searchReferences,
-        dirStructureMatchesPkg,
-        moveCallBack,
-        preDeclarationMoved,
-        postDeclarationMoved
-    ) {
         override fun refactoringProcessor(): BaseRefactoringProcessor {
             return K2MoveDeclarationsRefactoringProcessor(this)
         }
     }
 
-    class NestedDeclarations(
-        project: Project,
-        moveDescriptors: List<K2MoveDescriptor.Declarations>,
-        searchForText: Boolean,
-        searchInComments: Boolean,
-        searchReferences: Boolean,
-        dirStructureMatchesPkg: Boolean,
-        val newClassName: String? = null,
-        val outerInstanceParameterName: String? = null,
-        moveCallBack: MoveCallback? = null,
-        preDeclarationMoved: (KtNamedDeclaration) -> Unit = { },
-        postDeclarationMoved: (KtNamedDeclaration, KtNamedDeclaration) -> Unit = { _, _ -> },
-    ) : DeclarationsMoveDescriptor(
-        project,
-        moveDescriptors,
-        searchForText,
-        searchInComments,
-        searchReferences,
-        dirStructureMatchesPkg,
-        moveCallBack,
-        preDeclarationMoved,
-        postDeclarationMoved
-    ) {
-        override fun refactoringProcessor(): BaseRefactoringProcessor {
-            return K2MoveNestedDeclarationsRefactoringProcessor(this)
-        }
-    }
-
     companion object {
+        /**
+         * This parameter name provider attempts to find a name for the outer instance
+         * based on the outer classes name and avoids name clashes by attempting to
+         * choose a name that is not already taken anywhere in the declaration.
+         */
+        private val DefaultOuterInstanceParameterNameProvider = (fun (declaration: KtNamedDeclaration): String? {
+            val suggestedName = declaration.containingClass()?.takeIf {
+                (declaration !is KtClass || declaration.isInner()) && declaration !is KtProperty
+            }?.name?.decapitalizeAsciiOnly() ?: return null
+
+            val usedNames = mutableSetOf<String>()
+            declaration.accept(object : KtTreeVisitorVoid() {
+                override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                    super.visitNamedDeclaration(declaration)
+                    usedNames.add(declaration.nameAsSafeName.asString())
+                }
+
+                override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                    super.visitSimpleNameExpression(expression)
+                    expression.getIdentifier()?.text?.let { usedNames.add(it) }
+                }
+            })
+
+            if (suggestedName !in usedNames) return suggestedName
+            for (i in 1..1000) {
+                val nameWithNum = "$suggestedName$i"
+                if (nameWithNum !in usedNames) return nameWithNum
+            }
+            return null
+        })
+
         @RequiresReadLock
         fun Declarations(
             project: Project,

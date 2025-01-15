@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveNestedDeclarationsRefactoringProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.util.sourceRoot
@@ -61,19 +61,18 @@ internal object K2MoveNestedRefactoringAction : KotlinMoveRefactoringAction {
                     target = target,
                 )
                 val moveOperationDescriptor = allowAnalysisOnEdt {
-                    K2MoveOperationDescriptor.NestedDeclarations(
+                    K2MoveOperationDescriptor.Declarations(
                         project = project,
                         moveDescriptors = listOf(moveDescriptor),
                         searchForText = config.searchForText(),
                         searchInComments = config.searchInComments(),
                         searchReferences = config.searchReferences(),
                         dirStructureMatchesPkg = dirStructureMatchesPkg,
-                        newClassName = null,
-                        outerInstanceParameterName = config.getNullableString("outerInstanceParameter"),
+                        outerInstanceParameterNameProvider = { config.getNullableString("outerInstanceParameter") },
                         moveCallBack = null,
                     )
                 }
-                K2MoveNestedDeclarationsRefactoringProcessor(moveOperationDescriptor).run()
+                K2MoveDeclarationsRefactoringProcessor(moveOperationDescriptor).run()
             }
             "MOVE_MEMBERS" -> {
                 val members = elementsAtCaret.map { it.getNonStrictParentOfType<PsiMember>()!! }

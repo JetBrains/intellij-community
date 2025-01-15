@@ -15,7 +15,6 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -24,13 +23,9 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.getPackage
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
@@ -224,59 +219,6 @@ sealed class K2MoveModel {
         }
     }
 
-    class NestedDeclarations(
-        override val project: Project,
-        override val source: K2MoveSourceModel.ElementSource,
-        override val target: K2MoveTargetModel.File,
-        override val inSourceRoot: Boolean,
-        outerClassName: String?,
-        internal val needsInstanceReference: Boolean,
-        override val moveCallBack: MoveCallback? = null
-    ) : K2MoveModel() {
-
-        override fun isValidRefactoring(): Boolean {
-            return super.isValidRefactoring() && isValidDeclarationsRefactoring(source, target)
-        }
-
-        private var passOuterClass: Boolean = needsInstanceReference
-        var outerClassInstanceParameterName: String = outerClassName?.decapitalizeAsciiOnly() ?: "instance"
-
-        override fun buildPanel(panel: Panel) = with(panel) {
-            if (needsInstanceReference) {
-                lateinit var selected: ComponentPredicate
-                row {
-                    selected = checkBox(KotlinBundle.message("pass.outer.class.instance.as.parameter"))
-                        .bindSelected(::passOuterClass)
-                        .selected
-                }
-                row {
-                    label(KotlinBundle.message("parameter.name.prompt"))
-                    textField().bindText(::outerClassInstanceParameterName)
-                        .enabledIf(selected)
-                }.bottomGap(bottomGap = BottomGap.SMALL)
-            }
-            super.buildPanel(panel)
-        }
-
-        override fun toDescriptor(): K2MoveOperationDescriptor.NestedDeclarations {
-            val srcDescr = K2MoveSourceDescriptor.ElementSource(source.elements)
-            val targetDescr = K2MoveTargetDescriptor.File(target.fileName, target.pkgName, target.directory)
-            val moveDescriptor = K2MoveDescriptor.Declarations(project, srcDescr, targetDescr)
-
-            return K2MoveOperationDescriptor.NestedDeclarations(
-                project = project,
-                moveDescriptors = listOf(moveDescriptor),
-                searchForText = searchForText.state,
-                searchInComments = searchInComments.state,
-                searchReferences = searchReferences.state,
-                dirStructureMatchesPkg = true,
-                newClassName = null,
-                outerInstanceParameterName = outerClassInstanceParameterName.takeIf { passOuterClass },
-                moveCallBack = moveCallBack
-            )
-        }
-    }
-
     companion object {
         private val MOVE_DECLARATIONS: String
             @Nls
@@ -412,31 +354,14 @@ sealed class K2MoveModel {
                         val psiDirectory = containingFile.containingDirectory ?: error("No directory found")
                         K2MoveTargetModel.File(sourceFileName(), containingFile.packageFqName, psiDirectory)
                     }
-                    val singleDeclarationToMove = (elementsToMove.singleOrNull() as? KtNamedDeclaration)
-                        .takeIf { it !is KtObjectDeclaration || !it.isCompanion() }
-                    val outerClassName = (singleDeclarationToMove?.parent?.parent as? KtClassOrObject?)?.name
 
-                    if (singleDeclarationToMove?.containingClassOrObject != null) {
-                        val needsInstanceReference = (singleDeclarationToMove is KtClass && singleDeclarationToMove.isInner()) ||
-                                (singleDeclarationToMove is KtNamedFunction && singleDeclarationToMove.containingClassOrObject !is KtObjectDeclaration)
-                        NestedDeclarations(
-                            project = project,
-                            source = source,
-                            target = target,
-                            inSourceRoot = inSourceRoot,
-                            needsInstanceReference = needsInstanceReference,
-                            outerClassName = outerClassName.takeIf { needsInstanceReference },
-                            moveCallBack = moveCallBack
-                        )
-                    } else {
-                        Declarations(
-                            project = project,
-                            source = source,
-                            target = target,
-                            inSourceRoot = inSourceRoot,
-                            moveCallBack = moveCallBack
-                        )
-                    }
+                    Declarations(
+                        project = project,
+                        source = source,
+                        target = target,
+                        inSourceRoot = inSourceRoot,
+                        moveCallBack = moveCallBack
+                    )
                 }
 
                 else -> error("Unsupported move operation")

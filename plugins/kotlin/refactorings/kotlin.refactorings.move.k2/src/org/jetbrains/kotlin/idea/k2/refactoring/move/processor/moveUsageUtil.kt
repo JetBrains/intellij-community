@@ -12,7 +12,6 @@ import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -34,6 +33,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 /**
@@ -236,8 +236,7 @@ internal fun collectOuterInstanceReferences(member: KtNamedDeclaration): List<Ou
     return result
 }
 
-@ApiStatus.Internal
-fun KtNamedDeclaration.usesOuterInstanceParameter(): Boolean {
+internal fun KtNamedDeclaration.usesOuterInstanceParameter(): Boolean {
     return collectOuterInstanceReferences(this).isNotEmpty()
 }
 
@@ -259,15 +258,17 @@ private fun traverseOuterInstanceReferences(
     analyze(member) {
         val containingClassOrObject = member.containingClassOrObject ?: return false
         val outerClassSymbol = containingClassOrObject.symbol as? KaClassSymbol ?: return false
+        val outerClassPsi = outerClassSymbol.psi
         var found = false
         member.accept(object : PsiRecursiveElementWalkingVisitor() {
             private fun getOuterInstanceReference(element: PsiElement): OuterInstanceReferenceUsageInfo? {
                 return when (element) {
                     is KtThisExpression -> {
                         val symbol = element.expressionType?.symbol ?: return null
+                        val symbolPsi = symbol.psi
                         val isIndirect = when {
                             symbol == outerClassSymbol -> false
-                            symbol.isStrictAncestorOf(outerClassSymbol) -> true
+                            symbolPsi != null && outerClassPsi != null && symbolPsi.isAncestor(outerClassPsi) -> true
                             else -> return null
                         }
                         OuterInstanceReferenceUsageInfo.ExplicitThis(element, member, isIndirect)
