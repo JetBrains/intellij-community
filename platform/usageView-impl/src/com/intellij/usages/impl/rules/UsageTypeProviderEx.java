@@ -7,5 +7,5 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface UsageTypeProviderEx extends UsageTypeProvider {
-  @Nullable UsageType getUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets);
+  @Nullable UsageType getUsageType(@NotNull PsiElement element, @NotNull UsageTarget @NotNull [] targets);
 }
