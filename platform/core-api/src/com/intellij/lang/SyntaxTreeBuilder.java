@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -204,6 +204,8 @@ public interface SyntaxTreeBuilder {
     default boolean isCollapsed() {
       return false;
     }
+
+    default void remapTokenType(@NotNull IElementType newType) {throw new UnsupportedOperationException("not implemented for this kind of markers");}
   }
 
   /**

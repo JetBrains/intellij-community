@@ -650,6 +650,7 @@ com.intellij.lang.SyntaxTreeBuilder$Production
 - getStartOffset():I
 - getTokenType():com.intellij.psi.tree.IElementType
 - isCollapsed():Z
+- remapTokenType(com.intellij.psi.tree.IElementType):V
 com.intellij.lang.TokenSeparatorGenerator
 - a:generateWhitespaceBetweenTokens(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 c:com.intellij.lang.TreeBackedLighterAST
