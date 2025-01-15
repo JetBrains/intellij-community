@@ -91,6 +91,8 @@ f:com.intellij.platform.workspace.storage.ExternalMappingKey$Companion
 @:com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 - java.lang.annotation.Annotation
 - a:version():I
+com.intellij.platform.workspace.storage.GlobalStorageEntitySource
+- com.intellij.platform.workspace.storage.EntitySource
 com.intellij.platform.workspace.storage.ImmutableEntityStorage
 - com.intellij.platform.workspace.storage.EntityStorage
 - sf:Companion:com.intellij.platform.workspace.storage.ImmutableEntityStorage$Companion
