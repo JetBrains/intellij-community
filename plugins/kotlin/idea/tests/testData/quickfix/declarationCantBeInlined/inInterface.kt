@@ -5,4 +5,4 @@ interface B {
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertMemberToExtensionFix
 // TODO: KTIJ-29625
-/* IGNORE_K2 */
+// IGNORE_K2

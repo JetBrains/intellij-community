@@ -6,5 +6,5 @@ interface My {
 
 // Ignore in K2 as the `RedundantOpenInInterface` quickfix has been removed in K2 and a `TOOL_FIR` test directive doesn't exist. In K2,
 // this test case is covered by `redundantOpenFunctionInInterface.kt` in the `inspections-k2` module.
-/* IGNORE_K2 */
+// IGNORE_K2
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

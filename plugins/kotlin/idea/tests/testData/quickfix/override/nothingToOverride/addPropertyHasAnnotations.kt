@@ -11,4 +11,4 @@ class C : I {
     <caret>override val bar = 1
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddPropertyToSupertypeFix
-/* IGNORE_K2 */
+// IGNORE_K2

@@ -4,4 +4,4 @@ fun foo() {
     2 <caret>/ ""
 }
 
-/* IGNORE_K2 */
+// IGNORE_K2

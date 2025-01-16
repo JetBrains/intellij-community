@@ -38,7 +38,7 @@ import java.nio.file.Paths
 
 abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun doTestWithExtraFile(beforeFileName: String) {
-        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2_MULTILINE_COMMENT else IgnoreTests.DIRECTIVES.IGNORE_K1
+        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
         IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
             enableInspections(beforeFileName)
 

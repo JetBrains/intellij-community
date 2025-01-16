@@ -2,4 +2,4 @@ package simple
 
 val f = 42
 
-/* IGNORE_K2 */
+// IGNORE_K2

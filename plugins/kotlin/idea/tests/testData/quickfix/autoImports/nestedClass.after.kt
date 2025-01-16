@@ -5,4 +5,4 @@ import test.Test
 
 val a = <caret>Test.Nested
 
-/* IGNORE_K2 */
+// IGNORE_K2

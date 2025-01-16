@@ -9,4 +9,4 @@ fun main() {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
-/* IGNORE_K2 */
+// IGNORE_K2

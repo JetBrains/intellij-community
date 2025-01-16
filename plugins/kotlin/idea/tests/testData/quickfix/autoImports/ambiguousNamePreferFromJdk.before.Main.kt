@@ -7,4 +7,4 @@ import dependency.*
 fun foo(d: Date<caret>) {
 }
 
-/* IGNORE_K2 */
+// IGNORE_K2

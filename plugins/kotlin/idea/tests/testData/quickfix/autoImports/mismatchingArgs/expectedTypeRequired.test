@@ -2,7 +2,7 @@
 // "Import extension function 'X.foo'" "true"
 // ERROR: No value passed for parameter 'p'
 // ERROR: Type mismatch: inferred type is Unit but String was expected
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package main
 
@@ -26,7 +26,7 @@ fun <T> X.foo(): T = TODO()
 // "Import extension function 'X.foo'" "true"
 // ERROR: No value passed for parameter 'p'
 // ERROR: Type mismatch: inferred type is Unit but String was expected
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package main
 

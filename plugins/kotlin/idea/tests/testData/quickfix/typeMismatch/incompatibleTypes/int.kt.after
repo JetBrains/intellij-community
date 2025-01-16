@@ -5,4 +5,4 @@ fun test(b: Byte, i: Int) {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
-/* IGNORE_K2 */
+// IGNORE_K2

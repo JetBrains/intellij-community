@@ -7,4 +7,4 @@ class TestClass{
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SafeDeleteFix
-/* IGNORE_K2 */
+// IGNORE_K2

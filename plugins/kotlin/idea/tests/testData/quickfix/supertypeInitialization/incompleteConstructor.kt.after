@@ -3,4 +3,4 @@ open class Base(p1: Int, val p2: Int)
 
 class C private constructor(p1: Int, p2: Int) : Base<caret>(p1, p2)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix
-/* IGNORE_K2 */
+// IGNORE_K2

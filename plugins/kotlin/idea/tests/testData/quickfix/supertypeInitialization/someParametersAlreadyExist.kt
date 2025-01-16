@@ -8,4 +8,4 @@ open class Base<T>(p1: Int, private val p2: Int, p3: Any, p4: String, p5: T, p6:
 class C(p: Int, p2: Int, p3: String, p4: Any, p5: String, val p6: Int) : Base<String><caret>
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix
-/* IGNORE_K2 */
+// IGNORE_K2

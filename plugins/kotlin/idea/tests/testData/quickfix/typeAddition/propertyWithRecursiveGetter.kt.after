@@ -10,6 +10,6 @@ class A {
     val a<caret>
         get() = a
 }
-/* IGNORE_K2 */
+// IGNORE_K2
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention

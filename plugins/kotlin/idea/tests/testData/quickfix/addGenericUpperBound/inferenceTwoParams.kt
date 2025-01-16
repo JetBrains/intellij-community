@@ -7,4 +7,4 @@ fun <E, F> bar(x: E, y: F) = foo(<caret>x, y)
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.HighPriorityMakeUpperBoundNonNullableFix
 // TODO: KTIJ-29580
-/* IGNORE_K2 */
+// IGNORE_K2

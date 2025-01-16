@@ -10,4 +10,4 @@ suspend fun <T> suspending(): T {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddSuspendModifierFix
-/* IGNORE_K2 */
+// IGNORE_K2

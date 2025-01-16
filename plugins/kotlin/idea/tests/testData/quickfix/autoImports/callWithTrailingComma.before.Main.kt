@@ -16,4 +16,4 @@ class X {
     }
 }
 
-/* IGNORE_K2 */
+// IGNORE_K2

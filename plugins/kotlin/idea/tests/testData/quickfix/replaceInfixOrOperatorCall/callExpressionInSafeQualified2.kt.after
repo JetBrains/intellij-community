@@ -10,5 +10,5 @@ fun test(foo: Foo?) {
     foo // comment1
         ?. /* comment2 */ bar?.invoke()
 }
-/* IGNORE_K2 */
+// IGNORE_K2
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix

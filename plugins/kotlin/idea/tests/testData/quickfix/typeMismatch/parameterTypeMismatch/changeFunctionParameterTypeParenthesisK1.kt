@@ -9,5 +9,5 @@ fun <T> bar(x: T) {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
-/* IGNORE_K2 */
+// IGNORE_K2
 // For K2-specific behaviour, see changeFunctionParameterTypeParenthesisK2.kt

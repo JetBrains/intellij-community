@@ -8,4 +8,4 @@ import java.util.ArrayList
 class C(c: MutableCollection<out String>) : ArrayList<String>(c)
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix
-/* IGNORE_K2 */
+// IGNORE_K2

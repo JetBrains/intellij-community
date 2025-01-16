@@ -5,4 +5,4 @@ import java.io.DataInputStream
 class C : DataInputStream<caret>
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix
-/* IGNORE_K2 */
+// IGNORE_K2

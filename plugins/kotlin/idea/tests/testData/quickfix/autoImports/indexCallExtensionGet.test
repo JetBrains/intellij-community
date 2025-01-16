@@ -2,7 +2,7 @@
 // "Import operator 'Some.get'" "true"
 // ERROR: Unresolved reference: foo()["str"]
 // ERROR: No get method providing array access
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package testing
 
@@ -29,7 +29,7 @@ operator fun Some.get(s: String) {}
 // "Import operator 'Some.get'" "true"
 // ERROR: Unresolved reference: foo()["str"]
 // ERROR: No get method providing array access
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package testing
 

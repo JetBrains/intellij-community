@@ -6,4 +6,4 @@ fun foo(x: A) {
     if (x <<caret> 0) {}
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled
-/* IGNORE_K2 */
+// IGNORE_K2
