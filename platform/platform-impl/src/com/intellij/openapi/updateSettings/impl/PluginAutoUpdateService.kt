@@ -73,6 +73,9 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
         }
         ensureActive()
         LOG.debug { "new plugin updates: ${downloaders.joinToString { it.pluginName }}" }
+        if (downloaders.isEmpty()) {
+          continue
+        }
         val activeProject = ProjectUtil.getActiveProject()
         val downloadedList = if (activeProject != null) {
           withBackgroundProgress(activeProject, IdeBundle.message("update.downloading.plugins.progress"), true) {
