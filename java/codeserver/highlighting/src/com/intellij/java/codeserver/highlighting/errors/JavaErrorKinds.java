@@ -434,8 +434,8 @@ public final class JavaErrorKinds {
       .<Collection<PsiClassType>>parameterized()
       .withRawDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
 
-  public static final Parameterized<PsiElement, JavaIncompatibleTypeError> TYPE_INCOMPATIBLE =
-    parameterized(PsiElement.class, JavaIncompatibleTypeError.class, "type.incompatible")
+  public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> TYPE_INCOMPATIBLE =
+    parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "type.incompatible")
       .withDescription((psi, context) -> context.createDescription())
       .withTooltip((psi, context) -> context.createTooltip());
 

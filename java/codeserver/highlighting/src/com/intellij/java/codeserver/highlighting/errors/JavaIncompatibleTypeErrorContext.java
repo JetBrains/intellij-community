@@ -13,10 +13,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record JavaIncompatibleTypeError(@NotNull PsiType lType, @Nullable PsiType rType) {
+public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable PsiType rType) {
   private static final @NlsSafe String ANONYMOUS = "anonymous ";
 
-  private @NotNull String getReasonForIncompatibleTypes() {
+  private @Nls @NotNull String getReasonForIncompatibleTypes() {
     if (rType instanceof PsiMethodReferenceType referenceType) {
       JavaResolveResult[] results = referenceType.getExpression().multiResolve(false);
       if (results.length > 1) {

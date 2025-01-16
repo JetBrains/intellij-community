@@ -13,7 +13,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
-import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeError;
+import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
@@ -169,7 +169,7 @@ final class JavaErrorFixProvider {
 
   private void createTypeFixes() {
     multi(TYPE_INCOMPATIBLE, error -> {
-      JavaIncompatibleTypeError context = error.context();
+      JavaIncompatibleTypeErrorContext context = error.context();
       PsiElement anchor = error.psi();
       PsiElement parent = anchor.getParent();
       if (anchor instanceof PsiJavaCodeReferenceElement && parent instanceof PsiReferenceList &&
