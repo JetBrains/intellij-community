@@ -60,6 +60,19 @@ fun Path.getEelDescriptor(): EelDescriptor {
   return EelNioBridgeService.getInstanceSync().tryGetEelDescriptor(this) ?: LocalEelDescriptor
 }
 
+/**
+ * Retrieves [EelDescriptor] for the environment where [this] is located.
+ * @throws IllegalArgumentException if the project is [Project.isDefault]
+ */
+@Throws(IllegalArgumentException::class)
+fun Project.getEelDescriptor(): EelDescriptor {
+  val filePath = projectFilePath
+  if (filePath == null) {
+    throw IllegalArgumentException("EelDescriptor must not be requested for the default project")
+  }
+  return Path.of(filePath).getEelDescriptor()
+}
+
 val localEel: LocalEelApi by lazy {
   if (SystemInfo.isWindows) ApplicationManager.getApplication().service<LocalWindowsEelApi>() else ApplicationManager.getApplication().service<LocalPosixEelApi>()
 }

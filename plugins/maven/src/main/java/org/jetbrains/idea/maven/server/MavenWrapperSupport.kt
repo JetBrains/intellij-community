@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
 import com.intellij.build.FilePosition
@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
-import com.intellij.platform.eel.impl.utils.getEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelApiBlocking
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.zip.JBZipFile
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole

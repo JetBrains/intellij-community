@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.eel
 
 import com.intellij.openapi.project.Project
@@ -6,10 +6,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.impl.utils.getEelApiBlocking
-import com.intellij.platform.eel.impl.utils.getEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport

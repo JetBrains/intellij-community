@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.utils
 
 import com.intellij.openapi.diagnostic.logger
@@ -12,7 +12,9 @@ import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.EelProvider
+import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -62,8 +64,8 @@ fun Project?.getEelApiBlocking(): EelApi {
   return runBlockingMaybeCancellable { getEelApi() }
 }
 
-fun Project?.getEelDescriptor(): EelDescriptor {
-  return computeProjectPath("Project?.getEelDescriptor")?.getEelDescriptor() ?: LocalEelDescriptor
+fun EelDescriptor.upgradeBlocking(): EelApi {
+  return runBlockingMaybeCancellable { upgrade() }
 }
 
 private val LOG by lazy { logger<EelProvider>() }

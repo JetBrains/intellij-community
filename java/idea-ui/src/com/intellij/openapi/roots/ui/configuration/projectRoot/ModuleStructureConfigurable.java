@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -50,7 +50,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.impl.utils.EelProviderUtilsKt;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -564,7 +564,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       modules = myContext.myModulesConfigurator.addNewModule(basePath);
     }
     if (modules != null && !modules.isEmpty()) {
-      EelDescriptor eelDescriptor = Registry.is("java.home.finder.use.eel") ? EelProviderUtilsKt.getEelDescriptor(myProject) : null;
+      EelDescriptor eelDescriptor = Registry.is("java.home.finder.use.eel") ? EelProviderUtil.getEelDescriptor(myProject) : null;
       //new module wizard may add yet another SDK to the project
       myProjectStructureConfigurable.getProjectJdksModel().syncSdks(eelDescriptor);
       for (Module module : modules) {
