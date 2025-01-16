@@ -83,6 +83,7 @@ public abstract class ModalityState {
    * @return state corresponding to the modal dialog containing the given component.
    * @see Application#getModalityStateForComponent(Component)
    */
+  @RequiresEdt(generateAssertion = false)
   public static @NotNull ModalityState stateForComponent(@NotNull Component component) {
     return ApplicationManager.getApplication().getModalityStateForComponent(component);
   }
