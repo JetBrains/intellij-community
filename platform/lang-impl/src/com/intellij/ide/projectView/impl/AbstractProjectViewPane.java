@@ -1221,4 +1221,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     @Override
     public void treeCollapsed(TreeExpansionEvent event) { }
   }
+
+  public interface ProjectViewPaneWithAsyncSelect {
+    @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
+  }
 }

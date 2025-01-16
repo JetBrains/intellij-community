@@ -10152,8 +10152,11 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - updateFrom(java.lang.Object,Z,Z):V
 - a:updateFromRoot(Z):com.intellij.openapi.util.ActionCallback
 - writeExternal(org.jdom.Element):V
+com.intellij.ide.projectView.impl.AbstractProjectViewPane$ProjectViewPaneWithAsyncSelect
+- a:selectCB(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.util.ActionCallback
 a:com.intellij.ide.projectView.impl.AbstractProjectViewPaneWithAsyncSupport
 - com.intellij.ide.projectView.impl.AbstractProjectViewPane
+- com.intellij.ide.projectView.impl.AbstractProjectViewPane$ProjectViewPaneWithAsyncSelect
 - p:<init>(com.intellij.openapi.project.Project):V
 - createComponent():javax.swing.JComponent
 - pa:createStructure():com.intellij.ide.util.treeView.AbstractTreeStructureBase

@@ -90,8 +90,8 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.FocusEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -1246,13 +1246,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       LOG.debug("ProjectViewImpl.selectCB: element=" + element + ", file=" + file + ", requestFocus=" + requestFocus);
     }
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane instanceof AbstractProjectViewPaneWithAsyncSupport) {
+    if (viewPane instanceof AbstractProjectViewPane.ProjectViewPaneWithAsyncSelect asyncPane) {
       myAutoScrollOnFocusEditor.set(!requestFocus);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Delegating to AbstractProjectViewPaneWithAsyncSupport, auto scroll enabled="
+        LOG.debug("Delegating to ProjectViewPaneWithAsyncSelect, auto scroll enabled="
                                                  + myAutoScrollOnFocusEditor.get());
       }
-      return ((AbstractProjectViewPaneWithAsyncSupport)viewPane).selectCB(element, file, requestFocus);
+      return asyncPane.selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
     return ActionCallback.DONE;
