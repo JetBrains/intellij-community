@@ -19001,6 +19001,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeOnPropertyDelegate.kt");
             }
 
+            @TestMetadata("changePrimaryConstructorParameterTypeWhenExplicitThisK1.kt")
+            public void testChangePrimaryConstructorParameterTypeWhenExplicitThisK1() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeWhenExplicitThisK1.kt");
+            }
+
+            @TestMetadata("changePrimaryConstructorParameterTypeWhenExplicitThisK2.kt")
+            public void testChangePrimaryConstructorParameterTypeWhenExplicitThisK2() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeWhenExplicitThisK2.kt");
+            }
+
             @TestMetadata("char.kt")
             public void testChar() throws Exception {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/char.kt");
