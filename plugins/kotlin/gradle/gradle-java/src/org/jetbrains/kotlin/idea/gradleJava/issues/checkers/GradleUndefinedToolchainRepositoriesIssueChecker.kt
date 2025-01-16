@@ -23,7 +23,7 @@ class GradleUndefinedToolchainRepositoriesIssueChecker : GradleIssueChecker {
     override fun check(issueData: GradleIssueData): BuildIssue? {
         val rootCause = getRootCauseAndLocation(issueData.error).first
         if (rootCause.message?.contains("Toolchain download repositories have not been configured.") == true) {
-            return GradleUndefinedToolchainRepositoriesBuildIssue(rootCause)
+            return GradleUndefinedToolchainRepositoriesBuildIssue(rootCause, issueData.projectPath)
         }
         return null
     }
@@ -42,12 +42,13 @@ class GradleUndefinedToolchainRepositoriesIssueChecker : GradleIssueChecker {
 
 private class GradleUndefinedToolchainRepositoriesBuildIssue(
     cause: Throwable,
+    externalProjectPath: String
 ) : ConfigurableGradleBuildIssue() {
     init {
         setTitle(GradleBundle.message("gradle.build.issue.daemon.toolchain.repositories.undefined.title"))
         addDescription(cause.message ?: title)
         run {
-            val quickFix = GradleAddDownloadToolchainRepositoryQuickFix
+            val quickFix = GradleAddDownloadToolchainRepositoryQuickFix(externalProjectPath)
             val hyperlinkReference = addQuickFix(quickFix)
             addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.add.toolchain.repository", hyperlinkReference))
         }

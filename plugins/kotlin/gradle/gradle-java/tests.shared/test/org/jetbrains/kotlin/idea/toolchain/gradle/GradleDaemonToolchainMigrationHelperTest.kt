@@ -44,7 +44,8 @@ class GradleDaemonToolchainMigrationHelperTest: GradleProjectSdkResolverTestCase
 
     private suspend fun assertFoojayPluginIsApplied() {
         readAction {
-            project.getTopLevelBuildScriptSettingsPsiFile()!!.text.contains("org.gradle.toolchains.foojay-resolver-convention")
+            val settingsFile = getTopLevelBuildScriptSettingsPsiFile(project, projectPath)!!
+            settingsFile.text.contains("org.gradle.toolchains.foojay-resolver-convention")
         }
     }
 

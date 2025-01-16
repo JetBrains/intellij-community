@@ -57,14 +57,12 @@ fun Project.getTopLevelBuildScriptPsiFile(): PsiFile? {
     return findBuildGradleFile(projectDir.path, DEFAULT_SCRIPT_NAME, KOTLIN_BUILD_SCRIPT_NAME)?.getPsiFile(this)
 }
 
-fun Project.getTopLevelBuildScriptSettingsPsiFile(): PsiFile? {
-    val projectDir = this.guessProjectDir() ?: return null
-    return findBuildGradleFile(projectDir.path, SETTINGS_FILE_NAME, KOTLIN_SETTINGS_SCRIPT_NAME)
-        ?.getPsiFile(this)
-}
-
 fun Module.getTopLevelBuildScriptSettingsPsiFile(): PsiFile? {
     val externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(this) ?: return null
+    return getTopLevelBuildScriptSettingsPsiFile(project, externalProjectPath)
+}
+
+fun getTopLevelBuildScriptSettingsPsiFile(project: Project, externalProjectPath: String): PsiFile? {
     return findBuildGradleFile(externalProjectPath, SETTINGS_FILE_NAME, KOTLIN_SETTINGS_SCRIPT_NAME)
         ?.getPsiFile(project)
 }
