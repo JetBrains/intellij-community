@@ -104,7 +104,7 @@ public final class FormsInstrumenter extends ModuleLevelBuilder {
 
         // clean mapping
         for (Path srcFile : sourceToForms.keySet()) {
-          sourceToFormMap.remove(srcFile.toString());
+          sourceToFormMap.remove(srcFile);
         }
       }
       finally {

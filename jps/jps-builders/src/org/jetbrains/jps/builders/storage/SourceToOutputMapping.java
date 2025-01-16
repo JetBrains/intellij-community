@@ -21,7 +21,15 @@ public interface SourceToOutputMapping {
 
   void appendOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException;
 
-  void remove(@NotNull String sourcePath) throws IOException;
+  void remove(@NotNull Path sourceFile) throws IOException;
+
+  /**
+   * @deprecated Use {@link #remove(Path)}
+   */
+  @Deprecated
+  default void remove(@NotNull String sourcePath) throws IOException {
+    remove(Path.of(sourcePath));
+  }
 
   void removeOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException;
 

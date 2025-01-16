@@ -18,7 +18,7 @@ interface OneToManyPathMapping {
   fun setOutputs(path: String, outPaths: List<String>)
 
   @Throws(IOException::class)
-  fun remove(path: String)
+  fun remove(key: Path)
 }
 
 @ApiStatus.Internal

@@ -130,7 +130,7 @@ public final class BuildOperations {
       if (paths != null) {
         SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
         for (String path : paths) {
-          storage.remove(path);
+          storage.remove(Path.of(path));
         }
         dropped = true;
       }

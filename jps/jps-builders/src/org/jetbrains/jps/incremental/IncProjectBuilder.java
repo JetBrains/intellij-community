@@ -777,7 +777,7 @@ public final class IncProjectBuilder {
         final SourceToOutputMapping sourceToOutputStorage = dataManager.getSourceToOutputMap(target);
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         // actually delete outputs associated with removed paths
-        final Collection<String> pathsForIteration;
+        Collection<String> pathsForIteration;
         if (isTestMode) {
           // ensure predictable order in test logs
           pathsForIteration = new ArrayList<>(deletedPaths);
@@ -809,15 +809,15 @@ public final class IncProjectBuilder {
           if (target instanceof ModuleBuildTarget) {
             // check if the deleted source was associated with a form
             OneToManyPathMapping sourceToFormMap = dataManager.getSourceToFormMap(target);
-            Collection<String> boundForms = sourceToFormMap.getOutputs(deletedSource);
+            Path deletedSourceFile = Path.of(deletedSource);
+            Collection<Path> boundForms = sourceToFormMap.getOutputs(deletedSourceFile);
             if (boundForms != null) {
-              for (String formPath : boundForms) {
-                Path formFile = Path.of(formPath);
+              for (Path formFile : boundForms) {
                 if (Files.exists(formFile)) {
                   FSOperations.markDirty(context, CompilationRound.CURRENT, formFile.toFile());
                 }
               }
-              sourceToFormMap.remove(deletedSource);
+              sourceToFormMap.remove(deletedSourceFile);
             }
           }
         }

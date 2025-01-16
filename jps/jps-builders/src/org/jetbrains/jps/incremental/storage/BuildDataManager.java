@@ -687,8 +687,8 @@ public final class BuildDataManager {
     }
 
     @Override
-    public void remove(@NotNull String sourcePath) throws IOException {
-      myDelegate.remove(sourcePath);
+    public void remove(@NotNull Path sourceFile) throws IOException {
+      myDelegate.remove(sourceFile);
     }
 
     @Override

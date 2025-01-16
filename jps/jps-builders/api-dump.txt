@@ -1839,7 +1839,8 @@ org.jetbrains.jps.builders.storage.SourceToOutputMapping
 - a:getOutputs(java.lang.String):java.util.Collection
 - getSources():java.util.Collection
 - a:getSourcesIterator():java.util.Iterator
-- a:remove(java.lang.String):V
+- remove(java.lang.String):V
+- a:remove(java.nio.file.Path):V
 - a:removeOutput(java.lang.String,java.lang.String):V
 - a:setOutput(java.lang.String,java.lang.String):V
 - a:setOutputs(java.nio.file.Path,java.util.List):V
@@ -2672,7 +2673,7 @@ f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - getOutputs(java.lang.String):java.util.List
 - getOutputs(java.nio.file.Path):java.util.Collection
 - getState(java.lang.String):java.util.Collection
-- remove(java.lang.String):V
+- remove(java.nio.file.Path):V
 - removeData(java.lang.String,java.lang.String):V
 - setOutputs(java.lang.String,java.util.List):V
 f:org.jetbrains.jps.incremental.storage.ProjectStamps

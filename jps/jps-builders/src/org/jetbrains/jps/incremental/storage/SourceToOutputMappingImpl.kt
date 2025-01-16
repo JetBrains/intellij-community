@@ -27,8 +27,8 @@ class SourceToOutputMappingImpl @Throws(IOException::class) constructor(
   }
 
   @Throws(IOException::class)
-  override fun remove(sourcePath: String) {
-    mapping.remove(sourcePath)
+  override fun remove(sourceFile: Path) {
+    mapping.remove(sourceFile)
   }
 
   @Throws(IOException::class)

@@ -59,7 +59,7 @@ open class ExperimentalOneToManyPathMapping(
     }
   }
 
-  final override fun remove(path: String) {
-    map.remove(getKey(path))
+  final override fun remove(key: Path) {
+    map.remove(getKey(key))
   }
 }

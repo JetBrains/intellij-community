@@ -111,8 +111,8 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   }
 
   @Override
-  public void remove(@NotNull String keyPath) throws IOException {
-    super.remove(relativizer.toRelative(keyPath));
+  public void remove(@NotNull Path key) throws IOException {
+    super.remove(relativizer.toRelative(key));
   }
 
   @Override

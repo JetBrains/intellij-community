@@ -85,7 +85,7 @@ class SourceToOutputMappingFuzzTest {
   @Property
   fun removeOutputs(@ForAll("pathStrings") source: String, @ForAll("pathStringLists") outputs: List<String>) {
     mapping.setOutputs(MockPath(source), outputs)
-    mapping.remove(source)
+    mapping.remove(MockPath(source))
     val result = mapping.getOutputs(source)
     assertThat(result).isNull()
 

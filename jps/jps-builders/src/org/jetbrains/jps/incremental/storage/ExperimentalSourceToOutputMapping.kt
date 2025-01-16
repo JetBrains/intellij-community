@@ -57,8 +57,8 @@ class ExperimentalSourceToOutputMapping private constructor(
     }
   }
 
-  override fun remove(sourcePath: String) {
-    impl.remove(sourcePath)
+  override fun remove(sourceFile: Path) {
+    impl.remove(sourceFile)
   }
 
   override fun getOutputs(sourcePath: String): List<String>? = impl.getOutputs(sourcePath)
