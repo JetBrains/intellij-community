@@ -136,7 +136,7 @@ object ChangeParameterTypeFixFactory {
     }
 }
 
-private fun KtExpression.getOutermostParenthesizedExpressionOrThis(): PsiElement {
+private fun KtExpression.getOutermostParenthesizedExpressionOrThis(): KtExpression {
     val psiParent = this.parent
     return (psiParent as? KtParenthesizedExpression)?.getOutermostParenthesizedExpressionOrThis() ?: this
 }
