@@ -468,6 +468,7 @@ class UnindexedFilesScanner (
         progressReporter.getSubTaskReporter().use { subTaskReporter ->
           subTaskReporter.setText(provider.rootsScanningProgressText)
           val files: ArrayDeque<VirtualFile> = getFilesToScan(fileScannerVisitors, scanningStatistics, provider, thisProviderDeduplicateFilter)
+          PushedFilePropertiesUpdaterImpl.finishVisitors(fileScannerVisitors)
           scanFiles(provider, scanningStatistics, sharedExplanationLogger, files)
         }
       }
