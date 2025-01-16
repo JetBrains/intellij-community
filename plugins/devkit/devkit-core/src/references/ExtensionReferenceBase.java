@@ -1,18 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
@@ -20,12 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
-import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
-import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
-import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
-
-import java.util.List;
 
 abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> implements PluginConfigReference {
 
@@ -57,7 +48,8 @@ abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> imple
     if (StringUtil.isEmptyOrSpaces(resolveId)) return null;
 
     final CommonProcessors.FindProcessor<Extension> resolveProcessor = new CommonProcessors.FindFirstProcessor<>();
-    processCandidates(resolveProcessor, resolveId);
+    ExtensionLocatorKt.processExtensionCandidates(myElement.getProject(), getExtensionPointFqn(), resolveProcessor,
+                                                  resolveId, extension -> getNameElement(extension));
 
     final Extension value = resolveProcessor.getFoundValue();
     if (value == null) return null;
@@ -85,40 +77,7 @@ abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> imple
   }
 
   protected void processCandidates(Processor<? super Extension> processor) {
-    processCandidates(processor, null);
-  }
-
-  /**
-   * @param extensionPointId To locate a specific extension instance by ID or {@code null} to process all.
-   */
-  private void processCandidates(Processor<? super Extension> processor,
-                                 @Nullable String extensionPointId) {
-    final Project project = myElement.getProject();
-
-    final ExtensionPoint extensionPointDomElement =
-      ExtensionPointIndex.findExtensionPoint(project, PluginRelatedLocatorsUtils.getCandidatesScope(project), getExtensionPointFqn());
-    if (extensionPointDomElement == null) return;
-
-    final List<ExtensionCandidate> candidates;
-    if (extensionPointId == null) {
-      candidates = ExtensionLocatorKt.locateExtensionsByExtensionPoint(extensionPointDomElement);
-    }
-    else {
-      candidates = ExtensionLocatorKt.
-        locateExtensionsByExtensionPointAndId(extensionPointDomElement, extensionPointId,
-                                              extension -> {
-                                                final GenericAttributeValue<String> nameElement = getNameElement(extension);
-                                                return nameElement != null ? nameElement.getStringValue() : null;
-                                              }).findCandidates();
-    }
-
-    final DomManager manager = DomManager.getDomManager(project);
-    for (ExtensionCandidate candidate : candidates) {
-      final XmlTag element = candidate.pointer.getElement();
-      final DomElement domElement = manager.getDomElement(element);
-      if (domElement instanceof Extension) {
-        if (!processor.process((Extension)domElement)) return;
-      }
-    }
+    ExtensionLocatorKt.processExtensionCandidates(myElement.getProject(), getExtensionPointFqn(), processor,
+                                                  null, null);
   }
 }

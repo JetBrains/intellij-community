@@ -36,6 +36,8 @@ import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 import java.util.*;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
+import static org.jetbrains.idea.devkit.references.ActionOrGroupIdResolveUtil.ACTIVATE_TOOLWINDOW_ACTION_PREFIX;
+import static org.jetbrains.idea.devkit.references.ActionOrGroupIdResolveUtil.ACTIVATE_TOOLWINDOW_ACTION_SUFFIX;
 
 public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGroup> {
 
@@ -48,13 +50,25 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   public @NotNull Set<String> getAdditionalVariants(@NotNull ConvertContext context) {
     if (!isActionsAllowed()) return Collections.emptySet();
 
-    // add executor IDs here as valid results
-    Set<String> executorIds = new HashSet<>();
-    ActionOrGroupIdResolveUtil.processExecutors(context.getProject(), (id, psiClass) -> {
-      executorIds.add(id);
+    // add executor/activate toolwindow IDs here as valid results
+    Project project = context.getProject();
+    Set<String> additionalIds = new HashSet<>();
+    ActionOrGroupIdResolveUtil.processExecutors(project, (id, psiClass) -> {
+      additionalIds.add(id);
       return true;
     });
-    return executorIds;
+    ActionOrGroupIdResolveUtil.processActivateToolWindowActions(project, extension -> {
+      additionalIds.add(ACTIVATE_TOOLWINDOW_ACTION_PREFIX +
+                        ActionOrGroupIdResolveUtil.getToolWindowIdValue(extension) +
+                        ACTIVATE_TOOLWINDOW_ACTION_SUFFIX);
+      return true;
+    });
+    ActionOrGroupIdResolveUtil.processToolWindowId(project, (id, field) -> {
+      additionalIds.add(ACTIVATE_TOOLWINDOW_ACTION_PREFIX + id + ACTIVATE_TOOLWINDOW_ACTION_SUFFIX);
+      return true;
+    });
+
+    return additionalIds;
   }
 
   @ApiStatus.Internal

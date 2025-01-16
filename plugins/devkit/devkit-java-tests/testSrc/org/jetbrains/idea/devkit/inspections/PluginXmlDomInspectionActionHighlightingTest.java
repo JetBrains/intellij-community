@@ -58,10 +58,10 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
     // fake Executor
     myFixture.addClass("""
     package com.intellij.execution;
-    public abstract class Executor {
-      public abstract String getId();
-      public abstract String getContextActionId();
-    }
+      public abstract class Executor {
+        public abstract String getId();
+        public abstract String getContextActionId();
+      }
     """);
     myFixture.addClass("""
     public class MyExecutor extends com.intellij.execution.Executor {
@@ -74,6 +74,13 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
       public String getContextActionId() {
         return "MyExecutorContextActionId";
       }
+    }
+    """);
+    // toolwindow ID
+    myFixture.addClass("""
+    package com.intellij.openapi.wm;
+    interface ToolWindowId {
+      String FAVORITES = "ToolWindowIdFromConstants";
     }
     """);
 

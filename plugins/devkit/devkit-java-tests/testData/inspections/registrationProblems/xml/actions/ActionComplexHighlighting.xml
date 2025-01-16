@@ -114,4 +114,20 @@
       <add-to-group group-id="<error descr="Cannot resolve group 'MyExecutorId'">MyExecutorId</error>"/>
     </action>
   </actions>
+
+  <!-- ToolWindow -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.toolWindow" beanClass="java.lang.String"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow id="ToolWindowId"/>
+  </extensions>
+  <actions>
+    <action class="foo.bar.BarAction" use-shortcut-of="ActivateToolWindowIdToolWindow"/>
+    <action class="foo.bar.BarAction" use-shortcut-of="ActivateToolWindowIdFromConstantsToolWindow"/>
+
+    <action class="foo.bar.BarAction">
+      <add-to-group group-id="<error descr="Cannot resolve group 'ActivateToolWindowIdToolWindow'">ActivateToolWindowIdToolWindow</error>"/>
+    </action>
+  </actions>
 </idea-plugin>

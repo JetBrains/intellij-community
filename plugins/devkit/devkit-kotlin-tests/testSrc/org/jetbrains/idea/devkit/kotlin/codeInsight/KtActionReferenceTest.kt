@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.codeInsight
 
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.actionSystem.ActionManager
@@ -13,7 +15,6 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import kotlin.jvm.java
 
 @TestDataPath("\$CONTENT_ROOT/testData/codeInsight/actionReference")
 class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
@@ -128,6 +129,46 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting("ActionReferenceHighlighting.kt")
   }
 
+  fun testActionReferenceToolWindowHighlighting() {
+    myFixture.enableInspections(UnresolvedPluginConfigReferenceInspection::class.java)
+    configureToolWindowTest()
+
+    myFixture.testHighlighting("ActionReferenceToolWindowHighlighting.kt")
+  }
+
+  fun testActionReferenceToolWindowCompletion() {
+    configureToolWindowTest()
+    myFixture.configureByText("Caller.kt", """
+      fun usage(actionManager: com.intellij.openapi.actionSystem.ActionManager){
+        actionManager.getAction("ActivateT<caret>")
+      }
+    """.trimIndent())
+
+    assertContainsElements(myFixture.getCompletionVariants("Caller.kt").orEmpty(),
+                           "ActivateToolWindowIdToolWindow", "ActivateToolWindowIdWithSpacesToolWindow",
+                           "ActivateToolWindowIdFromConstantsToolWindow", "ActivateToolWindowIdFromConstants_DeprecatedToolWindow")
+
+    val extension = getLookupElementPresentation("ActivateToolWindowIdToolWindow")
+    assertTrue(extension.isItemTextBold)
+    assertEquals("FactoryClass", extension.typeText)
+
+    val deprecated = getLookupElementPresentation("ActivateToolWindowIdFromConstants_DeprecatedToolWindow")
+    assertTrue(deprecated.isStrikeout)
+    assertEquals("com.intellij.openapi.wm.ToolWindowId#DEPRECATED", deprecated.typeText)
+  }
+
+  private fun configureToolWindowTest() {
+    myFixture.copyFileToProject("actionReferenceToolWindowHighlighting.xml")
+    myFixture.addClass("""
+        package com.intellij.openapi.wm;
+        interface ToolWindowId {
+          String FAVORITES = "ToolWindowIdFromConstants";
+          @Deprecated
+          String DEPRECATED = "ToolWindowIdFromConstants_Deprecated";        
+        }
+      """.trimIndent())
+  }
+
   fun testRenameGroup() {
     myFixture.createFile("plugin.xml", pluginXmlActions("""
               <group id="myGroup"></group>
@@ -151,4 +192,9 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
 
   private val DLR = '$'.toString()
 
+  private fun getLookupElementPresentation(lookupString: String): LookupElementPresentation {
+    val lookupElement: LookupElement? = myFixture.getLookupElements()!!.find({ element: LookupElement -> element.getLookupString() == lookupString })
+    assertNotNull(lookupString, lookupElement)
+    return LookupElementPresentation.renderElement(lookupElement)
+  }
 }
