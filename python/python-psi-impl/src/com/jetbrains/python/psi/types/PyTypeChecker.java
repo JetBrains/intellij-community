@@ -1042,6 +1042,11 @@ public final class PyTypeChecker {
         collectGenerics(elementType, context, generics, visited);
       }
     }
+    else if (type instanceof PyTypedDictType typedDict) {
+      for (PyTypedDictType.FieldTypeAndTotality field : typedDict.getFields().values()) {
+        collectGenerics(field.getType(), context, generics, visited);
+      }
+    }
     else if (type instanceof PyCallableType callable && !(type instanceof PyClassLikeType)) {
       final List<PyCallableParameter> parameters = callable.getParameters(context);
       if (parameters != null) {

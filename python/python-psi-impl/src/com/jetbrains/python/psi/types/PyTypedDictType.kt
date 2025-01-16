@@ -17,20 +17,7 @@ class PyTypedDictType @JvmOverloads constructor(
   private val definitionLevel: DefinitionLevel,
   private val ancestors: List<PyTypedDictType>,
   private val declaration: PyQualifiedNameOwner? = null,
-) : PyClassTypeImpl(dictClass,
-                    definitionLevel != DefinitionLevel.INSTANCE), PyCollectionType {
-  override fun getElementTypes(): List<PyType?> {
-    return listOf(PyBuiltinCache.getInstance(dictClass).strType, getValuesType())
-  }
-
-  override fun getIteratedItemType(): PyType? {
-    return PyBuiltinCache.getInstance(dictClass).strType
-  }
-
-  private fun getValuesType(): PyType? {
-    return PyUnionType.union(fields.map { it.value.type })
-  }
-
+) : PyClassTypeImpl(dictClass, definitionLevel != DefinitionLevel.INSTANCE) {
   fun getElementType(key: String): PyType? {
     return fields[key]?.type
   }
