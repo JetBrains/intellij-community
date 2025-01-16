@@ -37,10 +37,20 @@ def get_type(table):
 
 def get_shape(table):
     # type: (np.ndarray) -> str
-    if table.ndim == 1:
-        return str((table.shape[0], 1))
+    shape = None
+    try:
+        import tensorflow as tf
+        if isinstance(table, tf.SparseTensor):
+            shape = table.dense_shape.numpy()
+        else:
+            shape = table.shape
+    except ImportError:
+        pass
+
+    if len(shape) == 1:
+        return str((shape[0], 1))
     else:
-        return str((table.shape[0], table.shape[1]))
+        return str((shape[0], shape[1]))
 
 
 def get_head(table):

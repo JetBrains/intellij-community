@@ -36,6 +36,26 @@ def setup_tf_tensor_with_nones():
     return tensor_with_nones
 
 
+@pytest.fixture
+def setup_sparse_tf_tensor_with_floats():
+    sparse_tensor = tf.sparse.SparseTensor(
+        indices=[[0, 1], [1, 0], [2, 2]],
+        values=[1.51, -0.351, 2.7],
+        dense_shape=[3, 3]
+    )
+    return sparse_tensor
+
+
+@pytest.fixture
+def setup_sparse_tf_tensor_with_nones():
+    sparse_tensor = tf.sparse.SparseTensor(
+        indices=[[0, 0], [1, 1], [2, 2], [0, 2]],
+        values= [float('nan'), -0.351, float('nan'), 1.5],
+        dense_shape=[3, 3]
+    )
+    return sparse_tensor
+
+
 # 1
 def test_tensor_1d_number():
     tensor = tf.constant([1, 2, 3])
@@ -107,7 +127,7 @@ def test_get_data_float_values_2f(setup_tf_tensor_with_floats):
     )
 
 
-# 8 TODO: remove trash in formatting
+# 8 TODO: try to fix precision troubles
 # def test_get_data_float_values_12f(setup_tf_tensor_with_floats):
 #     np_array = setup_tf_tensor_with_floats
 #     actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%.12f")
@@ -162,7 +182,7 @@ def test_get_data_none_values_2e(setup_tf_tensor_with_nones):
     )
 
 
-# 13 TODO: remove trash in formatting
+# 13 TODO: fix -- remove trash while formatting (precision troubles?)
 # def test_display_data_html_float_values(mocker, setup_tf_tensor_with_floats):
 #     np_array = setup_tf_tensor_with_floats
 #     # Mock the HTML and display functions
@@ -181,7 +201,7 @@ def test_get_data_none_values_2e(setup_tf_tensor_with_nones):
 #     )
 
 
-# 14 TODO: remove trash in formatting
+# 14 TODO: fix -- remove trash while formatting (precision troubles?)
 # def test_display_data_html_none_values(mocker, setup_tf_tensor_with_nones):
 #     np_array = setup_tf_tensor_with_nones
 #
@@ -239,6 +259,185 @@ def test_display_data_csv_none_values(mocker, setup_tf_tensor_with_nones):
         expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/display_data_csv_none_values.txt'
     )
 
+
+# sparse tensors tests
+# 17
+def test_sparse_tensor_1d_number():
+    sparse_tensor = tf.sparse.SparseTensor(
+        indices=[[0], [1], [2]],
+        values=[1, 2, 3],
+        dense_shape=[3]
+    )
+    __check_info_tf_tensor(sparse_tensor,
+                           'test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/tensorflow_1d_number_sparse.txt')
+
+
+# 18
+def test_sparse_tensor_2d_simple():
+    sparse_tensor = tf.sparse.SparseTensor(
+        indices=[[0, 0], [0, 2], [1, 0], [1, 1]],
+        values=[True, True, True, True],
+        dense_shape=[2, 3]
+    )
+    __check_info_tf_tensor(sparse_tensor,
+                           'test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/tensorflow_sparse_2d_simple.txt')
+
+
+# 19
+def test_sparse_tensor_2d_number():
+    sparse_tensor = tf.sparse.SparseTensor(
+        indices=[[0, 0], [0, 1], [0, 2],
+                 [1, 0], [1, 1], [1, 2],
+                 [2, 0], [2, 1], [2, 2]],
+        values=[1, 2, 3, 4, 5, 6, 7, 8, 9],
+        dense_shape=[3, 3]
+    )
+    __check_info_tf_tensor(sparse_tensor,
+                           'test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/tensorflow_sparse_2d_number.txt')
+
+
+# 20
+def test_get_data_float_values_sparse_2f(setup_sparse_tf_tensor_with_floats):
+    np_array = setup_sparse_tf_tensor_with_floats
+    actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%.2f")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_sparse_2f.txt'
+    )
+
+
+# 21 TODO: try to fix precision troubles
+# def test_get_data_float_values_sparse_12f(setup_sparse_tf_tensor_with_floats):
+#     np_array = setup_sparse_tf_tensor_with_floats
+#     actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%.12f")
+#
+#     __read_expected_from_file_and_compare_with_actual(
+#         actual=actual,
+#         expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_sparse_2f.txt'
+#     )
+
+
+# 22
+def test_get_data_float_values_sparse_2e(setup_sparse_tf_tensor_with_floats):
+    np_array = setup_sparse_tf_tensor_with_floats
+    actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%.2e")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_sparse_2e.txt'
+    )
+
+
+# 23
+def test_get_data_float_values_sparse_d(setup_sparse_tf_tensor_with_floats):
+    np_array = setup_sparse_tf_tensor_with_floats
+    actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%d")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_sparse_d.txt'
+    )
+
+
+# 24
+def test_get_data_float_values_sparse_d_garbage(setup_sparse_tf_tensor_with_floats):
+    np_array = setup_sparse_tf_tensor_with_floats
+    actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%d garbage")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_float_values_sparse_d_garbage.txt'
+    )
+
+
+# 25
+def test_get_data_none_values_sparse_2e(setup_sparse_tf_tensor_with_nones):
+    np_array = setup_sparse_tf_tensor_with_nones
+    actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%.2e")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/get_data_none_values_sparse_2e.txt'
+    )
+
+
+# 26 TODO: fix -- remove trash while formatting (precision troubles?)
+# def test_display_data_html_float_values_sparse(mocker, setup_sparse_tf_tensor_with_floats):
+#     np_array = setup_sparse_tf_tensor_with_floats
+#     # Mock the HTML and display functions
+#     mock_display = mocker.patch('IPython.display.display')
+#
+#     numpy_based_tables_helpers.display_data_html(np_array, 0, 2)
+#
+#     called_args, called_kwargs = mock_display.call_args
+#     displayed_html = called_args[0]
+#
+#     assert isinstance(displayed_html, HTML)
+#
+#     __read_expected_from_file_and_compare_with_actual(
+#         actual=displayed_html.data,
+#         expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/display_data_html_float_values_sparse.txt'
+#     )
+
+
+# 27 TODO: fix -- remove trash while formatting (precision troubles?)
+# def test_display_data_html_none_values_sparse(mocker, setup_sparse_tf_tensor_with_nones):
+#     np_array = setup_sparse_tf_tensor_with_nones
+#
+#     # Mock the HTML and display functions
+#     mock_display = mocker.patch('IPython.display.display')
+#
+#     numpy_based_tables_helpers.display_data_html(np_array, 0, 2)
+#
+#     called_args, called_kwargs = mock_display.call_args
+#     displayed_html = called_args[0]
+#
+#     assert isinstance(displayed_html, HTML)
+#
+#     __read_expected_from_file_and_compare_with_actual(
+#         actual=displayed_html.data,
+#         expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/display_data_html_none_values_sparse.txt'
+#     )
+
+
+# 28
+def test_display_data_csv_float_values_sparse(mocker, setup_sparse_tf_tensor_with_floats):
+    tf_tensor = setup_sparse_tf_tensor_with_floats
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('builtins.print')
+
+    numpy_based_tables_helpers.display_data_csv(tf_tensor, 0, 2)
+
+    called_args, called_kwargs = mock_print.call_args
+    displayed_csv = called_args[0]
+
+    assert isinstance(displayed_csv, str)
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/display_data_csv_float_values_sparse.txt'
+    )
+
+
+# 29
+def test_display_data_csv_none_values_sparse(mocker, setup_sparse_tf_tensor_with_nones):
+    tf_tensor = setup_sparse_tf_tensor_with_nones
+
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('builtins.print')
+
+    numpy_based_tables_helpers.display_data_csv(tf_tensor, 0, 2)
+
+    called_args, called_kwargs = mock_print.call_args
+    displayed_csv = called_args[0]
+
+    assert isinstance(displayed_csv, str)
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/numpy_based_without_pandas/tensorflow_without_pandas/' + test_data_directory + '/display_data_csv_none_values_sparse.txt'
+    )
 
 def __check_info_tf_tensor(arr, file):
     actual = [numpy_based_tables_helpers.get_type(arr),
