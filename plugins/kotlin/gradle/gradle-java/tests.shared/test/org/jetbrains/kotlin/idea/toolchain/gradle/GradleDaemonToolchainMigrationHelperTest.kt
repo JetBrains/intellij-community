@@ -51,6 +51,6 @@ class GradleDaemonToolchainMigrationHelperTest: GradleProjectSdkResolverTestCase
     private fun assertDaemonJvmProperties(expectedVersion: JavaVersion, expectedVendor: Variant) {
         val properties = GradleDaemonJvmPropertiesFile.getProperties(Path(projectPath))!!
         assertEquals(expectedVersion.feature.toString(), properties.version?.value)
-        assertEquals(expectedVendor.toJvmVendor().rawVendor, properties.vendor?.value?.toJvmVendor()?.rawVendor)
+        assertEquals(expectedVendor.toJvmVendor()?.rawVendor, properties.vendor?.value?.toJvmVendor()?.rawVendor)
     }
 }
