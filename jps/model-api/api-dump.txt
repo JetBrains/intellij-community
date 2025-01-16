@@ -404,6 +404,7 @@ a:org.jetbrains.jps.model.java.JpsJavaExtensionService
 - a:enumerateDependencies(java.util.Collection):org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 - pa:enumerateDependencies(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 - pa:enumerateDependencies(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
+- a:findSourceFile(org.jetbrains.jps.model.module.JpsModuleSourceRoot,java.lang.String):java.nio.file.Path
 - a:getCompilerConfiguration(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration
 - a:getDependencies(org.jetbrains.jps.model.module.JpsModule,org.jetbrains.jps.model.java.JpsJavaClasspathKind,Z):java.util.List
 - a:getDependencyExtension(org.jetbrains.jps.model.module.JpsDependencyElement):org.jetbrains.jps.model.java.JpsJavaDependencyExtension

@@ -538,23 +538,9 @@ internal fun findFileInModuleSources(module: JpsModule, relativePath: String, on
       if (type != root.rootType || (onlyProductionSources && !(root.rootType == JavaResourceRootType.RESOURCE || root.rootType == JavaSourceRootType.SOURCE))) {
         continue
       }
-
-      val properties = root.properties
-      var prefix = if (properties is JavaSourceRootProperties) {
-        properties.packagePrefix.replace('.', '/')
-      }
-      else {
-        (properties as JavaResourceRootProperties).relativeOutputPath
-      }.trimStart('/')
-      if (prefix.isNotEmpty() && !prefix.endsWith('/')) {
-        prefix += "/"
-      }
-
-      if (relativePath.startsWith(prefix)) {
-        val result = Path.of(JpsPathUtil.urlToPath(root.url), relativePath.substring(prefix.length))
-        if (Files.exists(result)) {
-          return result
-        }
+      val sourceFile = JpsJavaExtensionService.getInstance().findSourceFile(root, relativePath)
+      if (sourceFile != null) {
+        return sourceFile
       }
     }
   }

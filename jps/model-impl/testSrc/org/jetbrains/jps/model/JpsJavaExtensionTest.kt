@@ -16,14 +16,17 @@
 package org.jetbrains.jps.model
 
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import org.jetbrains.jps.model.java.JpsJavaDependencyScope
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.java.JpsJavaLibraryType
-import org.jetbrains.jps.model.java.JpsJavaModuleType
+import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+import kotlin.io.path.createDirectory
+import kotlin.io.path.createFile
+import kotlin.io.path.invariantSeparatorsPathString
 
 class JpsJavaExtensionTest {
   lateinit var project: JpsProject
@@ -59,7 +62,35 @@ class JpsJavaExtensionTest {
     assertTrue(extension!!.isExported)
     assertSame(JpsJavaDependencyScope.TEST, extension.scope)
   }
-  
+
+  @Test
+  fun findSourceFile(@TempDir dir: Path) {
+    val module = addModule()
+    val resourcesPath = dir.resolve("resources").createDirectory()
+    val resources = module.addSourceRoot(JpsPathUtil.pathToUrl(resourcesPath.invariantSeparatorsPathString), JavaResourceRootType.RESOURCE)
+    val foo = resourcesPath.resolve("foo.txt").createFile()
+    assertEquals(foo, javaService.findSourceFile(resources, "foo.txt"))
+    assertEquals(foo, javaService.findSourceFile(resources, "/foo.txt"))
+
+    val resourcesWithPrefixPath = dir.resolve("resourcesWithPrefix").createDirectory()
+    val bar = resourcesWithPrefixPath.resolve("bar.txt").createFile()
+    val baz = resourcesWithPrefixPath.resolve("bar").createDirectory().resolve("baz.txt").createFile()
+    val resourcesWithPrefix = module.addSourceRoot(JpsPathUtil.pathToUrl(resourcesWithPrefixPath.invariantSeparatorsPathString), 
+                                                   JavaResourceRootType.RESOURCE, 
+                                                   JavaResourceRootProperties("prefix", false))
+    assertEquals(bar, javaService.findSourceFile(resourcesWithPrefix, "prefix/bar.txt"))
+    assertEquals(baz, javaService.findSourceFile(resourcesWithPrefix, "prefix/bar/baz.txt"))
+    assertNull(javaService.findSourceFile(resourcesWithPrefix, "bar.txt"))
+
+    val srcWithPrefixPath = dir.resolve("srcWithPrefix").createDirectory()
+    val javaClass = srcWithPrefixPath.resolve("bar").createDirectory().resolve("Baz.java").createFile()
+    val srcWithPrefix = module.addSourceRoot(JpsPathUtil.pathToUrl(srcWithPrefixPath.invariantSeparatorsPathString),
+                                             JavaSourceRootType.SOURCE,
+                                             JavaSourceRootProperties("com.foo", false))
+    assertEquals(javaClass, javaService.findSourceFile(srcWithPrefix, "com/foo/bar/Baz.java"))
+    assertNull(javaService.findSourceFile(srcWithPrefix, "bar/Baz.java"))
+  }
+
   private fun addModule(): JpsModule {
     return project.addModule("m", JpsJavaModuleType.INSTANCE)
   }
