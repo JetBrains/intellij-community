@@ -167,7 +167,7 @@ internal class MavenProjectImportContextProvider(
     val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, sourceLevel, testSourceLevel)
 
     val compileSourceRootModules = getNonDefaultCompilerExecutions(project).map {
-      ModuleData("$moduleName.$it", StandardMavenModuleType.MAIN_ONLY, sourceLevel, testSourceLevel, true)
+      ModuleData("$moduleName.$it", StandardMavenModuleType.MAIN_ONLY_ADDITIONAL, sourceLevel, testSourceLevel)
     }
 
     val otherModules = listOf(mainData) + compileSourceRootModules + testData
@@ -211,7 +211,7 @@ internal class MavenProjectImportContextProvider(
       val dependencies = dataWithDependencies.testDependencies + dataWithDependencies.mainDependencies
 
       for (anotherModuleData in otherModules) {
-        if (anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY) {
+        if (anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY || anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) {
           result.add(MavenTreeModuleImportData(project, anotherModuleData, dataWithDependencies.mainDependencies, changes))
         }
         if (anotherModuleData.type == StandardMavenModuleType.TEST_ONLY) {

@@ -295,11 +295,11 @@ internal open class WorkspaceProjectImporter(
         // 'project' before 'project.main'/'project.test'
         .then(compareBy { it.moduleData.isMainOrTestModule })
 
-        // '.main' before '.test'
+        // '.main' before additional <compileSourceRoots> modules and '.test'
         .then(compareBy { !it.moduleData.isMainModule })
 
-        // '.main' before additional <compileSourceRoots> modules
-        .then(compareBy { !it.moduleData.isCompileSourceRootModule })
+        // additional <compileSourceRoots> modules before '.test'
+        .then(compareBy { !it.moduleData.isAdditionalMainModule })
 
         // 'pom.*' files before custom named files (e.g. 'custom.xml')
         .then(compareBy { !FileUtil.namesEqual("pom", it.mavenProject.file.nameWithoutExtension) })

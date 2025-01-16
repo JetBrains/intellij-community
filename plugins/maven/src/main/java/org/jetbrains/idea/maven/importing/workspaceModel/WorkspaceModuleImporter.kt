@@ -109,10 +109,10 @@ internal class WorkspaceModuleImporter(
     folderImportingContext: WorkspaceFolderImporter.FolderImportingContext,
   ) {
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext, workspaceConfigurators)
-    val importFolderHolder = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity,
+    val outputFolders = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity,
                                                                stats)
 
-    importJavaSettings(moduleEntity, importData, importFolderHolder)
+    importJavaSettings(moduleEntity, importData, outputFolders)
   }
 
   private fun collectDependencies(
@@ -289,7 +289,7 @@ internal class WorkspaceModuleImporter(
   private fun importJavaSettings(
     moduleEntity: ModuleEntity,
     importData: MavenModuleImportData,
-    importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders,
+    outputFolders: WorkspaceFolderImporter.OutputFolders,
   ) {
     val mavenProject = importData.mavenProject
     val languageLevel = MavenImportUtil.getLanguageLevel(mavenProject) { importData.moduleData.sourceLanguageLevel }
@@ -302,10 +302,10 @@ internal class WorkspaceModuleImporter(
 
     if (!inheritCompilerOutput) {
       if (moduleType.containsMain) {
-        compilerOutputUrl = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(importFolderHolder.outputPath))
+        compilerOutputUrl = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(outputFolders.outputPath))
       }
       if (moduleType.containsTest) {
-        compilerOutputUrlForTests = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(importFolderHolder.testOutputPath))
+        compilerOutputUrlForTests = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(outputFolders.testOutputPath))
       }
     }
 
