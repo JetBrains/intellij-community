@@ -37,6 +37,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.mixedmode.XDebugSessionMixedModeExtension;
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeSuspendContext;
@@ -1381,5 +1382,11 @@ public final class XDebugSessionImpl implements XDebugSession {
     handlersList.add(myMixedModeLowLevelDebugProcess.getProcessHandler());
     myCompositeProcessHandler = new CompositeProcessHandler(handlersList);
     return myCompositeProcessHandler;
+  }
+
+  @Override
+  public XDebuggerEditorsProvider getEditorsProvider() {
+    if (!isMixedMode()) return myDebugProcess.getEditorsProvider();
+    return myMixedModeExtension.getEditorsProvider();
   }
 }

@@ -3,6 +3,8 @@ package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.evaluation.XMixedModeDebuggersEditorProvider
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -24,6 +26,7 @@ class XDebugSessionMixedModeExtension(
 ) {
   private val stateMachine = MixedModeProcessTransitionStateMachine(low, high, coroutineScope)
   private val session = (high.asXDebugProcess.session as XDebugSessionImpl)
+  private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
 
   fun pause() {
     coroutineScope.launch {
@@ -85,7 +88,7 @@ class XDebugSessionMixedModeExtension(
   }
 
   fun runToPosition(position: XSourcePosition, suspendContext: XMixedModeSuspendContext) {
-    val isLowLevelStep = low.belongsToMe(position)
+    val isLowLevelStep = low.belongsToMe(position.file)
     val actionSuspendContext = if (isLowLevelStep) suspendContext.lowLevelDebugSuspendContext else suspendContext.highLevelDebugSuspendContext
     val state = if (isLowLevelStep) LowLevelRunToAddress(position, actionSuspendContext) else HighLevelRunToAddress(position, actionSuspendContext)
     this.stateMachine.set(state)
@@ -105,4 +108,10 @@ class XDebugSessionMixedModeExtension(
   }
 
   fun isMixedModeHighProcessReady(): Boolean = stateMachine.isMixedModeHighProcessReady()
+
+  fun getEditorsProvider(): XDebuggerEditorsProvider {
+    return editorsProvider ?: XMixedModeDebuggersEditorProvider(session,
+                                                                session.getDebugProcess(true).getEditorsProvider(),
+                                                                session.getDebugProcess(false).getEditorsProvider()).also { editorsProvider = it }
+  }
 }

@@ -16,7 +16,7 @@ import javax.swing.JPanel
 
 @ApiStatus.Internal
 class XThreadsView(project: Project, session: XDebugSessionImpl) : XDebugView() {
-  private val treePanel = XDebuggerTreePanel(project, session.debugProcess.editorsProvider, this, null, "", null)
+  private val treePanel = XDebuggerTreePanel(project, session.editorsProvider, this, null, "", null)
 
   fun getTree() = treePanel.tree
   fun getPanel(): JPanel = treePanel.mainPanel
