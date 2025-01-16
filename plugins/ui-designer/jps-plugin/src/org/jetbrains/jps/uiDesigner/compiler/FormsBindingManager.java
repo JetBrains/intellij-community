@@ -114,7 +114,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
 
     final Map<File, ModuleBuildTarget> filesToCompile = FileCollectionFactory.createCanonicalFileMap();
     final Map<File, ModuleBuildTarget> formsToCompile = FileCollectionFactory.createCanonicalFileMap();
-    final Map<Path, Collection<Path>> srcToForms = FileCollectionFactory.createCanonicalPathMap();
+    final Map<Path, List<Path>> sourceToForms = FileCollectionFactory.createCanonicalPathMap();
 
     if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) && config.isInstrumentClasses() && FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE)) {
       // force compilation of all forms, but only once per chunk
@@ -154,7 +154,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
           for (Path boundSource : sources) {
             if (!excludes.isExcluded(boundSource.toFile())) {
               isFormBound = true;
-              FormBindings.addBinding(boundSource, form.toPath(), srcToForms);
+              FormBindings.addBinding(boundSource, form.toPath(), sourceToForms);
               holderBuilder.markDirtyFile(target, boundSource);
               context.getScope().markIndirectlyAffected(target, boundSource);
               filesToCompile.put(boundSource.toFile(), target);
@@ -186,7 +186,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
 
         for (Path formFile : boundForms) {
           if (!excludes.isExcluded(formFile.toFile()) && Files.exists(formFile)) {
-            FormBindings.addBinding(srcFile.toPath(), formFile, srcToForms);
+            FormBindings.addBinding(srcFile.toPath(), formFile, sourceToForms);
             holderBuilder.markDirtyFile(target, formFile);
 
             context.getScope().markIndirectlyAffected(target, formFile);
@@ -199,7 +199,7 @@ public final class FormsBindingManager extends ModuleLevelBuilder {
       BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holderBuilder.create());
     }
 
-    FormBindings.setFormsToCompile(context, srcToForms);
+    FormBindings.setFormsToCompile(context, sourceToForms);
 
     if (config.isCopyFormsRuntimeToOutput() && containsValidForm(formsToCompile.keySet())) {
       for (ModuleBuildTarget target : chunk.getTargets()) {

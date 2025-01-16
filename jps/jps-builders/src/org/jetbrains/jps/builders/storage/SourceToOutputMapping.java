@@ -15,9 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public interface SourceToOutputMapping {
-  void setOutputs(@NotNull Path sourceFile, @NotNull List<@NotNull String> outputs) throws IOException;
-
-  void setOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException;
+  void setOutputs(@NotNull Path sourceFile, @NotNull List<@NotNull Path> outputs) throws IOException;
 
   void appendOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException;
 

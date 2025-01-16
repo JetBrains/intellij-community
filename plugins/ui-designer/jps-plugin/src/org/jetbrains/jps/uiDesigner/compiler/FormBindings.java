@@ -8,23 +8,23 @@ import org.jetbrains.jps.incremental.CompileContext;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 final class FormBindings {
-  private static final Key<Map<Path, Collection<Path>>> FORMS_TO_COMPILE = Key.create("_forms-to_compile_");
+  private static final Key<Map<Path, List<Path>>> FORMS_TO_COMPILE = Key.create("_forms-to_compile_");
 
-  static void addBinding(@NotNull Path srcFile, @NotNull Path form, @NotNull Map<Path, Collection<Path>> container) {
+  static void addBinding(@NotNull Path srcFile, @NotNull Path form, @NotNull Map<Path, List<Path>> container) {
     container.computeIfAbsent(srcFile, k -> new ArrayList<>()).add(form);
   }
 
-  static @Nullable Map<Path, Collection<Path>> getAndClearFormsToCompile(@NotNull CompileContext context) {
-    Map<Path, Collection<Path>> srcToForms = FORMS_TO_COMPILE.get(context);
+  static @Nullable Map<Path, List<Path>> getAndClearFormsToCompile(@NotNull CompileContext context) {
+    Map<Path, List<Path>> srcToForms = FORMS_TO_COMPILE.get(context);
     FORMS_TO_COMPILE.set(context, null);
     return srcToForms;
   }
 
-  static void setFormsToCompile(@NotNull CompileContext context, @NotNull Map<Path, Collection<Path>> srcToForms) {
+  static void setFormsToCompile(@NotNull CompileContext context, @NotNull Map<Path, List<Path>> srcToForms) {
     FORMS_TO_COMPILE.set(context, srcToForms.isEmpty() ? null : srcToForms);
   }
 }

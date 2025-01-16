@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.dynatrace.hash4j.hashing.Hashing;
@@ -58,9 +58,9 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
     appendData(pathHashCode(outputPath), IntSets.singleton(buildTargetId));
   }
 
-  void addMappings(@NotNull Collection<String> outputPaths, int buildTargetId) throws IOException {
+  void addMappings(int buildTargetId, @NotNull Collection<Path> outputPaths) throws IOException {
     IntSet set = IntSets.singleton(buildTargetId);
-    for (String outputPath : outputPaths) {
+    for (Path outputPath : outputPaths) {
       appendData(pathHashCode(outputPath), set);
     }
   }
@@ -125,6 +125,16 @@ public final class OutputToTargetRegistry extends AbstractStateStorage<Integer, 
   }
 
   private int pathHashCode(@NotNull String path) {
+    String relativePath = relativizer.toRelative(path);
+    if (ProjectStamps.PORTABLE_CACHES) {
+      return Hashing.xxh3_64().hashBytesToInt(relativePath.getBytes(StandardCharsets.UTF_8));
+    }
+    else {
+      return FileUtilRt.pathHashCode(relativePath);
+    }
+  }
+
+  private int pathHashCode(@NotNull Path path) {
     String relativePath = relativizer.toRelative(path);
     if (ProjectStamps.PORTABLE_CACHES) {
       return Hashing.xxh3_64().hashBytesToInt(relativePath.getBytes(StandardCharsets.UTF_8));

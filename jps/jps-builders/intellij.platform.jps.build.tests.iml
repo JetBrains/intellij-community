@@ -25,25 +25,25 @@
     <orderEntry type="library" scope="TEST" name="hash4j" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library name="jqwik" type="repository">
-        <properties maven-id="net.jqwik:jqwik:1.9.0">
+        <properties maven-id="net.jqwik:jqwik:1.9.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik/1.9.0/jqwik-1.9.0.jar">
-              <sha256sum>bcbbc834752835d9c534647f925756de2cd6f51a1e94fcf6162fd55f3fc2c706</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik/1.9.2/jqwik-1.9.2.jar">
+              <sha256sum>92c164d7c9d77b3883f3dd43cec9301603847c30c2e247782dc67fb86a4d8e36</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar">
               <sha256sum>b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik-api/1.9.0/jqwik-api-1.9.0.jar">
-              <sha256sum>1ebd46a1df6575c3d46ba263a6575c88fe654f164f9e3d1f7fbc05fdc9dc726c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik-api/1.9.2/jqwik-api-1.9.2.jar">
+              <sha256sum>60244aefd583d349cb26e81f5cc3ef9f66d309d49b6534ab7c9b63be38954054</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik-web/1.9.0/jqwik-web-1.9.0.jar">
-              <sha256sum>67030794b96c3e854795c6e709b1e9adc54df93474cb8e8380a791d58db2560e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik-web/1.9.2/jqwik-web-1.9.2.jar">
+              <sha256sum>4f5006f8dd93a13ca59ef92d5476b9aca1c479c0b6d0beb7c3e64970f6b7e632</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik-time/1.9.0/jqwik-time-1.9.0.jar">
-              <sha256sum>4258ec1239879e520ac6df63de21b821691cf57479a14700c6ab8bd98cba1fa5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik-time/1.9.2/jqwik-time-1.9.2.jar">
+              <sha256sum>3d5f67f87a7b305601a8aef6ec400df3ad400123af4e8459acf663126b08e05d</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik-engine/1.9.0/jqwik-engine-1.9.0.jar">
-              <sha256sum>6eb6ffbfcf81f5eef65cffdd41186f961f1a0fcb3c44f17e4c09d5d3aa773b2c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/jqwik/jqwik-engine/1.9.2/jqwik-engine-1.9.2.jar">
+              <sha256sum>623d105e90cd94b688baaa527bd0c4e284001c07c1f53e3b9a2db179ea57a70a</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -53,21 +53,21 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik/1.9.0/jqwik-1.9.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik/1.9.2/jqwik-1.9.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-api/1.9.0/jqwik-api-1.9.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-web/1.9.0/jqwik-web-1.9.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-time/1.9.0/jqwik-time-1.9.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-engine/1.9.0/jqwik-engine-1.9.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-api/1.9.2/jqwik-api-1.9.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-web/1.9.2/jqwik-web-1.9.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-time/1.9.2/jqwik-time-1.9.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-engine/1.9.2/jqwik-engine-1.9.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik/1.9.0/jqwik-1.9.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik/1.9.2/jqwik-1.9.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-api/1.9.0/jqwik-api-1.9.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-web/1.9.0/jqwik-web-1.9.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-time/1.9.0/jqwik-time-1.9.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-engine/1.9.0/jqwik-engine-1.9.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-api/1.9.2/jqwik-api-1.9.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-web/1.9.2/jqwik-web-1.9.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-time/1.9.2/jqwik-time-1.9.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/jqwik/jqwik-engine/1.9.2/jqwik-engine-1.9.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -14,12 +14,8 @@ class SourceToOutputMappingImpl @Throws(IOException::class) constructor(
 ) : SourceToOutputMapping, StorageOwner {
   private val mapping = OneToManyPathsMapping(storePath, relativizer)
 
-  override fun setOutputs(sourceFile: Path, outputs: List<String>) {
+  override fun setOutputs(sourceFile: Path, outputs: List<Path>) {
     mapping.setOutputs(sourceFile, outputs)
-  }
-
-  override fun setOutput(sourcePath: String, outputPath: String) {
-    mapping.setOutput(sourcePath, outputPath)
   }
 
   override fun appendOutput(sourcePath: String, outputPath: String) {

@@ -75,12 +75,13 @@ class SourceToOutputMappingFuzzTest {
 
   @Property
   fun setOutputs(@ForAll("pathStrings") source: String, @ForAll("pathStringLists") outputs: List<String>) {
-    mapping.setOutputs(MockPath(source), outputs)
+    val outputFiles = outputs.map { MockPath(it) }
+    mapping.setOutputs(MockPath(source), outputFiles)
     val result = mapping.getOutputs(MockPath(source))?.map { it.toString() }
     assertThat(result).isNotNull()
     assertThat(result).containsExactlyInAnyOrderElementsOf(outputs)
 
-    checkCursorAndSourceIterator(source, outputs)
+    checkCursorAndSourceIterator(source, outputs.map { it.toString() })
   }
 
   @Property
@@ -95,7 +96,7 @@ class SourceToOutputMappingFuzzTest {
   
   @Property
   fun removeOutputs(@ForAll("pathStrings") source: String, @ForAll("pathStringLists") outputs: List<String>) {
-    mapping.setOutputs(MockPath(source), outputs)
+    mapping.setOutputs(MockPath(source), outputs.map { MockPath(it) })
     mapping.remove(MockPath(source))
     val result = mapping.getOutputs(MockPath(source))
     assertThat(result).isNull()
@@ -121,7 +122,7 @@ class SourceToOutputMappingFuzzTest {
     for (source in sources) {
       val list = outputs[Random.nextInt(outputs.size)]
       expectedMap.put(source, list)
-      mapping.setOutputs(MockPath(source), list)
+      mapping.setOutputs(MockPath(source), list.map { MockPath(it) })
     }
 
     val actualMap = LinkedHashMap<String, List<String>>()

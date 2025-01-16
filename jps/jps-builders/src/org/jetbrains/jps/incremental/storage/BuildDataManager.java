@@ -657,22 +657,12 @@ public final class BuildDataManager {
     }
 
     @Override
-    public void setOutputs(@NotNull Path sourceFile, @NotNull List<@NotNull String> outputs) throws IOException {
+    public void setOutputs(@NotNull Path sourceFile, @NotNull List<@NotNull Path> outputs) throws IOException {
       try {
         myDelegate.setOutputs(sourceFile, outputs);
       }
       finally {
-        outputToTargetMapping.addMappings(outputs, myBuildTargetId);
-      }
-    }
-
-    @Override
-    public void setOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException {
-      try {
-        myDelegate.setOutput(sourcePath, outputPath);
-      }
-      finally {
-        outputToTargetMapping.addMapping(outputPath, myBuildTargetId);
+        outputToTargetMapping.addMappings(myBuildTargetId, outputs);
       }
     }
 

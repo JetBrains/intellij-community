@@ -33,24 +33,15 @@ open class ExperimentalOneToManyPathMapping(
     return Array<String>(list.size - valueOffset) { relativizer.toAbsolute(list.get(it + valueOffset), valueKind) }.asList()
   }
 
-  fun normalizeOutputPaths(outPaths: List<String>, relativeSourcePath: String?): Array<String>? {
-    return when {
-      outPaths.isEmpty() -> null
-      relativeSourcePath != null -> {
-        Array(outPaths.size + 1) {
-          if (it == 0) relativeSourcePath else relativizer.toRelative(outPaths.get(it - 1), valueKind)
-        }
-      }
-      else -> {
-        Array(outPaths.size) {
-          relativizer.toRelative(outPaths.get(it), valueKind)
-        }
+  override fun setOutputs(path: Path, outPaths: List<Path>) {
+    val normalizedOutputPaths = if (outPaths.isEmpty()) {
+      null
+    }
+    else {
+      Array(outPaths.size) {
+        relativizer.toRelative(outPaths.get(it), valueKind)
       }
     }
-  }
-
-  override fun setOutputs(path: String, outPaths: List<String>) {
-    val normalizedOutputPaths = normalizeOutputPaths(outPaths, null)
     if (normalizedOutputPaths == null) {
       map.remove(getKey(path))
     }
