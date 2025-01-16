@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.ActivityTracker
@@ -107,7 +107,7 @@ class StructureViewWrapperImpl(
       if (count == myActivityCount) return@createNamedTimer
 
       val state = ModalityState.stateForComponent(component)
-      if (ModalityState.current().dominates(state)) return@createNamedTimer
+      if (!ModalityState.current().accepts(state)) return@createNamedTimer
 
       val successful = loggedRun("check if update needed") { checkUpdate() }
       if (successful) myActivityCount = count // to check on the next turn

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.util.ui.update
@@ -33,7 +33,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
-import kotlin.Throws
 import kotlin.coroutines.coroutineContext
 
 private val priorityComparator = Comparator.comparingInt<Update> { it.priority }
@@ -434,7 +433,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
     val current = ModalityState.current()
     val modalityState = getModalityState()
-    return !current.dominates(modalityState)
+    return current.accepts(modalityState)
   }
 
   @Internal

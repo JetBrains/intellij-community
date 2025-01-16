@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.ui.tabs.impl
@@ -791,7 +791,7 @@ open class JBTabsImpl internal constructor(
           withContext(Dispatchers.EDT + anyModality) {
             writeIntentReadAction {
               val modalityState = ModalityState.stateForComponent(this@JBTabsImpl)
-              if (!ModalityState.current().dominates(modalityState)) {
+              if (ModalityState.current().accepts(modalityState)) {
                 updateTabActions(validateNow = false)
               }
             }

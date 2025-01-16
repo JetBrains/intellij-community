@@ -1,13 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.isRunBlockingUnderReadAction
-import com.intellij.openapi.util.Conditions
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.Runnable
@@ -58,7 +56,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
       val contextModality = context.effectiveContextModality()
       // If the context modality is explicitly any(), then no dispatch is performed,
       // as dominates(any()) always returns false, no special any() handling required here.
-      return ModalityState.current().dominates(contextModality)
+      return !ModalityState.current().accepts(contextModality)
     }
 
     override fun toString(): String = "Dispatchers.EDT.immediate"

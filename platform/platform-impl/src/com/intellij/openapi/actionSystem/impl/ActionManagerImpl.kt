@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog", "OVERRIDE_DEPRECATION", "RemoveRedundantQualifierName")
 
 package com.intellij.openapi.actionSystem.impl
@@ -1416,7 +1416,7 @@ private class CapturingListener(@JvmField val timerListener: TimerListener) : Ti
 private fun runListenerAction(listener: TimerListener) {
   val modalityState = listener.modalityState ?: return
   LOG.debug { "notify $listener" }
-  if (!ModalityState.current().dominates(modalityState)) {
+  if (ModalityState.current().accepts(modalityState)) {
     runCatching {
       listener.run()
     }.getOrLogException(LOG)
