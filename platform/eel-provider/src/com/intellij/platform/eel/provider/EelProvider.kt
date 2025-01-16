@@ -77,6 +77,10 @@ val localEel: LocalEelApi by lazy {
   if (SystemInfo.isWindows) ApplicationManager.getApplication().service<LocalWindowsEelApi>() else ApplicationManager.getApplication().service<LocalPosixEelApi>()
 }
 
+fun EelDescriptor.upgradeBlocking(): EelApi {
+  return runBlockingMaybeCancellable { upgrade() }
+}
+
 data object LocalEelDescriptor : EelDescriptor {
   override val operatingSystem: EelPath.OS
     get() = if (SystemInfo.isWindows) {

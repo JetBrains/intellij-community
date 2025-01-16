@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.impl.utils
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.Key
@@ -11,11 +10,9 @@ import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import java.nio.file.Path
 import kotlin.io.path.Path
 
@@ -56,16 +53,6 @@ private fun Project?.computeProjectPath(callLocation: String): Path? {
 
 suspend fun Project?.getEelApi(): EelApi {
   return computeProjectPath("Project?.getEelApi")?.getEelApi() ?: localEel
-}
-
-@RequiresBlockingContext
-fun Project?.getEelApiBlocking(): EelApi {
-  if (this == null) return localEel
-  return runBlockingMaybeCancellable { getEelApi() }
-}
-
-fun EelDescriptor.upgradeBlocking(): EelApi {
-  return runBlockingMaybeCancellable { upgrade() }
 }
 
 private val LOG by lazy { logger<EelProvider>() }

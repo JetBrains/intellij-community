@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.path.EelPath
@@ -22,6 +22,12 @@ import com.intellij.platform.eel.path.EelPath
  * For example, an SSH connection can be interrupted, and a Docker container can be restarted. These events do not affect the lifetime of [EelDescriptor].
  *
  * ## Usage
+ * The intended way to obtain [EelDescriptor] is with the use of `getEelDescriptor`:
+ * ```kotlin
+ * Path.of("\\\\wsl.localhost\\Ubuntu\\home\\Jacob\\projects").getEelDescriptor()
+ * project.getEelDescriptor()
+ * ```
+ *
  * You are free to compare and store [EelDescriptor].
  * TODO: In the future, [EelDescriptor] may also be serializable.
  * If you need to access the remote environment, you can use the method [upgrade], which can suspend for some time before returning a working instance of [EelApi]

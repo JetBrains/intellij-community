@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.Project;
@@ -7,10 +7,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,8 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.projectRoots.impl.JavaHomeFinderEel.javaHomeFinderEel;
-import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiBlocking;
-import static com.intellij.platform.eel.provider.EelProviderUtil.getLocalEel;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 @ApiStatus.Internal
 public abstract class JavaHomeFinder {
@@ -80,7 +81,7 @@ public abstract class JavaHomeFinder {
    * or that need the embedded JetBrains Runtime.
    */
   public static @NotNull List<String> suggestHomePaths(boolean forceEmbeddedJava) {
-    return suggestHomePaths(getLocalEel(), forceEmbeddedJava);
+    return suggestHomePaths(LocalEelDescriptor.INSTANCE, forceEmbeddedJava);
   }
 
   /**
@@ -90,12 +91,12 @@ public abstract class JavaHomeFinder {
    * @return suggested sdk home paths (sorted)
    */
   public static @NotNull List<@NotNull String> suggestHomePaths(@Nullable Project project) {
-    return suggestHomePaths(getEelApiBlocking(project), false);
+    return suggestHomePaths(project == null ? LocalEelDescriptor.INSTANCE : getEelDescriptor(project), false);
   }
 
   @ApiStatus.Internal
-  public static @NotNull List<String> suggestHomePaths(@NotNull EelApi eel, boolean forceEmbeddedJava) {
-    JavaHomeFinderBasic javaFinder = getFinder(eel, forceEmbeddedJava);
+  public static @NotNull List<String> suggestHomePaths(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
+    JavaHomeFinderBasic javaFinder = getFinder(eelDescriptor, forceEmbeddedJava);
     if (javaFinder == null) return Collections.emptyList();
 
     ArrayList<String> paths = new ArrayList<>(javaFinder.findExistingJdks());
@@ -107,19 +108,19 @@ public abstract class JavaHomeFinder {
     return forceEmbeddedJava || Registry.is("java.detector.enabled", true);
   }
 
-  private static JavaHomeFinderBasic getFinder(@NotNull EelApi eel, boolean forceEmbeddedJava) {
+  private static JavaHomeFinderBasic getFinder(@NotNull EelDescriptor descriptor, boolean forceEmbeddedJava) {
     if (!isDetectorEnabled(forceEmbeddedJava)) return null;
 
-    return getFinder(eel).checkEmbeddedJava(forceEmbeddedJava);
+    return getFinder(descriptor).checkEmbeddedJava(forceEmbeddedJava);
   }
 
   public static @NotNull JavaHomeFinderBasic getFinder(@Nullable Project project) {
-    return getFinder(getEelApiBlocking(project));
+    return getFinder(project == null ? LocalEelDescriptor.INSTANCE : getEelDescriptor(project));
   }
 
-  private static @NotNull JavaHomeFinderBasic getFinder(@NotNull EelApi eel) {
+  private static @NotNull JavaHomeFinderBasic getFinder(@NotNull EelDescriptor descriptor) {
     if (Registry.is("java.home.finder.use.eel")) {
-      return javaHomeFinderEel(eel);
+      return javaHomeFinderEel(descriptor);
     }
 
     SystemInfoProvider systemInfoProvider = new SystemInfoProvider();

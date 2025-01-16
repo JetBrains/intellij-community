@@ -36,9 +36,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.eel.LocalEelApi;
-import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,10 +72,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
-
-import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiBlocking;
 
 
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
@@ -338,9 +339,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @Override
     public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
       var project = myConfiguration.getProject();
-      var eel = getEelApiBlocking(project);
+      var eelDescriptor = EelProviderUtil.getEelDescriptor(project);
 
-      if (eel instanceof LocalEelApi) {
+      if (eelDescriptor instanceof LocalEelDescriptor) {
         return null;
       }
 
@@ -357,7 +358,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       mavenConfig.setHomePath(effectiveMavenHome);
       mavenConfig.setVersionString(mavenVersion);
 
-      var configuration = new EelTargetEnvironmentRequest.Configuration(eel);
+      var configuration = new EelTargetEnvironmentRequest.Configuration(EelProviderUtil.upgradeBlocking(eelDescriptor));
 
       configuration.addLanguageRuntime(mavenConfig);
 

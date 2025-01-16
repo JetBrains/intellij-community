@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
 import com.intellij.execution.wsl.WslPath
@@ -587,8 +587,8 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
 private fun CoroutineScope.findExistingJdks(descriptor: EelDescriptor?, comboBox: ProjectWizardJdkComboBox): Job = launch {
   val javaSdk = JavaSdk.getInstance()
   val homePaths = if (Registry.`is`("java.home.finder.use.eel")) {
-    val eel = descriptor?.upgrade() ?: localEel
-    JavaHomeFinder.suggestHomePaths(eel, false)
+    val eelDescriptor = descriptor ?: LocalEelDescriptor
+    JavaHomeFinder.suggestHomePaths(eelDescriptor, false)
   }
   else {
     JavaHomeFinder.suggestHomePaths()

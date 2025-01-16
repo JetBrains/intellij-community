@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -62,8 +63,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiBlocking;
 
 public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
@@ -205,7 +204,8 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
-    return JavaHomeFinder.suggestHomePaths(getEelApiBlocking(project), false);
+    return JavaHomeFinder.suggestHomePaths(project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project),
+                                           false);
   }
 
   @Override

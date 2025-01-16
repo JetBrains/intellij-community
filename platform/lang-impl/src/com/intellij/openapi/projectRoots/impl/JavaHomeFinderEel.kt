@@ -11,6 +11,7 @@ import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.impl.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.upgradeBlocking
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
@@ -74,7 +75,8 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
   }
 }
 
-internal fun javaHomeFinderEel(eel: EelApi): JavaHomeFinderBasic {
+internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
+  val eel = descriptor.upgradeBlocking()
   val systemInfoProvider = EelSystemInfoProvider(eel)
 
   val parentFinder = when (eel.platform) {

@@ -25,7 +25,6 @@ import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
@@ -45,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsActions.ActionText;
-import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelDescriptor;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 /**
  * @author anna
@@ -131,7 +130,7 @@ public class ProjectSdksModel implements SdkModel {
     if (sdkHomePath != null) {
       try {
         Path path = Path.of(sdkHomePath);
-        if (EelProviderUtil.getEelDescriptor(path).equals(eelDescriptor)) {
+        if (getEelDescriptor(path).equals(eelDescriptor)) {
           return true;
         }
       }

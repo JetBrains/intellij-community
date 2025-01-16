@@ -12,9 +12,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
-import com.intellij.platform.eel.impl.utils.getEelApiBlocking
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -45,7 +46,7 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
       return
     }
 
-    val eel = project.getEelApiBlocking()
+    val eel = project.getEelDescriptor().upgradeBlocking()
 
     dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
     val mavenPath = eel.collectMavenDirectories().firstOrNull()?.let { MavenUtil.getMavenHomePath(it) }

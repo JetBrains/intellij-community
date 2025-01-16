@@ -98,7 +98,6 @@ import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.platform.eel.fs.EelFileSystemApiKt.getPath;
-import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiBlocking;
 import static com.intellij.platform.eel.provider.utils.EelUtilsKt.fetchLoginShellEnvVariablesBlocking;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
@@ -673,7 +672,7 @@ public class MavenUtil {
   public static List<MavenHomeType> getSystemMavenHomeVariants(Project project) {
     List<MavenHomeType> result = new ArrayList<>();
 
-    var eel = getEelApiBlocking(project);
+    var eel = EelProviderUtil.upgradeBlocking(EelProviderUtil.getEelDescriptor(project));
     var envs = fetchLoginShellEnvVariablesBlocking(eel.getExec());
 
     String m2home = envs.get(ENV_M2_HOME);
@@ -955,7 +954,7 @@ public class MavenUtil {
   }
 
   public static @NotNull Path resolveM2Dir(@Nullable Project project) {
-    var eel = project != null ? getEelApiBlocking(project) : null;
+    var eel = project != null ? EelProviderUtil.upgradeBlocking(EelProviderUtil.getEelDescriptor(project)) : null;
     return MavenEelUtil.resolveM2Dir(eel);
   }
 
