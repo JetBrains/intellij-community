@@ -128,7 +128,7 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
       )
       vmParameters.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=$isIjentWslFsEnabled")
       if (isIjentWslFsEnabled) {
-        vmParameters.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
+        vmParameters.addAll(getMultiRoutingFileSystemVmOptions_Reflective(configuration.workingDirectory))
         vmParameters.add("-Xbootclasspath/a:${configuration.workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
       }
     }
@@ -230,29 +230,7 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
 private fun isIjentWslFsEnabledByDefaultForProduct_Reflective(workingDirectory: String?, platformPrefix: String?): Boolean {
   if (workingDirectory == null) return false
   try {
-    val buildConstantsClassPath = Path.of(
-      workingDirectory,
-      "out/classes/production/intellij.platform.ijent.community.buildConstants",
-    ).toUri().toURL()
-
-    val kotlinStdlibClassPath = run {
-      val systemClassLoader = getSystemClassLoader()
-      val kotlinCollectionsClassUri = systemClassLoader.getResource("kotlin/collections/CollectionsKt.class")!!.toURI()
-
-      if (kotlinCollectionsClassUri.scheme != "jar") {
-        logger<DevKitApplicationPatcher>().warn("Kotlin stdlib is not in a JAR: $kotlinCollectionsClassUri")
-        return false
-      }
-      val osPath = kotlinCollectionsClassUri.schemeSpecificPart
-        .substringBefore(".jar!")
-        .plus(".jar")
-        .removePrefix(if (SystemInfo.isWindows) "file:/" else "file:")
-
-      Path.of(osPath).toUri().toURL()
-    }
-
-    val tmpClassLoader = URLClassLoader(arrayOf(buildConstantsClassPath, kotlinStdlibClassPath), null)
-    val constantsClass = tmpClassLoader.loadClass("com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt")
+    val constantsClass = getIjentBuildScriptsConstantsClass_Reflective(workingDirectory) ?: return false
     val method = constantsClass.getDeclaredMethod("isIjentWslFsEnabledByDefaultForProduct", String::class.java)
     return method.invoke(null, platformPrefix) as Boolean
   }
@@ -269,4 +247,61 @@ private fun isIjentWslFsEnabledByDefaultForProduct_Reflective(workingDirectory: 
       else -> throw err
     }
   }
+}
+
+/**
+ * A direct call of [com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS] gets
+ * values which is bundled with the DevKit plugin.
+ * In contrast, the result of this function corresponds to what is written in the source code at current revision.
+ */
+@Suppress("FunctionName")
+private fun getMultiRoutingFileSystemVmOptions_Reflective(workingDirectory: String?): List<String> {
+  if (workingDirectory == null) return MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+  try {
+    val constantsClass = getIjentBuildScriptsConstantsClass_Reflective(workingDirectory) ?: return MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+    val field = constantsClass.getDeclaredField("MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS")
+    field.trySetAccessible()
+    @Suppress("UNCHECKED_CAST")
+    return field.get(constantsClass) as List<String>
+  }
+  catch (err: Throwable) {
+    when (err) {
+      is ClassNotFoundException, is NoSuchMethodException, is IllegalAccessException, is java.lang.reflect.InvocationTargetException -> {
+        logger<DevKitApplicationPatcher>().warn(
+          "Failed to reflectively load MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS from built classes." +
+          " Options from DevKit plugin loaded class will be used.",
+          err,
+        )
+        return MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+      }
+      else -> throw err
+    }
+  }
+}
+
+@Suppress("FunctionName")
+private fun getIjentBuildScriptsConstantsClass_Reflective(workingDirectory: String): Class<*>? {
+  val buildConstantsClassPath = Path.of(
+    workingDirectory,
+    "out/classes/production/intellij.platform.ijent.community.buildConstants",
+  ).toUri().toURL()
+
+  val kotlinStdlibClassPath = run {
+    val systemClassLoader = getSystemClassLoader()
+    val kotlinCollectionsClassUri = systemClassLoader.getResource("kotlin/collections/CollectionsKt.class")!!.toURI()
+
+    if (kotlinCollectionsClassUri.scheme != "jar") {
+      logger<DevKitApplicationPatcher>().warn("Kotlin stdlib is not in a JAR: $kotlinCollectionsClassUri")
+      return null
+    }
+    val osPath = kotlinCollectionsClassUri.schemeSpecificPart
+      .substringBefore(".jar!")
+      .plus(".jar")
+      .removePrefix(if (SystemInfo.isWindows) "file:/" else "file:")
+
+    Path.of(osPath).toUri().toURL()
+  }
+
+  val tmpClassLoader = URLClassLoader(arrayOf(buildConstantsClassPath, kotlinStdlibClassPath), null)
+  return tmpClassLoader.loadClass("com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt")
 }
