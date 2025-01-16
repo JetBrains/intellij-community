@@ -844,7 +844,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
 
     for (PsiMethod method : overridingMethods) {
-      if (!validOverriding.contains(method) && !multipleInterfaceImplementations.contains(method)) {
+      if (!multipleInterfaceImplementations.contains(method)) {
         JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(method.getLanguage());
         if (safeDeleteDelegate != null) {
           safeDeleteDelegate.createCleanupOverriding(method, allElementsToDelete, usages);
