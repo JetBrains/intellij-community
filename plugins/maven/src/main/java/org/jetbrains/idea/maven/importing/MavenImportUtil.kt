@@ -168,15 +168,26 @@ object MavenImportUtil {
 
   internal fun hasMultiReleaseOutput(project: MavenProject): Boolean {
     if (!multiReleaseOutputSyncEnabled()) return false
-    val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID) ?: return false
-    val executions = plugin.executions ?: return false
-    return executions.any { isMultiReleaseExecution(it) }
+    return compilerExecutions(project).any { isMultiReleaseExecution(it) }
   }
 
   private fun isMultiReleaseExecution(e: MavenPlugin.Execution): Boolean {
     val config = e.configurationElement ?: return false
     config.getChild("multiReleaseOutput") ?: return false
     return true
+  }
+
+  private fun compilerExecutions(project: MavenProject): List<MavenPlugin.Execution> {
+    val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID) ?: return emptyList()
+    return plugin.executions ?: return emptyList()
+  }
+
+  internal fun getNonDefaultCompilerExecutions(project: MavenProject): List<String> {
+    if (!multiReleaseOutputSyncEnabled()) return emptyList()
+    return compilerExecutions(project)
+      .filter { (it.phase == PHASE_COMPILE || it.phase == null) && it.configurationElement?.getChild("compileSourceRoots")?.children?.isNotEmpty() == true }
+      .map { it.executionId }
+      .filter { it != EXECUTION_COMPILE && it != EXECUTION_TEST_COMPILE }
   }
 
   private fun getMavenLanguageLevel(

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getNonDefaultCompilerExecutions
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getSourceLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTargetLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestSourceLanguageLevel
@@ -165,7 +166,12 @@ internal class MavenProjectImportContextProvider(
     val moduleTestName = moduleName + TEST_SUFFIX
     val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, sourceLevel, testSourceLevel)
 
-    return MavenProjectImportData(project, moduleData, changes, listOf(mainData, testData))
+    val compileSourceRootModules = getNonDefaultCompilerExecutions(project).map {
+      ModuleData("$moduleName.$it", StandardMavenModuleType.MAIN_ONLY, sourceLevel, testSourceLevel)
+    }
+
+    val otherModules = listOf(mainData) + compileSourceRootModules + testData
+    return MavenProjectImportData(project, moduleData, changes, otherModules)
   }
 
   private fun getModuleImportData(project: MavenProject, moduleName: String, changes: MavenProjectChanges): MavenProjectImportData {
