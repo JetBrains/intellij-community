@@ -26,6 +26,16 @@
     <lang.psiStructureViewFactory language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.structure.ADFileStructureFactory"/>
     <fileStructureGroupRuleProvider implementation="com.intellij.devkit.apiDump.lang.usages.ADFileStructureGroupRuleProvider"/>
     <usageTypeProvider implementation="com.intellij.devkit.apiDump.lang.usages.ADUsageTypeProvider"/>
+    <usageFilteringRuleProvider implementation="com.intellij.devkit.apiDump.lang.usages.ADUsageFilteringRuleProvider"/>
   </extensions>
+
+  <actions resource-bundle="messages.ApiDumpLangBundle">
+    <group id="UsageFilteringActionGroup.ApiDump">
+      <action id="UsageFiltering.ApiDump"
+              icon="com.intellij.devkit.apiDump.DevkitApiDumpIcons.ApiDump"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <add-to-group group-id="UsageFilteringActionGroup" anchor="last"/>
+    </group>
+  </actions>
 
 </idea-plugin>
