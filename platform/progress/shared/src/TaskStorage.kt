@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
-import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.exists
 import kotlinx.coroutines.NonCancellable
@@ -98,18 +97,17 @@ abstract class TaskStorage {
   protected abstract suspend fun removeTaskInfoEntity(taskInfoEntity: TaskInfoEntity)
 
   /**
-   * Updates the progress state of the given task.
-   * Old state is going to be overwritten, to receive all state updates use [updates]
+   * Updates a [TaskInfoEntity] in the storage using provided [updater]
+   * It's guaranteed that [taskInfoEntity] exists when [updater] is invoked
    *
    * @param taskInfoEntity The task to be updated.
-   * @param state The new progress state to set on the task.
+   * @param updater A lambda provided with a [ChangeScope] receiver to modify the task information.
    * @return Unit
    */
-  suspend fun updateTask(taskInfoEntity: TaskInfoEntity, state: ProgressState): Unit = withKernel {
+  suspend fun updateTask(taskInfoEntity: TaskInfoEntity, updater: ChangeScope.() -> Unit): Unit = withKernel {
     updateTaskInfoEntity {
       if (!taskInfoEntity.exists()) return@updateTaskInfoEntity
-
-      taskInfoEntity[TaskInfoEntity.ProgressStateType] = state
+      updater()
     }
   }
 
@@ -124,7 +122,7 @@ abstract class TaskStorage {
    *
    * @param updater A lambda provided with a [ChangeScope] receiver to modify the task information.
    */
-  abstract suspend fun updateTaskInfoEntity(updater: ChangeScope.() -> Unit)
+  protected abstract suspend fun updateTaskInfoEntity(updater: ChangeScope.() -> Unit)
 
   companion object {
     @JvmStatic

@@ -43,11 +43,8 @@ import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
-import com.jetbrains.rhizomedb.exists
-import fleet.kernel.change
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.filter
-import fleet.kernel.shared
 import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -163,12 +160,10 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   ) {
     if (taskSuspender !is BridgeTaskSuspender) return
 
+    val taskStorage = TaskStorage.getInstance()
     launch {
       taskSuspender.isSuspendable.collectLatest { suspension ->
-        TaskStorage.getInstance().updateTaskInfoEntity {
-          // in case of a replay, the existence has to be checked manually
-          if (!taskInfo.exists()) return@updateTaskInfoEntity
-
+        taskStorage.updateTask(taskInfo) {
           taskInfo[TaskInfoEntity.TaskSuspensionType] = suspension
         }
       }
@@ -211,8 +206,10 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   private fun CoroutineScope.subscribeToTaskUpdates(taskInfo: TaskInfoEntity, pipe: ProgressPipe) {
     val taskStorage = TaskStorage.getInstance()
     launch {
-      pipe.progressUpdates().collect {
-        taskStorage.updateTask(taskInfo, it)
+      pipe.progressUpdates().collect { state ->
+        taskStorage.updateTask(taskInfo) {
+          taskInfo[TaskInfoEntity.ProgressStateType] = state
+        }
       }
     }
   }
