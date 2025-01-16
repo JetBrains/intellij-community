@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Session
+import com.intellij.cce.evaluable.PROMPT_PROPERTY
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
@@ -88,7 +89,7 @@ open class BasicFileReportGenerator(
 
         val textToInsert = textToInsert(session)
         val center = textToInsert.length / sessions.size
-        val promptText = session.properties.additionalProperty("prompt").orEmpty()
+        val promptText = session.properties.additionalProperty(PROMPT_PROPERTY).orEmpty()
         var shift = 0
         for (j in 0 until sessionGroup.lastIndex) {
           val subToken = if (center == 0) textToInsert else textToInsert.substring(shift, shift + center)
