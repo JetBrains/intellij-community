@@ -23,7 +23,7 @@ import kotlin.coroutines.resumeWithException
 /**
  * **Obsolescence notice**
  *
- * Please use [Kotlin coroutines](https://youtrack.jetbrains.com/articles/IJPL-A-3/Kotlin-Coroutines)
+ * Please use [Kotlin coroutines](https://plugins.jetbrains.com/docs/intellij/kotlin-coroutines.html)
  * Instead of this class use [kotlinx.coroutines.CompletableDeferred]
  */
 @ApiStatus.Obsolete
