@@ -47,7 +47,7 @@ class NotebookMarkdownCellCornerGutterLineMarkerRenderer(
       }
       Position.BOTTOM -> {
         paintNotebookCellBorderGutter(
-          editor, g, r, inlayBounds.y + inlayBounds.height - bottomRectHeight, bottomRectHeight, Position.BOTTOM
+          editor, g, r, inlayBounds.y, inlayBounds.height, Position.BOTTOM
         )
       }
     }
