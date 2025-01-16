@@ -1093,10 +1093,11 @@ f:com.intellij.openapi.application.ModalityKt
 a:com.intellij.openapi.application.ModalityState
 - sf:NON_MODAL:com.intellij.openapi.application.ModalityState
 - <init>():V
+- a:accepts(com.intellij.openapi.application.ModalityState):Z
 - s:any():com.intellij.openapi.application.ModalityState
 - s:current():com.intellij.openapi.application.ModalityState
 - s:defaultModalityState():com.intellij.openapi.application.ModalityState
-- a:dominates(com.intellij.openapi.application.ModalityState):Z
+- f:dominates(com.intellij.openapi.application.ModalityState):Z
 - s:nonModal():com.intellij.openapi.application.ModalityState
 - s:stateForComponent(java.awt.Component):com.intellij.openapi.application.ModalityState
 - a:toString():java.lang.String

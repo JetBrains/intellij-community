@@ -1163,15 +1163,15 @@ f:com.intellij.openapi.application.ex.ApplicationUtil$CannotRunReadActionExcepti
 f:com.intellij.openapi.application.impl.AnyModalityState
 - com.intellij.openapi.application.ModalityState
 - sf:ANY:com.intellij.openapi.application.impl.AnyModalityState
-- dominates(com.intellij.openapi.application.ModalityState):Z
+- accepts(com.intellij.openapi.application.ModalityState):Z
 com.intellij.openapi.application.impl.ModalContextProjectLocator
 - a:isPartOf(javax.swing.JFrame,com.intellij.openapi.project.Project):Z
 f:com.intellij.openapi.application.impl.ModalityStateEx
 - com.intellij.openapi.application.ModalityState
 - <init>():V
+- accepts(com.intellij.openapi.application.ModalityState):Z
 - appendJob(kotlinx.coroutines.Job):com.intellij.openapi.application.ModalityState
 - appendProgress(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.application.ModalityState
-- dominates(com.intellij.openapi.application.ModalityState):Z
 a:com.intellij.openapi.command.CommandProcessorEx
 - com.intellij.openapi.command.CommandProcessor
 - <init>():V
