@@ -36,9 +36,9 @@ internal open class ClassifierImportCandidatesProvider(
     }
 
     context(KaSession)
-    override fun collectCandidateSymbols(
+    override fun collectCandidates(
         indexProvider: KtSymbolFromIndexProvider,
-    ): List<KaClassLikeSymbol> {
+    ): List<ClassLikeImportCandidate> {
         if (positionContext.explicitReceiver != null) return emptyList()
 
         val unresolvedName = positionContext.name
@@ -47,7 +47,9 @@ internal open class ClassifierImportCandidatesProvider(
         return buildList {
             addAll(indexProvider.getKotlinClassesByName(unresolvedName) { acceptsKotlinClass(it) })
             addAll(indexProvider.getJavaClassesByName(unresolvedName) { acceptsJavaClass(it) })
-        }.filter { it.isVisible(fileSymbol) && it.classId != null && acceptsClassLikeSymbol(it) }
+        }
+            .filter { it.isVisible(fileSymbol) && it.classId != null && acceptsClassLikeSymbol(it) }
+            .map { ClassLikeImportCandidate(it) }
     }
 }
 

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.psi.PsiMember
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
 import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
@@ -29,9 +28,9 @@ internal open class CallableImportCandidatesProvider(
         !javaCallable.isImported() && javaCallable.canBeImported()
 
     context(KaSession)
-    override fun collectCandidateSymbols(
+    override fun collectCandidates(
         indexProvider: KtSymbolFromIndexProvider,
-    ): List<KaCallableSymbol> {
+    ): List<CallableImportCandidate> {
         val unresolvedName = positionContext.name
         val explicitReceiver = positionContext.explicitReceiver
         val fileSymbol = getFileSymbol()
@@ -56,7 +55,9 @@ internal open class CallableImportCandidatesProvider(
             }
         }
 
-        return candidates.filter { it.isVisible(fileSymbol) && it.callableId != null }
+        return candidates
+            .filter { it.isVisible(fileSymbol) && it.callableId != null }
+            .map { CallableImportCandidate(it) }
     }
 }
 
@@ -78,9 +79,9 @@ internal class DelegateMethodImportCandidatesProvider(
 ) : CallableImportCandidatesProvider(positionContext) {
 
     context(KaSession)
-    override fun collectCandidateSymbols(
+    override fun collectCandidates(
         indexProvider: KtSymbolFromIndexProvider,
-    ): List<KaCallableSymbol> {
+    ): List<CallableImportCandidate> {
         val functionName = OperatorNameConventions.GET_VALUE.takeIf {
             unresolvedDelegateFunction.expectedFunctionSignature.startsWith(OperatorNameConventions.GET_VALUE.asString() + "(")
         } ?: OperatorNameConventions.SET_VALUE.takeIf {
@@ -92,6 +93,7 @@ internal class DelegateMethodImportCandidatesProvider(
             name = functionName,
             receiverTypes = listOf(expressionType),
         ) { acceptsKotlinCallable(it) }
+            .map { CallableImportCandidate(it) }
             .toList()
     }
 }
