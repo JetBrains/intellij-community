@@ -1,13 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent.nio
 
-import com.intellij.openapi.components.service
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
-import com.intellij.util.application
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -23,7 +21,7 @@ import kotlin.io.path.exists
  */
 @ApiStatus.Internal
 fun CoroutineScope.registerIjentNioFs(ijent: IjentApi, root: String, internalName: String, authority: String, recomputeIfRegistered: Boolean = true): Path {
-  val service = application.service<EelNioBridgeService>()
+  val service = EelNioBridgeService.getInstanceSync()
 
   if (!recomputeIfRegistered) {
     val rootPath = Path(root)

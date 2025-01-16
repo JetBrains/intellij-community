@@ -72,7 +72,7 @@ fun EelPath.asNioPathOrNull(): Path? {
   if (descriptor === LocalEelDescriptor) {
     return Path.of(toString())
   }
-  val service = ApplicationManager.getApplication().getService(EelNioBridgeService::class.java)
+  val service = EelNioBridgeService.getInstanceSync()
   val root = service.tryGetNioRoot(descriptor) ?: return null
   return parts.fold(root, Path::resolve)
 }
@@ -88,7 +88,7 @@ fun Path.asEelPath(): EelPath {
   if (fileSystem != FileSystems.getDefault()) {
     return throw IllegalArgumentException("Could not convert $this to EelPath: the path does not belong to the default NIO FileSystem")
   }
-  val service = ApplicationManager.getApplication().getService(EelNioBridgeService::class.java)
+  val service = EelNioBridgeService.getInstanceSync()
   val descriptor = service.tryGetEelDescriptor(this) ?: return EelPath.parse(toString(), LocalEelDescriptor)
   val root = service.tryGetNioRoot(descriptor) ?: error("unreachable") // since the descriptor is not null, the root should be as well
   val relative = root.relativize(this)
@@ -101,6 +101,6 @@ fun Path.asEelPath(): EelPath {
 }
 
 fun EelDescriptor.routingPrefix(): Path {
-  return ApplicationManager.getApplication().getService(EelNioBridgeService::class.java).tryGetNioRoot(this)
-         ?: throw IllegalArgumentException("Could not convert $this to EelPath: the path does not belong to the default NIO FileSystem")
+  return EelNioBridgeService.getInstanceSync().tryGetNioRoot(this)
+         ?: throw IllegalArgumentException("Failure of obtaining prefix: could not convert $this to EelPath. The path does not belong to the default NIO FileSystem")
 }

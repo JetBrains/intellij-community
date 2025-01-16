@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio.toggle
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -6,8 +6,6 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.provider.EelNioBridgeService
@@ -120,7 +118,7 @@ class IjentWslNioFsToggleStrategy(
   fun unregisterAll() {
     enabledInDistros.forEachGuaranteed { distro ->
       val descriptor = WslEelDescriptor(distro)
-      val service = ApplicationManager.getApplication().service<EelNioBridgeService>()
+      val service = EelNioBridgeService.getInstanceSync()
       service.deregister(descriptor)
     }
   }
@@ -132,7 +130,7 @@ private fun FileSystemProvider.getLocalFileSystem(): FileSystem =
 private val LOG = logger<IjentWslNioFsToggleStrategy>()
 
 private fun recomputeEel(distro: WSLDistribution, action: (underlyingProvider: FileSystemProvider, previousFs: FileSystem?) -> FileSystem?) {
-  val service = ApplicationManager.getApplication().service<EelNioBridgeService>()
+  val service = EelNioBridgeService.getInstanceSync()
   val localRoot = distro.getWindowsPath("/")
   val descriptor = WslEelDescriptor(distro)
   service.register(localRoot, descriptor, distro.id, false, false, action)

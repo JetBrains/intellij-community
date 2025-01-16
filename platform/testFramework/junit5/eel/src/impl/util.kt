@@ -3,8 +3,6 @@
 
 package com.intellij.platform.testFramework.junit5.eel.impl
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.eel.EelApi
@@ -61,7 +59,7 @@ internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFile
 
   val defaultProvider = FileSystems.getDefault().provider()
 
-  val service = ApplicationManager.getApplication().service<EelNioBridgeService>()
+  val service = EelNioBridgeService.getInstanceSync()
   val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
   val apiRef = AtomicReference<EelApi>(null)
   val descriptor = EelTestDescriptor(Ksuid.generate().toString(), os, apiRef::get)
