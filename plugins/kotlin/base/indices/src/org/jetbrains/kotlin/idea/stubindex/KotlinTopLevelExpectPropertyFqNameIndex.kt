@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 /**
  * Stores top level properties with `expect` modifier by full qualified name
  */
-class KotlinTopLevelExpectPropertyFqNameIndex : StringStubIndexExtension<KtProperty>() {
+class KotlinTopLevelExpectPropertyFqNameIndex internal constructor() : StringStubIndexExtension<KtProperty>() {
     companion object Helper : KotlinStringStubIndexHelper<KtProperty>(KtProperty::class.java) {
         override val indexKey: StubIndexKey<String, KtProperty> =
             StubIndexKey.createIndexKey(KotlinTopLevelExpectPropertyFqNameIndex::class.simpleName!!)

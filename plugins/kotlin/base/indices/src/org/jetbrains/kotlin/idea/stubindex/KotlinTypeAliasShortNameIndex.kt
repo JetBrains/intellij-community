@@ -7,7 +7,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-class KotlinTypeAliasShortNameIndex : StringStubIndexExtension<KtTypeAlias>() {
+class KotlinTypeAliasShortNameIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
     companion object Helper : KotlinStringStubIndexHelper<KtTypeAlias>(KtTypeAlias::class.java) {
         override val indexKey: StubIndexKey<String, KtTypeAlias> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex")

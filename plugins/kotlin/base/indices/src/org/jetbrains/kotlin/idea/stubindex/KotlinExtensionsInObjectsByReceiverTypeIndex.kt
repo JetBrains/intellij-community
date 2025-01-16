@@ -7,7 +7,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
-class KotlinExtensionsInObjectsByReceiverTypeIndex  : StringStubIndexExtension<KtCallableDeclaration>() {
+class KotlinExtensionsInObjectsByReceiverTypeIndex internal constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
     companion object Helper : KotlinExtensionsByReceiverTypeStubIndexHelper() {
         override val indexKey: StubIndexKey<String, KtCallableDeclaration> =
             StubIndexKey.createIndexKey(KotlinExtensionsInObjectsByReceiverTypeIndex::class.java.simpleName)

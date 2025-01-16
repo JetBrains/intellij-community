@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 @ApiStatus.Internal
-class KotlinProbablyContractedFunctionShortNameIndex : StringStubIndexExtension<KtNamedFunction>() {
+class KotlinProbablyContractedFunctionShortNameIndex internal constructor() : StringStubIndexExtension<KtNamedFunction>() {
     companion object Helper : KotlinStringStubIndexHelper<KtNamedFunction>(KtNamedFunction::class.java) {
         override val indexKey: StubIndexKey<String, KtNamedFunction> =
             StubIndexKey.createIndexKey(KotlinProbablyContractedFunctionShortNameIndex::class.java.simpleName)

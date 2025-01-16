@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class IdeKotlinDeclarationProviderFactory(private val project: Project) : KotlinDeclarationProviderFactory {
+internal class IdeKotlinDeclarationProviderFactory(private val project: Project) : KotlinDeclarationProviderFactory {
     override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KaModule?): KotlinDeclarationProvider {
         val mainProvider = IdeKotlinDeclarationProvider(project, scope, contextualModule)
 
@@ -44,7 +44,7 @@ class IdeKotlinDeclarationProviderFactory(private val project: Project) : Kotlin
     }
 }
 
-class IdeKotlinDeclarationProviderMerger(private val project: Project) : KotlinDeclarationProviderMerger {
+internal class IdeKotlinDeclarationProviderMerger(private val project: Project) : KotlinDeclarationProviderMerger {
     override fun merge(providers: List<KotlinDeclarationProvider>): KotlinDeclarationProvider =
         providers.mergeSpecificProviders<_, IdeKotlinDeclarationProvider>(KotlinCompositeDeclarationProvider.factory) { targetProviders ->
             IdeKotlinDeclarationProvider(

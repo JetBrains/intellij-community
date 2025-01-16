@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-class KotlinTopLevelTypeAliasByPackageIndex : StringStubIndexExtension<KtTypeAlias>() {
+class KotlinTopLevelTypeAliasByPackageIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
     companion object Helper : KotlinStringStubIndexHelper<KtTypeAlias>(KtTypeAlias::class.java) {
         override val indexKey: StubIndexKey<String, KtTypeAlias> =
             StubIndexKey.createIndexKey(KotlinTopLevelTypeAliasByPackageIndex::class.java.simpleName)

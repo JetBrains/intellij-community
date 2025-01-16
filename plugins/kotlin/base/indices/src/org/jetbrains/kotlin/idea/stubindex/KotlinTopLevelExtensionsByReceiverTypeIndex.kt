@@ -9,7 +9,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
-class KotlinTopLevelExtensionsByReceiverTypeIndex : StringStubIndexExtension<KtCallableDeclaration>() {
+class KotlinTopLevelExtensionsByReceiverTypeIndex internal constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
     companion object Helper : KotlinExtensionsByReceiverTypeStubIndexHelper() {
         @JvmField
         @Suppress("DeprecatedCallableAddReplaceWith")

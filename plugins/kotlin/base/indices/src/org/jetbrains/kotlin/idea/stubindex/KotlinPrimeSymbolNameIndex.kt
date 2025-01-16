@@ -5,7 +5,7 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 
-class KotlinPrimeSymbolNameIndex : StringStubIndexExtension<NavigatablePsiElement>() {
+class KotlinPrimeSymbolNameIndex internal constructor() : StringStubIndexExtension<NavigatablePsiElement>() {
     companion object Helper : KotlinStringStubIndexHelper<NavigatablePsiElement>(NavigatablePsiElement::class.java) {
         override val indexKey: StubIndexKey<String, NavigatablePsiElement> = StubIndexKey.createIndexKey("kotlin.primeIndexKey")
     }

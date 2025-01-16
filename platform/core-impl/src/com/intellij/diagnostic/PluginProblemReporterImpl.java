@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PluginProblemReporterImpl implements PluginProblemReporter {
+final class PluginProblemReporterImpl implements PluginProblemReporter {
   @Override
   public @NotNull PluginException createPluginExceptionByClass(@NotNull String errorMessage,
                                                                @Nullable Throwable cause,

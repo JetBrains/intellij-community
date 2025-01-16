@@ -14,7 +14,7 @@ import java.io.DataInput
 import java.io.DataOutput
 
 
-class KotlinJvmModuleAnnotationsIndex : FileBasedIndexExtension<String, List<ClassId>>() {
+class KotlinJvmModuleAnnotationsIndex internal constructor() : FileBasedIndexExtension<String, List<ClassId>>() {
     companion object {
         val NAME: ID<String, List<ClassId>> = ID.create(KotlinJvmModuleAnnotationsIndex::class.java.canonicalName)
     }

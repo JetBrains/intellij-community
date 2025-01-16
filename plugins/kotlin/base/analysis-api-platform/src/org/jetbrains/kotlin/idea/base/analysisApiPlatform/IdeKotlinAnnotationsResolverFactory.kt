@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
-class IdeKotlinAnnotationsResolverFactory(private val project: Project) : KotlinAnnotationsResolverFactory {
+internal class IdeKotlinAnnotationsResolverFactory(private val project: Project) : KotlinAnnotationsResolverFactory {
     override fun createAnnotationResolver(searchScope: GlobalSearchScope): KotlinAnnotationsResolver {
         return IdeKotlinAnnotationsResolver(project, searchScope)
     }

@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 import org.jetbrains.kotlin.analysis.api.platform.KotlinDeserializedDeclarationsOrigin
 import org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings
 
-class IdeKotlinPlatformSettings : KotlinPlatformSettings {
+internal class IdeKotlinPlatformSettings : KotlinPlatformSettings {
     override val deserializedDeclarationsOrigin: KotlinDeserializedDeclarationsOrigin
         get() = KotlinDeserializedDeclarationsOrigin.STUBS
 }

@@ -15,7 +15,7 @@ import java.io.DataInput
 import java.io.DataOutput
 
 internal const val MAPPING_FILE_DOT_FILE_EXTENSION = ".${ModuleMapping.MAPPING_FILE_EXT}"
-class KotlinModuleMappingIndex : FileBasedIndexExtension<String, PackageParts>() {
+class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<String, PackageParts>() {
     companion object {
         val NAME: ID<String, PackageParts> = ID.create(KotlinModuleMappingIndex::class.java.canonicalName)
 

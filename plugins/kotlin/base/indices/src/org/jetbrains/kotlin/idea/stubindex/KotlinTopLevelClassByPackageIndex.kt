@@ -7,7 +7,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
-class KotlinTopLevelClassByPackageIndex : StringStubIndexExtension<KtClassOrObject>() {
+class KotlinTopLevelClassByPackageIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
     companion object Helper : KotlinStringStubIndexHelper<KtClassOrObject>(KtClassOrObject::class.java) {
         override val indexKey: StubIndexKey<String, KtClassOrObject> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelClassByPackageIndex")

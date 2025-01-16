@@ -9,7 +9,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-class KotlinTopLevelTypeAliasFqNameIndex : StringStubIndexExtension<KtTypeAlias>() {
+class KotlinTopLevelTypeAliasFqNameIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
     companion object Helper : KotlinStringStubIndexHelper<KtTypeAlias>(KtTypeAlias::class.java) {
         override val indexKey: StubIndexKey<String, KtTypeAlias> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex")

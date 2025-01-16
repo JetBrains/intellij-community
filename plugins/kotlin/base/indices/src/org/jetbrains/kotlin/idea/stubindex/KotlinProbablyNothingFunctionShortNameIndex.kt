@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 @ApiStatus.Internal
-class KotlinProbablyNothingFunctionShortNameIndex : StringStubIndexExtension<KtNamedFunction>() {
+class KotlinProbablyNothingFunctionShortNameIndex internal constructor() : StringStubIndexExtension<KtNamedFunction>() {
     companion object Helper : KotlinStringStubIndexHelper<KtNamedFunction>(KtNamedFunction::class.java) {
         override val indexKey: StubIndexKey<String, KtNamedFunction> =
             StubIndexKey.createIndexKey(KotlinProbablyNothingFunctionShortNameIndex::class.java.simpleName)

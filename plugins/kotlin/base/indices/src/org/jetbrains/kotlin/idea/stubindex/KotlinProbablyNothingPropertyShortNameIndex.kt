@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtProperty
 
 @ApiStatus.Internal
-class KotlinProbablyNothingPropertyShortNameIndex : StringStubIndexExtension<KtProperty>() {
+class KotlinProbablyNothingPropertyShortNameIndex internal constructor() : StringStubIndexExtension<KtProperty>() {
     companion object Helper : KotlinStringStubIndexHelper<KtProperty>(KtProperty::class.java) {
         override val indexKey: StubIndexKey<String, KtProperty> =
             StubIndexKey.createIndexKey(KotlinProbablyNothingPropertyShortNameIndex::class.java.simpleName)

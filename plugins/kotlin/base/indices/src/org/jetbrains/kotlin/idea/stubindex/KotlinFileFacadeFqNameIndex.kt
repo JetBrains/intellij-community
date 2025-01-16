@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinFileFacadeFqNameIndex : StringStubIndexExtension<KtFile>() {
+class KotlinFileFacadeFqNameIndex internal constructor() : StringStubIndexExtension<KtFile>() {
     companion object Helper : KotlinStringStubIndexHelper<KtFile>(KtFile::class.java) {
         override val indexKey: StubIndexKey<String, KtFile> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex")

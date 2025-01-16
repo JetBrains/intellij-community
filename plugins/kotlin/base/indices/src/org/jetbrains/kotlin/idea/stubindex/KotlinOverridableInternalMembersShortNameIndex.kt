@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
-class KotlinOverridableInternalMembersShortNameIndex : StringStubIndexExtension<KtCallableDeclaration>() {
+class KotlinOverridableInternalMembersShortNameIndex internal constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
     companion object Helper : KotlinStringStubIndexHelper<KtCallableDeclaration>(KtCallableDeclaration::class.java) {
         override val indexKey: StubIndexKey<String, KtCallableDeclaration> =
             StubIndexKey.createIndexKey(KotlinOverridableInternalMembersShortNameIndex::class.java.simpleName)

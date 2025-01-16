@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
  * See [org.jetbrains.kotlin.idea.core.KotlinIndicesHelper.processAllCallablesFromSubclassObjects]
  * for a usage example.
  */
-class KotlinSubclassObjectNameIndex : StringStubIndexExtension<KtObjectDeclaration>() {
+class KotlinSubclassObjectNameIndex internal constructor() : StringStubIndexExtension<KtObjectDeclaration>() {
     companion object Helper : KotlinStringStubIndexHelper<KtObjectDeclaration>(KtObjectDeclaration::class.java) {
         override val indexKey: StubIndexKey<String, KtObjectDeclaration> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinSubclassObjectNameIndex")

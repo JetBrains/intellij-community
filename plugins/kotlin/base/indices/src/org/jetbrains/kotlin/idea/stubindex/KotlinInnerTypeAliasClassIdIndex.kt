@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtTypeAlias
  * The key is stringified [org.jetbrains.kotlin.name.ClassId] by the rules described in [org.jetbrains.kotlin.name.ClassId.asString]:
  * packages are delimited by '/' and classes by '.', e.g. "kotlin/Map.Entry"
  */
-class KotlinInnerTypeAliasClassIdIndex  : StringStubIndexExtension<KtTypeAlias>() {
+class KotlinInnerTypeAliasClassIdIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
     companion object Helper : KotlinStringStubIndexHelper<KtTypeAlias>(KtTypeAlias::class.java) {
         override val indexKey: StubIndexKey<String, KtTypeAlias> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinInnerTypeAliasClassIdIndex")

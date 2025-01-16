@@ -10,7 +10,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion.dropVersion
 
-class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl(), Disposable.Default {
+internal class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl(), Disposable.Default {
   @Volatile private lateinit var factories: Map<IElementType, StubElementFactory<*, *>>
   @Volatile private lateinit var lightFactories: Map<IElementType, LightStubElementFactory<*, *>>
   @Volatile private lateinit var type2serializerMap: Map<IElementType, ObjectStubSerializer<*, *>>
@@ -89,10 +89,10 @@ class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl(), Dis
 }
 
 @JvmField
-val STUB_DEFINITION_EP: LanguageExtension<LanguageStubDefinition> = LanguageExtension<LanguageStubDefinition>("com.intellij.languageStubDefinition")
+internal val STUB_DEFINITION_EP: LanguageExtension<LanguageStubDefinition> = LanguageExtension<LanguageStubDefinition>("com.intellij.languageStubDefinition")
 
 @JvmField
-val STUB_REGISTRY_EP: ExtensionPointName<StubRegistryExtension> = ExtensionPointName<StubRegistryExtension>("com.intellij.stubElementRegistryExtension")
+internal val STUB_REGISTRY_EP: ExtensionPointName<StubRegistryExtension> = ExtensionPointName<StubRegistryExtension>("com.intellij.stubElementRegistryExtension")
 
 private class StubRegistryImpl(
   private val factories: MutableMap<IElementType, StubElementFactory<*, *>>,

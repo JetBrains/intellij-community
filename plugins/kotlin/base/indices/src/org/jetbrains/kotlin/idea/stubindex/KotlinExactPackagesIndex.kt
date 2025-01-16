@@ -10,7 +10,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.idea.base.indices.getByKeyAndMeasure
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinExactPackagesIndex : StringStubIndexExtension<KtFile>() {
+class KotlinExactPackagesIndex internal constructor() : StringStubIndexExtension<KtFile>() {
     companion object {
         @JvmStatic
         private val LOG = Logger.getInstance(KotlinExactPackagesIndex::class.java)
