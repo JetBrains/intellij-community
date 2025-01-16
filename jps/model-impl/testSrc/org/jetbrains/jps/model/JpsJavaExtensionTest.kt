@@ -13,39 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.model;
+package org.jetbrains.jps.model
 
-import org.jetbrains.jps.model.java.*;
-import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.module.JpsDependencyElement;
-import org.jetbrains.jps.model.module.JpsLibraryDependency;
-import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaLibraryType
+import org.jetbrains.jps.model.java.JpsJavaModuleType
 
-import java.util.List;
-
-public class JpsJavaExtensionTest extends JpsJavaModelTestCase {
-  public void testModule() {
-    final JpsModule module = addModule();
-    final JpsJavaModuleExtension extension = getJavaService().getOrCreateModuleExtension(module);
-    extension.setOutputUrl("file://path");
-    JpsJavaModuleExtension moduleExtension = getJavaService().getModuleExtension(module);
-    assertNotNull(moduleExtension);
-    assertEquals("file://path", moduleExtension.getOutputUrl());
+class JpsJavaExtensionTest : JpsJavaModelTestCase() {
+  fun testModule() {
+    val module = addModule()
+    val extension = javaService.getOrCreateModuleExtension(module)
+    extension.outputUrl = "file://path"
+    val moduleExtension = javaService.getModuleExtension(module)
+    assertNotNull(moduleExtension)
+    assertEquals("file://path", moduleExtension!!.outputUrl)
   }
 
-  public void testDependency() {
-    final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
-    final JpsLibrary library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE);
-    final JpsLibraryDependency dependency = module.getDependenciesList().addLibraryDependency(library);
-    getJavaService().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.TEST);
-    getJavaService().getOrCreateDependencyExtension(dependency).setExported(true);
+  fun testDependency() {
+    val module = myProject.addModule("m", JpsJavaModuleType.INSTANCE)
+    val library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE)
+    val dependency = module.dependenciesList.addLibraryDependency(library)
+    javaService.getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
+    javaService.getOrCreateDependencyExtension(dependency).isExported = true
 
-    List<JpsDependencyElement> dependencies = assertOneElement(myProject.getModules()).getDependenciesList().getDependencies();
-    assertEquals(2, dependencies.size());
-    final JpsDependencyElement dep = dependencies.get(1);
-    final JpsJavaDependencyExtension extension = getJavaService().getDependencyExtension(dep);
-    assertNotNull(extension);
-    assertTrue(extension.isExported());
-    assertSame(JpsJavaDependencyScope.TEST, extension.getScope());
+    val dependencies = assertOneElement(myProject.modules).dependenciesList.dependencies
+    assertEquals(2, dependencies.size)
+    val dep = dependencies[1]
+    val extension = javaService.getDependencyExtension(dep)
+    assertNotNull(extension)
+    assertTrue(extension!!.isExported)
+    assertSame(JpsJavaDependencyScope.TEST, extension.scope)
   }
 }
