@@ -762,6 +762,7 @@ a:com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker
 - getStartIndex():I
 - getStartOffset():I
 - isCollapsed():Z
+- remapTokenType(com.intellij.psi.tree.IElementType):V
 - a:tokenTextMatches(java.lang.CharSequence):Z
 c:com.intellij.lexer.DelegateLexer
 - com.intellij.lexer.LexerBase
