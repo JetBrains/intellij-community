@@ -442,6 +442,10 @@ public final class JavaBuilderUtil {
       if (!affectedForChunk.isEmpty() && !getOrCreate(context, ALL_AFFECTED_NODE_SOURCES_KEY, HashSet::new).addAll(affectedForChunk)) {
         // all affected files in this round have already been affected in previous rounds. This might indicate a build cycle => recompiling whole chunk
         LOG.info("Build cycle detected for " + chunk.getName() + "; recompiling whole module chunk");
+        // turn on non-incremental mode for all targets from the current chunk => next time the whole chunk is recompiled and affected files won't be calculated anymore
+        for (ModuleBuildTarget target : chunk.getTargets()) {
+          context.markNonIncremental(target);
+        }
         FSOperations.markDirty(context, markDirtyRound, chunk, null);
         return true;
       }
