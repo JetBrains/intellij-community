@@ -15,7 +15,6 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import kotlin.io.path.name
 
 @Internal
@@ -37,7 +36,7 @@ object JdkInstallerEel {
           .createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().prefix("download-jdk-").build()).getOrThrow()
           .resolve(archiveName)
 
-        Files.copy(downloadFile, downloadFileEelCopy.asNioPath(), StandardCopyOption.REPLACE_EXISTING)
+        EelPathUtils.walkingTransfer(downloadFile, downloadFileEelCopy.asNioPath(), false, false)
 
         downloadFileEelCopy.parent
       }
