@@ -33,11 +33,6 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
   }
 
   @Override
-  public Path getStorageRoot() {
-    return timestampRoot;
-  }
-
-  @Override
   public FileTimestamp getCurrentStampIfUpToDate(@NotNull Path file, @NotNull BuildTarget<?> target, @Nullable BasicFileAttributes attrs) throws IOException {
     TimestampPerTarget[] state = getState(file.toFile());
     if (state == null) {

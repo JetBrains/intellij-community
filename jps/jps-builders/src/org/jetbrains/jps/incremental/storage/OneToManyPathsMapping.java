@@ -31,6 +31,10 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     super.update(normalizePath(keyPath), normalizePaths(boundPaths));
   }
 
+  void setOutputs(@NotNull Path keyFile, @NotNull List<String> boundPaths) throws IOException {
+    super.update(normalizePath(relativizer.toRelative(keyFile)), normalizePaths(boundPaths));
+  }
+
   void setOutput(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
     super.update(normalizePath(keyPath), List.of(normalizePath(boundPath)));
   }

@@ -38,13 +38,11 @@ class ExperimentalTimeStampStorage private constructor(
     }
   }
 
-  override fun getStorageRoot(): Path? = null
+  private fun createKey(file: Path): LongArray = stringTo128BitHash(relativizer.toRelative(file, RelativePathType.SOURCE))
 
   override fun updateStamp(file: Path, buildTarget: BuildTarget<*>?, currentFileTimestamp: Long) {
     map.put(createKey(file), currentFileTimestamp)
   }
-
-  private fun createKey(file: Path): LongArray = stringTo128BitHash(relativizer.toRelative(file, RelativePathType.SOURCE))
 
   override fun removeStamp(file: Path, target: BuildTarget<*>?) {
     map.remove(createKey(file))

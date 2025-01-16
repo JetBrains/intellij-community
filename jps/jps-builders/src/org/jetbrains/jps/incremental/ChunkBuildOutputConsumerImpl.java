@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
-import com.intellij.util.containers.FileHashStrategy;
+import com.intellij.util.containers.CanonicalFileHashStrategy;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
@@ -23,7 +23,7 @@ final class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputCon
   private final Map<String, CompiledClass> myClasses = new HashMap<>();
   private final Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new HashMap<>();
   private final Object2ObjectMap<File, String> myOutputToBuilderNameMap =
-    Object2ObjectMaps.synchronize(new Object2ObjectOpenCustomHashMap<>(FileHashStrategy.INSTANCE));
+    Object2ObjectMaps.synchronize(new Object2ObjectOpenCustomHashMap<>(CanonicalFileHashStrategy.INSTANCE));
   private volatile String myCurrentBuilderName;
   
   ChunkBuildOutputConsumerImpl(CompileContext context) {

@@ -59,14 +59,13 @@ public final class FormsInstrumenter extends ModuleLevelBuilder {
       return ExitCode.NOTHING_DONE;
     }
 
-    final Map<Path, Collection<Path>> srcToForms = FormBindings.getAndClearFormsToCompile(context);
-
-    if (srcToForms == null || srcToForms.isEmpty()) {
+    Map<Path, Collection<Path>> sourceToForms = FormBindings.getAndClearFormsToCompile(context);
+    if (sourceToForms == null || sourceToForms.isEmpty()) {
       return ExitCode.NOTHING_DONE;
     }
 
     Set<Path> formsToCompile = FileCollectionFactory.createCanonicalPathSet();
-    for (Collection<Path> files : srcToForms.values()) {
+    for (Collection<Path> files : sourceToForms.values()) {
       formsToCompile.addAll(files);
     }
 
@@ -91,18 +90,20 @@ public final class FormsInstrumenter extends ModuleLevelBuilder {
         Map<Path, Collection<Path>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer, config.isUseDynamicBundles());
         OneToManyPathMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap(chunk.representativeTarget());
         for (Map.Entry<Path, Collection<Path>> entry : processed.entrySet()) {
-          final Path src = entry.getKey();
-          final Collection<Path> forms = entry.getValue();
+          Collection<Path> forms = entry.getValue();
 
           List<String> formPaths = new ArrayList<>(forms.size());
           for (Path form : forms) {
             formPaths.add(form.toString());
           }
+
+          Path src = entry.getKey();
           sourceToFormMap.setOutputs(src.toString(), formPaths);
-          srcToForms.remove(src);
+          sourceToForms.remove(src);
         }
+
         // clean mapping
-        for (Path srcFile : srcToForms.keySet()) {
+        for (Path srcFile : sourceToForms.keySet()) {
           sourceToFormMap.remove(srcFile.toString());
         }
       }

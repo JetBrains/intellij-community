@@ -5,9 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FileCollectionFactory;
-import com.intellij.util.containers.PathHashStrategy;
 import com.intellij.util.io.IOUtil;
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -100,12 +98,12 @@ public final class FilesDelta {
         Set<Path> files;
         if (descriptor == null) {
           LOG.debug("Cannot find root by " + rootId + ", delta will be skipped");
-          files = new ObjectLinkedOpenCustomHashSet<>(PathHashStrategy.INSTANCE);
+          files = FileCollectionFactory.createCanonicalLinkedPathSet();
         }
         else {
           files = filesToRecompile.get(descriptor);
           if (files == null) {
-            files = new ObjectLinkedOpenCustomHashSet<>(PathHashStrategy.INSTANCE);
+            files = FileCollectionFactory.createCanonicalLinkedPathSet();
             filesToRecompile.put(descriptor, files);
           }
         }

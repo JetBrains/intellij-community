@@ -4,8 +4,8 @@ package org.jetbrains.jps.incremental.fs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CanonicalPathHashStrategy;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.PathHashStrategy;
 import com.intellij.util.io.IOUtil;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,7 +41,7 @@ public final class BuildFSState {
   private final boolean alwaysScanFS;
   private final Set<BuildTarget<?>> initialScanPerformed = Collections.synchronizedSet(new HashSet<>());
   @SuppressWarnings("SSBasedInspection")
-  private final Object2LongOpenCustomHashMap<Path> registrationStamps = new Object2LongOpenCustomHashMap<>(PathHashStrategy.INSTANCE);
+  private final Object2LongOpenCustomHashMap<Path> registrationStamps = new Object2LongOpenCustomHashMap<>(CanonicalPathHashStrategy.INSTANCE);
   private final Map<BuildTarget<?>, FilesDelta> deltas = Collections.synchronizedMap(new HashMap<>());
 
   public BuildFSState(boolean alwaysScanFS) {

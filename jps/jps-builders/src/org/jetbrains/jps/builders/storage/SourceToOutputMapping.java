@@ -15,13 +15,13 @@ import java.util.Iterator;
 import java.util.List;
 
 public interface SourceToOutputMapping {
-  void setOutputs(@NotNull String srcPath, @NotNull List<String> outputs) throws IOException;
+  void setOutputs(@NotNull Path sourceFile, @NotNull List<@NotNull String> outputs) throws IOException;
 
-  void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException;
+  void setOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException;
 
-  void appendOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException;
+  void appendOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException;
 
-  void remove(@NotNull String srcPath) throws IOException;
+  void remove(@NotNull String sourcePath) throws IOException;
 
   void removeOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException;
 

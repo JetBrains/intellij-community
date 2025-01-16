@@ -153,21 +153,22 @@ public final class BuildOperations {
    *         each changed source.
    */
   public static <R extends BuildRootDescriptor, T extends BuildTarget<R>>
-  Map<T, Map<File, List<String>>> cleanOutputsCorrespondingToChangedFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
+  Map<T, Map<Path, List<String>>> cleanOutputsCorrespondingToChangedFiles(@NotNull CompileContext context,
+                                                                          @NotNull DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
-      final Map<T, Map<File, List<String>>> sourcesToCleanedOutputByTargets = new HashMap<>();
+      Map<T, Map<Path, List<String>>> sourcesToCleanedOutputByTargets = new HashMap<>();
 
       Set<Path> dirsToDelete = FileCollectionFactory.createCanonicalPathSet();
       final Collection<String> allDeletedOutputPaths = new ArrayList<>();
 
-      dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
+      dirtyFilesHolder.processDirtyFiles(new FileProcessor<>() {
         // cache the mapping locally
         private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<>();
         private final Object2IntMap<T> idsCache = new Object2IntOpenHashMap<>();
 
         @Override
-        public boolean apply(@NotNull T target, @NotNull File file, @NotNull R sourceRoot) throws IOException {
+        public boolean apply(@NotNull T target, @NotNull File ioFile, @NotNull R sourceRoot) throws IOException {
           SourceToOutputMapping srcToOut = mappingsCache.get(target);
           if (srcToOut == null) {
             srcToOut = dataManager.getSourceToOutputMap(target);
@@ -182,7 +183,8 @@ public final class BuildOperations {
             targetId = idsCache.getInt(target);
           }
 
-          Collection<Path> outputs = srcToOut.getOutputs(file.toPath());
+          Path file = ioFile.toPath();
+          Collection<Path> outputs = srcToOut.getOutputs(file);
           List<String> failedToDeleteOutputs = new ArrayList<>();
           if (outputs == null) {
             return true;
@@ -191,7 +193,8 @@ public final class BuildOperations {
           boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
           List<String> deletedForThisSource = new ArrayList<>(outputs.size());
           for (Path outputFile : outputs) {
-            boolean deletedSuccessfully = deleteRecursivelyAndCollectDeleted(outputFile, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
+            boolean deletedSuccessfully =
+              deleteRecursivelyAndCollectDeleted(outputFile, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
             if (!deletedSuccessfully && Files.exists(outputFile)) {
               failedToDeleteOutputs.add(outputFile.toString());
             }
@@ -199,7 +202,7 @@ public final class BuildOperations {
 
           allDeletedOutputPaths.addAll(deletedForThisSource);
           dataManager.getOutputToTargetMapping().removeMappings(deletedForThisSource, targetId, srcToOut);
-          Map<File, List<String>> cleaned = sourcesToCleanedOutputByTargets.computeIfAbsent(target, k -> new HashMap<>());
+          Map<Path, List<String>> cleaned = sourcesToCleanedOutputByTargets.computeIfAbsent(target, k -> new HashMap<>());
           cleaned.put(file, failedToDeleteOutputs);
           return true;
         }

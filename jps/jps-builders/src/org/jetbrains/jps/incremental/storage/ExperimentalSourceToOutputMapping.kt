@@ -57,18 +57,18 @@ class ExperimentalSourceToOutputMapping private constructor(
     }
   }
 
-  override fun remove(srcPath: String) {
-    impl.remove(srcPath)
+  override fun remove(sourcePath: String) {
+    impl.remove(sourcePath)
   }
 
-  override fun getOutputs(srcPath: String): List<String>? = impl.getOutputs(srcPath)
+  override fun getOutputs(sourcePath: String): List<String>? = impl.getOutputs(sourcePath)
 
   override fun getOutputs(sourceFile: Path): List<Path>? = impl.getOutputs(sourceFile)
 
-  override fun setOutputs(path: String, outPaths: List<String>) {
-    val relativeSourcePath = relativizer.toRelative(path, RelativePathType.SOURCE)
+  override fun setOutputs(sourceFile: Path, outputPaths: List<String>) {
+    val relativeSourcePath = relativizer.toRelative(sourceFile, RelativePathType.SOURCE)
     val key = stringTo128BitHash(relativeSourcePath)
-    val normalizeOutputPaths = impl.normalizeOutputPaths(outPaths, relativeSourcePath)
+    val normalizeOutputPaths = impl.normalizeOutputPaths(outputPaths, relativeSourcePath)
     if (normalizeOutputPaths == null) {
       impl.map.remove(key)
     }

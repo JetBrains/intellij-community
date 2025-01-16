@@ -39,8 +39,6 @@ class HashStampStorage private constructor(
     }
   }
 
-  override fun getStorageRoot(): Path? = null
-
   override fun updateStamp(file: Path, buildTarget: BuildTarget<*>?, currentFileTimestamp: Long) {
     map.put(createKey(file), HashStamp(hash = FileHashUtil.getFileHash(file), timestamp = currentFileTimestamp))
   }

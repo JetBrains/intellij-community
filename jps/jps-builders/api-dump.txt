@@ -1842,7 +1842,7 @@ org.jetbrains.jps.builders.storage.SourceToOutputMapping
 - a:remove(java.lang.String):V
 - a:removeOutput(java.lang.String,java.lang.String):V
 - a:setOutput(java.lang.String,java.lang.String):V
-- a:setOutputs(java.lang.String,java.util.List):V
+- a:setOutputs(java.nio.file.Path,java.util.List):V
 a:org.jetbrains.jps.builders.storage.StorageProvider
 - <init>():V
 - createStorage(java.io.File):org.jetbrains.jps.incremental.storage.StorageOwner
@@ -2634,6 +2634,17 @@ f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - saveVersion():V
 - setProcessConstantsIncrementally(Z):V
 - versionDiffers():Z
+org.jetbrains.jps.incremental.storage.BuildDataProvider
+- a:clearCache():V
+- a:close():V
+- a:closeTargetMaps(org.jetbrains.jps.builders.BuildTarget):V
+- a:commit():V
+- a:getFileStampStorage(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage
+- a:getOutputToTargetMapping():org.jetbrains.jps.incremental.storage.OutputToTargetMapping
+- a:getSourceToForm(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.OneToManyPathMapping
+- a:getSourceToOutputMapping(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.builders.storage.SourceToOutputMapping
+- a:removeAllMaps():V
+- a:removeStaleTarget(java.lang.String,java.lang.String):V
 f:org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
 - sf:MODULES_WITH_TARGET_CONFIG_CHANGED_KEY:com.intellij.openapi.util.Key
 - isTargetDirty(org.jetbrains.jps.cmdline.ProjectDescriptor):Z
@@ -2676,7 +2687,6 @@ f:org.jetbrains.jps.incremental.storage.ProjectStamps
 - getStampStorage():org.jetbrains.jps.incremental.storage.StampsStorage
 org.jetbrains.jps.incremental.storage.StampsStorage
 - a:getCurrentStampIfUpToDate(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,java.nio.file.attribute.BasicFileAttributes):java.lang.Object
-- a:getStorageRoot():java.nio.file.Path
 - a:removeStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget):V
 - a:updateStamp(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,J):V
 org.jetbrains.jps.incremental.storage.StorageOwner

@@ -504,11 +504,13 @@ f:com.intellij.util.containers.FileCollectionFactory
 - sf:createCanonicalFilePathSet():java.util.Set
 - sf:createCanonicalFileSet():java.util.Set
 - sf:createCanonicalFileSet(java.util.Collection):java.util.Set
+- sf:createCanonicalLinkedPathSet():java.util.Set
 - sf:createCanonicalPathLinkedMap():java.util.Map
 - sf:createCanonicalPathMap():java.util.Map
 - sf:createCanonicalPathSet():java.util.Set
 - sf:createCanonicalPathSet(I):java.util.Set
 - sf:createCanonicalPathSet(java.util.Collection):java.util.Set
+- sf:createCaseSensitiveAwarePathSet():java.util.Set
 com.intellij.util.containers.HashingStrategy
 - s:canonical():com.intellij.util.containers.HashingStrategy
 - s:caseInsensitive():com.intellij.util.containers.HashingStrategy

@@ -1445,18 +1445,18 @@ public final class IncProjectBuilder {
           }
         };
         if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-          final Map<ModuleBuildTarget, Map<File, List<String>>> cleanedSources =
+          Map<ModuleBuildTarget, Map<Path, List<String>>> cleanedSources =
             BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder);
-          for (Map.Entry<ModuleBuildTarget, Map<File, List<String>>> entry : cleanedSources.entrySet()) {
-            final ModuleBuildTarget target = entry.getKey();
-            final Set<File> files = entry.getValue().keySet();
+          for (Map.Entry<ModuleBuildTarget, Map<Path, List<String>>> entry : cleanedSources.entrySet()) {
+            ModuleBuildTarget target = entry.getKey();
+            Set<Path> files = entry.getValue().keySet();
             if (!files.isEmpty()) {
               final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-              for (File srcFile : files) {
+              for (Path srcFile : files) {
                 List<String> outputs = entry.getValue().get(srcFile);
-                mapping.setOutputs(srcFile.getPath(), outputs);
+                mapping.setOutputs(srcFile, outputs);
                 if (!outputs.isEmpty()) {
-                  LOG.info("Some outputs were not removed for " + srcFile.getPath() + " source file: " + outputs);
+                  LOG.info("Some outputs were not removed for " + srcFile + " source file: " + outputs);
                 }
               }
             }
