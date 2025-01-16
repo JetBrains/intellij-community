@@ -85,6 +85,9 @@ public final class SettingsEntryPointAction extends ActionGroup
     boolean newUI = ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(place);
     return new ActionButton(this, presentation, place,
                             newUI ? ActionToolbar.experimentalToolbarMinimumButtonSize() : ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      {
+        putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, IdeBundle.message("settings.entry.point.tooltip"));
+      }
       @Override
       protected void paintButtonLook(Graphics g) {
         Icon icon = getIcon();
