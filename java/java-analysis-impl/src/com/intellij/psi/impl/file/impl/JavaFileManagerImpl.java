@@ -131,7 +131,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return bestClass;
   }
 
-  private boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
+  protected boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
     if (FileTypeRegistry.getInstance().isFileOfType(vFile, JavaClassFileType.INSTANCE)) {
       // See IDEADEV-5626
       ProjectFileIndex index = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
