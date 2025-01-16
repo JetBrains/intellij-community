@@ -126,4 +126,22 @@ class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
             additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
         )
     }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.1+")
+    fun testEnableUpdatedAnnotationDefaultingRule() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.1+")
+    fun testEnableUpdatedAnnotationDefaultingRuleField() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
 }

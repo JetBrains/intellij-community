@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageFeature.PropertyParamAnnotationDefaultTargetMode
 import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.diagnostics.rendering.buildRuntimeFeatureToFlagMap
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -12,6 +13,11 @@ object CliArgumentStringBuilder {
     private val dedicatedFeatureFlags: Map<LanguageFeature, String> by lazy {
         buildRuntimeFeatureToFlagMap(this::class.java.classLoader)
     }
+
+    private val featuresWithComplexArguments: Map<Pair<LanguageFeature, LanguageFeature.State>, String> = mapOf(
+        (PropertyParamAnnotationDefaultTargetMode to LanguageFeature.State.ENABLED) to "-Xannotation-default-target=param-property",
+        (PropertyParamAnnotationDefaultTargetMode to LanguageFeature.State.DISABLED) to "-Xannotation-default-target=first-only-warn",
+    )
 
     private val LanguageFeature.dedicatedFlagInfo: Pair<String, KotlinVersion?>?
         get()  {
@@ -39,11 +45,12 @@ object CliArgumentStringBuilder {
             val (xFlag, xFlagSinceVersion) = this
             if (kotlinVersion == null || xFlagSinceVersion == null || kotlinVersion.kotlinVersion >= xFlagSinceVersion) xFlag else null
         }
+        val specialCompilerArgument = featuresWithComplexArguments[this to state]
 
-        return if (shouldBeFeatureEnabled && dedicatedFlag != null) {
-            dedicatedFlag
-        } else {
-            "$LANGUAGE_FEATURE_FLAG_PREFIX${state.sign}$name"
+        return when {
+            shouldBeFeatureEnabled && dedicatedFlag != null -> dedicatedFlag
+            specialCompilerArgument != null -> specialCompilerArgument
+            else -> "$LANGUAGE_FEATURE_FLAG_PREFIX${state.sign}$name"
         }
     }
 

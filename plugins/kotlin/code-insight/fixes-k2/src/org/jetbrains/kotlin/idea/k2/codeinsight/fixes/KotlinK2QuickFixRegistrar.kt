@@ -169,6 +169,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(DeclarationCantBeInlinedFixFactories.removeOpenModifierFixFactory)
         registerFactory(WrongAnnotationTargetFixFactories.addAnnotationUseSiteTargetFixFactory)
         registerFactory(WrongAnnotationTargetFixFactories.addAnnotationUseSiteTargetForConstructorParameterFixFactory)
+        registerFactory(WrongAnnotationTargetFixFactories.enableFutureAnnotationTargetModeFactory)
         registerFactory(FinalUpperBoundFixFactories.inlineTypeParameterFixFactory)
         registerFactory(PropertyInitializerInInterfaceFixFactories.convertPropertyInitializerToGetterFixFactory)
         registerFactory(AddGenericUpperBoundFixFactories.upperBoundViolatedFixFactory)

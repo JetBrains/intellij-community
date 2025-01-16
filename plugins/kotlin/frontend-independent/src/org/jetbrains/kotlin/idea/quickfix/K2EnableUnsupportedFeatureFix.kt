@@ -21,6 +21,7 @@ class K2EnableUnsupportedFeatureFix(
     element: PsiElement,
     private val module: Module,
     private val languageFeature: LanguageFeature,
+    private val alternativeActionText: @IntentionName String? = null,
 ) : KotlinQuickFixAction<PsiElement>(element) {
     private val configurator: KotlinProjectConfigurator? by lazy {
         KotlinProjectConfigurator.EP_NAME
@@ -34,7 +35,9 @@ class K2EnableUnsupportedFeatureFix(
     }
 
     override fun getText(): @IntentionName String {
-        return KotlinIdeaCoreBundle.message("fix.enable.feature.support.text", languageFeature.presentableName)
+        val actionText = alternativeActionText
+            ?: KotlinIdeaCoreBundle.message("fix.enable.feature.support.text", languageFeature.presentableName)
+        return actionText
     }
 
     override fun getFamilyName(): @IntentionFamilyName String {
