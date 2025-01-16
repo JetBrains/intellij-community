@@ -5,8 +5,10 @@ import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.formatting.FormatTextRanges
 import com.intellij.formatting.service.AsyncDocumentFormattingService
 import com.intellij.formatting.service.AsyncFormattingRequest
+import com.intellij.formatting.service.CoreFormattingService
 import com.intellij.formatting.service.FormattingService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -16,11 +18,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.ui.LightweightHint
 import com.jetbrains.python.PyBundle
@@ -34,7 +34,6 @@ import kotlin.time.toKotlinDuration
 private val NAME: String = PyBundle.message("black.formatting.service.name")
 val DEFAULT_CHARSET: Charset = StandardCharsets.UTF_8
 private val FEATURES: Set<FormattingService.Feature> = setOf(FormattingService.Feature.FORMAT_FRAGMENTS)
-private val FALLBACK_TO_DEFAULT_FORMATTER_KEY: Key<Boolean> = Key("BLACK_FALLBACK_TO_EMBEDDED_FORMATTER")
 
 class BlackFormattingService : AsyncDocumentFormattingService() {
 
@@ -59,11 +58,6 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     }
 
     if (!blackConfiguration.enabledOnReformat) return false
-
-    source.getUserData(FALLBACK_TO_DEFAULT_FORMATTER_KEY)?.let {
-      source.putUserData(FALLBACK_TO_DEFAULT_FORMATTER_KEY, null)
-      return false
-    }
 
     return isApplicable
   }
@@ -92,16 +86,6 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
 
     val documentText = formattingRequest.documentText
     val isFormatFragmentAction = isFormatFragmentAction(documentText, formattingRequest)
-    val blackVersion = runBlockingCancellable { BlackFormatterVersionService.getVersion (project) }
-
-    if (isFormatFragmentAction && blackVersion < BlackFormatterUtil.MINIMAL_LINE_RANGES_COMPATIBLE_VERSION) {
-      LOG.debug("Black version $blackVersion is lower than minimal version that supports fragments' formatting, " +
-                "falling back to embedded formatter for fragment formatting")
-
-      file.putUserData(FALLBACK_TO_DEFAULT_FORMATTER_KEY, true)
-      showFormattedLinesInfo(editor, PyBundle.message("black.format.fragments.supported.info"), false)
-      return FallBackFormatFragmentTask(formattingRequest)
-    }
 
     val blackFormattingRequest = if (isFormatFragmentAction) {
       val lineRanges = mutableListOf<IntRange>()
@@ -122,8 +106,20 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
 
       override fun run() {
         runCatching {
-          val executor = BlackFormatterExecutor(project, sdk, blackConfig)
+          val blackVersion = runBlockingCancellable {
+            BlackFormatterVersionService.getVersion(project)
+          }
 
+          if (isFormatFragmentAction && blackVersion < BlackFormatterUtil.MINIMAL_LINE_RANGES_COMPATIBLE_VERSION) {
+            LOG.debug("Black version $blackVersion is lower than minimal version that supports fragments' formatting, " +
+                      "falling back to embedded formatter for fragment formatting")
+
+            showFormattedLinesInfo(editor, PyBundle.message("black.format.fragments.supported.info"), false)
+            fallbackToEmbeddedFormatter(formattingRequest)
+            return
+          }
+
+          val executor = BlackFormatterExecutor(project, sdk, blackConfig)
           when (val response = executor.getBlackFormattingResponse(blackFormattingRequest, timeout.toKotlinDuration())) {
             is BlackFormattingResponse.Success -> {
               val formattedDocumentText = response.formattedText
@@ -166,6 +162,25 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
         }
       }
 
+      private fun fallbackToEmbeddedFormatter(formattingRequest: AsyncFormattingRequest) {
+        val context = formattingRequest.context
+        val project = context.project
+        val psiFile = context.containingFile
+        WriteCommandAction
+          .runWriteCommandAction(project,
+                                 PyBundle.message("black.format.fragment.fallback.title"),
+                                 NOTIFICATION_GROUP_ID, {
+                                   val formatter = EP_NAME.findExtensionOrFail(CoreFormattingService::class.java)
+                                   val ranges = FormatTextRanges().apply {
+                                     formattingRequest.formattingRanges.forEach {
+                                       add(it, false)
+                                     }
+                                   }
+                                   formatter.formatRanges(psiFile, ranges, false, false)
+                                 }, psiFile)
+        formattingRequest.onTextReady(context.containingFile.text)
+      }
+
       override fun cancel(): Boolean = true
       override fun isRunUnderProgress(): Boolean = true
     }
@@ -177,22 +192,6 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
       PyBundle.message("black.no.lines.changed")
     else
       PyBundle.message("black.formatted.n.lines", diff, if (diff == 1) 1 else 0)
-  }
-
-  private class FallBackFormatFragmentTask(val formattingRequest: AsyncFormattingRequest) : FormattingTask {
-
-    override fun run() {
-      val context = formattingRequest.context
-      val project = context.project
-      val psiFile = context.containingFile
-      WriteCommandAction.runWriteCommandAction(project, PyBundle.message("black.format.fragment.fallback.title"), NOTIFICATION_GROUP_ID, {
-        CodeStyleManager.getInstance(project).reformatText(psiFile, formattingRequest.formattingRanges)
-      }, psiFile)
-      return formattingRequest.onTextReady(context.containingFile.text)
-    }
-
-    override fun cancel(): Boolean = true
-    override fun isRunUnderProgress(): Boolean = true
   }
 
   private fun showFormattedLinesInfo(editor: Editor?, text: @Nls String, isError: Boolean) {
