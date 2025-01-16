@@ -50,5 +50,6 @@
     <orderEntry type="library" name="kotlinc.analysis-api-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" />
+    <orderEntry type="library" name="kotlinc.scripting-compiler-plugin" level="project" />
   </component>
 </module>

@@ -7,4 +7,4 @@ fun <T> identity(value: T): T = value
 
 // We should infer `ComposableFunction0<Unit>` for `T`
 val cl = identity(@Composable {})
-val l: () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'kotlin.Function0<kotlin.Unit>', actual 'androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>'.'")!>cl<!>
+val l: () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'Function0<Unit>', actual 'ComposableFunction0<Unit>'.'")!>cl<!>

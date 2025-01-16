@@ -16,8 +16,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
-import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
-import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
@@ -37,7 +35,6 @@ internal class InvalidateK2CachesInternalAction : AnAction() {
         showNotificationAboutInvalidatedCaches(project, invalidationMode)
     }
 
-    @OptIn(LLFirInternals::class)
     @Suppress("TestOnlyProblems")
     private fun invalidateCaches(project: Project, invalidationMode: InvalidationMode) = runWriteAction {
         if (invalidationMode.invalidateSources) {
@@ -48,7 +45,6 @@ internal class InvalidateK2CachesInternalAction : AnAction() {
             }
         }
         if (invalidationMode.invalidateLibraries) {
-            LLFirBuiltinsSessionFactory.getInstance(project).clearForTheNextTest()
             JavaLibraryModificationTracker.incModificationCount(project)
             project.analysisMessageBus.apply {
                 syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeEnlarger
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
@@ -31,7 +32,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
             is KaDanglingFileModule -> {
                 val scopes = listOf(
                     module.file.fileScope(),
-                    getResolutionScope(module.contextModule)
+                    KotlinResolutionScopeEnlarger.getEnlargedResolutionScope(module.contextModule)
                 )
 
                 GlobalSearchScope.union(scopes)
@@ -59,16 +60,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
             scope
         }
 
-        return if (module is KaSourceModule) {
-            // remove dependency on `ModuleInfo` after KT-69980 is fixed
-            KotlinResolveScopeEnlarger.enlargeScope(
-                adjustedScope,
-                module.openapiModule,
-                isTestScope = module.sourceModuleKind == KaSourceModuleKind.TEST,
-            )
-        } else {
-            adjustedScope
-        }
+        return adjustedScope
     }
 
     private fun adjustScope(baseScope: GlobalSearchScope, module: KaSourceModule): GlobalSearchScope {

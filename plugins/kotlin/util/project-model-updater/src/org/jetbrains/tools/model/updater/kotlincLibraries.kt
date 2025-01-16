@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
 import org.jetbrains.tools.model.updater.impl.*
 
 private const val ktGroup = "org.jetbrains.kotlin"
-private const val BOOTSTRAP_VERSION = "2.1.255-dev-255"
+internal const val BOOTSTRAP_VERSION = "2.2.255-dev-255"
 
 // see .idea/jarRepositories.xml
 private val KOTLIN_IDE_DEPS_REPOSITORY = JpsRemoteRepository(

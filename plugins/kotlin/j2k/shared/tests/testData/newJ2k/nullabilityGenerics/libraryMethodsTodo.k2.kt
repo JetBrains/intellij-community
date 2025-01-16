@@ -1,10 +1,10 @@
-// ERROR: Return type mismatch: expected 'kotlin.collections.MutableCollection<kotlin.String>', actual 'kotlin.collections.MutableList<kotlin.String?>'.
-// ERROR: Initializer type mismatch: expected 'kotlin.collections.MutableCollection<kotlin.String>', actual 'kotlin.collections.MutableList<kotlin.String?>'.
-// ERROR: Type mismatch: inferred type is 'kotlin.String?', but 'kotlin.String' was expected.
-// ERROR: Type mismatch: inferred type is 'kotlin.String?', but 'kotlin.String' was expected.
-// ERROR: Initializer type mismatch: expected 'kotlin.collections.MutableSet<kotlin.String>', actual 'kotlin.collections.MutableSet<kotlin.String?>'.
-// ERROR: Type mismatch: inferred type is 'kotlin.String?', but 'kotlin.String' was expected.
-// ERROR: Type mismatch: inferred type is 'kotlin.String?', but 'kotlin.String' was expected.
+// ERROR: Return type mismatch: expected 'MutableCollection<String>', actual 'MutableList<String?>'.
+// ERROR: Initializer type mismatch: expected 'MutableCollection<String>', actual 'MutableList<String?>'.
+// ERROR: Type mismatch: inferred type is 'String?', but 'String' was expected.
+// ERROR: Type mismatch: inferred type is 'String?', but 'String' was expected.
+// ERROR: Initializer type mismatch: expected 'MutableSet<String>', actual 'MutableSet<String?>'.
+// ERROR: Type mismatch: inferred type is 'String?', but 'String' was expected.
+// ERROR: Type mismatch: inferred type is 'String?', but 'String' was expected.
 // TODO handle the case when type argument is used in the method return type (make it not-null)
 class J {
     var notNullSet: MutableSet<String> = mutableSetOf<String?>()
