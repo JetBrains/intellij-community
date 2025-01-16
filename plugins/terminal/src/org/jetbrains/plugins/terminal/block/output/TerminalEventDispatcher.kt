@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
 import org.jetbrains.plugins.terminal.block.output.TerminalEventDispatcher.MyKeyEventsListener
@@ -118,6 +119,7 @@ internal abstract class TerminalEventDispatcher(
   }
 
   companion object {
+    @Language("devkit-action-id")
     @NonNls
     private val ACTIONS_TO_SKIP = listOf(
       "ActivateTerminalToolWindow",
