@@ -4,8 +4,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiffKind
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
@@ -21,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.Cursor
 import java.time.ZonedDateTime
 import javax.swing.*
@@ -82,23 +84,26 @@ class NotebookBelowCellDelimiterPanel(
     return labelText
   }
 
-  private fun createTagsRow(): Box {
+  private fun createTagsRow(): Component {
     val tagsRow = JBBox.createHorizontalBox()
-    val plusActionToolbar = createAddTagButton()
-    tagsRow.add(plusActionToolbar)
-    tagsRow.add(Box.createHorizontalStrut(tagsSpacing))
+    tagsRow.add(createAddTagButton())
 
     cellTags.forEach { tag ->
-      val tagLabel = NotebookCellTagLabel(tag, cellIndex)
-      tagsRow.add(tagLabel)
+      tagsRow.add(NotebookCellTagLabel(tag, cellIndex))
       tagsRow.add(Box.createHorizontalStrut(tagsSpacing))
     }
     return tagsRow
   }
 
-  private fun createAddTagButton(): JComponent? {
-    val action = ActionManager.getInstance().getAction("JupyterCellAddTagInlayAction")
-    return ActionButton(action, null, "NotebookTagsPanel", JBUI.size(18, 18))
+  private fun createAddTagButton(): JComponent {
+    val actionGroup = ActionManager.getInstance().getAction("JupyterCellAddTagInlayActionGroup") as ActionGroup
+    val toolbar = ActionManager.getInstance().createActionToolbar("NotebookTagsPanel", actionGroup, /*horizontal =*/ true).apply {
+      layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
+      border = BorderFactory.createEmptyBorder()
+      setMinimumButtonSize(JBUI.size(18, 18))
+      targetComponent = this@NotebookBelowCellDelimiterPanel
+    }
+    return toolbar.component
   }
 
   private fun getExecutionCountLabelText(executionCount: Int?) = when {
