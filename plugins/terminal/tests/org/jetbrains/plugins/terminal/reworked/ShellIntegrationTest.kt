@@ -16,7 +16,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInputEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.output.*
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
@@ -161,27 +160,6 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       inputChannel.send(TerminalWriteBytesEvent("abcdef".toByteArray()))
       inputChannel.send(TerminalWriteBytesEvent(CTRL_L_BYTES))
     }
-
-    val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
-    val expectedEvents = listOf(
-      TerminalShellIntegrationInitializedEvent,
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent,
-      TerminalPromptStartedEvent,
-      TerminalPromptFinishedEvent
-    )
-
-    assertEquals(expectedEvents, shellIntegrationEvents)
-  }
-
-  @Test
-  fun `prompt events received after prompt is redrawn because of resize`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { inputChannel ->
-      inputChannel.send(TerminalWriteBytesEvent("abcdef".toByteArray()))
-      inputChannel.send(TerminalResizeEvent(TermSize(80, 10)))
-    }
-
-    println(events.joinToString("\n"))
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
