@@ -63,6 +63,7 @@ import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component
+import java.nio.file.Files
 import java.nio.file.Path
 import javax.accessibility.AccessibleContext
 import javax.swing.Icon
@@ -88,7 +89,7 @@ sealed class ProjectWizardJdkIntent {
 
   data class AddJdkFromJdkListDownloader(val extension: SdkDownload) : ProjectWizardJdkIntent()
 
-  data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String) : ProjectWizardJdkIntent()
+  data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String, val isSymlink: Boolean) : ProjectWizardJdkIntent()
 
   fun isAtLeast(version: Int): Boolean = when (this) {
     is DownloadJdk -> JavaVersion.tryParse(task.plannedVersion)?.isAtLeast(version)
@@ -358,7 +359,8 @@ class ProjectWizardJdkComboBox(
         return when (item) {
           is DownloadJdk, is AddJdkFromJdkListDownloader -> AllIcons.Actions.Download
           is AddJdkFromPath -> AllIcons.Nodes.PpJdk
-          is ExistingJdk, is DetectedJdk -> JavaSdk.getInstance().icon
+          is ExistingJdk -> JavaSdk.getInstance().icon
+          is DetectedJdk -> if (item.isSymlink) AllIcons.Nodes.Related else AllIcons.Nodes.PpJdk
           else -> EmptyIcon.ICON_16
         }
       }
@@ -512,7 +514,7 @@ private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
   }
   SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance(), null, path) { path: String ->
     val version = JavaSdk.getInstance().getVersionString(path)
-    val comboItem = DetectedJdk(version ?: "", path)
+    val comboItem = DetectedJdk(version ?: "", path, Files.isSymbolicLink(Path.of(path)))
     combo.addItem(comboItem)
     combo.selectedItem = comboItem
   }
@@ -585,24 +587,42 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
 
 // Searches for JDKs located on the computer, but not added to the IDE
 private fun CoroutineScope.findExistingJdks(descriptor: EelDescriptor?, comboBox: ProjectWizardJdkComboBox): Job = launch {
-  val javaSdk = JavaSdk.getInstance()
-  val homePaths = if (Registry.`is`("java.home.finder.use.eel")) {
-    val eelDescriptor = descriptor ?: LocalEelDescriptor
-    JavaHomeFinder.suggestHomePaths(eelDescriptor, false)
-  }
-  else {
-    JavaHomeFinder.suggestHomePaths()
-  }
-  val detected = homePaths.mapNotNull { homePath: String ->
-    val version = javaSdk.getVersionString(homePath)
-    when {
-      version != null && javaSdk.isValidSdkHome(homePath) -> DetectedJdk(version, homePath)
-      else -> null
+  val detected = when {
+    Registry.`is`("java.home.finder.use.eel") -> {
+      val eelDescriptor = descriptor ?: LocalEelDescriptor
+      findExistingJdksEel(eelDescriptor)
+    }
+    else -> {
+      val homePaths = JavaHomeFinder.suggestHomePaths()
+      val javaSdk = JavaSdk.getInstance()
+      homePaths.mapNotNull { homePath: String ->
+        val version = javaSdk.getVersionString(homePath)
+        when {
+          version != null && javaSdk.isValidSdkHome(homePath) -> DetectedJdk(version, homePath, false)
+          else -> null
+        }
+      }
     }
   }
 
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     comboBox.addExistingJdks(detected)
+  }
+}
+
+private fun findExistingJdksEel(eelDescriptor: EelDescriptor): List<DetectedJdk> {
+  val javaSdk = JavaSdk.getInstance()
+  val jdks = JavaHomeFinder.findJdks(eelDescriptor, false)
+
+  return jdks.mapNotNull {
+    val path = it.get(SdkType.HOMEPATH_KEY)
+    val version = it.get(JavaHomeFinder.JDK_VERSION_KEY)
+    val symlink = it.get(SdkType.IS_SYMLINK_KEY) ?: false
+
+    when {
+      path != null && version != null && javaSdk.isValidSdkHome(path) -> DetectedJdk(version.displayVersionString(), path, symlink)
+      else -> null
+    }
   }
 }
 
