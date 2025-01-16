@@ -276,10 +276,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
 
         // let's check that tool window actually loses focus
-        if (getToolWindowIdForComponent(focusedComponent) != toolWindowId) {
-          // a toolwindow lost focus
+        val focusedToolWindowId = getToolWindowIdForComponent(focusedComponent)
+        if (focusedToolWindowId != toolWindowId) {
           val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(focusedComponent) != null
-          if (!focusGoesToPopup) {
+          val focusGoesToDialog = focusedToolWindowId == null && ComponentUtil.getWindow(focusedComponent) is Dialog
+          if (!focusGoesToPopup && !focusGoesToDialog) {
             val info = toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindowId)
             toolWindowManager.deactivateToolWindow(info, activeEntry)
           }
