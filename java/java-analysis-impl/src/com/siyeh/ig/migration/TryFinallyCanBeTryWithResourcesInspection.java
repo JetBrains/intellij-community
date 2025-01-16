@@ -600,15 +600,22 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
 
       super.visitReferenceExpression(referenceExpression);
 
-      if (!(referenceExpression.getParent() instanceof PsiMethodCallExpression)) return;
-      PsiExpression qualifier = referenceExpression.getQualifierExpression();
+      if (referenceExpression.getParent() instanceof PsiMethodCallExpression) {
+        PsiExpression qualifier = referenceExpression.getQualifierExpression();
+        PsiVariable variable = ExpressionUtils.resolveVariable(qualifier);
 
-      PsiVariable variable = ExpressionUtils.resolveVariable(qualifier);
+        if (!collectedVariables.contains(variable)) return;
 
-      if (!collectedVariables.contains(variable)) return;
+        if (variable != null && !isCloseMethodCalled(referenceExpression) && isAutoCloseable(variable)) {
+          used = true;
+        }
+      } else if (referenceExpression.getParent() instanceof PsiExpressionList) {
+        PsiVariable variable = ExpressionUtils.resolveVariable(referenceExpression);
+        if (!collectedVariables.contains(variable)) return;
 
-      if(variable != null && !isCloseMethodCalled(referenceExpression) && isAutoCloseable(variable)) {
-        used = true;
+        if (variable != null && isAutoCloseable(variable)) {
+          used = true;
+        }
       }
     }
 
