@@ -12,7 +12,6 @@ import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.util.containers.ContainerUtil
@@ -38,7 +37,7 @@ internal fun readWholeFileIfNotTooLargeWithEel(path: Path): ByteArray? {
   }
   val api = map.computeIfAbsent(root) {
     runBlocking {
-      root.getEelApi()
+      root.getEelDescriptor().upgrade()
     }
   }
   if (api is LocalEelApi) {

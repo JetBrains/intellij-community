@@ -11,7 +11,6 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
-import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
@@ -32,6 +31,7 @@ import java.util.List;
 
 import static com.intellij.openapi.projectRoots.impl.JavaHomeFinderEel.javaHomeFinderEel;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
+import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
 
 @ApiStatus.Internal
 public abstract class JavaHomeFinder {
@@ -167,7 +167,7 @@ public abstract class JavaHomeFinder {
   }
 
   private static @Nullable Path defaultJavaLocationUsingEel(Path path) {
-    EelApi eel = EelProviderUtil.getEelApiBlocking(path);
+    EelApi eel = upgradeBlocking(getEelDescriptor(path));
     EelPlatform platform = eel.getPlatform();
     String eelPath = null;
     if (platform instanceof EelPlatform.Windows) {

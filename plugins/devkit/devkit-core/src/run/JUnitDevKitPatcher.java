@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.execution.JUnitPatcher;
@@ -155,7 +155,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
         var file = files.iterator().next();
         String projectFilePath =
           Objects.requireNonNull(project.getProjectFilePath(), "Run configurations should not be invoked on the default project");
-        EelApi eelApi = EelProviderUtil.getEelApiBlocking(Path.of(projectFilePath));
+        EelApi eelApi = EelProviderUtil.upgradeBlocking(EelProviderUtil.getEelDescriptor(Path.of(projectFilePath)));
         OS targetOs = EelProviderUtil.systemOs(eelApi);
         try (var stream = file.getInputStream()) {
           JavaModuleOptions.readOptions(stream, targetOs).forEach(vm::add);

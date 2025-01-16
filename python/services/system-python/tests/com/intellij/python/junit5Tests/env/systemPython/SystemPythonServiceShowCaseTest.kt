@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.systemPython
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.executeProcess
 import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.assertFail
@@ -12,13 +12,13 @@ import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.randomBinary
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.jetbrains.python.Result
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.v2.createVirtualenv
 import kotlinx.coroutines.async
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.*
+import org.hamcrest.Matchers.hasItem
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -33,7 +33,7 @@ class SystemPythonServiceShowCaseTest {
   fun testListPythons(): Unit = timeoutRunBlocking {
     for (systemPython in SystemPythonService().findSystemPythons()) {
       fileLogger().info("Python found: $systemPython")
-      val eelApi = systemPython.pythonBinary.getEelApi()
+      val eelApi = systemPython.pythonBinary.getEelDescriptor().upgrade()
       val process = eelApi.exec.executeProcess(systemPython.pythonBinary.pathString, "--version").getOrThrow()
       val output = async {
         process.stdout.readWholeText().getOrThrow()

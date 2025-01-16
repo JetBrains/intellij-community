@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.utils
 
 import com.intellij.execution.process.ProcessOutput
@@ -7,7 +7,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.ResultErrImpl
 import com.intellij.platform.eel.provider.ResultOkImpl
-import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.copy
 import com.intellij.util.io.computeDetached
@@ -115,7 +115,7 @@ suspend fun EelApi.where(exe: String): EelPath? {
 @ApiStatus.Experimental
 suspend fun Path.exec(vararg args: String, timeout: Duration = Int.MAX_VALUE.days): EelResult<ProcessOutput, EelExecApi.ExecuteProcessError?> {
 
-  val process = getEelApi().exec.executeProcess(pathString, *args).getOr { return it }
+  val process = getEelDescriptor().upgrade().exec.executeProcess(pathString, *args).getOr { return it }
   val output = withTimeoutOrNull(timeout) {
     process.awaitProcessResult()
   }

@@ -8,7 +8,10 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
@@ -50,7 +53,7 @@ object EelPathUtils {
     }
     val projectFilePath = project.projectFilePath ?: return Files.createTempFile(prefix, suffix)
     return runBlockingMaybeCancellable {
-      val eel = Path.of(projectFilePath).getEelApi()
+      val eel = Path.of(projectFilePath).getEelDescriptor().upgrade()
       val file = eel.fs.createTemporaryFile(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException()
       file.asNioPath()
     }
@@ -63,7 +66,7 @@ object EelPathUtils {
     }
     val projectFilePath = project.projectFilePath ?: return Files.createTempDirectory(prefix)
     return runBlockingMaybeCancellable {
-      val eel = Path.of(projectFilePath).getEelApi()
+      val eel = Path.of(projectFilePath).getEelDescriptor().upgrade()
       createTemporaryDirectory(eel, prefix)
     }
   }
@@ -113,7 +116,7 @@ object EelPathUtils {
    */
   fun transferContentsIfNonLocal(eel: EelApi, source: Path, sink: Path?): Path {
     if (eel is LocalEelApi) return source
-    if (source.getEelApiBlocking() !is LocalEelApi) {
+    if (source.getEelDescriptor() !is LocalEelDescriptor) {
       if (sink != null && source.getEelDescriptor() != sink.getEelDescriptor()) {
         throw UnsupportedOperationException("Transferring between different Eels is not supported yet")
       }

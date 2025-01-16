@@ -13,7 +13,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.util.coroutines.forEachConcurrent
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
@@ -21,10 +20,6 @@ import java.nio.file.Path
 
 interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
 interface LocalPosixEelApi : LocalEelApi, EelPosixApi
-
-suspend fun Path.getEelApi(): EelApi {
-  return getEelDescriptor().upgrade()
-}
 
 object EelInitialization {
   private val logger = logger<EelInitialization>()
@@ -94,13 +89,6 @@ data object LocalEelDescriptor : EelDescriptor {
     return localEel
   }
 }
-
-fun EelDescriptor.upgradeBlocking(): EelApi {
-  return runBlockingMaybeCancellable { upgrade() }
-}
-
-@RequiresBlockingContext
-fun Path.getEelApiBlocking(): EelApi = runBlockingMaybeCancellable { getEelApi() }
 
 @ApiStatus.Internal
 interface EelProvider {

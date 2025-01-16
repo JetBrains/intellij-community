@@ -9,9 +9,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.fs.EelFileSystemPosixApi
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.zip.JBZipFile
@@ -103,7 +102,7 @@ internal class MavenWrapperSupport {
       throw IllegalStateException(SyncBundle.message("zip.is.not.correct", zipFile.toAbsolutePath()))
     }
     val mavenHome = dirs[0]
-    if (mavenHome.getEelApiBlocking().fs is EelFileSystemPosixApi) {
+    if (mavenHome.getEelDescriptor().operatingSystem == EelPath.OS.UNIX) {
       makeMavenBinRunnable(mavenHome)
     }
     return mavenHome

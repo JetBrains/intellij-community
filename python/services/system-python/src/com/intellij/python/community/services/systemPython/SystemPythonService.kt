@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.systemPython
 
 import com.intellij.openapi.application.ApplicationManager
@@ -7,7 +7,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.Service.Level.APP
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
@@ -76,10 +76,10 @@ private class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSta
 
     val pythonsFromExtensions = SystemPythonProvider.EP
       .extensionList
-      .flatMap { it.findSystemPythons(eelApi) }.filter { it.getEelApi() == eelApi }
+      .flatMap { it.findSystemPythons(eelApi) }.filter { it.getEelDescriptor().upgrade() == eelApi }
 
     val badPythons = mutableSetOf<PythonBinary>()
-    val pythons = corePythons + pythonsFromExtensions + state.userProvidedPythons.filter { it.getEelApi() == eelApi }
+    val pythons = corePythons + pythonsFromExtensions + state.userProvidedPythons.filter { it.getEelDescriptor() == eelApi.descriptor }
 
     val result = pythons.toSet()
       .mapNotNull { python ->
