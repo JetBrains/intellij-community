@@ -36,7 +36,7 @@ internal open class ClassifierImportCandidatesProvider(
     }
 
     context(KaSession)
-    override fun collectCandidates(
+    override fun collectCandidateSymbols(
         indexProvider: KtSymbolFromIndexProvider,
     ): List<KaClassLikeSymbol> {
         if (positionContext.explicitReceiver != null) return emptyList()

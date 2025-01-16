@@ -129,8 +129,9 @@ object ImportQuickFixProvider {
 
     private fun KaSession.createImportFix(
         position: KtElement,
-        importCandidateSymbols: List<KaDeclarationSymbol>,
+        importCandidates: List<ImportCandidate>,
     ): ImportQuickFix? {
+        val importCandidateSymbols = importCandidates.map { it.symbol }
         if (importCandidateSymbols.isEmpty()) return null
 
         val containingKtFile = position.containingKtFile

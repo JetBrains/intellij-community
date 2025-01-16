@@ -29,7 +29,7 @@ internal open class CallableImportCandidatesProvider(
         !javaCallable.isImported() && javaCallable.canBeImported()
 
     context(KaSession)
-    override fun collectCandidates(
+    override fun collectCandidateSymbols(
         indexProvider: KtSymbolFromIndexProvider,
     ): List<KaCallableSymbol> {
         val unresolvedName = positionContext.name
@@ -78,7 +78,7 @@ internal class DelegateMethodImportCandidatesProvider(
 ) : CallableImportCandidatesProvider(positionContext) {
 
     context(KaSession)
-    override fun collectCandidates(
+    override fun collectCandidateSymbols(
         indexProvider: KtSymbolFromIndexProvider,
     ): List<KaCallableSymbol> {
         val functionName = OperatorNameConventions.GET_VALUE.takeIf {
