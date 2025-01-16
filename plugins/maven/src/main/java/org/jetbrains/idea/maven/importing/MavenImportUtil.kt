@@ -61,32 +61,28 @@ object MavenImportUtil {
   private const val EXECUTION_COMPILE = "default-compile"
   private const val EXECUTION_TEST_COMPILE = "default-testCompile"
 
-  fun getArtifactUrlForClassifierAndExtension(
-    artifact: MavenArtifact,
-    classifier: String?,
-    extension: String?,
-  ): String {
+  internal fun getArtifactUrlForClassifierAndExtension(artifact: MavenArtifact, classifier: String?, extension: String?): String {
     val newPath = artifact.getPathForExtraArtifact(classifier, extension)
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, newPath) + JarFileSystem.JAR_SEPARATOR
   }
 
-  fun getSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
+  internal fun getSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
     return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), true, false)
   }
 
-  fun getTestSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
+  internal fun getTestSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
     return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), true, true)
   }
 
-  fun getTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
+  internal fun getTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
     return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, false)
   }
 
-  fun getTestTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
+  internal fun getTestTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
     return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, true)
   }
 
-  fun getLanguageLevel(mavenProject: MavenProject, supplier: Supplier<LanguageLevel?>): LanguageLevel {
+  internal fun getLanguageLevel(mavenProject: MavenProject, supplier: Supplier<LanguageLevel?>): LanguageLevel {
     var level: LanguageLevel? = null
 
     val cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin")
@@ -150,7 +146,7 @@ object MavenImportUtil {
     return !JDOMUtil.areElementsEqual(compileExec.configurationElement, testExec.configurationElement)
   }
 
-  fun isTestExecution(e: MavenPlugin.Execution): Boolean {
+  private fun isTestExecution(e: MavenPlugin.Execution): Boolean {
     return checkExecution(e, PHASE_TEST_COMPILE, GOAL_TEST_COMPILE, EXECUTION_TEST_COMPILE)
   }
 
@@ -226,7 +222,7 @@ object MavenImportUtil {
     }
   }
 
-  fun getDefaultLevel(mavenProject: MavenProject): LanguageLevel {
+  internal fun getDefaultLevel(mavenProject: MavenProject): LanguageLevel {
     val plugin = mavenProject.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     if (plugin != null && plugin.version != null) {
       //https://github.com/apache/maven-compiler-plugin/blob/master/src/main/java/org/apache/maven/plugin/compiler/AbstractCompilerMojo.java
@@ -283,16 +279,16 @@ object MavenImportUtil {
     return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") >= 0
   }
 
-  fun isCompilerTestSupport(mavenProject: MavenProject): Boolean {
+  internal fun isCompilerTestSupport(mavenProject: MavenProject): Boolean {
     return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
   }
 
-  fun isMainOrTestModule(project: Project, moduleName: String): Boolean {
+  internal fun isMainOrTestModule(project: Project, moduleName: String): Boolean {
     val type = getMavenModuleType(project, moduleName)
     return type == StandardMavenModuleType.MAIN_ONLY || type == StandardMavenModuleType.TEST_ONLY
   }
 
-  fun isTestModule(project: Project, moduleName: String): Boolean {
+  internal fun isTestModule(project: Project, moduleName: String): Boolean {
     val type = getMavenModuleType(project, moduleName)
     return type == StandardMavenModuleType.TEST_ONLY
   }
@@ -305,7 +301,7 @@ object MavenImportUtil {
     return VirtualFileManager.getInstance().findFileByNioPath(pomPath)
   }
 
-  fun getMavenModuleType(project: Project, moduleName: @NlsSafe String): StandardMavenModuleType {
+  internal fun getMavenModuleType(project: Project, moduleName: @NlsSafe String): StandardMavenModuleType {
     val storage = project.workspaceModel.currentSnapshot
     val default = StandardMavenModuleType.SINGLE_MODULE
     val moduleTypeString = storage.resolve(ModuleId(moduleName))?.exModuleOptions?.externalSystemModuleType ?: return default
@@ -318,7 +314,7 @@ object MavenImportUtil {
     }
   }
 
-  fun getModuleNames(project: Project, pomXml: VirtualFile): List<String> {
+  internal fun getModuleNames(project: Project, pomXml: VirtualFile): List<String> {
     val storage = project.workspaceModel.currentSnapshot
     val pomXmlPath = pomXml.toNioPath()
     return storage.entities<ModuleEntity>()
@@ -327,7 +323,7 @@ object MavenImportUtil {
       .toList()
   }
 
-  fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {
+  internal fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {
     return WriteAction.compute<Module?, RuntimeException?>(ThrowableComputable {
       val modulePath = contentRoot.toNioPath().resolve(project.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)
       val module = getInstance(project)
@@ -341,7 +337,7 @@ object MavenImportUtil {
     })
   }
 
-  fun MavenProject.getAllCompilerConfigs(): List<Element> {
+  internal fun MavenProject.getAllCompilerConfigs(): List<Element> {
     val result = ArrayList<Element>(1)
     this.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)?.let(result::add)
 
