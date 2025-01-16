@@ -220,6 +220,11 @@ final class JavaErrorFixProvider {
         ContainerUtil.addIfNotNull(registrar, ChangeNewOperatorTypeFix.createFix(expression, context.lType()));
         return registrar;
       }
+      if (anchor instanceof PsiParameter parameter && parent instanceof PsiForeachStatement forEach) {
+        List<CommonIntentionAction> registrar = new ArrayList<>();
+        HighlightFixUtil.registerChangeVariableTypeFixes(parameter, context.rType(), forEach.getIteratedValue(), registrar::add);
+        return registrar;
+      }
       return List.of();
     });
 

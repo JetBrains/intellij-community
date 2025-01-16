@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,5 +69,18 @@ final class GenericsChecker {
         }
       }
     }
+  }
+
+  void checkForEachParameterType(@NotNull PsiForeachStatement statement, @NotNull PsiParameter parameter) {
+    PsiExpression expression = statement.getIteratedValue();
+    PsiType itemType = expression == null ? null : JavaGenericsUtil.getCollectionItemType(expression);
+    if (itemType == null) return;
+
+    PsiType parameterType = parameter.getType();
+    if (TypeConversionUtil.isAssignable(parameterType, itemType)) return;
+    if (IncompleteModelUtil.isIncompleteModel(statement) && IncompleteModelUtil.isPotentiallyConvertible(parameterType, itemType, expression)) {
+      return;
+    }
+    myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(parameter, new JavaIncompatibleTypeErrorContext(parameterType, itemType)));
   }
 }

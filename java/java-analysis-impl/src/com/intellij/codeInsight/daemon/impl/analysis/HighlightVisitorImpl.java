@@ -925,9 +925,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!hasErrorResults()) GenericsHighlightUtil.checkCatchParameterIsClass(parameter, myErrorSink);
       if (!hasErrorResults()) HighlightUtil.checkCatchTypeIsDisjoint(parameter, myErrorSink);
     }
-    else if (parent instanceof PsiForeachStatement forEach) {
-      if (!hasErrorResults()) add(GenericsHighlightUtil.checkForEachParameterType(forEach, parameter));
-    }
   }
 
   @Override

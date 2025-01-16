@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -818,23 +817,6 @@ public final class GenericsHighlightUtil {
       return builder;
     }
     return null;
-  }
-
-  static HighlightInfo.Builder checkForEachParameterType(@NotNull PsiForeachStatement statement, @NotNull PsiParameter parameter) {
-    PsiExpression expression = statement.getIteratedValue();
-    PsiType itemType = expression == null ? null : JavaGenericsUtil.getCollectionItemType(expression);
-    if (itemType == null) return null;
-
-    PsiType parameterType = parameter.getType();
-    if (TypeConversionUtil.isAssignable(parameterType, itemType)) {
-      return null;
-    }
-    if (IncompleteModelUtil.isIncompleteModel(statement) && IncompleteModelUtil.isPotentiallyConvertible(parameterType, itemType, expression)) {
-      return null;
-    }
-    HighlightInfo.Builder builder = HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, parameterType, parameter.getTextRange(), 0);
-    HighlightFixUtil.registerChangeVariableTypeFixes(parameter, itemType, expression, builder);
-    return builder;
   }
 
   //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.9.2

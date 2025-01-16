@@ -107,6 +107,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     else if (parent instanceof PsiForeachStatement forEach) {
       checkFeature(forEach, JavaFeature.FOR_EACH);
+      if (!hasErrorResults()) myGenericsChecker.checkForEachParameterType(forEach, parameter);
     }
   }
 

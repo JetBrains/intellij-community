@@ -626,7 +626,7 @@ public final class HighlightUtil {
     return highlightInfo;
   }
 
-  static @NotNull Consumer<CommonIntentionAction> asConsumer(HighlightInfo.Builder highlightInfo) {
+  static @NotNull Consumer<CommonIntentionAction> asConsumer(@Nullable HighlightInfo.Builder highlightInfo) {
     if (highlightInfo == null) {
       return fix -> {};
     }

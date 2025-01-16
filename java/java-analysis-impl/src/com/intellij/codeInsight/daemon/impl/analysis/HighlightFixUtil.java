@@ -232,16 +232,22 @@ public final class HighlightFixUtil {
   }
 
   static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
-                                                      @Nullable PsiType itemType,
-                                                      @Nullable PsiExpression expr,
-                                                      @Nullable HighlightInfo.Builder highlightInfo) {
-    if (highlightInfo == null) return;
+                                              @Nullable PsiType itemType,
+                                              @Nullable PsiExpression expr,
+                                              @Nullable HighlightInfo.Builder highlightInfo) {
+    registerChangeVariableTypeFixes(parameter, itemType, expr, HighlightUtil.asConsumer(highlightInfo));
+  }
+
+  static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
+                                              @Nullable PsiType itemType,
+                                              @Nullable PsiExpression expr,
+                                              @NotNull Consumer<? super CommonIntentionAction> info) {
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
-      highlightInfo.registerFix(action, null, null, null, null);
+      info.accept(action);
     }
     IntentionAction fix = createChangeReturnTypeFix(expr, parameter.getType());
     if (fix != null) {
-      highlightInfo.registerFix(fix, null, null, null, null);
+      info.accept(fix);
     }
   }
 
