@@ -140,6 +140,8 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
                 [versions]
                 test_library-version = "1.0"
                 kotlin = "1.9.24"
+                [bundles]
+                some_test-bundle = [ "some_test-library" ]
                 """.trimIndent()
             )
             // included build files

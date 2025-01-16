@@ -1,0 +1,12 @@
+// FILE: gradle/libs.versions.toml
+## RENAME_TO: kotlin-renamed
+## FILE_TO_CHECK: build.gradle.kts
+[plugins]
+<caret>kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+
+// FILE: build.gradle.kts
+libs.plugins.kotlin
+
+// FILE: build.gradle.kts.after
+libs.plugins.kotlin.renamed
+

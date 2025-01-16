@@ -68,6 +68,14 @@ fun findOriginInTomlFile(method: PsiMethod, context: PsiElement): PsiElement? {
   return tomlVisitor.resolveTarget
 }
 
+/**
+ * Determines a section name (libraries / plugins / bundles / versions) the given key-value belongs to
+ */
+fun getTomlParentSectionName(tomlKeyValue: TomlKeyValue): String? {
+  val parentTable = tomlKeyValue.parent?.asSafely<TomlTable>() ?: return null
+  return parentTable.header.key?.name
+}
+
 private fun getVersionCatalogName(psiClass: PsiClass): String? {
   val name = psiClass.name?.substringAfter(LIBRARIES_FOR_PREFIX) ?: return null
   if (name.endsWith("InPluginsBlock"))
