@@ -102,5 +102,6 @@
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>

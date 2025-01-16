@@ -9,11 +9,11 @@ import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalKeyEncoder
-import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInputEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
@@ -64,7 +64,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       TerminalPromptFinishedEvent,
     )
 
-    assertEquals(expectedEvents, shellIntegrationEvents)
+    assertSameEvents(shellIntegrationEvents, expectedEvents, events)
   }
 
   @Test
@@ -84,7 +84,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       TerminalPromptFinishedEvent
     )
 
-    assertEquals(expectedEvents, shellIntegrationEvents)
+    assertSameEvents(shellIntegrationEvents, expectedEvents, events)
   }
 
   /**
@@ -114,7 +114,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       TerminalPromptFinishedEvent
     )
 
-    assertEquals(expectedEvents, shellIntegrationEvents)
+    assertSameEvents(shellIntegrationEvents, expectedEvents, events)
   }
 
   /**
@@ -151,7 +151,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       TerminalPromptFinishedEvent
     )
 
-    assertEquals(expectedEvents, shellIntegrationEvents)
+    assertSameEvents(shellIntegrationEvents, expectedEvents, events)
   }
 
   @Test
@@ -170,7 +170,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       TerminalPromptFinishedEvent
     )
 
-    assertEquals(expectedEvents, shellIntegrationEvents)
+    assertSameEvents(shellIntegrationEvents, expectedEvents, events)
   }
 
   private suspend fun startSessionAndCollectOutputEvents(
@@ -195,6 +195,34 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
       outputEvents
     }
+  }
+
+  private fun assertSameEvents(
+    actual: List<TerminalOutputEvent>,
+    expected: List<TerminalOutputEvent>,
+    eventsToLog: List<TerminalOutputEvent>,
+  ) {
+    fun List<TerminalOutputEvent>.asString(): String {
+      return joinToString("\n")
+    }
+
+    val errorMessage = {
+      """
+        |
+        |Expected:
+        |${expected.asString()}
+        |
+        |But was:
+        |${actual.asString()}
+        |
+        |All events:
+        |${eventsToLog.asString()}
+      """.trimMargin()
+    }
+
+    assertThat(actual)
+      .overridingErrorMessage(errorMessage)
+      .isEqualTo(expected)
   }
 
   private fun TerminalKeyEncoder.enterBytes(): ByteArray {
