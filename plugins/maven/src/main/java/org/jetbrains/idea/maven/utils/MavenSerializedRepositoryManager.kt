@@ -1,17 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPathOrNull
-import kotlinx.coroutines.runBlocking
+import com.intellij.platform.eel.provider.getEelDescriptor
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -19,7 +14,6 @@ import java.nio.file.Path
  * This class contains a per-project storage of maven home directory.
  * This location cannot be defined globally, as we might have several projects belonging to different environments (e.g., different docker containers)
  */
-@Suppress("RAW_RUN_BLOCKING")
 @Service(Service.Level.PROJECT)
 @State(
   name = "MavenRepositoryManager",
@@ -41,8 +35,8 @@ class MavenSerializedRepositoryManager(private val project: Project) : Persisten
   override fun loadState(state: MavenSerializedRepositoryManager.State) {
     myState.mavenHomePath = state.mavenHomePath
     path = myState.mavenHomePath?.let {
-      val api = runBlocking { project.getEelApi() }
-      EelPath.parse(it, api.descriptor).asNioPathOrNull()
+      val descriptor = project.getEelDescriptor()
+      EelPath.parse(it, descriptor).asNioPathOrNull()
     }
   }
 

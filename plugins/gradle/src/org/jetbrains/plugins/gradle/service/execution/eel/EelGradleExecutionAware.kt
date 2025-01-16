@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import org.jetbrains.annotations.ApiStatus
@@ -44,7 +43,7 @@ class EelGradleExecutionAware : GradleExecutionAware {
   ): TargetEnvironmentConfigurationProvider? {
     return if (project.isEelSyncAvailable()) {
       runBlockingCancellable {
-        EelTargetEnvironmentConfigurationProvider(project.getEelApi())
+        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().upgrade())
       }
     }
     else {
@@ -58,7 +57,7 @@ class EelGradleExecutionAware : GradleExecutionAware {
   ): TargetEnvironmentConfigurationProvider? {
     return if (project.isEelSyncAvailable()) {
       runBlockingCancellable {
-        EelTargetEnvironmentConfigurationProvider(project.getEelApi())
+        EelTargetEnvironmentConfigurationProvider(project.getEelDescriptor().upgrade())
       }
     }
     else {

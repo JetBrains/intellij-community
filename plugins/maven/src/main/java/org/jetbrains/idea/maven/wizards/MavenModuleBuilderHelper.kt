@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.util.EditorHelper
@@ -17,8 +17,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -173,7 +173,7 @@ open class MavenModuleBuilderHelper(
   private suspend fun generateFromArchetype(project: Project, pom: VirtualFile) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT_FROM_ARCHETYPE)
 
-    val eel = project.getEelApi()
+    val eel = project.getEelDescriptor().upgrade()
 
     val workingDir: Path = try {
       val tmpOptions = EelFileSystemApi.CreateTemporaryEntryOptions.Builder().apply {

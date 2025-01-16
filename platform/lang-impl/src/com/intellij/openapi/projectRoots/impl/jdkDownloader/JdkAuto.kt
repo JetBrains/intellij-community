@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
@@ -28,8 +28,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.impl.utils.getEelApi
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.suspendingLazy
@@ -128,7 +128,7 @@ class JdkAuto : UnknownSdkResolver {
       }
 
       val eel = coroutineScope.suspendingLazy {
-        project?.getEelApi() ?: localEel
+        (project?.getEelDescriptor() ?: LocalEelDescriptor).upgrade()
       }
 
       @Deprecated("Remove when EelApi is stabilized")

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -28,10 +28,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.platform.eel.impl.utils.where
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.asNioPathOrNull
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -41,7 +41,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.io.IOException
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
@@ -62,7 +61,7 @@ object MavenEelUtil : MavenUtil() {
 
   @JvmStatic
   suspend fun Project?.resolveM2DirAsync(): Path {
-    return this?.getEelApi().resolveM2Dir()
+    return this?.getEelDescriptor()?.upgrade().resolveM2Dir()
   }
 
   suspend fun <T> resolveUsingEel(project: Project?, ordinary: suspend () -> T, eel: suspend (EelApi) -> T?): T {
@@ -70,7 +69,7 @@ object MavenEelUtil : MavenUtil() {
       MavenLog.LOG.error("resolveEelAware: Project is null")
     }
 
-    return project?.getEelApi()?.let { eel(it) } ?: ordinary.invoke()
+    return project?.getEelDescriptor()?.upgrade()?.let { eel(it) } ?: ordinary.invoke()
   }
 
   @JvmStatic
@@ -416,7 +415,7 @@ object MavenEelUtil : MavenUtil() {
   ) {
     MavenCoroutineScopeProvider.getCoroutineScope(project).launch(Dispatchers.IO) {
       withBackgroundProgress(project, MavenProjectBundle.message("wsl.jdk.searching"), cancellable = false) {
-        val eel = project.getEelApi()
+        val eel = project.getEelDescriptor().upgrade()
         val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
         if (sdkPath != null) {
           writeAction {
