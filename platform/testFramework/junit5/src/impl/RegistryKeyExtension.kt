@@ -2,6 +2,7 @@
 package com.intellij.testFramework.junit5.impl
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.testFramework.junit5.RegistryKey
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -18,30 +19,27 @@ internal class RegistryKeyExtension : AbstractInvocationInterceptor() {
       return invocation.proceed()
     }
     val valuesBefore = annotations.map { annotation ->
-      Pair(annotation, annotation.setValue())
+      setRegistryValue(annotation)
     }
     try {
       return invocation.proceed()
     }
     finally {
-      for ((annotation, previousValue) in valuesBefore.asReversed()) {
-        annotation.resetValue(previousValue)
+      for (handle in valuesBefore.asReversed()) {
+        handle()
       }
     }
   }
 
-  private fun RegistryKey.setValue(): String? = Registry.Companion.get(key).run {
-    val previousValue = Registry.Companion.stringValue(key)
-    setValue(value)
-    previousValue
-  }
-
-  private fun RegistryKey.resetValue(previousValue: String?): Unit = Registry.Companion.get(key).run {
-    if (previousValue == null) {
-      resetToDefault()
-    }
-    else {
-      setValue(previousValue)
+  /**
+   * @return resetting handle
+   */
+  private fun setRegistryValue(keyValue: RegistryKey): () -> Unit {
+    val rv: RegistryValue = Registry.get(keyValue.key)
+    val previousValue = rv.asString()
+    rv.setValue(keyValue.value)
+    return {
+      rv.setValue(previousValue)
     }
   }
 }
