@@ -107,7 +107,11 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
         val actionData = entry.clickArea?.actionData
         val payload = actionData?.payload
         when (payload) {
-          is PsiPointerInlayActionPayload -> (payload.pointer.element?.let { customToStringProvider?.invoke(it) } ?: "") + text
+          is PsiPointerInlayActionPayload -> {
+            val element = payload.pointer.element
+            val navElement = if (payload.useNavigationElement) element?.navigationElement else element
+            (navElement?.let { customToStringProvider?.invoke(it) } ?: "") + text
+          }
           is StringInlayActionPayload -> "[${payload.text}:${actionData.handlerId}]$text"
           else -> text
         }

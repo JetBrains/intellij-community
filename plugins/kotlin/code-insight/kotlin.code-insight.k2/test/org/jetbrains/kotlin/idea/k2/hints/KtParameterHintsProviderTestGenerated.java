@@ -50,6 +50,11 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/lambdaLastParameter.kt");
     }
 
+    @TestMetadata("libraryElement.kt")
+    public void testLibraryElement() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/libraryElement.kt");
+    }
+
     @TestMetadata("namedParameters.kt")
     public void testNamedParameters() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/namedParameters.kt");

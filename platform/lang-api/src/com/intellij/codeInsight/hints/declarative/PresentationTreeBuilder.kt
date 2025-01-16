@@ -79,18 +79,21 @@ class StringInlayActionPayload(val text: String) : InlayActionPayload {
   }
 }
 
-class PsiPointerInlayActionPayload(val pointer: SmartPsiElementPointer<*>) : InlayActionPayload {
+class PsiPointerInlayActionPayload(val pointer: SmartPsiElementPointer<*>, val useNavigationElement: Boolean) : InlayActionPayload {
+  // for the sake of backward compatibility
+  constructor(pointer: SmartPsiElementPointer<*>) : this(pointer, false)
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as PsiPointerInlayActionPayload
 
-    return pointer == other.pointer
+    return pointer == other.pointer && useNavigationElement == other.useNavigationElement
   }
 
   override fun hashCode(): Int {
-    return pointer.hashCode()
+    return pointer.hashCode() * 31 + useNavigationElement.hashCode()
   }
 }
 

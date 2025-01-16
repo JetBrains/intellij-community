@@ -1083,8 +1083,10 @@ f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHand
 f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 - com.intellij.codeInsight.hints.declarative.InlayActionPayload
 - <init>(com.intellij.psi.SmartPsiElementPointer):V
+- <init>(com.intellij.psi.SmartPsiElementPointer,Z):V
 - equals(java.lang.Object):Z
 - f:getPointer():com.intellij.psi.SmartPsiElementPointer
+- f:getUseNavigationElement():Z
 - hashCode():I
 com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 - com.intellij.codeInsight.hints.declarative.InlayHintsCollector

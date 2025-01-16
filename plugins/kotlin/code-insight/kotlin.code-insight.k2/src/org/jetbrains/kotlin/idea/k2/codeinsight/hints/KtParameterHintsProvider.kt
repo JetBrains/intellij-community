@@ -119,7 +119,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                     text(stringName,
                          symbol.psi?.createSmartPointer()?.let {
                              InlayActionData(
-                                 PsiPointerInlayActionPayload(it),
+                                 PsiPointerInlayActionPayload(pointer = it, useNavigationElement = true),
                                  PsiPointerInlayActionNavigationHandler.HANDLER_ID
                              )
                          })

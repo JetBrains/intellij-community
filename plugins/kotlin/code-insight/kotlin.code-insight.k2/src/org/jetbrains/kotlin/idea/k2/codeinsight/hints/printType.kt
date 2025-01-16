@@ -178,7 +178,7 @@ private fun PresentationTreeBuilder.printSymbolPsi(symbol: KaSymbol, name: Strin
         name,
         symbol.psi?.createSmartPointer()?.let {
             InlayActionData(
-                PsiPointerInlayActionPayload(it),
+                PsiPointerInlayActionPayload(it, true),
                 PsiPointerInlayActionNavigationHandler.HANDLER_ID
             )
         }
