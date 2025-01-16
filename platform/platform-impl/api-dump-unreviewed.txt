@@ -9499,6 +9499,8 @@ f:com.intellij.openapi.options.advanced.AdvancedSettingBean
 - f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - f:getServiceInstance():java.lang.Object
 - f:group():java.lang.String
+- f:isEnabled():Z
+- f:isVisible():Z
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 - f:title():java.lang.String
 - f:trailingLabel():java.lang.String
@@ -15780,10 +15782,12 @@ c:com.intellij.ui.plaf.beg.IdeaMenuUI
 - getPath():javax.swing.MenuElement[]
 - p:getPreferredMenuItemSize(javax.swing.JComponent,javax.swing.Icon,javax.swing.Icon,I):java.awt.Dimension
 - p:installDefaults():V
+- installUI(javax.swing.JComponent):V
 - paint(java.awt.Graphics,javax.swing.JComponent):V
 - pf:paintHover(java.awt.Graphics,javax.swing.JComponent,javax.swing.JMenu,javax.swing.Icon):V
 - s:paintRoundSelection(java.awt.Graphics,java.awt.Component,I,I):V
 - s:patchPreferredSize(java.awt.Component,java.awt.Dimension):java.awt.Dimension
+- uninstallUI(javax.swing.JComponent):V
 - update(java.awt.Graphics,javax.swing.JComponent):V
 c:com.intellij.ui.popup.AbstractPopup
 - com.intellij.ide.ui.ScreenAreaConsumer

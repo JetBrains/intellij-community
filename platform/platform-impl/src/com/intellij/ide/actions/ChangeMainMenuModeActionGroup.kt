@@ -16,7 +16,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
 
-class ChangeMainMenuModeActionGroup : DefaultActionGroup(), DumbAware {
+internal class ChangeMainMenuModeActionGroup : DefaultActionGroup(), DumbAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     return MainMenuDisplayMode.entries.map { ChangeMainMenuModeAction(it) }.toTypedArray()
   }

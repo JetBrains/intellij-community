@@ -13,7 +13,7 @@ import com.intellij.openapi.wm.impl.isMergeMainMenuWithWindowTitleOverridden
 
 @Suppress("unused")
 @Service(Service.Level.APP)
-class MergeMainMenuSettingProvider {
+internal class MergeMainMenuSettingProvider {
   var mergeMainMenu: Boolean
     get() = UISettings.getInstance().mergeMainMenuWithWindowTitle
     set(value) {

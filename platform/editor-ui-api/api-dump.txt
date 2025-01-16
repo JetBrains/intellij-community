@@ -242,6 +242,18 @@ c:com.intellij.ide.ui.ColorBlindnessSupport
 - <init>():V
 - s:get(com.intellij.ide.ui.ColorBlindness):com.intellij.ide.ui.ColorBlindnessSupport
 - getFilter():java.awt.image.ImageFilter
+e:com.intellij.ide.ui.MainMenuDisplayMode
+- java.lang.Enum
+- sf:Companion:com.intellij.ide.ui.MainMenuDisplayMode$Companion
+- sf:MERGED_WITH_MAIN_TOOLBAR:com.intellij.ide.ui.MainMenuDisplayMode
+- sf:SEPARATE_TOOLBAR:com.intellij.ide.ui.MainMenuDisplayMode
+- sf:UNDER_HAMBURGER_BUTTON:com.intellij.ide.ui.MainMenuDisplayMode
+- f:getDescription():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ide.ui.MainMenuDisplayMode
+- s:values():com.intellij.ide.ui.MainMenuDisplayMode[]
+f:com.intellij.ide.ui.MainMenuDisplayMode$Companion
+- f:valueOf(java.lang.String):com.intellij.ide.ui.MainMenuDisplayMode
 e:com.intellij.ide.ui.NavBarLocation
 - java.lang.Enum
 - sf:BOTTOM:com.intellij.ide.ui.NavBarLocation
@@ -357,6 +369,7 @@ f:com.intellij.ide.ui.UISettings
 - sf:getInstanceOrNull():com.intellij.ide.ui.UISettings
 - f:getKeepPopupsForToggles():Z
 - f:getLeftHorizontalSplit():Z
+- f:getMainMenuDisplayMode():com.intellij.ide.ui.MainMenuDisplayMode
 - f:getMarkModifiedTabsWithAsterisk():Z
 - f:getMaxLookupListHeight():I
 - f:getMaxLookupWidth():I
@@ -378,7 +391,6 @@ f:com.intellij.ide.ui.UISettings
 - f:getReuseNotModifiedTabs():Z
 - f:getRightHorizontalSplit():Z
 - f:getScrollTabLayoutInEditor():Z
-- f:getSeparateMainMenu():Z
 - sf:getShadowInstance():com.intellij.ide.ui.UISettings
 - f:getShowBreakpointsOverLineNumbers():Z
 - f:getShowCloseButton():Z
@@ -443,6 +455,7 @@ f:com.intellij.ide.ui.UISettings
 - f:setIdeScale(F):V
 - f:setKeepPopupsForToggles(Z):V
 - f:setLeftHorizontalSplit(Z):V
+- f:setMainMenuDisplayMode(com.intellij.ide.ui.MainMenuDisplayMode):V
 - f:setMarkModifiedTabsWithAsterisk(Z):V
 - f:setMaxLookupListHeight(I):V
 - f:setMaxLookupWidth(I):V
@@ -463,7 +476,6 @@ f:com.intellij.ide.ui.UISettings
 - f:setRememberSizeForEachToolWindowOldUI(Z):V
 - f:setReuseNotModifiedTabs(Z):V
 - f:setRightHorizontalSplit(Z):V
-- f:setSeparateMainMenu(Z):V
 - f:setShowBreakpointsOverLineNumbers(Z):V
 - f:setShowDirectoryForNonUniqueFilenames(Z):V
 - f:setShowEditorToolTip(Z):V
@@ -552,6 +564,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:getHideToolStripes():Z
 - f:getKeepPopupsForToggles():Z
 - f:getLeftHorizontalSplit():Z
+- f:getMainMenuDisplayMode():java.lang.String
 - f:getMarkModifiedTabsWithAsterisk():Z
 - f:getMaxLookupListHeight():I
 - f:getMaxLookupWidth():I
@@ -639,6 +652,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:setHideToolStripes(Z):V
 - f:setKeepPopupsForToggles(Z):V
 - f:setLeftHorizontalSplit(Z):V
+- f:setMainMenuDisplayMode(java.lang.String):V
 - f:setMarkModifiedTabsWithAsterisk(Z):V
 - f:setMaxLookupListHeight(I):V
 - f:setMaxLookupWidth(I):V
