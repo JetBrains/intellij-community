@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
@@ -91,7 +92,7 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
 
     val documentText = formattingRequest.documentText
     val isFormatFragmentAction = isFormatFragmentAction(documentText, formattingRequest)
-    val blackVersion = BlackFormatterVersionService.getVersion(project)
+    val blackVersion = runBlockingCancellable { BlackFormatterVersionService.getVersion (project) }
 
     if (isFormatFragmentAction && blackVersion < BlackFormatterUtil.MINIMAL_LINE_RANGES_COMPATIBLE_VERSION) {
       LOG.debug("Black version $blackVersion is lower than minimal version that supports fragments' formatting, " +

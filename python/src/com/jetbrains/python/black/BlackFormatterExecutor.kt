@@ -7,6 +7,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -94,7 +95,9 @@ class BlackFormatterExecutor(private val project: Project,
 
   private fun configToCmdArguments(blackFormattingRequest: BlackFormattingRequest): List<String> {
     val cmd = mutableListOf<String>()
-    val blackVersion = BlackFormatterVersionService.getVersion(project)
+    val blackVersion = runBlockingCancellable {
+      BlackFormatterVersionService.getVersion (project)
+    }
 
     if (FileTypeRegistry.getInstance().isFileOfType(blackFormattingRequest.virtualFile, PyiFileType.INSTANCE)) {
       cmd.add("--pyi")

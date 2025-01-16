@@ -225,16 +225,16 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     pathToBinaryRow.visible(isBinaryMode)
     sdkSelectionRow.visible(!isBinaryMode)
 
-    val selectedBlackVersion = if (isBinaryMode) {
-      if (blackExecutablePathField.text.isNotEmpty() && blackExecutableValidationInfo() == null) {
-        runWithModalProgressBlocking(project, PyBundle.message("black.getting.black.version")) {
-          BlackFormatterVersionService.getVersionForExecutable(blackExecutablePathField.text)
+    val selectedBlackVersion = runWithModalProgressBlocking(project, PyBundle.message("black.getting.black.version")) {
+      if (isBinaryMode) {
+        if (blackExecutablePathField.text.isNotEmpty() && blackExecutableValidationInfo() == null) {
+          BlackFormatterVersionService.getInstance(project).getVersionForExecutable(blackExecutablePathField.text)
         }
+        else UNKNOWN_VERSION
       }
-      else UNKNOWN_VERSION
-    }
-    else {
-      BlackFormatterVersionService.getVersionForPackage(selectedSdk, project)
+      else {
+        BlackFormatterVersionService.getInstance(project).getVersionForPackage(selectedSdk!!, project)
+      }
     }
 
     formattingFragmentsNotSupportedLabel.isVisible = selectedBlackVersion != UNKNOWN_VERSION
