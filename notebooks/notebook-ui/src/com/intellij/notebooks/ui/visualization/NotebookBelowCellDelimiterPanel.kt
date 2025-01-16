@@ -11,8 +11,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBBox
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -51,7 +49,10 @@ class NotebookBelowCellDelimiterPanel(
   private val frameColor = editor.notebookAppearance.codeCellBackgroundColor.get()
 
   init {
-    border = BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
+    border = BorderFactory.createCompoundBorder(
+      BorderFactory.createEmptyBorder(0, 0, 1, 1),
+      BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
+    )
     cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
 
     val addingTagsRow = (cellTags.isNotEmpty() && !isRenderedMarkdown && Registry.`is`("jupyter.cell.metadata.tags", false))
@@ -60,13 +61,16 @@ class NotebookBelowCellDelimiterPanel(
   }
 
   fun setFrameVisible(isVisible: Boolean) {
+    val frameBorder = when (isVisible) {
+      true -> BorderFactory.createMatteBorder(0, 0, 1, 1, frameColor)
+      else -> BorderFactory.createMatteBorder(0, 0, 1, 1, background)
+    }
+
     border = BorderFactory.createCompoundBorder(
-      when (isVisible) {
-        true -> IdeBorderFactory.createBorder(frameColor, SideBorder.BOTTOM or SideBorder.RIGHT)
-        else -> BorderFactory.createEmptyBorder()
-      },
+      frameBorder,
       BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
     )
+
     repaint()
   }
 

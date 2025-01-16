@@ -371,7 +371,7 @@ class EditorCellView(
     when (selected) {
       true -> {
         val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
-        input.cellActionsToolbar.showToolbar(targetComponent, interval.type)
+        input.cellActionsToolbar.showToolbar(targetComponent)
       }
       else -> input.cellActionsToolbar.hideToolbar()
     }

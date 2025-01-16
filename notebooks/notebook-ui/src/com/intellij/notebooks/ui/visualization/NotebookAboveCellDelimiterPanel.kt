@@ -15,6 +15,7 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
+import javax.swing.BorderFactory
 import javax.swing.JPanel
 
 class NotebookAboveCellDelimiterPanel(
@@ -70,7 +71,7 @@ class NotebookAboveCellDelimiterPanel(
     roofPanel?.let {
       it.border = when (isVisible) {
         true -> IdeBorderFactory.createBorder(frameColor, SideBorder.TOP or SideBorder.RIGHT)
-        else -> null
+        else -> BorderFactory.createEmptyBorder(1, 0, 0, 1)
       }
 
       it.repaint()
@@ -95,6 +96,7 @@ class NotebookAboveCellDelimiterPanel(
 
     roofPanel = JPanel().also {
       it.background = cellRoofColor
+      it.border = BorderFactory.createEmptyBorder(1, 0, 0, 1)
       it.preferredSize = Dimension(JBUIScale.scale(1), standardDelimiterHeight)
     }
   }

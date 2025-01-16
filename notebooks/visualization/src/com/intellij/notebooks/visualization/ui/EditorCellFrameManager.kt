@@ -59,7 +59,7 @@ class EditorCellFrameManager(
     removeRightBorder(layerController)
 
     val bounds = view.input.calculateBounds()
-    val lineX = (bounds.x + bounds.width).toDouble()
+    val lineX = (bounds.x + bounds.width - 0.5).toDouble()
     val lineY1 = (bounds.y + editor.notebookAppearance.aboveFirstCellDelimiterHeight).toDouble()
     val lineX2 = (bounds.y + bounds.height - 1).toDouble()
     rightBorderLine = Line2D.Double(lineX, lineY1, lineX, lineX2).also {
