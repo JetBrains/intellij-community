@@ -240,11 +240,18 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
       getJavaService().enumerateDependencies(Collections.singletonList(myModule)).withoutSdk(),
       depTestRoot
     );
+    assertSourceRoots(
+      getJavaService().enumerateDependencies(Collections.singletonList(myModule)).recursively().withoutSdk(),
+      depTestRoot
+    );
 
     try (var ignored = TestJpsDependenciesEnumerationHandler.Companion.addModule(myModule, false)) {
       // modified with a handler: do NOT add test roots from dependent modules
       assertSourceRoots(
         getJavaService().enumerateDependencies(Collections.singletonList(myModule)).withoutSdk()
+      );
+      assertSourceRoots(
+        getJavaService().enumerateDependencies(Collections.singletonList(myModule)).recursively().withoutSdk()
       );
     }
   }
