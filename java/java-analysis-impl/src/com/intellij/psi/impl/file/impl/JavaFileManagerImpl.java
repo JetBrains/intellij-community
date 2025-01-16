@@ -45,7 +45,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author dmitry lomov
  */
-public class JavaFileManagerImpl implements JavaFileManager, Disposable {
+public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance(JavaFileManagerImpl.class);
 
   private final PsiManagerEx myManager;
@@ -131,7 +131,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return bestClass;
   }
 
-  protected boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
+  private boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
     if (FileTypeRegistry.getInstance().isFileOfType(vFile, JavaClassFileType.INSTANCE)) {
       // See IDEADEV-5626
       ProjectFileIndex index = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
