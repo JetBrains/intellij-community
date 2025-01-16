@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter2D
 import com.intellij.ui.paint.RectanglePainter2D
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.font.TextLayout
@@ -73,7 +74,7 @@ open class InlineCompletionLineRenderer(
       if (block.text.isEmpty()) {
         continue
       }
-      g.font = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(block.attributes.fontType))
+      g.font = getFont(block.attributes, block.text)
       val textLayout = TextLayout(block.text, g.font, g.fontRenderContext)
       val textWidth = textLayout.advance.toDouble()
       val textHeight = targetRegion.height.toDouble()
@@ -126,5 +127,10 @@ open class InlineCompletionLineRenderer(
       g.color = color
       painter.paint(g, x, y, width, g.fontMetrics.descent.toDouble(), g.font)
     }
+  }
+
+  private fun getFont(attributes: TextAttributes, text: String): Font {
+    val original = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(attributes.fontType))
+    return UIUtil.getFontWithFallbackIfNeeded(original, text)
   }
 }
