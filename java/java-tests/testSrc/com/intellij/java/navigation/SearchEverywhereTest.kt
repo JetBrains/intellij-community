@@ -159,6 +159,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
       var bravoResult = waitForFuture(future, SEARCH_TIMEOUT)
       assert(bravoResult.filter { it in testElements } == listOf(class1, matchedAction1, class2, matchedAction2))
 
+      @Suppress("UnresolvedPluginConfigReference")
       abbreviationManager.register("bravo", "ia2")
       future = ui.findElementsForPattern("bravo")
       bravoResult = waitForFuture(future, SEARCH_TIMEOUT)
@@ -166,6 +167,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     }
     finally {
       actions.forEach { (key, _) -> actionManager.unregisterAction(key) }
+      @Suppress("UnresolvedPluginConfigReference")
       abbreviationManager.removeAllAbbreviations("ia2")
     }
   }
