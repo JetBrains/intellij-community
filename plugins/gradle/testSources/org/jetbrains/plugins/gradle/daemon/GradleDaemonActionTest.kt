@@ -31,17 +31,17 @@ class GradleDaemonActionTest : GradleImportingTestCase() {
   @Test
   @TargetVersions("6.0+") // The Gradle Daemon below version 6.0 is unstable and causes test fluctuations
   fun `test stop gradle daemon`() {
-    //runDaemon()
-    //stopDaemons(gradleUserHomesToCheck)
-    //assertNoDaemonRunning()
+    runDaemon()
+    stopDaemons(gradleUserHomesToCheck)
+    assertNoDaemonRunning()
   }
 
   @Test
   @TargetVersions("6.0+") // The Gradle Daemon below version 6.0 is unstable and causes test fluctuations
   fun `test stop gradle daemon when idle`() {
-    //runDaemon()
-    //gracefulStopDaemons(gradleUserHomesToCheck)
-    //assertNoDaemonRunning()
+    runDaemon()
+    gracefulStopDaemons(gradleUserHomesToCheck)
+    assertNoDaemonRunning()
   }
 
   private fun runDaemon() {
