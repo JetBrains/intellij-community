@@ -3,8 +3,10 @@ package com.intellij.notebooks.ui.visualization
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
 import com.intellij.ui.NewUiValue
@@ -71,6 +73,16 @@ interface NotebookEditorAppearanceSizes {
 
 interface NotebookEditorAppearanceColors {
   // TODO Sort everything lexicographically.
+
+  // it is a temporary hack to avoid PY-78524 (will be removed in future)
+  val codeCellBackgroundColor: ObservableProperty<Color>
+    get() {
+      return object : ObservableProperty<Color> {
+        override fun get(): Color {
+          return getCodeCellBackground(EditorColorsManager.getInstance().globalScheme) ?: JBColor.BLACK
+        }
+      }
+    }
 
   fun getCodeCellBackground(scheme: EditorColorsScheme): Color? = scheme.defaultBackground
   fun getGutterInputExecutionCountForegroundColor(scheme: EditorColorsScheme): Color? = null
