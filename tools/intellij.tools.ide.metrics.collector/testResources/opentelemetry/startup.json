@@ -2481,7 +2481,7 @@
             {
               "key": "class",
               "type": "string",
-              "value": "io.ktor.ide.startupactivities.KtorNewProjectStartupActivity"
+              "value": "com.intellij.ktor.startupactivities.KtorNewProjectStartupActivity"
             },
             {
               "key": "plugin",
@@ -16607,7 +16607,7 @@
             {
               "key": "class",
               "type": "string",
-              "value": "io.ktor.ide.plugins.add.KtorMarketplacePluginsUpdater"
+              "value": "com.intellij.ktor.plugins.add.KtorMarketplacePluginsUpdater"
             },
             {
               "key": "plugin",
