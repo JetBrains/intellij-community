@@ -3,6 +3,7 @@ package git4idea.checkin
 
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
@@ -75,7 +76,8 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
     }
     catch (e: VcsException) {
       if (pinentryProblemDetector.isDetected) {
-        project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = false)
+        project.service<GpgAgentConfigurationNotificator>()
+          .proposeCustomPinentryAgentConfiguration(isSuggestion = false, showOnce = false, type = NotificationType.WARNING)
       }
       if (gpgProblemDetector.isDetected) {
         throw GitGpgCommitException(e)

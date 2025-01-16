@@ -6,6 +6,7 @@ import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
@@ -61,19 +62,20 @@ private val LOG = logger<GpgAgentConfigurator>()
 internal class GpgAgentConfigurator(private val project: Project, private val cs: CoroutineScope): Disposable {
   companion object {
     @JvmStatic
-    fun isEnabled(project: Project, executable: GitExecutable): Boolean {
-      return Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) &&
-             (SystemInfo.isUnix
-              || executable is GitExecutable.Wsl
-              || application.isUnitTestMode)
-             && // do not configure Gpg Agent for roots without commit.gpgSign and user.signingkey enabled
-             GitRepositoryManager.getInstance(project)
-               .repositories.any { repository ->
-                 isGpgSignEnabledCached(repository)
-                 && getGpgSignKeyCached(repository) != null
-               }
+    fun isEnabled(project: Project, executable: GitExecutable): Boolean =
+      Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false)
+      && (application.isUnitTestMode || isRemDevOrWsl(executable))
+      && signingIsEnabledInAnyRepo(project)
 
-    }
+    private fun isRemDevOrWsl(executable: GitExecutable): Boolean =
+      AppMode.isRemoteDevHost() || executable is GitExecutable.Wsl
+
+    // do not configure Gpg Agent for roots without commit.gpgSign and user.signingkey enabled
+    private fun signingIsEnabledInAnyRepo(project: Project): Boolean = GitRepositoryManager.getInstance(project)
+      .repositories.any { repository ->
+        isGpgSignEnabledCached(repository)
+        && getGpgSignKeyCached(repository) != null
+      }
   }
 
   private val updateLauncherQueue = MergingUpdateQueue("update pinentry launcher queue", 100, true, null, this, null, false)
