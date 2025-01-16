@@ -35,6 +35,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +74,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private boolean myAutoHandleBeforeShow;
   private boolean myShowSubmenuOnHover;
   private boolean myExecuteExpandedItemOnClick;
+  private boolean myRepackWhenEmptyStateChanges;
 
   /**
    * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)}
@@ -930,17 +932,27 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     return -1;
   }
 
+  @ApiStatus.Internal
+  public void setRepackWhenEmptyStateChanges(boolean repackWhenEmptyStateChanges) {
+    this.myRepackWhenEmptyStateChanges = repackWhenEmptyStateChanges;
+  }
+
   @Override
   protected void onSpeedSearchPatternChanged() {
+    boolean wasEmpty = myListModel.getSize() == 0;
     ListPopupStep<?> step = getListStep();
     if (step instanceof FilterableListPopupStep<?> o) {
       o.updateFilter(mySpeedSearch.getFilter());
     }
     myListModel.refilter();
+    boolean nowEmpty = myListModel.getSize() == 0;
     if (myListModel.getSize() > 0) {
       if (!(shouldUseStatistics() && autoSelectUsingStatistics())) {
         selectBestMatch();
       }
+    }
+    if (myRepackWhenEmptyStateChanges && wasEmpty != nowEmpty) {
+      pack(false, true);
     }
   }
 

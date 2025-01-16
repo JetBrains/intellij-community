@@ -21,6 +21,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -216,6 +217,9 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       if (popup instanceof AbstractPopup abstractPopup) {
         abstractPopup.setSpeedSearchAlwaysShown();
         abstractPopup.setSpeedSearchEmptyText(IdeBundle.message("new.file.popup.search.hint"));
+      }
+      if (popup instanceof ListPopupImpl listPopup) {
+        listPopup.setRepackWhenEmptyStateChanges(true);
       }
       if (popup instanceof PopupFactoryImpl.ActionGroupPopup listPopup && listPopup.getList() instanceof JBList<?> list) {
         var emptyText = list.getEmptyText();
