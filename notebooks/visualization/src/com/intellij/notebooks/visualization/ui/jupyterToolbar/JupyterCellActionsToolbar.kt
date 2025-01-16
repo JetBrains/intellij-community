@@ -11,7 +11,7 @@ import javax.swing.JComponent
 class JupyterCellActionsToolbar(  // PY-72283
   actionGroup: ActionGroup,
   target: JComponent,
-  place: String = ActionPlaces.EDITOR_INLAY
+  place: String = ActionPlaces.EDITOR_INLAY,
 ) : JupyterAbstractAboveCellToolbar(actionGroup, target, place) {
 
   init {
