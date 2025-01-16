@@ -13,3 +13,7 @@ const val CATEGORY_PROPERTY = "category"
 const val PATH_PROPERTY = "path"
 const val START_LINE_PROPERTY = "start_line"
 const val END_LINE_PROPERTY = "end_line"
+
+const val FILE_PATTERN_PROPERTY_PREFIX: String = "file_property_regex"
+const val FILE_UNCHANGED_LINES_PREFIX: String = "file_unchanged_lines"
+const val FILE_CHANGED_LINES_PREFIX: String = "file_changed_lines"
