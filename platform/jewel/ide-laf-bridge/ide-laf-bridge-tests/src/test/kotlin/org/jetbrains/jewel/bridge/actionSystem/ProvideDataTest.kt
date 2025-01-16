@@ -8,6 +8,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import kotlinx.coroutines.runBlocking
@@ -17,11 +18,12 @@ import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 
-class ProvideDataTest {
-    @JvmField @Rule val rule = createComposeRule()
+public class ProvideDataTest {
+    @JvmField @Rule
+    public val rule: ComposeContentTestRule = createComposeRule()
 
     @Test
-    fun `one component`() {
+    public fun `one component`() {
         runBlocking {
             val sink = TestDataSink()
             val rootDataProviderModifier = RootDataProviderModifier()
@@ -46,7 +48,7 @@ class ProvideDataTest {
     }
 
     @Test
-    fun `component hierarchy`() {
+    public fun `component hierarchy`() {
         runBlocking {
             val rootDataProviderModifier = RootDataProviderModifier()
             var focusManager: FocusManager? = null

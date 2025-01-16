@@ -354,6 +354,7 @@ public final class org/jetbrains/jewel/samples/showcase/views/ComposableSingleto
 
 public final class org/jetbrains/jewel/samples/showcase/views/KeyBinding {
 	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/samples/showcase/views/KeyBinding$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
 	public synthetic fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -365,8 +366,12 @@ public final class org/jetbrains/jewel/samples/showcase/views/KeyBinding {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class org/jetbrains/jewel/samples/showcase/views/KeyBinding$Companion {
+}
+
 public final class org/jetbrains/jewel/samples/showcase/views/ViewInfo {
 	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/samples/showcase/views/ViewInfo$Companion;
 	public fun <init> (Ljava/lang/String;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/samples/showcase/views/KeyBinding;Lkotlin/jvm/functions/Function2;)V
 	public synthetic fun <init> (Ljava/lang/String;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/samples/showcase/views/KeyBinding;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
@@ -376,6 +381,9 @@ public final class org/jetbrains/jewel/samples/showcase/views/ViewInfo {
 	public final fun getTitle ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/samples/showcase/views/ViewInfo$Companion {
 }
 
 public final class org/jetbrains/jewel/samples/showcase/views/ViewInfoKt {
