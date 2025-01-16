@@ -11,6 +11,4 @@ fun <T> bar(x: T) {
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
 /* IGNORE_K2 */
-
-// Same example as in testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeFunctionParameterType1.kt
-// but shows another quick fix
+// For K2-specific behaviour, see changeFunctionParameterType5K2.kt
