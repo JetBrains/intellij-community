@@ -36,6 +36,9 @@ public class TryFinallyCanBeTryWithResourcesFixTest extends IGQuickFixesTestCase
   public void testIDEA243497() { doTest(); }
   public void testUseCloseAfterTry() { doTest(); }
   public void testUseCloseBeforeTry() { doTest(); }
+  public void testCatchInFinallySimple() { doTest(); }
+  public void testDoubleCatchInFinally() { doTest(); }
+  public void testCatchWithSuffixInFinally() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {

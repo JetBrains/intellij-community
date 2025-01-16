@@ -291,17 +291,6 @@ class ExtraUsageOfAutoCloseableInFinally {
 
   native MyAutoCloseable create();
 
-  public void secondCall() throws Exception {
-    MyAutoCloseable first = create();
-    MyAutoCloseable second = create();
-    try {
-      System.out.println(first.hashCode());
-    } finally {
-      System.out.println(second.hashCode());
-      first.close();
-    }
-  }
-
   public void respectsIfStatement() throws Exception {
     MyAutoCloseable first = create();
     <warning descr="'try' can use automatic resource management">try</warning> {
@@ -320,6 +309,53 @@ class ExtraUsageOfAutoCloseableInFinally {
     } finally {
       if (first.toString() != null) {
         first.close();
+      }
+    }
+  }
+}
+
+class NestedCatchSections {
+  interface MyAutoCloseable extends AutoCloseable {
+    @Override
+    void close();
+  }
+
+  void doubleTrySameExceptions(InputStream stream, InputStream stream2) {
+    try {
+      System.out.println(1);
+    } finally {
+      try {
+        stream.close();
+      } catch (IOException e) {
+      }
+      try {
+        stream2.close();
+      } catch (IOException e) {}
+    }
+  }
+
+
+  void withPrefixInFinally(InputStream stream) {
+    try {
+      System.out.println(1);
+    } finally {
+      int x = 10;
+      try {
+        stream.close();
+      } catch (IOException e) {
+      }
+    }
+  }
+
+  void duplicateExceptionsInOuterAndInnerCatch(InputStream stream) {
+    try {
+      stream.read();
+    } catch (IOException e) {
+
+    } finally {
+      try {
+        stream.close();
+      } catch (IOException e) {
       }
     }
   }
