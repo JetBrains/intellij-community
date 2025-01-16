@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent.nio
 
 import com.intellij.openapi.components.service
@@ -22,7 +22,7 @@ import kotlin.io.path.exists
  * Allows registering custom file systems
  */
 @ApiStatus.Internal
-fun CoroutineScope.registerIjentNioFs(ijent: IjentApi, root: String, authority: String, recomputeIfRegistered: Boolean = true): Path {
+fun CoroutineScope.registerIjentNioFs(ijent: IjentApi, root: String, internalName: String, authority: String, recomputeIfRegistered: Boolean = true): Path {
   val service = application.service<EelNioBridgeService>()
 
   if (!recomputeIfRegistered) {
@@ -44,7 +44,7 @@ fun CoroutineScope.registerIjentNioFs(ijent: IjentApi, root: String, authority: 
     // Nothing.
   }
 
-  service.register(root, ijent.descriptor, true, false) { underlyingProvider, previousFs ->
+  service.register(root, ijent.descriptor, internalName, true, false) { underlyingProvider, previousFs ->
     // Compute a path before custom fs registration. Usually should represent a non-existent local path
     val localPath = Path(root).also { check(!it.exists()) }
 

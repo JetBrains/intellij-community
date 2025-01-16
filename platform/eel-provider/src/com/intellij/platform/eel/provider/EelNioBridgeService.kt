@@ -2,18 +2,28 @@
 package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.NonNls
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.spi.FileSystemProvider
-import kotlin.jvm.Throws
 
 /**
  * A service that is responsible for mapping between instances of [EelPath] and [Path]
  */
 interface EelNioBridgeService {
+
+  companion object {
+    @JvmStatic
+    fun getInstanceSync(): EelNioBridgeService = ApplicationManager.getApplication().service()
+
+    @JvmStatic
+    suspend fun getInstance(): EelNioBridgeService = ApplicationManager.getApplication().serviceAsync()
+  }
 
   /**
    * @return `null` if [nioPath] belongs to a [java.nio.file.FileSystem] that was not registered as a backend of `MultiRoutingFileSystemProvider`
@@ -26,12 +36,23 @@ interface EelNioBridgeService {
   fun tryGetNioRoot(eelDescriptor: EelDescriptor): Path?
 
   /**
-   * Registers custom eel as a nio file system
+   * @return The `internalName` from [register] that was provided alongside [eelDescriptor].
    */
-  fun register(localRoot: String, descriptor: EelDescriptor, prefix: Boolean, caseSensitive: Boolean, fsProvider: (underlyingProvider: FileSystemProvider, previousFs: FileSystem?) -> FileSystem?)
+  fun tryGetId(eelDescriptor: EelDescriptor): String?
 
   /**
-   * Deregisters custom eel as a nio file system
+   * @return the descriptor that was provided alongside `internalName` during [register].
+   */
+  fun tryGetDescriptorByName(name: String): EelDescriptor?
+
+  /**
+   * Registers custom eel as a nio file system
+   * @param internalName An ascii name of the descriptor that can be used as internal ID of the registered environment.
+   */
+  fun register(localRoot: String, descriptor: EelDescriptor, internalName: @NonNls String, prefix: Boolean, caseSensitive: Boolean, fsProvider: (underlyingProvider: FileSystemProvider, previousFs: FileSystem?) -> FileSystem?)
+
+  /**
+   * Removes the registered NIO File System associated with [descriptor]
    */
   fun deregister(descriptor: EelDescriptor)
 }

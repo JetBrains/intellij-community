@@ -19,6 +19,7 @@ class EelNioBridgeServiceImpl : EelNioBridgeService {
 
   private val rootRegistry = ConcurrentHashMap<EelDescriptor, Path>()
   private val fsRegistry = ConcurrentHashMap<String, FileSystem>()
+  private val idRegistry = ConcurrentHashMap<EelDescriptor, String>()
 
   companion object {
     private val LOG = Logger.getInstance(EelNioBridgeServiceImpl::class.java)
@@ -33,7 +34,15 @@ class EelNioBridgeServiceImpl : EelNioBridgeService {
     return rootRegistry[eelDescriptor]
   }
 
-  override fun register(localRoot: String, descriptor: EelDescriptor, prefix: Boolean, caseSensitive: Boolean, fsProvider: (underlyingProvider: FileSystemProvider, existingFileSystem: FileSystem?) -> FileSystem?) {
+  override fun tryGetId(eelDescriptor: EelDescriptor): String? {
+    return idRegistry[eelDescriptor]
+  }
+
+  override fun tryGetDescriptorByName(name: String): EelDescriptor? {
+    return idRegistry.entries.find { it.value == name }?.key
+  }
+
+  override fun register(localRoot: String, descriptor: EelDescriptor, internalName: String, prefix: Boolean, caseSensitive: Boolean, fsProvider: (underlyingProvider: FileSystemProvider, existingFileSystem: FileSystem?) -> FileSystem?) {
     fsRegistry.compute(localRoot) { _, existingFileSystem ->
       val result: Ref<FileSystem?> = Ref(null)
       // the computation within MultiRoutingFileSystem can be restarted several times, but it will not terminate until it succeeds
@@ -48,6 +57,7 @@ class EelNioBridgeServiceImpl : EelNioBridgeService {
     val currentValue = rootRegistry[descriptor]
     val newRoot = Path.of(localRoot)
     rootRegistry[descriptor] = Path.of(localRoot)
+    idRegistry[descriptor] = internalName
     if (currentValue != null && currentValue != newRoot) {
       LOG.warn("Replacing EEL root for $descriptor from $currentValue to $newRoot")
     }

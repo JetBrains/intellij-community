@@ -135,5 +135,5 @@ private fun recomputeEel(distro: WSLDistribution, action: (underlyingProvider: F
   val service = ApplicationManager.getApplication().service<EelNioBridgeService>()
   val localRoot = distro.getWindowsPath("/")
   val descriptor = WslEelDescriptor(distro)
-  service.register(localRoot, descriptor, false, false, action)
+  service.register(localRoot, descriptor, distro.id, false, false, action)
 }

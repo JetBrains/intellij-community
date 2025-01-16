@@ -65,7 +65,7 @@ internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFile
   val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
   val apiRef = AtomicReference<EelApi>(null)
   val descriptor = EelTestDescriptor(Ksuid.generate().toString(), os, apiRef::get)
-  service.register(fakeRoot, descriptor, true, (os == EelPath.OS.WINDOWS)) { _, _ ->
+  service.register(fakeRoot, descriptor, "test-directory.name", true, (os == EelPath.OS.WINDOWS)) { _, _ ->
     fakeLocalFileSystem
   }
   val eelApi = eelApiByOs(fakeLocalFileSystem, descriptor, os)
