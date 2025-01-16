@@ -10,7 +10,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion.dropVersion
 
-internal class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl(), Disposable.Default {
+open class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl(), Disposable.Default {
   @Volatile private lateinit var factories: Map<IElementType, StubElementFactory<*, *>>
   @Volatile private lateinit var lightFactories: Map<IElementType, LightStubElementFactory<*, *>>
   @Volatile private lateinit var type2serializerMap: Map<IElementType, ObjectStubSerializer<*, *>>

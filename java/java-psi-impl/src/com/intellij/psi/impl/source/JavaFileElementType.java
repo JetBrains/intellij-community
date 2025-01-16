@@ -14,7 +14,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.ParsingDiagnostics;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.tree.java.JavaFileElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.ILightStubFileElementType;
@@ -104,7 +103,6 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   @Override
   public void indexStub(@NotNull PsiJavaFileStub stub, @NotNull IndexSink sink) {
-    sink.occurrence(JavaStubIndexKeys.FILE_PACKAGE_INDEX, stub.getPackageName());
   }
 
   @ApiStatus.Internal
