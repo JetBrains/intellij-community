@@ -63,19 +63,19 @@ import org.jetbrains.jewel.ui.theme.textAreaStyle
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     private val mainContent =
         panel {
-            buttonsRow()
-            separator()
-            labelsRows()
-            separator()
-            iconsRow()
-            separator()
-            textFieldsRow()
-            separator()
-            textAreasRow()
-            separator()
-            comboBoxesRow()
-            separator()
-        }
+                buttonsRow()
+                separator()
+                labelsRows()
+                separator()
+                iconsRow()
+                separator()
+                textFieldsRow()
+                separator()
+                textAreasRow()
+                separator()
+                comboBoxesRow()
+                separator()
+            }
             .apply {
                 border = JBUI.Borders.empty(0, 10)
                 isOpaque = false
@@ -97,30 +97,30 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
 
     private fun Panel.buttonsRow() {
         row("Buttons:") {
-            button("Swing Button") {}.align(AlignY.CENTER)
-            compose { OutlinedButton({}) { Text("Compose Button") } }
+                button("Swing Button") {}.align(AlignY.CENTER)
+                compose { OutlinedButton({}) { Text("Compose Button") } }
 
-            button("Default Swing Button") {}
-                .align(AlignY.CENTER)
-                .applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
-            compose { DefaultButton({}) { Text("Default Compose Button") } }
-        }
+                button("Default Swing Button") {}
+                    .align(AlignY.CENTER)
+                    .applyToComponent { putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, true) }
+                compose { DefaultButton({}) { Text("Default Compose Button") } }
+            }
             .layout(RowLayout.PARENT_GRID)
     }
 
     private fun Panel.labelsRows() {
         row("Labels:") {
-            label("Swing label").align(AlignY.CENTER)
-            compose { Text("Compose label") }
-        }
+                label("Swing label").align(AlignY.CENTER)
+                compose { Text("Compose label") }
+            }
             .layout(RowLayout.PARENT_GRID)
 
         row("Comments:") {
-            comment("Swing comment").align(AlignY.CENTER)
-            compose {
-                Text("Compose comment", style = Typography.medium(), color = JewelTheme.globalColors.text.info)
+                comment("Swing comment").align(AlignY.CENTER)
+                compose {
+                    Text("Compose comment", style = Typography.medium(), color = JewelTheme.globalColors.text.info)
+                }
             }
-        }
             .layout(RowLayout.PARENT_GRID)
 
         val longText = "WordWrapInsideWordsIsSupported:" + ("NoSpace".repeat(20) + " ").repeat(5) + "End"
@@ -169,222 +169,222 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
 
     private fun Panel.iconsRow() {
         row("Icons:") {
-            cell(JBLabel(JewelIcons.ToolWindowIcon).apply { border = JBUI.Borders.customLine(JBColor.RED) })
-                .align(AlignY.CENTER)
+                cell(JBLabel(JewelIcons.ToolWindowIcon).apply { border = JBUI.Borders.customLine(JBColor.RED) })
+                    .align(AlignY.CENTER)
 
-            compose {
-                Icon(
-                    key = IdeSampleIconKeys.jewelToolWindow,
-                    contentDescription = null,
-                    modifier = Modifier.border(1.dp, Color.Red),
-                )
+                compose {
+                    Icon(
+                        key = IdeSampleIconKeys.jewelToolWindow,
+                        contentDescription = null,
+                        modifier = Modifier.border(1.dp, Color.Red),
+                    )
+                }
             }
-        }
             .layout(RowLayout.PARENT_GRID)
     }
 
     private fun Panel.textFieldsRow() {
         row("Text fields:") {
-            textField().align(AlignY.CENTER)
+                textField().align(AlignY.CENTER)
 
-            compose {
-                val state = rememberTextFieldState("")
-                TextField(state)
+                compose {
+                    val state = rememberTextFieldState("")
+                    TextField(state)
+                }
             }
-        }
             .layout(RowLayout.PARENT_GRID)
     }
 
     private fun Panel.comboBoxesRow() {
         row("ComboBoxes:") {
-            // Swing ComboBoxes
-            val zoomLevels = arrayOf("100%", "125%", "150%", "175%", "200%", "300%")
+                // Swing ComboBoxes
+                val zoomLevels = arrayOf("100%", "125%", "150%", "175%", "200%", "300%")
 
-            JPanel()
-                .apply {
-                    layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                    add(JLabel("Not editable").apply { alignmentX = LEFT_ALIGNMENT })
-                    add(
-                        ComboBox(DefaultComboBoxModel(zoomLevels)).apply {
-                            isEditable = false
-                            alignmentX = LEFT_ALIGNMENT
-                        }
-                    )
-                }
-                .run { cell(this).align(AlignY.TOP) }
-            JPanel()
-                .apply {
-                    layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                    add(JLabel("Not editable + disabled").apply { alignmentX = LEFT_ALIGNMENT })
-                    add(
-                        ComboBox(DefaultComboBoxModel(zoomLevels)).apply {
-                            isEditable = false
-                            isEnabled = false
-                            alignmentX = LEFT_ALIGNMENT
-                        }
-                    )
-                }
-                .run { cell(this).align(AlignY.TOP) }
-
-            val itemsComboBox = arrayOf("Cat", "Elephant", "Sun", "Book", "Laughter")
-            JPanel()
-                .apply {
-                    layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                    add(JLabel("Editable").apply { alignmentX = LEFT_ALIGNMENT })
-                    add(
-                        ComboBox(DefaultComboBoxModel(itemsComboBox)).apply {
-                            isEditable = true
-                            alignmentX = LEFT_ALIGNMENT
-                        }
-                    )
-                }
-                .run { cell(this).align(AlignY.TOP) }
-
-            JPanel()
-                .apply {
-                    layout = BoxLayout(this, BoxLayout.Y_AXIS)
-                    add(JLabel("Editable + Disabled").apply { alignmentX = LEFT_ALIGNMENT })
-                    add(
-                        ComboBox(DefaultComboBoxModel(itemsComboBox)).apply {
-                            isEditable = true
-                            isEnabled = false
-                            alignmentX = LEFT_ALIGNMENT
-                        }
-                    )
-                }
-                .run { cell(this).align(AlignY.TOP) }
-
-            compose(modifier = Modifier.height(200.dp).padding(horizontal = 8.dp, vertical = 0.dp)) {
-                val comboBoxItems = remember {
-                    listOf(
-                        "Cat",
-                        "Elephant",
-                        "Sun",
-                        "Book",
-                        "Laughter",
-                        "Whisper",
-                        "Ocean",
-                        "Serendipity lorem ipsum",
-                        "Umbrella",
-                        "Joy",
-                    )
-                }
-                var selectedComboBox1: String? by remember { mutableStateOf(comboBoxItems.first()) }
-                var selectedComboBox2: String? by remember { mutableStateOf(comboBoxItems.first()) }
-                var selectedComboBox3: String? by remember { mutableStateOf(comboBoxItems.first()) }
-                var selectedComboBox4: String? by remember { mutableStateOf(comboBoxItems.first()) }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column {
-                        Text("Not editable")
-                        Text(text = "Selected item: $selectedComboBox1")
-
-                        ListComboBox(
-                            items = comboBoxItems,
-                            modifier = Modifier.width(200.dp),
-                            onSelectedItemChange = { _, text -> selectedComboBox1 = text },
-                            itemContent = { item, isSelected, isActive ->
-                                SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    iconContentDescription = item,
-                                )
-                            },
+                JPanel()
+                    .apply {
+                        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                        add(JLabel("Not editable").apply { alignmentX = LEFT_ALIGNMENT })
+                        add(
+                            ComboBox(DefaultComboBoxModel(zoomLevels)).apply {
+                                isEditable = false
+                                alignmentX = LEFT_ALIGNMENT
+                            }
                         )
                     }
-
-                    Column {
-                        Text("Not editable + disabled")
-                        Text(text = "Selected item: $selectedComboBox2")
-
-                        ListComboBox(
-                            items = comboBoxItems,
-                            modifier = Modifier.width(200.dp),
-                            isEnabled = false,
-                            onSelectedItemChange = { _, text -> selectedComboBox2 = text },
-                            itemContent = { item, isSelected, isActive ->
-                                SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    iconContentDescription = item,
-                                )
-                            },
+                    .run { cell(this).align(AlignY.TOP) }
+                JPanel()
+                    .apply {
+                        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                        add(JLabel("Not editable + disabled").apply { alignmentX = LEFT_ALIGNMENT })
+                        add(
+                            ComboBox(DefaultComboBoxModel(zoomLevels)).apply {
+                                isEditable = false
+                                isEnabled = false
+                                alignmentX = LEFT_ALIGNMENT
+                            }
                         )
                     }
+                    .run { cell(this).align(AlignY.TOP) }
 
-                    Column {
-                        Text("Editable")
-                        Text(text = "Selected item: $selectedComboBox3")
-                        EditableListComboBox(
-                            items = comboBoxItems,
-                            modifier = Modifier.width(200.dp),
-                            maxPopupHeight = 150.dp,
-                            onSelectedItemChange = { _, text -> selectedComboBox3 = text },
-                            itemContent = { item, isSelected, isActive ->
-                                SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    iconContentDescription = item,
-                                )
-                            },
+                val itemsComboBox = arrayOf("Cat", "Elephant", "Sun", "Book", "Laughter")
+                JPanel()
+                    .apply {
+                        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                        add(JLabel("Editable").apply { alignmentX = LEFT_ALIGNMENT })
+                        add(
+                            ComboBox(DefaultComboBoxModel(itemsComboBox)).apply {
+                                isEditable = true
+                                alignmentX = LEFT_ALIGNMENT
+                            }
                         )
                     }
+                    .run { cell(this).align(AlignY.TOP) }
 
-                    Column {
-                        Text("Editable + disabled")
-                        Text(text = "Selected item: $selectedComboBox4")
-                        EditableListComboBox(
-                            items = comboBoxItems,
-                            modifier = Modifier.width(200.dp),
-                            isEnabled = false,
-                            onSelectedItemChange = { _, text -> selectedComboBox4 = text },
-                            itemContent = { item, isSelected, isActive ->
-                                SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    iconContentDescription = item,
-                                )
-                            },
+                JPanel()
+                    .apply {
+                        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                        add(JLabel("Editable + Disabled").apply { alignmentX = LEFT_ALIGNMENT })
+                        add(
+                            ComboBox(DefaultComboBoxModel(itemsComboBox)).apply {
+                                isEditable = true
+                                isEnabled = false
+                                alignmentX = LEFT_ALIGNMENT
+                            }
                         )
+                    }
+                    .run { cell(this).align(AlignY.TOP) }
+
+                compose(modifier = Modifier.height(200.dp).padding(horizontal = 8.dp, vertical = 0.dp)) {
+                    val comboBoxItems = remember {
+                        listOf(
+                            "Cat",
+                            "Elephant",
+                            "Sun",
+                            "Book",
+                            "Laughter",
+                            "Whisper",
+                            "Ocean",
+                            "Serendipity lorem ipsum",
+                            "Umbrella",
+                            "Joy",
+                        )
+                    }
+                    var selectedComboBox1: String? by remember { mutableStateOf(comboBoxItems.first()) }
+                    var selectedComboBox2: String? by remember { mutableStateOf(comboBoxItems.first()) }
+                    var selectedComboBox3: String? by remember { mutableStateOf(comboBoxItems.first()) }
+                    var selectedComboBox4: String? by remember { mutableStateOf(comboBoxItems.first()) }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column {
+                            Text("Not editable")
+                            Text(text = "Selected item: $selectedComboBox1")
+
+                            ListComboBox(
+                                items = comboBoxItems,
+                                modifier = Modifier.width(200.dp),
+                                onSelectedItemChange = { _, text -> selectedComboBox1 = text },
+                                itemContent = { item, isSelected, isActive ->
+                                    SimpleListItem(
+                                        text = item,
+                                        isSelected = isSelected,
+                                        isActive = isActive,
+                                        iconContentDescription = item,
+                                    )
+                                },
+                            )
+                        }
+
+                        Column {
+                            Text("Not editable + disabled")
+                            Text(text = "Selected item: $selectedComboBox2")
+
+                            ListComboBox(
+                                items = comboBoxItems,
+                                modifier = Modifier.width(200.dp),
+                                isEnabled = false,
+                                onSelectedItemChange = { _, text -> selectedComboBox2 = text },
+                                itemContent = { item, isSelected, isActive ->
+                                    SimpleListItem(
+                                        text = item,
+                                        isSelected = isSelected,
+                                        isActive = isActive,
+                                        iconContentDescription = item,
+                                    )
+                                },
+                            )
+                        }
+
+                        Column {
+                            Text("Editable")
+                            Text(text = "Selected item: $selectedComboBox3")
+                            EditableListComboBox(
+                                items = comboBoxItems,
+                                modifier = Modifier.width(200.dp),
+                                maxPopupHeight = 150.dp,
+                                onSelectedItemChange = { _, text -> selectedComboBox3 = text },
+                                itemContent = { item, isSelected, isActive ->
+                                    SimpleListItem(
+                                        text = item,
+                                        isSelected = isSelected,
+                                        isActive = isActive,
+                                        iconContentDescription = item,
+                                    )
+                                },
+                            )
+                        }
+
+                        Column {
+                            Text("Editable + disabled")
+                            Text(text = "Selected item: $selectedComboBox4")
+                            EditableListComboBox(
+                                items = comboBoxItems,
+                                modifier = Modifier.width(200.dp),
+                                isEnabled = false,
+                                onSelectedItemChange = { _, text -> selectedComboBox4 = text },
+                                itemContent = { item, isSelected, isActive ->
+                                    SimpleListItem(
+                                        text = item,
+                                        isSelected = isSelected,
+                                        isActive = isActive,
+                                        iconContentDescription = item,
+                                    )
+                                },
+                            )
+                        }
                     }
                 }
             }
-        }
             .layout(RowLayout.PARENT_GRID)
     }
 
     private fun Panel.textAreasRow() {
         row("Text areas:") {
-            textArea().align(AlignY.CENTER).applyToComponent { rows = 3 }
+                textArea().align(AlignY.CENTER).applyToComponent { rows = 3 }
 
-            compose {
-                val metrics = remember(JBFont.label(), LocalDensity.current) { getFontMetrics(JBFont.label()) }
-                val charWidth =
-                    remember(metrics.widths) {
-                        // Same logic as in JTextArea
-                        metrics.charWidth('m')
-                    }
-                val lineHeight = metrics.height
+                compose {
+                    val metrics = remember(JBFont.label(), LocalDensity.current) { getFontMetrics(JBFont.label()) }
+                    val charWidth =
+                        remember(metrics.widths) {
+                            // Same logic as in JTextArea
+                            metrics.charWidth('m')
+                        }
+                    val lineHeight = metrics.height
 
-                val width = remember(charWidth) { (COLUMNS_SHORT * charWidth) }
-                val height = remember(lineHeight) { (3 * lineHeight) }
+                    val width = remember(charWidth) { (COLUMNS_SHORT * charWidth) }
+                    val height = remember(lineHeight) { (3 * lineHeight) }
 
-                val contentPadding = JewelTheme.textAreaStyle.metrics.contentPadding
-                val state = rememberTextFieldState("Hello")
-                TextArea(
-                    state = state,
-                    modifier =
-                        Modifier.size(
-                            width = width.dp + contentPadding.horizontal(LocalLayoutDirection.current),
-                            height = height.dp + contentPadding.vertical(),
-                        ),
-                )
+                    val contentPadding = JewelTheme.textAreaStyle.metrics.contentPadding
+                    val state = rememberTextFieldState("Hello")
+                    TextArea(
+                        state = state,
+                        modifier =
+                            Modifier.size(
+                                width = width.dp + contentPadding.horizontal(LocalLayoutDirection.current),
+                                height = height.dp + contentPadding.vertical(),
+                            ),
+                    )
+                }
             }
-        }
             .layout(RowLayout.PARENT_GRID)
     }
 

@@ -350,7 +350,7 @@ public value class ComboBoxState(public val state: ULong) : FocusableComponentSt
 
     override fun toString(): String =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, " +
-        "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
+            "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
         public fun of(
