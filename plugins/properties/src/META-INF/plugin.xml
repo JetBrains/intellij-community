@@ -27,6 +27,9 @@
     <extensionPoint name="extendedUseScopeProvider"
                     interface="com.intellij.lang.properties.codeInspection.unused.ExtendedUseScopeProvider"
                     dynamic="true"/>
+    <extensionPoint name="spellcheckerMnemonicsTokenizer"
+                    interface="com.intellij.lang.properties.spellchecker.MnemonicsTokenizer"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
