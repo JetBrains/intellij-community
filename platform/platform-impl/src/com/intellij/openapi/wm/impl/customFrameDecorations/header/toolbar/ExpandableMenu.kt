@@ -86,7 +86,7 @@ internal class ExpandableMenu(
     ideMenuHelper.updateUI()
   }
 
-  fun switchState(actionMenuToShow: ActionMenu? = null) {
+  fun switchState(actionMenuToShow: ActionMenu? = null, itemInd: Int = 0) {
     if (isShowing() && actionMenuToShow == null) {
       hideExpandedMenuBar()
       return
@@ -114,12 +114,12 @@ internal class ExpandableMenu(
 
     // The first menu usage has no selection in the menu. Fix it by invokeLater
     ApplicationManager.getApplication().invokeLater {
-      selectMenu(actionMenuToShow)
+      selectMenu(actionMenu = actionMenuToShow, itemInd = itemInd)
     }
   }
 
-  private fun selectMenu(actionMenu: ActionMenu? = null) {
-    var menu = ideMenu.getMenu(0)
+  private fun selectMenu(actionMenu: ActionMenu? = null, itemInd: Int) {
+    var menu = ideMenu.getMenu(itemInd)
     if (actionMenu != null) {
       for (m in ideMenu.rootMenuItems) {
         if (m.mnemonic == actionMenu.mnemonic) {

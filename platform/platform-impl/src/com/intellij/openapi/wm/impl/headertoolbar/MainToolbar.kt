@@ -3,15 +3,10 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
-import com.intellij.ide.ui.customization.ActionGroupCustomizationExtension
-import com.intellij.ide.ui.customization.ActionUrl
-import com.intellij.ide.ui.customization.CustomActionsListener
-import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.ide.ui.customization.CustomizationUtil
+import com.intellij.ide.ui.customization.*
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
@@ -31,7 +26,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
@@ -56,7 +50,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.MouseEvent
@@ -133,6 +126,15 @@ class MainToolbar(
         }
       }
     }
+  }
+
+  fun calculatePreferredWidth(): Int {
+    return components.filterIsInstance<ActionToolbar>().sumOf { it.component.preferredSize.width} + 4 * JBUI.scale(layoutGap)
+  }
+
+  @Internal
+  fun addToolbarListeners(listener: ActionToolbarListener, disposable: Disposable) {
+    components.filterIsInstance<ActionToolbar>().forEach { it.addListener(listener, disposable) }
   }
 
   private fun updateToolbarActions() {
@@ -261,7 +263,7 @@ class MainToolbar(
   }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
-    if (hideNativeLinuxTitle(UISettings.shadowInstance) && !UISettings.shadowInstance.separateMainMenu) {
+    if (hideNativeLinuxTitle(UISettings.shadowInstance) && UISettings.shadowInstance.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR) {
       WindowMoveListener(this).apply {
         setLeftMouseButtonOnly(true)
         installTo(this@MainToolbar)
@@ -303,7 +305,7 @@ class MainToolbar(
     if (accessibleContext == null) {
       accessibleContext = AccessibleMainToolbar()
     }
-    accessibleContext.accessibleName = if (ExperimentalUI.isNewUI() && UISettings.getInstance().separateMainMenu) {
+    accessibleContext.accessibleName = if (ExperimentalUI.isNewUI() && UISettings.getInstance().mainMenuDisplayMode == MainMenuDisplayMode.SEPARATE_TOOLBAR) {
       UIBundle.message("main.toolbar.accessible.group.name")
     }
     else {
@@ -345,7 +347,7 @@ private fun addWidget(widget: JComponent, parent: JComponent, position: Horizont
   }
 }
 
-@ApiStatus.Internal
+@Internal
 class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, false) {
   private val iconUpdater = HeaderIconUpdater()
