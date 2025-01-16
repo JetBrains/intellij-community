@@ -55,16 +55,16 @@ public final class JBCefTestHelper {
       }
     }, browser.getCefBrowser());
 
-    invokeAndWaitForLatch(latch, runnable);
+    invokeAndWaitForLatch(latch, "waiting onLoadEnd", runnable);
   }
 
   /**
    * Invokes and waits for the condition to become true.
    */
-  public static void invokeAndWaitForCondition(@NotNull Runnable runnable, @NotNull BooleanSupplier condition) {
+  public static void invokeAndWaitForCondition(@NotNull Runnable runnable, @NotNull BooleanSupplier condition, @NotNull String description) {
     CountDownLatch latch = new CountDownLatch(1);
 
-    invokeAndWaitForLatch(latch, () -> {
+    invokeAndWaitForLatch(latch, description, () -> {
       runnable.run();
       latch.countDown();
     });
@@ -80,15 +80,15 @@ public final class JBCefTestHelper {
     }
   }
 
-  public static void invokeAndWaitForLatch(@NotNull CountDownLatch latch, @NotNull Runnable runnable) {
+  public static void invokeAndWaitForLatch(@NotNull CountDownLatch latch, @NotNull String description, @NotNull Runnable runnable) {
     UIUtil.invokeLaterIfNeeded(runnable);
-    await(latch);
+    await(latch, description);
   }
 
-  public static void await(@NotNull CountDownLatch latch) {
+  public static void await(@NotNull CountDownLatch latch, @NotNull String description) {
     try {
       if (!latch.await(WAIT_BROWSER_SECONDS, TimeUnit.SECONDS)) {
-        Assert.fail("timeout:\n" + ThreadDumper.dumpThreadsToString());
+        Assert.fail(description + " failed by timeout:\n" + ThreadDumper.dumpThreadsToString());
       }
     }
     catch (InterruptedException e) {

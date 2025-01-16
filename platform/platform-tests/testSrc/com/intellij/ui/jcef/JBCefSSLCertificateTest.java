@@ -91,7 +91,7 @@ public class JBCefSSLCertificateTest {
     }
 
     public void waitCall() {
-      await(myLatch);
+      await(myLatch, "waiting CertificateErrorCallback");
     }
 
     public boolean continueCalled() {

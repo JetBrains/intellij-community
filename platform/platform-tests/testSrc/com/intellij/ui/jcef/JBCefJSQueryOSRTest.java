@@ -105,7 +105,7 @@ public class JBCefJSQueryOSRTest {
       browser.loadURL("chrome:version");
     });
 
-    invokeAndWaitForLatch(latch, () -> {
+    invokeAndWaitForLatch(latch, "executeJavaScript -> wait js callback", () -> {
       System.out.println("Executing JBCefJSQuery...");
       browser.getCefBrowser().executeJavaScript(jsQuery.inject("'hello'"), "about:blank", 0);
     });

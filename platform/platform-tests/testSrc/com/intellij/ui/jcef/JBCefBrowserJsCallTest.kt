@@ -138,7 +138,7 @@ class AsyncJBCefBrowserJsCallTest : JBCefBrowserJsCallTest() {
     var r1: String? = null
     var r2: String? = null
 
-    JBCefTestHelper.invokeAndWaitForLatch(latch) {
+    JBCefTestHelper.invokeAndWaitForLatch(latch, "wait js callback") {
       jsCall().onProcessed { latch.countDown() }.onSuccess { r1 = it }
       jsCall().onProcessed { }.onSuccess {
         r2 = it
@@ -159,7 +159,7 @@ class AsyncJBCefBrowserJsCallTest : JBCefBrowserJsCallTest() {
     var isSucceeded: Boolean? = null
     var actualResult: String? = null
 
-    JBCefTestHelper.invokeAndWaitForLatch(latch) {
+    JBCefTestHelper.invokeAndWaitForLatch(latch, "wait js callback") {
       browser.executeJavaScriptAsync(javaScript)
         .onError { error ->
           println(error.message)
