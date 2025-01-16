@@ -1686,6 +1686,7 @@ a:org.jetbrains.jps.builders.BuildTargetType
 - hashCode():I
 - f:isFileBased():Z
 org.jetbrains.jps.builders.DirtyFilesHolder
+- a:getRemoved(org.jetbrains.jps.builders.BuildTarget):java.util.Collection
 - a:getRemovedFiles(org.jetbrains.jps.builders.BuildTarget):java.util.Collection
 - a:hasDirtyFiles():Z
 - a:hasRemovedFiles():Z

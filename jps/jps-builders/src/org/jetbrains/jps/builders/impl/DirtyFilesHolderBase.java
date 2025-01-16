@@ -46,16 +46,21 @@ public abstract class DirtyFilesHolderBase<R extends BuildRootDescriptor, T exte
     return map != null && !map.isEmpty();
   }
 
-  @SuppressWarnings("SSBasedInspection")
   @Override
-  public @NotNull Collection<String> getRemovedFiles(@NotNull T target) {
+  public @NotNull Collection<Path> getRemoved(@NotNull T target) {
     Map<BuildTarget<?>, Collection<Path>> map = Utils.REMOVED_SOURCES_KEY.get(myContext);
     if (map != null) {
       Collection<Path> paths = map.get(target);
       if (paths != null) {
-        return paths.stream().map(Path::toString).collect(Collectors.toList());
+        return paths;
       }
     }
     return List.of();
+  }
+
+  @SuppressWarnings("SSBasedInspection")
+  @Override
+  public @NotNull Collection<String> getRemovedFiles(@NotNull T target) {
+    return getRemoved(target).stream().map(Path::toString).collect(Collectors.toList());
   }
 }

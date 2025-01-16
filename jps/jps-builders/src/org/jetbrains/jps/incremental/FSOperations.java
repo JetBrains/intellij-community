@@ -173,7 +173,12 @@ public final class FSOperations {
 
           @Override
           public @NotNull Collection<String> getRemovedFiles(@NotNull T target) {
-            return Collections.emptyList();
+            return List.of();
+          }
+
+          @Override
+          public @NotNull @Unmodifiable Collection<@NotNull Path> getRemoved(@NotNull T target) {
+            return List.of();
           }
         };
       }

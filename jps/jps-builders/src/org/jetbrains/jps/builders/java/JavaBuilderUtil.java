@@ -41,6 +41,7 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -641,7 +642,9 @@ public final class JavaBuilderUtil {
 
     Set<String> removed = CollectionFactory.createFilePathSet();
     for (ModuleBuildTarget target : chunk.getTargets()) {
-      removed.addAll(dirtyFilesHolder.getRemovedFiles(target));
+      for (Path file : dirtyFilesHolder.getRemoved(target)) {
+        removed.add(file.toString());
+      }
     }
     return removed;
   }
@@ -649,7 +652,7 @@ public final class JavaBuilderUtil {
   private static boolean hasRemovedPaths(ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
     if (dirtyFilesHolder.hasRemovedFiles()) {
       for (ModuleBuildTarget target : chunk.getTargets()) {
-        if (!dirtyFilesHolder.getRemovedFiles(target).isEmpty()) {
+        if (!dirtyFilesHolder.getRemoved(target).isEmpty()) {
           return true;
         }
       }
