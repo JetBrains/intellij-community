@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.internal.statistic.utils.hasStandardExceptionPrefix
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -106,7 +105,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         try {
             val executionContext = ExecutionContext(context, frameProxy)
-            return evaluateSafe(executionContext, codeFragment)
+            return evaluateSafe(executionContext)
         } catch (e: CodeFragmentCodegenException) {
             evaluationException(e.reason)
         } catch (e: EvaluateException) {
@@ -114,7 +113,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         } catch (e: IndexNotReadyException) {
             evaluationException(KotlinDebuggerEvaluationBundle.message("error.dumb.mode"))
         } catch (e: ProcessCanceledException) {
-            evaluationException(e)
+            throw e
         } catch (e: Eval4JInterpretingException) {
             evaluationException(e.cause)
         } catch (e: Exception) {
@@ -130,7 +129,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun evaluateSafe(context: ExecutionContext, codeFragment: KtCodeFragment): Any? {
+    private fun evaluateSafe(context: ExecutionContext): Any? {
         val hasCast = hasCastOperator(codeFragment)
         val compiledData = try {
             getCompiledCodeFragment(context)
@@ -264,13 +263,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 }
                 try {
                     evaluateWithEval4J(context, compiledData, classLoaderRef).also {
-                        LOG.error("Eval4J success, but compiling evaluator failed with: " + original.message, original)
+                        reportErrorWithAttachments(context, codeFragment, original, headerMessage = "Eval4J success, but compiling evaluator failed with: ")
                     }
                 } catch (e: Throwable) {
-                    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                        LOG.error("Eval4J also failed: " + e.message, e)
-                    }
-                    throw original
+                    throw original.also { it.addSuppressed(e) }
                 }
             }
         } else {
