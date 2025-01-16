@@ -60,11 +60,15 @@ import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
 import org.jetbrains.jewel.ui.component.Text
 
+/**
+ * Default implementation of [MarkdownBlockRenderer] that uses the provided styling, extensions, and inline renderer to
+ * render [MarkdownBlock]s into Compose UI elements.
+ */
 @ExperimentalJewelApi
 public open class DefaultMarkdownBlockRenderer(
-    private val rootStyling: MarkdownStyling,
-    private val rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
-    private val inlineRenderer: InlineMarkdownRenderer = DefaultInlineMarkdownRenderer(rendererExtensions),
+    override val rootStyling: MarkdownStyling,
+    override val rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
+    override val inlineRenderer: InlineMarkdownRenderer = DefaultInlineMarkdownRenderer(rendererExtensions),
 ) : MarkdownBlockRenderer {
     @Composable
     override fun render(
@@ -365,7 +369,7 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
-                render(block, mimeType, styling)
+                renderWithMimeType(block, mimeType, styling)
 
                 if (styling.infoPosition.verticalAlignment == Alignment.Bottom) {
                     FencedBlockInfo(
@@ -381,7 +385,11 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    public open fun render(block: FencedCodeBlock, mimeType: MimeType, styling: MarkdownStyling.Code.Fenced) {
+    public open fun renderWithMimeType(
+        block: FencedCodeBlock,
+        mimeType: MimeType,
+        styling: MarkdownStyling.Code.Fenced,
+    ) {
         val content = block.content
         val highlightedCode by
             LocalCodeHighlighter.current.highlight(content, mimeType).collectAsState(AnnotatedString(content))
@@ -451,4 +459,19 @@ public open class DefaultMarkdownBlockRenderer(
             content()
         }
     }
+
+    public override fun createCopy(
+        rootStyling: MarkdownStyling?,
+        rendererExtensions: List<MarkdownRendererExtension>?,
+        inlineRenderer: InlineMarkdownRenderer?,
+    ): MarkdownBlockRenderer =
+        DefaultMarkdownBlockRenderer(
+            rootStyling ?: this.rootStyling,
+            rendererExtensions ?: this.rendererExtensions,
+            inlineRenderer ?: this.inlineRenderer,
+        )
+
+    @ExperimentalJewelApi
+    override operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer =
+        DefaultMarkdownBlockRenderer(rootStyling, rendererExtensions = rendererExtensions + extension, inlineRenderer)
 }
