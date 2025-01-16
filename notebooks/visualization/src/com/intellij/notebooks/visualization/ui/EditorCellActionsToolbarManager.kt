@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import org.intellij.lang.annotations.Language
 import java.awt.Point
@@ -25,7 +24,7 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
   private val boundsChangeListener = object : JupyterBoundsChangeListener {
     override fun boundsChanged() = toolbar?.let {
       val targetComponent = it.targetComponent ?: return@let
-      it.bounds = calculateToolbarBounds(editor, targetComponent, it, cell.interval.ordinal)
+      it.bounds = calculateToolbarBounds(targetComponent, it)
     }
   }
 
@@ -33,13 +32,13 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
     JupyterBoundsChangeHandler.get(editor).subscribe(this, boundsChangeListener)
   }
 
-  fun showToolbar(targetComponent: JComponent, cellType: NotebookCellLines.CellType) {
-    val actionGroup = getActionGroup(cellType) ?: return
+  fun showToolbar(targetComponent: JComponent) {
+    val actionGroup = getActionGroup(cell.interval.type) ?: return
     if (targetComponent.width == 0 || targetComponent.height == 0) return
 
     removeToolbar()
-    toolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
 
+    toolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
     editor.contentComponent.add(toolbar, 0)
     updateToolbarPosition(targetComponent)
     refreshUI()
@@ -47,7 +46,7 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
 
   private fun updateToolbarPosition(targetComponent: JComponent) {
     toolbar?.let { toolbar ->
-      toolbar.bounds = calculateToolbarBounds(editor, targetComponent, toolbar, cell.interval.ordinal)
+      toolbar.bounds = calculateToolbarBounds(targetComponent, toolbar)
     }
   }
 
@@ -87,8 +86,41 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
     .templatePresentation
     .putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
 
-  companion object {
+  private fun calculateToolbarBounds(
+    panel: JComponent,
+    toolbar: JPanel,
+  ): Rectangle {
+    // todo: maybe fuse with JupyterAboveCellToolbarManager.Companion.calculateToolbarBounds
+    val toolbarHeight = toolbar.preferredSize.height
+    val toolbarWidth = toolbar.preferredSize.width
 
+    val panelHeight = panel.height
+    val panelWidth = panel.width
+
+    val delimiterSize = when(cell.interval.ordinal) {
+      0 -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
+      else -> editor.notebookAppearance.distanceBetweenCells
+    }
+
+    val panelRoofHeight = panelHeight - delimiterSize
+
+    val relativeOffsetRatio = when(cell.interval.ordinal) {
+      0 -> 0.12
+      else -> 0.05
+    }
+
+    val xOffset = (panelWidth - toolbarWidth - (panelWidth * relativeOffsetRatio)).toInt()
+    val yOffset = panelHeight - panelRoofHeight - (toolbarHeight / 2)
+
+    val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editor.contentComponent)
+
+    val xCoordinate = panelLocationInEditor.x + xOffset
+    val yCoordinate = panelLocationInEditor.y + yOffset
+
+    return Rectangle(xCoordinate, yCoordinate, toolbarWidth, toolbarHeight)
+  }
+
+  companion object {
     @Language("devkit-action-id")
     private const val ADDITIONAL_CODE_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar"
     @Language("devkit-action-id")
@@ -97,41 +129,5 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
     private const val ADDITIONAL_MARKDOWN_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar"
     @Language("devkit-action-id")
     private const val ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar.Ellipsis"
-
-    private fun calculateToolbarBounds(
-      editor: Editor,
-      panel: JComponent,
-      toolbar: JPanel,
-      ordinal: Int,
-    ): Rectangle {
-      // todo: maybe fuse with JupyterAboveCellToolbarManager.Companion.calculateToolbarBounds
-      val toolbarHeight = toolbar.preferredSize.height
-      val toolbarWidth = toolbar.preferredSize.width
-
-      val panelHeight = panel.height
-      val panelWidth = panel.width
-
-      val delimiterSize = when(ordinal) {
-        0 -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
-        else -> editor.notebookAppearance.distanceBetweenCells
-      }
-
-      val panelRoofHeight = panelHeight - delimiterSize
-
-      val relativeOffsetRatio = when(ordinal) {
-        0 -> 0.12
-        else -> 0.05
-      }
-
-      val xOffset = (panelWidth - toolbarWidth - (panelWidth * relativeOffsetRatio)).toInt()
-      val yOffset = panelHeight - panelRoofHeight - (toolbarHeight / 2)
-
-      val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editor.contentComponent)
-
-      val xCoordinate = panelLocationInEditor.x + xOffset
-      val yCoordinate = panelLocationInEditor.y + yOffset
-
-      return Rectangle(xCoordinate, yCoordinate, toolbarWidth, toolbarHeight)
-    }
   }
 }
