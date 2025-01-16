@@ -1204,7 +1204,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       collected.clear();
       setActiveEditors(editor1, editor2);
       type("/* xxx */");
-      waitForDaemon(myProject, myEditor.getDocument());
+      waitForDaemonToFinish(myProject, myEditor.getDocument());
 
       assertSameElements(collected, Arrays.asList(editor1, editor2));
       assertSameElements(applied, Arrays.asList(editor1, editor2));
@@ -1444,17 +1444,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }""";
       configureByText(JavaFileType.INSTANCE, text);
       EditorTestUtil.buildInitialFoldingsInBackground(myEditor);
-      waitForDaemon(myProject, myEditor.getDocument());
+      waitForDaemonToFinish(myProject, myEditor.getDocument());
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
-      waitForDaemon(myProject, myEditor.getDocument());
+      waitForDaemonToFinish(myProject, myEditor.getDocument());
       checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
       WriteCommandAction.runWriteCommandAction(myProject, () -> myEditor.getDocument().insertString(0, "/*"));
-      waitForDaemon(myProject, myEditor.getDocument());
+      waitForDaemonToFinish(myProject, myEditor.getDocument());
       checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_EXPAND_ALL_REGIONS);
-      waitForDaemon(myProject, myEditor.getDocument());
+      waitForDaemonToFinish(myProject, myEditor.getDocument());
       checkFoldingState("[FoldRegion -(0:37), placeholder='/.../']");
     });
   }
@@ -1469,7 +1469,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }""";
       configureByText(JavaFileType.INSTANCE, text);
       EditorTestUtil.buildInitialFoldingsInBackground(myEditor);
-      waitForDaemon(myProject, myEditor.getDocument());
+      waitForDaemonToFinish(myProject, myEditor.getDocument());
       checkFoldingState("[FoldRegion -(22:27), placeholder='{}']");
 
       JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
@@ -1477,7 +1477,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       try {
         settings.setCollapseMethods(true);
         CodeFoldingConfigurable.Util.applyCodeFoldingSettingsChanges();
-        waitForDaemon(myProject, myEditor.getDocument());
+        waitForDaemonToFinish(myProject, myEditor.getDocument());
         checkFoldingState("[FoldRegion +(22:27), placeholder='{}']");
       }
       finally {
@@ -1491,16 +1491,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   // return elapsed time in ms
-  static long waitForDaemon(@NotNull Project project, @NotNull Document document) {
+  static long waitForDaemonToFinish(@NotNull Project project, @NotNull Document document) {
     ThreadingAssertions.assertEventDispatchThread();
     long start = System.currentTimeMillis();
     long deadline = start + 60_000;
-    while (!daemonIsWorkingOrPending(project, document)) {
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      if (System.currentTimeMillis() > deadline) {
-        fail("Too long waiting for daemon to start");
-      }
-    }
+    waitForDaemonToStart(project, document, 60_000);
     while (daemonIsWorkingOrPending(project, document)) {
       if (System.currentTimeMillis() > deadline) {
         DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole();
@@ -1509,6 +1504,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
     return System.currentTimeMillis()-start;
+  }
+
+  private static void waitForDaemonToStart(@NotNull Project project, @NotNull Document document, long timeoutMs) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    long deadline = System.currentTimeMillis() + timeoutMs;
+    DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+    while (!daemonIsWorkingOrPending(project, document) && !myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile)) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      if (System.currentTimeMillis() > deadline) {
+        fail("Too long waiting for daemon to start. " +
+             "daemonIsWorkingOrPending="+daemonIsWorkingOrPending(project, document)+
+             "; allFinished="+myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile)+
+             "; thread dump:\n------"+ThreadDumper.dumpThreadsToString()+"\n======");
+      }
+    }
   }
 
   static boolean daemonIsWorkingOrPending(@NotNull Project project, @NotNull Document document) {
@@ -1643,7 +1653,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
 
     type("String i=0;");
-    waitForDaemon(myProject, myEditor.getDocument());
+    waitForDaemonToFinish(myProject, myEditor.getDocument());
     assertNotEmpty(DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.ERROR, getProject()));
     assertEquals(text, document.getText());  // retain non-phys document until after highlighting
     assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
@@ -1798,7 +1808,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     makeEditorWindowVisible(new Point(0, 1000), myEditor);
 
     type("/");
-    waitForDaemon(myProject, myEditor.getDocument());
+    waitForDaemonToFinish(myProject, myEditor.getDocument());
     List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.ERROR, getProject());
     assertNotEmpty(errors);
     assertTrue(errors.toString().contains("'class' or 'interface' expected"));
@@ -2086,7 +2096,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           LOG.debug("All typing completed. " +
                     "\neditor text:-----------\n"+myEditor.getDocument().getText()+"\n-------\n"+
                     "errors in markup: " + StringUtil.join(getErrorsFromMarkup(markupModel), "\n") + "\n-----\n");
-          waitForDaemon(getProject(), myEditor.getDocument());
+          waitForDaemonToFinish(getProject(), myEditor.getDocument());
           assertEmpty(myEditor.getDocument().getText(), getErrorsFromMarkup(markupModel));
         }
       });
@@ -2200,7 +2210,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       // warmup highlighting first, calibrating before that would make little sense
       for (int i = 0; i < 10; i++) {
         type("x");
-        waitForDaemon(getProject(), document);
+        waitForDaemonToFinish(getProject(), document);
         backspace();
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       }
@@ -2209,7 +2219,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       // compute time the highlighting takes to highlight this file completely
       for (int i = 0; i < CALIBRATE_N; i++) {
         type("x");
-        long elapsed = waitForDaemon(getProject(), document);
+        long elapsed = waitForDaemonToFinish(getProject(), document);
         avgElapsedTime += elapsed;
         backspace();
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -2238,13 +2248,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           throw new AssertionError(e);
         }
 
-        long deadline = System.currentTimeMillis() + 60_000;
-        while (!daemonIsWorkingOrPending(getProject(), document) && !myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile)) {
-          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-          if (System.currentTimeMillis() > deadline) {
-            fail("Too long waiting for daemon to start");
-          }
-        }
+        waitForDaemonToStart(getProject(), document, 60_000);
         backspace();
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       }

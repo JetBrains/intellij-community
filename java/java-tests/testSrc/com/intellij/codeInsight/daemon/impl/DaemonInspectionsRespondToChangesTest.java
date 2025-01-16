@@ -289,12 +289,12 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     MyTrackingInspection tool = registerInspection(new MyTrackingInspection(){});
 
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
-    DaemonRespondToChangesTest.waitForDaemon(myProject, myEditor.getDocument());
+    DaemonRespondToChangesTest.waitForDaemonToFinish(myProject, myEditor.getDocument());
     tool.visited.clear();
 
     getPsiManager().dropPsiCaches();
 
-    DaemonRespondToChangesTest.waitForDaemon(myProject, myEditor.getDocument());
+    DaemonRespondToChangesTest.waitForDaemonToFinish(myProject, myEditor.getDocument());
     assertNotEmpty(tool.visited);
   }
 
