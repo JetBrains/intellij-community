@@ -1,12 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JavaDebugProcess;
-import com.intellij.debugger.engine.RemoteStateState;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -280,8 +277,10 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
                                   debuggerRunnerSettings.getDebugPort())
         .project(myProject)
         .checkValidity(true)
-        .asyncAgent(true)
+        .asyncAgent(false) // add manually to allow early tmp folder deletion
         .create(javaParameters);
+
+    AsyncStacksUtils.addDebuggerAgent(javaParameters, myProject, true, getTestRootDisposable());
 
     myExecutionEnvironment.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, getTraceMode());
     DebuggerSession debuggerSession = attachVirtualMachine(myRunnableState, myExecutionEnvironment, debugParameters, false);
