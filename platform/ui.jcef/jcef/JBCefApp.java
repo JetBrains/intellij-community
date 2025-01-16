@@ -24,6 +24,7 @@ import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
 import org.cef.misc.BoolRef;
+import org.cef.misc.CefLog;
 import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -94,6 +95,15 @@ public final class JBCefApp {
     addCefCustomSchemeHandlerFactory(new JBCefSourceSchemeHandlerFactory());
     addCefCustomSchemeHandlerFactory(new JBCefFileSchemeHandlerFactory());
 
+    if (SettingsHelper.isDebugLogging()) {
+      // Init VERBOSE java logging
+      LOG.info("Use verbose CefLog to stderr.");
+      CefLog.init(null, CefSettings.LogSeverity.LOGSEVERITY_VERBOSE);
+
+      // Init VERBOSE native cef_server logging to stderr
+      System.setProperty("CEF_SERVER_LOG_LEVEL", "VERBOSE");
+    }
+
     if (RegistryManager.getInstance().is(REGISTRY_REMOTE_KEY)) {
       boolean isTemporaryDisabled = false;
       if (!Boolean.getBoolean("force_enable_out_of_process_jcef")) {
@@ -140,6 +150,13 @@ public final class JBCefApp {
 
       BoolRef trackGPUCrashes = new BoolRef(false);
       String[] args = Cancellation.forceNonCancellableSectionInClassInitializer(() -> SettingsHelper.loadArgs(config, settings, trackGPUCrashes));
+      if (SettingsHelper.isDebugLogging()) {
+        // Decrease logging level passed into the default init mechanism
+        settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_INFO;
+        settings.log_file = null;
+        // Init verbose chromium logging to stderr via 'vmodule' (to decrease output size)
+        args = ArrayUtil.mergeArrays(args, "--enable-logging=stderr", "--vmodule=statistics_recorder*=0", "--v=1");
+      }
       CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
       myCefSettings = settings;
       myCefApp = CefApp.getInstance(settings);
