@@ -20,9 +20,30 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
-import org.jetbrains.jewel.ui.component.styling.contentFor
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.theme.simpleListItemStyle
+
+/**
+ * A simple list item layout comprising of a content slot and an optional icon to its start side.
+ *
+ * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
+ * the [isSelected] and [isActive] values.
+ */
+@Composable
+public fun SimpleListItem(
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
+    isActive: Boolean = true,
+    icon: IconKey? = null,
+    iconContentDescription: String? = null,
+    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
+    height: Dp = JewelTheme.globalMetrics.rowHeight,
+    content: @Composable () -> Unit,
+) {
+    val state = remember(isSelected, isActive) { ListItemState(isSelected, isActive) }
+    SimpleListItem(state, modifier, iconModifier, icon, iconContentDescription, style, height, content)
+}
 
 /**
  * A simple list item layout comprising of a text and an optional icon to its start side.
@@ -65,6 +86,35 @@ public fun SimpleListItem(
     style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
     height: Dp = JewelTheme.globalMetrics.rowHeight,
 ) {
+    SimpleListItem(state, modifier, iconModifier, icon, iconContentDescription, style, height) {
+        Text(
+            text = text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = JewelTheme.defaultTextStyle,
+            color = style.colors.contentFor(state).value,
+            modifier = textModifier,
+        )
+    }
+}
+
+/**
+ * A simple list item layout comprising of a content slot and an optional icon to its start side.
+ *
+ * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
+ * the [state].
+ */
+@Composable
+public fun SimpleListItem(
+    state: ListItemState,
+    modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
+    icon: IconKey? = null,
+    iconContentDescription: String? = null,
+    style: SimpleListItemStyle = JewelTheme.simpleListItemStyle,
+    height: Dp = JewelTheme.globalMetrics.rowHeight,
+    content: @Composable () -> Unit,
+) {
     Row(
         modifier =
             modifier
@@ -83,14 +133,7 @@ public fun SimpleListItem(
         if (icon != null) {
             Icon(modifier = iconModifier.size(16.dp), key = icon, contentDescription = iconContentDescription)
         }
-        Text(
-            text = text,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = JewelTheme.defaultTextStyle,
-            color = style.colors.contentFor(state).value,
-            modifier = textModifier,
-        )
+        content()
     }
 }
 

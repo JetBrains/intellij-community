@@ -826,8 +826,10 @@ public final class org/jetbrains/jewel/ui/component/SelectableIconButtonState$Co
 }
 
 public final class org/jetbrains/jewel/ui/component/SimpleListItemKt {
+	public static final fun SimpleListItem-0vH8DBg (Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun SimpleListItem-aqv2aB4 (Ljava/lang/String;ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/runtime/Composer;II)V
 	public static final fun SimpleListItem-eKw1uXw (Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleListItem-gMrHQkA (ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/SliderKt {
