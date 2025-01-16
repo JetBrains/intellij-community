@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -214,6 +216,21 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults()) myMethodChecker.checkMethodCanHaveBody(method);
       if (!hasErrorResults()) myMethodChecker.checkMethodMustHaveBody(method);
       if (!hasErrorResults()) myMethodChecker.checkStaticMethodOverride(method);
+      MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
+      PsiClass aClass = method.getContainingClass();
+      if (!method.isConstructor()) {
+        List<HierarchicalMethodSignature> superMethodSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+        if (!superMethodSignatures.isEmpty()) {
+          if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+            if (!hasErrorResults()) myMethodChecker.checkMethodWeakerPrivileges(method, methodSignature, superMethodSignatures);
+            if (!hasErrorResults()) myMethodChecker.checkMethodOverridesFinal(methodSignature, superMethodSignatures);
+          }
+          if (!hasErrorResults()) myMethodChecker.checkMethodIncompatibleReturnType(method, methodSignature, superMethodSignatures);
+          if (aClass != null && !hasErrorResults()) {
+            myMethodChecker.checkMethodIncompatibleThrows(method, methodSignature, superMethodSignatures, aClass);
+          }
+        }
+      }
     }
     else if (parent instanceof PsiClass aClass) {
       if (!hasErrorResults()) myClassChecker.checkDuplicateNestedClass(aClass);
@@ -230,6 +247,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         //myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
       }
       if (!hasErrorResults()) myClassChecker.checkCyclicInheritance(aClass);
+      if (!hasErrorResults()) myMethodChecker.checkOverrideEquivalentInheritedMethods(aClass);
     }
   }
 

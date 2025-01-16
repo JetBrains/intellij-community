@@ -16,7 +16,6 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -57,7 +56,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class HighlightMethodUtil {
-  private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
 
   private HighlightMethodUtil() { }
 
@@ -79,70 +77,6 @@ public final class HighlightMethodUtil {
                                    JavaHighlightUtil.formatMethod(method2));
   }
 
-  static HighlightInfo.Builder checkMethodWeakerPrivileges(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                           @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
-                                                           boolean includeRealPositionInfo,
-                                                           @NotNull PsiFile containingFile, @Nullable Ref<? super String> description) {
-    PsiMethod method = methodSignature.getMethod();
-    PsiModifierList modifierList = method.getModifierList();
-    if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) return null;
-    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
-      PsiMethod superMethod = superMethodSignature.getMethod();
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
-      if (!PsiUtil.isAccessible(containingFile.getProject(), superMethod, method, null)) continue;
-      if (!includeRealPositionInfo && MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
-      HighlightInfo.Builder info = isWeaker(method, superMethod, includeRealPositionInfo, description);
-      if (info != null) return info;
-    }
-    return null;
-  }
-
-  private static HighlightInfo.Builder isWeaker(@NotNull PsiMethod method,
-                                                @NotNull PsiMethod superMethod,
-                                                boolean includeRealPositionInfo, @Nullable Ref<? super String> descriptionH) {
-    PsiModifierList modifierList = method.getModifierList();
-    int accessLevel = PsiUtil.getAccessLevel(modifierList);
-    String accessModifier = PsiUtil.getAccessModifier(accessLevel);
-    int superAccessLevel = PsiUtil.getAccessLevel(superMethod.getModifierList());
-    if (accessLevel < superAccessLevel) {
-      String description = JavaErrorBundle.message("weaker.privileges",
-                                                   createClashMethodMessage(method, superMethod, true),
-                                                   VisibilityUtil.toPresentableText(accessModifier),
-                                                   PsiUtil.getAccessModifier(superAccessLevel));
-      if (descriptionH != null) {
-        descriptionH.set(description);
-      }
-      TextRange textRange = TextRange.EMPTY_RANGE;
-      if (includeRealPositionInfo) {
-        PsiElement keyword = PsiUtil.findModifierInList(modifierList, accessModifier);
-        if (keyword != null) {
-          textRange = keyword.getTextRange();
-        }
-        else {
-          // in case of package-private or some crazy third-party plugin where some access modifier implied even if it's absent
-          PsiIdentifier identifier = method.getNameIdentifier();
-          if (identifier != null) {
-            textRange = identifier.getTextRange();
-          }
-        }
-      }
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
-      IntentionAction action = QuickFixFactory.getInstance().createChangeModifierFix();
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-
-    return null;
-  }
-
-
-  static HighlightInfo.Builder checkMethodIncompatibleReturnType(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                                 @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
-                                                                 boolean includeRealPositionInfo,
-                                                                 @Nullable Ref<? super String> description) {
-    return checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, includeRealPositionInfo, null, description);
-  }
 
   static HighlightInfo.Builder checkMethodIncompatibleReturnType(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
                                                                  @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
@@ -171,7 +105,7 @@ public final class HighlightMethodUtil {
       }
       HighlightInfo.Builder info = checkSuperMethodSignature(
         superMethod, superMethodSignature, superReturnType, method, methodSignature, returnType,
-        JavaErrorBundle.message("incompatible.return.type"), textRange, PsiUtil.getLanguageLevel(aClass), description);
+        textRange, PsiUtil.getLanguageLevel(aClass), description);
       if (info != null) {
         return info;
       }
@@ -186,7 +120,6 @@ public final class HighlightMethodUtil {
                                                                  @NotNull PsiMethod method,
                                                                  @NotNull MethodSignatureBackedByPsiMethod methodSignature,
                                                                  @NotNull PsiType returnType,
-                                                                 @NotNull @Nls String detailMessage,
                                                                  @NotNull TextRange range,
                                                                  @NotNull LanguageLevel languageLevel,
                                                                  @Nullable Ref<? super String> description) {
@@ -222,7 +155,8 @@ public final class HighlightMethodUtil {
       }
     }
 
-    return createIncompatibleReturnTypeMessage(method, superMethod, substitutedSuperReturnType, returnType, detailMessage, range,
+    return createIncompatibleReturnTypeMessage(method, superMethod, substitutedSuperReturnType, returnType,
+                                               JavaErrorBundle.message("incompatible.return.type"), range,
                                                description);
   }
 
@@ -260,133 +194,6 @@ public final class HighlightMethodUtil {
     return errorResult;
   }
 
-
-  static HighlightInfo.Builder checkMethodOverridesFinal(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                 @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures) {
-    PsiMethod method = methodSignature.getMethod();
-    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
-      PsiMethod superMethod = superMethodSignature.getMethod();
-      HighlightInfo.Builder info = checkSuperMethodIsFinal(method, superMethod);
-      if (info != null) return info;
-    }
-    return null;
-  }
-
-  private static HighlightInfo.Builder checkSuperMethodIsFinal(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
-    // strange things happen when super method is from Object and method from interface
-    if (superMethod.hasModifierProperty(PsiModifier.FINAL)) {
-      PsiClass superClass = superMethod.getContainingClass();
-      String description = JavaErrorBundle.message("final.method.override",
-                                                   JavaHighlightUtil.formatMethod(method),
-                                                   JavaHighlightUtil.formatMethod(superMethod),
-                                                     superClass != null ? HighlightUtil.formatClass(superClass) : "<unknown>");
-      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
-      HighlightInfo.Builder errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
-      QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(superMethod, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false)));
-      return errorResult;
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkMethodIncompatibleThrows(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                                             @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
-                                                             boolean includeRealPositionInfo,
-                                                             @NotNull PsiClass analyzedClass, @Nullable Ref<? super String> descriptionH) {
-    PsiMethod method = methodSignature.getMethod();
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
-    PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, analyzedClass, PsiSubstitutor.EMPTY);
-    PsiClassType[] exceptions = method.getThrowsList().getReferencedTypes();
-    PsiJavaCodeReferenceElement[] referenceElements;
-    List<PsiElement> exceptionContexts;
-    if (includeRealPositionInfo) {
-      exceptionContexts = new ArrayList<>();
-      referenceElements = method.getThrowsList().getReferenceElements();
-    }
-    else {
-      exceptionContexts = null;
-      referenceElements = null;
-    }
-    List<PsiClassType> checkedExceptions = new ArrayList<>();
-    for (int i = 0; i < exceptions.length; i++) {
-      PsiClassType exception = exceptions[i];
-      if (exception == null) {
-        LOG.error("throws: " + method.getThrowsList().getText() + "; method: " + method);
-      }
-      else if (!ExceptionUtil.isUncheckedException(exception)) {
-        checkedExceptions.add(exception);
-        if (includeRealPositionInfo && i < referenceElements.length) {
-          PsiJavaCodeReferenceElement exceptionRef = referenceElements[i];
-          exceptionContexts.add(exceptionRef);
-        }
-      }
-    }
-    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
-      PsiMethod superMethod = superMethodSignature.getMethod();
-      int index = getExtraExceptionNum(methodSignature, superMethodSignature, checkedExceptions, superSubstitutor);
-      if (index != -1) {
-        if (aClass.isInterface()) {
-          PsiClass superContainingClass = superMethod.getContainingClass();
-          if (superContainingClass != null && !superContainingClass.isInterface()) continue;
-          if (superContainingClass != null && !aClass.isInheritor(superContainingClass, true)) continue;
-        }
-        PsiClassType exception = checkedExceptions.get(index);
-        String description = JavaErrorBundle.message("overridden.method.does.not.throw",
-                                                     createClashMethodMessage(method, superMethod, true),
-                                                     JavaHighlightUtil.formatType(exception));
-        if (descriptionH != null) {
-          descriptionH.set(description);
-        }
-        TextRange textRange;
-        if (includeRealPositionInfo) {
-          PsiElement exceptionContext = exceptionContexts.get(index);
-          textRange = exceptionContext.getTextRange();
-        }
-        else {
-          textRange = TextRange.EMPTY_RANGE;
-        }
-        HighlightInfo.Builder errorResult =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
-        IntentionAction action1 = QuickFixFactory.getInstance().createMethodThrowsFix(method, exception, false, false);
-        errorResult.registerFix(action1, null, null, null, null);
-        IntentionAction action = QuickFixFactory.getInstance().createMethodThrowsFix(superMethod, exception, true, true);
-        errorResult.registerFix(action, null, null, null, null);
-        return errorResult;
-      }
-    }
-    return null;
-  }
-
-  // return number of exception  which was not declared in super method or -1
-  private static int getExtraExceptionNum(@NotNull MethodSignature methodSignature,
-                                          @NotNull MethodSignatureBackedByPsiMethod superSignature,
-                                          @NotNull List<? extends PsiClassType> checkedExceptions,
-                                          @NotNull PsiSubstitutor substitutorForDerivedClass) {
-    PsiMethod superMethod = superSignature.getMethod();
-    PsiSubstitutor substitutorForMethod = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superSignature);
-    for (int i = 0; i < checkedExceptions.size(); i++) {
-      PsiClassType checkedEx = checkedExceptions.get(i);
-      PsiType substituted = substitutorForMethod == null ? TypeConversionUtil.erasure(checkedEx) : substitutorForMethod.substitute(checkedEx);
-      PsiType exception = substitutorForDerivedClass.substitute(substituted);
-      if (!isMethodThrows(superMethod, substitutorForMethod, exception, substitutorForDerivedClass)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  private static boolean isMethodThrows(@NotNull PsiMethod method,
-                                        @Nullable PsiSubstitutor substitutorForMethod,
-                                        @NotNull PsiType exception,
-                                        @NotNull PsiSubstitutor substitutorForDerivedClass) {
-    PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
-    for (PsiClassType thrownException1 : thrownExceptions) {
-      PsiType thrownException = substitutorForMethod != null ? substitutorForMethod.substitute(thrownException1) : TypeConversionUtil.erasure(thrownException1);
-      thrownException = substitutorForDerivedClass.substitute(thrownException);
-      if (TypeConversionUtil.isAssignable(thrownException, exception)) return true;
-    }
-    return false;
-  }
 
   static void checkMethodCall(@NotNull PsiMethodCallExpression methodCall,
                               @NotNull PsiResolveHelper resolveHelper,
@@ -1381,138 +1188,6 @@ public final class HighlightMethodUtil {
     return null;
   }
 
-
-  private static String checkInterfaceInheritedMethodsReturnTypesDescription(@NotNull List<? extends MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                                                             @NotNull LanguageLevel languageLevel) {
-    if (superMethodSignatures.size() < 2) return null;
-    MethodSignatureBackedByPsiMethod[] returnTypeSubstitutable = {superMethodSignatures.get(0)};
-    for (int i = 1; i < superMethodSignatures.size(); i++) {
-      PsiMethod currentMethod = returnTypeSubstitutable[0].getMethod();
-      PsiType currentType = returnTypeSubstitutable[0].getSubstitutor().substitute(currentMethod.getReturnType());
-
-      MethodSignatureBackedByPsiMethod otherSuperSignature = superMethodSignatures.get(i);
-      PsiMethod otherSuperMethod = otherSuperSignature.getMethod();
-      PsiSubstitutor otherSubstitutor = otherSuperSignature.getSubstitutor();
-      PsiType otherSuperReturnType = otherSubstitutor.substitute(otherSuperMethod.getReturnType());
-      PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(returnTypeSubstitutable[0],
-                                                                                                  otherSuperSignature);
-      if (unifyingSubstitutor != null) {
-        otherSuperReturnType = unifyingSubstitutor.substitute(otherSuperReturnType);
-        currentType = unifyingSubstitutor.substitute(currentType);
-      }
-
-      if (otherSuperReturnType == null || currentType == null || otherSuperReturnType.equals(currentType)) continue;
-      PsiType otherReturnType = otherSuperReturnType;
-      PsiType curType = currentType;
-      String info =
-        LambdaUtil.performWithSubstitutedParameterBounds(otherSuperMethod.getTypeParameters(), otherSubstitutor, () -> {
-          if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
-            //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.4.8 Example 8.1.5-3
-            if (!(otherReturnType instanceof PsiPrimitiveType || curType instanceof PsiPrimitiveType)) {
-              if (otherReturnType.isAssignableFrom(curType)) return null;
-              if (curType.isAssignableFrom(otherReturnType)) {
-                returnTypeSubstitutable[0] = otherSuperSignature;
-                return null;
-              }
-            }
-            if (otherSuperMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(otherReturnType, curType)) return null;
-          }
-          return MessageFormat.format("{0}; {1}", createClashMethodMessage(otherSuperMethod, currentMethod, true), JavaErrorBundle.message("unrelated.overriding.methods.return.types"));
-        });
-      if (info != null) return info;
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkOverrideEquivalentInheritedMethods(@NotNull PsiClass aClass,
-                                                               @NotNull PsiFile containingFile,
-                                                               @NotNull LanguageLevel languageLevel) {
-    Collection<HierarchicalMethodSignature> visibleSignatures = aClass.getVisibleSignatures();
-    if (aClass.getImplementsListTypes().length == 0 && aClass.getExtendsListTypes().length == 0) {
-      // optimization: do not analyze unrelated methods from Object: in case of no inheritance they can't conflict
-      return null;
-    }
-    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
-
-    String description = null;
-    boolean appendImplementMethodFix = true;
-    Ultimate:
-    for (HierarchicalMethodSignature signature : visibleSignatures) {
-      PsiMethod method = signature.getMethod();
-      if (!resolveHelper.isAccessible(method, aClass, null)) continue;
-      List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
-
-      boolean allAbstracts = method.hasModifierProperty(PsiModifier.ABSTRACT);
-      PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || aClass.equals(containingClass)) continue; //to be checked at method level
-
-      if (aClass.isInterface() && !containingClass.isInterface()) continue;
-      String error;
-      if (allAbstracts) {
-        superSignatures = new ArrayList<>(superSignatures);
-        superSignatures.add(0, signature);
-        error = checkInterfaceInheritedMethodsReturnTypesDescription(superSignatures, languageLevel);
-      }
-      else {
-        Ref<String> descriptionH = new Ref<>();
-        checkMethodIncompatibleReturnType(signature, superSignatures, false, descriptionH);
-        error = descriptionH.get();
-      }
-      if (error != null) {
-        description = error;
-      }
-
-      if (method.hasModifierProperty(PsiModifier.STATIC) &&
-          //jsl 8, chapter 9.4.1
-          //chapter 8.4.8.2 speaks about a class that "declares or inherits a static method",
-          // at the same time the rule from chapter 9.4.1 speaks only about an interface that "declares a static method"
-          //There is no point to add java version check, because static methods in interfaces are allowed from java 8 too.
-          (!aClass.isInterface() ||
-           aClass.getManager().areElementsEquivalent(aClass, method.getContainingClass()))) {
-        for (HierarchicalMethodSignature superSignature : superSignatures) {
-          PsiMethod superMethod = superSignature.getMethod();
-          if (!superMethod.hasModifierProperty(PsiModifier.STATIC)) {
-            PsiClass superClass = superMethod.getContainingClass();
-            description = JavaErrorBundle.message("static.method.cannot.override.instance.method",
-                                                  JavaHighlightUtil.formatMethod(method),
-                                                  HighlightUtil.formatClass(containingClass),
-                                                  JavaHighlightUtil.formatMethod(superMethod),
-                                                    superClass != null ? HighlightUtil.formatClass(superClass) : "<unknown>");
-            appendImplementMethodFix = false;
-            break Ultimate;
-          }
-        }
-        continue;
-      }
-
-      if (description == null) {
-        Ref<@Nls String> descriptionH = new Ref<>();
-        checkMethodIncompatibleThrows(signature, superSignatures, false, aClass, descriptionH);
-        description = descriptionH.get();
-      }
-
-      if (description == null) {
-        Ref<@Nls String> descriptionH = new Ref<>();
-        checkMethodWeakerPrivileges(signature, superSignatures, false, containingFile, descriptionH);
-        description = descriptionH.get();
-      }
-
-      if (description != null) break;
-    }
-
-
-    if (description != null) {
-      // show error info at the class level
-      TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      HighlightInfo.Builder highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
-      if (appendImplementMethodFix) {
-        IntentionAction action = QuickFixFactory.getInstance().createImplementMethodsFix(aClass);
-        highlightInfo.registerFix(action, null, null, null, null);
-      }
-      return highlightInfo;
-    }
-    return null;
-  }
 
   static HighlightInfo.Builder checkConstructorHandleSuperClassExceptions(@NotNull PsiMethod method) {
     if (!method.isConstructor()) {

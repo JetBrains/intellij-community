@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -118,12 +119,36 @@ final class JavaErrorFixProvider {
     });
     fix(METHOD_ABSTRACT_BODY, error -> myFactory.createPushDownMethodFix());
     fix(METHOD_NATIVE_BODY, error -> myFactory.createPushDownMethodFix());
-    fix(METHOD_STATIC_OVERRIDES_INSTANCE, error -> removeModifierFix(error.psi(), PsiModifier.STATIC));
-    fix(METHOD_INSTANCE_OVERRIDES_STATIC, error -> maybeAddModifierFix(error.psi(), PsiModifier.STATIC));
-    fix(METHOD_STATIC_OVERRIDES_INSTANCE, error -> maybeAddModifierFix(error.context(), PsiModifier.STATIC));
-    fix(METHOD_INSTANCE_OVERRIDES_STATIC, error -> removeModifierFix(error.context(), PsiModifier.STATIC));
+    fix(METHOD_STATIC_OVERRIDES_INSTANCE, error -> removeModifierFix(error.context().method(), PsiModifier.STATIC));
+    fix(METHOD_INSTANCE_OVERRIDES_STATIC, error -> maybeAddModifierFix(error.context().method(), PsiModifier.STATIC));
+    fix(METHOD_STATIC_OVERRIDES_INSTANCE, error -> maybeAddModifierFix(error.context().superMethod(), PsiModifier.STATIC));
+    fix(METHOD_INSTANCE_OVERRIDES_STATIC, error -> removeModifierFix(error.context().superMethod(), PsiModifier.STATIC));
     fix(METHOD_OVERRIDES_FINAL, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
-    fix(METHOD_INHERITANCE_WEAKER_PRIVILEGES, error -> myFactory.createChangeModifierFix());
+    fix(METHOD_INHERITANCE_WEAKER_PRIVILEGES, 
+        error -> error.psi() instanceof PsiMethod ? myFactory.createChangeModifierFix() :
+                 error.psi() instanceof PsiClass cls ? myFactory.createImplementMethodsFix(cls) : null);
+    multi(METHOD_INHERITANCE_CLASH_DOES_NOT_THROW, error -> List.of(
+      myFactory.createMethodThrowsFix(error.context().method(), error.context().exceptionType(), false, false),
+      myFactory.createMethodThrowsFix(error.context().superMethod(), error.context().exceptionType(), true, true)
+    ));
+    multi(METHOD_INHERITANCE_CLASH_INCOMPATIBLE_RETURN_TYPES, error -> {
+      IncompatibleOverrideReturnTypeContext context = error.context();
+      PsiMethod method = context.method();
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      if (method instanceof LightRecordMethod recordMethod) {
+        registrar.addAll(
+          HighlightFixUtil.getChangeVariableTypeFixes(recordMethod.getRecordComponent(), context.superMethodReturnType()));
+      }
+      else {
+        registrar.add(myFactory.createMethodReturnFix(method, context.superMethodReturnType(), false));
+      }
+      registrar.add(myFactory.createSuperMethodReturnFix(context.superMethod(), context.methodReturnType()));
+      PsiClass returnClass = PsiUtil.resolveClassInClassTypeOnly(context.methodReturnType());
+      if (returnClass != null && context.superMethodReturnType() instanceof PsiClassType classType) {
+        registrar.add(myFactory.createChangeParameterClassFix(returnClass, classType));
+      }
+      return registrar;
+    });
   }
   
   private void createConstructorFixes() {

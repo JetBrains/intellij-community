@@ -61,7 +61,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -869,43 +868,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitModifierList(list);
     PsiElement parent = list.getParent();
     if (parent instanceof PsiMethod method) {
-      MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       PsiClass aClass = method.getContainingClass();
-      if (!method.isConstructor()) {
-        try {
-          List<HierarchicalMethodSignature> superMethodSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
-          if (!superMethodSignatures.isEmpty()) {
-            if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-              if (!hasErrorResults()) {
-                add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodSignatures, true, myFile, null));
-              }
-              if (!hasErrorResults()) add(HighlightMethodUtil.checkMethodOverridesFinal(methodSignature, superMethodSignatures));
-            }
-            if (!hasErrorResults()) {
-              add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true, null));
-            }
-            if (aClass != null && !hasErrorResults()) {
-              add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true, aClass, null));
-            }
-          }
-        }
-        catch (IndexNotReadyException ignored) {
-        }
-      }
       if (!hasErrorResults() && aClass != null) {
         GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
         myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(method));
       }
     }
     else if (parent instanceof PsiClass aClass) {
-      try {
-        if (!hasErrorResults()) add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass, myFile, myLanguageLevel));
-        if (!hasErrorResults()) {
-          GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
-          myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
-        }
-      }
-      catch (IndexNotReadyException ignored) {
+      if (!hasErrorResults()) {
+        GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
+        myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
       }
     }
   }

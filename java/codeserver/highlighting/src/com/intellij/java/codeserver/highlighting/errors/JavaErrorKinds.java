@@ -372,22 +372,22 @@ public final class JavaErrorKinds {
     error(PsiMethod.class, "method.should.have.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
   public static final Simple<PsiMethod> METHOD_SHOULD_HAVE_BODY_OR_ABSTRACT =
     error(PsiMethod.class, "method.should.have.body.or.abstract").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
-  public static final Parameterized<PsiMethod, PsiMethod> METHOD_STATIC_OVERRIDES_INSTANCE =
-    parameterized(PsiMethod.class, PsiMethod.class, "method.static.overrides.instance")
-      .withRange((method, superMethod) -> getMethodDeclarationTextRange(method))
-      .withRawDescription((method, superMethod) -> message("method.static.overrides.instance",
-                                                           formatMethod(method),
-                                                           formatClass(requireNonNull(method.getContainingClass())),
-                                                           formatMethod(superMethod),
-                                                           formatClass(requireNonNull(superMethod.getContainingClass()))));
-  public static final Parameterized<PsiMethod, PsiMethod> METHOD_INSTANCE_OVERRIDES_STATIC =
-    parameterized(PsiMethod.class, PsiMethod.class, "method.instance.overrides.static")
-      .withRange((method, superMethod) -> getMethodDeclarationTextRange(method))
-      .withRawDescription((method, superMethod) -> message("method.instance.overrides.static",
-                                                           formatMethod(method),
-                                                           formatClass(requireNonNull(method.getContainingClass())),
-                                                           formatMethod(superMethod),
-                                                           formatClass(requireNonNull(superMethod.getContainingClass()))));
+  public static final Parameterized<PsiMember, @NotNull OverrideClashContext> METHOD_STATIC_OVERRIDES_INSTANCE =
+    parameterized(PsiMember.class, OverrideClashContext.class, "method.static.overrides.instance")
+      .withRange((member, ctx) -> getMemberDeclarationTextRange(member))
+      .withRawDescription((method, ctx) -> message("method.static.overrides.instance",
+                                                   formatMethod(ctx.method()),
+                                                   formatClass(requireNonNull(ctx.method().getContainingClass())),
+                                                   formatMethod(ctx.superMethod()),
+                                                   formatClass(requireNonNull(ctx.superMethod().getContainingClass()))));
+  public static final Parameterized<PsiMember, @NotNull OverrideClashContext> METHOD_INSTANCE_OVERRIDES_STATIC =
+    parameterized(PsiMember.class, OverrideClashContext.class, "method.instance.overrides.static")
+      .withRange((method, ctx) -> getMemberDeclarationTextRange(method))
+      .withRawDescription((method, ctx) -> message("method.instance.overrides.static",
+                                                           formatMethod(ctx.method()),
+                                                           formatClass(requireNonNull(ctx.method().getContainingClass())),
+                                                           formatMethod(ctx.superMethod()),
+                                                           formatClass(requireNonNull(ctx.superMethod().getContainingClass()))));
   public static final Parameterized<PsiMethod, PsiMethod> METHOD_OVERRIDES_FINAL =
     parameterized(PsiMethod.class, PsiMethod.class, "method.overrides.final")
       .withRange((method, superMethod) -> getMethodDeclarationTextRange(method))
@@ -398,26 +398,56 @@ public final class JavaErrorKinds {
                        formatMethod(superMethod),
                        superClass != null ? formatClass(superClass) : "<unknown>");
       });
-  public static final Parameterized<PsiMethod, PsiMethod> METHOD_INHERITANCE_WEAKER_PRIVILEGES =
-    parameterized(PsiMethod.class, PsiMethod.class, "method.inheritance.weaker.privileges")
-      .withRange((method, superMethod) -> {
-        PsiModifierList modifierList = method.getModifierList();
-        PsiElement keyword = PsiUtil.findModifierInList(modifierList, PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(modifierList)));
-        if (keyword != null) {
-          return keyword.getTextRange().shiftLeft(method.getTextRange().getStartOffset());
+  public static final Parameterized<PsiMember, @NotNull OverrideClashContext> METHOD_INHERITANCE_WEAKER_PRIVILEGES =
+    parameterized(PsiMember.class, OverrideClashContext.class, "method.inheritance.weaker.privileges")
+      .withRange((psi, ctx) -> {
+        if (psi instanceof PsiMethod method) {
+          PsiModifierList modifierList = method.getModifierList();
+          PsiElement keyword = PsiUtil.findModifierInList(modifierList, PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(modifierList)));
+          if (keyword != null) {
+            return keyword.getTextRange().shiftLeft(method.getTextRange().getStartOffset());
+          }
+          // in case of package-private or some crazy third-party plugin where some access modifier implied even if it's absent
+          PsiIdentifier identifier = method.getNameIdentifier();
+          if (identifier != null) {
+            return identifier.getTextRangeInParent();
+          }
         }
-        // in case of package-private or some crazy third-party plugin where some access modifier implied even if it's absent
-        PsiIdentifier identifier = method.getNameIdentifier();
-        if (identifier != null) {
-          return identifier.getTextRangeInParent();
-        }
-        return getMethodDeclarationTextRange(method);
+        return getMemberDeclarationTextRange(psi);
       })
-      .withRawDescription((method, superMethod) -> message(
+      .withRawDescription((psi, ctx) -> message(
         "method.inheritance.weaker.privileges",
-        formatClashMethodMessage(method, superMethod, true),
-        VisibilityUtil.toPresentableText(PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()))),
-        VisibilityUtil.toPresentableText(PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(superMethod.getModifierList())))));
+        formatClashMethodMessage(ctx.method(), ctx.superMethod(), true),
+        VisibilityUtil.toPresentableText(PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(ctx.method().getModifierList()))),
+        VisibilityUtil.toPresentableText(PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(ctx.superMethod().getModifierList())))));
+  public static final Parameterized<PsiClass, @NotNull OverrideClashContext> METHOD_INHERITANCE_CLASH_UNRELATED_RETURN_TYPES =
+    parameterized(PsiClass.class, OverrideClashContext.class, "method.inheritance.clash.unrelated.return.types")
+      .withRange((cls, ctx) -> getClassDeclarationTextRange(cls))
+      .withRawDescription((cls, ctx) -> message("method.inheritance.clash.unrelated.return.types",
+                                                formatClashMethodMessage(ctx.superMethod(), ctx.method(), true)));
+  public static final Parameterized<PsiMember, @NotNull IncompatibleOverrideReturnTypeContext>
+    METHOD_INHERITANCE_CLASH_INCOMPATIBLE_RETURN_TYPES =
+    parameterized(PsiMember.class, IncompatibleOverrideReturnTypeContext.class, "method.inheritance.clash.incompatible.return.types")
+      .withRange((psi, ctx) -> {
+        if (psi instanceof PsiMethod method) {
+          PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+          if (returnTypeElement != null) {
+            return returnTypeElement.getTextRangeInParent();
+          }
+        }
+        return getMemberDeclarationTextRange(psi);
+      })
+      .withRawDescription((cls, ctx) -> message("method.inheritance.clash.incompatible.return.types",
+                                                formatClashMethodMessage(ctx.method(), ctx.superMethod(), true)));
+  public static final Parameterized<PsiMember, @NotNull IncompatibleOverrideExceptionContext>
+    METHOD_INHERITANCE_CLASH_DOES_NOT_THROW =
+    parameterized(PsiMember.class, IncompatibleOverrideExceptionContext.class, "method.inheritance.clash.does.not.throw")
+      .withRange((psi, ctx) ->
+                   ctx.exceptionReference() != null ? ctx.exceptionReference().getTextRange().shiftLeft(psi.getTextRange().getStartOffset()) :
+                   getMemberDeclarationTextRange(psi))
+      .withRawDescription((cls, ctx) -> message("method.inheritance.clash.does.not.throw",
+                                                formatClashMethodMessage(ctx.method(), ctx.superMethod(), true),
+                                                formatType(ctx.exceptionType())));
 
   public static final Parameterized<PsiMember, AmbiguousImplicitConstructorCallContext> CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL =
     parameterized(PsiMember.class, AmbiguousImplicitConstructorCallContext.class, "constructor.ambiguous.implicit.call")
@@ -553,6 +583,21 @@ public final class JavaErrorKinds {
                                              PsiFormatUtilBase.SHOW_TYPE);
       return message("constructor.ambiguous.implicit.call", m1, m2);
     }
+  }
+
+  public record OverrideClashContext(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+  }
+
+  public record IncompatibleOverrideReturnTypeContext(@NotNull PsiMethod method,
+                                                      @NotNull PsiType methodReturnType,
+                                                      @NotNull PsiMethod superMethod,
+                                                      @NotNull PsiType superMethodReturnType) {
+  }
+
+  public record IncompatibleOverrideExceptionContext(@NotNull PsiMethod method,
+                                                     @NotNull PsiMethod superMethod,
+                                                     @NotNull PsiClassType exceptionType,
+                                                     @Nullable PsiJavaCodeReferenceElement exceptionReference) {
   }
   
 }

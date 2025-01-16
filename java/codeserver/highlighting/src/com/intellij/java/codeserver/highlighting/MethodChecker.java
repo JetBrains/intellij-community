@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
+import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
@@ -12,10 +15,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 final class MethodChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
@@ -137,13 +139,13 @@ final class MethodChecker {
     boolean isSuperMethodStatic = superModifierList.hasModifierProperty(PsiModifier.STATIC);
     if (isMethodStatic != isSuperMethodStatic) {
       var errorKind = isMethodStatic ? JavaErrorKinds.METHOD_STATIC_OVERRIDES_INSTANCE : JavaErrorKinds.METHOD_INSTANCE_OVERRIDES_STATIC;
-      myVisitor.report(errorKind.create(method, superMethod));
+      myVisitor.report(errorKind.create(method, new JavaErrorKinds.OverrideClashContext(method, superMethod)));
       return;
     }
 
     if (isMethodStatic) {
       if (superClass.isInterface()) return;
-      checkIsWeaker(method, superMethod);
+      checkIsWeaker(method, method, superMethod);
       if (!myVisitor.hasErrorResults()) checkSuperMethodIsFinal(method, superMethod);
     }
   }
@@ -155,13 +157,273 @@ final class MethodChecker {
     }
   }
 
-  private void checkIsWeaker(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+  private void checkIsWeaker(@NotNull PsiMember anchor, @NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     PsiModifierList modifierList = method.getModifierList();
     int accessLevel = PsiUtil.getAccessLevel(modifierList);
     int superAccessLevel = PsiUtil.getAccessLevel(superMethod.getModifierList());
     if (accessLevel < superAccessLevel) {
-      myVisitor.report(JavaErrorKinds.METHOD_INHERITANCE_WEAKER_PRIVILEGES.create(method, superMethod));
+      myVisitor.report(JavaErrorKinds.METHOD_INHERITANCE_WEAKER_PRIVILEGES.create(
+        anchor, new JavaErrorKinds.OverrideClashContext(method, superMethod)));
     }
+  }
+
+  void checkOverrideEquivalentInheritedMethods(@NotNull PsiClass aClass) {
+    Collection<HierarchicalMethodSignature> visibleSignatures = aClass.getVisibleSignatures();
+    if (aClass.getImplementsListTypes().length == 0 && aClass.getExtendsListTypes().length == 0) {
+      // optimization: do not analyze unrelated methods from Object: in case of no inheritance they can't conflict
+      return;
+    }
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
+
+    for (HierarchicalMethodSignature signature : visibleSignatures) {
+      PsiMethod method = signature.getMethod();
+      if (!resolveHelper.isAccessible(method, aClass, null)) continue;
+      List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
+
+      boolean allAbstracts = method.hasModifierProperty(PsiModifier.ABSTRACT);
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || aClass.equals(containingClass)) continue; //to be checked at method level
+
+      if (aClass.isInterface() && !containingClass.isInterface()) continue;
+      if (allAbstracts) {
+        superSignatures = new ArrayList<>(superSignatures);
+        superSignatures.add(0, signature);
+        checkInterfaceInheritedMethodsReturnTypes(aClass, superSignatures);
+      }
+      else {
+        checkMethodIncompatibleReturnType(aClass, signature, superSignatures);
+      }
+
+      if (method.hasModifierProperty(PsiModifier.STATIC) &&
+          //jsl 8, chapter 9.4.1
+          //chapter 8.4.8.2 speaks about a class that "declares or inherits a static method",
+          // at the same time the rule from chapter 9.4.1 speaks only about an interface that "declares a static method"
+          //There is no point to add java version check, because static methods in interfaces are allowed from java 8 too.
+          (!aClass.isInterface() ||
+           aClass.getManager().areElementsEquivalent(aClass, method.getContainingClass()))) {
+        for (HierarchicalMethodSignature superSignature : superSignatures) {
+          PsiMethod superMethod = superSignature.getMethod();
+          if (!superMethod.hasModifierProperty(PsiModifier.STATIC)) {
+            myVisitor.report(JavaErrorKinds.METHOD_STATIC_OVERRIDES_INSTANCE.create(
+              aClass, new JavaErrorKinds.OverrideClashContext(method, superMethod)));
+            return;
+          }
+        }
+        continue;
+      }
+
+      if (!myVisitor.hasErrorResults()) {
+        checkMethodIncompatibleThrows(aClass, signature, superSignatures, aClass);
+      }
+
+      if (!myVisitor.hasErrorResults()) {
+        checkMethodWeakerPrivileges(aClass, signature, superSignatures);
+      }
+    }
+  }
+
+  void checkMethodWeakerPrivileges(@NotNull PsiMember anchor,
+                                   @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                   @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures) {
+    PsiMethod method = methodSignature.getMethod();
+    PsiModifierList modifierList = method.getModifierList();
+    if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) return;
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
+      PsiMethod superMethod = superMethodSignature.getMethod();
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
+      if (!PsiUtil.isAccessible(myVisitor.project(), superMethod, method, null)) continue;
+      if (anchor instanceof PsiClass && MethodSignatureUtil.isSuperMethod(superMethod, method)) continue;
+      checkIsWeaker(anchor, method, superMethod);
+    }
+  }
+
+  void checkMethodIncompatibleThrows(@NotNull PsiMember anchor,
+                                     @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                     @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
+                                     @NotNull PsiClass analyzedClass) {
+    PsiMethod method = methodSignature.getMethod();
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return;
+    PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, analyzedClass, PsiSubstitutor.EMPTY);
+    PsiClassType[] exceptions = method.getThrowsList().getReferencedTypes();
+    PsiJavaCodeReferenceElement[] referenceElements = anchor == method ? method.getThrowsList().getReferenceElements() : null;
+    List<PsiJavaCodeReferenceElement> exceptionContexts = new ArrayList<>();
+    List<PsiClassType> checkedExceptions = new ArrayList<>();
+    for (int i = 0; i < exceptions.length; i++) {
+      PsiClassType exception = exceptions[i];
+      if (!ExceptionUtil.isUncheckedException(exception)) {
+        checkedExceptions.add(exception);
+        if (referenceElements != null && i < referenceElements.length) {
+          PsiJavaCodeReferenceElement exceptionRef = referenceElements[i];
+          exceptionContexts.add(exceptionRef);
+        }
+      }
+    }
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
+      PsiMethod superMethod = superMethodSignature.getMethod();
+      int index = getExtraExceptionNum(methodSignature, superMethodSignature, checkedExceptions, superSubstitutor);
+      if (index != -1) {
+        if (aClass.isInterface()) {
+          PsiClass superContainingClass = superMethod.getContainingClass();
+          if (superContainingClass != null && !superContainingClass.isInterface()) continue;
+          if (superContainingClass != null && !aClass.isInheritor(superContainingClass, true)) continue;
+        }
+        PsiClassType exception = checkedExceptions.get(index);
+        myVisitor.report(JavaErrorKinds.METHOD_INHERITANCE_CLASH_DOES_NOT_THROW.create(
+          anchor,
+          new JavaErrorKinds.IncompatibleOverrideExceptionContext(method, superMethod, exception, 
+                                                                  exceptionContexts.isEmpty() ? null : exceptionContexts.get(index))));
+        return;
+      }
+    }
+  }
+
+  void checkMethodIncompatibleReturnType(@NotNull PsiMember anchorClass, @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                         @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures) {
+    PsiMethod method = methodSignature.getMethod();
+    PsiType returnType = methodSignature.getSubstitutor().substitute(method.getReturnType());
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return;
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
+      PsiMethod superMethod = superMethodSignature.getMethod();
+      PsiType declaredReturnType = superMethod.getReturnType();
+      PsiType superReturnType = declaredReturnType;
+      if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(declaredReturnType);
+      if (returnType == null || superReturnType == null || method == superMethod) continue;
+      PsiClass superClass = superMethod.getContainingClass();
+      if (superClass == null) continue;
+      checkSuperMethodSignature(
+        anchorClass, superMethod, superMethodSignature, superReturnType, method, methodSignature, returnType);
+    }
+  }
+
+  private void checkSuperMethodSignature(@NotNull PsiMember anchorClass,
+                                         @NotNull PsiMethod superMethod,
+                                         @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
+                                         @NotNull PsiType superReturnType,
+                                         @NotNull PsiMethod method,
+                                         @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                         @NotNull PsiType returnType) {
+    PsiClass superContainingClass = superMethod.getContainingClass();
+    if (superContainingClass != null &&
+        CommonClassNames.JAVA_LANG_OBJECT.equals(superContainingClass.getQualifiedName()) &&
+        !superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
+        return;
+      }
+    }
+
+    PsiType substitutedSuperReturnType;
+    // Important: we should use the language level of the file where the method is declared,
+    // not the language level of the current file, so myVisitor.isApplicable() doesn't work here. 
+    boolean hasGenerics = PsiUtil.isAvailable(JavaFeature.GENERICS, method);
+    if (hasGenerics && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
+      PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
+                                                                                                  superMethodSignature);
+      substitutedSuperReturnType = unifyingSubstitutor == null
+                                   ? superReturnType
+                                   : unifyingSubstitutor.substitute(superReturnType);
+    }
+    else {
+      substitutedSuperReturnType = TypeConversionUtil.erasure(superMethodSignature.getSubstitutor().substitute(superReturnType));
+    }
+
+    if (returnType.equals(substitutedSuperReturnType)) return;
+    if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
+      if (hasGenerics && LambdaUtil.performWithSubstitutedParameterBounds(
+        methodSignature.getTypeParameters(), methodSignature.getSubstitutor(),
+        () -> TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType))) {
+        return;
+      }
+    }
+
+    myVisitor.report(JavaErrorKinds.METHOD_INHERITANCE_CLASH_INCOMPATIBLE_RETURN_TYPES.create(
+      anchorClass, new JavaErrorKinds.IncompatibleOverrideReturnTypeContext(method, returnType, superMethod, substitutedSuperReturnType)));
+  }
+
+  private void checkInterfaceInheritedMethodsReturnTypes(@NotNull PsiClass aClass,
+                                                         @NotNull List<HierarchicalMethodSignature> superMethodSignatures) {
+    if (superMethodSignatures.size() < 2) return;
+    MethodSignatureBackedByPsiMethod[] returnTypeSubstitutable = {superMethodSignatures.get(0)};
+    for (int i = 1; i < superMethodSignatures.size(); i++) {
+      PsiMethod currentMethod = returnTypeSubstitutable[0].getMethod();
+      PsiType currentType = returnTypeSubstitutable[0].getSubstitutor().substitute(currentMethod.getReturnType());
+
+      MethodSignatureBackedByPsiMethod otherSuperSignature = superMethodSignatures.get(i);
+      PsiMethod otherSuperMethod = otherSuperSignature.getMethod();
+      PsiSubstitutor otherSubstitutor = otherSuperSignature.getSubstitutor();
+      PsiType otherSuperReturnType = otherSubstitutor.substitute(otherSuperMethod.getReturnType());
+      PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(returnTypeSubstitutable[0],
+                                                                                                  otherSuperSignature);
+      if (unifyingSubstitutor != null) {
+        otherSuperReturnType = unifyingSubstitutor.substitute(otherSuperReturnType);
+        currentType = unifyingSubstitutor.substitute(currentType);
+      }
+
+      if (otherSuperReturnType == null || currentType == null || otherSuperReturnType.equals(currentType)) continue;
+      PsiType otherReturnType = otherSuperReturnType;
+      PsiType curType = currentType;
+      LambdaUtil.performWithSubstitutedParameterBounds(otherSuperMethod.getTypeParameters(), otherSubstitutor, () -> {
+        if (myVisitor.languageLevel().isAtLeast(LanguageLevel.JDK_1_5)) {
+          //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.4.8 Example 8.1.5-3
+          if (!(otherReturnType instanceof PsiPrimitiveType || curType instanceof PsiPrimitiveType)) {
+            if (otherReturnType.isAssignableFrom(curType)) return null;
+            if (curType.isAssignableFrom(otherReturnType)) {
+              returnTypeSubstitutable[0] = otherSuperSignature;
+              return null;
+            }
+          }
+          if (otherSuperMethod.getTypeParameters().length > 0 && JavaGenericsUtil.isRawToGeneric(otherReturnType, curType)) return null;
+        }
+        myVisitor.report(JavaErrorKinds.METHOD_INHERITANCE_CLASH_UNRELATED_RETURN_TYPES
+                           .create(aClass, new JavaErrorKinds.OverrideClashContext(currentMethod, otherSuperMethod)));
+        return null;
+      });
+    }
+  }
+
+  void checkMethodOverridesFinal(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                 @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures) {
+    PsiMethod method = methodSignature.getMethod();
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
+      PsiMethod superMethod = superMethodSignature.getMethod();
+      checkSuperMethodIsFinal(method, superMethod);
+      if (myVisitor.hasErrorResults()) return;
+    }
+  }
+
+  // return number of exception  which was not declared in super method or -1
+  private static int getExtraExceptionNum(@NotNull MethodSignature methodSignature,
+                                          @NotNull MethodSignatureBackedByPsiMethod superSignature,
+                                          @NotNull List<? extends PsiClassType> checkedExceptions,
+                                          @NotNull PsiSubstitutor substitutorForDerivedClass) {
+    PsiMethod superMethod = superSignature.getMethod();
+    PsiSubstitutor substitutorForMethod = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature, superSignature);
+    for (int i = 0; i < checkedExceptions.size(); i++) {
+      PsiClassType checkedEx = checkedExceptions.get(i);
+      PsiType substituted =
+        substitutorForMethod == null ? TypeConversionUtil.erasure(checkedEx) : substitutorForMethod.substitute(checkedEx);
+      PsiType exception = substitutorForDerivedClass.substitute(substituted);
+      if (!isMethodThrows(superMethod, substitutorForMethod, exception, substitutorForDerivedClass)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private static boolean isMethodThrows(@NotNull PsiMethod method,
+                                        @Nullable PsiSubstitutor substitutorForMethod,
+                                        @NotNull PsiType exception,
+                                        @NotNull PsiSubstitutor substitutorForDerivedClass) {
+    PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
+    for (PsiClassType thrownException1 : thrownExceptions) {
+      PsiType thrownException =
+        substitutorForMethod != null ? substitutorForMethod.substitute(thrownException1) : TypeConversionUtil.erasure(thrownException1);
+      thrownException = substitutorForDerivedClass.substitute(thrownException);
+      if (TypeConversionUtil.isAssignable(thrownException, exception)) return true;
+    }
+    return false;
   }
 
   private static boolean isEnumSyntheticMethod(@NotNull MethodSignature methodSignature, @NotNull Project project) {
