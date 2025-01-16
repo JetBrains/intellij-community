@@ -574,8 +574,10 @@ open class ConsoleViewImpl protected constructor(
     }
   }
 
+  internal var useOwnModalityForUpdates: Boolean = false
+
   protected open val stateForUpdate: ModalityState?
-    get() = null
+    get() = if (useOwnModalityForUpdates) ModalityState.stateForComponent(this) else null
 
   private fun requestFlushImmediately() {
     addFlushRequest(0, FLUSH)

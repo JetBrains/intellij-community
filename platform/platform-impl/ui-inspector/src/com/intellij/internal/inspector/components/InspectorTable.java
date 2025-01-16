@@ -424,7 +424,9 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
       }
       else if (myProject != null) {
         if (myPreviewComponent == null) {
-          myPreviewComponent = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+          var builder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
+          builder.setUseOwnModalityStateForUpdates(true);
+          myPreviewComponent = builder.getConsole();
           JComponent consoleComponent = myPreviewComponent.getComponent();
           consoleComponent.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
         }
