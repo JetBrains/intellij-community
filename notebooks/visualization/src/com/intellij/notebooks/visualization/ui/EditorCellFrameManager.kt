@@ -58,11 +58,15 @@ class EditorCellFrameManager(
     layerController ?: return
     removeRightBorder(layerController)
 
-    val bounds = view.input.calculateBounds()
-    val lineX = (bounds.x + bounds.width - 0.5).toDouble()
-    val lineY1 = (bounds.y + editor.notebookAppearance.aboveFirstCellDelimiterHeight).toDouble()
-    val lineX2 = (bounds.y + bounds.height - 1).toDouble()
-    rightBorderLine = Line2D.Double(lineX, lineY1, lineX, lineX2).also {
+    val inlays = view.input.getBlockElementsInRange()
+    val upperInlayBounds = inlays.firstOrNull { it.properties.isShownAbove == true }?.bounds ?: return
+    val lowerInlayBounds = inlays.lastOrNull { it.properties.isShownAbove == false }?.bounds ?: return
+
+    val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
+    val lineStartY = (upperInlayBounds.y + upperInlayBounds.height).toDouble()
+    val lineEndY = (lowerInlayBounds.y).toDouble()
+
+    rightBorderLine = Line2D.Double(lineX, lineStartY, lineX, lineEndY).also {
       layerController.addOverlayLine(it, frameColor)
     }
   }

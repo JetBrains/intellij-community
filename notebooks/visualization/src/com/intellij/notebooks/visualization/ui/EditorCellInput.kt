@@ -5,6 +5,7 @@ import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDraggableBar
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -78,18 +79,21 @@ class EditorCellInput(
     updateInput()
   }
 
-  override fun calculateBounds(): Rectangle {
+  fun getBlockElementsInRange(): List<Inlay<*>> {
     val linesRange = interval.lines
     val startOffset = editor.document.getLineStartOffset(linesRange.first)
     val endOffset = editor.document.getLineEndOffset(linesRange.last)
-    val bounds = editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
+    return editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)
+  }
+
+  override fun calculateBounds(): Rectangle {
+    return getBlockElementsInRange()
       .asSequence()
       .filter { it.properties.priority > editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY }
       .mapNotNull { it.bounds }
       .fold(component.calculateBounds()) { b, i ->
         b.union(i)
       }
-    return bounds
   }
 
   fun updateInput(): Unit? = editor.updateManager.update { ctx ->
