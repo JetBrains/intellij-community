@@ -56,7 +56,6 @@ internal class XNextToolbarManagerImpl(val project: Project, val scope: Coroutin
       }
     })
     updatePinned()
-    //  EnableStripeGroup.Companion.setSingleStripeEnabled(true)
   }
 
   fun updatePinned() {

@@ -4,6 +4,9 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.toolWindow.EnableStripeGroup
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
 import com.intellij.ui.JBColor
@@ -22,9 +25,23 @@ open class DesignProcessor {
   companion object{
     @JvmStatic
     fun getInstance(): DesignProcessor = ApplicationManager.getApplication().getService(DesignProcessor::class.java)
+    @JvmStatic
+    protected val AI_COMPONENT: Key<Boolean> = Key.create("AI_COMPONENT")
+  }
+  init {
+    EnableStripeGroup.Companion.setSingleStripeEnabled(true)
   }
 
   open fun isAIComponent(c: JComponent): Boolean = false
+
+  open fun markAIComponent(c: JComponent, isAI: Boolean) {}
+  open fun markAIComponent(c: JComponent, dataHolder: UserDataHolder?) {
+    markAIComponent(c, dataHolder?.getUserData(AI_COMPONENT) ?: false)
+  }
+
+  open fun markAiContainerFor(c: JComponent): Unit = Unit
+
+  open fun unmarkAiContainerFor(c: JComponent): Unit = Unit
 
   open fun createEditorTabPainterAdapter(): TabPainterAdapter = EditorTabPainterAdapter()
 

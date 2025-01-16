@@ -222,6 +222,7 @@ class EditorTabbedContainer internal constructor(
         if (UISettings.getInstance().showFileIconInTabs) {
           it.setIcon(icon)
         }
+        DesignProcessor.getInstance().markAIComponent(it.component, selectedEditor)
       }
     )
     selectedEditor?.tabActions?.let {
