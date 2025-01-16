@@ -107,6 +107,23 @@ class KtSymbolFromIndexProvider(
                 typeAliasDeclarations.map { it.symbol } +
                 declarationsFromExtension
 
+    /**
+     * Collects [KaClassSymbol]s of objects with non-trivial base classes.
+     *
+     * @see KotlinSubclassObjectNameIndex
+     */
+    context(KaSession)
+    fun getKotlinSubclassObjectsByNameFilter(
+        nameFilter: (Name) -> Boolean,
+        scope: GlobalSearchScope = analysisScope,
+        psiFilter: (KtObjectDeclaration) -> Boolean = { true },
+    ): Sequence<KaClassSymbol> = KotlinSubclassObjectNameIndex.getAllElements<KtObjectDeclaration>(
+        project,
+        scope,
+        keyFilter = { nameFilter(getShortName(it)) },
+    ) { it.isAcceptable(psiFilter) }
+        .map { it.symbol }
+
     context(KaSession)
     @KaExperimentalApi
     fun getKotlinEnumEntriesByNameFilter(
