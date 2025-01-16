@@ -57,7 +57,7 @@ internal open class CallableImportCandidatesProvider(
 
         return candidates
             .map { CallableImportCandidate(it) }
-            .filter { it.isVisible(fileSymbol) && it.symbol.callableId != null }
+            .filter { it.isVisible(fileSymbol) && it.callableId != null }
     }
 }
 

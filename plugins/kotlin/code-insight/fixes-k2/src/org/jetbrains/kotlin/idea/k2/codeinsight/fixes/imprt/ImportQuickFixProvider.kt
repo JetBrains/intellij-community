@@ -118,10 +118,7 @@ object ImportQuickFixProvider {
             renderer.renderDeclaration(useSiteSession, candidate.symbol, printer = this)
         }
 
-        when (candidate) {
-            is CallableImportCandidate -> candidate.symbol.callableId?.packageName
-            is ClassLikeImportCandidate -> candidate.symbol.classId?.packageFqName
-        }?.let { packageName ->
+        candidate.packageName?.let { packageName ->
             append(" defined in ${packageName.asString()}")
             candidate.psi?.containingFile?.let { append(" in file ${it.name}") }
         }
@@ -225,8 +222,8 @@ object ImportQuickFixProvider {
     private fun ImportCandidate.getImportName(): String = buildString {
         if (this@getImportName is CallableImportCandidate) {
             val classSymbol = when {
-                symbol.receiverType != null -> symbol.receiverType?.expandedSymbol
-                else -> symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
+                receiverType != null -> receiverType?.expandedSymbol
+                else -> containingClass
             }
             classSymbol?.name?.let { append(it.asString()) }
         }

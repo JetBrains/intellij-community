@@ -49,7 +49,7 @@ internal open class ClassifierImportCandidatesProvider(
             addAll(indexProvider.getJavaClassesByName(unresolvedName) { acceptsJavaClass(it) })
         }
             .map { ClassLikeImportCandidate(it) }
-            .filter { it.isVisible(fileSymbol) && it.symbol.classId != null && acceptsClassLikeSymbol(it.symbol) }
+            .filter { it.isVisible(fileSymbol) && it.classId != null && acceptsClassLikeSymbol(it.symbol) }
     }
 }
 
