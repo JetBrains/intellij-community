@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import java.nio.file.Path
 import kotlin.script.experimental.api.valueOrNull
 
-const val KOTLIN_SCRIPTS_MODULE_NAME = "Kotlin Scripts"
+const val KOTLIN_SCRIPTS_MODULE_NAME: String = "kotlin.scripts"
 
 open class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?) : EntitySource
 

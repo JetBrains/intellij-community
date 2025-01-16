@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.script.experimental.api.valueOrNull
 
@@ -117,8 +118,8 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
         resolveSource(virtualFile)?.getConfigurationWithSdk(virtualFile)
 
     fun resolveSource(virtualFile: VirtualFile): ScriptConfigurationsSource<*>? {
-        val definition = virtualFile.findScriptDefinition(project)
-        return dependenciesSourceByDefinition.get()[definition?.definitionId]
+        val definition = findScriptDefinition(project, VirtualFileScriptSource(virtualFile))
+        return dependenciesSourceByDefinition.get()[definition.definitionId]
             ?: project.scriptConfigurationsSourceOfType<DependentScriptConfigurationsSource>()
     }
 
