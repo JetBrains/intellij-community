@@ -2292,6 +2292,10 @@
     <registryKey defaultValue="false"
                  description="Use shallow unused declaration analysis in batch mode (like in the editor, Java only)"
                  key="java.unused.declaration.inspection.use.shallow.local.anaysis.as.global"/>
+    <localInspection groupPath="Java" language="JAVA" key="inspection.static.import.can.be.used.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="true"
+                     level="WARNING" cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.intellij.codeInspection.StaticImportCanBeUsedInspection" bundle="messages.JavaBundle"/>
 
     <intentionAction>
       <language>JAVA</language>

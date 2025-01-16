@@ -1004,6 +1004,43 @@ public final class ImportHelper {
         return true;
       }
     }
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
+    PsiResolveHelper resolveHelper = facade.getResolveHelper();
+    for (Import anImport : resultList) {
+      if (anImport.isStatic()) {
+        String shortName = StringUtil.getShortName(anImport.name());
+        String prefix = StringUtil.getPackageName(anImport.name());
+        if (prefix.isEmpty()) continue;
+        PsiField field = psiClass.findFieldByName(shortName, true);
+        if (field != null &&
+            field.hasModifierProperty(PsiModifier.STATIC) &&
+            checkMemberAccessibility(field, resolveHelper, file, psiClass, prefix)) {
+          if (isOnDemandStaticImported(file, anImport)) {
+            return true;
+          }
+        }
+        else {
+          PsiClass inner = psiClass.findInnerClassByName(shortName, true);
+          if (inner != null &&
+              inner.hasModifierProperty(PsiModifier.STATIC) &&
+              checkMemberAccessibility(inner, resolveHelper, file, psiClass, prefix)) {
+            if (isOnDemandStaticImported(file, anImport)) {
+              return true;
+            }
+          }
+          else {
+            PsiMethod[] methods = psiClass.findMethodsByName(shortName, true);
+            if (ContainerUtil.exists(methods, psiMethod ->
+              psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
+              checkMemberAccessibility(psiMethod, resolveHelper, file, psiClass, prefix))) {
+              if (isOnDemandStaticImported(file, anImport)) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
 
     PsiImportList importList = file.getImportList();
     if (importList == null) return false;
@@ -1020,6 +1057,21 @@ public final class ImportHelper {
                                                   Collections.emptySet(), ImportUtils.createImplicitImportChecker(file));
 
     return singleImports.contains(newImport);
+  }
+
+  private static boolean isOnDemandStaticImported(@NotNull PsiJavaFile file, @NotNull Import anImport) {
+    if(!anImport.isStatic()) return false;
+    PsiImportList importList = file.getImportList();
+    if(importList==null)return false;
+    for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+      if(!statement.isOnDemand()) return false;
+      String packageName = StringUtil.getPackageName(anImport.name);
+      if (statement.getImportReference() != null &&
+          packageName.equals(statement.getImportReference().getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // returns list of (name, isImportStatic) pairs

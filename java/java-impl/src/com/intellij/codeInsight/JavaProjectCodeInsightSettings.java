@@ -43,8 +43,7 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
 
   public boolean isStaticAutoImportClass(@Nullable String name) {
     if (name == null) return false;
-    return includedAutoStaticNames.contains(name) ||
-           JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames.contains(name);
+    return getAllIncludedAutoStaticNames().contains(name);
   }
 
   public boolean isExcluded(@NotNull String name) {

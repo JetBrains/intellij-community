@@ -122,7 +122,15 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
-  private static @NotNull List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className) {
+  /**
+   * Retrieves the static import statements from the given import list that reference
+   * a specified class.
+   *
+   * @param importList the list of import statements in a Java file.
+   * @param className the fully qualified name of the class for which static imports are to be retrieved.
+   * @return a list of static import references corresponding to the specified class.
+   */
+  public static @NotNull List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className) {
     List<PsiJavaCodeReferenceElement> array = new ArrayList<>();
     for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
       PsiClass psiClass = staticStatement.resolveTargetClass();

@@ -4,12 +4,11 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
+import com.intellij.codeInspection.StaticImportCanBeUsedInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.ReferenceAdjuster;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -22,7 +21,6 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
 import one.util.streamex.StreamEx;
@@ -139,27 +137,19 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
   }
 
   private static boolean tryAutoStaticallyImport(@NotNull PsiReferenceExpression reference) {
-    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(reference.getProject());
-    PsiFile file = reference.getContainingFile();
-    if (!(file instanceof PsiJavaFile javaFile)) return false;
-    if (reference instanceof PsiMethodReferenceExpression) return false;
-    String memberName = reference.getReferenceName();
-    if (memberName == null) return false;
-    PsiJavaCodeReferenceElement qualifier = ObjectUtils.tryCast(reference.getQualifier(), PsiJavaCodeReferenceElement.class);
-    if (qualifier == null) return false;
-    if (GenericsUtil.isGenericReference(reference, qualifier)) return false;
-    if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class) != null) return false;
-    if (!(qualifier.resolve() instanceof PsiClass psiClass)) return false;
-    String classQualifiedName = psiClass.getQualifiedName();
-    if (!javaCodeStyleManager.isStaticAutoImportClass(classQualifiedName)) return false;
-    PsiElement referenceNameElement = qualifier.getReferenceNameElement();
-    if (referenceNameElement == null) return false;
-    PsiClass anImport = AddOnDemandStaticImportAction.getClassToPerformStaticImport(referenceNameElement);
-    if (anImport == null) return false;
-    if (javaCodeStyleManager.hasConflictingOnDemandImport(javaFile, anImport, memberName)) return false;
-    PsiImportList importList = javaFile.getImportList();
-    if (importList == null) return false;
-    PsiReferenceExpressionImpl.bindToElementViaStaticImport(anImport, memberName, importList);
+    StaticImportCanBeUsedInspection.OnDemandStaticImportContext context =
+      StaticImportCanBeUsedInspection.findOnDemandImportContext(reference);
+    if (context == null) return false;
+    PsiClass qualifierClass = context.psiClass();
+    String qualifiedName = qualifierClass.getQualifiedName();
+    List<PsiJavaCodeReferenceElement> refs = PsiReferenceExpressionImpl.getImportsFromClass(context.importList(), qualifiedName);
+    for (PsiJavaCodeReferenceElement ref : refs) {
+      PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
+      if (importStatement != null) {
+        importStatement.delete();
+      }
+    }
+    context.importList().add(JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createImportStaticStatement(qualifierClass, "*"));
     return true;
   }
 
