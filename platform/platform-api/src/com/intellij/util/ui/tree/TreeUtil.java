@@ -1490,7 +1490,7 @@ public final class TreeUtil {
    * @param path a tree path to a node that should be expanded
    * @return a promise that will be succeeded only if path is found and expanded
    */
-  public static @NotNull Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreePath path) {
+  public static @NotNull Promise<@NotNull TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreePath path) {
     return promiseExpand(tree, new TreeVisitor.ByTreePath<>(path, node -> node));
   }
 
@@ -1504,7 +1504,7 @@ public final class TreeUtil {
    * @param visitor a visitor that controls expanding of tree nodes
    * @return a promise that will be succeeded only if path is found and expanded
    */
-  public static @NotNull Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+  public static @NotNull Promise<@NotNull TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
     return promiseMakeVisibleOne(tree, visitor, path -> expandPathWithDebug(tree, path));
   }
 
@@ -1543,7 +1543,7 @@ public final class TreeUtil {
    * @param path a tree path to a node that should be made visible
    * @return a promise that will be succeeded only if path is found and made visible
    */
-  public static @NotNull Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreePath path) {
+  public static @NotNull Promise<@NotNull TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreePath path) {
     return promiseMakeVisible(tree, new TreeVisitor.ByTreePath<>(path, node -> node));
   }
 
@@ -1557,14 +1557,14 @@ public final class TreeUtil {
    * @param visitor a visitor that controls expanding of tree nodes
    * @return a promise that will be succeeded only if path is found and made visible
    */
-  public static @NotNull Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+  public static @NotNull Promise<@NotNull TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
     return promiseMakeVisibleOne(tree, visitor, null);
   }
 
-  private static @NotNull Promise<TreePath> promiseMakeVisibleOne(@NotNull JTree tree,
-                                                                  @NotNull TreeVisitor visitor,
-                                                                  @Nullable Consumer<? super TreePath> consumer) {
-    AsyncPromise<TreePath> promise = new AsyncPromise<>();
+  private static @NotNull Promise<@NotNull TreePath> promiseMakeVisibleOne(@NotNull JTree tree,
+                                                                           @NotNull TreeVisitor visitor,
+                                                                           @Nullable Consumer<? super TreePath> consumer) {
+    AsyncPromise<@NotNull TreePath> promise = new AsyncPromise<>();
     promiseMakeVisible(tree, visitor, promise)
       .onError(promise::setError)
       .onSuccess(path -> {
@@ -1610,11 +1610,11 @@ public final class TreeUtil {
   }
 
   private static Promise<List<TreePath>> promiseVisitAll(@NotNull JTree tree,
-                                                               @NotNull Stream<? extends TreeVisitor> visitors,
-                                                               @NotNull AsyncPromise<List<TreePath>> promise,
-                                                               @NotNull Function<? super TreeVisitor, Promise<TreePath>> visitAction,
-                                                               @Nullable Consumer<? super List<TreePath>> consumer) {
-    List<Promise<TreePath>> promises = visitors
+                                                         @NotNull Stream<? extends TreeVisitor> visitors,
+                                                         @NotNull AsyncPromise<List<TreePath>> promise,
+                                                         @NotNull Function<? super TreeVisitor, Promise<@Nullable TreePath>> visitAction,
+                                                         @Nullable Consumer<? super List<TreePath>> consumer) {
+    List<Promise<@Nullable TreePath>> promises = visitors
       .filter(Objects::nonNull)
       .map(visitAction)
       .collect(toList());
@@ -1642,7 +1642,9 @@ public final class TreeUtil {
     return promise;
   }
 
-  private static @NotNull Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull AsyncPromise<?> promise) {
+  private static @NotNull Promise<@Nullable TreePath> promiseMakeVisible(@NotNull JTree tree,
+                                                                         @NotNull TreeVisitor visitor,
+                                                                         @NotNull AsyncPromise<?> promise) {
     MakeVisibleVisitor makeVisibleVisitor =
       !(tree.getModel() instanceof TreeVisitor.Acceptor) && Tree.isBulkExpandCollapseSupported()
       ? new BulkMakeVisibleVisitor(tree, visitor, promise)
@@ -1920,7 +1922,7 @@ public final class TreeUtil {
    * @param tree a tree, which node should be selected
    * @return a promise that will be succeeded when first leaf node is made visible and selected
    */
-  public static @NotNull Promise<TreePath> promiseSelectFirstLeaf(@NotNull JTree tree) {
+  public static @NotNull Promise<@NotNull TreePath> promiseSelectFirstLeaf(@NotNull JTree tree) {
     AtomicReference<TreePath> reference = new AtomicReference<>();
     AsyncPromise<TreePath> promise = new AsyncPromise<>();
     promiseMakeVisible(tree, path -> {
@@ -1971,7 +1973,7 @@ public final class TreeUtil {
    * @param visitor a visitor that controls processing of tree nodes
    * @return a promise that will be succeeded when visiting is finished
    */
-  public static @NotNull Promise<TreePath> promiseVisit(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+  public static @NotNull Promise<@Nullable TreePath> promiseVisit(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
     TreeModel model = tree.getModel();
     if (model instanceof TreeVisitor.Acceptor acceptor) {
       return acceptor.accept(visitor);
@@ -1997,7 +1999,7 @@ public final class TreeUtil {
    * @param model   a tree model, which nodes should be processed
    * @param visitor a visitor that controls processing of tree nodes
    */
-  private static TreePath visitModel(@NotNull TreeModel model, @NotNull TreeVisitor visitor) {
+  private static @Nullable TreePath visitModel(@NotNull TreeModel model, @NotNull TreeVisitor visitor) {
     Object root = model.getRoot();
     if (root == null) return null;
 
