@@ -5,9 +5,12 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.PROMPT_PROPERTY
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
+import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.lang3.StringEscapeUtils
+import com.intellij.openapi.diagnostic.logger
+
 
 open class BasicFileReportGenerator(
   filterName: String,
@@ -76,14 +79,29 @@ open class BasicFileReportGenerator(
     if (_sessions.isEmpty() || _sessions.all { it.isEmpty() }) return text
 
     val sessions = _sessions.filterNot { it.isEmpty() }
+
     return StringBuilder().run {
       val delimiter = "&int;"
-      val offsets = sessions.flatten().map { it.offset }.distinct().sorted()
-      val sessionGroups = offsets.map { offset -> sessions.map { session -> session.find { it.offset == offset } } }
+      val offsets = sessions.flatten()
+        .map { it.offset }.distinct().sorted()
+      val unfilteredSessionGroups = offsets.map { offset -> sessions.map { session -> session.find { it.offset == offset } } }
+      val sessionGroups = unfilteredSessionGroups.filterIndexed {index, session -> if (index == 0) {
+        true
+      } else  {
+        val previousSession = unfilteredSessionGroups[index - 1].filterNotNull().first()
+        val currentSession = session.filterNotNull().first()
+        val LOG = logger<BasicFileReportGenerator>()
+        if(previousSession.offset + textToInsert(previousSession).length > currentSession.offset)
+        LOG.warn("Removing sessionId ${currentSession.id} because of overlapping with sessionId ${previousSession.id}")
+        return@filterIndexed previousSession.offset + textToInsert(previousSession).length <= currentSession.offset
+        }
+      }
+
       var offset = 0
 
       for (sessionGroup in sessionGroups) {
         val session = sessionGroup.filterNotNull().first()
+
         val commonText = StringEscapeUtils.escapeHtml4(text.substring(offset, session.offset))
         append(commonText)
 
