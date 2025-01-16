@@ -737,14 +737,14 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        # type: (<error descr="Generics should be specified through square brackets">Union()</error>) -> None
                        pass
                       \s
-                   v1 = <error descr="Generics should be specified through square brackets">Union(int, str)</error>
+                   v1 = Union(int, str)
                    v2 = None  # type: <error descr="Generics should be specified through square brackets">Union(int, str)</error>
-
+                   
                    U = Union
                    def i(j: <error descr="Generics should be specified through square brackets">U(int, str)</error>):
                        pass
                       \s
-                   v3 = <error descr="Generics should be specified through square brackets">U(int, str)</error>
+                   v3 = U(int, str)
 
                    with foo() as bar:  # type: <error descr="Generics should be specified through square brackets">Union(int,str)</error>
                        pass
@@ -781,6 +781,19 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    
                    def f(x: Annotated[<warning descr="Generics should be specified through square brackets">dict(key="value")</warning>, ""]):
                       pass""");
+  }
+
+  // PY-32634
+  public void testParenthesesInAssignment() {
+    doTestByText("""
+                  from typing import DefaultDict, TypeAlias
+                  
+                  example = DefaultDict(int)
+                  
+                  ExampleAlias: TypeAlias = <error descr="Generics should be specified through square brackets">DefaultDict(int)</error>
+                  
+                  type ExampleType = <error descr="Generics should be specified through square brackets">DefaultDict(int)</error>
+                  """);
   }
 
   // PY-16853

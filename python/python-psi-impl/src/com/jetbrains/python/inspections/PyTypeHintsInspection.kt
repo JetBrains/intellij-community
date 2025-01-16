@@ -88,7 +88,9 @@ class PyTypeHintsInspection : PyInspection() {
 
       checkInstanceAndClassChecks(node)
 
-      checkParenthesesOnGenerics(node)
+      if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) {
+        checkParenthesesOnGenerics(node)
+      }
     }
 
     private fun getTargetFromAssignment(node: PyCallExpression): PyExpression? {
@@ -694,7 +696,7 @@ class PyTypeHintsInspection : PyInspection() {
                           null,
                           ReplaceWithSubscriptionQuickFix())
         }
-        else if (PyTypingTypeProvider.isInsideTypeHint(call, myTypeEvalContext)) {
+        else {
           multiFollowAssignmentsChain(callee)
             .asSequence()
             .map { if (it is PyFunction) it.containingClass else it }
