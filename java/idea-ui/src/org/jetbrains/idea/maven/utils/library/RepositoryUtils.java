@@ -177,6 +177,7 @@ public final class RepositoryUtils {
       .submit(NonUrgentExecutor.getInstance())
       .thenAsync(rootsEqual -> {
         if (rootsEqual) {
+          LOG.debug("Finished setup library root for: " + library.getName());
           // Nothing to update
           return resolvedPromise();
         }
@@ -216,6 +217,9 @@ public final class RepositoryUtils {
             } catch (Throwable t) {
               LOG.warn("Unable to update project model for library '" + library.getName() + "'", t);
               result.setError(t);
+            }
+            finally {
+              LOG.debug("Finished setup library root for: " + library.getName());
             }
           });
 
