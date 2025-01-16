@@ -412,6 +412,7 @@ a:org.jetbrains.jps.model.java.JpsJavaExtensionService
 - a:getLanguageLevel(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.LanguageLevel
 - a:getModuleExtension(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.java.JpsJavaModuleExtension
 - a:getOutputDirectory(org.jetbrains.jps.model.module.JpsModule,Z):java.io.File
+- a:getOutputDirectoryPath(org.jetbrains.jps.model.module.JpsModule,Z):java.nio.file.Path
 - a:getOutputUrl(org.jetbrains.jps.model.module.JpsModule,Z):java.lang.String
 - a:getProjectExtension(org.jetbrains.jps.model.JpsProject):org.jetbrains.jps.model.java.JpsJavaProjectExtension
 - a:getTestModuleProperties(org.jetbrains.jps.model.module.JpsModule):org.jetbrains.jps.model.module.JpsTestModuleProperties
@@ -780,5 +781,6 @@ f:org.jetbrains.jps.util.JpsPathUtil
 - s:isUnder(java.util.Set,java.io.File):Z
 - s:pathToUrl(java.lang.String):java.lang.String
 - s:urlToFile(java.lang.String):java.io.File
+- s:urlToNioPath(java.lang.String):java.nio.file.Path
 - s:urlToOsPath(java.lang.String):java.lang.String
 - s:urlToPath(java.lang.String):java.lang.String

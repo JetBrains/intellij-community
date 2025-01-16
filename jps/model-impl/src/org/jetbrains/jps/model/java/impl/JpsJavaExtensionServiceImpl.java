@@ -123,6 +123,12 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   }
 
   @Override
+  public @Nullable Path getOutputDirectoryPath(JpsModule module, boolean forTests) {
+    String url = getOutputUrl(module, forTests);
+    return url != null ? JpsPathUtil.urlToNioPath(url) : null;
+  }
+
+  @Override
   public JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name, @NotNull String homePath) {
     JdkVersionDetector.JdkVersionInfo jdkInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath);
     assert jdkInfo != null : homePath;

@@ -20,6 +20,7 @@ import org.jetbrains.jps.model.module.JpsTestModuleProperties;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
@@ -75,7 +76,16 @@ public abstract class JpsJavaExtensionService {
 
   public abstract @Nullable String getOutputUrl(JpsModule module, boolean forTests);
 
+  /**
+   * Use {@link #getOutputDirectoryPath} instead.
+   */
   public abstract @Nullable File getOutputDirectory(JpsModule module, boolean forTests);
+
+  /**
+   * Returns a path to the directory where class files and resources for the module will be placed after compilation or {@code null} if
+   * the path isn't specified.
+   */
+  public abstract @Nullable Path getOutputDirectoryPath(JpsModule module, boolean forTests);
 
   @ApiStatus.Internal
   public abstract JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name, @NotNull String homePath);

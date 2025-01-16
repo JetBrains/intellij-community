@@ -41,6 +41,10 @@ public final class JpsPathUtil {
     return new File(urlToOsPath(url));
   }
 
+  public static @NotNull Path urlToNioPath(@NotNull String url) {
+    return Path.of(urlToOsPath(url));
+  }
+
   public static @NotNull String urlToOsPath(@NotNull String url) {
     return FileUtilRt.toSystemDependentName(urlToPath(url));
   }
