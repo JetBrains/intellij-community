@@ -44,17 +44,15 @@ def test_simple_array():
 
 
 # 2
-def test_simple_2d_array():
-    arr = np.array([[True, "False", True], [True, True, False]])
-    __check_info_np_array(arr, 'test_data/numpy_without_pandas/' + test_data_directory + '/array_2d_simple.txt')
+def test_simple_3d_array():
+    arr = np.array([[True, "False", True], [True, True, False], [True, True, False]])
+    __check_info_np_array(arr, 'test_data/numpy_without_pandas/' + test_data_directory + '/array_3d_simple.txt')
 
 
 # 3
-def test_2d_array():
-    arr = np.array([[1, 2, 3],
-                    [4, 5, 6],
-                    [7, 8, 9]])
-    __check_info_np_array(arr, 'test_data/numpy_without_pandas/' + test_data_directory + '/array_2d_number.txt')
+def test_3d_array():
+    arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    __check_info_np_array(arr, 'test_data/numpy_without_pandas/' + test_data_directory + '/array_3d_number.txt')
 
 
 # 4

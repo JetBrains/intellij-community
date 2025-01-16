@@ -43,17 +43,15 @@ def test_tensor_1d_number():
 
 
 # 2
-def test_tensor_2d_simple():
-    tensor = torch.tensor([[True, False, True], [True, True, False]])
-    __check_info_torch_tensor(tensor, 'test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/torch_2d_simple.txt')
+def test_tensor_3d_simple():
+    tensor = torch.tensor([[True, False, True], [True, True, False], [True, True, False]])
+    __check_info_torch_tensor(tensor, 'test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/torch_3d_simple.txt')
 
 
 # 3
-def test_tensor_2d_number():
-    tensor = torch.tensor([[1, 2, 3],
-                           [4, 5, 6],
-                           [7, 8, 9]])
-    __check_info_torch_tensor(tensor, 'test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/torch_2d_number.txt')
+def test_tensor_3d_number():
+    tensor = torch.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    __check_info_torch_tensor(tensor, 'test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/torch_3d_number.txt')
 
 
 # 4
@@ -124,7 +122,7 @@ def test_get_data_float_values_2f(setup_torch_tensor_with_floats):
     )
 
 
-# 8 TODO: remove trash in formatting
+# 8 TODO: try to fix precision troubles
 # def test_get_data_float_values_12f(setup_torch_tensor_with_floats):
 #     np_array = setup_torch_tensor_with_floats
 #     actual = numpy_based_tables_helpers.get_data(np_array, False, 0, 5, format="%.12f")
@@ -179,7 +177,7 @@ def test_get_data_none_values_2e(setup_torch_tensor_with_nones):
     )
 
 
-# 13
+# 13 TODO: round by default here -- fix?
 def test_display_data_html_float_values(mocker, setup_torch_tensor_with_floats):
     tensor = setup_torch_tensor_with_floats
     # Mock the HTML and display functions
@@ -198,7 +196,7 @@ def test_display_data_html_float_values(mocker, setup_torch_tensor_with_floats):
     )
 
 
-# 14
+# 14 TODO: round by default here -- fix?
 def test_display_data_html_none_values(mocker, setup_torch_tensor_with_nones):
     tensor = setup_torch_tensor_with_nones
 
@@ -218,43 +216,43 @@ def test_display_data_html_none_values(mocker, setup_torch_tensor_with_nones):
     )
 
 
-# 15 TODO: fix formatting issues
-# def test_display_data_csv_float_values(mocker, setup_torch_tensor_with_floats):
-#     torch_tensor = setup_torch_tensor_with_floats
-#     # Mock the CSV and display functions
-#     mock_print = mocker.patch('builtins.print')
-#
-#     numpy_based_tables_helpers.display_data_csv(torch_tensor, 0, 3)
-#
-#     called_args, called_kwargs = mock_print.call_args
-#     displayed_csv = called_args[0]
-#
-#     assert isinstance(displayed_csv, str)
-#
-#     __read_expected_from_file_and_compare_with_actual(
-#         actual=displayed_csv,
-#         expected_file='test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/display_data_csv_float_values.txt'
-#     )
+# 15 TODO: round by default here -- fix?
+def test_display_data_csv_float_values(mocker, setup_torch_tensor_with_floats):
+    torch_tensor = setup_torch_tensor_with_floats
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('builtins.print')
+
+    numpy_based_tables_helpers.display_data_csv(torch_tensor, 0, 3)
+
+    called_args, called_kwargs = mock_print.call_args
+    displayed_csv = called_args[0]
+
+    assert isinstance(displayed_csv, str)
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/display_data_csv_float_values.txt'
+    )
 
 
-# 16 TODO: fix formatting issues
-# def test_display_data_csv_none_values(mocker, setup_torch_tensor_with_nones):
-#     torch_tensor = setup_torch_tensor_with_nones
-#
-#     # Mock the CSV and display functions
-#     mock_print = mocker.patch('builtins.print')
-#
-#     numpy_based_tables_helpers.display_data_csv(torch_tensor, 0, 3)
-#
-#     called_args, called_kwargs = mock_print.call_args
-#     displayed_csv = called_args[0]
-#
-#     assert isinstance(displayed_csv, str)
-#
-#     __read_expected_from_file_and_compare_with_actual(
-#         actual=displayed_csv,
-#         expected_file='test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/display_data_csv_none_values.txt'
-#     )
+# 16 TODO: round by default here -- fix?
+def test_display_data_csv_none_values(mocker, setup_torch_tensor_with_nones):
+    torch_tensor = setup_torch_tensor_with_nones
+
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('builtins.print')
+
+    numpy_based_tables_helpers.display_data_csv(torch_tensor, 0, 3)
+
+    called_args, called_kwargs = mock_print.call_args
+    displayed_csv = called_args[0]
+
+    assert isinstance(displayed_csv, str)
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/display_data_csv_none_values.txt'
+    )
 
 
 def __read_expected_from_file_and_compare_with_actual(actual, expected_file):

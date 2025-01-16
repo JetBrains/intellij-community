@@ -44,17 +44,15 @@ def test_array_1d_number():
 
 
 # 2
-def test_array_2d_simple():
-    arr = np.array([[True, "False", True], [True, True, False]])
-    __check_info_np_array(arr, 'test_data/numpy_with_pandas/' + test_data_directory + '/array_2d_simple.txt')
+def test_array_3d_simple():
+    arr = np.array([[True, "False", True], [True, True, False], [True, True, False]])
+    __check_info_np_array(arr, 'test_data/numpy_with_pandas/' + test_data_directory + '/array_3d_simple.txt')
 
 
 # 3
-def test_array_2d_number():
-    arr = np.array([[1, 2, 3],
-                    [4, 5, 6],
-                    [7, 8, 9]])
-    __check_info_np_array(arr, 'test_data/numpy_with_pandas/' + test_data_directory + '/array_2d_number.txt')
+def test_array_3d_number():
+    arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    __check_info_np_array(arr, 'test_data/numpy_with_pandas/' + test_data_directory + '/array_3d_number.txt')
 
 
 # 4
@@ -166,7 +164,7 @@ def test_get_data_none_values_2e(setup_np_array_with_nones):
     )
 
 
-# 13
+# 13 TODO: round by default here -- fix?
 def test_display_data_html_float_values(mocker, setup_np_array_with_floats):
     np_array = setup_np_array_with_floats
     # Mock the HTML and display functions
@@ -205,24 +203,24 @@ def test_display_data_html_none_values(mocker, setup_np_array_with_nones):
     )
 
 
-#15 TODO: fix formatting issues
-# def test_display_data_csv_float_values(mocker, setup_np_array_with_floats):
-#     np_array = setup_np_array_with_floats
-#
-#     # Mock the CSV and display functions
-#     mock_print = mocker.patch('builtins.print')
-#
-#     numpy_tables_helpers.display_data_csv(np_array, 0, 3)
-#
-#     called_args, called_kwargs = mock_print.call_args
-#     displayed_csv = called_args[0]
-#
-#     assert isinstance(displayed_csv, str)
-#
-#     __read_expected_from_file_and_compare_with_actual(
-#         actual=displayed_csv,
-#         expected_file='test_data/numpy_with_pandas/' + test_data_directory + '/display_data_csv_float_values.txt'
-#     )
+#15 TODO: round by default here -- fix?
+def test_display_data_csv_float_values(mocker, setup_np_array_with_floats):
+    np_array = setup_np_array_with_floats
+
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('builtins.print')
+
+    numpy_tables_helpers.display_data_csv(np_array, 0, 3)
+
+    called_args, called_kwargs = mock_print.call_args
+    displayed_csv = called_args[0]
+
+    assert isinstance(displayed_csv, str)
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/numpy_with_pandas/' + test_data_directory + '/display_data_csv_float_values.txt'
+    )
 
 
 # 16
