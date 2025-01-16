@@ -138,3 +138,30 @@ a:com.intellij.webSymbols.utils.WebSymbolsIsolatedMappingScope
 - pa:getSubScopeBuilder():kotlin.jvm.functions.Function2
 - f:getSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind,com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
 - hashCode():I
+a:com.intellij.webSymbols.utils.WebSymbolsStructuredScope
+- com.intellij.webSymbols.query.WebSymbolsCompoundScope
+- <init>(com.intellij.psi.PsiElement):V
+- p:build(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,kotlin.jvm.functions.Function1):V
+- equals(java.lang.Object):Z
+- p:findBestMatchingScope(com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope):com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- pf:getLocation():com.intellij.psi.PsiElement
+- pa:getProvidedSymbolKinds():java.util.Set
+- pa:getRootPsiElement():com.intellij.psi.PsiElement
+- pf:getRootScope():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- pa:getScopesBuilderProvider():kotlin.jvm.functions.Function2
+- hashCode():I
+p:com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- com.intellij.webSymbols.WebSymbolsScope
+- a:getParent():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- a:getProperties():java.util.Map
+- a:getSource():com.intellij.psi.PsiElement
+pf:com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScopesHolder
+- <init>(com.intellij.psi.PsiElement,java.util.Set):V
+- f:addSymbol(com.intellij.webSymbols.WebSymbol):V
+- f:addSymbols(java.util.List):V
+- f:currentScope():com.intellij.webSymbols.WebSymbolsScope
+- f:getProvidedSymbolKinds():java.util.Set
+- f:getRootElement():com.intellij.psi.PsiElement
+- f:popScope():V
+- f:pushScope(com.intellij.psi.PsiElement,java.util.Map,java.util.Set):V
+- bs:pushScope$default(com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScopesHolder,com.intellij.psi.PsiElement,java.util.Map,java.util.Set,I,java.lang.Object):V
