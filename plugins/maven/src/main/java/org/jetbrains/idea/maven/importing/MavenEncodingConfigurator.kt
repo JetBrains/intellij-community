@@ -21,8 +21,7 @@ import java.nio.charset.Charset
 import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.UnsupportedCharsetException
 
-@ApiStatus.Internal
-class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
+private class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
   private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")
 
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
