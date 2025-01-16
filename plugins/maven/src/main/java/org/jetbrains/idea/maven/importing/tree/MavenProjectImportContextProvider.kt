@@ -167,7 +167,7 @@ internal class MavenProjectImportContextProvider(
     val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, sourceLevel, testSourceLevel)
 
     val compileSourceRootModules = getNonDefaultCompilerExecutions(project).map {
-      ModuleData("$moduleName.$it", StandardMavenModuleType.MAIN_ONLY, sourceLevel, testSourceLevel)
+      ModuleData("$moduleName.$it", StandardMavenModuleType.MAIN_ONLY, sourceLevel, testSourceLevel, true)
     }
 
     val otherModules = listOf(mainData) + compileSourceRootModules + testData

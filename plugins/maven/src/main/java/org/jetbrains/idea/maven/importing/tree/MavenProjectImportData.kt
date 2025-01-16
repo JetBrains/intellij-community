@@ -12,13 +12,14 @@ internal class ModuleData(
   val type: StandardMavenModuleType,
   private val sourceLevel: LanguageLevel?,
   private val testSourceLevel: LanguageLevel?,
+  val isCompileSourceRootModule: Boolean = false,
 ) {
   val sourceLanguageLevel: LanguageLevel?
     get() = if (type == StandardMavenModuleType.TEST_ONLY) testSourceLevel else sourceLevel
 
-  fun isMainModule() = type == StandardMavenModuleType.MAIN_ONLY
-  fun isTestModule() = type == StandardMavenModuleType.TEST_ONLY
-  fun isMainOrTestModule() = isMainModule() || isTestModule()
+  val isMainModule = type == StandardMavenModuleType.MAIN_ONLY
+  val isTestModule = type == StandardMavenModuleType.TEST_ONLY
+  val isMainOrTestModule = isMainModule || isTestModule
 
   override fun toString(): String {
     return moduleName
