@@ -20,26 +20,24 @@ object DarculaNewUIUtil {
     val g2 = g.create() as Graphics2D
 
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+      setupRenderingHints(g2)
 
       val lw = DarculaUIUtil.LW.get()
 
       when {
         enabled && outline != null -> {
           outline.setGraphicsColor(g2, focused)
-          paintRectangle(g2, rect, arc, bw)
+          paintComponentRectangle(g2, rect, arc, bw)
         }
 
         focused -> {
           DarculaUIUtil.Outline.focus.setGraphicsColor(g2, true)
-          paintRectangle(g2, rect, arc, bw)
+          paintComponentRectangle(g2, rect, arc, bw)
         }
 
         else -> {
           g2.color = DarculaUIUtil.getOutlineColor(enabled, focused)
-          paintRectangle(g2, rect, arc, lw)
+          paintComponentRectangle(g2, rect, arc, lw)
         }
       }
     }
@@ -52,22 +50,20 @@ object DarculaNewUIUtil {
    * Will be removed after the next 25.1 release
    */
   @ApiStatus.Internal
-  @Deprecated("Use drawRoundedRectangle instead")
+  @Deprecated("Use drawRoundedComponentRectangle instead")
   @ScheduledForRemoval
   fun paintComponentBorder(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
-    drawRoundedRectangle(g, rect, color, arc, thick)
+    drawRoundedComponentRectangle(g, rect, color, arc, thick)
   }
 
-  fun drawRoundedRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
+  fun drawRoundedComponentRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
     val g2 = g.create() as Graphics2D
 
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+      setupRenderingHints(g2)
 
       g2.color = color
-      paintRectangle(g2, rect, arc, thick)
+      paintComponentRectangle(g2, rect, arc, thick)
     }
     finally {
       g2.dispose()
@@ -82,7 +78,7 @@ object DarculaNewUIUtil {
   /**
    * Fills part of a component inside the border. The resulting rectangle is a little bit smaller than [rect],
    * so inside background doesn't protrude outside the line border (can be visible near rounded corners).
-   * This method should be used together with [paintComponentBorder],[drawRoundedRectangle], or other methods that draw lined border.
+   * This method should be used together with [paintComponentBorder],[drawRoundedComponentRectangle], or other methods that draw lined border.
    */
   fun fillInsideComponentBorder(g: Graphics, rect: Rectangle, color: Color, arc: Float = DarculaUIUtil.COMPONENT_ARC.float) {
     if (rect.width <= 0 || rect.height <= 0) {
@@ -92,9 +88,7 @@ object DarculaNewUIUtil {
     val g2 = g.create() as Graphics2D
 
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+      setupRenderingHints(g2)
 
       val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
       // Reduce size a little bit, so inside background is not protruded outside the border near rounded corners
@@ -116,9 +110,7 @@ object DarculaNewUIUtil {
     val g2 = g.create() as Graphics2D
 
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
-                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+      setupRenderingHints(g2)
 
       val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
       border.append(RoundRectangle2D.Float(0f, 0f, rect.width.toFloat(), rect.height.toFloat(), arc, arc), false)
@@ -131,21 +123,44 @@ object DarculaNewUIUtil {
     }
   }
 
-  /**
-   * Using DarculaUIUtil.doPaint and similar methods doesn't give good results when line thickness is 1 (right corners too thin)
-   */
-  private fun paintRectangle(g: Graphics2D, rect: Rectangle, arc: Float, thick: Int) {
+  fun drawRoundedRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Float) {
+    val g2 = g.create() as Graphics2D
+
+    try {
+      setupRenderingHints(g2)
+
+      g2.color = color
+      paintRectangleImpl(g2, rect, arc, thick)
+    }
+    finally {
+      g2.dispose()
+    }
+  }
+
+  fun setupRenderingHints(g: Graphics2D) {
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                        if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+  }
+
+  private fun paintComponentRectangle(g: Graphics2D, rect: Rectangle, arc: Float, thick: Int) {
     val addToRect = thick - DarculaUIUtil.LW.get()
     if (addToRect > 0) {
       @Suppress("UseDPIAwareInsets")
       JBInsets.addTo(rect, Insets(addToRect, addToRect, addToRect, addToRect))
     }
 
-    val w = thick.toFloat()
+    paintRectangleImpl(g, rect, arc, thick.toFloat())
+  }
+
+  /**
+   * Using DarculaUIUtil.doPaint and similar methods doesn't give good results when line thickness is 1 (right corners too thin)
+   */
+  private fun paintRectangleImpl(g: Graphics2D, rect: Rectangle, arc: Float, thick: Float) {
     val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
     border.append(RoundRectangle2D.Float(0f, 0f, rect.width.toFloat(), rect.height.toFloat(), arc, arc), false)
     val innerArc = max(arc - thick * 2, 0.0f)
-    border.append(RoundRectangle2D.Float(w, w, rect.width - w * 2, rect.height - w * 2, innerArc, innerArc), false)
+    border.append(RoundRectangle2D.Float(thick, thick, rect.width - thick * 2, rect.height - thick * 2, innerArc, innerArc), false)
 
     g.translate(rect.x, rect.y)
     g.fill(border)

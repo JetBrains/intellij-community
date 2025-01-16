@@ -2020,6 +2020,86 @@
       "since": "2019.3"
     },
     {
+      "key": "TrialWidget.Default.foreground",
+      "description": "Foreground of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.background",
+      "description": "Background of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.borderColor",
+      "description": "Border color of trial widget in default state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.hoverBackground",
+      "description": "Hover background of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.foreground",
+      "description": "Foreground of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.background",
+      "description": "Background of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.borderColor",
+      "description": "Border color of trial widget in active state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.hoverBackground",
+      "description": "Hover background of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.foreground",
+      "description": "Foreground of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.background",
+      "description": "Background of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.borderColor",
+      "description": "Border color of trial widget in alert state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.hoverBackground",
+      "description": "Hover background of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.foreground",
+      "description": "Foreground of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.background",
+      "description": "Background of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.borderColor",
+      "description": "Border color of trial widget in expiring state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.hoverBackground",
+      "description": "Hover background of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
       "key": "UiDesigner.Panel.background",
       "description": "Android plugin: panels around the preview area"
     },

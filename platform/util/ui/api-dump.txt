@@ -4708,6 +4708,32 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Tree$Selection
 - s:background(Z):java.awt.Color
 - s:forceFocusedSelectionForeground():Z
 - s:foreground(Z):java.awt.Color
+f:com.intellij.util.ui.JBUI$CurrentTheme$TrialWidget
+- <init>():V
+f:com.intellij.util.ui.JBUI$CurrentTheme$TrialWidget$Active
+- sf:BACKGROUND:java.awt.Color
+- sf:BORDER_COLOR:java.awt.Color
+- sf:FOREGROUND:java.awt.Color
+- sf:HOVER_BACKGROUND:java.awt.Color
+- <init>():V
+f:com.intellij.util.ui.JBUI$CurrentTheme$TrialWidget$Alert
+- sf:BACKGROUND:java.awt.Color
+- sf:BORDER_COLOR:java.awt.Color
+- sf:FOREGROUND:java.awt.Color
+- sf:HOVER_BACKGROUND:java.awt.Color
+- <init>():V
+f:com.intellij.util.ui.JBUI$CurrentTheme$TrialWidget$Default
+- sf:BACKGROUND:java.awt.Color
+- sf:BORDER_COLOR:java.awt.Color
+- sf:FOREGROUND:java.awt.Color
+- sf:HOVER_BACKGROUND:java.awt.Color
+- <init>():V
+f:com.intellij.util.ui.JBUI$CurrentTheme$TrialWidget$Expiring
+- sf:BACKGROUND:java.awt.Color
+- sf:BORDER_COLOR:java.awt.Color
+- sf:FOREGROUND:java.awt.Color
+- sf:HOVER_BACKGROUND:java.awt.Color
+- <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$Validator
 - <init>():V
 - s:errorBackgroundColor():java.awt.Color

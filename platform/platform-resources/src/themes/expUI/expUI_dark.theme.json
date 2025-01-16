@@ -747,6 +747,33 @@
       "border": "4,12,4,12"
     },
 
+    "TrialWidget": {
+      "Default": {
+        "foreground": "#CED0D6",
+        "background": "#27282E",
+        "borderColor": "#B4B8BF",
+        "hoverBackground": "#494B57"
+      },
+      "Active": {
+        "foreground": "#5FAD65",
+        "background": "#273828",
+        "borderColor": "#4E8052",
+        "hoverBackground": "#375239"
+      },
+      "Alert": {
+        "foreground": "#D6AE58",
+        "background": "#3D3223",
+        "borderColor": "#826A41",
+        "hoverBackground": "#5E4D33"
+      },
+      "Expiring": {
+        "foreground": "#FAE3DE",
+        "background": "#CC3645",
+        "borderColor": "#00000000",
+        "hoverBackground": "#E55765"
+      }
+    },
+
     "TitlePane": {
       "Button": {
         "preferredSize": "40,40",

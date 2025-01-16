@@ -18,6 +18,7 @@ import com.intellij.internal.ui.sandbox.dsl.validation.ValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPanel
 import com.intellij.internal.ui.sandbox.tests.accessibility.AccessibilityFailedInspectionsPanel
 import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
+import com.intellij.internal.ui.sandbox.tests.components.TrialStateButtonTestPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -102,7 +103,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     )),
 
     Group("Tests", children = listOf(
-      Group("Components", children = listOf(JBTextAreaTestPanel())),
+      Group("Components", children = listOf(JBTextAreaTestPanel(), TrialStateButtonTestPanel())),
       Group("Accessibility", children = listOf(
         AccessibilityFailedInspectionsPanel())
       )
