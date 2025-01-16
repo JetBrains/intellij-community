@@ -6,11 +6,12 @@ import com.intellij.vcs.log.graph.VisibleGraph
 import com.intellij.vcs.log.graph.actions.ActionController
 import kotlin.math.max
 
-internal class CompoundVisibleGraph<CommitId : Any>(private val firstGraph: VisibleGraph<CommitId>,
-                                                    private val secondGraph: VisibleGraph<CommitId>) : VisibleGraph<CommitId> {
-  override fun getVisibleCommitCount(): Int {
-    return max(firstGraph.visibleCommitCount, secondGraph.visibleCommitCount)
-  }
+internal class CompoundVisibleGraph<CommitId : Any>(
+  private val firstGraph: VisibleGraph<CommitId>,
+  private val secondGraph: VisibleGraph<CommitId>,
+) : VisibleGraph<CommitId> {
+  override val visibleCommitCount: Int
+    get() = max(firstGraph.visibleCommitCount, secondGraph.visibleCommitCount)
 
   override fun getRowInfo(visibleRow: Int): RowInfo<CommitId> =
     when {
@@ -24,13 +25,11 @@ internal class CompoundVisibleGraph<CommitId : Any>(private val firstGraph: Visi
     return firstGraph.getVisibleRowIndex(id) ?: secondGraph.getVisibleRowIndex(id)
   }
 
-  override fun getActionController(): ActionController<CommitId> {
-    return secondGraph.actionController
-  }
+  override val actionController: ActionController<CommitId>
+    get() = secondGraph.actionController
 
-  override fun getRecommendedWidth(): Int {
-    return secondGraph.recommendedWidth
-  }
+  override val recommendedWidth: Int
+    get() = secondGraph.recommendedWidth
 
   private fun VisibleGraph<CommitId>.containsRow(visibleRow: Int): Boolean {
     return visibleRow in 0 until visibleCommitCount

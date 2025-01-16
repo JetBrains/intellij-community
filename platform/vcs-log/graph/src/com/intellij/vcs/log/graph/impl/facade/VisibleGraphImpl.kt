@@ -32,7 +32,8 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
     updatePrintElementGenerator()
   }
 
-  override fun getVisibleCommitCount() = graphController.compiledGraph.nodesCount()
+  override val visibleCommitCount: Int
+    get() = graphController.compiledGraph.nodesCount()
 
   override fun getRowInfo(visibleRow: Int): RowInfo<CommitId> {
     val nodeId = graphController.compiledGraph.getNodeId(visibleRow)
@@ -45,7 +46,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
     return graphController.compiledGraph.getNodeIndex(nodeId)
   }
 
-  override fun getActionController(): ActionController<CommitId> = ActionControllerImpl()
+  override val actionController: ActionController<CommitId> = ActionControllerImpl()
 
   fun updatePrintElementGenerator() {
     presentationManager = PrintElementPresentationManagerImpl(permanentGraph, linearGraph, colorGenerator)
@@ -65,7 +66,8 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
                                  permanentGraph.branchNodeIds, visibleRow, visibleRange)
   }
 
-  override fun getRecommendedWidth(): Int = printElementGenerator.recommendedWidth
+  override val recommendedWidth: Int
+    get() = printElementGenerator.recommendedWidth
 
   val linearGraph: LinearGraph
     get() = graphController.compiledGraph
