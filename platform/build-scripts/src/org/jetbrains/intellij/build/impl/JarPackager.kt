@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.dynatrace.hash4j.hashing.HashStream64
@@ -643,8 +643,14 @@ class JarPackager private constructor(
   }
 }
 
+private val agentLibrariesNotForcedInSeparateJars = listOf(
+  "ideformer",
+  "code-agents-core"
+)
+
 private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String): Boolean {
-  if (fileName.endsWith("-rt.jar") || (fileName.contains("-agent") && !fileName.contains("ideformer"))) {
+  if (fileName.endsWith("-rt.jar")
+      || (fileName.contains("-agent") && agentLibrariesNotForcedInSeparateJars.none { fileName.contains(it) })) {
     return true
   }
 
