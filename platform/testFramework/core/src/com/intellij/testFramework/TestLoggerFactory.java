@@ -131,7 +131,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
 
     // just add a single console appender instead of multiple handlers, but for the root logger
-    rootLogger.addHandler(new LogToStdoutJulHandler(Level.FINE));
+    rootLogger.addHandler(new FilteringLogToStdoutJulHandler(Level.FINE));
   }
 
   public static @NotNull Path getTestLogDir() {
@@ -539,16 +539,12 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   // Cannot extend from ConsoleHandler since it is hard-coded to System.err,
   // and calling setOutputStream(System.out) after the constructor would close System.err.
-  private static class LogToStdoutJulHandler extends StreamHandler {
+  public static class LogToStdoutJulHandler extends StreamHandler {
     private boolean initialized;
 
-    LogToStdoutJulHandler(Level level) {
+    public LogToStdoutJulHandler() {
       super(System.out, new WithTimeSinceTestStartedJulFormatter());
-
-      // we'd like to capture all records with level or finer than the level
-      // so we set level to all and do actual level filtering with the filter
       setLevel(Level.ALL);
-      setFilter(record -> record.getLevel().intValue() <= level.intValue());
     }
 
     @Override
@@ -574,6 +570,16 @@ public final class TestLoggerFactory implements Logger.Factory {
     public synchronized void close() {
       // Prevent closing System.out.
       flush();
+    }
+  }
+
+  private static class FilteringLogToStdoutJulHandler extends LogToStdoutJulHandler {
+    FilteringLogToStdoutJulHandler(Level level) {
+      super();
+
+      // we'd like to capture all records with level or finer than the level
+      // so we set level to all and do actual level filtering with the filter
+      setFilter(record -> record.getLevel().intValue() <= level.intValue());
     }
   }
 
