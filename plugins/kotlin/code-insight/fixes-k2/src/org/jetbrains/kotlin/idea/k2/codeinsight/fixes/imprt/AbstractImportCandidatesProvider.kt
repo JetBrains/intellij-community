@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.isImported
 import org.jetbrains.kotlin.idea.util.positionContext.KDocLinkNamePositionContext
@@ -22,7 +21,7 @@ import org.jetbrains.kotlin.resolve.ImportPath
 
 internal abstract class AbstractImportCandidatesProvider(
     protected val positionContext: KotlinNameReferencePositionContext,
-) {
+): ImportCandidatesProvider {
 
     private val file: KtFile get() = positionContext.nameExpression.containingKtFile
     private val fileImports: List<ImportPath> by lazy { file.importDirectives.mapNotNull { it.importPath } }
@@ -61,9 +60,4 @@ internal abstract class AbstractImportCandidatesProvider(
 
     private fun KotlinRawPositionContext.acceptsInnerClasses(): Boolean =
         this is KotlinTypeNameReferencePositionContext || this is KDocLinkNamePositionContext
-
-    context(KaSession)
-    abstract fun collectCandidates(
-        indexProvider: KtSymbolFromIndexProvider,
-    ): List<KaDeclarationSymbol>
 }
