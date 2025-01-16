@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUiOnboarding.steps
 
+import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
@@ -31,6 +32,6 @@ internal class MainMenuStep : NewUiOnboardingStep {
   }
 
   override fun isAvailable(): Boolean {
-    return !SystemInfoRt.isMac && !UISettings.getInstance().separateMainMenu
+    return !SystemInfoRt.isMac && UISettings.getInstance().mainMenuDisplayMode == MainMenuDisplayMode.UNDER_HAMBURGER_BUTTON
   }
 }

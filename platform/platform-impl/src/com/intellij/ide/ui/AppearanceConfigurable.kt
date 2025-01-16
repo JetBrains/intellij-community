@@ -19,7 +19,6 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ThemeAutodetectSelector
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.HideNativeLinuxTitleNotSupportedReason
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -42,13 +41,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
-import com.intellij.openapi.wm.impl.isMergeMainMenuWithWindowTitleOverridden
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
@@ -126,16 +120,10 @@ private val cdExpandNodesWithSingleClick
                              comment = message("checkbox.expand.node.with.single.click.comment"), groupName = uiOptionGroupName)
 private val cdDnDWithAlt
   get() = CheckboxDescriptor(message("dnd.with.alt.pressed.only"), settings::dndWithPressedAltOnly, groupName = uiOptionGroupName)
-private val cdSeparateMainMenu
-  get() = CheckboxDescriptor(message("checkbox.main.menu.separate.toolbar"), settings::separateMainMenu, groupName = uiOptionGroupName)
-
 private val cdUseTransparentMode
   get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), settings.state::enableAlphaMode)
 private val cdUseContrastToolbars
   get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
-private val cdMergeMainMenuWithWindowTitle
-  get() = CheckboxDescriptor(message("checkbox.merge.main.menu.with.window.title"), settings::mergeMainMenuWithWindowTitle,
-                             groupName = windowOptionGroupName)
 private val cdFullPathsInTitleBar
   get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons
@@ -160,10 +148,9 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
     cdShowTreeIndents,
     cdDnDWithAlt,
     cdFullPathsInTitleBar,
-    cdSeparateMainMenu.takeUnless { SystemInfo.isMac },
     cdDifferentiateProjects,
     cdShowMenuIcons
-  ).filterNotNull().map(CheckboxDescriptor::asUiOptionDescriptor)
+  ).map(CheckboxDescriptor::asUiOptionDescriptor)
 }
 
 internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
@@ -412,15 +399,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 .comment(cdDifferentiateProjects.comment, 30)
             }
           }
-          if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
-            yield {
-              checkBox(cdSeparateMainMenu).apply {
-                if (!SystemInfo.isWindows) {
-                  comment(message("ide.restart.required.comment"))
-                }
-              }
-            }
-          }
           if (SystemInfo.isMac && MacCustomAppIcon.available()) {
             yield {
               checkBox(message("checkbox.ide.mac.app.icon")).comment(message("ide.restart.required.comment"))
@@ -441,31 +419,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield { checkBox(cdEnableMenuMnemonics) }
           yield { checkBox(cdShowMenuIcons) }
           yield { checkBox(cdKeepPopupsForToggles) }
-          if (SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable || CustomWindowHeaderUtil.hideNativeLinuxTitleAvailable) {
-            yield {
-              val checkBox = checkBox(cdMergeMainMenuWithWindowTitle)
-                .gap(RightGap.SMALL)
-              if (SystemInfoRt.isWindows && isMergeMainMenuWithWindowTitleOverridden) {
-                checkBox.enabled(false)
-                contextHelp(message("option.is.overridden.by.jvm.property", MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
-              }
-              if (SystemInfo.isUnix && !SystemInfo.isMac && !CustomWindowHeaderUtil.hideNativeLinuxTitleSupported) {
-                checkBox.enabled(false)
-                val comment = when (CustomWindowHeaderUtil.hideNativeLinuxTitleNotSupportedReason) {
-                  HideNativeLinuxTitleNotSupportedReason.INCOMPATIBLE_JBR -> message("hide.native.linux.title.not.supported.incompatible.jbr")
-                  HideNativeLinuxTitleNotSupportedReason.WAYLAND_OR_XTOOLKIT_REQUIRED -> message("hide.native.linux.title.not.supported.wayland.or.xtoolkit.required")
-                  HideNativeLinuxTitleNotSupportedReason.WSL_NOT_SUPPORTED -> message("hide.native.linux.title.not.supported.wsl")
-                  HideNativeLinuxTitleNotSupportedReason.TILING_WM_NOT_SUPPORTED -> message("hide.native.linux.title.not.supported.tiling.wm")
-                  HideNativeLinuxTitleNotSupportedReason.UNDEFINED_DESKTOP_NOT_SUPPORTED -> message("hide.native.linux.title.not.supported.undefined.desktop")
-                  null -> null
-                }
-                checkBox.comment(comment, 30)
-              }
-              else {
-                checkBox.comment(message("ide.restart.required.comment"))
-              }
-            }
-          }
         }
 
         // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
@@ -504,6 +457,22 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }
         }
 
+        if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
+          row  {
+            comboBox(model = CollectionComboBoxModel<MainMenuDisplayMode>(MainMenuDisplayMode.entries), SimpleListCellRenderer<MainMenuDisplayMode>.create { label, value, _ -> label.text = value.description  }  )
+              .label(message("main.menu.combobox.label"))
+              .bindItem(settings::mainMenuDisplayMode.toNullableProperty())
+              .apply {
+                if (!settings.mergeMainMenuWithWindowTitle) {
+                  enabled(false)
+                  comment(message("main.menu.combobox.disabled.description"))
+                }
+                else if (!SystemInfo.isWindows) {
+                  comment(message("ide.restart.required.comment"))
+                }
+              }
+          }
+        }
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
           row {
@@ -669,7 +638,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
   override fun apply() {
     val oldIsSupportScreenReaders = generalSettings.isSupportScreenReaders
-    val oldSeparateMainMenu = settings.separateMainMenu
+    val oldMainMenuDisplayMode = settings.mainMenuDisplayMode
     val oldMergeMainMenuWithWindowTitle = settings.mergeMainMenuWithWindowTitle
 
     val uiSettingsChanged = isModified
@@ -680,7 +649,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
 
     if (oldIsSupportScreenReaders != generalSettings.isSupportScreenReaders ||
-        (!SystemInfo.isWindows && oldSeparateMainMenu != settings.separateMainMenu) ||
+        (!SystemInfo.isWindows && oldMainMenuDisplayMode != settings.mainMenuDisplayMode && listOf(oldMainMenuDisplayMode,  settings.mainMenuDisplayMode).contains(MainMenuDisplayMode.SEPARATE_TOOLBAR)) ||
         oldMergeMainMenuWithWindowTitle != settings.mergeMainMenuWithWindowTitle) {
       RestartDialogImpl.showRestartRequired()
     }

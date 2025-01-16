@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomisedActionGroup
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -33,7 +34,7 @@ object CustomWindowHeaderUtil {
    */
   internal fun isMenuButtonInToolbar(uiSettings: UISettings): Boolean {
     return ExperimentalUI.isNewUI() &&
-           (SystemInfoRt.isUnix && !SystemInfoRt.isMac && !uiSettings.separateMainMenu && !hideNativeLinuxTitle(uiSettings) ||
+           (SystemInfoRt.isUnix && !SystemInfoRt.isMac && uiSettings.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR && !hideNativeLinuxTitle(uiSettings) ||
             SystemInfo.isMac && !Menu.isJbScreenMenuEnabled())
   }
 
@@ -97,7 +98,7 @@ object CustomWindowHeaderUtil {
       mainToolbarHasNoActions
     }
     else {
-      mainToolbarHasNoActions && !UISettings.getInstance().separateMainMenu
+      mainToolbarHasNoActions && UISettings.getInstance().mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR
     }
   }
 
@@ -113,11 +114,11 @@ object CustomWindowHeaderUtil {
       if (SystemInfoRt.isMac) {
         return true
       }
-      if (SystemInfoRt.isWindows && !uiSettings.separateMainMenu && uiSettings.mergeMainMenuWithWindowTitle && !isFullscreen) {
+      if (SystemInfoRt.isWindows && uiSettings.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR && uiSettings.mergeMainMenuWithWindowTitle && !isFullscreen) {
         return true
       }
     }
-    if (hideNativeLinuxTitle(UISettings.shadowInstance) && !uiSettings.separateMainMenu && !isFullscreen) {
+    if (hideNativeLinuxTitle(UISettings.shadowInstance) && uiSettings.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR && !isFullscreen) {
       return true
     }
     return false

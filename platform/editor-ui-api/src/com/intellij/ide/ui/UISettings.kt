@@ -121,10 +121,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.dndWithPressedAltOnly = value
     }
 
-  var separateMainMenu: Boolean
-    get() = !SystemInfoRt.isMac && state.separateMainMenu
+  var mainMenuDisplayMode: MainMenuDisplayMode
+    get() = MainMenuDisplayMode.valueOf(state.mainMenuDisplayMode)
     set(value) {
-      state.separateMainMenu = value
+      state.mainMenuDisplayMode = value.name
     }
 
   var useSmallLabelsOnTabs: Boolean
@@ -260,7 +260,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var showMainToolbar: Boolean
-    get() = if (NewUiValue.isEnabled()) separateMainMenu else state.showMainToolbar
+    get() = if (NewUiValue.isEnabled()) mainMenuDisplayMode == MainMenuDisplayMode.SEPARATE_TOOLBAR else state.showMainToolbar
     set(value) {
       state.showMainToolbar = value
 
@@ -827,6 +827,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (!state.allowMergeButtons) {
       Registry.get("ide.allow.merge.buttons").setValue(false)
       state.allowMergeButtons = true
+    }
+    if (state.mainMenuDisplayMode == null) {
+      state.mainMenuDisplayMode = if (state.separateMainMenu) MainMenuDisplayMode.SEPARATE_TOOLBAR.name
+      else MainMenuDisplayMode.UNDER_HAMBURGER_BUTTON.name
     }
   }
 
