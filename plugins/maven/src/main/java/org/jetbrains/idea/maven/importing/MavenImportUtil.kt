@@ -190,6 +190,16 @@ object MavenImportUtil {
       .filter { it != EXECUTION_COMPILE && it != EXECUTION_TEST_COMPILE }
   }
 
+  internal fun getCompileSourceRoots(project: MavenProject, executionId: String): List<String> {
+    return compilerExecutions(project)
+      .firstOrNull { it.executionId == executionId }
+      ?.configurationElement
+      ?.getChild("compileSourceRoots")
+      ?.children
+      ?.mapNotNull { it.textTrim }
+      .orEmpty()
+  }
+
   private fun getMavenLanguageLevel(
     mavenProject: MavenProject,
     useReleaseCompilerProp: Boolean,
