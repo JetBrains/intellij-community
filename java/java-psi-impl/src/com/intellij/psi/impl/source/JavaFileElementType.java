@@ -102,8 +102,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  public void indexStub(@NotNull PsiJavaFileStub stub, @NotNull IndexSink sink) {
-  }
+  public void indexStub(@NotNull PsiJavaFileStub stub, @NotNull IndexSink sink) { }
 
   @ApiStatus.Internal
   public static void setTestStubVersionModifier(int modifier) {

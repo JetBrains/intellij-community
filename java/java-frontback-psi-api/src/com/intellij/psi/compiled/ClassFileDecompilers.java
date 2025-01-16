@@ -73,7 +73,7 @@ public final class ClassFileDecompilers {
     return ApplicationManager.getApplication().getService(ClassFileDecompilers.class);
   }
 
-  public static final ExtensionPointName<Decompiler> EP_NAME = new ExtensionPointName<>("com.intellij.psi.classFileDecompiler");
+  public final ExtensionPointName<Decompiler> EP_NAME = new ExtensionPointName<>("com.intellij.psi.classFileDecompiler");
 
   private ClassFileDecompilers() {
     Application app = ApplicationManager.getApplication();

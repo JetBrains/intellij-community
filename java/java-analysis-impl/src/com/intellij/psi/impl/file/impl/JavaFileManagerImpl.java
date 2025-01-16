@@ -131,21 +131,18 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     return bestClass;
   }
 
-  protected boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
+  private boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
     if (FileTypeRegistry.getInstance().isFileOfType(vFile, JavaClassFileType.INSTANCE)) {
       // See IDEADEV-5626
-      var prm = ProjectRootManager.getInstance(myManager.getProject());
-      if (prm != null) { 
-        ProjectFileIndex index = prm.getFileIndex();
-        boolean checkMultiRelease = index.isInLibrary(vFile);
-        VirtualFile root = index.getClassRootForFile(vFile);
-        VirtualFile parent = vFile.getParent();
-        PsiNameHelper nameHelper = PsiNameHelper.getInstance(myManager.getProject());
-        while (parent != null && !Comparing.equal(parent, root) &&
-               (!checkMultiRelease || JavaMultiReleaseUtil.getVersionForVersionRoot(root, parent) == null)) {
-          if (!nameHelper.isIdentifier(parent.getName())) return false;
-          parent = parent.getParent();
-        }
+      ProjectFileIndex index = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
+      boolean checkMultiRelease = index.isInLibrary(vFile);
+      VirtualFile root = index.getClassRootForFile(vFile);
+      VirtualFile parent = vFile.getParent();
+      PsiNameHelper nameHelper = PsiNameHelper.getInstance(myManager.getProject());
+      while (parent != null && !Comparing.equal(parent, root) &&
+             (!checkMultiRelease || JavaMultiReleaseUtil.getVersionForVersionRoot(root, parent) == null)) {
+        if (!nameHelper.isIdentifier(parent.getName())) return false;
+        parent = parent.getParent();
       }
     }
 
