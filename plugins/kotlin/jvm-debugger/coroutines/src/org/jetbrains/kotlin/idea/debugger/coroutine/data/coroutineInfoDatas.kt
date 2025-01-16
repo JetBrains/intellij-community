@@ -96,7 +96,7 @@ fun createCoroutineInfoDataFromMirror(
 ): CoroutineInfoData =
     CoroutineInfoData(
         name = mirror.context?.name,
-        id = mirror.context?.id,
+        id = mirror.sequenceNumber,
         state = mirror.state,
         dispatcher = mirror.context?.dispatcher,
         lastObservedFrame = mirror.lastObservedFrame,
