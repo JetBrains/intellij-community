@@ -13850,6 +13850,7 @@ c:com.intellij.openapi.roots.ui.configuration.SdkDetector
 - s:getInstance():com.intellij.openapi.roots.ui.configuration.SdkDetector
 com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener
 - a:onSdkDetected(com.intellij.openapi.projectRoots.SdkType,java.lang.String,java.lang.String):V
+- onSdkDetected(com.intellij.openapi.projectRoots.SdkType,java.lang.String,java.lang.String,com.intellij.util.keyFMap.KeyFMap):V
 - onSearchCompleted():V
 - onSearchStarted():V
 a:com.intellij.openapi.roots.ui.configuration.SdkListItem

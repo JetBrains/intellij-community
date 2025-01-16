@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,15 @@ public class SdkDetector {
    */
   public interface DetectedSdkListener {
     void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home);
+
+    /**
+     * Provides detailed information about a detected SDK.
+     * @param info additional metadata associated with the detected SDK, stored in a {@link KeyFMap}.
+     */
+    default void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home, @NotNull KeyFMap info) {
+      onSdkDetected(type, version, home);
+    }
+
     default void onSearchStarted() { }
     default void onSearchCompleted() { }
   }
@@ -127,6 +137,13 @@ public class SdkDetector {
     }
 
     @Override
+    public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home, @NotNull KeyFMap info) {
+      synchronized (myPublicationLock) {
+        logEvent(listener -> listener.onSdkDetected(type, version, home, info));
+      }
+    }
+
+    @Override
     public void onSearchCompleted() {
       synchronized (myPublicationLock) {
         myIsRunning.set(false);
@@ -198,10 +215,11 @@ public class SdkDetector {
                              @NotNull ProgressIndicator indicator,
                              @NotNull DetectedSdkListener callback) {
     try {
-      Collection<String> suggestedPaths = type.suggestHomePaths(project);
-      for (String path : suggestedPaths) {
+      Collection<KeyFMap> suggestedPaths = type.collectSdkDetails(project);
+      for (KeyFMap info : suggestedPaths) {
         indicator.checkCanceled();
 
+        final String path = info.get(SdkType.HOMEPATH_KEY);
         if (path == null) continue;
 
         try {
@@ -214,20 +232,22 @@ public class SdkDetector {
           continue;
         }
 
-        String version;
-        try {
-          version = type.getVersionString(path);
-        }
-        catch (Exception e) {
-          LOG.warn("Failed to get the detected SDK version for " + type + " at " + path + ". " + e.getMessage(), e);
-          continue;
-        }
+        String version = info.get(SdkType.VERSION_KEY); // might have been detected earlier (e.g. to sort results)
         if (version == null) {
-          LOG.warn("No version is returned for detected SDK " + type + " at " + path);
-          continue;
+          try {
+              version = type.getVersionString(path);
+          }
+          catch (Exception e) {
+            LOG.warn("Failed to get the detected SDK version for " + type + " at " + path + ". " + e.getMessage(), e);
+            continue;
+          }
+          if (version == null) {
+            LOG.warn("No version is returned for detected SDK " + type + " at " + path);
+            continue;
+          }
         }
 
-        callback.onSdkDetected(type, version, path);
+        callback.onSdkDetected(type, version, path, info);
       }
     }
     catch (ProcessCanceledException e) {
@@ -255,6 +275,11 @@ public class SdkDetector {
     @Override
     public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home) {
       dispatch(() -> myTarget.onSdkDetected(type, version, home));
+    }
+
+    @Override
+    public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home, @NotNull KeyFMap info) {
+      dispatch(() -> myTarget.onSdkDetected(type, version, home, info));
     }
 
     @Override

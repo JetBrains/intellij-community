@@ -8,11 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.keyFMap.KeyFMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
@@ -37,6 +40,10 @@ public abstract class SdkType implements SdkTypeId {
   public static final ExtensionPointName<SdkType> EP_NAME = new ExtensionPointName<>("com.intellij.sdkType");
 
   private static final Comparator<Sdk> ALPHABETICAL_COMPARATOR = (sdk1, sdk2) -> StringUtil.compare(sdk1.getName(), sdk2.getName(), true);
+
+  public static final Key<String> HOMEPATH_KEY = new Key<>("sdk.homepath");
+  public static final Key<String> VERSION_KEY = new Key<>("sdk.version");
+  public static final Key<Boolean> IS_SYMLINK_KEY = new Key<>("sdk.is.symlink");
 
   private final String myName;
 
@@ -99,6 +106,21 @@ public abstract class SdkType implements SdkTypeId {
    */
   public @Unmodifiable @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
     return suggestHomePaths();
+  }
+
+  /**
+   * Returns a list of all valid SDKs found on the host where {@code project} is located, with additional information.
+   * Use {@link #suggestHomePaths(Project)} to only collect paths.
+   */
+  public @Unmodifiable @NotNull Collection<KeyFMap> collectSdkDetails(@Nullable Project project) {
+    return ContainerUtil.map(suggestHomePaths(project), homePath -> {
+      var info = KeyFMap.EMPTY_MAP
+        .plus(HOMEPATH_KEY, homePath)
+        .plus(IS_SYMLINK_KEY, Files.isSymbolicLink(Path.of(homePath)));
+      var version = getVersionString(homePath);
+      if (version != null) info = info.plus(VERSION_KEY, version);
+      return info;
+    });
   }
 
   /**
