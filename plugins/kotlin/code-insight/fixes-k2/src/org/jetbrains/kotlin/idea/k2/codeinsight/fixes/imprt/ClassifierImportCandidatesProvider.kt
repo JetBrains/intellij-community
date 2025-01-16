@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtTypeAlias
 
 internal open class ClassifierImportCandidatesProvider(
     positionContext: KotlinNameReferencePositionContext,
-) : ImportCandidatesProvider(positionContext) {
+) : AbstractImportCandidatesProvider(positionContext) {
 
     protected open fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean =
         !kotlinClass.isImported() && kotlinClass.canBeImported()

@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal open class CallableImportCandidatesProvider(
     positionContext: KotlinNameReferencePositionContext,
-) : ImportCandidatesProvider(positionContext) {
+) : AbstractImportCandidatesProvider(positionContext) {
 
     protected open fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
         !kotlinCallable.isImported() && kotlinCallable.canBeImported()

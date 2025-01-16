@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.ImportPath
 
-internal abstract class ImportCandidatesProvider(
+internal abstract class AbstractImportCandidatesProvider(
     protected val positionContext: KotlinNameReferencePositionContext,
 ) {
 

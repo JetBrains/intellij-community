@@ -59,7 +59,7 @@ object ImportQuickFixProvider {
     context(KaSession)
     private fun getCandidateProviders(
         positionContext: KotlinNameReferencePositionContext,
-    ): Sequence<ImportCandidatesProvider> = when (positionContext) {
+    ): Sequence<AbstractImportCandidatesProvider> = when (positionContext) {
         is KotlinSuperTypeCallNameReferencePositionContext,
         is KotlinTypeNameReferencePositionContext -> sequenceOf(
             ClassifierImportCandidatesProvider(positionContext),
