@@ -115,4 +115,25 @@ final class ExpressionChecker {
     }
     myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(elementToHighlight, new JavaIncompatibleTypeErrorContext(lType, rType)));
   }
+
+  void checkLocalClassReferencedFromAnotherSwitchBranch(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiClass aClass) {
+    if (!(aClass.getParent() instanceof PsiDeclarationStatement declarationStatement) ||
+        !(declarationStatement.getParent() instanceof PsiCodeBlock codeBlock) ||
+        !(codeBlock.getParent() instanceof PsiSwitchBlock)) {
+      return;
+    }
+    boolean classSeen = false;
+    for (PsiStatement statement : codeBlock.getStatements()) {
+      if (classSeen) {
+        if (PsiTreeUtil.isAncestor(statement, ref, true)) break;
+        if (statement instanceof PsiSwitchLabelStatement) {
+          myVisitor.report(JavaErrorKinds.REFERENCE_LOCAL_CLASS_OTHER_SWITCH_BRANCH.create(ref, aClass));
+          return;
+        }
+      }
+      else if (statement == declarationStatement) {
+        classSeen = true;
+      }
+    }
+  }
 }

@@ -41,6 +41,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
+  private final @NotNull StatementChecker myStatementChecker = new StatementChecker(this);
   private final @NotNull LiteralChecker myLiteralChecker = new LiteralChecker(this);
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
@@ -361,7 +362,25 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     JavaResolveResult result = ref instanceof PsiExpression ? resolveOptimised(ref, myFile) : doVisitReferenceElement(ref);
     if (result != null) {
       PsiElement resolved = result.getElement();
+      if (!hasErrorResults() && resolved instanceof PsiClass aClass) {
+        myExpressionChecker.checkLocalClassReferencedFromAnotherSwitchBranch(ref, aClass);
+      }
+      if (!hasErrorResults()) myGenericsChecker.checkRawOnParameterizedType(ref, resolved);
     }
+  }
+
+  @Override
+  public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
+    super.visitSwitchLabelStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkCaseStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkGuard(statement);
+  }
+
+  @Override
+  public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
+    super.visitSwitchLabeledRuleStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkCaseStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkGuard(statement);
   }
 
   private JavaResolveResult doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
@@ -377,6 +396,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkAbstractInstantiation(ref);
     if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
     if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);
+    if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression) myGenericsChecker.checkDiamondTypeNotAllowed(newExpression);
+    if (!hasErrorResults()) myGenericsChecker.checkSelectStaticClassFromParameterizedType(resolved, ref);
     return result;
   }
 

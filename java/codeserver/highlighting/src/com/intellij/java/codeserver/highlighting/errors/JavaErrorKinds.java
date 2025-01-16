@@ -497,6 +497,24 @@ public final class JavaErrorKinds {
     parameterized("new.expression.qualified.anonymous.implements.interface");
   public static final Simple<PsiElement> NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE =
     error("new.expression.qualified.qualified.class.reference");
+  public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_NOT_ALLOWED =
+    error("new.expression.diamond.not.allowed");
+
+  public static final Parameterized<PsiReferenceParameterList, PsiClass> REFERENCE_TYPE_ARGUMENT_STATIC_CLASS =
+    parameterized(PsiReferenceParameterList.class, PsiClass.class, "reference.type.argument.static.class")
+      .withRawDescription((list, cls) -> message("reference.type.argument.static.class", formatClass(cls)));
+  public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_TYPE_NEEDS_TYPE_ARGUMENTS =
+    error(PsiJavaCodeReferenceElement.class, "reference.type.needs.type.arguments")
+      .withRawDescription(ref -> message("reference.type.needs.type.arguments", requireNonNull(ref.getReferenceNameElement()).getText()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> REFERENCE_LOCAL_CLASS_OTHER_SWITCH_BRANCH =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "reference.local.class.other.switch.branch")
+      .withHighlightType((ref, cls) -> JavaErrorHighlightType.WRONG_REF)
+      .withRawDescription((ref, cls) -> message("reference.local.class.other.switch.branch", formatClass(cls)));
+  
+  public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
+  
+  public static final Simple<PsiExpression> GUARD_MISPLACED = error("guard.misplaced");
+  public static final Simple<PsiExpression> GUARD_EVALUATED_TO_FALSE = error("guard.evaluated.to.false");
 
   public static final Simple<PsiComment> COMMENT_SHEBANG_JAVA_FILE = error(PsiComment.class, "comment.shebang.java.file")
     .withRange(psi -> TextRange.create(0, 2));

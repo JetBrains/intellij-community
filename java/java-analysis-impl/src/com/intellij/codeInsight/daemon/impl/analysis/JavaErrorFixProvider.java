@@ -72,7 +72,9 @@ final class JavaErrorFixProvider {
                                             ANNOTATION_NOT_ALLOWED_EXTENDS, RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION,
                                             RECORD_HEADER_REGULAR_CLASS, INTERFACE_CLASS_INITIALIZER, INTERFACE_CONSTRUCTOR,
                                             CLASS_IMPLICIT_INITIALIZER, CLASS_IMPLICIT_PACKAGE,
-                                            RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, ANNOTATION_PERMITS)) {
+                                            RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, ANNOTATION_PERMITS,
+                                            NEW_EXPRESSION_DIAMOND_NOT_ALLOWED, REFERENCE_TYPE_ARGUMENT_STATIC_CLASS,
+                                            STATEMENT_CASE_OUTSIDE_SWITCH)) {
       fix(kind, genericRemover);
     }
     

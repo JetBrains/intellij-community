@@ -81,6 +81,42 @@ final class GenericsChecker {
     if (IncompleteModelUtil.isIncompleteModel(statement) && IncompleteModelUtil.isPotentiallyConvertible(parameterType, itemType, expression)) {
       return;
     }
-    myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(parameter, new JavaIncompatibleTypeErrorContext(parameterType, itemType)));
+    myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(parameter, new JavaIncompatibleTypeErrorContext(itemType, parameterType)));
+  }
+
+  void checkDiamondTypeNotAllowed(@NotNull PsiNewExpression expression) {
+    PsiReferenceParameterList typeArgumentList = expression.getTypeArgumentList();
+    PsiTypeElement[] typeParameterElements = typeArgumentList.getTypeParameterElements();
+    if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
+      myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_DIAMOND_NOT_ALLOWED.create(typeArgumentList));
+    }
+  }
+
+  void checkSelectStaticClassFromParameterizedType(@Nullable PsiElement resolved, @NotNull PsiJavaCodeReferenceElement ref) {
+    if (resolved instanceof PsiClass psiClass && psiClass.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiElement qualifier = ref.getQualifier();
+      if (qualifier instanceof PsiJavaCodeReferenceElement referenceElement) {
+        PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        if (parameterList != null && parameterList.getTypeArguments().length > 0) {
+          myVisitor.report(JavaErrorKinds.REFERENCE_TYPE_ARGUMENT_STATIC_CLASS.create(parameterList, psiClass));
+        }
+      }
+    }
+  }
+
+  /**
+   * see <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.8">JLS 4.8 on raw types</a>
+   */
+  void checkRawOnParameterizedType(@NotNull PsiJavaCodeReferenceElement parent, @Nullable PsiElement resolved) {
+    PsiReferenceParameterList list = parent.getParameterList();
+    if (list == null || list.getTypeArguments().length > 0) return;
+    if (parent.getQualifier() instanceof PsiJavaCodeReferenceElement ref &&
+        ref.getTypeParameters().length > 0 &&
+        resolved instanceof PsiTypeParameterListOwner typeParameterListOwner &&
+        typeParameterListOwner.hasTypeParameters() &&
+        !typeParameterListOwner.hasModifierProperty(PsiModifier.STATIC) && 
+        parent.getReferenceNameElement() != null) {
+      myVisitor.report(JavaErrorKinds.REFERENCE_TYPE_NEEDS_TYPE_ARGUMENTS.create(parent));
+    }
   }
 }

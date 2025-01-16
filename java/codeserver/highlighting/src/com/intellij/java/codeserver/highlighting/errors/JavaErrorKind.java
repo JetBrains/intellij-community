@@ -355,6 +355,16 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     /**
+     * Creates a new instance of Parameterized with the specified highlight type function.
+     *
+     * @param type a function that determines the {@link JavaErrorHighlightType} for a given Psi object.
+     * @return a new Parameterized instance with the updated highlight type function.
+     */
+    Parameterized<Psi, Context> withHighlightType(@NotNull BiFunction<? super Psi, ? super Context, JavaErrorHighlightType> type) {
+      return new Parameterized<>(myKey, myDescription, myTooltip, myAnchor, myRange, type, myValidator);
+    }
+
+    /**
      * Creates a new instance of Parameterized with a specified description function.
      *
      * @param description a BiFunction that computes a description based on the given Psi and Context.

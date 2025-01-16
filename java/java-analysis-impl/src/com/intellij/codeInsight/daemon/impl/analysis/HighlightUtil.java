@@ -2075,39 +2075,6 @@ public final class HighlightUtil {
   }
 
 
-  static HighlightInfo.Builder checkCaseStatement(@NotNull PsiSwitchLabelStatementBase statement) {
-    PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
-    if (switchBlock == null) {
-      String description = JavaErrorBundle.message("case.statement.outside.switch");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description);
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkLocalClassReferencedFromAnotherSwitchBranch(@NotNull PsiJavaCodeReferenceElement ref,
-                                                                                @NotNull PsiClass aClass) {
-    if (!(aClass.getParent() instanceof PsiDeclarationStatement declarationStatement) ||
-        !(declarationStatement.getParent() instanceof PsiCodeBlock codeBlock) ||
-        !(codeBlock.getParent() instanceof PsiSwitchBlock)) {
-      return null;
-    }
-    boolean classSeen = false;
-    for (PsiStatement statement : codeBlock.getStatements()) {
-      if (classSeen) {
-        if (PsiTreeUtil.isAncestor(statement, ref, true)) break;
-        if (statement instanceof PsiSwitchLabelStatement) {
-          String description = JavaErrorBundle.message("local.class.referenced.from.other.switch.branch", formatClass(aClass));
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).descriptionAndTooltip(description);
-        }
-      }
-      else if (statement == declarationStatement) {
-        classSeen = true;
-      }
-    }
-    return null;
-  }
-
   static void checkSwitchExpressionHasResult(@NotNull PsiSwitchExpression switchExpression,
                                              @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     PsiCodeBlock switchBody = switchExpression.getBody();

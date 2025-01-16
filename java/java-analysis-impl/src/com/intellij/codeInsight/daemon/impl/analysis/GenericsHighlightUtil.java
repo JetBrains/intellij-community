@@ -720,19 +720,6 @@ public final class GenericsHighlightUtil {
     return info;
   }
 
-  static HighlightInfo.Builder checkDiamondTypeNotAllowed(@NotNull PsiNewExpression expression) {
-    PsiReferenceParameterList typeArgumentList = expression.getTypeArgumentList();
-    PsiTypeElement[] typeParameterElements = typeArgumentList.getTypeParameterElements();
-    if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
-      String description = JavaErrorBundle.message("diamond.operator.not.allowed.here");
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeArgumentList).descriptionAndTooltip(description);
-      info.registerFix(QuickFixFactory.getInstance().createDeleteFix(typeArgumentList), null, null, null, null);
-      return info;
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkTypeParameterInstantiation(@NotNull PsiNewExpression expression) {
     PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
     if (classReference == null) return null;
@@ -1147,44 +1134,6 @@ public final class GenericsHighlightUtil {
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
     }
     return containingClass != null && PsiUtil.typeParametersIterator(containingClass).hasNext();
-  }
-
-  static HighlightInfo.Builder checkSelectStaticClassFromParameterizedType(@Nullable PsiElement resolved, @NotNull PsiJavaCodeReferenceElement ref) {
-    if (resolved instanceof PsiClass psiClass && psiClass.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiElement qualifier = ref.getQualifier();
-      if (qualifier instanceof PsiJavaCodeReferenceElement referenceElement) {
-        PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-        if (parameterList != null && parameterList.getTypeArguments().length > 0) {
-          String message = JavaErrorBundle.message("generics.select.static.class.from.parameterized.type",
-                                                   HighlightUtil.formatClass(psiClass));
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .range(parameterList)
-            .descriptionAndTooltip(message)
-            .registerFix(QuickFixFactory.getInstance().createDeleteFix(parameterList), null, null, null, null);
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
-   * see <a href="http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.8">JLS 4.8 on raw types</a>
-   */
-  static HighlightInfo.Builder checkRawOnParameterizedType(@NotNull PsiJavaCodeReferenceElement parent, @Nullable PsiElement resolved) {
-    PsiReferenceParameterList list = parent.getParameterList();
-    if (list == null || list.getTypeArguments().length > 0) return null;
-    if (parent.getQualifier() instanceof PsiJavaCodeReferenceElement ref &&
-        ref.getTypeParameters().length > 0 &&
-        resolved instanceof PsiTypeParameterListOwner typeParameterListOwner &&
-        typeParameterListOwner.hasTypeParameters() &&
-        !typeParameterListOwner.hasModifierProperty(PsiModifier.STATIC)) {
-      PsiElement referenceNameElement = parent.getReferenceNameElement();
-      if (referenceNameElement != null) {
-        String message = JavaErrorBundle.message("text.improper.formed.type", referenceNameElement.getText());
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(message);
-      }
-    }
-    return null;
   }
 
   private static void registerVariableParameterizedTypeFixes(@Nullable HighlightInfo.Builder builder,

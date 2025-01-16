@@ -20,7 +20,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -432,43 +431,6 @@ public class SwitchBlockHighlightingModel {
 
   static @NotNull HighlightInfo.Builder createError(@NotNull PsiElement range, @NlsContexts.DetailedDescription @NotNull String message) {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
-  }
-
-  static HighlightInfo.Builder checkGuard(@NotNull PsiSwitchLabelStatementBase statement, @NotNull LanguageLevel languageLevel,
-                                          @NotNull PsiFile psiFile) {
-    PsiExpression guardingExpr = statement.getGuardExpression();
-    if (guardingExpr == null) return null;
-    HighlightInfo.Builder info =
-      HighlightUtil.checkFeature(guardingExpr, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, languageLevel, psiFile);
-    if (info != null) {
-      return info;
-    }
-    PsiCaseLabelElementList list = statement.getCaseLabelElementList();
-    if (list != null) {
-      if (!ContainerUtil.exists(list.getElements(), e -> e instanceof PsiPattern)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr)
-          .descriptionAndTooltip(JavaErrorBundle.message("error.guard.allowed.after.patterns.only"));
-      }
-    }
-    HighlightInfo.Builder info2 = checkGuardingExpressionHasBooleanType(guardingExpr);
-    if (info2 != null) {
-      return info2;
-    }
-    Object constVal = ExpressionUtils.computeConstantExpression(guardingExpr);
-    if (Boolean.FALSE.equals(constVal)) {
-      String message = JavaErrorBundle.message("when.expression.is.false");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr).descriptionAndTooltip(message);
-    }
-    return null;
-  }
-
-  private static @Nullable HighlightInfo.Builder checkGuardingExpressionHasBooleanType(@Nullable PsiExpression guardingExpression) {
-    if (guardingExpression != null && !TypeConversionUtil.isBooleanType(guardingExpression.getType())) {
-      String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiTypes.booleanType()),
-                                               JavaHighlightUtil.formatType(guardingExpression.getType()));
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpression).descriptionAndTooltip(message);
-    }
-    return null;
   }
 
   enum SelectorKind {

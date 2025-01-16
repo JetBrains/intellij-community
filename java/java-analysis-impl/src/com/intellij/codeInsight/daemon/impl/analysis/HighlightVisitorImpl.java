@@ -948,10 +948,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     JavaResolveResult result = ref instanceof PsiExpression ? resolveOptimised(ref, myFile) : doVisitReferenceElement(ref);
     if (result != null) {
       PsiElement resolved = result.getElement();
-      if (!hasErrorResults()) add(GenericsHighlightUtil.checkRawOnParameterizedType(ref, resolved));
-      if (!hasErrorResults() && resolved instanceof PsiClass aClass) {
-        add(HighlightUtil.checkLocalClassReferencedFromAnotherSwitchBranch(ref, aClass));
-      }
       if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) {
         PreviewFeatureUtil.checkPreviewFeature(ref, myPreviewFeatureVisitor);
       }
@@ -989,10 +985,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkSelectStaticClassFromParameterizedType(resolved, ref));
-    if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression) {
-      add(GenericsHighlightUtil.checkDiamondTypeNotAllowed(newExpression));
-    }
     if (!hasErrorResults() && (!(parent instanceof PsiNewExpression newExpression) || !newExpression.isArrayCreation())) {
       add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor(), myJavaSdkVersion));
     }
@@ -1474,20 +1466,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitSuperExpression(@NotNull PsiSuperExpression expr) {
     add(HighlightUtil.checkThisOrSuperExpressionInIllegalContext(expr, expr.getQualifier(), myLanguageLevel));
     if (!hasErrorResults()) visitExpression(expr);
-  }
-
-  @Override
-  public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
-    super.visitSwitchLabelStatement(statement);
-    if (!hasErrorResults()) add(HighlightUtil.checkCaseStatement(statement));
-    if (!hasErrorResults()) add(SwitchBlockHighlightingModel.checkGuard(statement, myLanguageLevel, myFile));
-  }
-
-  @Override
-  public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
-    super.visitSwitchLabeledRuleStatement(statement);
-    if (!hasErrorResults()) add(HighlightUtil.checkCaseStatement(statement));
-    if (!hasErrorResults()) add(SwitchBlockHighlightingModel.checkGuard(statement, myLanguageLevel, myFile));
   }
 
   @Override
