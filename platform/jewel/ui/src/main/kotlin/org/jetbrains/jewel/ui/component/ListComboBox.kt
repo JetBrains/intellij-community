@@ -37,6 +37,7 @@ import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
+import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
 public fun ListComboBox(
@@ -66,7 +67,7 @@ public fun ListComboBox(
     }
 
     fun setSelectedItem(index: Int) {
-        if (index > 0 && index < items.lastIndex) {
+        if (index >= 0 && index <= items.lastIndex) {
             listState.selectedKeys = setOf(index)
             labelText = items[index]
             onSelectedItemChange(index, items[index])
@@ -146,10 +147,14 @@ public fun ListComboBox(
         PopupContent(
             items = items,
             previewSelectedItemIndex = previewSelectedIndex,
-            scrollState = listState,
+            listState = listState,
             popupMaxHeight = popupMaxHeight,
             contentPadding = contentPadding,
-            onHoveredItemChange = { previewSelectedIndex = it },
+            onPreviewSelectedItemChange = {
+                if (it >= 0 && previewSelectedIndex != it) {
+                    previewSelectedIndex = it
+                }
+            },
             onSelectedItemChange = ::setSelectedItem,
             itemContent = itemContent,
         )
@@ -184,7 +189,7 @@ public fun EditableListComboBox(
     }
 
     fun setSelectedItem(index: Int) {
-        if (index > 0 && index < items.lastIndex) {
+        if (index >= 0 && index <= items.lastIndex) {
             // Note: it's important to do the edit _before_ updating the list state,
             // since updating the list state will cause another, asynchronous and
             // potentially nested call to edit, which is not supported.
@@ -213,9 +218,13 @@ public fun EditableListComboBox(
         }
 
     EditableComboBox(
+        textFieldState = textFieldState,
         modifier = modifier,
         isEnabled = isEnabled,
-        inputTextFieldState = textFieldState,
+        outline = outline,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
         onArrowDownPress = {
             var currentSelectedIndex = listState.selectedItemIndex()
 
@@ -246,30 +255,33 @@ public fun EditableListComboBox(
                 setSelectedItem(indexOfSelected)
             }
         },
-        style = style,
-        textStyle = textStyle,
-        interactionSource = interactionSource,
-        outline = outline,
         popupManager =
-            PopupManager(
-                onPopupVisibleChange = {
-                    previewSelectedIndex = -1
-                    onPopupVisibleChange(it)
+            remember {
+                PopupManager(
+                    onPopupVisibleChange = {
+                        previewSelectedIndex = -1
+                        onPopupVisibleChange(it)
+                    },
+                    name = "EditableListComboBoxPopup",
+                )
+            },
+        popupContent = {
+            PopupContent(
+                items = items,
+                previewSelectedItemIndex = previewSelectedIndex,
+                listState = listState,
+                popupMaxHeight = popupMaxHeight,
+                contentPadding = contentPadding,
+                onPreviewSelectedItemChange = {
+                    if (it >= 0 && previewSelectedIndex != it) {
+                        previewSelectedIndex = it
+                    }
                 },
-                name = "EditableListComboBoxPopup",
-            ),
-    ) {
-        PopupContent(
-            items = items,
-            previewSelectedItemIndex = previewSelectedIndex,
-            scrollState = listState,
-            popupMaxHeight = popupMaxHeight,
-            contentPadding = contentPadding,
-            onHoveredItemChange = { previewSelectedIndex = it },
-            onSelectedItemChange = ::setSelectedItem,
-            itemContent = itemContent,
-        )
-    }
+                onSelectedItemChange = ::setSelectedItem,
+                itemContent = itemContent,
+            )
+        },
+    )
 }
 
 private suspend fun LazyListState.scrollToIndex(itemIndex: Int) {
@@ -307,21 +319,21 @@ private fun SelectableLazyListState.selectedItemIndex(): Int = selectedKeys.firs
 private fun PopupContent(
     items: List<String>,
     previewSelectedItemIndex: Int,
-    scrollState: SelectableLazyListState,
+    listState: SelectableLazyListState,
     popupMaxHeight: Dp,
     contentPadding: PaddingValues,
-    onHoveredItemChange: (Int) -> Unit,
+    onPreviewSelectedItemChange: (Int) -> Unit,
     onSelectedItemChange: (Int) -> Unit,
     itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     VerticallyScrollableContainer(
-        scrollState = scrollState.lazyListState,
+        scrollState = listState.lazyListState,
         modifier = Modifier.heightIn(max = popupMaxHeight),
     ) {
         SelectableLazyColumn(
             modifier = Modifier.fillMaxWidth().heightIn(max = popupMaxHeight).padding(contentPadding),
             selectionMode = SelectionMode.Single,
-            state = scrollState,
+            state = listState,
             onSelectedIndexesChange = { selectedItemsIndexes ->
                 val selectedIndex = selectedItemsIndexes.firstOrNull()
                 if (selectedIndex != null) onSelectedItemChange(selectedIndex)
@@ -329,10 +341,17 @@ private fun PopupContent(
         ) { ->
             itemsIndexed(
                 items = items,
-                key = { itemIndex, _ -> itemIndex },
+                key = { itemIndex, _ -> itemIndex }, // TODO pass in from user?
                 itemContent = { index, item ->
                     Box(
-                        modifier = Modifier.onMove { if (previewSelectedItemIndex != index) onHoveredItemChange(index) }
+                        modifier =
+                            Modifier.thenIf(!listState.isScrollInProgress) {
+                                onMove {
+                                    if (previewSelectedItemIndex != index) {
+                                        onPreviewSelectedItemChange(index)
+                                    }
+                                }
+                            }
                     ) {
                         // Items can be "actually" selected, or "preview" selected (e.g., hovered),
                         // but if we have a "preview" selection, we hide the "actual" selection

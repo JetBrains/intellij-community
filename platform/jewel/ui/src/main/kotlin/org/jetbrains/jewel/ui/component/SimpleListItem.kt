@@ -28,7 +28,7 @@ import org.jetbrains.jewel.ui.theme.simpleListItemStyle
  * A simple list item layout comprising of a text and an optional icon to its start side.
  *
  * The text will only take up one line and is ellipsized if too long to fit. The item will draw a background based on
- * the [state].
+ * the [isSelected] and [isActive] values.
  */
 @Composable
 public fun SimpleListItem(

@@ -361,7 +361,7 @@ public final class org/jetbrains/jewel/ui/component/DropdownState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/EditableComboBoxKt {
-	public static final fun EditableComboBox (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/text/input/TextFieldState;Lorg/jetbrains/jewel/ui/Outline;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun EditableComboBox (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/jetbrains/jewel/ui/component/FixedCursorPoint : androidx/compose/foundation/TooltipPlacement {

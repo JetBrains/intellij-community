@@ -125,23 +125,35 @@ public fun ComboBox(
                         }
                         .semantics(mergeDescendants = true) { role = Role.DropdownList }
                         .onPreviewKeyEvent {
-                            if (it.type == KeyEventType.KeyDown && it.key == Key.Spacebar) {
-                                popupManager.setPopupVisible(!popupVisible)
-                            }
-                            if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
-                                if (popupVisible) {
-                                    onArrowDownPress()
-                                } else {
-                                    popupManager.setPopupVisible(true)
+                            if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+
+                            when {
+                                it.key == Key.Spacebar -> {
+                                    popupManager.setPopupVisible(!popupVisible)
+                                    true
                                 }
+
+                                it.key == Key.DirectionDown -> {
+                                    if (popupVisible) {
+                                        onArrowDownPress()
+                                    } else {
+                                        popupManager.setPopupVisible(true)
+                                    }
+                                    true
+                                }
+
+                                it.key == Key.DirectionUp && popupVisible -> {
+                                    onArrowUpPress()
+                                    true
+                                }
+
+                                it.key == Key.Escape && popupVisible -> {
+                                    popupManager.setPopupVisible(false)
+                                    true
+                                }
+
+                                else -> false
                             }
-                            if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionUp && popupVisible) {
-                                onArrowUpPress()
-                            }
-                            if (it.type == KeyEventType.KeyDown && it.key == Key.Escape && popupVisible) {
-                                popupManager.setPopupVisible(false)
-                            }
-                            false
                         }
                 }
                 .background(style.colors.backgroundFor(comboBoxState, false).value, shape)
@@ -203,7 +215,7 @@ public fun ComboBox(
                 },
                 modifier =
                     popupModifier
-                        .testTag("Jewel.ComboBox.PopupMenu")
+                        .testTag("Jewel.ComboBox.Popup")
                         .heightIn(max = maxHeight)
                         .width(comboBoxWidth)
                         .onClick { popupManager.setPopupVisible(false) },
