@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -120,11 +121,20 @@ public abstract class SdkListItem {
     public final @NotNull SdkType sdkType;
     public final @NlsSafe String version;
     public final @NotNull String homePath;
+    public final @NotNull KeyFMap info;
 
     SuggestedItem(@NotNull SdkType sdkType, @NlsSafe @NotNull String version, @NotNull String homePath) {
       this.sdkType = sdkType;
       this.version = version;
       this.homePath = homePath;
+      this.info = KeyFMap.EMPTY_MAP;
+    }
+
+    SuggestedItem(@NotNull SdkType sdkType, @NlsSafe @NotNull String version, @NotNull String homePath, @NotNull KeyFMap info) {
+      this.sdkType = sdkType;
+      this.version = version;
+      this.homePath = homePath;
+      this.info = info;
     }
   }
 
