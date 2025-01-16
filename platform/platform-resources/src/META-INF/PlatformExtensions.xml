@@ -1588,6 +1588,7 @@
                              groupId="root"/>
 
     <advancedSetting id="ide.ui.native.file.chooser" default="true" groupKey="group.advanced.settings.ui"/>
+    <advancedSetting id="merge.main.menu" default="true" groupKey="group.advanced.settings.ui" service="com.intellij.ide.ui.MergeMainMenuSettingProvider" property="mergeMainMenu"/>
     <advancedSetting id="ide.always.show.tool.window.header.icons" default="false" groupKey="group.advanced.settings.tool.windows"/>
     <advancedSetting id="ide.tool.window.header.dnd" default="true" groupKey="group.advanced.settings.tool.windows"/>
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>

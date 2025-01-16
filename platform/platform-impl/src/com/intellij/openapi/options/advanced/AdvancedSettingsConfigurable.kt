@@ -2,12 +2,14 @@
 package com.intellij.openapi.options.advanced
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
@@ -26,6 +28,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.RestartDialogImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -33,6 +36,13 @@ import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
+import kotlin.Boolean
+import kotlin.Enum
+import kotlin.String
+import kotlin.Unit
+import kotlin.apply
+import kotlin.let
+import kotlin.takeIf
 
 private class SettingsGroup(
   @JvmField val groupRow: Row,
@@ -160,6 +170,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
               label?.text ?: extension.title(),
               advancedSetting.isDefault
             )
+            row.setVisible(extension.isVisible())
             settingsRows.add(row)
           }
         }
@@ -252,6 +263,23 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     }
     return Runnable { applyFilter(option, false) }
   }
+
+  override fun apply() {
+    val settings = UISettings.getInstance()
+    val oldMergeMainMenuWithWindowTitle = settings.mergeMainMenuWithWindowTitle
+
+    val uiSettingsChanged = isModified
+    super.apply()
+    if (uiSettingsChanged) {
+      UISettings.getInstance().fireUISettingsChanged()
+      EditorFactory.getInstance().refreshAllEditors()
+    }
+
+    if (oldMergeMainMenuWithWindowTitle != settings.mergeMainMenuWithWindowTitle) {
+      RestartDialogImpl.showRestartRequired()
+    }
+    super.apply()
+  }
 }
 
 private fun isMatch(filterWords: Collection<String>, text: String): Boolean {
@@ -264,6 +292,7 @@ private fun Row.control(extension: AdvancedSettingBean): AdvancedSettingControl 
     AdvancedSettingType.Bool -> {
       val cb = checkBox(extension.title())
         .bindSelected({ AdvancedSettings.getBoolean(extension.id) }, { AdvancedSettings.setBoolean(extension.id, it) })
+        .enabled(extension.isEnabled())
       AdvancedSettingControl(
         cb,
         if (extension.defaultValueObject == true) cb.component.selected else cb.component.selected.not()
@@ -273,6 +302,7 @@ private fun Row.control(extension: AdvancedSettingBean): AdvancedSettingControl 
     AdvancedSettingType.Int -> {
       val textField = intTextField()
         .bindIntText({ AdvancedSettings.getInt(extension.id) }, { AdvancedSettings.setInt(extension.id, it) })
+        .enabled(extension.isEnabled())
       AdvancedSettingControl(
         textField,
         textField.component.enteredTextSatisfies { it == extension.defaultValueObject.toString() }
@@ -283,6 +313,7 @@ private fun Row.control(extension: AdvancedSettingBean): AdvancedSettingControl 
       val textField = textField()
         .columns(30)
         .bindText({ AdvancedSettings.getString(extension.id) }, { AdvancedSettings.setString(extension.id, it) })
+        .enabled(extension.isEnabled())
       AdvancedSettingControl(
         textField,
         textField.component.enteredTextSatisfies { it == extension.defaultValueObject }
@@ -296,6 +327,7 @@ private fun Row.control(extension: AdvancedSettingBean): AdvancedSettingControl 
           { AdvancedSettings.getEnum(extension.id, extension.enumKlass!!) },
           { AdvancedSettings.setEnum(extension.id, it as Enum<*>) }
         )
+        .enabled(extension.isEnabled())
       AdvancedSettingControl(
         cb,
         cb.component.selectedValueIs(extension.defaultValueObject as Enum<*>)

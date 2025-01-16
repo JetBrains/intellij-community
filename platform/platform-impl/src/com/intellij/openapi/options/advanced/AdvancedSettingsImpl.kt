@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.MutableAccessor
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.text.nullize
@@ -19,9 +20,9 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import java.lang.reflect.Method
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.jvm.Throws
 
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   companion object {
@@ -138,8 +139,25 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   fun group(): @Nls String? = if (groupKey.isEmpty()) null else findBundle()?.let { BundleBase.message(it, groupKey) }
 
   fun description(): @Nls String? {
+    if (descriptionGetter != null && serviceInstance != null) {
+      descriptionGetter!!.invoke(serviceInstance!!)?.let { if ((it as? String)?.isNotEmpty() == true) return it}
+    }
     val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.${id}.description" }
     return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.let { BundleBase.message(it, descriptionKey) }
+  }
+
+  fun isVisible(): Boolean {
+    if (visibilityCheckMethod != null && serviceInstance != null) {
+      visibilityCheckMethod!!.invoke(serviceInstance!!)?.let { return it as? Boolean ?: true }
+    }
+    return true
+  }
+
+  fun isEnabled(): Boolean {
+    if (enabledCheckMethod != null && serviceInstance != null) {
+      enabledCheckMethod!!.invoke(serviceInstance!!)?.let { return it as? Boolean ?: true }
+    }
+    return true
   }
 
   fun trailingLabel(): @Nls String? {
@@ -191,6 +209,33 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
     else
       serviceInstance?.let { instance ->
         XmlSerializerUtil.getAccessors(instance.javaClass).find { it.name == property }
+      }
+  }
+
+  private val descriptionGetter: Method? by lazy {
+    if (property.isEmpty())
+      null
+    else
+      serviceInstance?.let { instance ->
+        instance.javaClass.methods.find { it.name == "get" + StringUtil.capitalizeWithJavaBeanConvention(property) + "Description" }
+      }
+  }
+
+  private val visibilityCheckMethod: Method? by lazy {
+    if (property.isEmpty())
+      null
+    else
+      serviceInstance?.let { instance ->
+        instance.javaClass.methods.find { it.name == "is" + StringUtil.capitalizeWithJavaBeanConvention(property) + "Visible" }?.takeIf { it.canAccess(instance) }
+      }
+  }
+
+  private val enabledCheckMethod: Method? by lazy {
+    if (property.isEmpty())
+      null
+    else
+      serviceInstance?.let { instance ->
+        instance.javaClass.methods.find { it.name == "is" + StringUtil.capitalizeWithJavaBeanConvention(property) +  "Enabled" }?.takeIf { it.canAccess(instance) }
       }
   }
 

@@ -640,6 +640,8 @@
                     class="com.intellij.platform.ide.impl.presentationAssistant.TogglePresentationAssistantAction"/>
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
+            <group id="ChangeMainMenuModeActionGroup"
+                   class="com.intellij.ide.actions.ChangeMainMenuModeActionGroup" searchable="false" popup="true"/>
             <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
             <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
             <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>
@@ -1726,6 +1728,7 @@
 
     <group id="ToolbarPopupActions.MainToolbarNewUI">
       <reference ref="MainToolbarQuickActions"/>
+      <reference ref="ChangeMainMenuModeActionGroup"/>
       <separator/>
       <reference ref="ChangeProjectColorActionGroup"/>
       <reference ref="WelcomeScreen.ChangeProjectIcon"/>
