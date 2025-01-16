@@ -74,11 +74,11 @@ public open class ScrollSyncMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(block: FencedCodeBlock, mimeType: MimeType, styling: MarkdownStyling.Code.Fenced) {
+    override fun renderWithMimeType(block: FencedCodeBlock, mimeType: MimeType, styling: MarkdownStyling.Code.Fenced) {
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, mimeType, styling)
+                    super.renderWithMimeType(block, mimeType, styling)
                     return
                 }
 

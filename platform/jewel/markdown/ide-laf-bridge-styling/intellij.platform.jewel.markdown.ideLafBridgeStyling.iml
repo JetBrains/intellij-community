@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmAlerts" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmTables" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />

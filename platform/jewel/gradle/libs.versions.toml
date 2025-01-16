@@ -19,6 +19,7 @@ poko = "0.17.1"
 [libraries]
 commonmark-core = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 commonmark-ext-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
+commonmark-ext-gfm-tables = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
 
 filePicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" }
 
