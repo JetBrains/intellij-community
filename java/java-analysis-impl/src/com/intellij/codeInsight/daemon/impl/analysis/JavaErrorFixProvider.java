@@ -131,6 +131,7 @@ final class JavaErrorFixProvider {
       myFactory.createMethodThrowsFix(error.context().method(), error.context().exceptionType(), false, false),
       myFactory.createMethodThrowsFix(error.context().superMethod(), error.context().exceptionType(), true, true)
     ));
+    fix(VARARG_NOT_LAST_PARAMETER, error -> myFactory.createMakeVarargParameterLastFix(error.psi()));
     multi(METHOD_INHERITANCE_CLASH_INCOMPATIBLE_RETURN_TYPES, error -> {
       IncompatibleOverrideReturnTypeContext context = error.context();
       PsiMethod method = context.method();
@@ -149,6 +150,7 @@ final class JavaErrorFixProvider {
       }
       return registrar;
     });
+    fix(VARARG_CSTYLE_DECLARATION, error -> new NormalizeBracketsFix(error.psi()));
   }
   
   private void createConstructorFixes() {
@@ -365,6 +367,9 @@ final class JavaErrorFixProvider {
     fix(RECORD_NO_HEADER, error -> myFactory.createAddEmptyRecordHeaderFix(error.psi()));
     fix(RECORD_INSTANCE_FIELD, error -> addModifierFix(error.psi(), PsiModifier.STATIC));
     fix(RECORD_INSTANCE_INITIALIZER, error -> addModifierFix(error.psi(), PsiModifier.STATIC));
+    fix(RECORD_COMPONENT_VARARG_NOT_LAST, error -> myFactory.createMakeVarargParameterLastFix(error.psi()));
+    fix(RECORD_COMPONENT_RESTRICTED_NAME, error -> myFactory.createRenameFix(error.psi()));
+    fix(RECORD_COMPONENT_CSTYLE_DECLARATION, error -> new NormalizeBracketsFix(error.psi()));
   }
 
   private void createReceiverParameterFixes() {

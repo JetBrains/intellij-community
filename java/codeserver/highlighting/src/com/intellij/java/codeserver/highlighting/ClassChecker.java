@@ -339,21 +339,6 @@ final class ClassChecker {
     myVisitor.report(JavaErrorKinds.CLASS_WRONG_FILE_NAME.create(aClass));
   }
 
-  void checkWellFormedRecord(@NotNull PsiClass psiClass) {
-    PsiRecordHeader header = psiClass.getRecordHeader();
-    if (!psiClass.isRecord()) {
-      if (header != null) {
-        myVisitor.report(JavaErrorKinds.RECORD_HEADER_REGULAR_CLASS.create(header));
-      }
-      return;
-    }
-    PsiIdentifier identifier = psiClass.getNameIdentifier();
-    if (identifier == null) return;
-    if (header == null) {
-      myVisitor.report(JavaErrorKinds.RECORD_NO_HEADER.create(psiClass));
-    }
-  }
-
   void checkSealedClassInheritors(@NotNull PsiClass psiClass) {
     if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
       PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();

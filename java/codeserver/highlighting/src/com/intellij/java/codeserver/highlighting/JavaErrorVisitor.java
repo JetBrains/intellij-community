@@ -36,8 +36,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull LanguageLevel myLanguageLevel;
   private final @NotNull AnnotationChecker myAnnotationChecker = new AnnotationChecker(this);
   final @NotNull ClassChecker myClassChecker = new ClassChecker(this);
+  private final @NotNull RecordChecker myRecordChecker = new RecordChecker(this);
   private final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
-  private final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
+  final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private final @NotNull LiteralChecker myLiteralChecker = new LiteralChecker(this);
@@ -81,6 +82,32 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitElement(@NotNull PsiElement element) {
     super.visitElement(element);
     myHasError = false;
+  }
+
+  @Override
+  public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
+    super.visitRecordComponent(recordComponent);
+    if (!hasErrorResults()) myRecordChecker.checkRecordComponentWellFormed(recordComponent);
+    if (!hasErrorResults()) myRecordChecker.checkRecordAccessorReturnType(recordComponent);
+  }
+
+  @Override
+  public void visitParameter(@NotNull PsiParameter parameter) {
+    super.visitParameter(parameter);
+
+    PsiElement parent = parameter.getParent();
+    if (parent instanceof PsiParameterList && parameter.isVarArgs()) {
+      if (!hasErrorResults()) checkFeature(parameter, JavaFeature.VARARGS);
+      if (!hasErrorResults()) myMethodChecker.checkVarArgParameterWellFormed(parameter);
+    }
+    else if (parent instanceof PsiCatchSection) {
+      if (!hasErrorResults() && parameter.getType() instanceof PsiDisjunctionType) {
+        checkFeature(parameter, JavaFeature.MULTI_CATCH);
+      }
+    }
+    else if (parent instanceof PsiForeachStatement forEach) {
+      checkFeature(forEach, JavaFeature.FOR_EACH);
+    }
   }
 
   @Override
@@ -314,9 +341,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkMustNotBeLocal(aClass);
     if (!hasErrorResults()) myClassChecker.checkClassAndPackageConflict(aClass);
     if (!hasErrorResults()) myClassChecker.checkPublicClassInRightFile(aClass);
-    if (!hasErrorResults()) myClassChecker.checkWellFormedRecord(aClass);
     if (!hasErrorResults()) myClassChecker.checkSealedClassInheritors(aClass);
     if (!hasErrorResults()) myClassChecker.checkSealedSuper(aClass);
+    if (!hasErrorResults()) myRecordChecker.checkRecordHeader(aClass);
   }
 
   @Override

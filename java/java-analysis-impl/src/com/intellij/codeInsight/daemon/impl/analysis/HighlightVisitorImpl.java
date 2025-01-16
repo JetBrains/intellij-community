@@ -912,11 +912,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
     super.visitRecordComponent(recordComponent);
-    if (!hasErrorResults()) add(HighlightUtil.checkRecordComponentVarArg(recordComponent));
-    if (!hasErrorResults()) add(HighlightUtil.checkCStyleDeclaration(recordComponent));
-    if (!hasErrorResults()) add(HighlightUtil.checkRecordComponentName(recordComponent));
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkRecordComponentInitialized(recordComponent));
-    if (!hasErrorResults()) add(HighlightUtil.checkRecordAccessorReturnType(recordComponent));
   }
 
   @Override
@@ -924,21 +920,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitParameter(parameter);
 
     PsiElement parent = parameter.getParent();
-    if (parent instanceof PsiParameterList && parameter.isVarArgs()) {
-      if (!hasErrorResults()) add(checkFeature(parameter, JavaFeature.VARARGS));
-      if (!hasErrorResults()) add(GenericsHighlightUtil.checkVarArgParameterIsLast(parameter));
-      if (!hasErrorResults()) add(HighlightUtil.checkCStyleDeclaration(parameter));
-    }
-    else if (parent instanceof PsiCatchSection) {
-      if (!hasErrorResults() && parameter.getType() instanceof PsiDisjunctionType) {
-        add(checkFeature(parameter, JavaFeature.MULTI_CATCH));
-      }
+    if (parent instanceof PsiCatchSection) {
       if (!hasErrorResults()) add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
       if (!hasErrorResults()) GenericsHighlightUtil.checkCatchParameterIsClass(parameter, myErrorSink);
       if (!hasErrorResults()) HighlightUtil.checkCatchTypeIsDisjoint(parameter, myErrorSink);
     }
     else if (parent instanceof PsiForeachStatement forEach) {
-      add(checkFeature(forEach, JavaFeature.FOR_EACH));
       if (!hasErrorResults()) add(GenericsHighlightUtil.checkForEachParameterType(forEach, parameter));
     }
   }

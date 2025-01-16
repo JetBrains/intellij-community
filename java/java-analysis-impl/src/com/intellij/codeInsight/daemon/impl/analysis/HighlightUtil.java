@@ -39,8 +39,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.scope.PatternResolveState;
@@ -77,9 +75,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 // generates HighlightInfoType.ERROR-like HighlightInfos
 public final class HighlightUtil {
-  public static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = Set.of(
-    "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
-
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = Map.of(
@@ -138,7 +133,6 @@ public final class HighlightUtil {
     Set.of(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
 
   private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
-  public static final TokenSet BRACKET_TOKENS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
   private static final @NlsSafe String ANONYMOUS = "anonymous ";
 
   private HighlightUtil() { }
@@ -1590,72 +1584,6 @@ public final class HighlightUtil {
     else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       HighlightFixUtil.registerChangeVariableTypeFixes(assignmentExpression.getLExpression(), expectedType, null, info);
     }
-  }
-
-  static HighlightInfo.Builder checkRecordComponentName(@NotNull PsiRecordComponent component) {
-    PsiIdentifier identifier = component.getNameIdentifier();
-    if (identifier != null) {
-      String name = identifier.getText();
-      if (RESTRICTED_RECORD_COMPONENT_NAMES.contains(name)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
-          .descriptionAndTooltip(JavaErrorBundle.message("record.component.restricted.name", name));
-      }
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkRecordComponentVarArg(@NotNull PsiRecordComponent recordComponent) {
-    if (recordComponent.isVarArgs() && PsiTreeUtil.getNextSiblingOfType(recordComponent, PsiRecordComponent.class) != null) {
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(recordComponent)
-        .descriptionAndTooltip(JavaErrorBundle.message("record.component.vararg.not.last"));
-      IntentionAction action = getFixFactory().createMakeVarargParameterLastFix(recordComponent);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkCStyleDeclaration(@NotNull PsiVariable variable) {
-    PsiIdentifier identifier = variable.getNameIdentifier();
-    if (identifier == null) return null;
-    PsiElement start = null;
-    PsiElement end = null;
-    for (PsiElement element = identifier.getNextSibling(); element != null; element = element.getNextSibling()) {
-      if (PsiUtil.isJavaToken(element, BRACKET_TOKENS)) {
-        if (start == null) start = element;
-        end = element;
-      }
-    }
-    if (start != null) {
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(variable, start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())
-        .descriptionAndTooltip(variable instanceof PsiRecordComponent
-          ? JavaErrorBundle.message("record.component.cstyle.declaration")
-          : JavaErrorBundle.message("vararg.cstyle.array.declaration"));
-      var action = new NormalizeBracketsFix(variable);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkRecordAccessorReturnType(@NotNull PsiRecordComponent component) {
-    String componentName = component.getName();
-    PsiTypeElement typeElement = component.getTypeElement();
-    if (typeElement == null) return null;
-    PsiClass containingClass = component.getContainingClass();
-    if (containingClass == null) return null;
-    PsiMethod[] methods = containingClass.findMethodsByName(componentName, false);
-    for (PsiMethod method : methods) {
-      if (method instanceof LightRecordMethod) {
-        List<HierarchicalMethodSignature> superSignatures =
-          PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method, method.getResolveScope()).getSuperSignatures();
-        MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
-        return HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, superSignatures, true, typeElement.getTextRange(),
-                                                                     null);
-      }
-    }
-    return null;
   }
 
   static HighlightInfo.Builder checkInstanceOfPatternSupertype(@NotNull PsiInstanceOfExpression expression) {

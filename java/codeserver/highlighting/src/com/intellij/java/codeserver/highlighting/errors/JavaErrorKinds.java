@@ -311,6 +311,20 @@ public final class JavaErrorKinds {
     .withAnchor(PsiReferenceList::getFirstChild);
   public static final Simple<PsiReferenceList> RECORD_PERMITS = error(PsiReferenceList.class, "record.permits")
     .withAnchor(PsiReferenceList::getFirstChild);
+  public static final Simple<PsiRecordComponent> RECORD_COMPONENT_VARARG_NOT_LAST = 
+    error("record.component.vararg.not.last");
+  public static final Parameterized<PsiRecordComponent, @NotNull TextRange> RECORD_COMPONENT_CSTYLE_DECLARATION = 
+    parameterized(PsiRecordComponent.class, TextRange.class, "record.component.cstyle.declaration")
+      .withRange((component, range) -> range);
+  public static final Simple<PsiRecordComponent> RECORD_COMPONENT_RESTRICTED_NAME = 
+    error(PsiRecordComponent.class, "record.component.restricted.name")
+      .withAnchor(PsiRecordComponent::getNameIdentifier)
+      .withRawDescription(component -> message("record.component.restricted.name", component.getName()));
+
+  public static final Simple<PsiParameter> VARARG_NOT_LAST_PARAMETER = error("vararg.not.last.parameter");
+  public static final Parameterized<PsiParameter, @NotNull TextRange> VARARG_CSTYLE_DECLARATION =
+    parameterized(PsiParameter.class, TextRange.class, "vararg.cstyle.array.declaration")
+      .withRange((component, range) -> range);
 
   public static final Simple<PsiReferenceList> ENUM_EXTENDS = error(PsiReferenceList.class, "enum.extends")
     .withAnchor(PsiReferenceList::getFirstChild);
@@ -433,6 +447,12 @@ public final class JavaErrorKinds {
           PsiTypeElement returnTypeElement = method.getReturnTypeElement();
           if (returnTypeElement != null) {
             return returnTypeElement.getTextRangeInParent();
+          }
+        }
+        if (psi instanceof PsiRecordComponent component) {
+          PsiTypeElement typeElement = component.getTypeElement();
+          if (typeElement != null) {
+            return typeElement.getTextRangeInParent();
           }
         }
         return getMemberDeclarationTextRange(psi);

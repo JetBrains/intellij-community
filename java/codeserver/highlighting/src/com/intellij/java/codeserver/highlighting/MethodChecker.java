@@ -6,12 +6,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +24,7 @@ import java.util.*;
 final class MethodChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
   private final @NotNull Map<PsiClass, MostlySingularMultiMap<MethodSignature, PsiMethod>> myDuplicateMethods = new HashMap<>();
+  private static final TokenSet BRACKET_TOKENS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
   private static final MethodSignature ourValuesEnumSyntheticMethod =
     MethodSignatureUtil.createMethodSignature("values",
                                               PsiType.EMPTY_ARRAY,
@@ -278,7 +281,7 @@ final class MethodChecker {
     }
   }
 
-  void checkMethodIncompatibleReturnType(@NotNull PsiMember anchorClass, @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+  void checkMethodIncompatibleReturnType(@NotNull PsiMember anchor, @NotNull MethodSignatureBackedByPsiMethod methodSignature,
                                          @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures) {
     PsiMethod method = methodSignature.getMethod();
     PsiType returnType = methodSignature.getSubstitutor().substitute(method.getReturnType());
@@ -292,12 +295,11 @@ final class MethodChecker {
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null) continue;
-      checkSuperMethodSignature(
-        anchorClass, superMethod, superMethodSignature, superReturnType, method, methodSignature, returnType);
+      checkSuperMethodSignature(anchor, superMethod, superMethodSignature, superReturnType, method, methodSignature, returnType);
     }
   }
 
-  private void checkSuperMethodSignature(@NotNull PsiMember anchorClass,
+  private void checkSuperMethodSignature(@NotNull PsiMember anchor,
                                          @NotNull PsiMethod superMethod,
                                          @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
                                          @NotNull PsiType superReturnType,
@@ -339,7 +341,7 @@ final class MethodChecker {
     }
 
     myVisitor.report(JavaErrorKinds.METHOD_INHERITANCE_CLASH_INCOMPATIBLE_RETURN_TYPES.create(
-      anchorClass, new JavaErrorKinds.IncompatibleOverrideReturnTypeContext(method, returnType, superMethod, substitutedSuperReturnType)));
+      anchor, new JavaErrorKinds.IncompatibleOverrideReturnTypeContext(method, returnType, superMethod, substitutedSuperReturnType)));
   }
 
   private void checkInterfaceInheritedMethodsReturnTypes(@NotNull PsiClass aClass,
@@ -381,6 +383,41 @@ final class MethodChecker {
         return null;
       });
     }
+  }
+
+  void checkVarArgParameterWellFormed(@NotNull PsiParameter parameter) {
+    PsiElement declarationScope = parameter.getDeclarationScope();
+    if (declarationScope instanceof PsiMethod psiMethod) {
+      PsiParameter[] params = psiMethod.getParameterList().getParameters();
+      if (params[params.length - 1] != parameter) {
+        myVisitor.report(JavaErrorKinds.VARARG_NOT_LAST_PARAMETER.create(parameter));
+        return;
+      }
+    }
+    TextRange range = getCStyleDeclarationRange(parameter);
+    if (range != null) {
+      myVisitor.report(JavaErrorKinds.VARARG_CSTYLE_DECLARATION.create(parameter, range));
+    }
+  }
+
+  static @Nullable TextRange getCStyleDeclarationRange(@NotNull PsiVariable variable) {
+    PsiIdentifier identifier = variable.getNameIdentifier();
+    TextRange range = null;
+    if (identifier != null) {
+      PsiElement start = null;
+      PsiElement end = null;
+      for (PsiElement element = identifier.getNextSibling(); element != null; element = element.getNextSibling()) {
+        if (PsiUtil.isJavaToken(element, BRACKET_TOKENS)) {
+          if (start == null) start = element;
+          end = element;
+        }
+      }
+      if (start != null) {
+        range = TextRange.create(start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset())
+          .shiftLeft(variable.getTextRange().getStartOffset());
+      }
+    }
+    return range;
   }
 
   void checkMethodOverridesFinal(@NotNull MethodSignatureBackedByPsiMethod methodSignature,

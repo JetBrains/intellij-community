@@ -1043,22 +1043,6 @@ public final class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkVarArgParameterIsLast(@NotNull PsiParameter parameter) {
-    PsiElement declarationScope = parameter.getDeclarationScope();
-    if (declarationScope instanceof PsiMethod psiMethod) {
-      PsiParameter[] params = psiMethod.getParameterList().getParameters();
-      if (params[params.length - 1] != parameter) {
-        String description = JavaErrorBundle.message("vararg.not.last.parameter");
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter).descriptionAndTooltip(description);
-        IntentionAction action = QuickFixFactory.getInstance().createMakeVarargParameterLastFix(parameter);
-        info.registerFix(action, null, null, null, null);
-        return info;
-      }
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkParametersAllowed(@NotNull PsiReferenceParameterList refParamList) {
     PsiElement parent = refParamList.getParent();
     if (parent instanceof PsiReferenceExpression) {
