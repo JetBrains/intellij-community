@@ -11,53 +11,58 @@ import org.commonmark.node.Node
 import org.commonmark.node.SoftLineBreak as CMSoftLineBreak
 import org.commonmark.node.StrongEmphasis as CMStrongEmphasis
 import org.commonmark.node.Text as CMText
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.WithInlineMarkdown
 import org.jetbrains.jewel.markdown.WithTextContent
-import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 
-@VisibleForTesting
-internal fun Node.readInlineContent(
-    markdownProcessor: MarkdownProcessor,
-    extensions: List<MarkdownProcessorExtension>,
-): List<InlineMarkdown> = buildList {
+/**
+ * Reads the contents of this [Node] as a list of [InlineMarkdown] nodes.
+ *
+ * @param markdownProcessor Used to parse the inline contents as needed.
+ * @return A list of the contents as parsed [InlineMarkdown].
+ * @see toInlineMarkdownOrNull
+ */
+@ExperimentalJewelApi
+public fun Node.readInlineContent(markdownProcessor: MarkdownProcessor): List<InlineMarkdown> = buildList {
     var current = this@readInlineContent.firstChild
     while (current != null) {
-        val inline = current.toInlineMarkdownOrNull(markdownProcessor, extensions)
+        val inline = current.toInlineMarkdownOrNull(markdownProcessor)
         if (inline != null) add(inline)
 
         current = current.next
     }
 }
 
-@VisibleForTesting
-internal fun Node.toInlineMarkdownOrNull(
-    markdownProcessor: MarkdownProcessor,
-    extensions: List<MarkdownProcessorExtension>,
-) =
+/**
+ * Tries parsing a CommonMark [Node] to an [InlineMarkdown] node.
+ *
+ * @param markdownProcessor Used to parse the contents of this node, as needed.
+ * @return The parsed [InlineMarkdown], or null if it is a custom node that can't be parsed by any of the
+ *   [`MarkdownInlineProcessorExtension`][org.jetbrains.jewel.markdown.extensions.MarkdownInlineProcessorExtension]s
+ *   registered to [markdownProcessor].
+ * @see org.jetbrains.jewel.markdown.extensions.MarkdownInlineProcessorExtension
+ * @see readInlineContent
+ */
+public fun Node.toInlineMarkdownOrNull(markdownProcessor: MarkdownProcessor): InlineMarkdown? =
     when (this) {
         is CMText -> InlineMarkdown.Text(literal)
         is CMLink ->
             InlineMarkdown.Link(
                 destination = destination,
                 title = title,
-                inlineContent = readInlineContent(markdownProcessor, extensions),
+                inlineContent = readInlineContent(markdownProcessor),
             )
 
         is CMEmphasis ->
-            InlineMarkdown.Emphasis(
-                delimiter = openingDelimiter,
-                inlineContent = readInlineContent(markdownProcessor, extensions),
-            )
+            InlineMarkdown.Emphasis(delimiter = openingDelimiter, inlineContent = readInlineContent(markdownProcessor))
 
-        is CMStrongEmphasis ->
-            InlineMarkdown.StrongEmphasis(openingDelimiter, readInlineContent(markdownProcessor, extensions))
+        is CMStrongEmphasis -> InlineMarkdown.StrongEmphasis(openingDelimiter, readInlineContent(markdownProcessor))
 
         is CMCode -> InlineMarkdown.Code(literal)
         is CMHtmlInline -> InlineMarkdown.HtmlInline(literal)
         is CMImage -> {
-            val inlineContent = readInlineContent(markdownProcessor, extensions)
+            val inlineContent = readInlineContent(markdownProcessor)
             InlineMarkdown.Image(
                 source = destination,
                 alt = inlineContent.renderAsSimpleText().trim(),
@@ -69,7 +74,7 @@ internal fun Node.toInlineMarkdownOrNull(
         is CMHardLineBreak -> InlineMarkdown.HardLineBreak
         is CMSoftLineBreak -> InlineMarkdown.SoftLineBreak
         is CMCustomNode ->
-            extensions
+            markdownProcessor.extensions
                 .find { it.inlineProcessorExtension?.canProcess(this) == true }
                 ?.inlineProcessorExtension
                 ?.processInlineMarkdown(this, markdownProcessor)

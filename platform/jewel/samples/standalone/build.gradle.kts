@@ -15,6 +15,7 @@ dependencies {
     implementation(projects.markdown.intUiStandaloneStyling)
     implementation(projects.markdown.extension.gfmAlerts)
     implementation(projects.markdown.extension.autolink)
+    implementation(projects.markdown.extension.gfmTables)
     implementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
     implementation(compose.components.resources)
     implementation(project(":samples:showcase"))

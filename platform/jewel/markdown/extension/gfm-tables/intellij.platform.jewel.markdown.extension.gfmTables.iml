@@ -29,6 +29,7 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/kotlin" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
@@ -38,9 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmAlerts" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmTables" />
     <orderEntry type="module-library" scope="TEST">
       <library name="org.jetbrains.compose.ui.ui.test.junit4" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.ui:ui-test-junit4:1.7.1">
@@ -347,8 +345,31 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
+    <orderEntry type="module-library">
+      <library name="commonmark.ext.gfm.tables" type="repository">
+        <properties maven-id="org.commonmark:commonmark-ext-gfm-tables:0.24.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-tables/0.24.0/commonmark-ext-gfm-tables-0.24.0.jar">
+              <sha256sum>b54dc332f931e6d07c2766144c087b08f3693677e368151a67020b4e95bb4b99</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0.jar">
+              <sha256sum>679338e0b7fc15c02d275d598654b01a149893bc28a87992e90123c8d06af25b</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-tables/0.24.0/commonmark-ext-gfm-tables-0.24.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-tables/0.24.0/commonmark-ext-gfm-tables-0.24.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

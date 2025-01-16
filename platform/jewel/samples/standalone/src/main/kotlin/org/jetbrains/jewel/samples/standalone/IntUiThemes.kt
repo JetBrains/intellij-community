@@ -14,6 +14,7 @@ public enum class IntUiThemes {
     public fun isLightHeader(): Boolean = this == LightWithLightHeader
 
     public companion object {
-        public fun fromSystemTheme(systemTheme: SystemTheme): IntUiThemes = if (systemTheme == SystemTheme.LIGHT) Light else Dark
+        public fun fromSystemTheme(systemTheme: SystemTheme): IntUiThemes =
+            if (systemTheme == SystemTheme.LIGHT) Light else Dark
     }
 }
