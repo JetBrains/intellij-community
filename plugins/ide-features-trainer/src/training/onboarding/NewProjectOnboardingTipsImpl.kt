@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
@@ -25,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -38,8 +38,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getAvailableLineBreakpointTypes
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import training.learn.LearnBundle
 import training.ui.LearningUiUtil
@@ -85,14 +83,7 @@ private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
   }
 }
 
-@Service(Service.Level.PROJECT)
-private class InstallOnboardingTipsService(val coroutineScope: CoroutineScope)
-
-
-private fun installTipsReadAction(
-  project: Project,
-  info: OnboardingTipsInstallationInfo,
-) {
+private suspend fun installTipsInProjectFiles(project: Project, info: OnboardingTipsInstallationInfo) {
   OnboardingTipsStatistics.logOnboardingTipsInstalled(project, onboardingGenerationNumber)
 
   // Set this option explicitly, because its default depends on the number of empty projects.
@@ -100,37 +91,38 @@ private fun installTipsReadAction(
 
   val module = project.modules.singleOrNull() ?: return
 
-  val pathsOfFilesWithTips = mutableListOf<String>()
-  val pathsOfFilesWithBreakpoints = mutableListOf<String>()
+  val (pathsOfFilesWithTips, pathsOfFilesWithBreakpoints) = readAction {
+    val pathsOfFilesWithTips = mutableListOf<String>()
+    val pathsOfFilesWithBreakpoints = mutableListOf<String>()
 
-  val sourceRoots = module.rootManager.let { rootManager ->
-    rootManager.sourceRoots.takeIf { it.isNotEmpty() } ?: rootManager.contentRoots.takeIf { it.isNotEmpty() }
-  } ?: error("No roots for $module")
+    val sourceRoots = module.rootManager.sourceRoots
+    for (root in sourceRoots) {
+      VfsUtilCore.visitChildrenRecursively(root, object: VirtualFileVisitor<Any>(NO_FOLLOW_SYMLINKS, limit(10)) {
+        override fun visitFileEx(file: VirtualFile): Result {
+          val infoForFile = info.infos.singleOrNull { file.name == it.fileName }
+          if (infoForFile == null) return CONTINUE
 
-  for (root in sourceRoots) {
-    VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any>(NO_FOLLOW_SYMLINKS, limit(10)) {
-      override fun visitFileEx(file: VirtualFile): Result {
-        val infoForFile = info.infos.singleOrNull { file.name == it.fileName }
-        if (infoForFile == null) return CONTINUE
+          val document = FileDocumentManager.getInstance().getDocument(file) ?: return CONTINUE
 
-        val document = FileDocumentManager.getInstance().getDocument(file) ?: return CONTINUE
+          val offsets = infoForFile.offsetsForBreakpoint(document.charsSequence)
 
-        val offsets = infoForFile.offsetsForBreakpoint(document.charsSequence)
+          for (offset in offsets) {
+            val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return CONTINUE
 
-        for (offset in offsets) {
-          val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return CONTINUE
-
-          val types = getAvailableLineBreakpointTypes(project, position, null)
-          XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, types, position, false, false, null, true)
+            val types = getAvailableLineBreakpointTypes(project, position, null)
+            XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, types, position, false, false, null, true)
+          }
+          if (offsets.isNotEmpty()) {
+            pathsOfFilesWithBreakpoints.add(file.path)
+          }
+          pathsOfFilesWithTips.add(file.path)
+          return CONTINUE
         }
-        if (offsets.isNotEmpty()) {
-          pathsOfFilesWithBreakpoints.add(file.path)
-        }
-        pathsOfFilesWithTips.add(file.path)
-        return CONTINUE
-      }
-    })
+      })
+    }
+    pathsOfFilesWithTips to pathsOfFilesWithBreakpoints
   }
+
   project.filePathsWithOnboardingBreakPointGotIt = pathsOfFilesWithBreakpoints
   installDebugGotItListener(project)
 
@@ -142,22 +134,27 @@ private fun installTipsReadAction(
   onboardingGenerationNumber++
 }
 
+private class InstallOnboardingTooltip : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    val info = onboardingTipsInstallationInfoKey.get(project)
+
+    if (info != null) {
+      installTipsInProjectFiles(project, info)
+    }
+    else {
+      installDebugGotItListener(project)
+    }
+  }
+}
+
 private class InstallOnboardingTipsEditorListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
     val editor = event.editor
     val project = editor.project ?: return
 
-    val info = onboardingTipsInstallationInfoKey.get(project)
-    if (info != null) {
-      project.service<InstallOnboardingTipsService>().coroutineScope.launch {
-        readAction {
-          installTipsReadAction(project, info)
-        }
-      }
-    }
-
     // It may take some time after the editor will be opened, but the onboarding tips are not installed yet (some race may be here)
-    if (info != null || editor.virtualFile?.path?.let { project.filePathsWithOnboardingTips?.contains(it) } == true) {
+    if (onboardingTipsInstallationInfoKey.get(project) != null ||
+        editor.virtualFile?.path?.let { project.filePathsWithOnboardingTips?.contains(it) } == true) {
       DocRenderManager.setDocRenderingEnabled(editor, true)
     }
   }
