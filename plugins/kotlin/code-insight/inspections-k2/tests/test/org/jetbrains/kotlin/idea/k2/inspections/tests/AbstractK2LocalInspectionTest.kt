@@ -53,12 +53,6 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         return super.getAfterTestDataAbsolutePath(mainFileName)
     }
 
-    override fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2, "after") {
-            doTestForInternal(mainFile, inspection, fileText)
-        }
-    }
-
     override fun doTest(path: String) {
         val mainFile = File(dataFilePath(fileName()))
 

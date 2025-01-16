@@ -80,6 +80,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/selfReferenceConstructorParameter")
             model("${idea}/inspectionsLocal/canBeVal")
             model("${idea}/inspectionsLocal/addOperatorModifier")
+            model("${idea}/inspectionsLocal/kotlinUnreachableCode")
         }
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,

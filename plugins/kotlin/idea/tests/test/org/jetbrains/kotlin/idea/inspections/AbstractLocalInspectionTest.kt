@@ -87,7 +87,18 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
     protected open fun doTest(path: String) {
         val mainFile = File(dataFilePath(fileName()))
-        val inspection = createInspection(mainFile)
+
+        val inspection: LocalInspectionTool = try {
+            createInspection(mainFile)
+        } catch (e: Throwable) {
+            val shouldBeIgnored =
+                InTextDirectivesUtils.isDirectiveDefined(FileUtil.loadFile(mainFile), IgnoreTests.DIRECTIVES.of(pluginMode))
+            if (shouldBeIgnored) {
+                return
+            } else {
+                throw e
+            }
+        }
 
         val fileText = FileUtil.loadFile(mainFile, true)
         TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
@@ -353,7 +364,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K1, "after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.of(pluginMode), "after") {
             doTestForInternal(mainFile, inspection, fileText)
         }
     }
