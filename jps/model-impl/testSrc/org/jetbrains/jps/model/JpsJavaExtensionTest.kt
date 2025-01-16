@@ -15,12 +15,26 @@
  */
 package org.jetbrains.jps.model
 
+import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsJavaModuleType
+import org.jetbrains.jps.model.module.JpsModule
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JpsJavaExtensionTest : JpsJavaModelTestCase() {
-  fun testModule() {
+class JpsJavaExtensionTest {
+  lateinit var project: JpsProject
+
+  @BeforeEach
+  fun setUp() {
+    project = JpsElementFactory.getInstance().createModel().project
+  }
+
+  @Test
+  fun module() {
     val module = addModule()
     val extension = javaService.getOrCreateModuleExtension(module)
     extension.outputUrl = "file://path"
@@ -29,14 +43,15 @@ class JpsJavaExtensionTest : JpsJavaModelTestCase() {
     assertEquals("file://path", moduleExtension!!.outputUrl)
   }
 
-  fun testDependency() {
-    val module = myProject.addModule("m", JpsJavaModuleType.INSTANCE)
-    val library = myProject.addLibrary("l", JpsJavaLibraryType.INSTANCE)
+  @Test
+  fun dependency() {
+    val module = addModule()
+    val library = project.addLibrary("l", JpsJavaLibraryType.INSTANCE)
     val dependency = module.dependenciesList.addLibraryDependency(library)
     javaService.getOrCreateDependencyExtension(dependency).scope = JpsJavaDependencyScope.TEST
     javaService.getOrCreateDependencyExtension(dependency).isExported = true
 
-    val dependencies = assertOneElement(myProject.modules).dependenciesList.dependencies
+    val dependencies = assertOneElement(project.modules).dependenciesList.dependencies
     assertEquals(2, dependencies.size)
     val dep = dependencies[1]
     val extension = javaService.getDependencyExtension(dep)
@@ -44,4 +59,11 @@ class JpsJavaExtensionTest : JpsJavaModelTestCase() {
     assertTrue(extension!!.isExported)
     assertSame(JpsJavaDependencyScope.TEST, extension.scope)
   }
+  
+  private fun addModule(): JpsModule {
+    return project.addModule("m", JpsJavaModuleType.INSTANCE)
+  }
+  
+  private val javaService
+    get() = JpsJavaExtensionService.getInstance()
 }
