@@ -85,6 +85,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private State myState = new State();
   private final Set<String> myTypes = new HashSet<>();
   private final Set<RunConfiguration> myHiddenConfigurations = new HashSet<>();
+  private final Set<RunConfiguration> myShownConfigurations = new HashSet<>();
   private volatile List<List<RunDashboardServiceImpl>> myServices = new SmartList<>();
   private final ReentrantReadWriteLock myServiceLock = new ReentrantReadWriteLock();
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
@@ -178,7 +179,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
       @Override
       public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
-        myHiddenConfigurations.remove(settings.getConfiguration());
+        RunConfiguration configuration = settings.getConfiguration();
+        myHiddenConfigurations.remove(configuration);
+        myShownConfigurations.remove(configuration);
         if (!myUpdateStarted) {
           syncConfigurations();
           updateDashboardIfNeeded(settings);
@@ -218,7 +221,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         updateDashboardIfNeeded(env.getRunnerAndConfigurationSettings());
       }
     });
-    connection.subscribe(RunDashboardManager.DASHBOARD_TOPIC, new RunDashboardListener() {
+    connection.subscribe(DASHBOARD_TOPIC, new RunDashboardListener() {
       @Override
       public void configurationChanged(@NotNull RunConfiguration configuration, boolean withStructure) {
         updateDashboardIfNeeded(configuration, withStructure);
@@ -287,7 +290,13 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private boolean isShown(@NotNull RunConfiguration runConfiguration) {
-    return myTypes.contains(runConfiguration.getType().getId()) && !myHiddenConfigurations.contains(runConfiguration);
+    if  (!myTypes.contains(runConfiguration.getType().getId())) return false;
+    if (myState.excludedNewTypes.contains(runConfiguration.getType().getId())) {
+      return myShownConfigurations.contains(runConfiguration);
+    }
+    else {
+      return !myHiddenConfigurations.contains(runConfiguration);
+    }
   }
 
   private static @Nullable RunConfiguration getBaseConfiguration(@NotNull RunConfiguration runConfiguration) {
@@ -318,6 +327,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myState.excludedTypes.clear();
     myState.excludedTypes.addAll(enableByDefaultTypes);
     myState.excludedTypes.removeAll(myTypes);
+
+    myState.excludedNewTypes.retainAll(types);
+    myHiddenConfigurations.removeIf(configuration -> !types.contains(configuration.getType().getId()));
+    myShownConfigurations.removeIf(configuration -> !types.contains(configuration.getType().getId()));
 
     syncConfigurations();
     if (!removed.isEmpty()) {
@@ -375,27 +388,83 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   public Set<RunConfiguration> getHiddenConfigurations() {
-    return Collections.unmodifiableSet(myHiddenConfigurations);
+    Set<RunConfiguration> hiddenConfigurations = new HashSet<>(myHiddenConfigurations);
+    for (String typeId : myState.excludedNewTypes) {
+      hiddenConfigurations.addAll(getExcludedConfigurations(typeId, myShownConfigurations));
+    }
+    return hiddenConfigurations;
+  }
+
+  private Collection<RunConfiguration> getExcludedConfigurations(String typeId, Collection<RunConfiguration> toExclude) {
+    ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(typeId);
+    if (type == null) return Collections.emptyList();
+
+    List<RunConfiguration> configurations = RunManager.getInstance(myProject).getConfigurationsList(type);
+    return ContainerUtil.filter(configurations, configuration -> !toExclude.contains(configuration));
   }
 
   public void hideConfigurations(Collection<? extends RunConfiguration> configurations) {
-    myHiddenConfigurations.addAll(configurations);
+    for (RunConfiguration configuration : configurations) {
+      if (myState.excludedNewTypes.contains(configuration.getType().getId())) {
+        myShownConfigurations.remove(configuration);
+      }
+      else {
+        myHiddenConfigurations.add(configuration);
+      }
+    }
     syncConfigurations();
     if (!configurations.isEmpty()) {
       moveRemovedContent(settings -> configurations.contains(settings.getConfiguration()) ||
                                      configurations.contains(getBaseConfiguration(settings.getConfiguration())));
     }
+    if (myTypeContent != null) {
+      myTypeContent.setType(myTypeContent.getType());
+    }
     updateDashboard(true);
   }
 
   public void restoreConfigurations(Collection<? extends RunConfiguration> configurations) {
-    myHiddenConfigurations.removeAll(configurations);
+    for (RunConfiguration configuration : configurations) {
+      if (myState.excludedNewTypes.contains(configuration.getType().getId())) {
+        myShownConfigurations.add(configuration);
+      }
+      else {
+        myHiddenConfigurations.remove(configuration);
+      }
+    }
     syncConfigurations();
     if (!configurations.isEmpty()) {
       moveAddedContent(settings -> configurations.contains(settings.getConfiguration()) ||
                                    configurations.contains(getBaseConfiguration(settings.getConfiguration())));
     }
+    if (myTypeContent != null) {
+      myTypeContent.setType(myTypeContent.getType());
+    }
     updateDashboard(true);
+  }
+
+  public boolean isNewExcluded(String typeId) {
+    return myState.excludedNewTypes.contains(typeId);
+  }
+
+  public void setNewExcluded(String typeId, boolean newExcluded) {
+    if (newExcluded) {
+      if (myState.excludedNewTypes.add(typeId)) {
+        invert(typeId, myHiddenConfigurations, myShownConfigurations);
+        updateDashboard(true);
+      }
+    }
+    else {
+      if (myState.excludedNewTypes.remove(typeId)) {
+        invert(typeId, myShownConfigurations, myHiddenConfigurations);
+        updateDashboard(true);
+      }
+    }
+  }
+
+  private void invert(String typeId, Set<RunConfiguration> from, Set<RunConfiguration> to) {
+    to.addAll(getExcludedConfigurations(typeId, from));
+    from.removeIf(configuration -> configuration.getType().getId().equals(typeId));
   }
 
   public boolean isOpenRunningConfigInNewTab() {
@@ -798,7 +867,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
-  public @Nullable State getState() {
+  public @NotNull State getState() {
+    myState.excludedNewTypes.retainAll(myTypes);
+
     myState.hiddenConfigurations.clear();
     for (RunConfiguration configuration : myHiddenConfigurations) {
       ConfigurationType type = configuration.getType();
@@ -811,6 +882,26 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         configurations.add(configuration.getName());
       }
     }
+
+    myState.shownConfigurations.clear();
+    for (RunConfiguration configuration : myShownConfigurations) {
+      ConfigurationType type = configuration.getType();
+      if (myTypes.contains(type.getId())) {
+        Set<String> configurations = myState.shownConfigurations.get(type.getId());
+        if (configurations == null) {
+          configurations = new HashSet<>();
+          myState.shownConfigurations.put(type.getId(), configurations);
+        }
+        configurations.add(configuration.getName());
+      }
+    }
+
+    // Maintain both sets so the project could be opened in an old version
+    // with configurations hidden in a new one.
+    for (String typeId : myState.excludedNewTypes) {
+      Collection<RunConfiguration> hiddenConfigurations = getExcludedConfigurations(typeId, myShownConfigurations);
+      myState.hiddenConfigurations.put(typeId, new HashSet<>(ContainerUtil.map(hiddenConfigurations, RunConfiguration::getName)));
+    }
     return myState;
   }
 
@@ -822,6 +913,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     Set<String> enableByDefaultTypes = getEnableByDefaultTypes();
     enableByDefaultTypes.removeAll(myState.excludedTypes);
     myTypes.addAll(enableByDefaultTypes);
+
+    myHiddenConfigurations.clear();
+    myShownConfigurations.clear();
+    myState.excludedNewTypes.retainAll(myTypes);
     if (!myTypes.isEmpty()) {
       loadHiddenConfigurations();
       initTypes();
@@ -830,18 +925,21 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   private void loadHiddenConfigurations() {
     for (Map.Entry<String, Set<String>> entry : myState.hiddenConfigurations.entrySet()) {
-      ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(entry.getKey());
-      if (type == null) continue;
-
-      List<RunConfiguration> configurations = RunManager.getInstance(myProject).getConfigurationsList(type);
-      for (String name : entry.getValue()) {
-        for (RunConfiguration configuration : configurations) {
-          if (configuration.getName().equals(name)) {
-            myHiddenConfigurations.add(configuration);
-          }
-        }
+      if (!myState.excludedNewTypes.contains(entry.getKey())) {
+        loadConfigurations(entry.getKey(), entry.getValue(), myHiddenConfigurations);
       }
     }
+    for (Map.Entry<String, Set<String>> entry : myState.shownConfigurations.entrySet()) {
+      loadConfigurations(entry.getKey(), entry.getValue(), myShownConfigurations);
+    }
+  }
+
+  private void loadConfigurations(String typeId, Set<String> configurationNames, Set<RunConfiguration> result) {
+    ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(typeId);
+    if (type == null) return;
+
+    List<RunConfiguration> configurations = RunManager.getInstance(myProject).getConfigurationsList(type);
+    result.addAll(ContainerUtil.filter(configurations, configuration -> configurationNames.contains(configuration.getName())));
   }
 
   private void initTypes() {
@@ -872,6 +970,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     public final Set<String> configurationTypes = new HashSet<>();
     public final Set<String> excludedTypes = new HashSet<>();
     public final Map<String, Set<String>> hiddenConfigurations = new HashMap<>();
+    public final Map<String, Set<String>> shownConfigurations = new HashMap<>();
+    // Run configuration types for which new run configurations will be hidden
+    // in the Services tool window by default.
+    public final Set<String> excludedNewTypes = new HashSet<>();
     public boolean openRunningConfigInTab = false;
   }
 
