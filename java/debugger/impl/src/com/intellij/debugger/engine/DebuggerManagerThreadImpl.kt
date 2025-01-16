@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -271,8 +271,24 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
     }
   }
 
-  val isIdle: Boolean
-    get() = myEvents.isEmpty
+  /**
+   * Indicates whether the debugger manager thread is currently idle.
+   * This is determined by checking if there are no pending events
+   * and no unfinished commands (other than the current one).
+   */
+  @ApiStatus.Internal
+  fun isIdle(): Boolean {
+    if (!myEvents.isEmpty) {
+      return false
+    }
+    val currentCommand = getCurrentCommand()
+    if (currentCommand != null) {
+      return unfinishedCommands.singleOrNull() == currentCommand
+    }
+    else {
+      return unfinishedCommands.isEmpty()
+    }
+  }
 
   fun hasAsyncCommands(): Boolean {
     return myEvents.hasAsyncCommands()
