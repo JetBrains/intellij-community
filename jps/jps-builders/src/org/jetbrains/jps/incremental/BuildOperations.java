@@ -119,18 +119,18 @@ public final class BuildOperations {
   }
 
   private static boolean dropRemovedPaths(@NotNull CompileContext context, @NotNull Collection<? extends BuildTarget<?>> targets) throws IOException {
-    Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    Map<BuildTarget<?>, Collection<Path>> map = Utils.REMOVED_SOURCES_KEY.get(context);
     if (map == null) {
       return false;
     }
 
     boolean dropped = false;
     for (BuildTarget<?> target : targets) {
-      Collection<String> paths = map.remove(target);
+      Collection<Path> paths = map.remove(target);
       if (paths != null) {
         SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-        for (String path : paths) {
-          storage.remove(Path.of(path));
+        for (Path file : paths) {
+          storage.remove(file);
         }
         dropped = true;
       }

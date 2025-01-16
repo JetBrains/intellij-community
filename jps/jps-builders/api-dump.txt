@@ -2635,17 +2635,6 @@ f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - saveVersion():V
 - setProcessConstantsIncrementally(Z):V
 - versionDiffers():Z
-org.jetbrains.jps.incremental.storage.BuildDataProvider
-- a:clearCache():V
-- a:close():V
-- a:closeTargetMaps(org.jetbrains.jps.builders.BuildTarget):V
-- a:commit():V
-- a:getFileStampStorage(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage
-- a:getOutputToTargetMapping():org.jetbrains.jps.incremental.storage.OutputToTargetMapping
-- a:getSourceToForm(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.OneToManyPathMapping
-- a:getSourceToOutputMapping(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.builders.storage.SourceToOutputMapping
-- a:removeAllMaps():V
-- a:removeStaleTarget(java.lang.String,java.lang.String):V
 f:org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
 - sf:MODULES_WITH_TARGET_CONFIG_CHANGED_KEY:com.intellij.openapi.util.Key
 - isTargetDirty(org.jetbrains.jps.cmdline.ProjectDescriptor):Z

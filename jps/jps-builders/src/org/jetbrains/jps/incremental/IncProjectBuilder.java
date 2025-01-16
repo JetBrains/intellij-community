@@ -754,11 +754,12 @@ public final class IncProjectBuilder {
     registerTargetsWithClearedOutput(context, Collections.singletonList(target));
   }
 
+  @SuppressWarnings("SSBasedInspection")
   private boolean processDeletedPaths(CompileContext context, final Set<? extends BuildTarget<?>> targets) throws ProjectBuildException {
     boolean doneSomething = false;
     try {
       // cleanup outputs
-      final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<>();
+      final Map<BuildTarget<?>, Collection<Path>> targetToRemovedSources = new HashMap<>();
 
       Set<Path> dirsToDelete = FileCollectionFactory.createCanonicalPathSet();
       for (BuildTarget<?> target : targets) {
@@ -767,10 +768,11 @@ public final class IncProjectBuilder {
           continue;
         }
 
-        targetToRemovedSources.put(target, deletedPaths);
+        targetToRemovedSources.put(target, deletedPaths.stream().map(Path::of).collect(Collectors.toList()));
         if (isTargetOutputCleared(context, target)) {
           continue;
         }
+
         int buildTargetId = context.getProjectDescriptor().dataManager.getTargetStateManager().getBuildTargetId(target);
         final boolean shouldPruneEmptyDirs = target instanceof ModuleBasedTarget;
         BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
@@ -823,15 +825,15 @@ public final class IncProjectBuilder {
         }
       }
       if (!targetToRemovedSources.isEmpty()) {
-        final Map<BuildTarget<?>, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
+        Map<BuildTarget<?>, Collection<Path>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
         if (existing != null) {
-          for (Map.Entry<BuildTarget<?>, Collection<String>> entry : existing.entrySet()) {
-            final Collection<String> paths = targetToRemovedSources.get(entry.getKey());
-            if (paths != null) {
-              paths.addAll(entry.getValue());
+          for (Map.Entry<BuildTarget<?>, Collection<Path>> entry : existing.entrySet()) {
+            Collection<Path> paths = targetToRemovedSources.get(entry.getKey());
+            if (paths == null) {
+              targetToRemovedSources.put(entry.getKey(), entry.getValue());
             }
             else {
-              targetToRemovedSources.put(entry.getKey(), entry.getValue());
+              paths.addAll(entry.getValue());
             }
           }
         }
@@ -1616,14 +1618,14 @@ public final class IncProjectBuilder {
       }
       try {
         // restore deleted paths that were not processed by 'integrate'
-        final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+        Map<BuildTarget<?>, Collection<Path>> map = Utils.REMOVED_SOURCES_KEY.get(context);
         if (map != null) {
-          for (Map.Entry<BuildTarget<?>, Collection<String>> entry : map.entrySet()) {
-            final BuildTarget<?> target = entry.getKey();
-            final Collection<String> paths = entry.getValue();
+          for (Map.Entry<BuildTarget<?>, Collection<Path>> entry : map.entrySet()) {
+            BuildTarget<?> target = entry.getKey();
+            Collection<Path> paths = entry.getValue();
             if (paths != null) {
-              for (String path : paths) {
-                fsState.registerDeleted(context, target, Path.of(path), null);
+              for (Path file : paths) {
+                fsState.registerDeleted(context, target, file, null);
               }
             }
           }

@@ -24,7 +24,7 @@ import java.util.function.Function;
  * @author Eugene Zhuravlev
  */
 public final class Utils {
-  public static final Key<Map<BuildTarget<?>, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
+  public static final Key<Map<BuildTarget<?>, Collection<Path>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
   public static final Key<Boolean> PROCEED_ON_ERROR_KEY = Key.create("_proceed_on_error_");
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
