@@ -1056,7 +1056,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
         PsiClass notVisitedClass = notVisitedClasses.poll();
         if (!isAbstractSealed(notVisitedClass) || visitedClasses.contains(notVisitedClass)) continue;
         visitedClasses.add(notVisitedClass);
-        Collection<PsiClass> permittedClasses = getPermittedClasses(psiClass);
+        Collection<PsiClass> permittedClasses = getPermittedClasses(notVisitedClass);
         result.addAll(permittedClasses);
         notVisitedClasses.addAll(permittedClasses);
       }
