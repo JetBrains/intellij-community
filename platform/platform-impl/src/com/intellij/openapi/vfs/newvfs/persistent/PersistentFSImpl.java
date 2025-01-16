@@ -414,6 +414,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public @NotNull AttributeOutputStream writeAttribute(@NotNull VirtualFile file,
                                                        @NotNull FileAttribute attribute) {
+    //TODO RC: ThreadingAssertions.assertWriteAccess();
     return vfsPeer.writeAttribute(fileId(file), attribute);
   }
 
@@ -423,11 +424,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private @NotNull OutputStream writeContent(@NotNull VirtualFile file,
                                              boolean contentOfFixedSize) {
+    ThreadingAssertions.assertWriteAccess();
     return vfsPeer.writeContent(fileId(file), contentOfFixedSize);
   }
 
   @Override
   public int storeUnlinkedContent(byte @NotNull [] bytes) throws ContentTooBigException {
+    //TODO RC: ThreadingAssertions.assertWriteAccess() ?
     return vfsPeer.writeContentRecord(new ByteArraySequence(bytes));
   }
 
@@ -534,6 +537,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public void setWritable(@NotNull VirtualFile file,
                           boolean writableFlag) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
     getFileSystem(file).setWritable(file, writableFlag);
     boolean oldWritable = isWritable(file);
     if (oldWritable != writableFlag) {
@@ -695,6 +699,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                        @NotNull VirtualFile file,
                                        @NotNull VirtualFile parent,
                                        @NotNull String name) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     getFileSystem(file).copyFile(requestor, file, parent, name);
     processEvent(new VFileCopyEvent(requestor, file, parent, name));
 
@@ -709,6 +715,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public @NotNull VirtualFile createChildDirectory(Object requestor,
                                                    @NotNull VirtualFile parent,
                                                    @NotNull String dir) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     getFileSystem(parent).createChildDirectory(requestor, parent, dir);
 
     processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, ChildInfo.EMPTY_ARRAY));
@@ -728,6 +736,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public @NotNull VirtualFile createChildFile(Object requestor,
                                               @NotNull VirtualFile parent,
                                               @NotNull String name) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     getFileSystem(parent).createChildFile(requestor, parent, name);
     processEvent(new VFileCreateEvent(requestor, parent, name, false, null, null, null));
     VFileEvent caseSensitivityEvent = VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(parent, name);
@@ -760,6 +770,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     NewVirtualFileSystem fs = getFileSystem(file);
     fs.deleteFile(requestor, file);
     if (!fs.exists(file)) {
@@ -771,6 +783,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public void renameFile(Object requestor,
                          @NotNull VirtualFile file,
                          @NotNull String newName) throws IOException {
+    ThreadingAssertions.assertWriteAccess();
+
     getFileSystem(file).renameFile(requestor, file, newName);
     String oldName = file.getName();
     if (!newName.equals(oldName)) {
@@ -1003,6 +1017,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         if (closed) return;
         super.close();
 
+        ThreadingAssertions.assertWriteAccess();
+
         long oldLength = getLastRecordedLength(file);
         VFileContentChangeEvent event = new VFileContentChangeEvent(
           requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count
@@ -1073,6 +1089,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void processEvent(@NotNull VFileEvent event) {
+    ThreadingAssertions.assertWriteAccess();
+
     if (!event.isValid()) return;
 
     List<VFileEvent> outValidatedEvents = new ArrayList<>();
@@ -1397,6 +1415,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @ApiStatus.Internal
   public void processEventsImpl(@NotNull List<? extends CompoundVFileEvent> events, boolean excludeAsyncListeners) {
+    ThreadingAssertions.assertWriteAccess();
+
     int startIndex = 0;
     int cappedInitialSize = Math.min(events.size(), INNER_ARRAYS_THRESHOLD);
     List<Runnable> applyActions = new ArrayList<>(cappedInitialSize);
