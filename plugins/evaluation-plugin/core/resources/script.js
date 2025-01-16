@@ -236,7 +236,7 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   addAiaDiagnosticsBlock("Internal api calls from original code snippet", "ground_truth_internal_api_calls", popup, lookup)
   addAiaDiagnosticsBlock("Extracted api calls from generated code snippet", "predicted_api_calls", popup, lookup)
   // TODO better to add a separate popup view?
-  addAiaDiagnosticsBlock("Failed file regexp properties:", "aia_failed_file_regex_properties", popup, lookup)
+  addAiaDiagnosticsBlock("Failed file validations:", "aia_failed_file_validations", popup, lookup)
   addAiaDiagnosticsBlock("Appeared highlights", "appeared_highlights", popup, lookup)
   addAiaDiagnosticsBlock("Erased APIs", "erased_apis", popup, lookup)
   addDiagnosticsBlock("RAW SUGGESTIONS", "raw_proposals", popup, lookup)
