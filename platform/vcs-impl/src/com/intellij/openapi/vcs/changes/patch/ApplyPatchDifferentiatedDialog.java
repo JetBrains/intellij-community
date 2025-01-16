@@ -440,6 +440,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           return StreamUtil.readText(inputStreamReader);
         }
       });
+      if (text.isEmpty()) return null;
 
       PatchReader reader = new PatchReader(text);
       reader.parseAllPatches();
