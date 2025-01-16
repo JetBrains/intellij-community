@@ -1366,36 +1366,40 @@ public final class IncProjectBuilder {
       }
     }
 
-    final ProjectDescriptor pd = context.getProjectDescriptor();
+    final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     final Set<String> affectedOutputs = CollectionFactory.createFilePathSet();
     final Set<String> affectedSources = CollectionFactory.createFilePathSet();
 
     final List<SourceToOutputMapping> mappings = new ArrayList<>();
     for (T target : targets) {
-      pd.fsState.processFilesToRecompile(context, target, new FileProcessor<>() {
+      projectDescriptor.fsState.processFilesToRecompile(context, target, new FileProcessor<>() {
         private SourceToOutputMapping srcToOut;
         @Override
         public boolean apply(@NotNull T target, @NotNull File file, @NotNull R root) throws IOException {
-          final String src = FileUtilRt.toSystemIndependentName(file.getPath());
-          if (affectedSources.add(src)) {
-            if (srcToOut == null) { // lazy init
-              srcToOut = pd.dataManager.getSourceToOutputMap(target);
-              mappings.add(srcToOut);
-            }
-            final Collection<String> outs = srcToOut.getOutputs(src);
-            if (outs != null) {
-              // Temporary hack for KTIJ-197
-              // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behaviour.
-              // Now it does. It isn't yet obvious whether it is right or wrong behaviour. Let's leave old behaviour for a
-              // while for safety and keeping kotlin incremental JPS tests green
-              List<String> filteredOuts = new ArrayList<>();
-              for (String out : outs) {
-                if (!"kotlin_module".equals(StringUtil.substringAfterLast(out, "."))) {
-                  filteredOuts.add(out);
-                }
+          String src = FileUtilRt.toSystemIndependentName(file.getPath());
+          if (!affectedSources.add(src)) {
+            return true;
+          }
+
+          if (srcToOut == null) { // lazy init
+            srcToOut = projectDescriptor.dataManager.getSourceToOutputMap(target);
+            mappings.add(srcToOut);
+          }
+
+          Collection<Path> outs = srcToOut.getOutputs(file.toPath());
+          if (outs != null) {
+            // Temporary hack for KTIJ-197
+            // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behaviour.
+            // Now it does. It isn't yet obvious whether it is right or wrong behaviour. Let's leave old behaviour for a
+            // while for safety and keeping kotlin incremental JPS tests green
+            List<String> filteredOuts = new ArrayList<>(outs.size());
+            for (Path out : outs) {
+              String outPath = FileUtilRt.toSystemIndependentName(out.toString());
+              if (!outPath.endsWith(".kotlin_module")) {
+                filteredOuts.add(outPath);
               }
-              affectedOutputs.addAll(filteredOuts);
             }
+            affectedOutputs.addAll(filteredOuts);
           }
           return true;
         }
