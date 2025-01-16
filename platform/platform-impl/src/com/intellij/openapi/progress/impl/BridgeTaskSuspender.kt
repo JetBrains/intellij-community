@@ -55,6 +55,8 @@ internal class BridgeTaskSuspender(indicator: ProgressIndicator) : TaskSuspender
 
   override fun pause(reason: @ProgressText String?) {
     synchronized(suspenderLock) {
+      if (isSuspendable.value is TaskSuspension.NonSuspendable) return@synchronized
+
       if (_state.compareAndSet(TaskSuspenderState.Active, TaskSuspenderState.Paused(reason))) {
         progressSuspender.get()?.suspendProcess(reason)
       }
@@ -71,13 +73,19 @@ internal class BridgeTaskSuspender(indicator: ProgressIndicator) : TaskSuspender
   }
 
   override fun suspenderAdded(suspender: ProgressSuspender) {
-    progressSuspender.set(suspender)
-    _isSuspendable.value = TaskSuspension.Suspendable(suspender.suspendedText)
+    synchronized(suspenderLock) {
+      progressSuspender.set(suspender)
+      _isSuspendable.value = TaskSuspension.Suspendable(suspender.suspendedText)
+      onStateChanged(suspender)
+    }
   }
 
   override fun suspenderRemoved() {
-    progressSuspender.set(null)
-    _isSuspendable.value = TaskSuspension.NonSuspendable
+    synchronized(suspenderLock) {
+      progressSuspender.set(null)
+      _isSuspendable.value = TaskSuspension.NonSuspendable
+      _state.update { TaskSuspenderState.Active }
+    }
   }
 
   override fun onStateChanged(suspender: ProgressSuspender) {

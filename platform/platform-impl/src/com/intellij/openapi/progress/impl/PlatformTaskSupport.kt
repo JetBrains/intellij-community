@@ -146,11 +146,28 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     launch {
       withKernel {
         tryWithEntities(taskInfo) {
+          subscribeToTaskCancellation(taskInfo, taskContext)
           subscribeToTaskSuspensionChanges(taskInfo, taskSuspender)
-          subscribeToTaskStatus(taskInfo, taskContext, taskSuspender)
           subscribeToTaskUpdates(taskInfo, pipe)
         }
       }
+    }
+  }
+
+  private fun CoroutineScope.subscribeToTaskCancellation(
+    taskInfo: TaskInfoEntity,
+    context: CoroutineContext,
+  ) {
+    val title = taskInfo.title
+    val entityId = taskInfo.eid
+
+    launch {
+      taskInfo.statuses
+        .filter { it is TaskStatus.Canceled }
+        .collect {
+          LOG.trace { "Task was cancelled, entityId=$entityId, title=$title" }
+          context.cancel()
+        }
     }
   }
 
@@ -158,13 +175,34 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     taskInfo: TaskInfoEntity,
     taskSuspender: TaskSuspender?,
   ) {
-    if (taskSuspender !is BridgeTaskSuspender) return
+    if (taskSuspender == null) return
 
+    // Task suspension is not going to change, we can subscribe directly to statuses
+    @Suppress("DEPRECATION")
+    if (taskSuspender !is BridgeTaskSuspender) {
+      subscribeToTaskStatus(taskInfo, taskSuspender)
+      return
+    }
+
+    val title = taskInfo.title
+    val entityId = taskInfo.eid
     val taskStorage = TaskStorage.getInstance()
     launch {
       taskSuspender.isSuspendable.collectLatest { suspension ->
+        LOG.trace { "Task suspension changed to $suspension, entityId=$entityId, title=$title" }
+
         taskStorage.updateTask(taskInfo) {
           taskInfo[TaskInfoEntity.TaskSuspensionType] = suspension
+        }
+
+        if (suspension is TaskSuspension.Suspendable) {
+          // Ensure that subscribeToTaskStatus is canceled when we receive a new isSuspendable value
+          coroutineScope {
+            subscribeToTaskStatus(taskInfo, taskSuspender)
+          }
+        } else {
+          // Set status to Active in case the task was paused when isSuspendable changed
+          TaskManager.resumeTask(taskInfo, TaskStatus.Source.SYSTEM)
         }
       }
     }
@@ -172,7 +210,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   private fun CoroutineScope.subscribeToTaskStatus(
     taskInfo: TaskInfoEntity,
-    context: CoroutineContext,
     taskSuspender: TaskSuspender?,
   ) {
     val title = taskInfo.title
@@ -197,7 +234,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
           when (status) {
             is TaskStatus.Running -> taskSuspender?.resume()
             is TaskStatus.Paused -> taskSuspender?.pause(status.reason)
-            is TaskStatus.Canceled -> context.cancel()
+            is TaskStatus.Canceled -> { /* do nothing, processed by subscribeToTaskCancellation */ }
           }
         }
     }
