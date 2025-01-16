@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -51,10 +51,8 @@ public final class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLo
           LOG.assertTrue(classReference != null);
           final PsiReferenceParameterList parameterList = classReference.getParameterList();
           LOG.assertTrue(parameterList != null);
-          for (PsiTypeElement typeElement : parameterList.getTypeParameterElements()) {
-            if (typeElement.getAnnotations().length > 0) {
-              return;
-            }
+          if (PsiTreeUtil.findChildOfType(parameterList, PsiAnnotation.class) != null) {
+            return;
           }
           final PsiElement firstChild = parameterList.getFirstChild();
           final PsiElement lastChild = parameterList.getLastChild();
