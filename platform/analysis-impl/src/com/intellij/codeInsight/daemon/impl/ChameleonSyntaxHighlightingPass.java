@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.lang.Language;
@@ -67,7 +68,7 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
                                           @NotNull ProperTextRange restrictRange,
                                           @NotNull ProperTextRange priorityRange,
                                           @Nullable Editor editor) {
-    super(file.getProject(), document, "chameleon", file, editor, restrictRange, false, HighlightInfoProcessor.getEmpty());
+    super(file.getProject(), document, AnalysisBundle.message("pass.chameleon"), file, editor, restrictRange, false, HighlightInfoProcessor.getEmpty());
     myPriorityRange = priorityRange;
   }
 
