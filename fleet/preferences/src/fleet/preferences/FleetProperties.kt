@@ -44,6 +44,7 @@ val isFleetShortCircuitMode: Boolean by lazy {
   true
 }
 
+@Deprecated("remove FL-30525")
 val shipAutoUpdateEnabled: Boolean by lazy {
   fleetProperty("fleet.ship.autoUpdate") == "true"
 }
