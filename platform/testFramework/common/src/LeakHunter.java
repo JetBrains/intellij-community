@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.testFramework.common.DumpKt;
 import com.intellij.testFramework.common.TestApplicationKt;
@@ -205,11 +206,15 @@ public final class LeakHunter {
         Please make sure you dispose your resources properly. See https://plugins.jetbrains.com/docs/intellij/disposers.html""";
 
     if (TeamCityLogger.isUnderTC) {
-      result+="\n  You can find a memory snapshot `"
-        +TestApplicationKt.LEAKED_PROJECTS
-        +".hproof.zip` in the \"Artifacts\" tab of the build run.";
-      result+="\n  If you suspect a particular test, you can reproduce the problem locally " +
-              "calling TestApplicationManager.testProjectLeak() after the test.";
+      String buildUrl = TeamCityLogger.currentBuildUrl != null ? StringUtil.trimEnd(TeamCityLogger.currentBuildUrl, "/") : "";
+      String buildArtifactsLink = !buildUrl.isBlank() ? " " + buildUrl + "?buildTab=artifacts" : "";
+
+      result += "\n  You can find a memory snapshot `"
+                + TestApplicationKt.LEAKED_PROJECTS
+                + ".hprof.zip` in the \"Artifacts\" tab of the build run" + buildArtifactsLink + ".";
+      result += "\n  See leaks investigation guide https://jb.gg/ijpl-project-leaks.";
+      result += "\n  If you suspect a particular test, you can reproduce the problem locally " +
+                "calling TestApplicationManager.testProjectLeak() after the test.";
     }
     else if (knownHeapDumpPath != null) {
       result += "\n  Please see ``" + knownHeapDumpPath + "` for a memory dump";
