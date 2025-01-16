@@ -419,7 +419,7 @@ private suspend fun rebaseLoop(
       whileSelect {
         rebaseLoopStateDebug.set(state)
         remoteKernelBroadcastReceiver.onReceiveCatching { broadcastOrClosed ->
-          frequentSpannedScope("broadcast") {
+          spannedScope("broadcast") {
             if (broadcastOrClosed.isClosed) {
               val closeCause = broadcastOrClosed.exceptionOrNull()
               val unconfirmed = unconfirmedInstructions(state)
@@ -451,7 +451,7 @@ private suspend fun rebaseLoop(
           }
         }
         changesReceiver.onReceiveCatching { changeOrClosed ->
-          frequentSpannedScope("change") {
+          spannedScope("change") {
             if (changeOrClosed.isClosed) {
               val closeCause = changeOrClosed.exceptionOrNull()
               if (closeCause == null) {
@@ -489,7 +489,7 @@ private suspend fun rebaseLoop(
         }
         if (state.rebaseLog.isRebasing()) {
           onTimeout(0) {
-            frequentSpannedScope("rebase step") {
+            spannedScope("rebase step") {
               val (rebaseLog, tx) = state.rebaseLog.continueRebase(encoder)
               state = state.copy(rebaseLog = rebaseLog)
               if (!state.rebaseLog.isRebasing()) {

@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.preferences
 
-import kotlin.random.Random
-
 // True means one wants to investigate how fleet itself works (e.g. enable verbose logging or increase transport delays)
 val isFleetDebugMode: Boolean by lazy { fleetFlag("fleet.debug.mode") }
 
@@ -30,6 +28,7 @@ val isFleetDistributionConveyorLayout: Boolean by lazy { fleetFlag("fleet.distri
 // e.g. upload required resources to the Space in the runtime
 val isFleetUnpublishedBuild: Boolean by lazy { fleetFlag("fleet.unpublished.build") }
 
+@Deprecated("remove FL-30525")
 val isUsingMicroSpans: Boolean by lazy { fleetFlag("fleet.track.micro.spans", defaultValue = true) }
 
 // Defines whether we are under testing. If set to true, some components will be mocked.
