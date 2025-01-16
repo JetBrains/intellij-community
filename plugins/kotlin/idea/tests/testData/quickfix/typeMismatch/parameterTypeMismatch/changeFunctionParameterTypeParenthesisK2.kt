@@ -8,7 +8,5 @@ fun <T> bar(x: T) {
 }
 
 // IGNORE_K1
+// For K1-specific behaviour, see changeFunctionParameterTypeParenthesisK1.kt
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix
-
-// Same example as in testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesis.kt
-// but shows another quick fix

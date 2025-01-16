@@ -4826,9 +4826,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType5k2.kt");
         }
 
-        @TestMetadata("changeFunctionParameterTypeParenthesis.kt")
-        public void testChangeFunctionParameterTypeParenthesis() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesis.kt");
+        @TestMetadata("changeFunctionParameterTypeParenthesisK1.kt")
+        public void testChangeFunctionParameterTypeParenthesisK1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeParenthesisK1.kt");
         }
 
         @TestMetadata("changeFunctionParameterTypeParenthesisK2.kt")
