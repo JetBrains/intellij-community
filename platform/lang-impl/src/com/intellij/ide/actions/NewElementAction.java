@@ -5,6 +5,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -78,6 +79,9 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
+    if (isProjectView(e)) {
+      presentation.setText(ActionsBundle.message("action.NewElement.ProjectView.text"));
+    }
     if (project == null) {
       presentation.setEnabled(false);
       return;
