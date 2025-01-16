@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.Disposable;
@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 public final class ModalityStateEx extends ModalityState {
+
   private final WeakList<Object> myModalEntities = new WeakList<>();
   private static final Set<Object> ourTransparentEntities = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
 
@@ -29,7 +30,7 @@ public final class ModalityStateEx extends ModalityState {
 
   ModalityStateEx(@NotNull List<?> modalEntities) {
     if (modalEntities.contains(null)) {
-      throw new IllegalArgumentException("Must not pass null modality: "+modalEntities);
+      throw new IllegalArgumentException("Must not pass null modality: " + modalEntities);
     }
     myModalEntities.addAll(modalEntities);
   }
@@ -38,7 +39,7 @@ public final class ModalityStateEx extends ModalityState {
     return myModalEntities.toStrongList();
   }
 
-  public @NotNull ModalityState appendProgress(@NotNull ProgressIndicator progress){
+  public @NotNull ModalityState appendProgress(@NotNull ProgressIndicator progress) {
     return appendEntity(progress);
   }
 
@@ -46,7 +47,7 @@ public final class ModalityStateEx extends ModalityState {
     return appendEntity(job);
   }
 
-  @NotNull ModalityStateEx appendEntity(@NotNull Object anEntity){
+  @NotNull ModalityStateEx appendEntity(@NotNull Object anEntity) {
     List<@NotNull Object> modalEntities = getModalEntities();
     List<Object> list = new ArrayList<>(modalEntities.size() + 1);
     list.addAll(modalEntities);
