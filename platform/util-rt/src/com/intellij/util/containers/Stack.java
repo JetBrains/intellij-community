@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +11,9 @@ import java.util.*;
  * and therefore is (1) not synchronized and (2) faster.
  *
  * @author max
+ * @deprecated use {@link ArrayDeque}
  */
+@Deprecated
 public class Stack<T> extends ArrayList<T> {
   public Stack() { }
 
@@ -31,10 +33,18 @@ public class Stack<T> extends ArrayList<T> {
     }
   }
 
+  /**
+   * @deprecated use {@link Deque#push}
+   */
+  @Deprecated
   public void push(T t) {
     add(t);
   }
 
+  /**
+   * @deprecated use {@link Deque#getFirst}
+   */
+  @Deprecated
   public T peek() {
     final int size = size();
     if (size == 0) {
@@ -43,22 +53,38 @@ public class Stack<T> extends ArrayList<T> {
     return get(size - 1);
   }
 
+  /**
+   * @deprecated use {@link Deque#pop}
+   */
+  @Deprecated
   public T pop() {
     final int size = size();
     if (size == 0) throw new EmptyStackException();
     return remove(size - 1);
   }
 
+  /**
+   * @deprecated don't search for element index in a stack, use another collection
+   */
+  @Deprecated
   public int search(Object o) {
     int idx = lastIndexOf(o);
     return idx == -1 ? -1 : size() - idx;
   }
 
+  /**
+   * @deprecated use {@link Deque#pollFirst}
+   */
+  @Deprecated
   @Nullable
   public T tryPop() {
     return isEmpty() ? null : pop();
   }
 
+  /**
+   * @deprecated use {@link Deque#isEmpty}
+   */
+  @Deprecated
   public boolean empty() {
     return isEmpty();
   }
