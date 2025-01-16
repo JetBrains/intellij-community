@@ -208,7 +208,6 @@ object GitLessonsUtil {
   fun TaskContext.showWarningIfGitWindowClosed(restoreTaskWhenResolved: Boolean = false) {
     showWarningIfToolWindowClosed(ToolWindowId.VCS,
                                   GitLessonsBundle.message("git.window.closed.warning",
-                                                           @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // todo IJPL-165055
                                                            action("ActivateVersionControlToolWindow"), strong("Git")),
                                   restoreTaskWhenResolved)
   }
@@ -309,7 +308,7 @@ object GitLessonsUtil {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.isVisible == true
     }
 
-    test { @Suppress("InjectedReferences", "UnresolvedPluginConfigReference") actions("ActivateVersionControlToolWindow") } // todo IJPL-165055
+    test { actions("ActivateVersionControlToolWindow") }
   }
 
   fun TaskTestContext.clickChangeElement(partOfText: String) {

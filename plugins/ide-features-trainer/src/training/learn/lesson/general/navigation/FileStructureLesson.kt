@@ -49,9 +49,7 @@ abstract class FileStructureLesson
         test { invokeActionViaShortcut("ENTER") }
       }
       // There is no Structure tool window in the PyCharm Edu. So added this check.
-      @Suppress("UnresolvedPluginConfigReference") // todo IJPL-165055
       if (ActionManager.getInstance().getAction("ActivateStructureToolWindow") != null) {
-        @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // todo IJPL-165055
         task("ActivateStructureToolWindow") {
           text(LessonsBundle.message("file.structure.toolwindow", action(it)))
           stateCheck { focusOwner?.javaClass?.name.isToStringContains("StructureViewComponent") }

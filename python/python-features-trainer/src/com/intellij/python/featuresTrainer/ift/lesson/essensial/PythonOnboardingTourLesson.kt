@@ -359,7 +359,6 @@ class PythonOnboardingTourLesson :
       var collapsed = false
 
       text(PythonLessonsBundle.message("python.onboarding.project.view.description",
-                                       @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // todo IJPL-165055
                                        action("ActivateProjectToolWindow")))
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.view"),
            LearningBalloonConfig(Balloon.Position.atRight, width = 0, cornerToPointerDistance = 8))

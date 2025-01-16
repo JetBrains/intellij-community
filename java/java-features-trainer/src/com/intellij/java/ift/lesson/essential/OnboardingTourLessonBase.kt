@@ -123,7 +123,6 @@ abstract class OnboardingTourLessonBase(id: String) : CommonLogicForOnboardingTo
       openProjectViewTask = taskId
       var projectDirExpanded = false
 
-      @Suppress("InjectedReferences", "UnresolvedPluginConfigReference") // todo IJPL-165055
       text(JavaLessonsBundle.message("java.onboarding.project.view.description",
                                      action("ActivateProjectToolWindow")))
       text(JavaLessonsBundle.message("java.onboarding.balloon.project.view"),

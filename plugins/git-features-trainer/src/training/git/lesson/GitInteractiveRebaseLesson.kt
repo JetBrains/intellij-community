@@ -57,7 +57,6 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
   override val lessonContent: LessonContext.() -> Unit = {
     highlightToolWindowStripe(ToolWindowId.VCS)
 
-    @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // todo IJPL-165055
     task("ActivateVersionControlToolWindow") {
       openGitWindow(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it),
                                              strong(GitBundle.message("git4idea.vcs.name"))))

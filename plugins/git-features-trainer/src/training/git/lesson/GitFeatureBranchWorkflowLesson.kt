@@ -75,7 +75,6 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   override val lessonContent: LessonContext.() -> Unit = {
     highlightToolWindowStripe(ToolWindowId.VCS)
 
-    @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // todo IJPL-165055
     task("ActivateVersionControlToolWindow") {
       val gitWindowName = GitBundle.message("git4idea.vcs.name")
       text(GitLessonsBundle.message("git.feature.branch.introduction.1", strong(branchName),

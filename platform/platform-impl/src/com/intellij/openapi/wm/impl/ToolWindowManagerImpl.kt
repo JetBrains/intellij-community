@@ -2594,7 +2594,6 @@ private fun getActivateToolWindowVKsMask(): Int {
     return 0
   }
 
-  @Suppress("UnresolvedPluginConfigReference") // todo IJPL-165055
   val baseShortcut = KeymapManager.getInstance().activeKeymap.getShortcuts("ActivateProjectToolWindow")
 
   @Suppress("DEPRECATION")
