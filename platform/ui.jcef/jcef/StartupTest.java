@@ -19,6 +19,7 @@ import org.cef.handler.*;
 import org.cef.misc.BoolRef;
 import org.cef.misc.IntRef;
 import org.cef.misc.StringRef;
+import org.cef.misc.Utils;
 import org.cef.network.CefRequest;
 import org.cef.network.CefResponse;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,8 @@ import java.util.concurrent.TimeUnit;
 
 final class StartupTest {
   private static final Logger LOG = Logger.getInstance(StartupTest.class);
-  private static final Boolean IS_DISABLED = Boolean.getBoolean("ide.browser.jcef.out-of-process.startup_test.disabled");
+  private static final Boolean IS_DISABLED = Utils.getBoolean("ide.browser.jcef.out-of-process.startup_test.disabled");
+  private static final int LOAD_TIMEOUT_SEC = Utils.getInteger("ide.browser.jcef.out-of-process.startup_test.timeout_sec", 15);
 
   @SuppressWarnings("HttpUrlsUsage")
   private static final String TEST_URL = "http://test.com/test.html";
@@ -128,7 +130,7 @@ final class StartupTest {
         CefBrowser browser = JBCefBrowserBase.createOsrBrowser(JBCefOSRHandlerFactory.getInstance(), client, TEST_URL, null, null, null, true, new CefBrowserSettings());
         browser.createImmediately();
         try {
-          latch.await(10, TimeUnit.SECONDS);
+          latch.await(LOAD_TIMEOUT_SEC, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
           LOG.error(e);
         }
