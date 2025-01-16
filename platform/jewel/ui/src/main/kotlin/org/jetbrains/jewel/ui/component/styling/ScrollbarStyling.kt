@@ -149,7 +149,8 @@ public class ScrollbarMetrics(public val thumbCornerSize: CornerSize, public val
         return result
     }
 
-    override fun toString(): String = "ScrollbarMetrics(thumbCornerSize=$thumbCornerSize, minThumbLength=$minThumbLength)"
+    override fun toString(): String =
+        "ScrollbarMetrics(thumbCornerSize=$thumbCornerSize, minThumbLength=$minThumbLength)"
 
     public companion object
 }

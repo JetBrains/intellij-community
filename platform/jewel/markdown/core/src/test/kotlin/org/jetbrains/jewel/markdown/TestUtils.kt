@@ -15,7 +15,7 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak
 import org.junit.Assert.assertTrue
 
-fun List<MarkdownBlock>.assertEquals(vararg expected: MarkdownBlock) {
+public fun List<MarkdownBlock>.assertEquals(vararg expected: MarkdownBlock) {
     val differences = findDifferences(expected.toList(), indentSize = 0)
     assertTrue(
         "The following differences were found:\n\n" + "${differences.joinToString("\n").replace('\t', '→')}\n\n",
@@ -23,7 +23,7 @@ fun List<MarkdownBlock>.assertEquals(vararg expected: MarkdownBlock) {
     )
 }
 
-fun List<MarkdownBlock>.findDifferences(expected: List<MarkdownBlock>, indentSize: Int): List<String> = buildList {
+public fun List<MarkdownBlock>.findDifferences(expected: List<MarkdownBlock>, indentSize: Int): List<String> = buildList {
     val indent = " ".repeat(indentSize)
     val thisSize = this@findDifferences.size
     if (expected.size != thisSize) {
@@ -166,24 +166,24 @@ private fun diffList(actual: ListBlock, expected: MarkdownBlock, indentSize: Int
     }
 }
 
-fun paragraph(content: String) = Paragraph(InlineMarkdown.Text(content))
+public fun paragraph(content: String): Paragraph = Paragraph(InlineMarkdown.Text(content))
 
-fun heading(level: Int, vararg inlineContent: InlineMarkdown) = Heading(inlineContent = inlineContent, level = level)
+public fun heading(level: Int, vararg inlineContent: InlineMarkdown): Heading = Heading(inlineContent = inlineContent, level = level)
 
-fun indentedCodeBlock(content: String) = IndentedCodeBlock(content)
+public fun indentedCodeBlock(content: String): IndentedCodeBlock = IndentedCodeBlock(content)
 
-fun fencedCodeBlock(content: String, mimeType: MimeType? = null) = FencedCodeBlock(content, mimeType)
+public fun fencedCodeBlock(content: String, mimeType: MimeType? = null): FencedCodeBlock = FencedCodeBlock(content, mimeType)
 
-fun blockQuote(vararg contents: MarkdownBlock) = BlockQuote(contents.toList())
+public fun blockQuote(vararg contents: MarkdownBlock): BlockQuote = BlockQuote(contents.toList())
 
-fun unorderedList(vararg items: ListItem, isTight: Boolean = true, marker: String = "-") =
+public fun unorderedList(vararg items: ListItem, isTight: Boolean = true, marker: String = "-"): UnorderedList =
     UnorderedList(items.toList(), isTight, marker)
 
-fun orderedList(vararg items: ListItem, isTight: Boolean = true, startFrom: Int = 1, delimiter: String = ".") =
+public fun orderedList(vararg items: ListItem, isTight: Boolean = true, startFrom: Int = 1, delimiter: String = "."): OrderedList =
     OrderedList(items.toList(), isTight, startFrom, delimiter)
 
-fun listItem(vararg items: MarkdownBlock) = ListItem(*items)
+public fun listItem(vararg items: MarkdownBlock): ListItem = ListItem(*items)
 
-fun htmlBlock(content: String) = HtmlBlock(content)
+public fun htmlBlock(content: String): HtmlBlock = HtmlBlock(content)
 
-fun thematicBreak() = ThematicBreak
+public fun thematicBreak(): ThematicBreak = ThematicBreak

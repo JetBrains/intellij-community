@@ -27,11 +27,7 @@ private class KeyBasedReplacementPainterSvgPatchHint(val map: Map<String, Color>
 
     override fun hashCode(): Int = map.hashCode()
 
-    override fun toString(): String {
-        return "KeyBasedReplacementPainterSvgPatchHint(" +
-               "map=$map" +
-               ")"
-    }
+    override fun toString(): String = "KeyBasedReplacementPainterSvgPatchHint(map=$map)"
 }
 
 private fun Element.patchPalette(replacementColors: Map<String, Color>) {

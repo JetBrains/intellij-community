@@ -99,7 +99,8 @@ public class SplitButtonMetrics(public val dividerMetrics: DividerMetrics, publi
         return result
     }
 
-    override fun toString(): String = "SplitButtonMetrics(dividerMetrics=$dividerMetrics, dividerPadding=$dividerPadding)"
+    override fun toString(): String =
+        "SplitButtonMetrics(dividerMetrics=$dividerMetrics, dividerPadding=$dividerPadding)"
 
     public companion object
 }

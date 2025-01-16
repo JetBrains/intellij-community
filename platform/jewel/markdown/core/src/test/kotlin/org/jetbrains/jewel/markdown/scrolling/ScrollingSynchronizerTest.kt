@@ -62,10 +62,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @Suppress("LargeClass")
-class ScrollingSynchronizerTest {
+public class ScrollingSynchronizerTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun headings() {
+    public fun headings() {
         val markdown =
             """
                             # Heading 1
@@ -96,7 +96,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun paragraphs() {
+    public fun paragraphs() {
         val markdown =
             """
                             p1
@@ -128,7 +128,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `empty spaces`() {
+    public fun `empty spaces`() {
         val markdown =
             """
                             # Heading 1
@@ -176,7 +176,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `unordered list`() {
+    public fun `unordered list`() {
         val markdown =
             """
                             Items:
@@ -210,7 +210,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `ordered list`() {
+    public fun `ordered list`() {
         val markdown =
             """
                             Items:
@@ -244,7 +244,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `fenced code block`() {
+    public fun `fenced code block`() {
         val markdown =
             """
                             ```kotlin
@@ -293,7 +293,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `indented code block`() {
+    public fun `indented code block`() {
         val markdown =
             """
                             Here starts the indented code block.
@@ -342,7 +342,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `add a block`() {
+    public fun `add a block`() {
         val firstRun =
             """
                             ```kotlin
@@ -406,7 +406,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `remove a block`() {
+    public fun `remove a block`() {
         val firstRun =
             """
                             **CHANGE**
@@ -470,7 +470,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `change a block`() {
+    public fun `change a block`() {
         val firstRun =
             """
                             ```kotlin
@@ -538,7 +538,7 @@ class ScrollingSynchronizerTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun `merge code blocks`() {
+    public fun `merge code blocks`() {
         val firstRun =
             """
                             ```kotlin
@@ -890,7 +890,7 @@ class ScrollingSynchronizerTest {
         )
     }
 
-    companion object {
+    public companion object {
         private const val CODE_TEXT_SIZE = 10
     }
 }
