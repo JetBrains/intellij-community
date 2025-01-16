@@ -538,20 +538,18 @@ internal class KotlinIdeDeclarationRenderer(
                         {
                             declarationRenderer.typeParametersRenderer.renderWhereClause(analysisSession, symbol, declarationRenderer, printer)
                         },
-                        {
-                            if (symbol is KaPropertySymbol) {
-                                symbol.initializer?.initializerPsi?.let {
-                                    val builder = StringBuilder()
-                                    with(highlightingManager) {
-                                        builder.append(highlight(" = ") { asOperationSign })
-                                        val expressionValue = KotlinParameterInfoBase.getDefaultValueStringRepresentation(it)
-                                        builder.appendCodeSnippetHighlightedByLexer(expressionValue.text)
-                                    }
-                                    printer.append(builder)
-                                }
-                            }
-                        }
                     )
+                    if (symbol is KaPropertySymbol) {
+                        symbol.initializer?.initializerPsi?.let {
+                            val builder = StringBuilder()
+                            with(highlightingManager) {
+                                builder.append(highlight(" = ") { asOperationSign })
+                                val expressionValue = KotlinParameterInfoBase.getDefaultValueStringRepresentation(it)
+                                builder.appendCodeSnippetHighlightedByLexer(expressionValue.text)
+                            }
+                            printer.append(builder)
+                        }
+                    }
                 }
             }
         }
