@@ -48,8 +48,8 @@ internal open class ClassifierImportCandidatesProvider(
             addAll(indexProvider.getKotlinClassesByName(unresolvedName) { acceptsKotlinClass(it) })
             addAll(indexProvider.getJavaClassesByName(unresolvedName) { acceptsJavaClass(it) })
         }
-            .filter { it.isVisible(fileSymbol) && it.classId != null && acceptsClassLikeSymbol(it) }
             .map { ClassLikeImportCandidate(it) }
+            .filter { it.isVisible(fileSymbol) && it.symbol.classId != null && acceptsClassLikeSymbol(it.symbol) }
     }
 }
 

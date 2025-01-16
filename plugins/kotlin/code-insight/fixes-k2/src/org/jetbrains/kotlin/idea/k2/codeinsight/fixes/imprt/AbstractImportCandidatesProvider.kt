@@ -28,7 +28,11 @@ internal abstract class AbstractImportCandidatesProvider(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    protected fun KaSymbol.isVisible(fileSymbol: KaFileSymbol): Boolean =
+    protected fun ImportCandidate.isVisible(fileSymbol: KaFileSymbol): Boolean = symbol.isVisible(fileSymbol)
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun KaSymbol.isVisible(fileSymbol: KaFileSymbol): Boolean =
         this is KaDeclarationSymbol && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
 
     protected fun PsiElement.isImported(): Boolean =
