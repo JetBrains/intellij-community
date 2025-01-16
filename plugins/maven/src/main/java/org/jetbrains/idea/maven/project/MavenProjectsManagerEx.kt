@@ -67,10 +67,10 @@ interface MavenAsyncProjectsManager {
   fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec)
   suspend fun updateAllMavenProjects(spec: MavenSyncSpec)
 
-  fun scheduleForceUpdateMavenProject(mavenProject: MavenProject) =
+  fun scheduleForceUpdateMavenProject(mavenProject: MavenProject): Unit =
     scheduleForceUpdateMavenProjects(listOf(mavenProject))
 
-  fun scheduleForceUpdateMavenProjects(mavenProjects: List<MavenProject>) =
+  fun scheduleForceUpdateMavenProjects(mavenProjects: List<MavenProject>): Unit =
     scheduleUpdateMavenProjects(
       MavenSyncSpec.full("MavenProjectsManagerEx.scheduleForceUpdateMavenProjects", true),
       mavenProjects.map { it.file },
