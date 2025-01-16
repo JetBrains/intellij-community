@@ -20,6 +20,8 @@ public final class ThreadDumpParser {
   private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
   private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
   private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) (?:State:)? (.+) CPU usage on sample: .+");
+  private static final Pattern ourJcmdThreadStartPattern = Pattern.compile("#\\d+ \"(.*)\"(.*)");
+  private static final Pattern ourJcmdStackTraceElement = Pattern.compile("\\S+\\(.+\\)");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
@@ -76,8 +78,11 @@ public final class ThreadDumpParser {
           parsedThreadState = tryParseThreadState(line, lastThreadState);
         }
         lastThreadStack.append(line).append("\n");
-        if (!parsedThreadState && line.trim().startsWith("at")) {
-          haveNonEmptyStackTrace = true;
+        if (!parsedThreadState) {
+          var trimmed = line.trim();
+          if (trimmed.startsWith("at") || ourJcmdStackTraceElement.matcher(trimmed).matches()) {
+            haveNonEmptyStackTrace = true;
+          }
         }
       }
     }
@@ -222,6 +227,14 @@ public final class ThreadDumpParser {
     m = ourForcedThreadStartPattern.matcher(line);
     if (m.matches()) {
       return new ThreadState(m.group(1), m.group(2));
+    }
+
+    m = ourJcmdThreadStartPattern.matcher(line);
+    if (m.matches()) {
+      var state = new ThreadState(m.group(1), "unknown");
+      var suffix = m.group(2);
+      state.setVirtual(suffix.contains(" virtual"));
+      return state;
     }
 
     boolean daemon = line.contains(" [DAEMON]");

@@ -341,6 +341,75 @@ public class ThreadDumpParserTest extends TestCase {
     assertEquals(4, threads.size());
   }
 
+  public void testJcmdThreadDumpToFilePlainTextFormat() {
+    String text = """
+      81916
+      2025-01-14T19:27:30.373190Z
+      21+35-2513
+      
+      #1 "main"
+            java.base/jdk.internal.misc.Unsafe.park(Native Method)
+            java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+            java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:756)
+            java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.tryAcquireSharedNanos(AbstractQueuedSynchronizer.java:1126)
+            java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:276)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor.awaitTermination(ThreadPerTaskExecutor.java:181)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor.awaitTermination(ThreadPerTaskExecutor.java:195)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor.close(ThreadPerTaskExecutor.java:212)
+            VTHardWork.main(VTHardWork.java:25)
+      
+      #9 "Reference Handler"
+            java.base/java.lang.ref.Reference.waitForReferencePendingList(Native Method)
+            java.base/java.lang.ref.Reference.processPendingReferences(Reference.java:246)
+            java.base/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)
+      
+      #11 "Signal Dispatcher"
+      
+      #18 "Notification Thread"
+      
+      #23 "" virtual
+            VTHardWork.isPrime2(VTHardWork.java:56)
+            VTHardWork.calculatePrimes(VTHardWork.java:32)
+            VTHardWork.lambda$main$0(VTHardWork.java:21)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor$TaskRunner.run(ThreadPerTaskExecutor.java:314)
+            java.base/java.lang.VirtualThread.run(VirtualThread.java:311)
+      
+      #24 "" virtual
+            java.base/java.util.Random.next(Random.java:444)
+            java.base/java.util.Random.nextDouble(Random.java:698)
+            java.base/java.lang.Math.random(Math.java:893)
+            VTHardWork.rand(VTHardWork.java:40)
+            VTHardWork.calculatePrimes(VTHardWork.java:32)
+            VTHardWork.lambda$main$0(VTHardWork.java:21)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor$TaskRunner.run(ThreadPerTaskExecutor.java:314)
+            java.base/java.lang.VirtualThread.run(VirtualThread.java:311)
+      
+      #25 "" virtual
+            java.base/java.util.Random.next(Random.java:444)
+            java.base/java.util.Random.nextDouble(Random.java:698)
+            java.base/java.lang.Math.random(Math.java:893)
+            VTHardWork.rand(VTHardWork.java:40)
+            VTHardWork.calculatePrimes(VTHardWork.java:32)
+            VTHardWork.lambda$main$0(VTHardWork.java:21)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor$TaskRunner.run(ThreadPerTaskExecutor.java:314)
+            java.base/java.lang.VirtualThread.run(VirtualThread.java:311)
+      """.stripIndent();
+
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(7, threads.size());
+    assertEquals(3, threads.stream().filter(s -> s.isVirtual()).count());
+
+    assertEquals("main", threads.get(0).getName());
+    assertTrue(threads.get(0).getStackTrace().contains("Unsafe.park"));
+    assertTrue(threads.get(0).getStackTrace().contains("VTHardWork.main"));
+    assertFalse(threads.get(0).isEmptyStackTrace());
+    assertFalse(threads.get(0).isVirtual());
+
+    assertEquals("{unnamed}", threads.get(1).getName());
+    assertFalse(threads.get(1).isEmptyStackTrace());
+    assertTrue(threads.get(1).isVirtual());
+  }
+
   public void testCoroutineDump() {
     String text = """
       "Timer-0" prio=0 tid=0x0 nid=0x0 waiting on condition

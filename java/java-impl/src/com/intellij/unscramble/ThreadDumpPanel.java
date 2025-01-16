@@ -43,24 +43,17 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-
-import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
 
 /**
  * @author Jeka
  * @author Konstantin Bulenkov
  */
 public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoStackTraceFoldingPanel {
-  private static final Icon PAUSE_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Pause, Daemon_sign});
-  private static final Icon LOCKED_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Debugger.MuteBreakpoints, Daemon_sign});
-  private static final Icon RUNNING_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Resume, Daemon_sign});
-  private static final Icon SOCKET_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{Socket, Daemon_sign});
-  private static final Icon IDLE_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{Idle, Daemon_sign});
-  private static final Icon EDT_BUSY_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.ProfileCPU, Daemon_sign});
-  private static final Icon IO_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.MenuSaveall, Daemon_sign});
+  private static final Map<Icon, Icon> daemonIcons = new HashMap<>();
+  private static final Map<Icon, Icon> virtualIcons = new HashMap<>();
+
   private final JBList<ThreadState> myThreadList;
   private final List<ThreadState> myThreadDump;
   private final List<ThreadState> myMergedThreadDump;
@@ -210,27 +203,46 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     }
   }
 
+  private static Icon getLayeredIcon(Icon baseIcon, Icon extraIcon, Map<Icon, Icon> cache) {
+    return cache.computeIfAbsent(baseIcon,
+                                 bi -> IconManager.getInstance().createLayered(bi, extraIcon));
+  }
+
   private static Icon getThreadStateIcon(ThreadState threadState) {
-    boolean daemon = threadState.isDaemon();
+    Icon baseIcon;
     if (threadState.isSleeping()) {
-      return daemon ? PAUSE_ICON_DAEMON : AllIcons.Actions.Pause;
+      baseIcon = AllIcons.Actions.Pause;
     }
-    if (threadState.isWaiting()) {
-      return daemon ? LOCKED_ICON_DAEMON : AllIcons.Debugger.MuteBreakpoints;
+    else if (threadState.isWaiting()) {
+      baseIcon = AllIcons.Debugger.MuteBreakpoints;
     }
-    if (threadState.getOperation() == ThreadOperation.Socket) {
-      return daemon ? SOCKET_ICON_DAEMON : Socket;
+    else if (threadState.getOperation() == ThreadOperation.Socket) {
+      baseIcon = AllIcons.Debugger.ThreadStates.Socket;
     }
-    if (threadState.getOperation() == ThreadOperation.IO) {
-      return daemon ? IO_ICON_DAEMON : AllIcons.Actions.MenuSaveall;
+    else if (threadState.getOperation() == ThreadOperation.IO) {
+      baseIcon = AllIcons.Actions.MenuSaveall;
     }
-    if (threadState.isEDT()) {
+    else if (threadState.isEDT()) {
       if ("idle".equals(threadState.getThreadStateDetail())) {
-        return daemon ? IDLE_ICON_DAEMON : Idle;
+        baseIcon = AllIcons.Debugger.ThreadStates.Idle;
       }
-      return daemon ? EDT_BUSY_ICON_DAEMON : AllIcons.Actions.ProfileCPU;
+      else {
+        baseIcon = AllIcons.Actions.ProfileCPU;
+      }
     }
-    return daemon ? RUNNING_ICON_DAEMON : AllIcons.Actions.Resume;
+    else {
+      baseIcon = AllIcons.Actions.Resume;
+    }
+
+    if (threadState.isVirtual()) {
+      return getLayeredIcon(baseIcon, AllIcons.Debugger.ThreadStates.Virtual_sign, virtualIcons);
+    }
+    else if (threadState.isDaemon()) {
+      return getLayeredIcon(baseIcon, AllIcons.Debugger.ThreadStates.Daemon_sign, daemonIcons);
+    }
+    else {
+      return baseIcon;
+    }
   }
 
   private enum StateCode {RUN, RUN_IO, RUN_SOCKET, PAUSED, LOCKED, EDT, IDLE}
@@ -275,7 +287,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
         }
       }
       SimpleTextAttributes attrs = getAttributes(threadState);
-      append(threadState.getName() + " (", attrs);
+      append(threadState.getName(), attrs);
       String detail = threadState.getThreadStateDetail();
       if (detail == null) {
         detail = threadState.getState();
@@ -283,8 +295,9 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
       if (detail.length() > 30) {
         detail = detail.substring(0, 30) + "...";
       }
-      append(detail, attrs);
-      append(")", attrs);
+      if (!detail.isEmpty() && !detail.equals("unknown") && !detail.equals("undefined")) {
+        append(" (" + detail + ")", attrs);
+      }
       if (threadState.getExtraState() != null) {
         append(" [" + threadState.getExtraState() + "]", attrs);
       }

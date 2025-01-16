@@ -362,6 +362,7 @@ f:com.intellij.icons.AllIcons$Debugger$ThreadStates
 - sf:Daemon_sign:javax.swing.Icon
 - sf:Idle:javax.swing.Icon
 - sf:Socket:javax.swing.Icon
+- sf:Virtual_sign:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Diff
 - sf:ApplyNotConflicts:javax.swing.Icon

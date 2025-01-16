@@ -382,6 +382,7 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon Daemon_sign = load("debugger/threadStates/daemon_sign.svg", -1004603604, 2);
       /** 16x16 */ public static final @NotNull Icon Idle = load("expui/status/success.svg", "debugger/threadStates/idle.svg", -623903127, 2);
       /** 16x16 */ public static final @NotNull Icon Socket = load("debugger/threadStates/socket.svg", 1241843581, 2);
+      /** 16x16 */ public static final @NotNull Icon Virtual_sign = load("debugger/threadStates/virtual_sign.svg", 468196618, 2);
     }
 
     /** 16x16 */ public static final @NotNull Icon ThreadSuspended = load("expui/debugger/threads.svg", "debugger/threadSuspended.svg", 1956118369, 0);

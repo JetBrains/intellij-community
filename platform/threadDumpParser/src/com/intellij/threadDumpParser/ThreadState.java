@@ -22,6 +22,7 @@ public class ThreadState {
   private String myThreadStateDetail;
   private String myExtraState;
   private boolean isDaemon;
+  private boolean isVirtual;
   private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<>();
   private final Set<ThreadState> myDeadlockedThreads = new HashSet<>();
   private String ownableSynchronizers;
@@ -31,7 +32,17 @@ public class ThreadState {
   private int myStackDepth;
 
   public ThreadState(final String name, final String state) {
-    myName = name;
+    // Loom's virtual threads often have empty name, try to make it look nicer.
+    var explicitlyUnnamedName = "{unnamed}";
+    if (name.isEmpty()) {
+      myName = explicitlyUnnamedName;
+    }
+    else if (name.matches("@\\d+")) {
+      myName = explicitlyUnnamedName + name;
+    }
+    else {
+      myName = name;
+    }
     myState = state.trim();
   }
 
@@ -174,6 +185,14 @@ public class ThreadState {
     isDaemon = daemon;
   }
 
+  public boolean isVirtual() {
+    return isVirtual;
+  }
+
+  public void setVirtual(boolean virtual) {
+    isVirtual = virtual;
+  }
+
   public static class CompoundThreadState extends ThreadState {
     private final ThreadState myOriginalState;
     private int myCounter = 1;
@@ -188,6 +207,7 @@ public class ThreadState {
       if (!Objects.equals(state.myState, myOriginalState.myState)) return false;
       if (state.myEmptyStackTrace != myOriginalState.myEmptyStackTrace) return false;
       if (state.isDaemon != myOriginalState.isDaemon) return false;
+      if (state.isVirtual != myOriginalState.isVirtual) return false;
       if (!Objects.equals(state.myJavaThreadState, myOriginalState.myJavaThreadState)) return false;
       if (!Objects.equals(state.myThreadStateDetail, myOriginalState.myThreadStateDetail)) return false;
       if (!Objects.equals(state.myExtraState, myOriginalState.myExtraState)) return false;
@@ -279,6 +299,11 @@ public class ThreadState {
     @Override
     public boolean isDaemon() {
       return myOriginalState.isDaemon();
+    }
+
+    @Override
+    public boolean isVirtual() {
+      return myOriginalState.isVirtual();
     }
 
     @Override
