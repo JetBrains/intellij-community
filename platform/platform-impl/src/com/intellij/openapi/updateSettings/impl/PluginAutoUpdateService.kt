@@ -173,7 +173,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
              "(${updatesState.size} updates are prepared in total)")
   }
 
-  fun onPluginUpdatesCheck(updates: List<PluginDownloader>) {
+  fun onPluginUpdatesChecked(updates: List<PluginDownloader>) {
     LOG.debug { "onPluginUpdateCheck: ${updates.joinToString { it.pluginName }}" }
     val sent = pendingDownloads.trySend(updates)
     if (sent.isFailure) {
