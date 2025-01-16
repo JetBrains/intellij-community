@@ -4,10 +4,7 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.OsAbstractionForJdkInstaller;
@@ -15,9 +12,11 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -97,6 +96,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(finder);
   }
 
+  /// Detects the paths of JDKs on the machine.
   public final @NotNull Set<String> findExistingJdks() {
     Set<String> result = new TreeSet<>();
 
@@ -113,6 +113,24 @@ public class JavaHomeFinderBasic {
     }
 
     return result;
+  }
+
+  /// Detects the paths of JDKs on the machine with information about the Java version and architecture.
+  public final @NotNull Set<KeyFMap> findExistingJdkEntries() {
+    final var paths = findExistingJdks();
+    final var detector = JdkVersionDetector.getInstance();
+
+    return paths.stream().map(path -> {
+      final var version = detector.detectJdkVersionInfo(path);
+      var info = KeyFMap.EMPTY_MAP.plus(SdkType.HOMEPATH_KEY, path);
+      if (version != null) {
+        info = info
+          .plus(JavaHomeFinder.JDK_VERSION_KEY, version)
+          .plus(SdkType.VERSION_KEY, version.displayVersionString());
+      }
+      return info.plus(SdkType.IS_SYMLINK_KEY, Files.isSymbolicLink(Path.of(path)));
+    }).collect(Collectors.toSet());
+
   }
 
   public @NotNull Set<String> findInJavaHome() {

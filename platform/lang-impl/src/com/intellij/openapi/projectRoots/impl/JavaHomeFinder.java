@@ -2,7 +2,9 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -15,10 +17,11 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
 import java.nio.file.FileSystems;
@@ -62,6 +65,8 @@ public abstract class JavaHomeFinder {
     }
   }
 
+  public static final Key<JdkVersionDetector.JdkVersionInfo> JDK_VERSION_KEY = new Key<>("jdk.version.info");
+
   /**
    * Tries to find existing Java SDKs on this computer.
    * If no JDK found, returns possible directories to start file chooser.
@@ -96,11 +101,30 @@ public abstract class JavaHomeFinder {
 
   @ApiStatus.Internal
   public static @NotNull List<String> suggestHomePaths(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
+    return ContainerUtil.map(findJdks(eelDescriptor, forceEmbeddedJava), map -> map.get(SdkType.HOMEPATH_KEY));
+  }
+
+  /**
+   * Returns a list of {@link KeyFMap} containing information about the JDKs detected on the computer.
+   * See keys in {@link SdkType} and {@link JavaHomeFinder#JDK_VERSION_KEY}.
+   */
+  @ApiStatus.Internal
+  public static @NotNull List<KeyFMap> findJdks(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
     JavaHomeFinderBasic javaFinder = getFinder(eelDescriptor, forceEmbeddedJava);
     if (javaFinder == null) return Collections.emptyList();
 
-    ArrayList<String> paths = new ArrayList<>(javaFinder.findExistingJdks());
-    paths.sort((o1, o2) -> Comparing.compare(JavaVersion.tryParse(o2), JavaVersion.tryParse(o1)));
+    return findJdks(javaFinder);
+  }
+
+  private static @NotNull ArrayList<KeyFMap> findJdks(JavaHomeFinderBasic javaFinder) {
+    ArrayList<KeyFMap> paths = new ArrayList<>(javaFinder.findExistingJdkEntries());
+    paths.sort((o1, o2) -> {
+      final var v1 = o1.get(JDK_VERSION_KEY);
+      final var v2 = o2.get(JDK_VERSION_KEY);
+      final int v = Comparing.compare(v2 != null ? v2.version : null, v1 != null ? v1.version : null);
+      if (v != 0) return v;
+      return Comparing.compare(o1.get(SdkType.HOMEPATH_KEY), o2.get(SdkType.HOMEPATH_KEY));
+    });
     return paths;
   }
 

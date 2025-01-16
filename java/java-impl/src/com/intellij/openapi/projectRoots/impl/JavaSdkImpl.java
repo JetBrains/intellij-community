@@ -43,6 +43,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MostlySingularMultiMap;
+import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
@@ -206,6 +207,12 @@ public final class JavaSdkImpl extends JavaSdk {
   public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
     return JavaHomeFinder.suggestHomePaths(project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project),
                                            false);
+  }
+
+  @Override
+  public @Unmodifiable @NotNull Collection<KeyFMap> collectSdkDetails(@Nullable Project project) {
+    return JavaHomeFinder.findJdks(project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project),
+                                   false);
   }
 
   @Override
