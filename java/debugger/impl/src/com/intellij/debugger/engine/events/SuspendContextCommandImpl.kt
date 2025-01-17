@@ -13,6 +13,7 @@ private val LOG = Logger.getInstance(SuspendContextCommandImpl::class.java)
  */
 abstract class SuspendContextCommandImpl protected constructor(open val suspendContext: SuspendContextImpl?) : DebuggerCommandImpl() {
   private var mySuspendContextSetInProgress = false
+  private var shouldCancelCommandScopeOnSuspend = false
 
   @Throws(Exception::class)
   open fun contextAction(suspendContext: SuspendContextImpl): Unit = throw AbstractMethodError()
@@ -46,6 +47,16 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
     finally {
       suspendContext.removeUnfinishedCommand(this)
     }
+  }
+
+  /**
+   * When [SuspendContextImpl] is resumed, the command scope of the unfinished commands should be canceled.
+   * However, cancellation of the scope for the current command can affect its execution,
+   * so the cancellation of the current command is postponed upon its suspension.
+   */
+  @ApiStatus.Internal
+  fun cancelCommandScopeOnSuspend() {
+    shouldCancelCommandScopeOnSuspend = true
   }
 
   final override fun invokeContinuation(): Unit = invokeWithChecks {
@@ -88,7 +99,12 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
 
   final override fun onSuspendOrFinish() {
     if (mySuspendContextSetInProgress) {
+      mySuspendContextSetInProgress = false
       suspendContext?.myInProgress = false
+    }
+    if (shouldCancelCommandScopeOnSuspend) {
+      shouldCancelCommandScopeOnSuspend = false
+      cancelCommandScope()
     }
   }
 }

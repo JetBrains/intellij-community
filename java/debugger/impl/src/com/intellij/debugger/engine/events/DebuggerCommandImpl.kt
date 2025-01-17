@@ -88,7 +88,8 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
   @ApiStatus.Internal
   protected open fun invokeContinuation(): Unit = executeContinuation()
 
-  private fun cancelCommandScope() {
+  @ApiStatus.Internal
+  fun cancelCommandScope() {
     commandScope?.cancel()
     commandScope = null
   }
@@ -121,6 +122,7 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
     }
     else {
       invokeContinuation()
+      onSuspendOrFinish()
     }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -499,10 +500,18 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     for (SuspendContextCommandImpl postponed = pollPostponedCommand(); postponed != null; postponed = pollPostponedCommand()) {
       postponed.notifyCancelled();
     }
-    for (SuspendContextCommandImpl command : myUnfinishedCommands) {
-      command.notifyCancelled();
+    DebuggerCommandImpl currentCommand = DebuggerManagerThreadImpl.getCurrentCommand();
+    for (var it = myUnfinishedCommands.iterator(); it.hasNext(); ) {
+      SuspendContextCommandImpl command = it.next();
+      if (currentCommand != command) {
+        command.cancelCommandScope();
+        it.remove();
+      }
+      else {
+        command.cancelCommandScopeOnSuspend();
+        // do not remove itself
+      }
     }
-    myUnfinishedCommands.clear();
   }
 
   public final SuspendContextCommandImpl pollPostponedCommand() {
