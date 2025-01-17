@@ -76,9 +76,10 @@ interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
     fun mavenModuleTypeOrder(type: MavenModuleType): Int = when (type) {
       StandardMavenModuleType.SINGLE_MODULE -> 0
       StandardMavenModuleType.MAIN_ONLY -> 1
-      StandardMavenModuleType.TEST_ONLY -> 2
-      StandardMavenModuleType.COMPOUND_MODULE -> 3
-      StandardMavenModuleType.AGGREGATOR -> 4
+      StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> 2
+      StandardMavenModuleType.TEST_ONLY -> 3
+      StandardMavenModuleType.COMPOUND_MODULE -> 4
+      StandardMavenModuleType.AGGREGATOR -> 5
     }
 
     val mavenProjectToModuleName = mavenProjectsWithModules.associateBy({ it.mavenProject }, {
