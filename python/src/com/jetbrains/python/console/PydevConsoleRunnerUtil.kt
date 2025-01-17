@@ -10,8 +10,10 @@ import com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
 import com.intellij.execution.target.value.andThenJoinToString
 import com.intellij.execution.target.value.toLinkedSetFunction
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Pair
@@ -30,6 +32,7 @@ import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.util.function.Function
 
@@ -240,4 +243,27 @@ private fun getConsoleCommunication(element: PsiElement): ConsoleCommunication? 
 fun getConsoleSdk(element: PsiElement): Sdk? {
   val containingFile = element.containingFile
   return containingFile?.getCopyableUserData(PydevConsoleRunner.CONSOLE_SDK)
+}
+
+fun getModuleToStartConsole(project: Project, moduleManager: ModuleManager): Module {
+  val selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles()
+  val moduleForOpenedFile = selectedFiles.firstNotNullOfOrNull {
+    val isLocalFs = it.isInLocalFileSystem
+    if (!isLocalFs)
+      return@firstNotNullOfOrNull null
+    ModuleUtilCore.findModuleForFile(it, project)
+  }
+  if (moduleForOpenedFile != null) {
+    return moduleForOpenedFile
+  }
+
+  val projectLocalModule = moduleManager.modules.firstOrNull {
+    val roots = it.rootManager.contentRoots
+    roots.all { it.isInLocalFileSystem }
+  }
+  if (projectLocalModule != null) {
+    return projectLocalModule
+  }
+
+  return moduleManager.modules.firstOrNull() ?: throw IllegalStateException("Module must not be null when running python console")
 }
