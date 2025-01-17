@@ -4,14 +4,18 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
+import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.*;
 
 final class GenericsChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
@@ -117,6 +121,121 @@ final class GenericsChecker {
         !typeParameterListOwner.hasModifierProperty(PsiModifier.STATIC) && 
         parent.getReferenceNameElement() != null) {
       myVisitor.report(JavaErrorKinds.REFERENCE_TYPE_NEEDS_TYPE_ARGUMENTS.create(parent));
+    }
+  }
+
+  void checkInterfaceMultipleInheritance(@NotNull PsiClass aClass) {
+    PsiClassType[] types = aClass.getSuperTypes();
+    if (types.length < 2) return;
+    checkInterfaceMultipleInheritance(aClass,
+                                      aClass,
+                                      PsiSubstitutor.EMPTY, new HashMap<>(),
+                                      new HashSet<>());
+  }
+
+  private void checkInterfaceMultipleInheritance(@NotNull PsiClass aClass,
+                                                 @NotNull PsiClass place,
+                                                 @NotNull PsiSubstitutor derivedSubstitutor,
+                                                 @NotNull Map<PsiClass, PsiSubstitutor> inheritedClasses,
+                                                 @NotNull Set<? super PsiClass> visited) {
+    List<PsiClassType.ClassResolveResult> superTypes = PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, place.getResolveScope());
+    for (PsiClassType.ClassResolveResult result : superTypes) {
+      PsiClass superClass = result.getElement();
+      if (superClass == null || visited.contains(superClass)) continue;
+      PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
+      //JLS 4.8 The superclasses (respectively, superinterfaces) of a raw type are the erasures 
+      // of the superclasses (superinterfaces) of any of the parameterizations of the generic type.
+      superTypeSubstitutor = PsiUtil.isRawSubstitutor(aClass, derivedSubstitutor)
+                             ? elementFactory.createRawSubstitutor(superClass)
+                             : MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, derivedSubstitutor);
+
+      PsiSubstitutor inheritedSubstitutor = inheritedClasses.get(superClass);
+      if (inheritedSubstitutor != null) {
+        PsiTypeParameter[] typeParameters = superClass.getTypeParameters();
+        for (PsiTypeParameter typeParameter : typeParameters) {
+          PsiType type1 = inheritedSubstitutor.substitute(typeParameter);
+          PsiType type2 = superTypeSubstitutor.substitute(typeParameter);
+
+          if (!Comparing.equal(type1, type2)) {
+            var context = new JavaErrorKinds.InheritTypeClashContext(superClass, type1, type2);
+            if (type1 != null && type2 != null) {
+              myVisitor.report(JavaErrorKinds.CLASS_INHERITANCE_DIFFERENT_TYPE_ARGUMENTS.create(place, context));
+            }
+            else {
+              myVisitor.report(JavaErrorKinds.CLASS_INHERITANCE_RAW_AND_GENERIC.create(place, context));
+            }
+            return;
+          }
+        }
+      }
+      inheritedClasses.put(superClass, superTypeSubstitutor);
+      visited.add(superClass);
+      checkInterfaceMultipleInheritance(superClass, place, superTypeSubstitutor, inheritedClasses, visited);
+      visited.remove(superClass);
+      if (myVisitor.hasErrorResults()) return;
+    }
+  }
+
+  void checkClassSupersAccessibility(@NotNull PsiClass aClass) {
+    checkClassSupersAccessibility(aClass, aClass, aClass.getResolveScope(), true);
+  }
+
+  void checkClassSupersAccessibility(@NotNull PsiClass aClass, @NotNull PsiElement ref, @NotNull GlobalSearchScope scope) {
+    checkClassSupersAccessibility(ref, aClass, scope, false);
+  }
+
+  private void checkClassSupersAccessibility(@NotNull PsiElement anchor,
+                                             @NotNull PsiClass aClass,
+                                             @NotNull GlobalSearchScope resolveScope,
+                                             boolean checkParameters) {
+    JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
+    for (PsiClassType superType : aClass.getSuperTypes()) {
+      HashSet<PsiClass> checked = new HashSet<>();
+      checked.add(aClass);
+      checkTypeAccessible(anchor, superType, checked, checkParameters, true, resolveScope, factory);
+    }
+  }
+
+  private void checkTypeAccessible(@NotNull PsiElement anchor,
+                                   @Nullable PsiType type,
+                                   @NotNull Set<? super PsiClass> classes,
+                                   boolean checkParameters,
+                                   boolean checkSuperTypes,
+                                   @NotNull GlobalSearchScope resolveScope,
+                                   @NotNull JavaPsiFacade factory) {
+    type = PsiClassImplUtil.correctType(type, resolveScope);
+
+    PsiClass aClass = PsiUtil.resolveClassInType(type);
+    if (aClass != null && classes.add(aClass)) {
+      VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
+      if (vFile == null) return;
+      FileIndexFacade index = FileIndexFacade.getInstance(aClass.getProject());
+      if (!index.isInSource(vFile) && !index.isInLibraryClasses(vFile)) return;
+
+      PsiImplicitClass parentImplicitClass = PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class);
+      String qualifiedName = aClass.getQualifiedName();
+      if (parentImplicitClass == null && qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
+        myVisitor.report(JavaErrorKinds.CLASS_NOT_ACCESSIBLE.create(anchor, aClass));
+        return;
+      }
+
+      if (!checkParameters) return;
+
+      if (type instanceof PsiClassType classType) {
+        for (PsiType parameterType : classType.getParameters()) {
+          checkTypeAccessible(anchor, parameterType, classes, true, false, resolveScope, factory);
+          if (myVisitor.hasErrorResults()) return;
+        }
+      }
+
+      if (!checkSuperTypes) return;
+
+      boolean isInLibrary = !index.isInContent(vFile);
+      for (PsiClassType superType : aClass.getSuperTypes()) {
+        checkTypeAccessible(anchor, superType, classes, !isInLibrary, true, resolveScope, factory);
+        if (myVisitor.hasErrorResults()) return;
+      }
     }
   }
 }

@@ -44,7 +44,6 @@ import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -221,7 +220,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
     myPreviewFeatureVisitor = myLanguageLevel.isPreview() ? null : new PreviewFeatureUtil.PreviewFeatureVisitor(myLanguageLevel, myErrorSink);
     JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
-    myCollector = new JavaErrorCollector(myFile, error -> reportError(error, errorFixProvider));
+    myCollector = new JavaErrorCollector(myFile, myJavaModule, error -> reportError(error, errorFixProvider));
   }
 
   private void reportError(JavaCompilationError<?, ?> error, JavaErrorFixProvider errorFixProvider) {
@@ -458,8 +457,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitClass(@NotNull PsiClass aClass) {
     super.visitClass(aClass);
     if (aClass instanceof PsiSyntheticClass) return;
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkClassSupersAccessibility(aClass));
     if (!hasErrorResults()) add(HighlightUtil.checkImplicitThisReferenceBeforeSuper(aClass, myJavaSdkVersion));
     if (!hasErrorResults()) GenericsHighlightUtil.checkTypeParameterOverrideEquivalentMethods(aClass, myLanguageLevel, myErrorSink, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
   }
@@ -619,21 +616,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
-    add(checkFeature(statement, JavaFeature.STATIC_IMPORTS));
+    visitElement(statement);
     if (!hasErrorResults()) add(ImportsHighlightUtil.checkStaticOnDemandImportResolvesToClass(statement));
-    if (!hasErrorResults()) {
-      PsiJavaCodeReferenceElement importReference = statement.getImportReference();
-      PsiClass targetClass = statement.resolveTargetClass();
-      if (importReference != null) {
-        PsiElement referenceNameElement = importReference.getReferenceNameElement();
-        if (referenceNameElement != null && targetClass != null) {
-          add(GenericsHighlightUtil.checkClassSupersAccessibility(targetClass, referenceNameElement, myFile.getResolveScope()));
-        }
-      }
-      if (!hasErrorResults()) {
-        PreviewFeatureUtil.checkPreviewFeature(statement, myPreviewFeatureVisitor);
-      }
-    }
+    if (!hasErrorResults()) PreviewFeatureUtil.checkPreviewFeature(statement, myPreviewFeatureVisitor);
   }
 
   @Override
@@ -1172,15 +1157,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     add(HighlightUtil.checkUnqualifiedSuperInDefaultMethod(myLanguageLevel, expression, qualifierExpression));
     if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
-      if (parent instanceof PsiMethodCallExpression) {
-        PsiClass psiClass = RefactoringChangeUtil.getQualifierClass(expression);
-        if (psiClass != null) {
-          add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression, myFile.getResolveScope()));
-        }
-      }
-      if (!hasErrorResults()) {
-        add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
-      }
+      add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
     }
     if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) {
       PreviewFeatureUtil.checkPreviewFeature(expression, myPreviewFeatureVisitor);

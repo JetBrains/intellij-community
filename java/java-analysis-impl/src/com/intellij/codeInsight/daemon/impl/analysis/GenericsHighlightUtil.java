@@ -315,66 +315,6 @@ public final class GenericsHighlightUtil {
     }
   }
 
-  static HighlightInfo.Builder checkInterfaceMultipleInheritance(@NotNull PsiClass aClass) {
-    PsiClassType[] types = aClass.getSuperTypes();
-    if (types.length < 2) return null;
-    TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-    return checkInterfaceMultipleInheritance(aClass,
-                                             aClass,
-                                             PsiSubstitutor.EMPTY, new HashMap<>(),
-                                             new HashSet<>(), textRange);
-  }
-
-  private static HighlightInfo.Builder checkInterfaceMultipleInheritance(@NotNull PsiClass aClass,
-                                                                 @NotNull PsiElement place,
-                                                                 @NotNull PsiSubstitutor derivedSubstitutor,
-                                                                 @NotNull Map<PsiClass, PsiSubstitutor> inheritedClasses,
-                                                                 @NotNull Set<? super PsiClass> visited,
-                                                                 @NotNull TextRange textRange) {
-    List<PsiClassType.ClassResolveResult> superTypes = PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, place.getResolveScope());
-    for (PsiClassType.ClassResolveResult result : superTypes) {
-      PsiClass superClass = result.getElement();
-      if (superClass == null || visited.contains(superClass)) continue;
-      PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
-      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
-      //JLS 4.8 The superclasses (respectively, superinterfaces) of a raw type are the erasures of the superclasses (superinterfaces) of any of the parameterizations of the generic type.
-      superTypeSubstitutor = PsiUtil.isRawSubstitutor(aClass, derivedSubstitutor) ? elementFactory.createRawSubstitutor(superClass)
-                                                                                  : MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, derivedSubstitutor);
-
-      PsiSubstitutor inheritedSubstitutor = inheritedClasses.get(superClass);
-      if (inheritedSubstitutor != null) {
-        PsiTypeParameter[] typeParameters = superClass.getTypeParameters();
-        for (PsiTypeParameter typeParameter : typeParameters) {
-          PsiType type1 = inheritedSubstitutor.substitute(typeParameter);
-          PsiType type2 = superTypeSubstitutor.substitute(typeParameter);
-
-          if (!Comparing.equal(type1, type2)) {
-            String description;
-            if (type1 != null && type2 != null) {
-              description = JavaErrorBundle.message("generics.cannot.be.inherited.with.different.type.arguments",
-                                                    HighlightUtil.formatClass(superClass),
-                                                    JavaHighlightUtil.formatType(type1),
-                                                    JavaHighlightUtil.formatType(type2));
-            }
-            else {
-              description = JavaErrorBundle.message("generics.cannot.be.inherited.as.raw.and.generic",
-                                                    HighlightUtil.formatClass(superClass), 
-                                                    JavaHighlightUtil.formatType(type1 != null ? type1 : type2));
-            }
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
-          }
-        }
-      }
-      inheritedClasses.put(superClass, superTypeSubstitutor);
-      visited.add(superClass);
-      HighlightInfo.Builder builder = checkInterfaceMultipleInheritance(superClass, place, superTypeSubstitutor, inheritedClasses, visited, textRange);
-      visited.remove(superClass);
-
-      if (builder != null) return builder;
-    }
-    return null;
-  }
-
   static void computeOverrideEquivalentMethodErrors(@NotNull PsiClass aClass,
                                                     @NotNull Set<? super PsiClass> overrideEquivalentMethodsVisitedClasses,
                                                     @NotNull Map<PsiMember, HighlightInfo.Builder> overrideEquivalentMethodsErrors) {
@@ -1184,32 +1124,6 @@ public final class GenericsHighlightUtil {
               JavaErrorBundle.message("type.parameter.has.incompatible.upper.bounds", parameterName, conflictingConjunctsMessage))
             .range(HighlightMethodUtil.getFixRange(call));
         }
-      }
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkClassSupersAccessibility(@NotNull PsiClass aClass) {
-    HighlightInfo.Builder builder = checkClassSupersAccessibility(aClass, aClass.getResolveScope(), true);
-    return builder == null ? null : builder.range(HighlightNamesUtil.getClassDeclarationTextRange(aClass));
-  }
-
-  static HighlightInfo.Builder checkClassSupersAccessibility(@NotNull PsiClass aClass, @NotNull PsiElement ref, @NotNull GlobalSearchScope scope) {
-    HighlightInfo.Builder builder = checkClassSupersAccessibility(aClass, scope, false);
-    return builder == null ? null : builder.range(ref.getTextRange());
-  }
-
-  private static HighlightInfo.Builder checkClassSupersAccessibility(@NotNull PsiClass aClass,
-                                                                     @NotNull GlobalSearchScope resolveScope,
-                                                                     boolean checkParameters) {
-    JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
-    for (PsiClassType superType : aClass.getSuperTypes()) {
-      HashSet<PsiClass> checked = new HashSet<>();
-      checked.add(aClass);
-      String notAccessibleErrorMessage = isTypeAccessible(superType, checked, checkParameters, true, resolveScope, factory);
-      if (notAccessibleErrorMessage != null) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .descriptionAndTooltip(notAccessibleErrorMessage);
       }
     }
     return null;

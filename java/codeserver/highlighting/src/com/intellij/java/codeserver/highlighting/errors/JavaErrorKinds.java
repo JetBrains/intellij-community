@@ -188,6 +188,7 @@ public final class JavaErrorKinds {
       .withAnchor(parameter -> requireNonNullElse(parameter.getTypeElement(), parameter)).parameterized();
   public static final Parameterized<PsiReceiverParameter, @Nullable String> RECEIVER_NAME_MISMATCH =
     error(PsiReceiverParameter.class, "receiver.name.mismatch").withAnchor(PsiReceiverParameter::getIdentifier).parameterized();
+  
   // PsiMember = PsiClass | PsiEnumConstant
   public static final Parameterized<PsiMember, PsiMethod> CLASS_NO_ABSTRACT_METHOD =
     error(PsiMember.class, "class.must.implement.method")
@@ -293,7 +294,23 @@ public final class JavaErrorKinds {
       .withRawDescription((psi, ctx) -> message(
         "class.cannot.be.referenced.from.static.context",
         formatClass(ctx.outerClass()) + "." + (psi instanceof PsiSuperExpression ? PsiKeyword.SUPER : PsiKeyword.THIS)));
-
+  public static final Parameterized<PsiClass, InheritTypeClashContext> CLASS_INHERITANCE_DIFFERENT_TYPE_ARGUMENTS =
+    parameterized(PsiClass.class, InheritTypeClashContext.class, "class.inheritance.different.type.arguments")
+      .withRange((cls, ctx) -> getClassDeclarationTextRange(cls))
+      .withRawDescription((cls, ctx) -> message("class.inheritance.different.type.arguments",
+                                                formatClass(ctx.superClass()),
+                                                formatType(ctx.type1()),
+                                                formatType(ctx.type2())));
+  public static final Parameterized<PsiClass, InheritTypeClashContext> CLASS_INHERITANCE_RAW_AND_GENERIC =
+    parameterized(PsiClass.class, InheritTypeClashContext.class, "class.inheritance.raw.and.generic")
+      .withRange((cls, ctx) -> getClassDeclarationTextRange(cls))
+      .withRawDescription((cls, ctx) -> message("class.inheritance.raw.and.generic",
+                                                formatClass(ctx.superClass()),
+                                                formatType(ctx.type1() != null ? ctx.type1() : ctx.type2())));
+  public static final Parameterized<PsiElement, PsiClass> CLASS_NOT_ACCESSIBLE =
+    parameterized(PsiElement.class, PsiClass.class, "class.not.accessible")
+      .withRange((psi, cls) -> psi instanceof PsiMember member ? getMemberDeclarationTextRange(member) : null)
+      .withRawDescription((psi, cls) -> message("class.not.accessible", formatClass(cls)));
 
   public static final Simple<PsiJavaCodeReferenceElement> VALUE_CLASS_EXTENDS_NON_ABSTRACT = error("value.class.extends.non.abstract");
   
@@ -625,6 +642,8 @@ public final class JavaErrorKinds {
 
   public record OverrideClashContext(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
   }
+  
+  public record InheritTypeClashContext(@NotNull PsiClass superClass, @Nullable PsiType type1, @Nullable PsiType type2) {}
 
   public record IncompatibleOverrideReturnTypeContext(@NotNull PsiMethod method,
                                                       @NotNull PsiType methodReturnType,

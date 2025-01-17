@@ -18,6 +18,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +44,15 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private final @NotNull StatementChecker myStatementChecker = new StatementChecker(this);
   private final @NotNull LiteralChecker myLiteralChecker = new LiteralChecker(this);
+  private final @Nullable PsiJavaModule myJavaModule;
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
-  JavaErrorVisitor(@NotNull PsiFile file, @NotNull Consumer<JavaCompilationError<?, ?>> consumer) {
+  JavaErrorVisitor(@NotNull PsiFile file, @Nullable PsiJavaModule module, @NotNull Consumer<JavaCompilationError<?, ?>> consumer) {
     myFile = file;
     myProject = file.getProject();
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
     myErrorConsumer = consumer;
+    myJavaModule = module;
   }
 
   void report(@NotNull JavaCompilationError<?, ?> error) {
@@ -336,6 +339,21 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
+    checkFeature(statement, JavaFeature.STATIC_IMPORTS);
+    if (!hasErrorResults()) {
+      PsiJavaCodeReferenceElement importReference = statement.getImportReference();
+      PsiClass targetClass = statement.resolveTargetClass();
+      if (importReference != null) {
+        PsiElement referenceNameElement = importReference.getReferenceNameElement();
+        if (referenceNameElement != null && targetClass != null) {
+          myGenericsChecker.checkClassSupersAccessibility(targetClass, referenceNameElement, myFile.getResolveScope());
+        }
+      }
+    }
+  }
+
+  @Override
   public void visitClass(@NotNull PsiClass aClass) {
     super.visitClass(aClass);
     if (aClass instanceof PsiSyntheticClass) return;
@@ -345,6 +363,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkPublicClassInRightFile(aClass);
     if (!hasErrorResults()) myClassChecker.checkSealedClassInheritors(aClass);
     if (!hasErrorResults()) myClassChecker.checkSealedSuper(aClass);
+    if (!hasErrorResults()) myGenericsChecker.checkInterfaceMultipleInheritance(aClass);
+    if (!hasErrorResults()) myGenericsChecker.checkClassSupersAccessibility(aClass);
     if (!hasErrorResults()) myRecordChecker.checkRecordHeader(aClass);
   }
 
@@ -354,6 +374,16 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) {
       visitExpression(expression);
       if (hasErrorResults()) return;
+    }
+    PsiElement parent = expression.getParent();
+    PsiExpression qualifierExpression = expression.getQualifierExpression();
+    if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
+      if (parent instanceof PsiMethodCallExpression) {
+        PsiClass psiClass = RefactoringChangeUtil.getQualifierClass(expression);
+        if (psiClass != null) {
+          myGenericsChecker.checkClassSupersAccessibility(psiClass, expression, myFile.getResolveScope());
+        }
+      }
     }
   }
 

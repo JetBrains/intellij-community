@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +23,13 @@ public final class JavaErrorCollector {
    * @param file Java file to process
    * @param consumer a consumer to get errors
    */
-  public JavaErrorCollector(@NotNull PsiFile file, @NotNull Consumer<@NotNull JavaCompilationError<?, ?>> consumer) { 
-    myVisitor = new JavaErrorVisitor(file, consumer); 
+  public JavaErrorCollector(@NotNull PsiFile file, @NotNull Consumer<@NotNull JavaCompilationError<?, ?>> consumer) {
+    this(file, null, consumer); 
+  }
+
+  public JavaErrorCollector(@NotNull PsiFile file, @Nullable PsiJavaModule module,
+                            @NotNull Consumer<@NotNull JavaCompilationError<?, ?>> consumer) { 
+    myVisitor = new JavaErrorVisitor(file, module, consumer); 
   }
 
   /**
