@@ -33,7 +33,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" name="joni" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
@@ -44,5 +43,6 @@
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="fleet.fastutil" />
   </component>
 </module>

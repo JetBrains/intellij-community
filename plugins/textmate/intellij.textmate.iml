@@ -38,7 +38,6 @@
     <orderEntry type="module" module-name="intellij.platform.diff" />
     <orderEntry type="module" module-name="intellij.textmate.core" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="library" name="jackson" level="project" />
@@ -48,5 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="fleet.fastutil" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

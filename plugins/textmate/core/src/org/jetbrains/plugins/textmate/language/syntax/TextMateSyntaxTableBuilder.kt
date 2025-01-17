@@ -1,16 +1,14 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.IntOpenHashSet
+import fleet.fastutil.ints.forEach
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.plist.PListValue
 import org.jetbrains.plugins.textmate.plist.Plist
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Consumer
-import java.util.function.IntConsumer
 import kotlin.math.max
 
 class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
@@ -47,11 +45,11 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
         rules[scopeName] = compiledNode
       }
     }
-    referencedRulesSet.forEach(IntConsumer { id ->
+    referencedRulesSet.forEach { id ->
       compiledRules[id]?.let { compiledRule ->
         rulesRepository[id] = compiledRule
       }
-    })
+    }
     rulesRepository.trim()
     return syntaxTable
   }
@@ -134,7 +132,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
       return null
     }
     val result = arrayOfNulls<TextMateRawCapture>(maxGroupIndex + 1)
-    map.int2ObjectEntrySet().fastForEach(Consumer { e  -> result[e.intKey] = e.value })
+    map.entries.forEach { e -> result[e.key] = e.value }
     return result
   }
 }
@@ -152,7 +150,7 @@ private interface SyntaxRawNode {
 
   fun compile(
     topLevelNodes: Map<CharSequence, SyntaxRawNode>,
-    compiledNodes: Int2ObjectMap<SyntaxNodeDescriptor>,
+    compiledNodes: Int2ObjectOpenHashMap<SyntaxNodeDescriptor>,
     referencesNodesSet: IntOpenHashSet,
     syntaxTable: TextMateSyntaxTableCore,
   ): SyntaxNodeDescriptor?
@@ -169,7 +167,7 @@ private class SyntaxIncludeRawNode(
 
   override fun compile(
     topLevelNodes: Map<CharSequence, SyntaxRawNode>,
-    compiledNodes: Int2ObjectMap<SyntaxNodeDescriptor>,
+    compiledNodes: Int2ObjectOpenHashMap<SyntaxNodeDescriptor>,
     referencesNodesSet: IntOpenHashSet,
     syntaxTable: TextMateSyntaxTableCore,
   ): SyntaxNodeDescriptor? {
@@ -247,12 +245,14 @@ private class SyntaxRawNodeImpl(
 
   override fun compile(
     topLevelNodes: Map<CharSequence, SyntaxRawNode>,
-    compiledNodes: Int2ObjectMap<SyntaxNodeDescriptor>,
+    compiledNodes: Int2ObjectOpenHashMap<SyntaxNodeDescriptor>,
     referencesNodesSet: IntOpenHashSet,
     syntaxTable: TextMateSyntaxTableCore,
   ): SyntaxNodeDescriptor? {
     repository.values.forEach { repositoryNode ->
-      compiledNodes[repositoryNode.ruleId] = repositoryNode.compile(topLevelNodes, compiledNodes, referencesNodesSet, syntaxTable)
+      repositoryNode.compile(topLevelNodes, compiledNodes, referencesNodesSet, syntaxTable)?.let {
+        compiledNodes[repositoryNode.ruleId] = it
+      }
     }
 
     val captures = if (rawCaptures.isNotEmpty()) {

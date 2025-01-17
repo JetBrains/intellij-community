@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
  */
 class TextMateSyntaxTableCore(
   private val rules: Map<CharSequence, SyntaxNodeDescriptor>,
-  private val rulesRepository: Int2ObjectMap<SyntaxNodeDescriptor>,
+  private val rulesRepository: Int2ObjectOpenHashMap<SyntaxNodeDescriptor>,
 ) {
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TextMateSyntaxTableCore::class.java)

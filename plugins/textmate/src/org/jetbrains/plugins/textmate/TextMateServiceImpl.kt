@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -29,8 +29,8 @@ import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
 import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.language.preferences.*
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher

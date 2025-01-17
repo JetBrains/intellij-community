@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
+import fleet.fastutil.ints.IntArrayList
+import fleet.fastutil.ints.isEmpty
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.plugins.textmate.Constants
@@ -28,7 +28,7 @@ class TextMateLexerCore(
   private var myCurrentOffset: Int = 0
   private var myText: CharSequence = ""
   private var myCurrentScope: TextMateScope = TextMateScope.EMPTY
-  private var myNestedScope: IntList = IntArrayList.of()
+  private var myNestedScope = IntArrayList.of()
   private var myStates = persistentListOf<TextMateLexerState>()
 
   fun getCurrentOffset(): Int {
@@ -347,8 +347,7 @@ class TextMateLexerCore(
       addToken(output, position)
     }
     if (!myNestedScope.isEmpty()) {
-      val nested = myNestedScope.getInt(myNestedScope.size - 1)
-      myNestedScope.removeInt(myNestedScope.size - 1)
+      val nested = myNestedScope.removeAt(myNestedScope.size - 1)
       repeat(nested) {
         myCurrentScope = myCurrentScope.parent ?: myCurrentScope
       }
