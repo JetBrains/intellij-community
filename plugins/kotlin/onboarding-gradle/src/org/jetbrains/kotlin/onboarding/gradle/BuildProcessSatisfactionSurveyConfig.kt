@@ -12,7 +12,7 @@ import kotlinx.datetime.LocalDate
 class BuildProcessSatisfactionSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override val surveyId: String = "kotlin_gradle_build_process_feedback"
-    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 12, 1)
+    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2035, 1, 1)
     override val requireIdeEAP: Boolean = false
 
     override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialogWithEmail<out SystemDataJsonSerializable> {
