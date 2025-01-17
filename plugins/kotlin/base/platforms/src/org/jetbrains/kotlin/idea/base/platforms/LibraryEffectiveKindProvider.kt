@@ -10,12 +10,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryKindRegistry
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
@@ -24,7 +24,8 @@ import com.intellij.util.gist.VirtualFileGist
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
-import com.intellij.util.io.*
+import com.intellij.util.io.DataExternalizer
+import com.intellij.util.io.IOUtil
 import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -34,13 +35,14 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION
 import java.io.DataInput
 import java.io.DataOutput
+import java.util.concurrent.ConcurrentHashMap
+
+private enum class KnownLibraryKindForIndex {
+    COMMON, JS, UNKNOWN
+}
 
 @Service(Service.Level.PROJECT)
 class LibraryEffectiveKindProvider(private val project: Project) {
-    private enum class KnownLibraryKindForIndex {
-        COMMON, JS, UNKNOWN
-    }
-
     private fun findKind(classRoots: Array<VirtualFile>): PersistentLibraryKind<*>? {
         val virtualFile = classRoots.firstOrNull() ?: return null
         virtualFile.putUserData(CLASS_ROOTS_KEY, classRoots)
@@ -67,7 +69,7 @@ class LibraryEffectiveKindProvider(private val project: Project) {
                 val classRoot = classRoots.firstOrNull() ?: return null
 
                 val platformKind: PersistentLibraryKind<*>? =
-                    classRoot.getUserData(LIBRARY_KIND_KEY)?.takeIf { it != NEEDS_TO_BE_CLARIFIED_KIND } ?: findKind(classRoots)?.let {
+                    classRoot.getUserData(LIBRARY_KIND_KEY) ?: findKind(classRoots)?.let {
                         classRoot.putUserData(LIBRARY_KIND_KEY, it)
                         it
                     }
@@ -84,41 +86,37 @@ class LibraryEffectiveKindProvider(private val project: Project) {
     // it's assumed that this scanner runs everytime when library has been changed and library kind will be updated
     class LibraryKindScanner : IndexableFileScanner {
         internal companion object {
-            fun runScannerOutsideScanningSession(classRoots: Array<VirtualFile>) {
+            fun runScannerOutsideScanningSession(classRoot: VirtualFile) {
                 val scannerVisitor = ScannerVisitor()
-                var lastResult: KnownLibraryKindForIndex? = null
-                for (classRoot in classRoots) {
-                    scannerVisitor.result = null
-                    VfsUtil.visitChildrenRecursively(classRoot, object : VirtualFileVisitor<Any?>() {
-                        override fun visitFileEx(file: VirtualFile): Result =
-                            if (visitFile(file)) CONTINUE else skipTo(classRoot)
+                VfsUtil.visitChildrenRecursively(classRoot, object : VirtualFileVisitor<Any?>() {
+                    override fun visitFileEx(file: VirtualFile): Result =
+                        if (visitFile(file)) CONTINUE else skipTo(classRoot)
 
-                        override fun visitFile(file: VirtualFile): Boolean {
-                            ProgressManager.checkCanceled()
-                            scannerVisitor.visitFile(file)
-                            return scannerVisitor.result == null || scannerVisitor.result == KnownLibraryKindForIndex.COMMON
-                        }
-                    })
-                    val result = scannerVisitor.result
-                    if (result != null && (lastResult == null || result != KnownLibraryKindForIndex.COMMON)) {
-                        lastResult = result
+                    override fun visitFile(file: VirtualFile): Boolean {
+                        ProgressManager.checkCanceled()
+                        scannerVisitor.visitFile(file)
+                        val knownLibraryKind = scannerVisitor.knownLibraryKindForClassRoot[classRoot]
+                        return knownLibraryKind == null || knownLibraryKind == KnownLibraryKindForIndex.COMMON
                     }
-                }
-                scannerVisitor.result = lastResult
-                scannerVisitor.visitingFinished(classRoots.toList())
+                })
+                scannerVisitor.visitingFinished()
             }
         }
 
         private class ScannerVisitor {
             val classFileType = FileTypeRegistry.getInstance().getFileTypeByExtension("class")
             val kotlinJavaScriptMetaFileType = FileTypeRegistry.getInstance().getFileTypeByExtension("kjsm")
+            val jarFileSystem: JarFileSystem = JarFileSystem.getInstance()
 
-            var result: KnownLibraryKindForIndex? = null
+            val knownLibraryKindForClassRoot = ConcurrentHashMap<VirtualFile, KnownLibraryKindForIndex>()
 
             fun visitFile(fileOrDir: VirtualFile) {
                 if (fileOrDir.isDirectory) return
 
-                if (result != KnownLibraryKindForIndex.UNKNOWN) {
+                val classRoot = jarFileSystem.getRootByEntry(fileOrDir) ?: return
+                val kind = knownLibraryKindForClassRoot[classRoot]
+
+                if (kind != KnownLibraryKindForIndex.UNKNOWN) {
                     val nameSequence = fileOrDir.nameSequence
                     if (nameSequence.endsWith(".java") ||
                         nameSequence.endsWith(KotlinFileType.DOT_DEFAULT_EXTENSION)
@@ -130,47 +128,42 @@ class LibraryEffectiveKindProvider(private val project: Project) {
                     }
                     when {
                         fileType == classFileType ->
-                            result = KnownLibraryKindForIndex.UNKNOWN
+                            knownLibraryKindForClassRoot[classRoot] = KnownLibraryKindForIndex.UNKNOWN
 
                         fileType == kotlinJavaScriptMetaFileType ->
-                            result = KnownLibraryKindForIndex.JS
+                            knownLibraryKindForClassRoot[classRoot] = KnownLibraryKindForIndex.JS
 
-                        result == null &&
+                        kind == null &&
                                 (fileType == KlibMetaFileType ||
                                         nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION) && fileType == KotlinBuiltInFileType) ->
-                            result = KnownLibraryKindForIndex.COMMON
+                            knownLibraryKindForClassRoot[classRoot] = KnownLibraryKindForIndex.COMMON
 
                         else -> Unit
                     }
                 }
             }
 
-            fun visitingFinished(roots: Collection<VirtualFile>) {
-                val platformKind = when (result) {
-                    KnownLibraryKindForIndex.COMMON -> KotlinCommonLibraryKind
-                    KnownLibraryKindForIndex.JS -> KotlinJavaScriptLibraryKind
-                    else -> NEEDS_TO_BE_CLARIFIED_KIND
-                }
-
-                for (classRoot in roots) {
-                    classRoot.putUserData(LIBRARY_KIND_KEY, platformKind)
+            fun visitingFinished() {
+                for ((classRoot, knownLibraryKind) in knownLibraryKindForClassRoot) {
+                    classRoot.putUserData(LIBRARY_KIND_KEY, null)  // Clear outdated cache
+                    classRoot.putUserData(LIBRARY_KIND_GUESS_FROM_CONTENT_KEY, knownLibraryKind)
                 }
             }
         }
 
         override fun startSession(project: Project): IndexableFileScanner.ScanSession {
-            val scannerVisitor = ScannerVisitor()
             return object : IndexableFileScanner.ScanSession {
                 override fun createVisitor(indexableSetOrigin: IndexableSetOrigin): IndexableFileScanner.IndexableFileVisitor? {
                     if (indexableSetOrigin is LibraryOrigin) {
                         return object : IndexableFileScanner.IndexableFileVisitor {
+                            private val scannerVisitor = ScannerVisitor()
+
                             override fun visitFile(fileOrDir: VirtualFile) {
                                 scannerVisitor.visitFile(fileOrDir)
                             }
 
                             override fun visitingFinished() {
-                                val roots = indexableSetOrigin.classRoots
-                                scannerVisitor.visitingFinished(roots)
+                                scannerVisitor.visitingFinished()
                             }
                         }
                     }
@@ -211,14 +204,39 @@ private class KotlinLibraryKindGistProvider {
 
         // otherwise try to guess the platform based on content of archive - does it have js specific files, or common
         if (platformKind == null) {
-            LibraryKindScanner.runScannerOutsideScanningSession(classRoots)
-            platformKind = file.getUserData(LIBRARY_KIND_KEY)
+            platformKind = guessLibraryKindFromContent(classRoots)
         }
+
         // as the final resort - we consider them as a regular jar JVM library
-        if (platformKind == NEEDS_TO_BE_CLARIFIED_KIND) {
-            platformKind = IdePlatformKindProjectStructure.getLibraryKind(JvmPlatforms.defaultJvmPlatform.idePlatformKind)
+        if (platformKind == null) {
+            IdePlatformKindProjectStructure.getLibraryKind(JvmPlatforms.defaultJvmPlatform.idePlatformKind)
         }
         platformKind
+    }
+
+    private fun guessLibraryKindFromContent(classRoots: Array<VirtualFile>): PersistentLibraryKind<*>? {
+        val classRootLibraryKinds = classRoots.asSequence().map { classRoot ->
+            classRoot.getUserData(LIBRARY_KIND_GUESS_FROM_CONTENT_KEY)?.let { return@map it }
+            // Library hasn't been scanned yet - run the scanner manually
+            LibraryKindScanner.runScannerOutsideScanningSession(classRoot)
+            classRoot.getUserData(LIBRARY_KIND_GUESS_FROM_CONTENT_KEY)
+        }
+
+        var hasCommonLibraries = false
+        for (libraryKind in classRootLibraryKinds) {
+            when (libraryKind) {
+                KnownLibraryKindForIndex.JS -> return KotlinJavaScriptLibraryKind
+                null, KnownLibraryKindForIndex.UNKNOWN -> return null
+                // A JVM library can have common jars inside, but it's not a reason to immediately say it's a common library.
+                // First check there are no UNKNOWNs and only then proceed.
+                KnownLibraryKindForIndex.COMMON -> hasCommonLibraries = true
+            }
+        }
+        return if (hasCommonLibraries) {
+            KotlinCommonLibraryKind
+        } else {
+            null
+        }
     }
 
     companion object {
@@ -227,6 +245,5 @@ private class KotlinLibraryKindGistProvider {
 }
 
 private val LIBRARY_KIND_KEY: Key<PersistentLibraryKind<*>> = Key.create("LibraryEffectiveKind")
+private val LIBRARY_KIND_GUESS_FROM_CONTENT_KEY: Key<KnownLibraryKindForIndex> = Key.create("LibraryEffectiveKindGuessFromContent")
 private val CLASS_ROOTS_KEY: Key<Array<VirtualFile>> = Key.create("LibraryClassRoots")
-private val NEEDS_TO_BE_CLARIFIED_KIND: UnknownLibraryKind
-    get() = UnknownLibraryKind.getOrCreate("Needs to be clarified")

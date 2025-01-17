@@ -63,7 +63,12 @@ public interface IndexableFileScanner {
     void visitFile(@NotNull VirtualFile fileOrDir);
 
     /**
-     * Called on a background thread when all files of {@link IndexableSetOrigin} has been successfully processed.
+     * Called on a background thread when files of {@link IndexableSetOrigin} have been successfully processed.
+     * <p>
+     * If several {@link IndexableSetOrigin}s have common files (e.g., common jars between libraries),
+     * then {@link #visitFile} will be skipped for all visitors except for the first one to scan a specific file.
+     * Therefore, this method should NOT expect that {@link #visitFile} has been called for <b>all</b> the files in a provider.
+     * @see IndexableFilesDeduplicateFilter
      */
     @ApiStatus.Experimental
     default void visitingFinished() {
