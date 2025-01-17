@@ -4,11 +4,11 @@ import java.io.*;
 
 class a {
  void f() {
-   <error descr="Label without statement">a:</error>
+   <error descr="Label without statement">a</error>:
  }
  void f1() {
    a:
-   <error descr="Label without statement">b:</error>
+   <error descr="Label without statement">b</error>:
  }
  void f2() {
    a: return;

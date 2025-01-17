@@ -457,7 +457,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitClass(@NotNull PsiClass aClass) {
     super.visitClass(aClass);
     if (aClass instanceof PsiSyntheticClass) return;
-    if (!hasErrorResults()) add(HighlightUtil.checkImplicitThisReferenceBeforeSuper(aClass, myJavaSdkVersion));
     if (!hasErrorResults()) GenericsHighlightUtil.checkTypeParameterOverrideEquivalentMethods(aClass, myLanguageLevel, myErrorSink, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
   }
 
@@ -780,14 +779,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(description));
       }
     }
-    if (!hasErrorResults()) add(HighlightUtil.checkIllegalVoidType(keyword));
-  }
-
-  @Override
-  public void visitLabeledStatement(@NotNull PsiLabeledStatement statement) {
-    super.visitLabeledStatement(statement);
-    if (!hasErrorResults()) add(HighlightUtil.checkLabelWithoutStatement(statement));
-    if (!hasErrorResults()) add(HighlightUtil.checkLabelAlreadyInUse(statement));
   }
 
   @Override
@@ -908,7 +899,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiCatchSection) {
       if (!hasErrorResults()) add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
       if (!hasErrorResults()) GenericsHighlightUtil.checkCatchParameterIsClass(parameter, myErrorSink);
-      if (!hasErrorResults()) HighlightUtil.checkCatchTypeIsDisjoint(parameter, myErrorSink);
     }
   }
 
@@ -1492,10 +1482,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       UnhandledExceptions thrownTypes = HighlightUtil.collectUnhandledExceptions(statement);
       if (thrownTypes.hasUnresolvedCalls()) return;
       for (PsiParameter parameter : statement.getCatchBlockParameters()) {
-        HighlightUtil.checkExceptionAlreadyCaught(parameter, myErrorSink);
-        if (!hasErrorResults()) {
-          HighlightUtil.checkExceptionThrownInTry(parameter, thrownTypes.exceptions(), myErrorSink);
-        }
         if (!hasErrorResults()) {
           HighlightUtil.checkWithImprovedCatchAnalysis(parameter, thrownTypes.exceptions(), myFile, myErrorSink);
         }

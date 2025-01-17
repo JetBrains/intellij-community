@@ -311,6 +311,10 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, PsiClass.class, "class.not.accessible")
       .withRange((psi, cls) -> psi instanceof PsiMember member ? getMemberDeclarationTextRange(member) : null)
       .withRawDescription((psi, cls) -> message("class.not.accessible", formatClass(cls)));
+  public static final Parameterized<PsiMember, PsiClass> REFERENCE_MEMBER_BEFORE_CONSTRUCTOR =
+    parameterized(PsiMember.class, PsiClass.class, "reference.member.before.constructor")
+      .withRange((psi, cls) -> getMemberDeclarationTextRange(psi))
+      .withRawDescription((psi, cls) -> message("reference.member.before.constructor", cls.getName() + ".this"));
 
   public static final Simple<PsiJavaCodeReferenceElement> VALUE_CLASS_EXTENDS_NON_ABSTRACT = error("value.class.extends.non.abstract");
   
@@ -500,11 +504,36 @@ public final class JavaErrorKinds {
       .withRange(psi -> psi instanceof PsiMember member ? getMemberDeclarationTextRange(member) : null)
       .<Collection<PsiClassType>>parameterized()
       .withRawDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
+  public static final Parameterized<PsiTypeElement, InvalidDisjointTypeContext> EXCEPTION_MUST_BE_DISJOINT =
+    parameterized(PsiTypeElement.class, InvalidDisjointTypeContext.class, "exception.must.be.disjoint")
+      .withRawDescription((te, ctx) -> message(
+        "exception.must.be.disjoint",
+        PsiFormatUtil.formatClass(ctx.subClass(), PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME),
+        PsiFormatUtil.formatClass(ctx.superClass(), PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME)));
+  public static final Parameterized<PsiTypeElement, PsiCatchSection> EXCEPTION_ALREADY_CAUGHT =
+    parameterized(PsiTypeElement.class, PsiCatchSection.class, "exception.already.caught")
+      .withRawDescription((te, upperCatch) -> message(
+        "exception.already.caught", PsiFormatUtil.formatClass(
+          requireNonNull(PsiUtil.resolveClassInClassTypeOnly(te.getType())),
+          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME)));
+  public static final Parameterized<PsiParameter, PsiClassType> EXCEPTION_NEVER_THROWN_TRY = 
+    parameterized(PsiParameter.class, PsiClassType.class, "exception.never.thrown.try")
+      .withRawDescription((parameter, type) -> message("exception.never.thrown.try", formatType(type)));
+  public static final Parameterized<PsiTypeElement, PsiClassType> EXCEPTION_NEVER_THROWN_TRY_MULTI = 
+    parameterized(PsiTypeElement.class, PsiClassType.class, "exception.never.thrown.try.multi")
+      .withRawDescription((parameter, type) -> message("exception.never.thrown.try.multi", formatType(type)));
 
   public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> TYPE_INCOMPATIBLE =
     parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "type.incompatible")
       .withDescription((psi, context) -> context.createDescription())
       .withTooltip((psi, context) -> context.createTooltip());
+  public static final Simple<PsiKeyword> TYPE_VOID_ILLEGAL = error("type.void.illegal");
+
+  public static final Simple<PsiLabeledStatement> LABEL_WITHOUT_STATEMENT = error(PsiLabeledStatement.class, "label.without.statement")
+    .withAnchor(label -> label.getLabelIdentifier());
+  public static final Simple<PsiLabeledStatement> LABEL_DUPLICATE = error(PsiLabeledStatement.class, "label.duplicate")
+    .withAnchor(label -> label.getLabelIdentifier())
+    .withRawDescription(statement -> message("label.duplicate", statement.getLabelIdentifier().getText()));
 
   public static final Simple<PsiNewExpression> NEW_EXPRESSION_QUALIFIED_MALFORMED =
     error("new.expression.qualified.malformed");
@@ -655,6 +684,9 @@ public final class JavaErrorKinds {
                                                      @NotNull PsiMethod superMethod,
                                                      @NotNull PsiClassType exceptionType,
                                                      @Nullable PsiJavaCodeReferenceElement exceptionReference) {
+  }
+
+  public record InvalidDisjointTypeContext(@NotNull PsiClass superClass, @NotNull PsiClass subClass) {
   }
   
 }

@@ -1376,69 +1376,6 @@ public final class HighlightUtil {
     return thrownTypes;
   }
 
-  static void checkExceptionThrownInTry(@NotNull PsiParameter parameter,
-                                        @NotNull Set<? extends PsiClassType> thrownTypes,
-                                        @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiElement declarationScope = parameter.getDeclarationScope();
-    if (!(declarationScope instanceof PsiCatchSection)) return;
-
-    PsiType caughtType = parameter.getType();
-    if (caughtType instanceof PsiClassType) {
-      HighlightInfo.Builder info = checkSimpleCatchParameter(parameter, thrownTypes, (PsiClassType)caughtType);
-      if (info != null) {
-        errorSink.accept(info);
-      }
-      return;
-    }
-    if (caughtType instanceof PsiDisjunctionType) {
-      checkMultiCatchParameter(parameter, thrownTypes, errorSink);
-    }
-  }
-
-  private static HighlightInfo.Builder checkSimpleCatchParameter(@NotNull PsiParameter parameter,
-                                                         @NotNull Collection<? extends PsiClassType> thrownTypes,
-                                                         @NotNull PsiClassType caughtType) {
-    if (ExceptionUtil.isUncheckedExceptionOrSuperclass(caughtType)) return null;
-
-    for (PsiClassType exceptionType : thrownTypes) {
-      if (exceptionType.isAssignableFrom(caughtType) || caughtType.isAssignableFrom(exceptionType)) return null;
-    }
-
-    String description = JavaErrorBundle.message("exception.never.thrown.try", JavaHighlightUtil.formatType(caughtType));
-    HighlightInfo.Builder errorResult =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter).descriptionAndTooltip(description);
-    IntentionAction action = getFixFactory().createDeleteCatchFix(parameter);
-    errorResult.registerFix(action, null, null, null, null);
-    return errorResult;
-  }
-
-  private static void checkMultiCatchParameter(@NotNull PsiParameter parameter,
-                                               @NotNull Collection<? extends PsiClassType> thrownTypes,
-                                               @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
-
-    for (PsiTypeElement typeElement : typeElements) {
-      PsiType catchType = typeElement.getType();
-      if (catchType instanceof PsiClassType classType && ExceptionUtil.isUncheckedExceptionOrSuperclass(classType)) continue;
-
-      boolean used = false;
-      for (PsiClassType exceptionType : thrownTypes) {
-        if (exceptionType.isAssignableFrom(catchType) || catchType.isAssignableFrom(exceptionType)) {
-          used = true;
-          break;
-        }
-      }
-      if (!used) {
-        String description = JavaErrorBundle.message("exception.never.thrown.try", JavaHighlightUtil.formatType(catchType));
-        HighlightInfo.Builder builder =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
-        IntentionAction action = getFixFactory().createDeleteMultiCatchFix(typeElement);
-        builder.registerFix(action, null, null, null, null);
-        errorSink.accept(builder);
-      }
-    }
-  }
-
 
   static void checkWithImprovedCatchAnalysis(@NotNull PsiParameter parameter,
                                              @NotNull Collection<? extends PsiClassType> thrownInTryStatement,
@@ -2279,33 +2216,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkIllegalVoidType(@NotNull PsiKeyword type) {
-    if (!PsiKeyword.VOID.equals(type.getText())) return null;
-
-    PsiElement parent = type.getParent();
-    if (parent instanceof PsiErrorElement) return null;
-    if (parent instanceof PsiTypeElement) {
-      PsiElement typeOwner = parent.getParent();
-      if (typeOwner != null) {
-        // do not highlight incomplete declarations
-        if (PsiUtilCore.hasErrorElementChild(typeOwner)) return null;
-      }
-
-      if (typeOwner instanceof PsiMethod method) {
-        if (method.getReturnTypeElement() == parent && PsiTypes.voidType().equals(method.getReturnType())) return null;
-      }
-      else if (typeOwner instanceof PsiClassObjectAccessExpression classAccess) {
-        if (TypeConversionUtil.isVoidType(classAccess.getOperand().getType())) return null;
-      }
-      else if (typeOwner instanceof JavaCodeFragment) {
-        if (typeOwner.getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null) return null;
-      }
-    }
-
-    String description = JavaErrorBundle.message("illegal.type.void");
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(type).descriptionAndTooltip(description);
-  }
-
   static HighlightInfo.Builder checkMemberReferencedBeforeConstructorCalled(@NotNull PsiElement expression,
                                                                             @Nullable PsiElement resolved,
                                                                             @NotNull Function<? super PsiElement, ? extends PsiMethod> surroundingConstructor) {
@@ -2534,30 +2444,6 @@ public final class HighlightUtil {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
   }
 
-  static HighlightInfo.Builder checkImplicitThisReferenceBeforeSuper(@NotNull PsiClass aClass, @NotNull JavaSdkVersion javaSdkVersion) {
-    if (javaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) return null;
-    if (aClass instanceof PsiAnonymousClass || aClass instanceof PsiTypeParameter) return null;
-    PsiClass superClass = aClass.getSuperClass();
-    if (superClass == null || !PsiUtil.isInnerClass(superClass)) return null;
-    PsiClass outerClass = superClass.getContainingClass();
-    if (!InheritanceUtil.isInheritorOrSelf(aClass, outerClass, true)) {
-      return null;
-    }
-    // 'this' can be used as an (implicit) super() qualifier
-    PsiMethod[] constructors = aClass.getConstructors();
-    if (constructors.length == 0) {
-      TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      return createMemberReferencedError(aClass.getName() + ".this", range, false);
-    }
-    for (PsiMethod constructor : constructors) {
-      PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
-      if (!JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
-        return createMemberReferencedError(aClass.getName() + ".this", HighlightNamesUtil.getMethodDeclarationTextRange(constructor), false);
-      }
-    }
-    return null;
-  }
-
   private static boolean isThisOrSuperReference(@Nullable PsiExpression qualifierExpression, @NotNull PsiClass aClass) {
     if (qualifierExpression == null) return true;
     if (!(qualifierExpression instanceof PsiQualifiedExpression expression)) return false;
@@ -2565,117 +2451,6 @@ public final class HighlightUtil {
     if (qualifier == null) return true;
     PsiElement resolved = qualifier.resolve();
     return resolved instanceof PsiClass && InheritanceUtil.isInheritorOrSelf(aClass, (PsiClass)resolved, true);
-  }
-
-
-  static HighlightInfo.Builder checkLabelWithoutStatement(@NotNull PsiLabeledStatement statement) {
-    if (statement.getStatement() == null) {
-      String description = JavaErrorBundle.message("label.without.statement");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description);
-    }
-    return null;
-  }
-
-
-  static HighlightInfo.Builder checkLabelAlreadyInUse(@NotNull PsiLabeledStatement statement) {
-    PsiIdentifier identifier = statement.getLabelIdentifier();
-    String text = identifier.getText();
-    PsiElement element = statement;
-    while (element != null) {
-      if (element instanceof PsiMethod || element instanceof PsiClass) break;
-      if (element instanceof PsiLabeledStatement labeledStatement && element != statement &&
-          Objects.equals(labeledStatement.getLabelIdentifier().getText(), text)) {
-        String description = JavaErrorBundle.message("duplicate.label", text);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description);
-      }
-      element = element.getParent();
-    }
-    return null;
-  }
-
-
-  static void checkCatchTypeIsDisjoint(@NotNull PsiParameter parameter, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (!(parameter.getType() instanceof PsiDisjunctionType)) return;
-
-    List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
-    for (int i = 0, size = typeElements.size(); i < size; i++) {
-      PsiClass class1 = PsiUtil.resolveClassInClassTypeOnly(typeElements.get(i).getType());
-      if (class1 == null) continue;
-      for (int j = i + 1; j < size; j++) {
-        PsiClass class2 = PsiUtil.resolveClassInClassTypeOnly(typeElements.get(j).getType());
-        if (class2 == null) continue;
-        boolean sub = InheritanceUtil.isInheritorOrSelf(class1, class2, true);
-        boolean sup = InheritanceUtil.isInheritorOrSelf(class2, class1, true);
-        if (sub || sup) {
-          String name1 = PsiFormatUtil.formatClass(class1, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
-          String name2 = PsiFormatUtil.formatClass(class2, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
-          String message = JavaErrorBundle.message("exception.must.be.disjoint", sub ? name1 : name2, sub ? name2 : name1);
-          PsiTypeElement element = typeElements.get(sub ? i : j);
-          HighlightInfo.Builder builder =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message);
-          IntentionAction action = getFixFactory().createDeleteMultiCatchFix(element);
-          builder.registerFix(action, null, null, null, null);
-          errorSink.accept(builder);
-          break;
-        }
-      }
-    }
-  }
-
-
-  static void checkExceptionAlreadyCaught(@NotNull PsiParameter parameter, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiCatchSection catchSection)) return;
-
-    PsiCatchSection[] allCatchSections = catchSection.getTryStatement().getCatchSections();
-    int startFrom = ArrayUtilRt.find(allCatchSections, catchSection) - 1;
-    if (startFrom < 0) return;
-
-    List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
-    boolean isInMultiCatch = typeElements.size() > 1;
-
-    for (PsiTypeElement typeElement : typeElements) {
-      PsiClass catchClass = PsiUtil.resolveClassInClassTypeOnly(typeElement.getType());
-      if (catchClass == null) continue;
-
-      for (int i = startFrom; i >= 0; i--) {
-        PsiCatchSection upperCatchSection = allCatchSections[i];
-        PsiType upperCatchType = upperCatchSection.getCatchType();
-
-        boolean highlight = upperCatchType instanceof PsiDisjunctionType type
-                                  ? checkMultipleTypes(catchClass, type.getDisjunctions())
-                                  : checkSingleType(catchClass, upperCatchType);
-        if (highlight) {
-          String className = PsiFormatUtil.formatClass(catchClass, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
-          String description = JavaErrorBundle.message("exception.already.caught", className);
-          HighlightInfo.Builder builder =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
-
-          IntentionAction action;
-          if (isInMultiCatch) {
-            action = getFixFactory().createDeleteMultiCatchFix(typeElement);
-          }
-          else {
-            action = getFixFactory().createDeleteCatchFix(parameter);
-          }
-          builder.registerFix(action, null, null, null, null);
-          builder.registerFix(getFixFactory().createMoveCatchUpFix(catchSection, upperCatchSection), null, null, null, null);
-          errorSink.accept(builder);
-        }
-      }
-    }
-  }
-
-  private static boolean checkMultipleTypes(@NotNull PsiClass catchClass, @NotNull List<? extends PsiType> upperCatchTypes) {
-    for (int i = upperCatchTypes.size() - 1; i >= 0; i--) {
-      if (checkSingleType(catchClass, upperCatchTypes.get(i))) return true;
-    }
-    return false;
-  }
-
-  private static boolean checkSingleType(@NotNull PsiClass catchClass, @Nullable PsiType upperCatchType) {
-    PsiClass upperCatchClass = PsiUtil.resolveClassInType(upperCatchType);
-    return upperCatchClass != null && InheritanceUtil.isInheritorOrSelf(catchClass, upperCatchClass, true);
   }
 
 

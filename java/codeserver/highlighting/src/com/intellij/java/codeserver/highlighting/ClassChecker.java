@@ -7,6 +7,7 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -795,5 +796,27 @@ final class ClassChecker {
       }
       return new CachedValueProvider.Result<>(false, PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  void checkImplicitThisReferenceBeforeSuper(@NotNull PsiClass aClass) {
+    if (myVisitor.sdkVersion().isAtLeast(JavaSdkVersion.JDK_1_7)) return;
+    if (aClass instanceof PsiAnonymousClass || aClass instanceof PsiTypeParameter) return;
+    PsiClass superClass = aClass.getSuperClass();
+    if (superClass == null || !PsiUtil.isInnerClass(superClass)) return;
+    PsiClass outerClass = superClass.getContainingClass();
+    if (!InheritanceUtil.isInheritorOrSelf(aClass, outerClass, true)) return;
+    // 'this' can be used as an (implicit) super() qualifier
+    PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(aClass, aClass));
+      return;
+    }
+    for (PsiMethod constructor : constructors) {
+      PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (!JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
+        myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(constructor, aClass));
+        return;
+      }
+    }
   }
 }

@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
+import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
@@ -19,6 +22,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +49,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull StatementChecker myStatementChecker = new StatementChecker(this);
   private final @NotNull LiteralChecker myLiteralChecker = new LiteralChecker(this);
   private final @Nullable PsiJavaModule myJavaModule;
+  private final @NotNull JavaSdkVersion myJavaSdkVersion;
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   JavaErrorVisitor(@NotNull PsiFile file, @Nullable PsiJavaModule module, @NotNull Consumer<JavaCompilationError<?, ?>> consumer) {
@@ -53,6 +58,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
     myErrorConsumer = consumer;
     myJavaModule = module;
+    myJavaSdkVersion = ObjectUtils
+      .notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
   }
 
   void report(@NotNull JavaCompilationError<?, ?> error) {
@@ -77,6 +84,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     return myLanguageLevel;
   }
 
+  @NotNull JavaSdkVersion sdkVersion() {
+    return myJavaSdkVersion;
+  }
+
   @Contract(pure = true)
   boolean hasErrorResults() {
     return myHasError;
@@ -96,6 +107,19 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitTryStatement(@NotNull PsiTryStatement statement) {
+    super.visitTryStatement(statement);
+    if (!hasErrorResults()) {
+      UnhandledExceptions thrownTypes = collectUnhandledExceptions(statement);
+      if (thrownTypes.hasUnresolvedCalls()) return;
+      for (PsiParameter parameter : statement.getCatchBlockParameters()) {
+        myStatementChecker.checkExceptionAlreadyCaught(parameter);
+        if (!hasErrorResults()) myStatementChecker.checkExceptionThrownInTry(parameter, thrownTypes.exceptions());
+      }
+    }
+  }
+  
+  @Override
   public void visitParameter(@NotNull PsiParameter parameter) {
     super.visitParameter(parameter);
 
@@ -108,6 +132,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults() && parameter.getType() instanceof PsiDisjunctionType) {
         checkFeature(parameter, JavaFeature.MULTI_CATCH);
       }
+      if (!hasErrorResults()) myStatementChecker.checkCatchTypeIsDisjoint(parameter);
     }
     else if (parent instanceof PsiForeachStatement forEach) {
       checkFeature(forEach, JavaFeature.FOR_EACH);
@@ -336,6 +361,14 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitKeyword(@NotNull PsiKeyword keyword) {
     super.visitKeyword(keyword);
     if (!hasErrorResults()) myClassChecker.checkStaticDeclarationInInnerClass(keyword);
+    if (!hasErrorResults()) myExpressionChecker.checkIllegalVoidType(keyword);
+  }
+
+  @Override
+  public void visitLabeledStatement(@NotNull PsiLabeledStatement statement) {
+    super.visitLabeledStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkLabelWithoutStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkLabelAlreadyInUse(statement);
   }
 
   @Override
@@ -363,6 +396,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkPublicClassInRightFile(aClass);
     if (!hasErrorResults()) myClassChecker.checkSealedClassInheritors(aClass);
     if (!hasErrorResults()) myClassChecker.checkSealedSuper(aClass);
+    if (!hasErrorResults()) myClassChecker.checkImplicitThisReferenceBeforeSuper(aClass);
     if (!hasErrorResults()) myGenericsChecker.checkInterfaceMultipleInheritance(aClass);
     if (!hasErrorResults()) myGenericsChecker.checkClassSupersAccessibility(aClass);
     if (!hasErrorResults()) myRecordChecker.checkRecordHeader(aClass);
@@ -573,6 +607,22 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
   }
 
+  private static @NotNull UnhandledExceptions collectUnhandledExceptions(@NotNull PsiTryStatement statement) {
+    UnhandledExceptions thrownTypes = UnhandledExceptions.EMPTY;
+
+    PsiCodeBlock tryBlock = statement.getTryBlock();
+    if (tryBlock != null) {
+      thrownTypes = thrownTypes.merge(UnhandledExceptions.collect(tryBlock));
+    }
+
+    PsiResourceList resources = statement.getResourceList();
+    if (resources != null) {
+      thrownTypes = thrownTypes.merge(UnhandledExceptions.collect(resources));
+    }
+
+    return thrownTypes;
+  }
+  
   void checkFeature(@NotNull PsiElement element, @NotNull JavaFeature feature) {
     if (!feature.isSufficient(myLanguageLevel)) {
       report(JavaErrorKinds.UNSUPPORTED_FEATURE.create(element, feature));

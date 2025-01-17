@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
@@ -40,7 +41,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
 /**
- * Fixes attached to error messages provided by {@link com.intellij.java.codeserver.highlighting.JavaErrorCollector}.
+ * Fixes attached to error messages provided by {@link JavaErrorCollector}.
  * To add new fixes use {@link #fix(JavaErrorKind, JavaFixProvider)} or {@link #multi(JavaErrorKind, JavaFixesProvider)}
  * methods and return a fix or a list of fixes from lambda.
  */
@@ -82,6 +83,7 @@ final class JavaErrorFixProvider {
     createConstructorFixes();
     createMethodFixes();
     createExpressionFixes();
+    createExceptionFixes();
     createGenericFixes();
     createRecordFixes();
     createTypeFixes();
@@ -153,6 +155,21 @@ final class JavaErrorFixProvider {
       return registrar;
     });
     fix(VARARG_CSTYLE_DECLARATION, error -> new NormalizeBracketsFix(error.psi()));
+  }
+
+  private void createExceptionFixes() {
+    fix(EXCEPTION_MUST_BE_DISJOINT, error -> myFactory.createDeleteMultiCatchFix(error.psi()));
+    fix(EXCEPTION_NEVER_THROWN_TRY_MULTI, error -> myFactory.createDeleteMultiCatchFix(error.psi()));
+    multi(EXCEPTION_ALREADY_CAUGHT, error -> {
+      PsiParameter parameter = PsiTreeUtil.getParentOfType(error.psi(), PsiParameter.class, false);
+      if (parameter == null) return List.of();
+      boolean multiCatch = PsiUtil.getParameterTypeElements(parameter).size() > 1;
+      IntentionAction deleteFix = multiCatch ? myFactory.createDeleteMultiCatchFix(error.psi()) : myFactory.createDeleteCatchFix(parameter);
+      PsiCatchSection catchSection = (PsiCatchSection)requireNonNull(parameter.getDeclarationScope());
+      PsiCatchSection upperCatchSection = error.context();
+      return List.of(deleteFix, myFactory.createMoveCatchUpFix(catchSection, upperCatchSection));
+    });
+    fix(EXCEPTION_NEVER_THROWN_TRY, error -> myFactory.createDeleteCatchFix(error.psi()));
   }
   
   private void createConstructorFixes() {

@@ -5,10 +5,7 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,5 +132,30 @@ final class ExpressionChecker {
         classSeen = true;
       }
     }
+  }
+
+  void checkIllegalVoidType(@NotNull PsiKeyword type) {
+    if (!PsiKeyword.VOID.equals(type.getText())) return;
+
+    PsiElement parent = type.getParent();
+    if (parent instanceof PsiErrorElement) return;
+    if (parent instanceof PsiTypeElement) {
+      PsiElement typeOwner = parent.getParent();
+      if (typeOwner != null) {
+        // do not highlight incomplete declarations
+        if (PsiUtilCore.hasErrorElementChild(typeOwner)) return;
+      }
+
+      if (typeOwner instanceof PsiMethod method) {
+        if (method.getReturnTypeElement() == parent && PsiTypes.voidType().equals(method.getReturnType())) return;
+      }
+      else if (typeOwner instanceof PsiClassObjectAccessExpression classAccess) {
+        if (TypeConversionUtil.isVoidType(classAccess.getOperand().getType())) return;
+      }
+      else if (typeOwner instanceof JavaCodeFragment) {
+        if (typeOwner.getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null) return;
+      }
+    }
+    myVisitor.report(JavaErrorKinds.TYPE_VOID_ILLEGAL.create(type));
   }
 }
