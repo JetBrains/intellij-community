@@ -53,7 +53,6 @@ internal class MavenProjectImportContextProvider(
   }
 
   private fun getModuleImportDataContext(projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>): ModuleImportDataContext {
-    var hasChanges = false
     val allModules: MutableList<MavenProjectImportData> = ArrayList<MavenProjectImportData>()
     val moduleImportDataByMavenId: MutableMap<MavenId, MavenProjectImportData> = TreeMap<MavenId, MavenProjectImportData>(
       Comparator.comparing<MavenId?, String?>(Function { obj: MavenId? -> obj!!.getKey() }))
@@ -69,9 +68,6 @@ internal class MavenProjectImportContextProvider(
       }
 
       val mavenProjectImportData = getModuleImportData(project, moduleName!!, changes)
-      if (changes.hasChanges()) {
-        hasChanges = true
-      }
       moduleImportDataByMavenId.put(project.mavenId, mavenProjectImportData)
       allModules.add(mavenProjectImportData)
     }
