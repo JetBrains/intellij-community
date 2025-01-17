@@ -26,7 +26,6 @@ import kotlin.io.path.*
 internal class RuntimeModuleRepositoryChecker private constructor(
   private val commonDistPath: Path,
   private val osSpecificDistPath: Path?,
-  private val currentMode: ProductMode,
   private val context: BuildContext,
 ): AutoCloseable {
   private val descriptorsJarFile: Path
@@ -52,8 +51,8 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   }
   
   companion object {
-    suspend fun checkProductModules(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
-      createCheckers(currentMode, context).forEach {
+    suspend fun checkProductModules(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
+      createCheckers(context).forEach {
         it().use { checker ->
           checker.checkProductModules(productModulesModule, softly)
         }
@@ -61,28 +60,28 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
 
     /**
-     * Verifies that subset of the current product described by product-modules.xml file from [productModulesModule] can be loaded as a
+     * Verifies that the frontend part of the current product described by the product-modules.xml file from [productModulesModule] can be loaded as a
      * separate product: JARs referenced from its modules must not include resources from modules not included to the product, or they are
      * split by packages in a way that the class-loader may load relevant classes only.
      */
-    suspend fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, currentMode: ProductMode, context: BuildContext, softly: SoftAssertions) {
-      createCheckers(currentMode, context).forEach {
+    suspend fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
+      createCheckers(context).forEach {
         it().use { checker ->
-          checker.checkIntegrityOfEmbeddedProduct(productModulesModule, softly)
+          checker.checkIntegrityOfEmbeddedFrontend(productModulesModule, softly)
         }
       }
     }
 
-    private fun createCheckers(currentMode: ProductMode, context: BuildContext): List<() -> RuntimeModuleRepositoryChecker> {
+    private fun createCheckers(context: BuildContext): List<() -> RuntimeModuleRepositoryChecker> {
       val commonDistPath = context.paths.distAllDir 
       if (commonDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
-        return listOf { RuntimeModuleRepositoryChecker(commonDistPath, null, currentMode, context) }
+        return listOf { RuntimeModuleRepositoryChecker(commonDistPath, null, context) }
       }
       return SUPPORTED_DISTRIBUTIONS
         .mapNotNull { distribution ->
           val osSpecificDistPath = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, context)
           if (osSpecificDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
-            { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, currentMode, context) }
+            { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, context) }
           }
           else null
         }
@@ -131,7 +130,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private suspend fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, softly: SoftAssertions) {
+  private suspend fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, softly: SoftAssertions) {
     val productModules = loadProductModules(productModulesModule)
 
     val allProductModules = LinkedHashMap<RuntimeModuleId, FList<String>>()
@@ -143,7 +142,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     productModules.bundledPluginModuleGroups.forEach { group ->
       if (group.includedModules.isEmpty()) {
         softly.collectAssertionError(AssertionError("""
-           |No modules from '$group' are included in a product running in '${currentMode.id}' mode, so corresponding plugin won't be loaded.
+           |No modules from '$group' are included in a product running in the frontend mode, so corresponding plugin won't be loaded.
            |Probably it indicates that some incorrect dependency was added to the main plugin module.  
         """.trimMargin()))
         return@forEach
@@ -183,17 +182,21 @@ internal class RuntimeModuleRepositoryChecker private constructor(
           "'${it.stringId}' (<- ${allProductModules.getValue(it).joinToString(" <- ")})"
         }
         val rest = includedModules.size - displayedModulesCount
+        val embeddedProductPresentableName = "${context.applicationInfo.shortProductName} Frontend"
         val more = if (rest > 0) " and $rest more ${StringUtil.pluralize("module", rest)}" else ""
         softly.collectAssertionError(AssertionError("""
-          |Module '${moduleId.stringId}' is not part of '$productModulesModule' product included in ${context.applicationInfo.fullProductName} distribution, but it's packed in ${included.pathString},
-          |which is included in the classpath of '$productModulesModule' because:
+          |Module '${moduleId.stringId}' is not part of $embeddedProductPresentableName included in the full ${context.applicationInfo.shortProductName} distribution, but it's packed in ${included.pathString},
+          |which is included in the classpath of $embeddedProductPresentableName because:
           |$firstIncludedModuleData$more are also packed in it.
-          |This means that '${moduleId.stringId}' will be included in the classpath of '$productModulesModule' as well. 
-          |Unnecessary code and resources in the classpath may cause performance problems, also, they may cause '$productModulesModule' to behave differently in a standalone 
+          |This means that '${moduleId.stringId}' will be included in the classpath of $embeddedProductPresentableName as well. 
+          |Unnecessary code and resources in the classpath may cause performance problems, also, they may cause $embeddedProductPresentableName to behave differently in a standalone 
           |installation and when invoked from ${context.applicationInfo.fullProductName}. To fix the problem, you should do one of the following:
-          |* if other modules packed in '${included.pathString}' shouldn't be part of '$productModulesModule', remove incorrect dependencies shown above; this may require extracting additional modules;
-          |* if '${moduleId.stringId}' actually should be included in '$productModulesModule', make sure that it's included either by adding it as a content module in plugin.xml, or by adding it in the main module group in product-modules.xml;
-          |* otherwise, change the build scripts to put '${moduleId.stringId}' in a separate JAR.
+          |* if other modules packed in '${included.pathString}' shouldn't be part of $embeddedProductPresentableName, remove incorrect dependencies shown above; this may require extracting additional modules;
+          |* if '${moduleId.stringId}' actually should be included in $embeddedProductPresentableName, make sure that it's included either by adding it as a content module in plugin.xml, or by adding it in the main module group in product-modules.xml;
+          |* if '${moduleId.stringId}' should not be included in $embeddedProductPresentableName, but other parts of ${included.pathString} should, ensure that they are put to
+          |  separate JAR files; it may be enough to add a runtime dependency on 'intellij.platform.backend' to all modules which shouldn't be included to the frontend part,
+          |  the build scripts will take this into account to assign separate JARs automatically; however, if custom layout is specified for a plugin, you may need to put modules
+          |  to separate JARs using explicit 'withModule(...)' calls in the layout configuration.
         """.trimMargin()))
       }
     }
@@ -205,7 +208,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     val content = context.getModuleOutputFileContent(context.findRequiredModule(productModulesModule), relativePath)
                   ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
     try {
-      return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, currentMode, repository)
+      return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, ProductMode.FRONTEND, repository)
     }
     catch (e: IOException) {
       throw MalformedRepositoryException("Failed to load module group from $debugName", e)

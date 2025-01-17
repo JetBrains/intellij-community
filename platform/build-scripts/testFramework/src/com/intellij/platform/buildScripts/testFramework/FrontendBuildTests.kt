@@ -2,7 +2,6 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItemKind
-import com.intellij.platform.runtime.product.ProductMode
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
@@ -28,7 +27,7 @@ fun runTestBuildForFrontend(
       assertTrue(context.useModularLoader) { "Frontend distribution must use the modular loader, but $frontendProperties doesn't use it" }
       val rootModule = frontendProperties.rootModuleForModularLoader
       assertNotNull(rootModule) { "Root module for the modular loader is not specified in $frontendProperties" }
-      RuntimeModuleRepositoryChecker.checkProductModules(rootModule!!, ProductMode.FRONTEND, context, softly)
+      RuntimeModuleRepositoryChecker.checkProductModules(rootModule!!, context, softly)
     }
   )
 }

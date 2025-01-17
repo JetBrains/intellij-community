@@ -197,7 +197,7 @@ private suspend fun doRunTestBuild(context: suspend () -> BuildContext, traceSpa
         val frontendRootModule = context.productProperties.embeddedFrontendRootModule
         if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
           val softly = SoftAssertions()
-          RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct(frontendRootModule, ProductMode.FRONTEND, context, softly)
+          RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
           checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
           softly.assertAll()
         }
