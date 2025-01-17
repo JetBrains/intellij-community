@@ -365,8 +365,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
             if (Registry.`is`("auto.hide.all.tool.windows.on.any.action", true)) {
               val focusedComponent = IdeFocusManager.getInstance(manager.project).focusOwner
               val actionComponent = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) ?: event.inputEvent?.component
+              val actionComponentWindow = ComponentUtil.getWindow(actionComponent)
+              // Not the best heuristics, but there seems to be no easy way to check "Is this a popup?".
+              // So we check for something like "javax.swing.Popup$HeavyweightWindow...".
+              val actionInvokedFromPopup = actionComponentWindow?.javaClass?.name?.startsWith("javax.swing.Popup") == true
               val actionToolWindowId = getToolWindowIdForComponent(actionComponent)
-              if (focusedComponent != null) {
+              if (focusedComponent != null && !actionInvokedFromPopup) {
                 hideAllUnfocusedAutoHideToolWindows(manager, focusedComponent) { id -> id != actionToolWindowId }
               }
             }
