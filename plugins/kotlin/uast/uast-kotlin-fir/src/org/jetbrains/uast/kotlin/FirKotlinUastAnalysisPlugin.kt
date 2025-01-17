@@ -23,7 +23,7 @@ class FirKotlinUastAnalysisPlugin : UastAnalysisPlugin {
         @Suppress("UNCHECKED_CAST")
         return when (fact) {
             UExpressionFact.UNullabilityFact -> checkNullability(ktElement)
-        } as T
+        } as T?
     }
 
     private fun checkNullability(ktElement: KtElement): UNullability? {
