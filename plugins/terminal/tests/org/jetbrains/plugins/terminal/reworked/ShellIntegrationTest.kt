@@ -9,6 +9,7 @@ import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalKeyEncoder
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -181,13 +182,19 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, childScope("TerminalSession"), size)
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()
+      val promptFinishedEventDeferred = CompletableDeferred(false)
       launch {
         for (events in session.outputChannel) {
           outputEvents.addAll(events)
+          if (events.any { it is TerminalPromptFinishedEvent }) {
+            promptFinishedEventDeferred.complete(true)
+          }
         }
       }
 
-      delay(1000) // Wait for prompt initialization
+      // Wait for prompt initialization before going further
+      promptFinishedEventDeferred.await()
+
       block(session.inputChannel)
 
       delay(1000) // Wait for the shell to handle input sent in `block`
