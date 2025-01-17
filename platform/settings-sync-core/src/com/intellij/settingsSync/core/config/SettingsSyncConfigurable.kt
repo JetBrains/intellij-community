@@ -480,7 +480,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   ) {
     companion object{
       val addAccount = UserProviderHolder(
-        "<ADDACCOUNT>", SettingsSyncUserData("<ADDACCOUNT>", ""), "",
+        "<ADDACCOUNT>", SettingsSyncUserData("<ADDACCOUNT>", "", null, null), "",
         "", "")
     }
 
