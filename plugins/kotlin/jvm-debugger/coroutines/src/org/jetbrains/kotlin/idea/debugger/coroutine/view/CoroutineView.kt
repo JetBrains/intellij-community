@@ -179,24 +179,28 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
                 val cache = coroutineCache.cache
                 val isHierarchyBuilt = coroutineDebugProxy.fetchAndSetJobsAndParentsForCoroutines(cache)
                 if (isHierarchyBuilt) {
-                    val parentJobToChildCoroutines = cache.groupBy { it.parentJob }
-                    val jobToCoroutine = cache.filter { it.job != null }.associateBy { it.job!! }
-                    val rootCoroutines = parentJobToChildCoroutines.keys.mapNotNull {
-                        val parentJob = jobToCoroutine[it]
-                        // Root coroutines are those with no parent or whose parent is not in the jobToCoroutineInfo map
-                        // E.g. if a coroutine's parent is a BlockingCoroutine, which was not captured in the coroutine dump, because it's already completing.
-                        if (parentJob?.parentJob == null || jobToCoroutine[parentJob.parentJob] == null) {
-                            parentJob
+                    val parentJobToChildCoroutineInfos = cache.groupBy { it.parentJob }
+                    val jobToCoroutineInfo = cache.associateBy { it.job }
+                    val parentJobs = parentJobToChildCoroutineInfos.keys
+                    val rootJobs = parentJobs.mapNotNull {
+                        // The root job's coroutine is either not present in the dump (and in jobToCoroutineInfo map)
+                        // (e.g. if it's a BlockingCoroutine, which was not captured in the coroutine dump, because it's already completing).
+                        // or it has no parent.
+                        val parentCoroutineInfo = jobToCoroutineInfo[it]
+                        if (parentCoroutineInfo == null || parentCoroutineInfo.parentJob == null) {
+                            it
                         } else null
                     }
-                    for (rootCoroutine in rootCoroutines) {
+                    for (rootJob in rootJobs) {
+                        val rootCoroutine = jobToCoroutineInfo[rootJob]
                         coroutines.add(
                             CoroutineContainer(
                                 suspendContext = suspendContext,
-                                coroutineInfo = rootCoroutine,
-                                isCurrent = rootCoroutine.isRunningOnCurrentThread(suspendContext),
-                                childCoroutines = parentJobToChildCoroutines[rootCoroutine.job] ?: emptyList(),
-                                parentJobToChildCoroutines = parentJobToChildCoroutines
+                                rootJob = rootJob,
+                                rootCoroutineInfo = rootCoroutine,
+                                isCurrent = rootCoroutine?.isRunningOnCurrentThread(suspendContext) ?: false,
+                                childCoroutines = parentJobToChildCoroutineInfos[rootJob] ?: emptyList(),
+                                parentJobToChildCoroutines = parentJobToChildCoroutineInfos
                             )
                         )
                     }
@@ -206,7 +210,8 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
                         coroutines.add(
                             CoroutineContainer(
                                 suspendContext = suspendContext,
-                                coroutineInfo = coroutine,
+                                rootJob = coroutine.job,
+                                rootCoroutineInfo = coroutine,
                                 isCurrent = coroutine.isRunningOnCurrentThread(suspendContext),
                                 childCoroutines = emptyList(),
                                 parentJobToChildCoroutines = emptyMap()
@@ -262,7 +267,7 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
             invokeInSuspendContext(suspendContext) { suspendContext ->
                 val children = XValueChildrenList()
                 coroutines?.forEach {
-                    children.add(CoroutineContainer(suspendContext, it, it.isRunningOnCurrentThread(suspendContext), emptyList(), emptyMap()))
+                    children.add(CoroutineContainer(suspendContext, it.job, it, it.isRunningOnCurrentThread(suspendContext), emptyList(), emptyMap()))
                 }
                 if (children.size() > 0) {
                     node.addChildren(children, true)
@@ -275,23 +280,27 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
 
     inner class CoroutineContainer(
         private val suspendContext: SuspendContextImpl,
-        private val coroutineInfo: CoroutineInfoData,
+        rootJob: String?,
+        private val rootCoroutineInfo: CoroutineInfoData?,
         isCurrent: Boolean,
         private val childCoroutines: List<CoroutineInfoData>,
         private val parentJobToChildCoroutines: Map<String?, List<CoroutineInfoData>>
-    ) : RendererContainer(renderer.renderThreadGroup(coroutineInfo.coroutineDescriptor, isCurrent)) {
+    ) : RendererContainer(renderer.renderThreadGroup(rootCoroutineInfo?.coroutineDescriptor ?: rootJob ?: CoroutineInfoData.UNKNOWN_JOB, isCurrent)) {
         override fun computeChildren(node: XCompositeNode) {
             invokeInSuspendContext(suspendContext) { suspendContext ->
                 val children = XValueChildrenList()
-                children.add(FramesContainer(coroutineInfo, suspendContext))
+                if (rootCoroutineInfo != null) {
+                    children.add(FramesContainer(rootCoroutineInfo, suspendContext))
+                }
 
-                childCoroutines.forEach {
-                    val childCoroutines = parentJobToChildCoroutines[it.job]
+                childCoroutines.forEach { childCoroutine ->
+                    val childCoroutines = parentJobToChildCoroutines[childCoroutine.job]
                     children.add(
                         CoroutineContainer(
                             suspendContext,
-                            it,
-                            it.isRunningOnCurrentThread(suspendContext),
+                            childCoroutine.job,
+                            childCoroutine,
+                            childCoroutine.isRunningOnCurrentThread(suspendContext),
                             childCoroutines ?: emptyList(),
                             parentJobToChildCoroutines
                         )

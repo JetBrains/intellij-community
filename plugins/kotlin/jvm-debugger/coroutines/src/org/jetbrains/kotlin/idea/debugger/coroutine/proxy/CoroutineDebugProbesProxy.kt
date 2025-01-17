@@ -50,7 +50,7 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
         val executionContext = suspendContext.executionContext() ?: return false
         val debugCoroutineInfos = infos.map { it.debugCoroutineInfoRef }
         val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getJobsAndParentsForCoroutines", debugCoroutineInfos)
-        val jobsWithParents = (array as? ArrayReference)?.values?.map { (it as StringReference).value() }
+        val jobsWithParents = (array as? ArrayReference)?.values?.map { (it as? StringReference)?.value() }
             ?: fallBackToMirrorFetchJobsAndParentsForCoroutines(executionContext, infos)
         if (jobsWithParents.isEmpty()) return false
         for (i in 0 until jobsWithParents.size step 2) {

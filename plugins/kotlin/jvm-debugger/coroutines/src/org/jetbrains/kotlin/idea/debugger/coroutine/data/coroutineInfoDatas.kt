@@ -37,10 +37,12 @@ open class CoroutineInfoData(
 
     var parentJob: String? = null
 
-    private val contextSummary = "[$dispatcher, ${job ?: ""}]"
+    private val contextSummary by lazy {
+        "[$dispatcher ${if (job == null) "" else ", $job"}]"
+    }
 
     val coroutineDescriptor: String by lazy {
-        "\"$name:$id\": $state $contextSummary"
+        "\"${this.name}:$id\": $state ${if (isRunning) "on thread ${lastObservedThread?.name() ?: UNKNOWN_THREAD }" else "" } $contextSummary"
     }
 
     private val coroutineStackFrames: CoroutineStacksInfoData? by lazy {
@@ -69,6 +71,8 @@ open class CoroutineInfoData(
         const val DEFAULT_COROUTINE_NAME: String = "coroutine"
         @Deprecated("This API will not be exposed in the future versions.")
         const val DEFAULT_COROUTINE_STATE: String = "UNKNOWN"
+        internal const val UNKNOWN_JOB: String = "UNKNOWN_JOB"
+        private const val UNKNOWN_THREAD: String = "UNKNOWN_THREAD"
     }
 
     @Deprecated("Please use API of CoroutineInfoData instead.")
