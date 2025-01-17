@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.project;
 public abstract class MavenProjectChanges {
   public static final MavenProjectChanges NONE = createNoneChanges();
   public static final MavenProjectChanges ALL = createAllChanges();
-  public static final MavenProjectChanges DEPENDENCIES = createDependenciesChanges();
 
   public abstract boolean hasPackagingChanges();
 
