@@ -344,6 +344,21 @@ class NestedCatchSections {
     void close();
   }
 
+  void doubleTrySameVariables(InputStream stream) {
+    try {
+      System.out.println(1);
+    } finally {
+      try {
+        stream.close();
+      } catch (IOException e) {
+      }
+      try {
+        stream.close();
+      } catch (IOException e) {
+      }
+    }
+  }
+
   void doubleTrySameExceptions(InputStream stream, InputStream stream2) {
     try {
       System.out.println(1);
