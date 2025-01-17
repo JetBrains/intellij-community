@@ -50,6 +50,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.io.PathKt;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
@@ -72,9 +73,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
 
   private static final Logger LOG = Logger.getInstance(AbstractGradleModuleBuilder.class);
@@ -105,7 +105,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private Path rootProjectPath;
   private boolean myUseKotlinDSL;
   private boolean isCreatingNewProject;
-  private boolean createEmptyContentRoots = true;
+  private boolean isCreatingEmptyContentRoots = true;
   private GradleVersion gradleVersion;
   private DistributionType gradleDistributionType;
   private @Nullable String gradleHome;
@@ -114,10 +114,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private boolean isCreatingBuildScriptFile = true;
   private boolean isCreatingSettingsScriptFile = true;
   private VirtualFile buildScriptFile;
-  private VirtualFile settingsScriptFile;
   private GradleBuildScriptBuilder<?> buildScriptBuilder;
-  private final List<Consumer<GradleBuildScriptBuilder<?>>> buildScriptConfigurators = new ArrayList<>();
-  private final List<BiConsumer<VirtualFile, VirtualFile>> preImportConfigurators = new ArrayList<>();
 
   public AbstractGradleModuleBuilder() {
     super(GradleConstants.SYSTEM_ID, GradleDefaultProjectSettings.createProjectSettings(""));
@@ -167,7 +164,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     }
 
     if (isCreatingSettingsScriptFile) {
-      settingsScriptFile = setupGradleSettingsFile(
+      setupGradleSettingsFile(
         rootProjectPath, modelContentRootDir, project.getName(),
         myProjectId == null ? module.getName() : myProjectId.getArtifactId(),
         isCreatingNewLinkedProject(),
@@ -177,8 +174,6 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
     if (isCreatingBuildScriptFile) {
       buildScriptBuilder = GradleBuildScriptBuilder.create(gradleVersion, myUseKotlinDSL);
-      buildScriptConfigurators.forEach(it -> it.accept(buildScriptBuilder));
-
       var scriptDataBuilder = new BuildScriptDataBuilder(buildScriptFile, buildScriptBuilder);
       modifiableRootModel.getModule().putUserData(BUILD_SCRIPT_DATA, scriptDataBuilder);
     }
@@ -237,7 +232,6 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     }
 
     if (isCreatingBuildScriptFile) {
-      preImportConfigurators.forEach(c -> c.accept(buildScriptFile, settingsScriptFile));
       openBuildScriptFile(project, buildScriptFile);
     }
     if (isCreatingWrapper && isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
@@ -249,7 +243,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private void reloadProject(@NotNull Project project) {
     ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized(() -> {
       ImportSpecBuilder importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
-      if (createEmptyContentRoots) {
+      if (isCreatingEmptyContentRoots) {
         importSpec.createDirectoriesForEmptyContentRoots();
       }
       importSpec.callback(new ConfigureGradleModuleCallback(importSpec));
@@ -264,19 +258,6 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     vcs.markFileForAdding(rootProjectPath.resolve("gradlew.bat"), false);
     GradleWrapperUtil.generateGradleWrapper(rootProjectPath, gradleVersion);
     vcs.finish();
-  }
-
-  public void configureBuildScript(@NotNull Consumer<GradleBuildScriptBuilder<?>> configure) {
-    buildScriptConfigurators.add(configure);
-  }
-
-  /**
-   * Runs the configure callback just before the Gradle import starts.
-   * The first parameter to the callback is the buildScriptFile, the second parameter is the settingsScriptFile.
-   * Can be used to do more advanced modifications of the Gradle files.
-   */
-  public void configurePreImport(@NotNull BiConsumer<@NotNull VirtualFile, @NotNull VirtualFile> configure) {
-    preImportConfigurators.add(configure);
   }
 
   private @Nullable VirtualFile createAndConfigureBuildScriptFile() {
@@ -515,8 +496,12 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     isCreatingNewProject = creatingNewProject;
   }
 
-  public void setCreateEmptyContentRoots(boolean createEmptyContentRoots) {
-    this.createEmptyContentRoots = createEmptyContentRoots;
+  public boolean isCreatingEmptyContentRoots() {
+    return isCreatingEmptyContentRoots;
+  }
+
+  public void setCreatingEmptyContentRoots(boolean creatingEmptyContentRoots) {
+    this.isCreatingEmptyContentRoots = creatingEmptyContentRoots;
   }
 
   public void setGradleVersion(@NotNull GradleVersion version) {

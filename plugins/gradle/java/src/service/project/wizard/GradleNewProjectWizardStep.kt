@@ -47,9 +47,9 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.GradleIcons
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -483,11 +483,18 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return isFoojayPluginSupported(gradleVersionToUse)
   }
 
-  fun setupBuilder(builder: AbstractGradleModuleBuilder) {
+  @ApiStatus.Internal
+  fun setupProjectFromBuilder(project: Project) {
+    val builder = object : AbstractGradleModuleBuilder() {}
+
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name
 
+    builder.isCreatingWrapper = false
+    builder.isCreatingBuildScriptFile = false
+    builder.isCreatingSettingsScriptFile = false
+    builder.isCreatingEmptyContentRoots = false
     builder.isCreatingNewProject = context.isCreatingNewProject
 
     builder.parentProject = parentData
@@ -497,17 +504,10 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
     builder.isUseKotlinDsl = gradleDsl == GradleDsl.KOTLIN
 
-    builder.setCreateEmptyContentRoots(false)
     builder.setGradleVersion(gradleVersionToUse)
     builder.setGradleDistributionType(distributionType.value)
     builder.setGradleHome(gradleHome)
-  }
 
-  fun setupBuildScript(builder: AbstractGradleModuleBuilder, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
-    builder.configureBuildScript(configure)
-  }
-
-  fun setupProject(project: Project, builder: AbstractGradleModuleBuilder) {
     setupProjectFromBuilder(project, builder)
       ?.also { startJdkDownloadIfNeeded(it) }
   }

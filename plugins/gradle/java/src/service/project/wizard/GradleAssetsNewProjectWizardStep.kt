@@ -27,14 +27,7 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
   override fun setupProject(project: Project) {
     super.setupProject(project)
 
-    val builder = object : AbstractGradleModuleBuilder() {}
-
-    builder.isCreatingWrapper = false
-    builder.isCreatingSettingsScriptFile = false
-    builder.isCreatingBuildScriptFile = false
-
-    parent.setupBuilder(builder)
-    parent.setupProject(project, builder)
+    parent.setupProjectFromBuilder(project)
   }
 
   fun addBuildScript(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
