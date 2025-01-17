@@ -13,4 +13,9 @@ interface AboutPopupDescriptionProvider {
    * Return additional info which should be shown in the "About" dialog.
    */
   fun getDescription(): @DetailedDescription String?
+
+  /**
+   * Return additional info which should be copied into clipboard in the "About" dialog.
+   */
+  fun getExtendedDescription(): @DetailedDescription String? = getDescription()
 }
