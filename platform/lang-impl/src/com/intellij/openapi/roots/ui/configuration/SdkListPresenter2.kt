@@ -84,8 +84,8 @@ internal class SdkListPresenter2<T>(
         }
         item.icon = icon ?: IconUtil.addIcon
 
-        item.append(SdkListPresenter.presentDetectedSdkPath(sdkListItem.homePath))
-        item.append(" ${sdkListItem.version}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        item.append(sdkListItem.version)
+        item.append(" ${SdkListPresenter.presentDetectedSdkPath(sdkListItem.homePath)}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
 
       is SdkListItem.ProjectSdkItem -> {
