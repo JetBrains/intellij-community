@@ -50,6 +50,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
@@ -468,6 +469,18 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       LOCAL -> GradleInstallationManager.getGradleVersion(Path.of(gradleHome))!!
     }
     GradleVersion.version(rawGradleVersion)
+  }
+
+  val isCreatingNewLinkedProject: Boolean by lazy {
+    parentData == null
+  }
+
+  val isFoojayPluginSupported: Boolean by lazy {
+    resolveIsFoojayPluginSupported()
+  }
+
+  protected open fun resolveIsFoojayPluginSupported(): Boolean {
+    return isFoojayPluginSupported(gradleVersionToUse)
   }
 
   fun setupBuilder(builder: AbstractGradleModuleBuilder) {
