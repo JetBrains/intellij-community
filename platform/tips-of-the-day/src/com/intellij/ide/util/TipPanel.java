@@ -147,9 +147,9 @@ final class TipPanel extends JPanel implements DoNotAskOption {
                                                AllIcons.Ide.LikeDimmed, AllIcons.Ide.Like, AllIcons.Ide.LikeSelected, true);
     AnAction dislikeAction = createFeedbackAction(IdeBundle.message("tip.of.the.day.feedback.dislike"),
                                                   AllIcons.Ide.DislikeDimmed, AllIcons.Ide.Dislike, AllIcons.Ide.DislikeSelected, false);
-    ActionGroup group = new DefaultActionGroup(likeAction, dislikeAction);
+    AnAction[] actions = {likeAction, dislikeAction};
 
-    ActionToolbarImpl toolbar = new ActionToolbarImpl("TipsAndTricksDialog", group, true) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl("TipsAndTricksDialog", new DefaultActionGroup(actions), true) {
       @Override
       protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
                                                           ActionButtonLook look,
@@ -182,7 +182,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
       @Override
       public @NotNull Dimension getPreferredSize() {
         Dimension size = getFeedbackButtonSize();
-        int buttonsCount = getActionGroup().getChildren(null).length;
+        int buttonsCount = actions.length;
         return new Dimension(size.width * buttonsCount, size.height);
       }
 
