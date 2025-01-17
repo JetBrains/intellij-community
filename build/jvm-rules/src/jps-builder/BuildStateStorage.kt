@@ -33,7 +33,7 @@ private val READ_FILE_OPTION = enumSetOf(StandardOpenOption.READ)
 private val notNullUtfStringFieldType = FieldType.notNullable(ArrowType.Utf8())
 
 private val sourceFileField = Field("sourceFile", notNullUtfStringFieldType, null)
-private val digestField = Field("digest", FieldType.notNullable(ArrowType.FixedSizeBinary(32)), null)
+private val digestField = Field("digest", FieldType.nullable(ArrowType.FixedSizeBinary(32)), null)
 private val outputListField = Field(
   "outputs",
   FieldType.notNullable(ArrowType.List()),
@@ -96,17 +96,25 @@ fun saveBuildState(buildStateFile: Path, list: Array<SourceDescriptor>, relativi
     val digestVector = root.getVector("digest") as FixedSizeBinaryVector
     val outputListVector = root.getVector("outputs") as ListVector
 
+    sourceFileVector.setInitialCapacity(list.size, 100.0)
     sourceFileVector.allocateNew(list.size)
+
     digestVector.allocateNew(list.size)
-    outputListVector.setInitialCapacity(list.size, 1.5)
+
+    outputListVector.setInitialCapacity(list.size, 10.0)
     outputListVector.allocateNew()
 
     val outputListInnerVector = outputListVector.addOrGetVector<VarCharVector>(notNullUtfStringFieldType).vector
     var rowIndex = 0
     var outputRowIndex = 0
     for (descriptor in list) {
-      sourceFileVector.set(rowIndex, relativizer.toRelative(descriptor.sourceFile, RelativePathType.SOURCE).toByteArray())
-      digestVector.set(rowIndex, descriptor.digest!!)
+      sourceFileVector.setSafe(rowIndex, relativizer.toRelative(descriptor.sourceFile, RelativePathType.SOURCE).toByteArray())
+      if (descriptor.digest == null) {
+        digestVector.setNull(rowIndex)
+      }
+      else {
+        digestVector.setSafe(rowIndex, descriptor.digest!!)
+      }
 
       val outputs = descriptor.outputs
       outputListVector.startNewValue(rowIndex)
@@ -147,7 +155,7 @@ private fun doLoad(root: VectorSchemaRoot, relativizer: PathTypeAwareRelativizer
   var outputIndex = 0
   for (rowIndex in 0 until root.rowCount) {
     val sourceFile = relativizer.toAbsoluteFile(String(sourceFileVector.get(rowIndex)), RelativePathType.SOURCE)
-    val digest = digestVector.get(rowIndex) ?: throw IOException("Digest cannot be null")
+    val digest = if (digestVector.isNull(rowIndex)) null else digestVector.get(rowIndex)
     val outputs = if (outputListVector.isNull(rowIndex)) {
       null
     }

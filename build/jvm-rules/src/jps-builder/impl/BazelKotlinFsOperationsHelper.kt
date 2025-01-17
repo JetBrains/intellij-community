@@ -7,7 +7,6 @@ import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.FileProcessor
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
-import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.incremental.BuildOperations
 import org.jetbrains.jps.incremental.CompileContext
@@ -17,47 +16,35 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
 import java.io.File
-import java.nio.file.Path
 
 internal class BazelKotlinFsOperationsHelper(
   private val context: CompileContext,
   private val chunk: ModuleChunk,
   private val dirtyFilesHolder: KotlinDirtySourceFilesHolder,
   private val log: RequestLog,
+  private val dataManager: BazelBuildDataProvider,
 ) {
   internal var hasMarkedDirty = false
     private set
 
   fun markChunk(excludeFiles: Set<File>) {
     val target = chunk.targets.single()
-    val filter = { file: Path ->
-      val filePath = file.toString()
-      when {
-        !(FileUtilRt.extensionEquals(filePath, "kt") || FileUtilRt.extensionEquals(filePath, "kts")) -> {
-          false
-        }
-        excludeFiles.contains(file.toFile()) -> {
-          false
-        }
-        else -> {
-          hasMarkedDirty = true
-          true
-        }
-      }
-    }
-
     var completelyMarkedDirty = true
-    val stampStorage = context.projectDescriptor.dataManager.getFileStampStorage(target)
+    val stampStorage = dataManager.getFileStampStorage(target)
     for (rootDescriptor in (context.projectDescriptor.buildRootIndex as BazelBuildRootIndex).descriptors) {
       val file = rootDescriptor.rootFile
-      if (!filter(file)) {
+      val filePath = file.toString()
+      if (!(FileUtilRt.extensionEquals(filePath, "kt") || FileUtilRt.extensionEquals(filePath, "kts")) ||
+        excludeFiles.contains(file.toFile())) {
         completelyMarkedDirty = false
         continue
       }
 
+      hasMarkedDirty = true
+
       // if it is a full project rebuild, all storages are already completely cleared;
       // so passing null because there is no need to access the storage to clear non-existing data
-      val marker = if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) null else stampStorage
+      val marker = if (dataManager.isCleanBuild) null else stampStorage
       context.projectDescriptor.fsState.markDirty(context, CompilationRound.NEXT, file, rootDescriptor, marker, false)
     }
 
@@ -71,7 +58,7 @@ internal class BazelKotlinFsOperationsHelper(
     for (file in files) {
       val root = buildRootIndex.fileToDescriptors.get(file.toPath())
       if (root != null) {
-        dirtyFilesHolder.byTarget[root.target]?._markDirty(file, root)
+        dirtyFilesHolder.byTarget.get(root.target)?._markDirty(file, root)
       }
     }
 

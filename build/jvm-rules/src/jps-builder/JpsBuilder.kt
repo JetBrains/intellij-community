@@ -155,14 +155,6 @@ suspend fun buildUsingJps(
     isRebuild = true
   }
 
-  val buildDataProvider = BazelBuildDataProvider(
-    relativizer = typeAwareRelativizer,
-    actualDigestMap = sourceFileToDigest,
-    sourceToDescriptor = buildState ?: HashMap(sourceFileToDigest.size),
-    storeFile = buildStateFile,
-    allocator = allocator,
-  )
-
   var exitCode = initAndBuild(
     isRebuild = isRebuild,
     messageHandler = log,
@@ -174,7 +166,14 @@ suspend fun buildUsingJps(
     abiJar = abiJar,
     relativizer = relativizer,
     jpsModel = jpsModel,
-    buildDataProvider = buildDataProvider,
+    buildDataProvider = BazelBuildDataProvider(
+      relativizer = typeAwareRelativizer,
+      actualDigestMap = sourceFileToDigest,
+      sourceToDescriptor = buildState ?: HashMap(sourceFileToDigest.size),
+      storeFile = buildStateFile,
+      allocator = allocator,
+      isCleanBuild = isRebuild,
+    ),
   )
   if (exitCode == -1) {
     log.resetState()
@@ -189,7 +188,14 @@ suspend fun buildUsingJps(
       abiJar = abiJar,
       relativizer = relativizer,
       jpsModel = jpsModel,
-      buildDataProvider = buildDataProvider,
+      buildDataProvider = BazelBuildDataProvider(
+        relativizer = typeAwareRelativizer,
+        actualDigestMap = sourceFileToDigest,
+        sourceToDescriptor = HashMap(sourceFileToDigest.size),
+        storeFile = buildStateFile,
+        allocator = allocator,
+        isCleanBuild = true,
+      ),
     )
   }
 
@@ -252,7 +258,7 @@ private suspend fun initAndBuild(
         JavaBuilder(BazelSharedThreadPool),
         //NotNullInstrumentingBuilder(),
         JavaBackwardReferenceIndexBuilder(),
-        BazelKotlinBuilder(isKotlinBuilderInDumbMode = false, log = messageHandler),
+        BazelKotlinBuilder(isKotlinBuilderInDumbMode = false, log = messageHandler, dataManager = buildDataProvider),
         KotlinCompilerReferenceIndexBuilder(),
       )
       builders.sortBy { it.category.ordinal }
@@ -287,7 +293,8 @@ private suspend fun initAndBuild(
       }
       return exitCode
     }
-    catch (_: RebuildRequestedException) {
+    catch (e: RebuildRequestedException) {
+      messageHandler.info("RebuildRequestedException: ${e.cause?.message}: ${e.stackTraceToString()}")
       return -1
     }
     finally {
@@ -331,6 +338,13 @@ private suspend fun postBuild(
         relativizer = buildDataProvider.relativizer,
         allocator = buildDataProvider.allocator,
       )
+    }
+
+    launch {
+      // deletes class loader classpath index files for changed output roots
+      // todo remove when we will produce JAR directly
+      Files.deleteIfExists(classOutDir.resolve("classpath.index"))
+      Files.deleteIfExists(classOutDir.resolve(".unmodified"))
     }
 
     launch(CoroutineName("create output JAR and ABI JAR")) {

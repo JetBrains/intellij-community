@@ -1,8 +1,11 @@
-@file:Suppress("UnstableApiUsage")
+@file:Suppress("UnstableApiUsage", "TestOnlyProblems")
 
-package org.jetbrains.bazel.jvm.jps
+package org.jetbrains.bazel.jvm.jps.test
 
 import org.apache.arrow.memory.RootAllocator
+import org.jetbrains.bazel.jvm.jps.SourceDescriptor
+import org.jetbrains.bazel.jvm.jps.loadBuildState
+import org.jetbrains.bazel.jvm.jps.saveBuildState
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
 import java.nio.file.Files
@@ -31,18 +34,14 @@ private val relativizer = object : PathTypeAwareRelativizer {
 
 internal fun testSerialization() {
   val random = Random(42)
-  val sourceDescriptors = arrayOf(
+  val sourceDescriptors = Array<SourceDescriptor>(random.nextInt(100, 20_000)) {
     SourceDescriptor(
-      sourceFile = Path.of("a/b/c.kt"),
+      sourceFile = Path.of("a/b/c/${java.lang.Long.toUnsignedString(random.nextLong(), 36)}.kt"),
       digest = random.nextBytes(32),
-      outputs = listOf("a/b/c.class")
-    ),
-    SourceDescriptor(
-      sourceFile = Path.of("a/b/d.kt"),
-      digest = random.nextBytes(32),
-      outputs = listOf("a/b/d.class")
-    ),
-  )
+      outputs = Array(random.nextInt(0, 20)) { "a/b/${java.lang.Long.toUnsignedString(random.nextLong(), 36)}.class" }.asList()
+    )
+  }
+  sourceDescriptors.sortBy { it.sourceFile }
 
   val file = Files.createTempFile("test", ".arrow")
   RootAllocator(Long.MAX_VALUE).use { allocator ->

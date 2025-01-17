@@ -2,9 +2,13 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
+import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.jps.SourceDescriptor
+import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import org.jetbrains.jps.incremental.storage.*
 import java.nio.file.Path
@@ -16,12 +20,16 @@ internal class BazelBuildDataProvider(
   private val sourceToDescriptor: HashMap<Path, SourceDescriptor>,
   @JvmField val storeFile: Path,
   @JvmField val allocator: RootAllocator,
+  @JvmField val isCleanBuild: Boolean,
 ) : BuildDataProvider {
-  private val stamp = BazelStampStorage(actualDigestMap = actualDigestMap, map = sourceToDescriptor)
+  @JvmField
+  val stampStorage = BazelStampStorage(actualDigestMap = actualDigestMap, map = sourceToDescriptor)
 
-  @JvmField val sourceToOutputMapping = BazelSourceToOutputMapping(map = sourceToDescriptor, relativizer = relativizer)
+  @JvmField
+  val sourceToOutputMapping = BazelSourceToOutputMapping(map = sourceToDescriptor, relativizer = relativizer)
 
-  private val sourceToForm = object : OneToManyPathMapping {
+  @JvmField
+  val sourceToForm = object : OneToManyPathMapping {
     override fun getOutputs(path: String): Collection<String>? = sourceToOutputMapping.getOutputs(path)
 
     override fun getOutputs(file: Path): Collection<Path>? = sourceToOutputMapping.getOutputs(file)
@@ -49,7 +57,7 @@ internal class BazelBuildDataProvider(
   override fun removeStaleTarget(targetId: String, targetTypeId: String) {
   }
 
-  override fun getFileStampStorage(target: BuildTarget<*>): BazelStampStorage = stamp
+  override fun getFileStampStorage(target: BuildTarget<*>): BazelStampStorage = stampStorage
 
   override fun getSourceToOutputMapping(target: BuildTarget<*>): BazelSourceToOutputMapping = sourceToOutputMapping
 
@@ -74,6 +82,9 @@ internal class BazelStampStorage(
   private val actualDigestMap: Map<Path, ByteArray>,
   private val map: HashMap<Path, SourceDescriptor>,
 ) : StampsStorage<ByteArray> {
+  val actualSourceCount: Int
+    get() = actualDigestMap.size
+
   override fun updateStamp(sourceFile: Path, buildTarget: BuildTarget<*>?, currentFileTimestamp: Long) {
     val actualDigest = requireNotNull(actualDigestMap.get(sourceFile)) {
       "No digest is provided for $sourceFile"
@@ -85,10 +96,10 @@ internal class BazelStampStorage(
   }
 
   override fun removeStamp(sourceFile: Path, buildTarget: BuildTarget<*>?) {
-    //synchronized(map) {
-    //  map.get(sourceFile)?.digest = null
-    //}
-    throw UnsupportedOperationException("Must not be used")
+    // used by BazelKotlinFsOperationsHelper (markChunk -> fsState.markDirty)
+    synchronized(map) {
+      map.get(sourceFile)?.digest = null
+    }
   }
 
   override fun getCurrentStampIfUpToDate(file: Path, buildTarget: BuildTarget<*>?, attrs: BasicFileAttributes?): ByteArray? {
@@ -99,10 +110,54 @@ internal class BazelStampStorage(
     throw UnsupportedOperationException("Must not be used")
   }
 
-  fun isDirty(sourceFile: Path): Boolean {
-    val storedDigest = synchronized(map) { map.get(sourceFile)?.digest } ?: return true
-    val actualDigest = actualDigestMap.get(sourceFile) ?: return true
-    return !storedDigest.contentEquals(actualDigest)
+  internal enum class SourceFileStatus {
+    UNCHANGED, CHANGED, NEW, UNCOMPILED
+  }
+
+  fun checkIsDirtyAndUnsetStampIfDirty(
+    toRecompile: Object2ObjectArrayMap<BuildRootDescriptor, Set<Path>>,
+    deletedFiles: MutableCollection<Path>,
+    descriptors: List<JavaSourceRootDescriptor>,
+  ): Boolean {
+    require(actualDigestMap.size == descriptors.size)
+
+    synchronized(map) {
+      var completelyMarkedDirty = true
+      for (rootDescriptor in descriptors) {
+        val sourceFile = rootDescriptor.file
+        val actualDigest = actualDigestMap.get(sourceFile)!!
+        val descriptor = map.get(sourceFile)
+        val status = when {
+          descriptor == null -> SourceFileStatus.NEW
+          descriptor.digest == null -> {
+            // possible reason: the previous compilation failed due to an error in another file, so this file was not compiled
+            // (but we reset digest as it was changed)
+            SourceFileStatus.UNCOMPILED
+          }
+          descriptor.digest.contentEquals(actualDigest) -> SourceFileStatus.UNCHANGED
+          else -> {
+            descriptor.digest = null
+            SourceFileStatus.CHANGED
+          }
+        }
+        if (status == SourceFileStatus.UNCHANGED) {
+          completelyMarkedDirty = false
+        }
+        else {
+          toRecompile.put(rootDescriptor, ObjectArraySet(arrayOf(sourceFile)))
+        }
+      }
+
+      val iterator = map.keys.iterator()
+      while (iterator.hasNext()) {
+        val sourceFile = iterator.next()
+        if (!actualDigestMap.contains(sourceFile)) {
+          deletedFiles.add(sourceFile)
+          iterator.remove()
+        }
+      }
+      return completelyMarkedDirty
+    }
   }
 }
 
@@ -189,16 +244,6 @@ internal class BazelSourceToOutputMapping(
       }
     }
     return result
-  }
-
-  fun findDeletedAndUnsetDigest(known: Map<Path, *>): List<Path> {
-    synchronized(map) {
-      return map.values.asSequence()
-        .filter { !known.containsKey(it.sourceFile) }
-        .onEach { it.digest = null }
-        .map { it.sourceFile }
-        .toList()
-    }
   }
 
   override fun getSourceFileIterator(): Iterator<Path> {

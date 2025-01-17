@@ -65,6 +65,7 @@ internal class BazelKotlinBuilder(
   private val isKotlinBuilderInDumbMode: Boolean,
   private val enableLookupStorageFillingInDumbMode: Boolean = false,
   private val log: RequestLog,
+  private val dataManager: BazelBuildDataProvider,
 ) : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
   companion object {
     const val JPS_KOTLIN_HOME_PROPERTY = "jps.kotlin.home"
@@ -156,13 +157,6 @@ internal class BazelKotlinBuilder(
     buildLogger?.afterChunkBuildStarted(context, chunk)
   }
 
-  /**
-   * Invalidate usages of removed classes.
-   * See KT-13677 for more details.
-   *
-   * todo(1.2.80): move to KotlinChunk
-   * todo(1.2.80): got rid of jpsGlobalContext usages (replace with KotlinCompileContext)
-   */
   private fun markAdditionalFilesForInitialRound(
     kotlinChunk: KotlinChunk,
     chunk: ModuleChunk,
@@ -178,7 +172,7 @@ internal class BazelKotlinBuilder(
         }
       }
     )
-    val fsOperations = BazelKotlinFsOperationsHelper(context, chunk, dirtyFilesHolder, log)
+    val fsOperations = BazelKotlinFsOperationsHelper(context, chunk, dirtyFilesHolder, log, dataManager = dataManager)
 
     val representativeTarget = kotlinContext.targetsBinding[chunk.representativeTarget()] ?: return
 
@@ -242,6 +236,7 @@ internal class BazelKotlinBuilder(
       chunk = chunk,
       dirtyFilesHolder = kotlinDirtyFilesHolder,
       log = log,
+      dataManager = dataManager,
     )
     val proposedExitCode = doBuild(
       chunk = chunk,
@@ -286,7 +281,7 @@ internal class BazelKotlinBuilder(
     if (!kotlinDirtyFilesHolder.hasDirtyOrRemovedFiles) {
       if (isChunkRebuilding) {
         for (target in targets) {
-          kotlinContext.hasKotlinMarker[target] = false
+          kotlinContext.hasKotlinMarker.set(target, false)
         }
       }
 
@@ -329,11 +324,6 @@ internal class BazelKotlinBuilder(
       chunk = chunk,
       messageCollector = messageCollector
     ) ?: return ABORT
-
-    context.testingContext?.buildLogger?.compilingFiles(
-      kotlinDirtyFilesHolder.allDirtyFiles,
-      kotlinDirtyFilesHolder.allRemovedFilesFiles
-    )
 
     val outputItemCollector = doCompileModuleChunk(
       kotlinChunk = kotlinChunk,
