@@ -5,7 +5,6 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentWrapper
-import com.intellij.notebooks.visualization.outputs.getEditorBackground
 import com.intellij.notebooks.visualization.ui.registerEditorSizeWatcher
 import com.intellij.notebooks.visualization.ui.textEditingAreaWidth
 import java.awt.BorderLayout
@@ -24,11 +23,6 @@ internal class SurroundingComponent private constructor(private val innerCompone
 
   fun fireResize() {
     this.firePropertyChange("preferredSize", null, preferredSize)
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-    background = getEditorBackground()
   }
 
   override fun getPreferredSize(): Dimension = super.getPreferredSize().also {

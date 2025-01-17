@@ -1,5 +1,6 @@
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.notebooks.ui.bind
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.SwingClientProperty
 import com.intellij.notebooks.visualization.context.NotebookDataContext
@@ -69,7 +70,8 @@ class EditorCellOutputsView(
     }
   }
 
-  private val outerComponent = UiDataProvider.wrapComponent(SurroundingComponent.create(editor, innerComponent)){ sink ->
+  private val surroundingComponent = SurroundingComponent.create(editor, innerComponent)
+  private val outerComponent = UiDataProvider.wrapComponent(surroundingComponent) { sink ->
     sink[NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL] = cell.interval
   }
 
@@ -93,6 +95,9 @@ class EditorCellOutputsView(
     cell.outputs.scrollingEnabled.afterChange(this) {
       innerComponent.scrollingEnabled = it
       innerComponent.revalidate()
+    }
+    editor.notebookAppearance.editorBackgroundColor.bind(this) {
+      surroundingComponent.background = it
     }
     update()
   }
