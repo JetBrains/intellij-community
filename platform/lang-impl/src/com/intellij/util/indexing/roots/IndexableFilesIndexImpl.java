@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.application.ReadAction;
@@ -103,7 +103,7 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     ModuleDependencyIndex moduleDependencyIndex = ModuleDependencyIndex.getInstance(project);
     if (!Registry.is("ide.workspace.model.sdk.remove.custom.processing")) {
       List<Sdk> sdks = new ArrayList<>();
-      for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      for (Sdk sdk : ProjectJdkTable.getInstance(project).getAllJdks()) {
         if (moduleDependencyIndex.hasDependencyOn(sdk)) {
           sdks.add(sdk);
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.WriteAction;
@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +117,7 @@ final class UnknownMissingSdkFix implements UnknownSdkFix {
     WriteAction.run(() -> {
       ProjectJdkTable table = ProjectJdkTable.getInstance();
       if (sdkName != null) {
-        Sdk clash = table.findJdk(sdkName);
+        SdkEntity clash = SdkUtils.findClashingSdk(sdkName, sdk);
         if (clash != null) {
           LOG.warn("SDK with name " + sdkName + " already exists: clash=" + clash + ", new=" + sdk);
           return;
