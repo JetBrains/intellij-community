@@ -17,7 +17,7 @@ abstract class RegexFacadeTest {
   fun matchingFromPosition() {
     val regex = regex("[0-9]+")
     val string = TextMateString.fromString("12:00pm")
-    val match = regex.match(string, 2, -1, true, null)
+    val match = regex.match(string, 2, true, true, null)
     assertEquals(TextMateRange(3, 5), match.codePointRange(string.bytes))
   }
 
@@ -36,7 +36,7 @@ abstract class RegexFacadeTest {
     val regex = regex("мир")
     val text = "привет, мир; привет, мир!"
     val string = TextMateString.fromString(text)
-    val match = regex.match(string, byteOffsetByCharOffset(text, 0, 9), -1, true, null)
+    val match = regex.match(string, byteOffsetByCharOffset(text, 0, 9), true, true, null)
     assertEquals(TextMateRange(21, 24), match.codePointRange(string.bytes))
   }
 

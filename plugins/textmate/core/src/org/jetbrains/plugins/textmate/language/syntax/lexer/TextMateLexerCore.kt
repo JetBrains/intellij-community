@@ -92,7 +92,7 @@ class TextMateLexerCore(
     var lastSuccessStateOccursCount = 0
     var lastMovedOffset = lineStartOffset
 
-    val matchBeginOfString = lineStartOffset == 0
+    val matchBeginString = lineStartOffset == 0
     var anchorByteOffset = -1 // makes sense only for a line, cannot be used across lines
 
     val string = fromCharSequence(line)
@@ -105,8 +105,8 @@ class TextMateLexerCore(
         val matchWhile = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.WHILE,
                                                           string = string,
                                                           byteOffset = lineByteOffset,
-                                                          anchorOffset = anchorByteOffset,
-                                                          matchBeginOfString = matchBeginOfString,
+                                                          matchBeginPosition = anchorByteOffset == lineByteOffset,
+                                                          matchBeginString = matchBeginString,
                                                           lexerState = whileState,
                                                           checkCancelledCallback = checkCancelledCallback)
         if (matchWhile.matched) {
@@ -132,8 +132,8 @@ class TextMateLexerCore(
       val currentState = mySyntaxMatcher.matchRule(syntaxNodeDescriptor = lastRule,
                                                    string = string,
                                                    byteOffset = lineByteOffset,
-                                                   gosOffset = anchorByteOffset,
-                                                   matchBeginOfString = matchBeginOfString,
+                                                   matchBeginPosition = anchorByteOffset == lineByteOffset,
+                                                   matchBeginString = matchBeginString,
                                                    priority = TextMateWeigh.Priority.NORMAL,
                                                    currentScope = myCurrentScope,
                                                    checkCancelledCallback = checkCancelledCallback)
@@ -144,8 +144,8 @@ class TextMateLexerCore(
       val endMatch = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.END,
                                                       string = string,
                                                       byteOffset = lineByteOffset,
-                                                      anchorOffset = anchorByteOffset,
-                                                      matchBeginOfString = matchBeginOfString,
+                                                      matchBeginPosition = anchorByteOffset == lineByteOffset,
+                                                      matchBeginString = matchBeginString,
                                                       lexerState = lastState,
                                                       checkCancelledCallback = checkCancelledCallback)
       if (endMatch.matched && (!currentMatch.matched || currentMatch.byteOffset().start >= endMatch.byteOffset().start || lastState == currentState)) {

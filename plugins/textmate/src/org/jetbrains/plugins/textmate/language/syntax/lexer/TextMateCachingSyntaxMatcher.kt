@@ -24,17 +24,23 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
     byteOffset: Int,
-    gosOffset: Int,
-    matchBeginOfString: Boolean,
+    matchBeginPosition: Boolean,
+    matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
     currentScope: TextMateScope,
     checkCancelledCallback: Runnable?,
   ): TextMateLexerState {
     return CACHE.get(
-      MatchKey(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope)) {
+      MatchKey(syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, priority, currentScope)) {
       requireNotNull(it)
-      delegate.matchRule(it.syntaxNodeDescriptor, it.string, it.byteOffset, it.gosOffset, it.matchBeginOfString,
-                         it.priority, it.currentScope, checkCancelledCallback)
+      delegate.matchRule(syntaxNodeDescriptor = it.syntaxNodeDescriptor,
+                         string = it.string,
+                         byteOffset = it.byteOffset,
+                         matchBeginPosition = it.matchBeginPosition,
+                         matchBeginString = it.matchBeginString,
+                         priority = it.priority,
+                         currentScope = it.currentScope,
+                         checkCancelledCallback = checkCancelledCallback)
     }
   }
 
@@ -42,20 +48,20 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
     keyName: Constants.StringKey,
     string: TextMateString,
     byteOffset: Int,
-    anchorOffset: Int,
-    matchBeginOfString: Boolean,
+    matchBeginPosition: Boolean,
+    matchBeginString: Boolean,
     lexerState: TextMateLexerState,
     checkCancelledCallback: Runnable?,
   ): MatchData {
-    return delegate.matchStringRegex(keyName, string, byteOffset, anchorOffset, matchBeginOfString, lexerState, checkCancelledCallback)
+    return delegate.matchStringRegex(keyName, string, byteOffset, matchBeginPosition, matchBeginString, lexerState, checkCancelledCallback)
   }
 
   private data class MatchKey(
     val syntaxNodeDescriptor: SyntaxNodeDescriptor,
     val string: TextMateString,
     val byteOffset: Int,
-    val gosOffset: Int,
-    val matchBeginOfString: Boolean,
+    val matchBeginPosition: Boolean,
+    val matchBeginString: Boolean,
     val priority: TextMateWeigh.Priority,
     val currentScope: TextMateScope,
   )

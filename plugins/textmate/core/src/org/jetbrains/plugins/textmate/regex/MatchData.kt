@@ -1,11 +1,8 @@
 package org.jetbrains.plugins.textmate.regex
 
 import org.jetbrains.plugins.textmate.regex.RegexUtil.codePointsRangeByByteRange
-import org.joni.Region
-import kotlin.math.max
 
-class MatchData private constructor(val matched: Boolean,
-                                    private val offsets: IntArray) {
+data class MatchData(val matched: Boolean, private val offsets: IntArray) {
   fun count(): Int {
     return offsets.size / 2
   }
@@ -47,18 +44,5 @@ class MatchData private constructor(val matched: Boolean,
 
   companion object {
     val NOT_MATCHED: MatchData = MatchData(false, IntArray(0))
-
-    fun fromRegion(matchedRegion: Region?): MatchData {
-      if (matchedRegion != null) {
-        val offsets = IntArray(matchedRegion.numRegs * 2)
-        for (i in 0..<matchedRegion.numRegs) {
-          val startIndex = i * 2
-          offsets[startIndex] = max(matchedRegion.getBeg(i), 0)
-          offsets[startIndex + 1] = max(matchedRegion.getEnd(i), 0)
-        }
-        return MatchData(true, offsets)
-      }
-      return NOT_MATCHED
-    }
   }
 }

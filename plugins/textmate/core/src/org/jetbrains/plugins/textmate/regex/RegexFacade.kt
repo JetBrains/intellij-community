@@ -5,8 +5,8 @@ interface RegexFacade {
 
   fun match(string: TextMateString,
             byteOffset: Int,
-            gosOffset: Int,
-            matchBeginOfString: Boolean,
+            matchBeginPosition: Boolean,
+            matchBeginString: Boolean,
             checkCancelledCallback: Runnable?): MatchData
 }
 

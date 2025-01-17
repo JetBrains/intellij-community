@@ -13,8 +13,8 @@ interface TextMateSyntaxMatcher {
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
     byteOffset: Int,
-    gosOffset: Int,
-    matchBeginOfString: Boolean,
+    matchBeginPosition: Boolean,
+    matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
     currentScope: TextMateScope,
     checkCancelledCallback: Runnable?,
@@ -24,8 +24,8 @@ interface TextMateSyntaxMatcher {
     keyName: Constants.StringKey,
     string: TextMateString,
     byteOffset: Int,
-    anchorOffset: Int,
-    matchBeginOfString: Boolean,
+    matchBeginPosition: Boolean,
+    matchBeginString: Boolean,
     lexerState: TextMateLexerState,
     checkCancelledCallback: Runnable?,
   ): MatchData
@@ -40,8 +40,8 @@ class TextMateSyntaxMatcherImpl(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
     byteOffset: Int,
-    gosOffset: Int,
-    matchBeginOfString: Boolean,
+    matchBeginPosition: Boolean,
+    matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
     currentScope: TextMateScope,
     checkCancelledCallback: Runnable?,
@@ -50,23 +50,33 @@ class TextMateSyntaxMatcherImpl(
     val children = syntaxNodeDescriptor.children
     for (child in children) {
       resultState = moreImportantState(resultState,
-                                       matchFirstChild(child, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope))
+                                       matchFirstChild(syntaxNodeDescriptor = child,
+                                                       string = string,
+                                                       byteOffset = byteOffset,
+                                                       matchBeginPosition = matchBeginPosition,
+                                                       matchBeginString = matchBeginString,
+                                                       priority = priority,
+                                                       currentScope = currentScope))
       if (resultState.matchData.matched && resultState.matchData.byteOffset().start == byteOffset) {
         // Optimization. There cannot be anything more `important` than the current state matched from the very beginning
         break
       }
     }
-    return moreImportantState(resultState,
-                              matchInjections(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, currentScope,
-                                              checkCancelledCallback))
+    return moreImportantState(resultState, matchInjections(syntaxNodeDescriptor = syntaxNodeDescriptor,
+                                                           string = string,
+                                                           byteOffset = byteOffset,
+                                                           matchBeginPosition = matchBeginPosition,
+                                                           matchBeginString = matchBeginString,
+                                                           currentScope = currentScope,
+                                                           checkCancelledCallback = checkCancelledCallback))
   }
 
   override fun matchStringRegex(
     keyName: Constants.StringKey,
     string: TextMateString,
     byteOffset: Int,
-    anchorOffset: Int,
-    matchBeginOfString: Boolean,
+    matchBeginPosition: Boolean,
+    matchBeginString: Boolean,
     lexerState: TextMateLexerState,
     checkCancelledCallback: Runnable?,
   ): MatchData {
@@ -78,15 +88,19 @@ class TextMateSyntaxMatcherImpl(
     else {
       regex.toString()
     }
-    return regexFactory.regex(regexString).match(string, byteOffset, anchorOffset, matchBeginOfString, checkCancelledCallback)
+    return regexFactory.regex(regexString).match(string = string,
+                                                 byteOffset = byteOffset,
+                                                 matchBeginPosition = matchBeginPosition,
+                                                 matchBeginString = matchBeginString,
+                                                 checkCancelledCallback = checkCancelledCallback)
   }
 
   private fun matchFirstChild(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
     byteOffset: Int,
-    gosOffset: Int,
-    matchBeginOfString: Boolean,
+    matchBeginPosition: Boolean,
+    matchBeginString: Boolean,
     priority: TextMateWeigh.Priority,
     currentScope: TextMateScope,
     checkCancelledCallback: Runnable? = null,
@@ -94,19 +108,19 @@ class TextMateSyntaxMatcherImpl(
     val match = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.MATCH)
     if (match != null) {
       val regex = regexFactory.regex(match.toString())
-      val matchData = regex.match(string, byteOffset, gosOffset, matchBeginOfString, checkCancelledCallback)
+      val matchData = regex.match(string, byteOffset, matchBeginPosition, matchBeginString, checkCancelledCallback)
       return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
     }
     val begin = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.BEGIN)
     if (begin != null) {
       val regex = regexFactory.regex(begin.toString())
-      val matchData = regex.match(string, byteOffset, gosOffset, matchBeginOfString, checkCancelledCallback)
+      val matchData = regex.match(string, byteOffset, matchBeginPosition, matchBeginString, checkCancelledCallback)
       return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
     }
     if (syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.END) != null) {
       return TextMateLexerState.notMatched(syntaxNodeDescriptor)
     }
-    return matchRule(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope,
+    return matchRule(syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, priority, currentScope,
                      checkCancelledCallback)
   }
 
@@ -135,8 +149,8 @@ class TextMateSyntaxMatcherImpl(
     syntaxNodeDescriptor: SyntaxNodeDescriptor,
     string: TextMateString,
     byteOffset: Int,
-    gosOffset: Int,
-    matchBeginOfString: Boolean,
+    matchBeginPosition: Boolean,
+    matchBeginString: Boolean,
     currentScope: TextMateScope,
     checkCancelledCallback: Runnable?,
   ): TextMateLexerState {
@@ -149,7 +163,7 @@ class TextMateSyntaxMatcherImpl(
         continue
       }
       val injectionState: TextMateLexerState? =
-        matchRule(injection.syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, selectorWeigh.priority,
+        matchRule(injection.syntaxNodeDescriptor, string, byteOffset, matchBeginPosition, matchBeginString, selectorWeigh.priority,
                   currentScope, checkCancelledCallback)
       resultState = moreImportantState(resultState, injectionState!!)
     }
