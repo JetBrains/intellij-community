@@ -19,7 +19,7 @@ import kotlin.reflect.KClass
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
-object Storage {
+private object Storage {
   val logger = logger<Storage>()
 }
 
@@ -128,14 +128,14 @@ data class DurableSnapshotWithPartitions(
   val partitions: Map<UID, Int>,
 ) {
   companion object {
-    val Empty = DurableSnapshotWithPartitions(DurableSnapshot.Empty, emptyMap())
+    val Empty: DurableSnapshotWithPartitions = DurableSnapshotWithPartitions(DurableSnapshot.Empty, emptyMap())
   }
 }
 
 private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(snapshotWithPartitions: DurableSnapshotWithPartitions, isFailFast: Boolean) {
   span("applyDurableSnapshotWithPartitions") {
     val memoizedEIDs = HashMap<UID, EID>()
-    applySnapshot(snapshotWithPartitions.snapshot) { uid ->
+    applySnapshotNew(snapshotWithPartitions.snapshot) { uid ->
       val partition = snapshotWithPartitions.partitions[uid]!!
       memoizedEIDs.computeIfAbsent(uid) { EidGen.freshEID(partition) }
     }
@@ -245,4 +245,3 @@ fun DbContext<Q>.reportSchemaProblems(problems: List<MissingRequiredAttribute>, 
     }
   }
 }
-
