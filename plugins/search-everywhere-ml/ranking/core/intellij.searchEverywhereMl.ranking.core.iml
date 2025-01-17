@@ -153,5 +153,6 @@
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.ext" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
   </component>
 </module>

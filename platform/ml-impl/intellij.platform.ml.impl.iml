@@ -54,5 +54,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="library" exported="" name="jetbrains.mlapi.ml.tools" level="project" />
     <orderEntry type="library" exported="" name="jetbrains.mlapi.ml.tools.suspendable" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
   </component>
 </module>
