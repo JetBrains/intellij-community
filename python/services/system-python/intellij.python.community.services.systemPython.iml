@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="intellij.python.sdk" />
     <orderEntry type="module" module-name="intellij.python.community" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.extensions" />

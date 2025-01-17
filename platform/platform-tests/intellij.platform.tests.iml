@@ -107,7 +107,6 @@
     <orderEntry type="module" module-name="intellij.platform.buildData" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="ktor-server-cio" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="rhino" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />

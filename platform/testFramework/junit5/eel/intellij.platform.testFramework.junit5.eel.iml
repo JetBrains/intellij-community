@@ -16,7 +16,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />

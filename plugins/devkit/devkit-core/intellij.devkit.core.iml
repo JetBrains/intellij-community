@@ -85,7 +85,6 @@
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="library" name="snakeyaml" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
 </module>

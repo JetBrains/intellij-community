@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="module" module-name="intellij.platform.ijent" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />

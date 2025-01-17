@@ -12,7 +12,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.python.parser" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.python.community" />

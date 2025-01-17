@@ -60,7 +60,6 @@
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" name="netty-codec-protobuf" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
   <component name="copyright">
