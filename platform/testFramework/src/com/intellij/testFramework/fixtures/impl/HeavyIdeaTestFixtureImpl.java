@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
+import com.intellij.testFramework.fixtures.TestFixtureProjectPathProvider;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -64,15 +65,17 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String mySanitizedName;
-  private final Path myProjectPath;
+  private final @Nullable TestFixtureProjectPathProvider myProjectPathProvider;
   private final boolean myIsDirectoryBasedProject;
   private SdkLeakTracker mySdkLeakTracker;
 
   private AccessToken projectTracker;
 
-  HeavyIdeaTestFixtureImpl(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject) {
+  HeavyIdeaTestFixtureImpl(@NotNull String name,
+                           @Nullable TestFixtureProjectPathProvider projectPathProvider,
+                           boolean isDirectoryBasedProject) {
     mySanitizedName = FileUtil.sanitizeFileName(name, false);
-    myProjectPath = projectPath;
+    myProjectPathProvider = projectPathProvider;
     myIsDirectoryBasedProject = isDirectoryBasedProject;
   }
 
@@ -202,12 +205,16 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   private @NotNull Path generateProjectPath() {
     Path tempDirectory;
-    if (myProjectPath == null) {
+    Path projectPath = null;
+    if (myProjectPathProvider != null) {
+      projectPath = myProjectPathProvider.get();
+    }
+    if (projectPath == null) {
       tempDirectory = TemporaryDirectory.generateTemporaryPath(mySanitizedName);
       myFilesToDelete.add(tempDirectory);
     }
     else {
-      tempDirectory = myProjectPath;
+      tempDirectory = projectPath;
     }
     return tempDirectory.resolve(mySanitizedName + (myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
   }

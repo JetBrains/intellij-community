@@ -33,7 +33,15 @@ public abstract class IdeaTestFixtureFactory {
 
   public abstract @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, boolean isDirectoryBasedProject);
 
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject);
+  public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
+                                                                         @Nullable Path projectPath,
+                                                                         boolean isDirectoryBasedProject) {
+    return createFixtureBuilder(name, () -> projectPath, isDirectoryBasedProject);
+  }
+
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
+                                                                                  @NotNull TestFixtureProjectPathProvider projectPathProvider,
+                                                                                  boolean isDirectoryBasedProject);
 
   public abstract @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String projectName);
 
