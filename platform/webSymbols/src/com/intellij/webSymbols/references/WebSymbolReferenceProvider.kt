@@ -148,7 +148,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
   private open class NameSegmentReference(
     private val element: PsiElement,
     private val rangeInElement: TextRange,
-    protected val nameSegments: Collection<WebSymbolNameSegment>,
+    val nameSegments: Collection<WebSymbolNameSegment>,
   )
     : WebSymbolReference {
 
@@ -266,11 +266,11 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
       else -1
     }
 
+    @Suppress("HardCodedStringLiteral")
     private fun @Nls String.sanitizeHtmlOutputForProblemMessage(): @Nls String =
       this.replace(Regex("</?code>"), "`")
         .replace(Regex("</?[a-zA-Z-]+[^>]*>"), "")
         .let {
-          @Suppress("HardCodedStringLiteral")
           StringUtil.unescapeXmlEntities(it)
         }
   }
