@@ -139,7 +139,7 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
     }
   }
   
-  fun `test module with production name like a test module`() {
+  fun `test module with production roots named like a test module`() {
     val name = "a.tests.actually.not"
     addModule(name, withTests = false)
     buildAndCheck {
