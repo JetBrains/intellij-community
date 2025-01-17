@@ -3,40 +3,13 @@ package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.nio.file.Path
 
 @ApiStatus.NonExtendable
-interface GradleSettingScriptBuilder<Self: GradleSettingScriptBuilder<Self>> : ScriptElementBuilder {
-
-  fun setProjectName(projectName: String): Self
-
-  fun setProjectDir(name: String, relativePath: String): Self
-
-  fun include(vararg name: String): Self
-
-  fun includeFlat(vararg name: String): Self
+interface GradleSettingScriptBuilder<Self : GradleSettingScriptBuilder<Self>>
+  : GradleSettingScriptBuilderCore<Self> {
 
   fun include(relativePath: Path): Self
-
-  fun includeBuild(name: String): Self
-
-  fun pluginManagement(configure: ScriptTreeBuilder.() -> Unit): Self
-
-  fun enableFeaturePreview(featureName: String): Self
-
-  fun addCode(text: String): Self
-
-  fun addCode(expression: Expression): Self
-
-  fun addCode(configure: ScriptTreeBuilder.() -> Unit): Self
-
-  fun generateTree(): BlockElement
-
-  fun generate(): String
 
   companion object {
 
