@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -45,7 +45,7 @@ private class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
       builder.mutableLibraryMap.getOrPutDataByEntity(addChange.newEntity) {
         LibraryBridgeImpl(
           libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project),
-          project = project,
+          origin = LibraryOrigin.OfProject(project),
           initialId = addChange.newEntity.symbolicId,
           initialEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage,
           targetBuilder = builder,
@@ -147,7 +147,7 @@ class ProjectLibraryTableBridgeImpl(
       .map { libraryEntity ->
         Pair(libraryEntity, LibraryBridgeImpl(
           libraryTable = this@ProjectLibraryTableBridgeImpl,
-          project = project,
+          origin = LibraryOrigin.OfProject(project),
           initialId = libraryEntity.symbolicId,
           initialEntityStorage = entityStorage,
           targetBuilder = targetBuilder

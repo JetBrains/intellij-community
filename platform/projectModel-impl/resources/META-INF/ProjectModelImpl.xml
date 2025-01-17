@@ -36,9 +36,6 @@
     <!-- Global Workspace Model -->
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>
-    <!-- Global Workspace Model Libraries -->
-    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge"
-                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl"/>
     <!-- Global or Custom Workspace Model Libraries -->
     <workspace.bridgeInitializer
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalAndCustomLibraryTableBridgeInitializer"/>
@@ -95,6 +92,8 @@
                  description="Enable workspace model checking for accessing bridges from WSM listeners"/>
     <registryKey key="ide.workspace.model.sdk.remove.custom.processing" defaultValue="false" restartRequired="true"
                  description="Removes custom processing of Global Libraries and SDKs in the Workspace Model"/>
+    <registryKey key="ide.workspace.model.per.environment.model.separation" defaultValue="false" restartRequired="true"
+                 description="Enable existence of multiple workspace models, one per each isolated environment"/>
 
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.OrphanageActivity"/>

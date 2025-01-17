@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.google.common.collect.HashBiMap
@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerat
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
@@ -34,7 +35,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
           //if a module-level library from ModifiableRootModel is changed, the changes must not be committed to the model until
           //ModifiableRootModel is committed. So we place copies of LibraryBridge instances to the modifiable model. If the model is disposed
           //these copies are disposed; if the model is committed only changed copies will be included to the model, otherwise they will be disposed.
-          val modifiableCopy = LibraryBridgeImpl(this, modifiableModel.project, libraryEntry.symbolicId,
+          val modifiableCopy = LibraryBridgeImpl(this, LibraryOrigin.OfProject(modifiableModel.project), libraryEntry.symbolicId,
                                                  modifiableModel.entityStorageOnDiff,
                                                  modifiableModel.diff)
           copyToOriginal[modifiableCopy] = originalLibrary
@@ -93,7 +94,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
     val library = LibraryBridgeImpl(
       libraryTable = ModuleRootComponentBridge.getInstance(modifiableModel.module).moduleLibraryTable,
-      project = modifiableModel.project,
+      origin = LibraryOrigin.OfProject(modifiableModel.project),
       initialId = libraryEntity.symbolicId,
       initialEntityStorage = modifiableModel.entityStorageOnDiff,
       targetBuilder = modifiableModel.diff

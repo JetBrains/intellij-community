@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.application.ApplicationManager
@@ -8,13 +8,19 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.BridgeInitializer
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridgeRegistry
+import com.intellij.workspaceModel.ide.toPath
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
 class GlobalSdkBridgeInitializer : BridgeInitializer {
@@ -37,7 +43,7 @@ class GlobalSdkBridgeInitializer : BridgeInitializer {
 }
 
 @ApiStatus.Internal
-class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
+class GlobalSdkBridgesLoader(val descriptor: EelDescriptor) : GlobalSdkTableBridge {
 
   override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                                 initialEntityStorage: VersionedEntityStorage): () -> Unit {
@@ -63,6 +69,10 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
     val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
 
     for (addChange in addChanges) {
+      if (shouldSkipEntityProcessing(addChange)) {
+        continue
+      }
+
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
         val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
@@ -79,6 +89,9 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
     if (changes.isEmpty()) return
 
     for (change in changes) {
+      if (shouldSkipEntityProcessing(change)) {
+        continue
+      }
       LOG.debug { "Process sdk change $change" }
       when (change) {
         is EntityChange.Added -> {
@@ -108,8 +121,30 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
     }
   }
 
+  /**
+   * The events about changes in global models are broadcasted to all existing `GlobalWorkspaceModel`s.
+   * Not all of them are interested in every change, especially if the change happens in an unrelated environment.
+   */
+  private fun shouldSkipEntityProcessing(entityChange: EntityChange<SdkEntity>): Boolean {
+    if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+      return false
+    }
+    return (entityChange.oldEntity ?: entityChange.newEntity)?.homePath?.toPath()?.getEelDescriptor() != descriptor
+  }
 
   companion object {
     private val LOG = logger<GlobalSdkBridgesLoader>()
   }
+}
+
+
+@ApiStatus.Internal
+class GlobalSdkTableBridgeRegistryImpl : GlobalSdkTableBridgeRegistry {
+  val registry: MutableMap<EelDescriptor, GlobalSdkTableBridge> = ConcurrentHashMap()
+  override fun getTableBridge(eelDescriptor: EelDescriptor): GlobalSdkTableBridge {
+    return registry.computeIfAbsent(eelDescriptor) {
+      GlobalSdkBridgesLoader(eelDescriptor)
+    }
+  }
+
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
@@ -21,8 +22,8 @@ import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
-  private val libraryTableDelegate = GlobalLibraryTableDelegate(this, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))
+class GlobalLibraryTableBridgeImpl(val descriptor: EelDescriptor) : GlobalLibraryTableBridge, Disposable {
+  private val libraryTableDelegate = GlobalLibraryTableDelegate(this, descriptor, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))
 
   override fun initializeBridges(changes: Map<Class<*>, List<EntityChange<*>>>,
                                         builder: MutableEntityStorage) = initializeLibraryBridgesTimeMs.addMeasuredTime {
@@ -66,7 +67,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   override fun getPresentation(): LibraryTablePresentation = GLOBAL_LIBRARY_TABLE_PRESENTATION
 
   override fun getModifiableModel(): LibraryTable.ModifiableModel {
-    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, createEntitySourceForGlobalLibrary())
+    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, descriptor, createEntitySourceForGlobalLibrary())
   }
 
   override fun dispose(): Unit = Disposer.dispose(libraryTableDelegate)
@@ -78,7 +79,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   override fun removeListener(listener: LibraryTable.Listener) = libraryTableDelegate.removeListener(listener)
 
   private fun createEntitySourceForGlobalLibrary(): EntitySource {
-    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
+    val virtualFileUrlManager = GlobalWorkspaceModel.getInstance(descriptor).getVirtualFileUrlManager()
     val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUrl(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
     return JpsGlobalFileEntitySource(globalLibrariesFile)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -14,6 +14,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.EelNioBridgeService
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
@@ -37,13 +41,26 @@ import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
-@Service
 @OptIn(EntityStorageInstrumentationApi::class)
 @ApiStatus.Internal
-class GlobalWorkspaceModel : Disposable {
+class GlobalWorkspaceModel(
+  /**
+   * Despite the prefix `Global`, the IDE can have multiple workspace models per isolated environment, such as WSL and Docker containers.
+   *
+   * Logically, the entities existing within one environment have no sense on the other environment (i.e., the files in Docker are unreachable from the host OS);
+   * hence we need to:
+   * 1. Prevent entities from one environment from appearing for another one;
+   * 2. Ensure that the namespace of "global" entities (such as SDKs and global libraries) is local to each environment.
+   */
+  val eelDescriptor: EelDescriptor,
+  val internalEnvironmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
+) : Disposable {
+
   /**
    * Store link to the project from which changes came from. It's needed to avoid redundant changes application at [applyStateToProject]
    */
@@ -52,7 +69,10 @@ class GlobalWorkspaceModel : Disposable {
   // Marker indicating that changes came from global storage
   internal var isFromGlobalWorkspaceModel: Boolean = false
   private var virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
-  private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()?.apply { setVirtualFileUrlManager(virtualFileManager) }
+  private val globalWorkspaceModelCache = GlobalWorkspaceModelCache.getInstance()?.apply {
+    setVirtualFileUrlManager(virtualFileManager)
+    registerCachePartition(internalEnvironmentName)
+  }
   private val globalEntitiesFilter = { entitySource: EntitySource -> entitySource is GlobalStorageEntitySource }
 
   val entityStorage: VersionedEntityStorageImpl
@@ -75,7 +95,7 @@ class GlobalWorkspaceModel : Disposable {
         val activity = StartUpMeasurer.startActivity("global cache loading")
         val previousStorage: MutableEntityStorage?
         val loadingCacheTime = measureTimeMillis {
-          previousStorage = cache.loadCache()
+          previousStorage = cache.loadCache(internalEnvironmentName)
         }
         val storage = if (previousStorage == null) {
           MutableEntityStorage.create()
@@ -94,7 +114,7 @@ class GlobalWorkspaceModel : Disposable {
 
     val callback = JpsGlobalModelSynchronizer.getInstance()
       .apply { setVirtualFileUrlManager(virtualFileManager) }
-      .loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
+      .loadInitialState(internalEnvironmentName, mutableEntityStorage, entityStorage, loadedFromCache)
     val changes = (mutableEntityStorage as MutableEntityStorageInstrumentation).collectChanges()
     entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
     callback.invoke()
@@ -169,7 +189,7 @@ class GlobalWorkspaceModel : Disposable {
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ThreadingAssertions.assertWriteAccess()
 
-    GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers().forEach {
+    GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers(eelDescriptor).forEach {
       logErrorOnEventHandling {
         it.initializeBridges(change, builder)
       }
@@ -179,19 +199,20 @@ class GlobalWorkspaceModel : Disposable {
   private fun onBeforeChanged(change: VersionedStorageChange) {
     ThreadingAssertions.assertWriteAccess()
 
-    GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers().forEach { it.handleBeforeChangeEvents(change) }
+    GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers(eelDescriptor).forEach { it.handleBeforeChangeEvents(change) }
   }
 
   @RequiresWriteLock
   private fun onChanged(change: VersionedStorageChange) {
     ThreadingAssertions.assertWriteAccess()
 
-    GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers().forEach { it.handleChangedEvents(change) }
+    GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers(eelDescriptor).forEach { it.handleChangedEvents(change) }
 
     globalWorkspaceModelCache?.scheduleCacheSave()
     isFromGlobalWorkspaceModel = true
     ProjectManager.getInstance().openProjects.forEach { project ->
-      if (!project.isDisposed) applyStateToProject(project)
+      if (project.isDisposed || project.getEelDescriptor() != eelDescriptor) return@forEach
+      applyStateToProject(project)
     }
     isFromGlobalWorkspaceModel = false
   }
@@ -306,7 +327,16 @@ class GlobalWorkspaceModel : Disposable {
 
   companion object {
     private val LOG = logger<GlobalWorkspaceModel>()
-    fun getInstance(): GlobalWorkspaceModel = ApplicationManager.getApplication().service()
+
+    @JvmStatic
+    fun getInstance(descriptor: EelDescriptor): GlobalWorkspaceModel = ApplicationManager.getApplication().service<GlobalWorkspaceModelRegistry>().getGlobalModel(descriptor)
+
+    @JvmStatic
+    fun getInstanceByInternalName(name: GlobalWorkspaceModelCache.InternalEnvironmentName): GlobalWorkspaceModel = ApplicationManager.getApplication().service<GlobalWorkspaceModelRegistry>().getGlobalModelByDescriptorName(name)
+
+    @JvmStatic
+    fun getInstances(): List<GlobalWorkspaceModel> = ApplicationManager.getApplication().service<GlobalWorkspaceModelRegistry>().getGlobalModels()
+
 
     private val updatesCounter: AtomicLong = AtomicLong()
     private val totalUpdatesTimeMs = MillisecondsMeasurer()
@@ -354,3 +384,51 @@ private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPro
 
 private fun JpsGlobalFileEntitySource.copy(manager: VirtualFileUrlManager): JpsGlobalFileEntitySource =
   JpsGlobalFileEntitySource(file.createCopyAtManager(manager))
+
+@ApiStatus.Internal
+@VisibleForTesting
+@Service(Service.Level.APP)
+class GlobalWorkspaceModelRegistry {
+  companion object {
+    const val GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID: String = "Local"
+  }
+  private val environmentToModel: MutableMap<EelDescriptor, GlobalWorkspaceModel> = ConcurrentHashMap()
+
+  fun getGlobalModel(descriptor: EelDescriptor): GlobalWorkspaceModel {
+    val protectedDescriptor = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) descriptor else LocalEelDescriptor
+    val internalName = if (protectedDescriptor is LocalEelDescriptor) {
+      GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID
+    }
+    else {
+      EelNioBridgeService.getInstanceSync().tryGetId(descriptor)
+      ?: throw IllegalArgumentException("Descriptor $descriptor must be registered before using in Workspace Model")
+    }
+    return environmentToModel.computeIfAbsent(descriptor) { GlobalWorkspaceModel(descriptor, InternalEnvironmentNameImpl(internalName)) }
+  }
+
+  fun getGlobalModelByDescriptorName(name: GlobalWorkspaceModelCache.InternalEnvironmentName): GlobalWorkspaceModel {
+    val protectedName = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) name.name else GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID
+    val descriptor = if (protectedName == GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID) {
+      LocalEelDescriptor
+    }
+    else {
+      EelNioBridgeService.getInstanceSync().tryGetDescriptorByName(protectedName)
+      ?: throw IllegalArgumentException("Descriptor $protectedName must be registered in ${EelNioBridgeService::class.qualifiedName} before using in Workspace Model")
+    }
+    val model = getGlobalModel(descriptor)
+    return model
+  }
+
+  fun getGlobalModels(): List<GlobalWorkspaceModel> {
+    return environmentToModel.values.toList()
+  }
+
+  @TestOnly
+  fun dropCaches() {
+    environmentToModel.clear()
+  }
+
+}
+
+@ApiStatus.Internal
+class InternalEnvironmentNameImpl(override val name: String) : GlobalWorkspaceModelCache.InternalEnvironmentName
