@@ -20,4 +20,5 @@ inspections:
       - "**/resources/tips/**"
   - inspection: LightServiceMigrationXML
     ignore:
+      - "plugins/devkit/devkit-core/resources/intellij.devkit.core.xml"
       - "plugins/git4idea/resources/intellij.vcs.git.xml"
