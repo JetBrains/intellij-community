@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.ide.impl.OpenProjectTask
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
@@ -199,5 +200,18 @@ fun <T : Any> extensionPointFixture(epName: ExtensionPointName<T>, extension: T)
   epName.point.registerExtension(extension, disposable)
   initialized(extension) {
     Disposer.dispose(disposable)
+  }
+}
+
+/**
+ * Ensures [registryValue] has [value] state during the lifetime of the fixture.
+ * After the fixture is disposed, the previous value is restored.
+ */
+@TestOnly
+fun registryValueFixture(registryValue: RegistryValue, value: Boolean): TestFixture<Unit> = testFixture {
+  val prevValue = registryValue.asBoolean()
+  registryValue.setValue(value)
+  initialized(Unit) {
+    registryValue.setValue(prevValue)
   }
 }
