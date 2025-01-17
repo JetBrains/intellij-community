@@ -5,7 +5,7 @@ import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.createRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
-import com.intellij.platform.runtime.product.serialization.impl.PluginXmlReader
+import com.intellij.platform.runtime.product.serialization.impl.loadPluginModules
 import com.intellij.platform.runtime.repository.writePluginXml
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -31,8 +31,8 @@ class PluginXmlReaderTest {
             </idea-plugin>  
         """.trimIndent()
     )
-    val pluginModules = PluginXmlReader.loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
-                                                          ResourceFileResolver.createDefault(repository))
+    val pluginModules = loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
+                                          ResourceFileResolver.createDefault(repository))
     val main = pluginModules.single()
     assertEquals("plugin.main", main.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.REQUIRED, main.loadingRule)
@@ -64,8 +64,8 @@ class PluginXmlReaderTest {
             </idea-plugin>  
         """.trimIndent()
     )
-    val pluginModules = PluginXmlReader.loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
-                                                          ResourceFileResolver.createDefault(repository))
+    val pluginModules = loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
+                                          ResourceFileResolver.createDefault(repository))
     assertEquals(3, pluginModules.size)
     val (main, optional, unknown) = pluginModules
     assertEquals("plugin.main", main.moduleId.stringId)
