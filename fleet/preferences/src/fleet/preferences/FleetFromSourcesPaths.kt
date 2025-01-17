@@ -9,6 +9,7 @@ import java.nio.file.Path
 import java.util.stream.Collectors
 import kotlin.io.path.absolute
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -31,10 +32,8 @@ object FleetFromSourcesPaths {
     intellijProjectRoot.resolve("fleet")
   }
 
-  private const val fontsResourcesDirectory: String = "/frontend/fonts"
-
-  @Deprecated(message = "should use the string property on next dock api breakage", ReplaceWith("fontsResourcesDirectory"))
-  val fontsDirectory: Path = Path.of(fontsResourcesDirectory)
+  @Deprecated(message = "use FrontendResourceReader.fontsResourcePrefix when possible, we now read fonts from resources", level = DeprecationLevel.ERROR)
+  val fontsDirectory: Path = Path.of("/frontend/fonts")
 
   @Deprecated(message = "use [DesktopDockResources#osIntegrationAppIconFile] instead, it will be set appropriately in dev distributions", level = DeprecationLevel.ERROR)
   val dockAppDevIconFile: Path by lazy { // TODO: remove in next Dock API breakage
@@ -74,12 +73,11 @@ object FleetFromSourcesPaths {
 
   //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.noria.ui.test"])
   object Fonts {
-    val jbMonoTTF: String by lazy {
-      "$fontsResourcesDirectory/JetBrainsMono/JetBrainsMono-Regular.ttf"
-    }
-    val notoColorEmoji: String by lazy {
-      "$fontsResourcesDirectory/NotoColorEmoji/NotoColorEmoji.ttf"
-    }
+    @Deprecated("use FrontendResourceReader.fontsResourcePrefix when possible, we now read fonts from resources", level = DeprecationLevel.ERROR)
+    val jbMonoTTF: String = "/frontend/fonts/JetBrainsMono/JetBrainsMono-Regular.ttf"
+
+    @Deprecated("use FrontendResourceReader.fontsResourcePrefix when possible, we now read fonts from resources", level = DeprecationLevel.ERROR)
+    val notoColorEmoji: String = "/frontend/fonts/NotoColorEmoji/NotoColorEmoji.ttf"
   }
 
   private fun findRepositoryRoot(): Path? {
