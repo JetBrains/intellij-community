@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,8 +18,14 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.util.*;
-import java.util.function.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -37,7 +42,9 @@ public abstract class Decompressor {
       mySource = file;
     }
 
-    @ApiStatus.Obsolete
+    /** @deprecated use {@link #Tar(Path)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Tar(@NotNull File file) {
       mySource = file.toPath();
     }
@@ -103,7 +110,9 @@ public abstract class Decompressor {
       mySource = file;
     }
 
-    @ApiStatus.Obsolete
+    /** @deprecated use {@link #Zip(Path)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Zip(@NotNull File file) {
       mySource = file.toPath();
     }
@@ -332,7 +341,9 @@ public abstract class Decompressor {
     return this;
   }
 
-  @ApiStatus.Obsolete
+  /** @deprecated use {@link #extract(Path)} instead */
+  @Deprecated
+  @SuppressWarnings("IO_FILE_USAGE")
   public final void extract(@NotNull File outputDir) throws IOException {
     extract(outputDir.toPath());
   }

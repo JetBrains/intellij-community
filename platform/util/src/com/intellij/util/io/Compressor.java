@@ -11,16 +11,11 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.DosFileAttributes;
@@ -43,7 +38,9 @@ public abstract class Compressor implements Closeable {
       this(Files.newOutputStream(file), compression);
     }
 
-    @ApiStatus.Obsolete
+    /** @deprecated use {@link #Tar(Path, Compression)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
       this(file.toPath(), compression);
     }
@@ -115,7 +112,9 @@ public abstract class Compressor implements Closeable {
    * ZIP extensions (file modes, symlinks, etc.) are not supported.
    */
   public static class Zip extends Compressor {
-    @ApiStatus.Obsolete
+    /** @deprecated use {@link #Zip(Path)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Zip(@NotNull File file) throws IOException {
       this(file.toPath());
     }
@@ -175,7 +174,9 @@ public abstract class Compressor implements Closeable {
   }
 
   public static final class Jar extends Zip {
-    @ApiStatus.Obsolete
+    /** @deprecated use {@link #Jar(Path)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Jar(@NotNull File file) throws IOException {
       this(file.toPath());
     }
@@ -203,7 +204,9 @@ public abstract class Compressor implements Closeable {
     return this;
   }
 
-  @ApiStatus.Obsolete
+  /** @deprecated use {@link #addFile(String, Path)} instead */
+  @Deprecated
+  @SuppressWarnings("IO_FILE_USAGE")
   public final void addFile(@NotNull String entryName, @NotNull File file) throws IOException {
     addFile(entryName, file.toPath());
   }
@@ -252,7 +255,9 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  @ApiStatus.Obsolete
+  /** @deprecated use {@link #addDirectory(Path)} instead */
+  @Deprecated
+  @SuppressWarnings("IO_FILE_USAGE")
   public final void addDirectory(@NotNull File directory) throws IOException {
     addDirectory(directory.toPath());
   }
@@ -261,7 +266,9 @@ public abstract class Compressor implements Closeable {
     addDirectory("", directory);
   }
 
-  @ApiStatus.Obsolete
+  /** @deprecated use {@link #addDirectory(String, Path)} instead */
+  @Deprecated
+  @SuppressWarnings("IO_FILE_USAGE")
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
     addDirectory(prefix, directory.toPath());
   }
