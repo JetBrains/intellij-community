@@ -34,11 +34,14 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
   var type: ConfigurationType? = null
     set(value) {
       field = value
+      if (nodeStateChanging) return
+
       if (value != null) {
         checkBox.isSelected = !(RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).isNewExcluded(value.id)
       }
       updateTree(value)
     }
+  private var nodeStateChanging = false
   private lateinit var checkBox: JCheckBox
   private var hasFolders = false
 
@@ -101,13 +104,19 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
       override fun nodeStateChanged(node: CheckedTreeNode) {
         val settings = node.userObject as? RunnerAndConfigurationSettings ?: return
         if (node.userObject is RunnerAndConfigurationSettings) {
-          if (node.isChecked) {
-            (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).restoreConfigurations(
-              SmartList(settings.getConfiguration()))
+          try {
+            nodeStateChanging = true
+            if (node.isChecked) {
+              (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).restoreConfigurations(
+                SmartList(settings.getConfiguration()))
+            }
+            else {
+              (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).hideConfigurations(
+                SmartList(settings.getConfiguration()))
+            }
           }
-          else {
-            (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).hideConfigurations(
-              SmartList(settings.getConfiguration()))
+          finally {
+            nodeStateChanging = false
           }
         }
       }
