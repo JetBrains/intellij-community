@@ -195,8 +195,8 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
       assertTrue(tomlPath.endsWith(endOfTomlPath))
     }
 
-    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") {
-      withSettingsFile {
+    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleVersionCatalogs-completion")
         addCode("""
           includeBuild("includedBuild")
@@ -246,7 +246,7 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         """.trimIndent()
       )
       // included build with settings
-      withSettingsFile("includedBuild") {
+      withSettingsFile(gradleVersion, "includedBuild") {
         setProjectName("includedBuild")
         addCode("""
           dependencyResolutionManagement {

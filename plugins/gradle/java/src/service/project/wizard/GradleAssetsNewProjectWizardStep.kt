@@ -42,7 +42,7 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
 
   fun addSettingsScript(configure: GradleSettingScriptBuilder<*>.() -> Unit) {
     val name = getSettingsScriptName(parent.gradleDsl)
-    val content = settingsScript(parent.gradleDsl, configure)
+    val content = settingsScript(parent.getGradleVersion(), parent.gradleDsl, configure)
     addAssets(GeneratorFile(name, content))
   }
 
@@ -69,7 +69,7 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
 
     val name = getSettingsScriptName(parent.gradleDsl)
     val path = projectPath.resolve(name)
-    val content = settingsScript(parent.gradleDsl) {
+    val content = settingsScript(parent.getGradleVersion(), parent.gradleDsl) {
       setProjectName(parent.artifactId)
       configure()
     }
@@ -102,8 +102,8 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
         .generate()
     }
 
-    private fun settingsScript(gradleDsl: GradleDsl, configure: GradleSettingScriptBuilder<*>.() -> Unit): String {
-      return GradleSettingScriptBuilder.create(gradleDsl)
+    private fun settingsScript(gradleVersion: GradleVersion, gradleDsl: GradleDsl, configure: GradleSettingScriptBuilder<*>.() -> Unit): String {
+      return GradleSettingScriptBuilder.create(gradleVersion, gradleDsl)
         .apply(configure)
         .generate()
     }

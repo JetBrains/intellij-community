@@ -445,7 +445,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   public @NotNull String settingsScript(@NotNull Consumer<GradleSettingScriptBuilder<?>> configure) {
-    var builder = GradleSettingScriptBuilder.create(GradleDsl.GROOVY);
+    var builder = GradleSettingScriptBuilder.create(getCurrentGradleVersion(), GradleDsl.GROOVY);
     configure.accept(builder);
     return builder.generate();
   }

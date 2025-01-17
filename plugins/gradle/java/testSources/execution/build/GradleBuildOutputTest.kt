@@ -17,7 +17,7 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test build script errors on Build`(gradleVersion: GradleVersion) {
     val fixtureBuilder = GradleTestFixtureBuilder.create("GradleExecutionOutputTest.test build script errors on Build") {
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("project")
         include("api", "impl", "brokenProject")
       }

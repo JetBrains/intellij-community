@@ -135,7 +135,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
 
     companion object {
         val GRADLE_COMPOSITE_BUILD_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
-            withSettingsFile(useKotlinDsl = true) {
+            withSettingsFile(gradleVersion, useKotlinDsl = true) {
                 setProjectName("GradleKotlinFixture")
                 includeBuild("not-build-src")
             }
@@ -157,7 +157,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                     const val kotlinStdLib = "..."
                 """.trimIndent()
             )
-            withSettingsFile(useKotlinDsl = true, relativeModulePath = "not-build-src") {
+            withSettingsFile(gradleVersion, useKotlinDsl = true, relativeModulePath = "not-build-src") {
                 addCode("""
                     pluginManagement {
                         repositories {
@@ -189,7 +189,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
             }
         }
         val GRADLE_KMP_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
-            withSettingsFile(useKotlinDsl = true) {
+            withSettingsFile(gradleVersion, useKotlinDsl = true) {
                 setProjectName("GradleKotlinFixture")
                 include("module1", ":module1:a-module11", ":module1:a-module11:module111")
                 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
@@ -242,7 +242,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
         }
 
         val GRADLE_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
-            withSettingsFile(useKotlinDsl = true) {
+            withSettingsFile(gradleVersion, useKotlinDsl = true) {
                 setProjectName("GradleKotlinFixture")
                 include(":module1")
                 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import java.nio.file.Path
@@ -14,15 +15,15 @@ interface GradleSettingScriptBuilder<Self : GradleSettingScriptBuilder<Self>>
   companion object {
 
     @JvmStatic
-    fun create(useKotlinDsl: Boolean): GradleSettingScriptBuilder<*> {
-      return create(GradleDsl.valueOf(useKotlinDsl))
+    fun create(gradleVersion: GradleVersion, useKotlinDsl: Boolean): GradleSettingScriptBuilder<*> {
+      return create(gradleVersion, GradleDsl.valueOf(useKotlinDsl))
     }
 
     @JvmStatic
-    fun create(gradleDsl: GradleDsl): GradleSettingScriptBuilder<*> {
+    fun create(gradleVersion: GradleVersion, gradleDsl: GradleDsl): GradleSettingScriptBuilder<*> {
       return when (gradleDsl) {
-        GradleDsl.GROOVY -> GroovyDslGradleSettingScriptBuilder.Impl()
-        GradleDsl.KOTLIN -> KotlinDslGradleSettingScriptBuilder.Impl()
+        GradleDsl.GROOVY -> GroovyDslGradleSettingScriptBuilder.Impl(gradleVersion)
+        GradleDsl.KOTLIN -> KotlinDslGradleSettingScriptBuilder.Impl(gradleVersion)
       }
     }
   }

@@ -170,7 +170,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   }
 
   fun ModuleInfo.Builder.withSettingsFile(configure: GradleSettingScriptBuilder<*>.() -> Unit) {
-    filesConfiguration.withSettingsFile(useKotlinDsl = useKotlinDsl, configure = configure)
+    filesConfiguration.withSettingsFile(gradleVersion, useKotlinDsl = useKotlinDsl, configure = configure)
   }
 
   open fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {

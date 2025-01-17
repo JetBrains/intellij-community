@@ -49,7 +49,7 @@ abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
     companion object {
 
         private val KOTLIN_JS_MULTIPLATFORM_FIXTURE = GradleTestFixtureBuilder.create("kotlin-plugin-multiplatform-project") { gradleVersion ->
-            withSettingsFile {
+            withSettingsFile(gradleVersion) {
                 pluginManagement {
                     call("repositories") {
                         code("mavenCentral()")
@@ -84,7 +84,7 @@ abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
         }
 
         private val KOTLIN_JUNIT4_FIXTURE = GradleTestFixtureBuilder.create("kotlin-plugin-junit4-project") { gradleVersion ->
-            withSettingsFile {
+            withSettingsFile(gradleVersion) {
                 setProjectName("kotlin-plugin-junit4-project")
             }
             withBuildFile(gradleVersion) {
@@ -96,7 +96,7 @@ abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
         }
 
         private val KOTLIN_TESTNG_FIXTURE = GradleTestFixtureBuilder.create("kotlin-plugin-testng-project") { gradleVersion ->
-            withSettingsFile {
+            withSettingsFile(gradleVersion) {
                 setProjectName("kotlin-plugin-testng-project")
             }
             withBuildFile(gradleVersion) {

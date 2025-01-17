@@ -123,7 +123,7 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
     companion object {
         @JvmStatic
         protected val GRADLE_VERSION_CATALOGS_FIXTURE = GradleTestFixtureBuilder.create("version-catalogs-kotlin-dsl") { gradleVersion ->
-            withSettingsFile(useKotlinDsl = true) {
+            withSettingsFile(gradleVersion, useKotlinDsl = true) {
                 setProjectName("version-catalogs-kotlin-dsl")
                 includeBuild("includedBuild1")
                 includeBuild("includedBuildWithoutSettings")
@@ -145,7 +145,7 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
                 """.trimIndent()
             )
             // included build files
-            withSettingsFile(relativeModulePath = "includedBuild1", useKotlinDsl = true) { }
+            withSettingsFile(gradleVersion, relativeModulePath = "includedBuild1", useKotlinDsl = true) { }
             withBuildFile(gradleVersion, relativeModulePath = "includedBuild1", useKotlinDsl = true) {
                 withKotlinMultiplatformPlugin()
                 withMavenCentral()

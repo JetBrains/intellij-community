@@ -131,7 +131,7 @@ abstract class GradleReloadProjectBaseTestCase {
           testFixture.testRoot.createDirectory(projectName)
         }
         writeAction {
-          projectRoot.createSettingsFile {
+          projectRoot.createSettingsFile(testFixture.gradleVersion) {
             setProjectName(projectName)
           }
         }

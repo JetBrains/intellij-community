@@ -280,7 +280,7 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
   companion object {
 
     private val MY_CONFIGURATION_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-myConfiguration") { gradleVersion ->
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleHighlightingTest-myConfiguration")
       }
       withBuildFile(gradleVersion) {
@@ -293,8 +293,8 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       }
     }
 
-    private val BUILD_SRC_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc") {
-      withSettingsFile {
+    private val BUILD_SRC_FIXTURE = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleHighlightingTest-buildSrc")
       }
       withDirectory("buildSrc/src/main/groovy")
@@ -302,8 +302,8 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       withFile("buildSrc/settings.gradle", "")
     }
 
-    private val BUILD_SRC_FIXTURE_2 = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc2") {
-      withSettingsFile {
+    private val BUILD_SRC_FIXTURE_2 = GradleTestFixtureBuilder.create("GradleHighlightingTest-buildSrc2") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleHighlightingTest-buildSrc2")
       }
       withFile("buildSrc/src/main/groovy/GrTask.groovy", """
