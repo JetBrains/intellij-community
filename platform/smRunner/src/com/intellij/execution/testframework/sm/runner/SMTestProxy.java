@@ -416,13 +416,13 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public @Nullable Long getStartTime() {
+  public @Nullable Long getStartTimeMillis() {
     return myStartTime;
   }
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public @Nullable Long getEndTime() {
+  public @Nullable Long getEndTimeMillis() {
     return myEndTime;
   }
 

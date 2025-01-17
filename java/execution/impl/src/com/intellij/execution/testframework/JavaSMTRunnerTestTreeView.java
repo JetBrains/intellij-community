@@ -17,6 +17,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.TimeUnit;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -61,24 +62,23 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
             startedAt = getFirstChildStartedAt(testProxy);
           }
           else {
-            startedAt = testProxy.getStartTime();
+            startedAt = testProxy.getStartTimeMillis();
           }
           if (startedAt == null || startedAt == 0) {
             return null;
           }
-          long duration = System.currentTimeMillis() - startedAt;
-          if (duration < 1000) {
-            return null;
-          }
-          duration = (duration / 1000) * 1000;
-          return NlsMessages.formatDurationApproximateNarrow(duration);
+          long durationMillis = System.currentTimeMillis() - startedAt;
+          long durationSeconds = TimeUnit.MILLISECONDS.toSeconds(durationMillis);
+          if (durationSeconds == 0) return null;
+          durationMillis = TimeUnit.SECONDS.toMillis(durationSeconds);
+          return NlsMessages.formatDurationApproximateNarrow(durationMillis);
         }
         if (testProxy.isSuite() &&
             testProxy.isFinal() &&
             !testProxy.isSubjectToHide(consoleProperties) &&
             JavaAwareTestConsoleProperties.USE_WALL_TIME.value(consoleProperties)) {
-          Long startTime = testProxy.getStartTime();
-          Long endTime = testProxy.getEndTime();
+          Long startTime = testProxy.getStartTimeMillis();
+          Long endTime = testProxy.getEndTimeMillis();
           if (startTime != null && endTime != null && startTime < endTime) {
             return NlsMessages.formatDurationApproximateNarrow(endTime - startTime);
           }
@@ -95,7 +95,7 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
         for (SMTestProxy child : testProxy.getChildren()) {
           Long time;
           if (child.isLeaf()) {
-            time = child.getStartTime();
+            time = child.getStartTimeMillis();
           }
           else {
             time = getFirstChildStartedAt(child);
@@ -132,13 +132,13 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
     SMTestProxy test = getSelectedTest(location);
 
     if (test == null || test.isLeaf() || test.getDurationStrategy() != TestDurationStrategy.AUTOMATIC ||
-        test.getEndTime() == null || test.getStartTime() == null ||
-        test.getEndTime() <= test.getStartTime()) {
+        test.getEndTimeMillis() == null || test.getStartTimeMillis() == null ||
+        test.getEndTimeMillis() <= test.getStartTimeMillis()) {
       return null;
     }
 
     if (getWidth() / 2 < Math.abs(p.x)) {
-      long overallDuration = test.getEndTime() - test.getStartTime();
+      long overallDuration = test.getEndTimeMillis() - test.getStartTimeMillis();
       Long sumDuration = test.getDuration();
       String durationText = "";
       durationText += JavaBundle.message("java.test.overall.time", NlsMessages.formatDurationApproximateNarrow(overallDuration));
@@ -157,8 +157,8 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
         !JavaAwareTestConsoleProperties.USE_WALL_TIME.value(myTestConsoleProperties)) {
       return proxy.getDuration();
     }
-    Long startTime = proxy.getStartTime();
-    Long endTime = proxy.getEndTime();
+    Long startTime = proxy.getStartTimeMillis();
+    Long endTime = proxy.getEndTimeMillis();
     if (startTime == null || endTime == null || startTime >= endTime) {
       return null;
     }
