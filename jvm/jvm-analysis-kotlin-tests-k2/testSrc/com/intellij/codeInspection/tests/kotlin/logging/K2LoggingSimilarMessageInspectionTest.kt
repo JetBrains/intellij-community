@@ -91,5 +91,46 @@ class K2LoggingSimilarMessageInspectionTest : KotlinLoggingSimilarMessageInspect
       }
     """.trimIndent())
   }
+
+
+  fun `test suppressed slf4j statement`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+        import org.slf4j.Logger
+        import org.slf4j.LoggerFactory
+        
+        internal object Logging {
+            private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'java'.">java</error>)
+        
+            private fun request1(i: String) {
+                LOG.debug("Call successful")
+            }
+        
+            fun test2() {
+                @Suppress("LoggingSimilarMessage")
+                LOG.debug("Call successful")
+            }
+        }
+    """.trimIndent())
+  }
+
+  fun `test suppressed slf4j method`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+      
+      internal object Logging {
+          private val LOG: Logger = LoggerFactory.getLogger(Logging::class.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'java'.">java</error>)
+      
+          private fun request1(i: String) {
+              LOG.debug("Call successful")
+          }
+      
+          @Suppress("LoggingSimilarMessage")
+          fun test2() {
+              LOG.debug("Call successful")
+          }
+      }
+    """.trimIndent())
+  }
 }
 

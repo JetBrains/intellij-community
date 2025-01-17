@@ -614,5 +614,41 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
      }
     """.trimIndent())
   }
+
+  fun `test suppressed slf4j statement`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.slf4j.*;
+      class Logging {
+        private static Logger LOG = LoggerFactory.getLogger(Logging.class);
+        
+        private static void request1(String i) {
+          LOG.debug("Call successful");
+        }
+    
+        private static void request2(int i) {
+          //noinspection LoggingSimilarMessage
+          LOG.debug("Call successful");
+        }
+     }
+    """.trimIndent())
+  }
+
+  fun `test suppressed slf4j method`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.slf4j.*;
+      class Logging {
+        private static Logger LOG = LoggerFactory.getLogger(Logging.class);
+        
+        private static void request1(String i) {
+          LOG.debug("Call successful");
+        }
+    
+        @SuppressWarnings("LoggingSimilarMessage")
+        public static void test2() {
+            LOG.debug("Call successful");
+        }
+     }
+    """.trimIndent())
+  }
 }
 
