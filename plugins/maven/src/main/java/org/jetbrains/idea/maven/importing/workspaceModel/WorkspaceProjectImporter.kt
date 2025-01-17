@@ -59,7 +59,7 @@ var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE: Boolean = false
 
 internal open class WorkspaceProjectImporter(
   protected val myProjectsTree: MavenProjectsTree,
-  protected val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+  protected val projectsToImportWithChanges: Map<MavenProject, MavenProjectChangesBase>,
   protected val myImportingSettings: MavenImportingSettings,
   protected val myModifiableModelsProvider: IdeModifiableModelsProvider,
   protected val myProject: Project,
@@ -157,7 +157,7 @@ internal open class WorkspaceProjectImporter(
     return migratedToExternalStorage
   }
 
-  private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChanges>) {
+  private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChangesBase>) {
     val projectFilePaths: List<String> get() = allProjectsToChanges.keys.map { it.path }
     val changedProjectsOnly: Iterable<MavenProject>
       get() = allProjectsToChanges
@@ -169,7 +169,7 @@ internal open class WorkspaceProjectImporter(
 
   private fun collectProjectChanges(
     storageBeforeImport: EntityStorage,
-    originalProjectsChanges: Map<MavenProject, MavenProjectChanges>,
+    originalProjectsChanges: Map<MavenProject, MavenProjectChangesBase>,
     migratedToExternalStorage: Boolean,
   ): ProjectChangesInfo {
     val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
@@ -182,13 +182,13 @@ internal open class WorkspaceProjectImporter(
     // if it was ignored, module dependencies should be replaced with library dependencies and vice versa
     val projectsChanged = !sameProjects(projectFilesFromPreviousImport, allProjects)
 
-    val allProjectsToChanges: Map<MavenProject, MavenProjectChanges> = allProjects.associateWith {
+    val allProjectsToChanges: Map<MavenProject, MavenProjectChangesBase> = allProjects.associateWith {
       if (projectsChanged) {
-        MavenProjectChanges.ALL
+        MavenProjectChangesBase.ALL
       }
       else {
         val newProjectToImport = it.path !in projectFilesFromPreviousImport
-        if (newProjectToImport) MavenProjectChanges.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChanges.NONE)
+        if (newProjectToImport) MavenProjectChangesBase.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChangesBase.NONE)
       }
     }
 
@@ -226,7 +226,7 @@ internal open class WorkspaceProjectImporter(
 
   private fun buildModuleNameMap(
     externalSystemModuleEntities: Sequence<ExternalSystemModuleOptionsEntity>,
-    projectToImport: Map<MavenProject, MavenProjectChanges>,
+    projectToImport: Map<MavenProject, MavenProjectChangesBase>,
   ): Map<MavenProject, String> {
     return MavenModuleNameMapper.mapModuleNames(myProjectsTree, projectToImport.keys, getExistingModuleNames(externalSystemModuleEntities))
   }
@@ -234,7 +234,7 @@ internal open class WorkspaceProjectImporter(
   private fun importModules(
     storageBeforeImport: EntityStorage,
     builder: MutableEntityStorage,
-    projectsToImport: Map<MavenProject, MavenProjectChanges>,
+    projectsToImport: Map<MavenProject, MavenProjectChangesBase>,
     mavenProjectToModuleName: Map<MavenProject, String>,
     contextData: UserDataHolderBase,
     stats: WorkspaceImportStats,
@@ -246,7 +246,7 @@ internal open class WorkspaceProjectImporter(
     val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
 
     class PartialModulesData(
-      val changes: MavenProjectChanges,
+      val changes: MavenProjectChangesBase,
       val modules: MutableList<ModuleWithTypeData<ModuleEntity>>,
     )
 
@@ -752,6 +752,6 @@ internal class ModuleWithTypeData<M>(
 
 internal class MavenProjectWithModulesData<M>(
   override val mavenProject: MavenProject,
-  override val changes: MavenProjectChanges,
+  override val changes: MavenProjectChangesBase,
   override val modules: List<ModuleWithTypeData<M>>,
 ) : MavenWorkspaceConfigurator.MavenProjectWithModules<M>

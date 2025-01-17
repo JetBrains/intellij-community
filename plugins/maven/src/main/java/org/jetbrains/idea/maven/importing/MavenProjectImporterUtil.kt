@@ -12,10 +12,7 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.LegacyExtensionImporter.CountAndTime
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
-import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -175,11 +172,12 @@ internal object MavenProjectImporterUtil {
                              module: Module,
                              moduleType: StandardMavenModuleType,
                              mavenTree: MavenProjectsTree,
-                             changes: MavenProjectChanges,
+                             changesBase: MavenProjectChangesBase,
                              mavenProjectToModuleName: Map<MavenProject, String>,
                              mavenImporters: List<MavenImporter>): LegacyExtensionImporter? {
         if (moduleType === StandardMavenModuleType.COMPOUND_MODULE) return null
         var suitableImporters = mavenImporters
+        val changes = if (changesBase.hasChanges()) MavenProjectChanges.ALL else MavenProjectChanges.NONE
         return if (suitableImporters.isEmpty()) null
         else LegacyExtensionImporter(module, mavenTree, mavenProject, changes, mavenProjectToModuleName, suitableImporters)
       }

@@ -17,7 +17,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
+import org.jetbrains.idea.maven.project.MavenProjectChangesBase
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
@@ -121,7 +121,7 @@ interface MavenWorkspaceConfigurator {
    */
   interface MavenProjectWithModules<M> {
     val mavenProject: MavenProject
-    val changes: MavenProjectChanges
+    val changes: MavenProjectChangesBase
     val modules: List<ModuleWithType<M>>
   }
 

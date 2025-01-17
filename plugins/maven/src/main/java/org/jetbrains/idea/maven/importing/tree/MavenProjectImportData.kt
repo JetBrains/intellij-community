@@ -5,7 +5,7 @@ import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
+import org.jetbrains.idea.maven.project.MavenProjectChangesBase
 
 internal class ModuleData(
   val moduleName: String,
@@ -48,13 +48,13 @@ internal open class MavenTreeModuleImportData(
   mavenProject: MavenProject,
   moduleData: ModuleData,
   val dependencies: List<MavenImportDependency<*>>,
-  val changes: MavenProjectChanges,
+  val changes: MavenProjectChangesBase,
 ) : MavenModuleImportData(mavenProject, moduleData)
 
 internal class MavenProjectImportData(
   val mavenProject: MavenProject,
   val moduleData: ModuleData,
-  val changes: MavenProjectChanges,
+  val changes: MavenProjectChangesBase,
   val otherModules: List<ModuleData>,
 ) {
 

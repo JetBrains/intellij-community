@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
-public abstract class MavenProjectChanges {
+public abstract class MavenProjectChanges implements MavenProjectChangesBase {
   public static final MavenProjectChanges NONE = createNoneChanges();
   public static final MavenProjectChanges ALL = createAllChanges();
 
@@ -31,6 +31,7 @@ public abstract class MavenProjectChanges {
 
   public abstract boolean hasPropertyChanges();
 
+  @Override
   public boolean hasChanges() {
     return hasPackagingChanges() ||
            hasOutputChanges() ||
