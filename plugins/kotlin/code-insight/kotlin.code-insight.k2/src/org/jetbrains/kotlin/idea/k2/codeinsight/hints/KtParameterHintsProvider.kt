@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
@@ -114,7 +115,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             if (argument.isArgumentNamed(symbol)) continue
 
             name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
-                sink.addPresentation(InlineInlayPosition(arg.startOffset, true), hintFormat = HintFormat.default) {
+                val element = arg.getParentOfType<KtValueArgument>(true, KtValueArgumentList::class.java) ?: arg
+                sink.addPresentation(InlineInlayPosition(element.startOffset, true), hintFormat = HintFormat.default) {
                     if (symbol.isVararg) text(Typography.ellipsis.toString())
                     text(stringName,
                          symbol.psi?.createSmartPointer()?.let {
