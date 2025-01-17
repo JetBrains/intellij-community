@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.logging
 
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -41,6 +42,14 @@ internal class LoggingStringPartEvaluator {
       }
       val context = initContext.copy(depth = initContext.depth - 1)
       if (context.maxParts <= 0 || context.depth <= 0) {
+        return listOf(PartHolder(null, false))
+      }
+      if (expression is UUnknownExpression) {
+        val sourcePsi = expression.sourcePsi
+        //can be compiled element, so let's try to use as java literal, otherwise fail
+        if (sourcePsi is PsiLiteralExpression && sourcePsi.value is String) {
+          return listOf(PartHolder(sourcePsi.value as? String, true))
+        }
         return listOf(PartHolder(null, false))
       }
       if (!isString(expression)) {
