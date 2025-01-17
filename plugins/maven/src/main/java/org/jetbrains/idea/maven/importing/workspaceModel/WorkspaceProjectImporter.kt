@@ -59,7 +59,7 @@ var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE: Boolean = false
 
 internal open class WorkspaceProjectImporter(
   protected val myProjectsTree: MavenProjectsTree,
-  protected val projectsToImportWithChanges: Map<MavenProject, MavenProjectChangesBase>,
+  protected val projectsToImportWithChanges: Map<MavenProject, MavenProjectModifications>,
   protected val myImportingSettings: MavenImportingSettings,
   protected val myModifiableModelsProvider: IdeModifiableModelsProvider,
   protected val myProject: Project,
@@ -157,19 +157,19 @@ internal open class WorkspaceProjectImporter(
     return migratedToExternalStorage
   }
 
-  private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChangesBase>) {
+  private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectModifications>) {
     val projectFilePaths: List<String> get() = allProjectsToChanges.keys.map { it.path }
     val changedProjectsOnly: Iterable<MavenProject>
       get() = allProjectsToChanges
         .asSequence()
-        .filter { (_, changes) -> changes.hasChanges() }
+        .filter { (_, changes) -> changes == MavenProjectModifications.ALL }
         .map { (mavenProject, _) -> mavenProject }
         .asIterable()
   }
 
   private fun collectProjectChanges(
     storageBeforeImport: EntityStorage,
-    originalProjectsChanges: Map<MavenProject, MavenProjectChangesBase>,
+    originalProjectsChanges: Map<MavenProject, MavenProjectModifications>,
     migratedToExternalStorage: Boolean,
   ): ProjectChangesInfo {
     val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
@@ -182,17 +182,17 @@ internal open class WorkspaceProjectImporter(
     // if it was ignored, module dependencies should be replaced with library dependencies and vice versa
     val projectsChanged = !sameProjects(projectFilesFromPreviousImport, allProjects)
 
-    val allProjectsToChanges: Map<MavenProject, MavenProjectChangesBase> = allProjects.associateWith {
+    val allProjectsToChanges: Map<MavenProject, MavenProjectModifications> = allProjects.associateWith {
       if (projectsChanged) {
-        MavenProjectChangesBase.ALL
+        MavenProjectModifications.ALL
       }
       else {
         val newProjectToImport = it.path !in projectFilesFromPreviousImport
-        if (newProjectToImport) MavenProjectChangesBase.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectChangesBase.NONE)
+        if (newProjectToImport) MavenProjectModifications.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectModifications.NONE)
       }
     }
 
-    val hasChanges = allProjectsToChanges.values.any { it.hasChanges() } || migratedToExternalStorage
+    val hasChanges = allProjectsToChanges.values.any { it == MavenProjectModifications.ALL } || migratedToExternalStorage
 
     return ProjectChangesInfo(hasChanges, allProjectsToChanges)
   }
@@ -226,7 +226,7 @@ internal open class WorkspaceProjectImporter(
 
   private fun buildModuleNameMap(
     externalSystemModuleEntities: Sequence<ExternalSystemModuleOptionsEntity>,
-    projectToImport: Map<MavenProject, MavenProjectChangesBase>,
+    projectToImport: Map<MavenProject, MavenProjectModifications>,
   ): Map<MavenProject, String> {
     return MavenModuleNameMapper.mapModuleNames(myProjectsTree, projectToImport.keys, getExistingModuleNames(externalSystemModuleEntities))
   }
@@ -234,7 +234,7 @@ internal open class WorkspaceProjectImporter(
   private fun importModules(
     storageBeforeImport: EntityStorage,
     builder: MutableEntityStorage,
-    projectsToImport: Map<MavenProject, MavenProjectChangesBase>,
+    projectsToImport: Map<MavenProject, MavenProjectModifications>,
     mavenProjectToModuleName: Map<MavenProject, String>,
     contextData: UserDataHolderBase,
     stats: WorkspaceImportStats,
@@ -246,7 +246,7 @@ internal open class WorkspaceProjectImporter(
     val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
 
     class PartialModulesData(
-      val changes: MavenProjectChangesBase,
+      val changes: MavenProjectModifications,
       val modules: MutableList<ModuleWithTypeData<ModuleEntity>>,
     )
 
@@ -274,7 +274,7 @@ internal open class WorkspaceProjectImporter(
     }
 
     val result = projectToModulesData.map { (mavenProject, partialData) ->
-      MavenProjectWithModulesData(mavenProject, partialData.changes, partialData.modules)
+      MavenProjectWithModulesData(mavenProject, partialData.changes == MavenProjectModifications.ALL, partialData.modules)
     }
 
     tracer.spanBuilder("configureModules").use { configureModules(result, builder, contextData, stats) }
@@ -438,7 +438,7 @@ internal open class WorkspaceProjectImporter(
       }
 
       if (appliedModules.isNotEmpty()) {
-        result.add(MavenProjectWithModulesData(each.mavenProject, each.changes, appliedModules))
+        result.add(MavenProjectWithModulesData(each.mavenProject, each.hasChanges, appliedModules))
       }
     }
 
@@ -534,7 +534,7 @@ internal open class WorkspaceProjectImporter(
                                                                             moduleWithType.module,
                                                                             moduleWithType.type,
                                                                             myProjectsTree,
-                                                                            projectWithModules.changes,
+                                                                            projectWithModules.hasChanges,
                                                                             moduleNameByProject,
                                                                             importers)
       }
@@ -752,6 +752,6 @@ internal class ModuleWithTypeData<M>(
 
 internal class MavenProjectWithModulesData<M>(
   override val mavenProject: MavenProject,
-  override val changes: MavenProjectChangesBase,
+  override val hasChanges: Boolean,
   override val modules: List<ModuleWithTypeData<M>>,
 ) : MavenWorkspaceConfigurator.MavenProjectWithModules<M>

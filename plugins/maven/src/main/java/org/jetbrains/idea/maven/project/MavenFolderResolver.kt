@@ -32,9 +32,7 @@ class MavenFolderResolver(private val project: Project) {
   }
 
   private suspend fun doResolveFoldersAndImport(projects: Collection<MavenProject>, progressReporter: RawProgressReporter) {
-
-    val allProjectsWithChanges = resolveFolders(projects, progressReporter)
-    val projectsToImportWithChanges = allProjectsWithChanges.filter { !it.key.hasReadingErrors() && it.value.hasChanges() }
+    resolveFolders(projects, progressReporter)
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->
@@ -44,38 +42,34 @@ class MavenFolderResolver(private val project: Project) {
       false
     }
 
-    if (!projectsToImportWithChanges.isEmpty()) {
-      projectsManager.importMavenProjects(projectsToImportWithChanges)
-    }
+    projectsManager.importMavenProjects(projects)
   }
 
-  private suspend fun resolveFolders(mavenProjects: Collection<MavenProject>,
-                                     progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChangesBase> {
+  private suspend fun resolveFolders(mavenProjects: Collection<MavenProject>, progressReporter: RawProgressReporter) {
     val console = MavenSourceGenerationConsole(project)
     try {
       console.start()
       val tree = projectsManager.projectsTree
       val mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree)
       val projectMultiMap = MavenUtil.groupByBasedir(mavenProjectsToResolve, tree)
-      val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChangesBase>()
       for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
         console.startSourceGeneration(baseDir)
-        val chunk = resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter, console)
-        projectsWithChanges.putAll(chunk)
+        resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter, console)
         console.finishSourceGeneration(baseDir)
       }
-      return projectsWithChanges
     }
     finally {
       console.finish()
     }
   }
 
-  private suspend fun resolveFolders(baseDir: String,
-                                     mavenProjects: Collection<MavenProject>,
-                                     tree: MavenProjectsTree,
-                                     progressReporter: RawProgressReporter,
-                                     console: MavenSourceGenerationConsole): Map<MavenProject, MavenProjectChangesBase> {
+  private suspend fun resolveFolders(
+    baseDir: String,
+    mavenProjects: Collection<MavenProject>,
+    tree: MavenProjectsTree,
+    progressReporter: RawProgressReporter,
+    console: MavenSourceGenerationConsole,
+  ) {
     val goal = projectsManager.importingSettings.updateFoldersOnImportPhase
 
     val fileToProject = mavenProjects.associateBy({ File(it.file.path) }, { it })
@@ -100,16 +94,13 @@ class MavenFolderResolver(private val project: Project) {
       projectsManager.embeddersManager.release(embedder)
     }
 
-    val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChangesBase>()
     for (goalResult in goalResults) {
       val mavenProject = fileToProject.getOrDefault(goalResult.file, null)
       if (null != mavenProject && MavenUtil.shouldResetDependenciesAndFolders(goalResult.problems)) {
         val changes = mavenProject.setFolders(goalResult.folders)
-        projectsWithChanges[mavenProject] = if (changes.hasChanges()) MavenProjectChangesBase.ALL else MavenProjectChangesBase.NONE
         tree.fireFoldersResolved(Pair.create(mavenProject, changes))
       }
     }
-    return projectsWithChanges
   }
 
   private fun collectMavenProjectsToResolve(mavenProjects: Collection<MavenProject>, tree: MavenProjectsTree): Collection<MavenProject> {

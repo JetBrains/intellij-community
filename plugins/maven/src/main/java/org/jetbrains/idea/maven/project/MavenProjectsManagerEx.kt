@@ -85,7 +85,7 @@ interface MavenAsyncProjectsManager {
                                   filesToDelete: List<VirtualFile>)
 
   @ApiStatus.Internal
-  suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChangesBase>)
+  suspend fun importMavenProjects(projectsToImport: Collection<MavenProject>)
 
   suspend fun downloadArtifacts(projects: Collection<MavenProject>,
                                 artifacts: Collection<MavenArtifact>?,
@@ -120,13 +120,17 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return updateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManagerEx.addManagedFilesWithProfilesAndUpdate"), modelsProvider)
   }
 
-  override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChangesBase>) {
+  override suspend fun importMavenProjects(projects: Collection<MavenProject>) {
+    importMavenProjects(projects.associate { it to MavenProjectModifications.ALL })
+  }
+
+  private suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectModifications>) {
     reapplyModelStructureOnly {
       importMavenProjects(projectsToImport, null, it)
     }
   }
 
-  private suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChangesBase>,
+  private suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectModifications>,
                                           modelsProvider: IdeModifiableModelsProvider?,
                                           parentActivity: StructuredIdeActivity): List<Module> {
     return tracer.spanBuilder("importMavenProjects").useWithScope {
@@ -137,7 +141,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   @RequiresBackgroundThread
-  private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChangesBase>,
+  private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectModifications>,
                                             optionalModelsProvider: IdeModifiableModelsProvider?,
                                             parentActivity: StructuredIdeActivity): List<Module> {
     if (projectsToImport.any { it.key == null }) {
@@ -185,7 +189,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return importResult.createdModules
   }
 
-  private fun runImportProjectActivity(projectsToImport: Map<MavenProject, MavenProjectChangesBase>,
+  private fun runImportProjectActivity(projectsToImport: Map<MavenProject, MavenProjectModifications>,
                                        modelsProvider: IdeModifiableModelsProvider,
                                        parentActivity: StructuredIdeActivity): ImportResult {
     val projectImporter = MavenProjectImporter.createImporter(
@@ -214,7 +218,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
 
   private suspend fun importAllProjects() {
-    val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectChangesBase.ALL })
+    val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectModifications.ALL })
     importMavenProjects(projectsToImport)
   }
 
@@ -438,7 +442,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
     val projectsToImport = resolutionResult.mavenProjectMap.entries
       .flatMap { it.value }
-      .associateBy({ it }, { MavenProjectChangesBase.ALL })
+      .associateBy({ it }, { MavenProjectModifications.ALL })
 
     // plugins and artifacts can be resolved in parallel with import
     return coroutineScope {

@@ -65,7 +65,7 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
       mavenProjectToModuleNamesCache[each.mavenProject.mavenId] = moduleNames
     }
 
-    val changedOnlyProjects = context.mavenProjectsWithModules.mapNotNull { if (it.changes.hasChanges()) it.mavenProject else null }
+    val changedOnlyProjects = context.mavenProjectsWithModules.mapNotNull { if (it.hasChanges) it.mavenProject else null }
 
     val map = HashMap<MavenProject, MutableList<String>>()
     collectProcessorModuleNames(changedOnlyProjects.asIterable(),
@@ -114,7 +114,7 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
 
     val perProjectProcessorModuleNames: Map<MavenProject, MutableList<String>> = ANNOTATION_PROCESSOR_MODULE_NAMES[context, java.util.Map.of()]
 
-    val changedOnly = context.mavenProjectsWithModules.filter { it: MavenProjectWithModules<Module> -> it.changes.hasChanges() }
+    val changedOnly = context.mavenProjectsWithModules.filter { it: MavenProjectWithModules<Module> -> it.hasChanges }
     val projectWithModules = changedOnly.map { it: MavenProjectWithModules<Module> ->
       val processorModuleNames = perProjectProcessorModuleNames.getOrDefault(it.mavenProject, listOf())
       MavenProjectWithProcessorModules(it.mavenProject, it.modules, processorModuleNames)

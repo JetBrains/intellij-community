@@ -30,7 +30,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChangesBase
+import org.jetbrains.idea.maven.project.MavenProjectModifications
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.SupportedRequestType
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -47,12 +47,12 @@ internal class MavenProjectImportContextProvider(
   private val myMavenProjectToModuleName: Map<MavenProject, String>,
 ) {
 
-  fun getAllModules(projectsWithChanges: Map<MavenProject, MavenProjectChangesBase>): List<MavenTreeModuleImportData> {
+  fun getAllModules(projectsWithChanges: Map<MavenProject, MavenProjectModifications>): List<MavenTreeModuleImportData> {
     val importDataContext = getModuleImportDataContext(projectsWithChanges)
     return getFlattenModuleDataDependencyContext(importDataContext)
   }
 
-  private fun getModuleImportDataContext(projectsToImportWithChanges: Map<MavenProject, MavenProjectChangesBase>): ModuleImportDataContext {
+  private fun getModuleImportDataContext(projectsToImportWithChanges: Map<MavenProject, MavenProjectModifications>): ModuleImportDataContext {
     val allModules: MutableList<MavenProjectImportData> = ArrayList<MavenProjectImportData>()
     val moduleImportDataByMavenId: MutableMap<MavenId, MavenProjectImportData> = TreeMap<MavenId, MavenProjectImportData>(
       Comparator.comparing<MavenId?, String?>(Function { obj: MavenId? -> obj!!.getKey() }))
@@ -308,7 +308,7 @@ internal class MavenProjectImportContextProvider(
   private fun getModuleImportDataSingle(
     project: MavenProject,
     moduleName: String,
-    changes: MavenProjectChangesBase,
+    changes: MavenProjectModifications,
     languageLevels: LanguageLevels,
   ): MavenProjectImportData {
     val type = if (project.isAggregator) {
@@ -327,7 +327,7 @@ internal class MavenProjectImportContextProvider(
   private fun getModuleImportDataCompound(
     project: MavenProject,
     moduleName: String,
-    changes: MavenProjectChangesBase,
+    changes: MavenProjectModifications,
     languageLevels: LanguageLevels,
   ): MavenProjectImportData {
     val type = StandardMavenModuleType.COMPOUND_MODULE
@@ -351,7 +351,7 @@ internal class MavenProjectImportContextProvider(
     return MavenProjectImportData(project, moduleData, changes, otherModules)
   }
 
-  private fun getModuleImportData(project: MavenProject, moduleName: String, changes: MavenProjectChangesBase): MavenProjectImportData {
+  private fun getModuleImportData(project: MavenProject, moduleName: String, changes: MavenProjectModifications): MavenProjectImportData {
     val languageLevels = getLanguageLevels(project)
 
     val needCreateCompoundModule = needCreateCompoundModule(project, languageLevels)
