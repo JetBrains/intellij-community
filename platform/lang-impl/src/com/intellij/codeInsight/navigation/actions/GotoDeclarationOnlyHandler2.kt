@@ -46,7 +46,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
           actionResult.navigationProvider?.let {
             GTDUCollector.recordNavigated(eventData, it.javaClass)
           }
-          navigateRequestLazy(project, actionResult.requestor)
+          navigateRequestLazy(project, actionResult.requestor, editor)
           reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.AUTO, actionResult.navigationProvider)
         }
         is MultipleTargets -> {
@@ -58,7 +58,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
             navigationProvider?.let {
               GTDUCollector.recordNavigated(eventData, navigationProvider.javaClass)
             }
-            navigateRequestLazy(project, requestor)
+            navigateRequestLazy(project, requestor, editor)
             reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.FROM_POPUP, navigationProvider)
           }
           popup.showInBestPositionFor(editor)
@@ -71,7 +71,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
   override fun startInWriteAction(): Boolean = false
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    if (navigateToLookupItem(project)) {
+    if (navigateToLookupItem(project, editor)) {
       return
     }
     if (EditorUtil.isCaretInVirtualSpace(editor)) {

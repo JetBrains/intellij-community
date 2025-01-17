@@ -35,6 +35,9 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -103,6 +106,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -110,8 +114,6 @@ import java.util.stream.Collectors;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 import static com.intellij.find.actions.SearchOptionsService.SearchVariant.SHOW_USAGES;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
-import static com.intellij.find.actions.ShowUsagesUtilsKt.getEditorFor;
-import static com.intellij.find.actions.ShowUsagesUtilsKt.navigateAndHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
 import static com.intellij.util.FindUsagesScopeKt.FindUsagesScope;
 import static com.intellij.util.ObjectUtils.doIfNotNull;
@@ -529,6 +531,19 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return ShowUsagesManager.getInstance(project).showElementUsagesWithResult(parameters, actionHandler, usageView);
   }
 
+  @ApiStatus.Internal
+  private static Editor getEditorFor(Usage usage) {
+    FileEditorLocation location = usage.getLocation();
+    if (location == null) {
+      return null;
+    }
+    FileEditor newFileEditor = location.getEditor();
+    if (newFileEditor instanceof TextEditor fileEditor) {
+      return fileEditor.getEditor();
+    }
+    return null;
+  }
+
   public static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
                                                                       @NotNull ShowUsagesActionHandler actionHandler,
                                                                       @NotNull UsageViewImpl usageView) {
@@ -567,7 +582,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Runnable itemChosenCallback = table.prepareTable(
       showMoreUsagesRunnable(parameters, actionHandler),
       showUsagesInMaximalScopeRunnable(parameters, actionHandler, showUsagesPopupData),
-      actionHandler
+      actionHandler, parameters
     );
 
     Consumer<AbstractPopup> tableResizer = popup -> {
@@ -740,6 +755,18 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
             // else all usages filtered out
           }
           else if (visibleUsages.size() == 1 && actionHandler.navigateToSingleUsageImmediately()) {
+            final BiConsumer<Usage, String> onReady = (Usage usage, @Nls String hint) -> {
+              var newEditor = getEditorFor(usage);
+              if (newEditor == null) {
+                cancel(popup);
+                return;
+              }
+              if (parameters.editor != null) {
+                hint(false, hint, parameters.withEditor(parameters.editor), actionHandler);
+              }
+              cancel(popup);
+            };
+
             if (usages.size() == 1) {
               //the only usage
               Usage usage = visibleUsages.iterator().next();
@@ -750,7 +777,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
               }
               else {
                 String hint = UsageViewBundle.message("show.usages.only.usage", searchScope.getDisplayName());
-                navigateAndHint(project, usage, hint, parameters, actionHandler, () -> cancel(popup));
+                UsageNavigation.getInstance(project).navigateAndHint(
+                  project, usage, () -> onReady.accept(usage, hint), parameters.editor);
               }
             }
             else {
@@ -759,7 +787,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
               Usage visibleUsage = visibleUsages.iterator().next();
               if (areAllUsagesInOneLine(visibleUsage, usages)) {
                 String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScope.getDisplayName());
-                navigateAndHint(project, visibleUsage, hint, parameters, actionHandler, () -> cancel(popup));
+                UsageNavigation.getInstance(project).navigateAndHint(
+                  project, visibleUsage, () -> onReady.accept(visibleUsage, hint), parameters.editor);
               }
             }
           }
