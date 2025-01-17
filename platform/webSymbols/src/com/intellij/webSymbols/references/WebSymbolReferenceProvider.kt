@@ -132,7 +132,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
             ?.firstOrNull()
         }.takeIf { it.size == segments.size }?.firstOrNull()
         if (showProblems && (deprecation != null || problemOnly || segments.any { it.problem != null })) {
-          NameSegmentReferenceWithProblem(element, range.shiftRight(symbolNameOffset), segments, deprecation, problemOnly)
+          NameSegmentReferenceWithProblem(element, symbol, range.shiftRight(symbolNameOffset), segments, deprecation, problemOnly)
         }
         else if (!range.isEmpty && !problemOnly) {
           NameSegmentReference(element, range.shiftRight(symbolNameOffset), segments)
@@ -173,6 +173,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   private class NameSegmentReferenceWithProblem(
     element: PsiElement,
+    private val symbol: WebSymbol,
     rangeInElement: TextRange,
     nameSegments: Collection<WebSymbolNameSegment>,
     private val apiStatus: WebSymbolApiStatus?,
@@ -200,7 +201,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
               toolMapping?.getProblemMessage(segment.displayName)
               ?: problemKind.getDefaultProblemMessage(segment.displayName),
               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true,
-              *WebSymbolsProblemQuickFixProvider.getQuickFixes(element, segment, problemKind).toTypedArray()
+              *WebSymbolsProblemQuickFixProvider.getQuickFixes(element, symbol, segment, problemKind).toTypedArray()
             )
           )
         }.firstOrNull()
