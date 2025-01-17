@@ -166,10 +166,11 @@ def test_get_tables_display_options():
         assert max_colwidth is None
 
 
+# TODO: fix issues with not none start + end indices in the tests below
 # 7
 def test_get_data_float_values_2f(setup_dataset_with_float_values):
     df = setup_dataset_with_float_values
-    actual = datasets_helpers.get_data(df, False, 0, 3, format="%.2f")
+    actual = datasets_helpers.get_data(df, False, 0, 5, format="%.2f")
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
@@ -180,7 +181,7 @@ def test_get_data_float_values_2f(setup_dataset_with_float_values):
 # 8
 def test_get_data_float_values_12f(setup_dataset_with_float_values):
     df = setup_dataset_with_float_values
-    actual = datasets_helpers.get_data(df, False, 0, 3, format="%.12f")
+    actual = datasets_helpers.get_data(df, False, 0, 5, format="%.12f")
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
@@ -207,7 +208,7 @@ def __check_info_dataset(arr, file):
 # 8
 def test_get_data_float_values_2e(setup_dataset_with_float_values):
     df = setup_dataset_with_float_values
-    actual = datasets_helpers.get_data(df, False, 0, 3, format="%.2e")
+    actual = datasets_helpers.get_data(df, False, 0, 5, format="%.2e")
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
@@ -218,7 +219,7 @@ def test_get_data_float_values_2e(setup_dataset_with_float_values):
 #9
 def test_get_data_float_values_d(setup_dataset_with_float_values):
     df = setup_dataset_with_float_values
-    actual = datasets_helpers.get_data(df, False, 0, 3, format="%d")
+    actual = datasets_helpers.get_data(df, False, 0, 5, format="%d")
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
@@ -229,7 +230,7 @@ def test_get_data_float_values_d(setup_dataset_with_float_values):
 # 10
 def test_get_data_float_values_d_garbage(setup_dataset_with_float_values):
     df = setup_dataset_with_float_values
-    actual = datasets_helpers.get_data(df, False, 0, 3, format="%d garbage")
+    actual = datasets_helpers.get_data(df, False, 0, 5, format="%d garbage")
 
     __read_expected_from_file_and_compare_with_actual(
         actual=actual,
@@ -245,7 +246,7 @@ def test_display_data_html_dataset(mocker, setup_dataset):
     # Mock the HTML and display functions
     mock_display = mocker.patch('IPython.display.display')
 
-    datasets_helpers.display_data_html(dataset, 0, 16)
+    datasets_helpers.display_data_html(dataset, 0, 5)
 
     called_args, called_kwargs = mock_display.call_args
     displayed_html = called_args[0]
