@@ -188,55 +188,44 @@ public final class VcsFacadeImpl extends VcsFacade {
   /**
    * creates light files for before and after contents and returns changed elements
    */
-  public @NotNull @Unmodifiable <T extends PsiElement> List<T> getCommitChangedElements(@NotNull Project project,
-                                                                                        @NotNull Change change,
-                                                                                        @NotNull Function<PsiFile, ? extends List<T>> elementExtractor) {
+  public @NotNull @Unmodifiable <T extends PsiElement> List<T> getCommitChangedElements(@NotNull Change change,
+                                                                                        @NotNull PsiCollector<T> elementExtractor) {
     ContentRevision beforeRevision = change.getBeforeRevision();
     ContentRevision afterRevision = change.getAfterRevision();
 
+    // todo do we care about /r here
     String contentBefore = getRevisionedContentFrom(beforeRevision);
     String contentAfter = getRevisionedContentFrom(afterRevision);
 
-    PsiFile psiFileBefore = contentBefore != null ? createLightFile(project, contentBefore, beforeRevision.getFile()) : null;
-    PsiFile psiFileAfter = contentAfter != null ? createLightFile(project, contentAfter, afterRevision.getFile()) : null;
+    List<T> elementsBefore = contentBefore != null ? elementExtractor.collectTargetPsi(contentBefore, beforeRevision.getFile().getFileType()) : emptyList();
+    List<T> elementsAfter = contentAfter != null ? elementExtractor.collectTargetPsi(contentAfter, afterRevision.getFile().getFileType()) : emptyList();
 
-    List<T> elementsBefore = findElements(elementExtractor, psiFileBefore);
-    List<T> elementsAfter = findElements(elementExtractor, psiFileAfter);
-
-    if (ContainerUtil.isEmpty(elementsBefore) && ContainerUtil.isEmpty(elementsAfter)) return emptyList();
+    if (elementsBefore.isEmpty() && elementsAfter.isEmpty()) return emptyList();
 
     if (change.getType() == Change.Type.NEW) {
-      return Objects.requireNonNull(elementsAfter);
+      return elementsAfter;
     }
     if (change.getType() == Change.Type.DELETED) {
-      return Objects.requireNonNull(elementsBefore);
+      return elementsBefore;
     }
+
+    assert contentBefore != null && contentAfter != null;
+
     List<? extends Range> ranges = getChangedRangesForCommit(contentBefore, contentAfter);
     BitSet changedLinesBefore = createLinesBitSetBefore(ranges);
     BitSet changedLinesAfter = createLinesBitSetAfter(ranges);
 
-    List<T> changedPsiBefore = filterChanged(psiFileBefore, elementsBefore, changedLinesBefore);
-    List<T> changedPsiAfter = filterChanged(psiFileAfter, elementsAfter, changedLinesAfter);
+    List<T> changedPsiBefore = filterChanged(elementsBefore, changedLinesBefore);
+    List<T> changedPsiAfter = filterChanged(elementsAfter, changedLinesAfter);
 
     return ContainerUtil.concat(changedPsiBefore, changedPsiAfter);
   }
 
-  private static <T extends PsiElement> @NotNull List<T> filterChanged(@NotNull PsiFile psiFile,
-                                                                       @NotNull List<T> elements,
+  private static <T extends PsiElement> @NotNull List<T> filterChanged(@NotNull List<T> elements,
                                                                        @NotNull BitSet changedLines) {
-    Document document = psiFile.getFileDocument();
+    if (elements.isEmpty()) return elements;
+    Document document = elements.get(0).getContainingFile().getFileDocument();
     return ContainerUtil.filter(elements, element -> isElementChanged(element, document, changedLines));
-  }
-
-  private static <T extends PsiElement> @Nullable List<T> findElements(@NotNull Function<PsiFile, ? extends List<T>> elementExtractor,
-                                                                       @Nullable PsiFile psiFileBefore) {
-    List<T> psiBefore = psiFileBefore != null ? elementExtractor.fun(psiFileBefore) : null;
-    return psiBefore == null ? null : ContainerUtil.skipNulls(psiBefore);
-  }
-
-  private static @NotNull PsiFile createLightFile(@NotNull Project project, @NotNull String text, @NotNull FilePath filePath) {
-    PsiFileFactory factory = PsiFileFactory.getInstance(project);
-    return factory.createFileFromText(filePath.getName(), filePath.getFileType(), text);
   }
 
   private static @NotNull List<Range> getChangedRangesForCommit(@NotNull String contentBefore, @NotNull String contentAfter) {
@@ -257,11 +246,6 @@ public final class VcsFacadeImpl extends VcsFacade {
       if (range.hasLines()) {
         changedLines.set(range.getLine1(), range.getLine2());
       }
-      // todo include unchanged lines before and after?
-      //else {
-      //   mark unchanged lines around deleted lines as modified
-        //changedLines.set(Math.max(0, range.getLine1() - 1), range.getLine1() + 1);
-      //}
     }
     return changedLines;
   }
@@ -272,11 +256,6 @@ public final class VcsFacadeImpl extends VcsFacade {
       if (range.hasLines()) {
         changedLines.set(range.getVcsLine1(), range.getVcsLine2());
       }
-      // todo include unchanged lines before and after?
-      //else {
-      //   mark unchanged lines around deleted lines as modified
-      //changedLines.set(Math.max(0, range.getVcsLine1() - 1), range.getVcsLine1() + 1);
-      //}
     }
     return changedLines;
   }
