@@ -9,7 +9,6 @@ import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
-import com.intellij.platform.runtime.repository.serialization.impl.XmlStreamUtil
 import java.io.IOException
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamConstants
@@ -43,10 +42,25 @@ fun loadPluginModules(
             inContentTag = true
           }
           else if (level == 3 && inContentTag && tagName == "module") {
-            val moduleAttribute = XmlStreamUtil.readFirstAttribute(reader, "name")
-            val moduleName = moduleAttribute.substringBefore('/')
+            var nameAttribute: String? = null
+            var loading: String? = null
+            for (i in 0 until  reader.attributeCount) {
+              when (reader.getAttributeLocalName(i)) {
+                "name" -> nameAttribute = reader.getAttributeValue(i)
+                "loading" -> loading = reader.getAttributeValue(i)
+              }
+            }
+            if (nameAttribute == null) {
+              throw XMLStreamException("'name' attribute is not found in 'module' tag")
+            }
+            val moduleName = nameAttribute.substringBefore('/')
             if (addedModules.add(moduleName)) {
-              modules.add(RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), RuntimeModuleLoadingRule.OPTIONAL))
+              val loadingRule = when (loading) {
+                "required", "embedded" -> RuntimeModuleLoadingRule.REQUIRED
+                "on-demand" -> RuntimeModuleLoadingRule.ON_DEMAND
+                else -> RuntimeModuleLoadingRule.OPTIONAL
+              }    
+              modules.add(RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), loadingRule))
             }
           }
         }

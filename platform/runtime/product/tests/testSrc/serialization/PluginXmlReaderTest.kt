@@ -44,6 +44,10 @@ class PluginXmlReaderTest {
       tempDirectory.rootPath,
       RawRuntimeModuleDescriptor.create("plugin.main", listOf("plugin"), emptyList()),
       RawRuntimeModuleDescriptor.create("plugin.optional", emptyList(), listOf("plugin.main")),
+      RawRuntimeModuleDescriptor.create("plugin.optional.explicit", emptyList(), listOf("plugin.main")),
+      RawRuntimeModuleDescriptor.create("plugin.on_demand", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin.required", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin.embedded", emptyList(), emptyList()),
     )
     @Suppress("XmlUnusedNamespaceDeclaration") 
     writePluginXml(tempDirectory.rootPath / "plugin", 
@@ -59,6 +63,10 @@ class PluginXmlReaderTest {
               <content>
                 <module name="plugin.main/subpackage"/>
                 <module name="plugin.optional"/>
+                <module name="plugin.optional.explicit" loading="optional"/>
+                <module name="plugin.on_demand" loading="on-demand"/>
+                <module name="plugin.required" loading="required"/>
+                <module loading="embedded" name="plugin.embedded" />
                 <module name="plugin.unknown"/>
               </content>
             </idea-plugin>  
@@ -66,12 +74,21 @@ class PluginXmlReaderTest {
     )
     val pluginModules = loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
                                           ResourceFileResolver.createDefault(repository))
-    assertEquals(3, pluginModules.size)
-    val (main, optional, unknown) = pluginModules
+    assertEquals(7, pluginModules.size)
+    val (main, optional, optionalExplicit, onDemand, required) = pluginModules
+    val (embedded, unknown) = pluginModules.subList(5, 7)
     assertEquals("plugin.main", main.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.REQUIRED, main.loadingRule)
     assertEquals("plugin.optional", optional.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
+    assertEquals("plugin.optional.explicit", optionalExplicit.moduleId.stringId)
+    assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optionalExplicit.loadingRule)
+    assertEquals("plugin.on_demand", onDemand.moduleId.stringId)
+    assertEquals(RuntimeModuleLoadingRule.ON_DEMAND, onDemand.loadingRule)
+    assertEquals("plugin.required", required.moduleId.stringId)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, required.loadingRule)
+    assertEquals("plugin.embedded", embedded.moduleId.stringId)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, embedded.loadingRule)
     assertEquals("plugin.unknown", unknown.moduleId.stringId)
     assertEquals(RuntimeModuleLoadingRule.OPTIONAL, unknown.loadingRule)
   }
