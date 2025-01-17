@@ -12,10 +12,12 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.jvm.JvmModifier;
@@ -256,6 +258,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     for (CommonIntentionAction fix : errorFixProvider.getFixes(error)) {
       info.registerFix(fix.asIntention(), null, null, null, null);
     }
+    if (error.kind() == JavaErrorKinds.EXPRESSION_EXPECTED) {
+      UnresolvedReferenceQuickFixUpdater.getInstance(getProject()).registerQuickFixesLater((PsiReference)error.psi(), info);
+    }
     add(info);
   }
 
@@ -300,7 +305,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
     super.visitArrayInitializerExpression(expression);
-    if (!hasErrorResults()) add(HighlightUtil.checkArrayInitializerApplicable(expression));
     if (!(expression.getParent() instanceof PsiNewExpression)) {
       if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()));
     }
@@ -535,22 +539,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiMethodCallExpression) return;
     PsiType type = expression.getType();
 
-    if (!hasErrorResults()) add(HighlightUtil.checkMustBeBoolean(expression, type));
-    if (!hasErrorResults() && expression instanceof PsiArrayAccessExpression accessExpression) {
-      add(HighlightUtil.checkValidArrayAccessExpression(accessExpression));
-    }
     if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression &&
         newExpression.getQualifier() != expression && newExpression.getArrayInitializer() != expression) {
       add(HighlightUtil.checkAssignability(PsiTypes.intType(), expression.getType(), expression, expression));  // like in 'new String["s"]'
     }
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression, myFile));
     if (!hasErrorResults()) add(HighlightUtil.checkVariableExpected(expression));
-    if (parent instanceof PsiArrayInitializerExpression arrayInitializer) {
-      if (!hasErrorResults()) add(HighlightUtil.checkArrayInitializer(expression, type, arrayInitializer));
-    }
-    if (!hasErrorResults()) add(HighlightUtil.checkTernaryOperatorConditionIsBoolean(expression, type));
-    if (!hasErrorResults()) add(HighlightUtil.checkAssertOperatorTypes(expression, type));
-    if (!hasErrorResults()) add(HighlightUtil.checkSynchronizedExpressionType(expression, type, myFile));
     if (!hasErrorResults()) add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression, type));
     if (!hasErrorResults() &&
         parent instanceof PsiThrowStatement statement &&
@@ -1125,14 +1119,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         catch (IndexNotReadyException ignored) {
         }
       }
-    }
-
-    if (!hasErrorResults() && resultForIncompleteCode != null && PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, expression)) {
-      add(HighlightUtil.checkPatternVariableRequired(expression, resultForIncompleteCode));
-    }
-
-    if (!hasErrorResults() && resultForIncompleteCode != null) {
-      add(HighlightUtil.checkExpressionRequired(expression, resultForIncompleteCode, myFile));
     }
 
     if (!hasErrorResults() && resolved instanceof PsiField) {

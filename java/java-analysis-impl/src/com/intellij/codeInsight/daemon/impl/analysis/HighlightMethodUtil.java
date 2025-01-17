@@ -280,25 +280,7 @@ public final class HighlightMethodUtil {
         }
       }
       else {
-        String description = JavaErrorBundle.message("method.call.expected");
-        builder =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(description);
-        if (resolved instanceof PsiClass) {
-          IntentionAction action = QuickFixFactory.getInstance().createInsertNewFix(methodCall, (PsiClass)resolved);
-          builder.registerFix(action, null, null, null, null);
-        }
-        else {
-          TextRange range = getFixRange(methodCall);
-          registerStaticMethodQualifierFixes(methodCall, builder);
-          registerUsageFixes(methodCall, builder, range);
-          if (resolved instanceof PsiVariable variable && JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(languageLevel)) {
-            PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(variable.getType());
-            if (method != null) {
-              IntentionAction action = QuickFixFactory.getInstance().createInsertMethodCallFix(methodCall, method);
-              builder.registerFix(action, null, null, range, null);
-            }
-          }
-        }
+        builder = null;
       }
     }
     if (builder == null) {

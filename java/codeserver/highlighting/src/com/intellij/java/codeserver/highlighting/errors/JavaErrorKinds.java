@@ -290,7 +290,7 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "class.not.enclosing")
       .withRawDescription((psi, ctx) -> message("class.not.enclosing", formatClass(ctx.outerClass())));
   public static final Parameterized<PsiElement, ClassStaticReferenceErrorContext> CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT =
-    parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "this.expression.cannot.be.referenced.from.static.context")
+    parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "class.cannot.be.referenced.from.static.context")
       .withRawDescription((psi, ctx) -> message(
         "class.cannot.be.referenced.from.static.context",
         formatClass(ctx.outerClass()) + "." + (psi instanceof PsiSuperExpression ? PsiKeyword.SUPER : PsiKeyword.THIS)));
@@ -528,12 +528,26 @@ public final class JavaErrorKinds {
       .withDescription((psi, context) -> context.createDescription())
       .withTooltip((psi, context) -> context.createTooltip());
   public static final Simple<PsiKeyword> TYPE_VOID_ILLEGAL = error("type.void.illegal");
+  public static final Simple<PsiExpression> TYPE_VOID_NOT_ALLOWED = error("type.void.not.allowed");
 
   public static final Simple<PsiLabeledStatement> LABEL_WITHOUT_STATEMENT = error(PsiLabeledStatement.class, "label.without.statement")
     .withAnchor(label -> label.getLabelIdentifier());
   public static final Simple<PsiLabeledStatement> LABEL_DUPLICATE = error(PsiLabeledStatement.class, "label.duplicate")
     .withAnchor(label -> label.getLabelIdentifier())
     .withRawDescription(statement -> message("label.duplicate", statement.getLabelIdentifier().getText()));
+
+  public static final Parameterized<PsiExpression, PsiType> ARRAY_ILLEGAL_INITIALIZER =
+    parameterized(PsiExpression.class, PsiType.class, "array.illegal.initializer")
+      .withRawDescription((expr, type) -> message("array.illegal.initializer", formatType(type)));
+  public static final Simple<PsiArrayInitializerExpression> ARRAY_INITIALIZER_NOT_ALLOWED = error("array.initializer.not.allowed");
+  public static final Parameterized<PsiExpression, PsiType> ARRAY_TYPE_EXPECTED =
+    parameterized(PsiExpression.class, PsiType.class, "array.type.expected")
+      .withRawDescription((expr, type) -> message("array.type.expected", formatType(type)));
+
+  public static final Parameterized<PsiReferenceExpression, PsiClass> PATTERN_TYPE_PATTERN_EXPECTED =
+    parameterized("pattern.type.pattern.expected");
+
+  public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
 
   public static final Simple<PsiNewExpression> NEW_EXPRESSION_QUALIFIED_MALFORMED =
     error("new.expression.qualified.malformed");
@@ -592,26 +606,29 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiExpression, PsiClass> CALL_SUPER_QUALIFIER_NOT_INNER_CLASS = 
     parameterized(PsiExpression.class, PsiClass.class, "call.super.qualifier.not.inner.class")
       .withRawDescription((psi, cls) -> message("call.super.qualifier.not.inner.class", formatClass(cls)));
+  public static final Simple<PsiMethodCallExpression> CALL_EXPECTED = error("call.expected");
 
 
-  private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@NotNull String key) {
+  private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
+    @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
     return new Simple<>(key);
   }
 
-  private static @NotNull <Psi extends PsiElement> Simple<Psi> error(@SuppressWarnings("unused") @NotNull Class<Psi> psiClass,
-                                                                     @NotNull String key) {
+  private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
+    @SuppressWarnings("unused") @NotNull Class<Psi> psiClass,
+    @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
     return error(key);
   }
 
   private static @NotNull <Psi extends PsiElement, Context> Parameterized<Psi, Context> parameterized(
     @SuppressWarnings("unused") @NotNull Class<Psi> psiClass,
     @SuppressWarnings("unused") @NotNull Class<Context> contextClass,
-    @NotNull String key) {
+    @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
     return new Parameterized<>(key);
   }
 
   private static @NotNull <Psi extends PsiElement, Context> Parameterized<Psi, Context> parameterized(
-    @NotNull String key) {
+    @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
     return new Parameterized<>(key);
   }
 

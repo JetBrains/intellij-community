@@ -232,7 +232,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
   @Override
   public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
-    super.visitMethodReferenceExpression(expression);
+    visitElement(expression);
     checkFeature(expression, JavaFeature.METHOD_REFERENCES);
     PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (functionalInterfaceType != null && !PsiTypesUtil.allTypeParametersResolved(expression, functionalInterfaceType)) return;
@@ -334,7 +334,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
     if (!hasErrorResults()) myClassChecker.checkEnumSuperConstructorCall(expression);
     if (!hasErrorResults()) myClassChecker.checkSuperQualifierType(expression);
-
+    if (!hasErrorResults()) myExpressionChecker.checkMethodCall(expression);
+    if (!hasErrorResults()) visitExpression(expression);
   }
 
   @Override
@@ -419,9 +420,21 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         }
       }
     }
+    if (!hasErrorResults() && resultForIncompleteCode != null && PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, expression)) {
+      myExpressionChecker.checkPatternVariableRequired(expression, resultForIncompleteCode);
+    }
+    if (!hasErrorResults() && resultForIncompleteCode != null) {
+      myExpressionChecker.checkExpressionRequired(expression, resultForIncompleteCode);
+    }
   }
 
   @Override
+  public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
+    super.visitArrayInitializerExpression(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkArrayInitializerApplicable(expression);
+  }
+
+    @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     JavaResolveResult result = ref instanceof PsiExpression ? resolveOptimised(ref, myFile) : doVisitReferenceElement(ref);
     if (result != null) {
@@ -558,6 +571,15 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitExpression(@NotNull PsiExpression expression) {
     super.visitExpression(expression);
     if (!hasErrorResults()) myAnnotationChecker.checkConstantExpression(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkMustBeBoolean(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkAssertOperatorTypes(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkSynchronizedExpressionType(expression);
+    if (expression.getParent() instanceof PsiArrayInitializerExpression arrayInitializer) {
+      if (!hasErrorResults()) myExpressionChecker.checkArrayInitializer(expression, arrayInitializer);
+    }
+    if (!hasErrorResults() && expression instanceof PsiArrayAccessExpression accessExpression) {
+      myExpressionChecker.checkValidArrayAccessExpression(accessExpression);
+    }
   }
 
   @Override

@@ -23,12 +23,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -211,6 +213,44 @@ final class JavaErrorFixProvider {
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("remove.qualifier.fix")));
     fix(LITERAL_CHARACTER_TOO_LONG, error -> myFactory.createConvertToStringLiteralAction());
     fix(LITERAL_CHARACTER_EMPTY, error -> myFactory.createConvertToStringLiteralAction());
+    fix(PATTERN_TYPE_PATTERN_EXPECTED, error -> {
+      String patternVarName = new VariableNameGenerator(error.psi(), VariableKind.LOCAL_VARIABLE).byName("ignored").generate(true);
+      return myFactory.createReplaceWithTypePatternFix(error.psi(), error.context(), patternVarName);
+    });
+    fix(ARRAY_INITIALIZER_NOT_ALLOWED, error -> myFactory.createAddNewArrayExpressionFix(error.psi()));
+    fix(ARRAY_TYPE_EXPECTED, error -> error.psi().getParent() instanceof PsiArrayAccessExpression accessExpression ?
+                                      myFactory.createReplaceWithListAccessFix(accessExpression) : null);
+    fix(ARRAY_ILLEGAL_INITIALIZER, error -> {
+      if (error.psi().getParent() instanceof PsiArrayInitializerExpression initializerExpression) {
+        PsiType sameType = JavaHighlightUtil.sameType(initializerExpression.getInitializers());
+        if (sameType != null) {
+          return VariableArrayTypeFix.createFix(initializerExpression, sameType);
+        }
+      }
+      return null;
+    });
+    multi(CALL_EXPECTED, error -> {
+      PsiMethodCallExpression methodCall = error.psi();
+      JavaResolveResult result = methodCall.getMethodExpression().advancedResolve(true);
+      PsiElement resolved = result.getElement();
+      if (resolved instanceof PsiClass psiClass) {
+        return List.of(myFactory.createInsertNewFix(methodCall, psiClass));
+      }
+      else {
+        List<CommonIntentionAction> registrar = new ArrayList<>();
+        registrar.add(myFactory.createStaticImportMethodFix(methodCall));
+        registrar.add(myFactory.createQualifyStaticMethodCallFix(methodCall));
+        registrar.add(myFactory.addMethodQualifierFix(methodCall));
+        registrar.addAll(myFactory.createCreateMethodFromUsageFixes(methodCall));
+        if (resolved instanceof PsiVariable variable && PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, methodCall)) {
+          PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(variable.getType());
+          if (method != null) {
+            registrar.add(myFactory.createInsertMethodCallFix(methodCall, method));
+          }
+        }
+        return registrar;
+      }
+    });
   }
 
   private void createTypeFixes() {
@@ -218,30 +258,40 @@ final class JavaErrorFixProvider {
       JavaIncompatibleTypeErrorContext context = error.context();
       PsiElement anchor = error.psi();
       PsiElement parent = anchor.getParent();
+      PsiType lType = context.lType();
+      PsiType rType = context.rType();
       if (anchor instanceof PsiJavaCodeReferenceElement && parent instanceof PsiReferenceList &&
           parent.getParent() instanceof PsiMethod method && method.getThrowsList() == parent) {
         // Incompatible type in throws clause
-        PsiClass usedClass = PsiUtil.resolveClassInClassTypeOnly(context.rType());
-        if (usedClass != null && context.lType() instanceof PsiClassType throwableType) {
+        PsiClass usedClass = PsiUtil.resolveClassInClassTypeOnly(rType);
+        if (usedClass != null && lType instanceof PsiClassType throwableType) {
           return List.of(myFactory.createExtendsListFix(usedClass, throwableType, true));
         }
       }
       if (anchor instanceof PsiExpression expression) {
         List<CommonIntentionAction> registrar = new ArrayList<>();
-        AddTypeArgumentsConditionalFix.register(registrar::add, expression, context.lType());
-        if (context.rType() != null && isCastIntentionApplicable(expression, context.lType())) {
-          ContainerUtil.addIfNotNull(registrar, myFactory.createAddTypeCastFix(context.lType(), expression));
+        AddTypeArgumentsConditionalFix.register(registrar::add, expression, lType);
+        if (rType != null && isCastIntentionApplicable(expression, lType)) {
+          ContainerUtil.addIfNotNull(registrar, myFactory.createAddTypeCastFix(lType, expression));
         }
-        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(registrar::add, expression, context.lType(), context.rType());
-        if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(context.lType()))) {
-          ContainerUtil.addIfNotNull(registrar, HighlightFixUtil.createChangeReturnTypeFix(expression, context.lType()));
+        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(registrar::add, expression, lType, rType);
+        if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(lType))) {
+          ContainerUtil.addIfNotNull(registrar, HighlightFixUtil.createChangeReturnTypeFix(expression, lType));
         }
-        ContainerUtil.addIfNotNull(registrar, ChangeNewOperatorTypeFix.createFix(expression, context.lType()));
+        ContainerUtil.addIfNotNull(registrar, ChangeNewOperatorTypeFix.createFix(expression, lType));
+        if (PsiTypes.booleanType().equals(lType) && expression instanceof PsiAssignmentExpression assignment &&
+            assignment.getOperationTokenType() == JavaTokenType.EQ) {
+          registrar.add(myFactory.createAssignmentToComparisonFix(assignment));
+        }
+        if (expression.getParent() instanceof PsiArrayInitializerExpression initializerList) {
+          PsiType sameType = JavaHighlightUtil.sameType(initializerList.getInitializers());
+          ContainerUtil.addIfNotNull(registrar, sameType == null ? null : VariableArrayTypeFix.createFix(initializerList, sameType));
+        }
         return registrar;
       }
       if (anchor instanceof PsiParameter parameter && parent instanceof PsiForeachStatement forEach) {
         List<CommonIntentionAction> registrar = new ArrayList<>();
-        HighlightFixUtil.registerChangeVariableTypeFixes(parameter, context.rType(), forEach.getIteratedValue(), registrar::add);
+        HighlightFixUtil.registerChangeVariableTypeFixes(parameter, rType, forEach.getIteratedValue(), registrar::add);
         return registrar;
       }
       return List.of();
