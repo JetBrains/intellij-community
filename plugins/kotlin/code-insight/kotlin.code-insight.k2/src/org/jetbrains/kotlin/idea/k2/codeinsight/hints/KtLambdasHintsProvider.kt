@@ -65,7 +65,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
                 text("^")
                 text(lambdaName,
                      InlayActionData(
-                         PsiPointerInlayActionPayload(lambdaExpression.createSmartPointer(), true),
+                         PsiPointerInlayActionPayload(pointer = lambdaExpression.createSmartPointer(), useNavigationElement = true),
                          PsiPointerInlayActionNavigationHandler.HANDLER_ID
                      )
                 )
