@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtilRt
 import kotlinx.coroutines.*
+import org.apache.arrow.memory.RootAllocator
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.jps.impl.*
@@ -48,7 +50,7 @@ private fun configureKotlincHome() {
   System.setProperty("jps.kotlin.home", singleFile.parent.toString())
 }
 
-internal fun configureGlobalJps(logWriter: LogWriter) {
+fun configureGlobalJps(logWriter: LogWriter) {
   Logger.setFactory { BazelLogger(category = IdeaLogRecordFormatter.smartAbbreviate(it), writer = logWriter) }
   System.setProperty("jps.service.manager.impl", BazelJpsServiceManager::class.java.name)
   System.setProperty("jps.backward.ref.index.builder.fs.case.sensitive", "true")
@@ -61,10 +63,18 @@ internal fun configureGlobalJps(logWriter: LogWriter) {
   configureKotlincHome()
 }
 
-object JpsBuildWorker : WorkRequestExecutor {
-  @JvmStatic
-  fun main(startupArgs: Array<String>) {
-    processRequests(startupArgs = startupArgs, executor = this, setup = { configureGlobalJps(it) })
+class JpsBuildWorker private constructor(private val allocator: RootAllocator) : WorkRequestExecutor {
+  companion object {
+    @JvmStatic
+    fun main(startupArgs: Array<String>) {
+      RootAllocator(Long.MAX_VALUE).use { allocator ->
+        processRequests(
+          startupArgs = startupArgs,
+          executor = JpsBuildWorker(allocator),
+          setup = { configureGlobalJps(it) },
+        )
+      }
+    }
   }
 
   override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int {
@@ -90,11 +100,13 @@ object JpsBuildWorker : WorkRequestExecutor {
       dependencyFileToDigest = dependencyFileToDigest,
       isDebugEnabled = request.verbosity > 0,
       sourceFileToDigest = sourceFileToDigest,
+      allocator = allocator,
     )
   }
 }
 
-internal suspend fun buildUsingJps(
+@VisibleForTesting
+suspend fun buildUsingJps(
   baseDir: Path,
   args: ArgMap<JvmBuilderFlags>,
   out: Writer,
@@ -102,6 +114,7 @@ internal suspend fun buildUsingJps(
   dependencyFileToDigest: Map<Path, ByteArray>,
   sourceFileToDigest: Map<Path, ByteArray>,
   isDebugEnabled: Boolean,
+  allocator: RootAllocator,
 ): Int {
   val log = RequestLog(out = out, isDebugEnabled = isDebugEnabled)
 
@@ -132,9 +145,9 @@ internal suspend fun buildUsingJps(
   // if class output dir doesn't exist, make sure that we do not to use existing cache - pass `isRebuild` as true in this case
   var isRebuild = Files.notExists(classOutDir)
 
-  val buildStateFile = dataDir.resolve("$prefix-state-v1.db")
+  val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
   val typeAwareRelativizer = relativizer.typeAwareRelativizer!!
-  val buildState = loadBuildState(buildStateFile, typeAwareRelativizer, log)
+  val buildState = loadBuildState(buildStateFile, typeAwareRelativizer, allocator, log)
   if (buildState == null) {
     FileUtilRt.deleteRecursively(dataDir)
     FileUtilRt.deleteRecursively(classOutDir)
@@ -147,6 +160,7 @@ internal suspend fun buildUsingJps(
     actualDigestMap = sourceFileToDigest,
     sourceToDescriptor = buildState ?: HashMap(sourceFileToDigest.size),
     storeFile = buildStateFile,
+    allocator = allocator,
   )
 
   var exitCode = initAndBuild(
@@ -242,7 +256,7 @@ private suspend fun initAndBuild(
         KotlinCompilerReferenceIndexBuilder(),
       )
       builders.sortBy { it.category.ordinal }
-      val exitCode = JpsProjectBuilder(
+      val exitCode = JpsTargetBuilder(
         log = messageHandler,
         isCleanBuild = storageInitializer.isCleanBuild,
         dataManager = buildDataProvider,
@@ -311,7 +325,12 @@ private suspend fun postBuild(
 
       ensureActive()
 
-      saveBuildState(buildDataProvider.storeFile, sourceDescriptors, relativizer = buildDataProvider.relativizer)
+      saveBuildState(
+        buildStateFile = buildDataProvider.storeFile,
+        list = sourceDescriptors,
+        relativizer = buildDataProvider.relativizer,
+        allocator = buildDataProvider.allocator,
+      )
     }
 
     launch(CoroutineName("create output JAR and ABI JAR")) {

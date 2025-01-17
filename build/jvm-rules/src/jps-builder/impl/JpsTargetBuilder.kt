@@ -41,7 +41,7 @@ private const val CLASSPATH_INDEX_FILE_NAME = "classpath.index"
 // "classpath.index doesn't exist because deleted on module file change" vs. "classpath.index doesn't exist because was not created"
 private const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
 
-internal class JpsProjectBuilder(
+internal class JpsTargetBuilder(
   private val log: RequestLog,
   private val isCleanBuild: Boolean,
   private val dataManager: BazelBuildDataProvider,
@@ -114,6 +114,7 @@ internal class JpsProjectBuilder(
         }
       }
     })
+
     val allModuleLevelBuildersBuildStartedSpan = Tracer.start("All ModuleLevelBuilder.buildStarted")
     for (builder in builders) {
       builder.buildStarted(context)
@@ -128,7 +129,7 @@ internal class JpsProjectBuilder(
       val affected = context.scope.isAffected(moduleTarget)
       isAffectedSpan.complete()
       if (affected) {
-        buildTargetChunk(context = context, target = moduleTarget, builders = builders)
+        buildTarget(context = context, target = moduleTarget, builders = builders)
       }
       checkingSourcesSpan.complete()
 
@@ -373,7 +374,7 @@ internal class JpsProjectBuilder(
     fsState.markInitialScanPerformed(target)
   }
 
-  private fun buildTargetChunk(context: CompileContext, target: BazelModuleBuildTarget, builders: Array<ModuleLevelBuilder>) {
+  private fun buildTarget(context: CompileContext, target: BazelModuleBuildTarget, builders: Array<ModuleLevelBuilder>) {
     val buildSpan = Tracer.start { "Building ${target.presentableName}" }
     val fsState = context.projectDescriptor.fsState
     var doneSomething: Boolean

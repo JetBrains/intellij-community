@@ -11,13 +11,30 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
-class SourceDescriptor(
+data class SourceDescriptor(
   // absolute and normalized
   @JvmField var sourceFile: Path,
   @JvmField var digest: ByteArray? = null,
   @JvmField var outputs: List<String>? = null,
 ) {
   //fun isEmpty(): Boolean = digest == null && outputs.isNullOrEmpty()
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SourceDescriptor) return false
+
+    if (sourceFile != other.sourceFile) return false
+    if (!digest.contentEquals(other.digest)) return false
+    if (outputs != other.outputs) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = sourceFile.hashCode()
+    result = 31 * result + (digest?.contentHashCode() ?: 0)
+    result = 31 * result + (outputs?.hashCode() ?: 0)
+    return result
+  }
 }
 
 suspend fun packageToJar(

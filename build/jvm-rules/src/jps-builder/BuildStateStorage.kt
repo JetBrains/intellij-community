@@ -1,149 +1,171 @@
-@file:Suppress("UnstableApiUsage")
+@file:Suppress("UnstableApiUsage", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.jps
 
-import com.google.protobuf.CodedInputStream
-import com.google.protobuf.CodedOutputStream
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import org.jetbrains.intellij.build.io.unmapBuffer
+import org.apache.arrow.memory.RootAllocator
+import org.apache.arrow.vector.FixedSizeBinaryVector
+import org.apache.arrow.vector.VarCharVector
+import org.apache.arrow.vector.VectorSchemaRoot
+import org.apache.arrow.vector.complex.ListVector
+import org.apache.arrow.vector.ipc.ArrowFileReader
+import org.apache.arrow.vector.ipc.ArrowFileWriter
+import org.apache.arrow.vector.types.pojo.ArrowType
+import org.apache.arrow.vector.types.pojo.Field
+import org.apache.arrow.vector.types.pojo.FieldType
+import org.apache.arrow.vector.types.pojo.Schema
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.io.writeFileUsingTempFile
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
 import org.jetbrains.kotlin.utils.addToStdlib.enumSetOf
 import java.io.IOException
-import java.nio.ByteBuffer
-import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
-import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.zip.CRC32
 
-private const val STATE_FILE_FORMAT_VERSION = 1
+private const val STATE_FILE_FORMAT_VERSION = 1.toString()
+private const val VERSION_META_NAME = "version"
 
 private val WRITE_FILE_OPTION = enumSetOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE)
 private val READ_FILE_OPTION = enumSetOf(StandardOpenOption.READ)
 
-internal fun loadBuildState(
+private val notNullUtfStringFieldType = FieldType.notNullable(ArrowType.Utf8())
+
+private val sourceFileField = Field("sourceFile", notNullUtfStringFieldType, null)
+private val digestField = Field("digest", FieldType.notNullable(ArrowType.FixedSizeBinary(32)), null)
+private val outputListField = Field(
+  "outputs",
+  FieldType.notNullable(ArrowType.List()),
+  java.util.List.of(Field("output", notNullUtfStringFieldType, null))
+)
+
+private val sourceDescriptorSchema = Schema(java.util.List.of(sourceFileField, digestField, outputListField))
+
+private val stateFileMetadata = java.util.Map.of(VERSION_META_NAME, STATE_FILE_FORMAT_VERSION)
+
+@VisibleForTesting
+fun loadBuildState(
   buildStateFile: Path,
   relativizer: PathTypeAwareRelativizer,
-  log: RequestLog,
+  allocator: RootAllocator,
+  log: RequestLog?,
 ): HashMap<Path, SourceDescriptor>? {
-  var map: MappedByteBuffer? = null
   try {
-    map = FileChannel.open(buildStateFile, READ_FILE_OPTION).use {
-      it.map(FileChannel.MapMode.READ_ONLY, 0, it.size())
+    FileChannel.open(buildStateFile, READ_FILE_OPTION).use { fileChannel ->
+      VectorSchemaRoot.create(sourceDescriptorSchema, allocator).use { root ->
+        ArrowFileReader(fileChannel, allocator).use { fileReader ->
+          // metadata is available only after loading batch
+          fileReader.loadNextBatch()
+
+          val formatVersion = fileReader.metaData.get(VERSION_META_NAME)
+          if (formatVersion != STATE_FILE_FORMAT_VERSION) {
+            val message = "format version mismatch: expected $STATE_FILE_FORMAT_VERSION, actual $formatVersion"
+            if (log == null) {
+              throw IOException(message)
+            }
+            else {
+              log.warn(message)
+            }
+            return null
+          }
+
+          return doLoad(fileReader.vectorSchemaRoot, relativizer)
+        }
+      }
     }
-    return doLoad(map, relativizer)
   }
   catch (_: NoSuchFileException) {
     return null
   }
   catch (e: Throwable) {
+    if (log == null) {
+      throw e
+    }
+
     log.error("cannot load $buildStateFile", e)
     // will be deleted by caller
     return null
   }
-  finally {
-    map?.let { unmapBuffer(it) }
-  }
 }
 
-internal fun saveBuildState(buildStateFile: Path, list: Array<SourceDescriptor>, relativizer: PathTypeAwareRelativizer) {
-  val byteArrayOutputStream = BufferExposingByteArrayOutputStream()
-  val output = CodedOutputStream.newInstance(byteArrayOutputStream)
-  output.writeFixed32NoTag(STATE_FILE_FORMAT_VERSION)
-  // allocate for checksum
-  output.writeFixed64NoTag(0L)
+@VisibleForTesting
+fun saveBuildState(buildStateFile: Path, list: Array<SourceDescriptor>, relativizer: PathTypeAwareRelativizer, allocator: RootAllocator) {
+  VectorSchemaRoot.create(sourceDescriptorSchema, allocator).use { root ->
+    val sourceFileVector = root.getVector("sourceFile") as VarCharVector
+    val digestVector = root.getVector("digest") as FixedSizeBinaryVector
+    val outputListVector = root.getVector("outputs") as ListVector
 
-  output.writeUInt32NoTag(list.size)
-  for (descriptor in list) {
-    output.writeStringNoTag(relativizer.toRelative(descriptor.sourceFile, RelativePathType.SOURCE))
-    output.writeByteArrayNoTag(descriptor.digest)
-    val outputs = descriptor.outputs
-    if (outputs == null) {
-      output.writeUInt32NoTag(0)
+    sourceFileVector.allocateNew(list.size)
+    digestVector.allocateNew(list.size)
+    outputListVector.setInitialCapacity(list.size, 1.5)
+    outputListVector.allocateNew()
+
+    val outputListInnerVector = outputListVector.addOrGetVector<VarCharVector>(notNullUtfStringFieldType).vector
+    var rowIndex = 0
+    var outputRowIndex = 0
+    for (descriptor in list) {
+      sourceFileVector.set(rowIndex, relativizer.toRelative(descriptor.sourceFile, RelativePathType.SOURCE).toByteArray())
+      digestVector.set(rowIndex, descriptor.digest!!)
+
+      val outputs = descriptor.outputs
+      outputListVector.startNewValue(rowIndex)
+      if (outputs == null) {
+        outputListVector.endValue(rowIndex, 0)
+      }
+      else {
+        for (output in outputs) {
+          outputListInnerVector.setSafe(outputRowIndex++, output.toByteArray())
+        }
+        outputListVector.endValue(rowIndex, outputs.size)
+      }
+
+      rowIndex++
     }
-    else {
-      output.writeUInt32NoTag(outputs.size)
-      for (outputPath in outputs) {
-        output.writeStringNoTag(outputPath)
+
+    root.setRowCount(rowIndex)
+
+    writeFileUsingTempFile(buildStateFile) { tempFile ->
+      FileChannel.open(tempFile, WRITE_FILE_OPTION).use { fileChannel ->
+        ArrowFileWriter(root, null, fileChannel, stateFileMetadata).use { fileWriter ->
+          fileWriter.start()
+          fileWriter.writeBatch()
+          fileWriter.end()
+        }
       }
     }
   }
-
-  // allocate for checksum
-  output.writeFixed64NoTag(0L)
-  output.flush()
-
-  val data = byteArrayOutputStream.internalBuffer
-  val dataSize = byteArrayOutputStream.size()
-
-  val crc32 = CRC32()
-  val dataOffset = Int.SIZE_BYTES + Long.SIZE_BYTES
-  crc32.update(data, dataOffset, dataSize - dataOffset)
-  val checksum = crc32.value
-
-  CodedOutputStream.newInstance(data, Int.SIZE_BYTES, dataOffset).writeFixed64NoTag(checksum)
-  CodedOutputStream.newInstance(data, dataSize - Long.SIZE_BYTES, dataOffset).writeFixed64NoTag(checksum)
-
-  val parent = buildStateFile.parent
-  Files.createDirectories(parent)
-  writeFileUsingTempFile(buildStateFile) { tempFile ->
-    FileChannel.open(tempFile, WRITE_FILE_OPTION).use {
-      it.write(ByteBuffer.wrap(data, 0, dataSize), 0)
-    }
-  }
 }
 
-private fun doLoad(byteBuffer: MappedByteBuffer, relativizer: PathTypeAwareRelativizer): HashMap<Path, SourceDescriptor> {
-  val fileSize = byteBuffer.limit()
+private fun doLoad(root: VectorSchemaRoot, relativizer: PathTypeAwareRelativizer): HashMap<Path, SourceDescriptor> {
+  val sourceFileVector = root.getVector(sourceFileField) as VarCharVector
+  val digestVector = root.getVector(digestField) as FixedSizeBinaryVector
+  val outputListVector = root.getVector(outputListField) as ListVector
+  val outputListInnerVector = outputListVector.addOrGetVector<VarCharVector>(notNullUtfStringFieldType).vector
 
-  val crc32 = CRC32()
-  byteBuffer.mark()
-  byteBuffer.position(Int.SIZE_BYTES + Long.SIZE_BYTES).limit(fileSize - Long.SIZE_BYTES)
-  crc32.update(byteBuffer)
-  val expectedChecksum = crc32.value
-  byteBuffer.position(0).limit(fileSize)
-
-  val input = CodedInputStream.newInstance(byteBuffer)
-
-  val formatVersion = input.readRawLittleEndian32()
-  if (formatVersion != STATE_FILE_FORMAT_VERSION) {
-    throw IOException("format version mismatch: expected $STATE_FILE_FORMAT_VERSION, actual $formatVersion")
-  }
-
-  val storedChecksum = input.readRawLittleEndian64()
-  if (storedChecksum != expectedChecksum) {
-    throw IOException("checksum mismatch: expected $expectedChecksum, actual $storedChecksum (file start)")
-  }
-
-  val size = input.readRawVarint32()
-  val map = HashMap<Path, SourceDescriptor>(size)
-  repeat(size) {
-    val source = input.readStringRequireUtf8()
-    val digest = input.readByteArray()
-    val inputSize = input.readRawVarint32()
-    val outputs = if (inputSize == 0) {
+  val result = HashMap<Path, SourceDescriptor>(root.rowCount)
+  var outputIndex = 0
+  for (rowIndex in 0 until root.rowCount) {
+    val sourceFile = relativizer.toAbsoluteFile(String(sourceFileVector.get(rowIndex)), RelativePathType.SOURCE)
+    val digest = digestVector.get(rowIndex) ?: throw IOException("Digest cannot be null")
+    val outputs = if (outputListVector.isNull(rowIndex)) {
       null
     }
     else {
-      Array(inputSize) { input.readStringRequireUtf8() }.asList()
+      val start = outputListVector.getElementStartIndex(rowIndex)
+      val end = outputListVector.getElementEndIndex(rowIndex)
+      Array<String>(end - start) {
+        String(outputListInnerVector.get(it + start))
+      }.asList()
     }
 
-    val sourceFile = relativizer.toAbsoluteFile(source, RelativePathType.SOURCE)
-    map.put(sourceFile, SourceDescriptor(
+    result.put(sourceFile, SourceDescriptor(
       sourceFile = sourceFile,
       digest = digest,
       outputs = outputs,
     ))
+    outputIndex++
   }
 
-  val storedChecksumEnd = input.readRawLittleEndian64()
-  if (storedChecksumEnd != expectedChecksum) {
-    throw IOException("checksum mismatch: expected $expectedChecksum, actual $storedChecksumEnd (file end)")
-  }
-
-  return map
+  return result
 }

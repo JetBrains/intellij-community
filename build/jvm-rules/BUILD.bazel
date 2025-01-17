@@ -128,4 +128,60 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "flatbuffers-java",
+    jar = "@flatbuffers-java//file",
+    source_jar = "@flatbuffers-java-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "arrow-format",
+    jar = "@arrow-format//file",
+    source_jar = "@arrow-format-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "arrow-algorithm",
+    jar = "@arrow-algorithm//file",
+    source_jar = "@arrow-algorithm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "arrow-vector",
+    jar = "@arrow-vector//file",
+    source_jar = "@arrow-vector-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":flatbuffers-java",
+        ":arrow-format"
+    ],
+)
+
+jvm_import(
+    name = "arrow-memory-core",
+    jar = "@arrow-memory-core//file",
+    source_jar = "@arrow-memory-core-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "arrow-memory-netty",
+    jar = "@arrow-memory-netty//file",
+    source_jar = "@arrow-memory-netty-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":arrow-memory-netty-buffer-patch"
+    ],
+)
+
+jvm_import(
+    name = "arrow-memory-netty-buffer-patch",
+    jar = "@arrow-memory-netty-buffer-patch//file",
+    source_jar = "@arrow-memory-netty-buffer-patch-sources//file",
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `libraries` end

@@ -2,6 +2,7 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.jps.SourceDescriptor
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
@@ -14,6 +15,7 @@ internal class BazelBuildDataProvider(
   actualDigestMap: Map<Path, ByteArray>,
   private val sourceToDescriptor: HashMap<Path, SourceDescriptor>,
   @JvmField val storeFile: Path,
+  @JvmField val allocator: RootAllocator,
 ) : BuildDataProvider {
   private val stamp = BazelStampStorage(actualDigestMap = actualDigestMap, map = sourceToDescriptor)
 

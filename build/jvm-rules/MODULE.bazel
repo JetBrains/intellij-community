@@ -216,6 +216,97 @@ http_file(
     downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.1-sources.jar",
 )
 
+http_file(
+    name = "flatbuffers-java",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/24.12.23/flatbuffers-java-24.12.23.jar",
+    sha256 = "67c87e2e588734cf0166423e89ca99761479a580f1bd959c052b82a2546440e8",
+    downloaded_file_path = "flatbuffers-java-24.12.23.jar",
+)
+http_file(
+    name = "flatbuffers-java-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/24.12.23/flatbuffers-java-24.12.23-sources.jar",
+    sha256 = "822f6a95531ec757019d3e3e8af68885b0a682e53825d571f7cecf0c71b4edde",
+    downloaded_file_path = "flatbuffers-java-24.12.23-sources.jar",
+)
+
+http_file(
+    name = "arrow-format",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-format/18.1.0/arrow-format-18.1.0.jar",
+    sha256 = "004181b3877d8dabb2cb3bc00a9d1f535c1aab750cc8b6050d16bd2dc9ed29dd",
+    downloaded_file_path = "arrow-format-18.1.0.jar",
+)
+http_file(
+    name = "arrow-format-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-format/18.1.0/arrow-format-18.1.0-sources.jar",
+    sha256 = "d9dfee9b5fcaa5fba16d35f4c7d94183e8dca19de969a7f0f718726bb5026b4c",
+    downloaded_file_path = "arrow-format-18.1.0-sources.jar",
+)
+
+http_file(
+    name = "arrow-algorithm",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.1.0/arrow-algorithm-18.1.0.jar",
+    sha256 = "8627d00c1fa3341ff49d894fb88f003e9a7ca4a3846527e31d881c162cf146ff",
+    downloaded_file_path = "arrow-algorithm-18.1.0.jar",
+)
+http_file(
+    name = "arrow-algorithm-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.1.0/arrow-algorithm-18.1.0-sources.jar",
+    sha256 = "d5c6c4ed38c33a55e126f86bccfb4d7c87341d23b5f820392b332e011d22c7a0",
+    downloaded_file_path = "arrow-algorithm-18.1.0-sources.jar",
+)
+
+http_file(
+    name = "arrow-vector",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-vector/18.1.0/arrow-vector-18.1.0.jar",
+    sha256 = "abfef148779957f34430c14e9b9a98872ea8064336bc82998d53668a0ded7d2a",
+    downloaded_file_path = "arrow-vector-18.1.0.jar",
+)
+http_file(
+    name = "arrow-vector-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-vector/18.1.0/arrow-vector-18.1.0-sources.jar",
+    sha256 = "d1fd0853979b6670f073fb95f83794c5792706e179a686a6471ee3a6450bf716",
+    downloaded_file_path = "arrow-vector-18.1.0-sources.jar",
+)
+
+http_file(
+    name = "arrow-memory-core",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-core/18.1.0/arrow-memory-core-18.1.0.jar",
+    sha256 = "bc42ead76b54879bee621608727b19c24bc58dc1eb5d760eafc8aa8519ec427c",
+    downloaded_file_path = "arrow-memory-core-18.1.0.jar",
+)
+http_file(
+    name = "arrow-memory-core-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-core/18.1.0/arrow-memory-core-18.1.0-sources.jar",
+    sha256 = "3b6b1d90b876fb5de2f7229bb4baa9f4cf9ffffb4c1c79bb163cbb7bba0a2ae0",
+    downloaded_file_path = "arrow-memory-core-18.1.0-sources.jar",
+)
+
+http_file(
+    name = "arrow-memory-netty",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty/18.1.0/arrow-memory-netty-18.1.0.jar",
+    sha256 = "17448652b4bba123b6e901d1d7ddf63b776387c98295de93247c9461605da6f7",
+    downloaded_file_path = "arrow-memory-netty-18.1.0.jar",
+)
+http_file(
+    name = "arrow-memory-netty-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty/18.1.0/arrow-memory-netty-18.1.0-sources.jar",
+    sha256 = "574c3dcb951dc2ee7366030c79d07ec4736c3fc299070c08efa00da216ae36ea",
+    downloaded_file_path = "arrow-memory-netty-18.1.0-sources.jar",
+)
+
+http_file(
+    name = "arrow-memory-netty-buffer-patch",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty-buffer-patch/18.1.0/arrow-memory-netty-buffer-patch-18.1.0.jar",
+    sha256 = "472e5621551278de99cab9bd1b929c8db053fe603a732c259e42d48df3c77911",
+    downloaded_file_path = "arrow-memory-netty-buffer-patch-18.1.0.jar",
+)
+http_file(
+    name = "arrow-memory-netty-buffer-patch-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty-buffer-patch/18.1.0/arrow-memory-netty-buffer-patch-18.1.0-sources.jar",
+    sha256 = "ef22d12cd2c7f250373e381db176657eceb0be2fd3b01abc85e8c2f41feb970b",
+    downloaded_file_path = "arrow-memory-netty-buffer-patch-18.1.0-sources.jar",
+)
+
 ### auto-generated section `libraries` end
 
 # Test Libraries

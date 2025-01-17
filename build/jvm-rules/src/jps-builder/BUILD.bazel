@@ -18,8 +18,19 @@ kt_jvm_library(
         "//src/jps-builder/packager",
         "@lib//:hash4j",
         "@lib//:mvstore",
+        "//:arrow-vector",
+        "//:arrow-memory-netty",
+        "//:arrow-memory-core",
+        "//:arrow-algorithm",
     ],
     runtime_deps = [
+        # arrow wants slf4j
+        "@lib//:slf4j-api",
+        # use IJ logger as backend for slf4j
+        "@lib//:log4_j",
+        # ByteBufferBackedInputStream is used by arrow
+        "@lib//:jackson",
+        "@lib//:jackson-databind",
         # jps needs these libs
         "@lib//:asm",
         "@lib//:aalto-xml",
@@ -57,20 +68,4 @@ java_binary(
         "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
     ]),
     visibility = ["//visibility:public"],
-)
-
-java_binary(
-    name = "test-worker",
-    runtime_deps = [":worker-lib"],
-    data = [
-        "@kotlinc//:kotlinc_dist",
-        "@kotlin-serialization-compiler-plugin//file",
-    ],
-    main_class = "org.jetbrains.bazel.jvm.jps.TestJpsBuildWorker",
-    jvm_flags = get_jvm_flags([
-        "-Dkotlin.environment.keepalive=true",
-        "-Djps.use.experimental.storage=true",
-        "-Djps.kotlin.home=$(rlocationpath @kotlinc//:kotlinc_dist)",
-        "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
-    ]),
 )

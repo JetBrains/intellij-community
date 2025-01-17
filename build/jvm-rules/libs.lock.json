@@ -1,4 +1,8 @@
 {
+  "com.google.flatbuffers:flatbuffers-java:24.12.23": [
+    "67c87e2e588734cf0166423e89ca99761479a580f1bd959c052b82a2546440e8",
+    "822f6a95531ec757019d3e3e8af68885b0a682e53825d571f7cecf0c71b4edde"
+  ],
   "com.google.protobuf:protobuf-java:4.29.3": [
     "442db5991a11974d72127353be7d7e7abdf8d943d83b16668cb2e336d7392f54",
     "6a755c09e0e5112a39c9e0910e07021d8700294666cd22c431fcf572acb4eb77"
@@ -6,6 +10,30 @@
   "dev.drewhamilton.poko:poko-compiler-plugin:0.18.2": [
     "08edf341dfa4dd0a9e15b83a2a74850baad3a4a3ca2f93aed05ca6a481b1f394",
     "02f7ac954f3a9574b37a54d7bdc79190325b9ee38a3244256a84d6d760eb6f1f"
+  ],
+  "org.apache.arrow:arrow-algorithm:18.1.0": [
+    "8627d00c1fa3341ff49d894fb88f003e9a7ca4a3846527e31d881c162cf146ff",
+    "d5c6c4ed38c33a55e126f86bccfb4d7c87341d23b5f820392b332e011d22c7a0"
+  ],
+  "org.apache.arrow:arrow-format:18.1.0": [
+    "004181b3877d8dabb2cb3bc00a9d1f535c1aab750cc8b6050d16bd2dc9ed29dd",
+    "d9dfee9b5fcaa5fba16d35f4c7d94183e8dca19de969a7f0f718726bb5026b4c"
+  ],
+  "org.apache.arrow:arrow-memory-core:18.1.0": [
+    "bc42ead76b54879bee621608727b19c24bc58dc1eb5d760eafc8aa8519ec427c",
+    "3b6b1d90b876fb5de2f7229bb4baa9f4cf9ffffb4c1c79bb163cbb7bba0a2ae0"
+  ],
+  "org.apache.arrow:arrow-memory-netty-buffer-patch:18.1.0": [
+    "472e5621551278de99cab9bd1b929c8db053fe603a732c259e42d48df3c77911",
+    "ef22d12cd2c7f250373e381db176657eceb0be2fd3b01abc85e8c2f41feb970b"
+  ],
+  "org.apache.arrow:arrow-memory-netty:18.1.0": [
+    "17448652b4bba123b6e901d1d7ddf63b776387c98295de93247c9461605da6f7",
+    "574c3dcb951dc2ee7366030c79d07ec4736c3fc299070c08efa00da216ae36ea"
+  ],
+  "org.apache.arrow:arrow-vector:18.1.0": [
+    "abfef148779957f34430c14e9b9a98872ea8064336bc82998d53668a0ded7d2a",
+    "d1fd0853979b6670f073fb95f83794c5792706e179a686a6471ee3a6450bf716"
   ],
   "org.jetbrains.kotlin:kotlin-build-tools-api:2.1.20-Beta1": [
     "09ddebb845f30310395d91c084f65d2133484080dfac1977502776b77345f3d7",

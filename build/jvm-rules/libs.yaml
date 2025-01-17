@@ -32,3 +32,22 @@
     # other libs
     - id: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm
       version: 1.10.1
+    - id: com.google.flatbuffers:flatbuffers-java
+      version: 24.12.23
+    - id: org.apache.arrow:arrow-format
+      version: 18.1.0
+    - id: org.apache.arrow:arrow-algorithm
+      version: 18.1.0
+    - id: org.apache.arrow:arrow-vector
+      version: 18.1.0
+      runtimeDeps:
+        - ":flatbuffers-java"
+        - ":arrow-format"
+    - id: org.apache.arrow:arrow-memory-core
+      version: 18.1.0
+    - id: org.apache.arrow:arrow-memory-netty
+      version: 18.1.0
+      runtimeDeps:
+        - ":arrow-memory-netty-buffer-patch"
+    - id: org.apache.arrow:arrow-memory-netty-buffer-patch
+      version: 18.1.0
