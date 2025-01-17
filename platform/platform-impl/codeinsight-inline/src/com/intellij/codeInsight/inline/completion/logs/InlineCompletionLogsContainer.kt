@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import kotlinx.coroutines.Job
@@ -33,6 +34,8 @@ class InlineCompletionLogsContainer() {
   private val fullLogsShare: AtomicInteger = AtomicInteger(1)
 
   private val forceFullLogs: AtomicBoolean = AtomicBoolean(false)
+
+  private var project: Project? = null
 
   fun forceFullLogs() {
     forceFullLogs.set(true)
@@ -88,6 +91,10 @@ class InlineCompletionLogsContainer() {
     }
   }
 
+  fun addProject(project: Project?) {
+    this.project = project
+  }
+
   /**
    * Use to add log to log container.
    * If you have to launch expensive computation and don't want to pause your main execution (especially if you are on EDT) use [addAsync].
@@ -118,8 +125,8 @@ class InlineCompletionLogsContainer() {
     cancelAsyncAdds()
 
 
-    InlineCompletionLogs.Session.SESSION_EVENT.log( // log function is asynchronous, so it's ok to launch it even on EDT
-      logs.filter { it.value.isNotEmpty() }.mapNotNull() { (phase, logs) ->
+    InlineCompletionLogs.Session.SESSION_EVENT.log(project = project, // log function is asynchronous, so it's ok to launch it even on EDT
+                                                   logs.filter { it.value.isNotEmpty() }.mapNotNull { (phase, logs) ->
 
         // for release, log only basic fields for most of the requests and very rarely log everything.
         val filteredEvents = if (forceFullLogs.get() || InlineCompletionEapSupport.getInstance().isEap() || random < (1f / 100f * fullLogsShare.get())) {

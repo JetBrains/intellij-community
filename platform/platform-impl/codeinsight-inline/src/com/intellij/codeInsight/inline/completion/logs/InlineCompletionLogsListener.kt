@@ -61,6 +61,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     holder.lastInvocationTimestamp = System.currentTimeMillis()
 
     val container = InlineCompletionLogsContainer.create(event.request.editor)
+    container.addProject(event.request.editor.project)
     container.add(REQUEST_ID with event.request.requestId)
     container.add(REQUEST_EVENT with event.request.event.javaClass)
     container.add(INLINE_API_PROVIDER with event.provider)
