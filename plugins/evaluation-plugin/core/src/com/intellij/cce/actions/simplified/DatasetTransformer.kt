@@ -13,6 +13,24 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 
+fun main(args: Array<String>) {
+  if (args.size < 3) {
+    error("All arguments are required: <projectPath> <simplifiedActionsPath> <actionsPath>")
+    error("Example: command <projectPath> <simplifiedActionsPath> <actionsPath>")
+    return
+  }
+  val (rootPath, inputPath, outputPath) = args
+
+  val datasetContent = Files.readString(Paths.get(inputPath))
+  val simplifiedDataset = SimplifiedDatasetSerializer.parseJson(datasetContent).toList()
+
+  val transformer = DatasetTransformer(FileOffsetProvider(rootPath))
+  val transformedDataset = transformer.transform(simplifiedDataset)
+
+  val resultContent = ActionArraySerializer.serialize(transformedDataset.toTypedArray())
+  Files.writeString(Paths.get(outputPath), resultContent)
+}
+
 interface OffsetProvider {
   fun getLineStartOffset(filePath: String, line: Int): Int
   fun getLineEndOffset(filePath: String, line: Int): Int
