@@ -352,7 +352,6 @@ class EditorCellView(
   fun updateSelection(value: Boolean) {
     selected = value
     updateFolding()
-    updateRunButtonVisibility()
     updateCellHighlight()
     myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
   }
@@ -365,7 +364,12 @@ class EditorCellView(
   }
 
   private fun updateRunButtonVisibility() {
-    input.runCellButton?.visible = !disableActions && (mouseOver || selected)
+    input.runCellButton ?: return
+    val shouldBeVisible = !disableActions && (mouseOver || selected)
+    if (input.runCellButton.lastRunButtonVisibility == shouldBeVisible) return
+
+    input.runCellButton.visible = shouldBeVisible
+    input.runCellButton.lastRunButtonVisibility = shouldBeVisible // 更新状態を記録
   }
 
   private fun updateCellActionsToolbarVisibility() {
