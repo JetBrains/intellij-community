@@ -37,7 +37,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.importing.*
-import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
 import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
@@ -240,8 +239,8 @@ internal open class WorkspaceProjectImporter(
     contextData: UserDataHolderBase,
     stats: WorkspaceImportStats,
   ): List<MavenProjectWithModulesData<ModuleEntity>> {
-    val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings.dependencyTypesAsSet,
-                                                    mavenProjectToModuleName).getContext(projectsToImport)
+    val allModules = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings.dependencyTypesAsSet,
+                                                       mavenProjectToModuleName).getAllModules(projectsToImport)
 
     val entitySourceNamesBeforeImport = FileInDirectorySourceNames.from(storageBeforeImport)
     val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
@@ -254,7 +253,7 @@ internal open class WorkspaceProjectImporter(
     val projectToModulesData = mutableMapOf<MavenProject, PartialModulesData>()
     val unloadedModulesNameHolder = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNameHolder
 
-    for (importData in sortProjectsToImportByPrecedence(context)) {
+    for (importData in sortProjectsToImportByPrecedence(allModules)) {
       if (unloadedModulesNameHolder.isUnloaded(importData.moduleData.moduleName)) continue
 
       val moduleEntity = WorkspaceModuleImporter(myProject,
@@ -282,7 +281,7 @@ internal open class WorkspaceProjectImporter(
     return result
   }
 
-  private fun sortProjectsToImportByPrecedence(context: MavenModuleImportContext): List<MavenTreeModuleImportData> {
+  private fun sortProjectsToImportByPrecedence(allModules: List<MavenTreeModuleImportData>): List<MavenTreeModuleImportData> {
     // We need to order the projects to import folders correctly:
     //   in case of overlapping root/source folders in several projects,
     //   we register them only once for the first project in the list
@@ -307,7 +306,7 @@ internal open class WorkspaceProjectImporter(
         // stabilize order by file name
         .thenComparing { a, b -> FileUtil.comparePaths(a.mavenProject.file.name, b.mavenProject.file.name) }
 
-    return context.allModules.sortedWith(comparator)
+    return allModules.sortedWith(comparator)
   }
 
   private fun commitModulesToWorkspaceModel(

@@ -47,14 +47,9 @@ internal class MavenProjectImportContextProvider(
   private val myMavenProjectToModuleName: Map<MavenProject, String>,
 ) {
 
-  fun getContext(projectsWithChanges: Map<MavenProject, MavenProjectChanges>): MavenModuleImportContext {
+  fun getAllModules(projectsWithChanges: Map<MavenProject, MavenProjectChanges>): List<MavenTreeModuleImportData> {
     val importDataContext = getModuleImportDataContext(projectsWithChanges)
-    val importDataDependencyContext = getFlattenModuleDataDependencyContext(importDataContext)
-
-    return MavenModuleImportContext(
-      importDataDependencyContext.allModuleDataWithDependencies,
-      importDataContext.hasChanges
-    )
+    return getFlattenModuleDataDependencyContext(importDataContext)
   }
 
   private fun getModuleImportDataContext(projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>): ModuleImportDataContext {
@@ -81,24 +76,24 @@ internal class MavenProjectImportContextProvider(
       allModules.add(mavenProjectImportData)
     }
 
-    return ModuleImportDataContext(allModules, moduleImportDataByMavenId, hasChanges)
+    return ModuleImportDataContext(allModules, moduleImportDataByMavenId)
   }
 
-  private fun getFlattenModuleDataDependencyContext(context: ModuleImportDataContext): ModuleImportDataDependencyContext {
+  private fun getFlattenModuleDataDependencyContext(context: ModuleImportDataContext): List<MavenTreeModuleImportData> {
     val allModuleDataWithDependencies: MutableList<MavenTreeModuleImportData> = ArrayList<MavenTreeModuleImportData>()
 
     for (importData in context.importData) {
-      val importDataWithDependencies = getDependencies(context, importData)
+      val importDataWithDependencies = getDependencies(context.moduleImportDataByMavenId, importData)
       val mavenModuleImportDataList = splitToModules(importDataWithDependencies)
       for (moduleImportData in mavenModuleImportDataList) {
         allModuleDataWithDependencies.add(moduleImportData)
       }
     }
 
-    return ModuleImportDataDependencyContext(allModuleDataWithDependencies)
+    return allModuleDataWithDependencies
   }
 
-  private fun getDependencies(context: ModuleImportDataContext, importData: MavenProjectImportData): MavenModuleImportDataWithDependencies {
+  private fun getDependencies(moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>, importData: MavenProjectImportData): MavenModuleImportDataWithDependencies {
     val mavenProject = importData.mavenProject
 
     MavenLog.LOG.debug("Creating dependencies for $mavenProject: ${mavenProject.dependencies.size}")
@@ -109,7 +104,7 @@ internal class MavenProjectImportContextProvider(
     addMainDependencyToTestModule(importData, testDependencies)
     val otherTestModules = importData.otherTestModules
     for (artifact in mavenProject.dependencies) {
-      for (dependency in getDependency(context, artifact, mavenProject)) {
+      for (dependency in getDependency(moduleImportDataByMavenId, artifact, mavenProject)) {
         if (otherTestModules.isNotEmpty() && dependency.scope == DependencyScope.TEST) {
           testDependencies.add(dependency)
         }
@@ -121,7 +116,7 @@ internal class MavenProjectImportContextProvider(
     return MavenModuleImportDataWithDependencies(importData, mainDependencies, testDependencies)
   }
 
-  private fun getDependency(context: ModuleImportDataContext, artifact: MavenArtifact, mavenProject: MavenProject): List<MavenImportDependency<*>> {
+  private fun getDependency(moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>, artifact: MavenArtifact, mavenProject: MavenProject): List<MavenImportDependency<*>> {
     val dependencyType = artifact.type
     MavenLog.LOG.trace("Creating dependency from $mavenProject to $artifact, type $dependencyType")
 
@@ -143,7 +138,7 @@ internal class MavenProjectImportContextProvider(
         return emptyList()
       }
 
-      val mavenProjectImportData = context.moduleImportDataByMavenId[depProject.mavenId]
+      val mavenProjectImportData = moduleImportDataByMavenId[depProject.mavenId]
 
       val depProjectIgnored = myProjectsTree.isIgnored(depProject)
       if (mavenProjectImportData == null || depProjectIgnored) {
@@ -376,11 +371,6 @@ internal class MavenProjectImportContextProvider(
   private class ModuleImportDataContext(
     val importData: List<MavenProjectImportData>,
     val moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
-    val hasChanges: Boolean,
-  )
-
-  private class ModuleImportDataDependencyContext(
-    val allModuleDataWithDependencies: List<MavenTreeModuleImportData>,
   )
 
   private fun splitToModules(dataWithDependencies: MavenModuleImportDataWithDependencies): List<MavenTreeModuleImportData> {
