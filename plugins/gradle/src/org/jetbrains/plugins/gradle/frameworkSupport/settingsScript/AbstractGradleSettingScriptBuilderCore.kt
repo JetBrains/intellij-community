@@ -16,9 +16,14 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
 
   private var projectName: String? = null
   private val script = ScriptTreeBuilder()
+  private var plugins = ScriptTreeBuilder()
   private var pluginManagement: ScriptTreeBuilder.() -> Unit = {}
 
   protected abstract fun apply(action: Self.() -> Unit): Self
+
+  private fun applyAndMerge(builder: ScriptTreeBuilder, configure: ScriptTreeBuilder.() -> Unit): Self = apply {
+    builder.addNonExistedElements(configure)
+  }
 
   override fun setProjectName(projectName: String): Self = apply {
     this.projectName = projectName
@@ -56,7 +61,19 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
     script.addElements(configure)
   }
 
+  override fun withPlugin(configure: ScriptTreeBuilder.() -> Unit): Self =
+    applyAndMerge(plugins, configure)
+
+  override fun withPlugin(id: String, version: String?): Self =
+    withPlugin {
+      when (version) {
+        null -> call("id", id)
+        else -> infixCall(call("id", id), "version", string(version))
+      }
+    }
+
   override fun generateTree(): BlockElement = ScriptTreeBuilder.tree {
+    callIfNotEmpty("plugins", plugins)
     callIfNotEmpty("pluginManagement", pluginManagement)
     assignIfNotNull("rootProject.name", projectName)
     join(script)

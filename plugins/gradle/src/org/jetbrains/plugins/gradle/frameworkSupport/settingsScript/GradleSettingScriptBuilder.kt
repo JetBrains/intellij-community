@@ -13,6 +13,8 @@ interface GradleSettingScriptBuilder<Self : GradleSettingScriptBuilder<Self>>
 
   fun include(relativePath: Path): Self
 
+  fun withFoojayPlugin(): Self
+
   companion object {
 
     @JvmStatic

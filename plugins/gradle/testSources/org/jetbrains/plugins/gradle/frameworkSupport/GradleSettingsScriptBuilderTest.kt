@@ -72,4 +72,19 @@ class GradleSettingsScriptBuilderTest : GradleSettingsScriptBuilderTestCase() {
       include(Path.of("../../external-project/module/sub-module"))
     }
   }
+
+  @Test
+  fun `test foojay plugin configuration`() {
+    assertBuildSettings("""
+      |plugins {
+      |    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+      |}
+    """.trimMargin(), """
+      |plugins {
+      |    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+      |}
+    """.trimMargin()) {
+      withFoojayPlugin()
+    }
+  }
 }

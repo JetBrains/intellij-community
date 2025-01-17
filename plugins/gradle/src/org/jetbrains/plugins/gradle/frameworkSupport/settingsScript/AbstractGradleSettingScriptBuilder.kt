@@ -12,6 +12,8 @@ abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingSc
 ) : AbstractGradleSettingScriptBuilderCore<Self>(gradleVersion),
     GradleSettingScriptBuilder<Self> {
 
+  private val foojayPluginVersion = getFoojayPluginVersion()
+
   override fun include(relativePath: Path): Self = apply {
     val projectName = relativePath
       .dropWhile { it.name == ".." }
@@ -28,5 +30,10 @@ abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingSc
         include(projectName)
       }
     }
+  }
+
+  override fun withFoojayPlugin(): Self = apply {
+    assert(isFoojayPluginSupported(gradleVersion))
+    withPlugin("org.gradle.toolchains.foojay-resolver-convention", foojayPluginVersion)
   }
 }
