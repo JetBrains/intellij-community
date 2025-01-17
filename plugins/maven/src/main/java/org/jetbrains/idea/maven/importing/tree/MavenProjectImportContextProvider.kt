@@ -5,14 +5,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
+import org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
+import org.jetbrains.idea.maven.importing.MavenImportUtil.escapeCompileSourceRootModuleSuffix
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getNonDefaultCompilerExecutions
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getSourceLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTargetLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestSourceLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestTargetLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.hasExecutionsForTests
-import org.jetbrains.idea.maven.importing.MavenImportUtil.hasMultiReleaseOutput
 import org.jetbrains.idea.maven.importing.MavenImportUtil.hasTestCompilerArgs
 import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompilerTestSupport
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
@@ -25,9 +27,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.util.*
 import java.util.function.Function
-
-private const val MAIN_SUFFIX: String = ".main"
-private const val TEST_SUFFIX: String = ".test"
 
 internal class MavenProjectImportContextProvider(
   private val myProject: Project,
@@ -124,7 +123,7 @@ internal class MavenProjectImportContextProvider(
     if (languageLevels.mainAndTestLevelsDiffer()) return true
     if (hasTestCompilerArgs(project)) return true
     if (hasExecutionsForTests(project)) return true
-    if (hasMultiReleaseOutput(project)) return true
+    if (getNonDefaultCompilerExecutions(project).isNotEmpty()) return true
 
     return false
   }
@@ -160,14 +159,15 @@ internal class MavenProjectImportContextProvider(
     val testSourceLevel = languageLevels.testSourceLevel
     val moduleData = ModuleData(moduleName, type, sourceLevel, testSourceLevel)
 
-    val moduleMainName = moduleName + MAIN_SUFFIX
+    val moduleMainName = "$moduleName.$MAIN_SUFFIX"
     val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, sourceLevel, testSourceLevel)
 
-    val moduleTestName = moduleName + TEST_SUFFIX
+    val moduleTestName = "$moduleName.$TEST_SUFFIX"
     val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, sourceLevel, testSourceLevel)
 
     val compileSourceRootModules = getNonDefaultCompilerExecutions(project).map {
-      ModuleData("$moduleName.$it", StandardMavenModuleType.MAIN_ONLY_ADDITIONAL, sourceLevel, testSourceLevel)
+      val suffix = escapeCompileSourceRootModuleSuffix(it)
+      ModuleData("$moduleName.$suffix", StandardMavenModuleType.MAIN_ONLY_ADDITIONAL, sourceLevel, testSourceLevel)
     }
 
     val otherModules = listOf(mainData) + compileSourceRootModules + testData

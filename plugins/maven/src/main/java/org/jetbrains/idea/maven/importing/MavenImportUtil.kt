@@ -37,6 +37,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.PrefixStringEncoder
 import java.util.function.Supplier
 
 @ApiStatus.Internal
@@ -51,6 +52,12 @@ object MavenImportUtil {
 
   private const val COMPILER_PLUGIN_GROUP_ID = "org.apache.maven.plugins"
   private const val COMPILER_PLUGIN_ARTIFACT_ID = "maven-compiler-plugin"
+
+  internal const val MAIN_SUFFIX: String = "main"
+  internal const val TEST_SUFFIX: String = "test"
+
+  // compileSourceRoot submodules cannot be named 'main' and 'test'
+  private val compileSourceRootEncoder = PrefixStringEncoder(setOf(MAIN_SUFFIX, TEST_SUFFIX), "compileSourceRoot-")
 
   private const val PHASE_COMPILE = "compile"
   private const val PHASE_TEST_COMPILE = "test-compile"
@@ -166,17 +173,6 @@ object MavenImportUtil {
     return `is`("maven.sync.compileSourceRoots.and.multiReleaseOutput")
   }
 
-  internal fun hasMultiReleaseOutput(project: MavenProject): Boolean {
-    if (!multiReleaseOutputSyncEnabled()) return false
-    return compilerExecutions(project).any { isMultiReleaseExecution(it) }
-  }
-
-  private fun isMultiReleaseExecution(e: MavenPlugin.Execution): Boolean {
-    val config = e.configurationElement ?: return false
-    config.getChild("multiReleaseOutput") ?: return false
-    return true
-  }
-
   private fun compilerExecutions(project: MavenProject): List<MavenPlugin.Execution> {
     val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID) ?: return emptyList()
     return plugin.executions ?: return emptyList()
@@ -198,6 +194,14 @@ object MavenImportUtil {
       ?.children
       ?.mapNotNull { it.textTrim }
       .orEmpty()
+  }
+
+  internal fun escapeCompileSourceRootModuleSuffix(suffix: String): String {
+    return compileSourceRootEncoder.encode(suffix)
+  }
+
+  internal fun unescapeCompileSourceRootModuleSuffix(suffix: String): String {
+    return compileSourceRootEncoder.decode(suffix)
   }
 
   private fun getMavenLanguageLevel(
