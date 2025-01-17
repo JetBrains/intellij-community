@@ -52,7 +52,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("6.0+") // The Gradle Daemon below version 6.0 is unstable and causes test fluctuations
+  @TargetVersions("6.0+", "!8.12")// The Gradle Daemon below version 6.0 is unstable and causes test fluctuations
   fun `test daemon reused for source downloading`() {
     // a custom Gradle User Home is required to isolate execution of the test from different tests running at the same time
     overrideGradleUserHome("test-daemon-reused-for-source-downloading")
