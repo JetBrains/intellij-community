@@ -56,6 +56,7 @@ import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
+import org.opentest4j.AssertionFailedError
 import java.io.File
 import java.util.concurrent.Callable
 import kotlin.math.max
@@ -141,12 +142,18 @@ fun CodeInsightTestFixture.checkLookupItems(
       locations.forEachIndexed { index, location ->
         moveToOffsetBySignature(location)
         completeBasic()
-        checkListByFile(
-          renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
-                            lookupItemFilter),
-          expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".${index + 1}.txt",
-          containsCheck
-        )
+        try {
+          checkListByFile(
+            renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderDisplayText, renderDisplayEffects,
+                              lookupItemFilter),
+            expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".${index + 1}.txt",
+            containsCheck
+          )
+        } catch (e: FileComparisonFailedError) {
+          throw FileComparisonFailedError(e.message + "\nFor location: $location",
+                                          e.expectedStringPresentation, e.actualStringPresentation,
+                                          e.filePath, e.actualFilePath)
+        }
         checkLookupDocumentation(".${index + 1}")
       }
     }
