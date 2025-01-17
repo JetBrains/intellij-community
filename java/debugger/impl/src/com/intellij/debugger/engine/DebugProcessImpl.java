@@ -813,6 +813,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void addDebugProcessListener(DebugProcessListener listener) {
+    if (disposable.isDisposed()) return;
     myDebugProcessListeners.add(listener, disposable);
   }
 
