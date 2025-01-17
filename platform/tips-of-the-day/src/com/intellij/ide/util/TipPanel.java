@@ -91,14 +91,14 @@ final class TipPanel extends JPanel implements DoNotAskOption {
     };
     mySubSystemLabel.setForeground(UIUtil.getLabelInfoForeground());
     mySubSystemLabel.setBorder(JBUI.Borders.emptyBottom((int)TextParagraph.SMALL_INDENT));
-    mySubSystemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    mySubSystemLabel.setAlignmentX(LEFT_ALIGNMENT);
     contentPanel.add(mySubSystemLabel);
 
     myTextPane = new MyTextPane();
     myTextPane.putClientProperty("caretWidth", 0);
     myTextPane.setBackground(TipUiSettings.getPanelBackground());
     myTextPane.setMargin(JBInsets.emptyInsets());
-    myTextPane.setAlignmentX(Component.LEFT_ALIGNMENT);
+    myTextPane.setAlignmentX(LEFT_ALIGNMENT);
     Disposer.register(parentDisposable, myTextPane);
     contentPanel.add(myTextPane);
 
@@ -155,7 +155,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
                                                           ActionButtonLook look,
                                                           @NotNull String place,
                                                           @NotNull Presentation presentation,
-                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
+                                                          @NotNull Supplier<? extends @NotNull Dimension> minimumSize) {
         ActionButton button = new ActionButton(action, presentation, place, getFeedbackButtonSize()) {
           @Override
           protected void paintButtonLook(Graphics g) {
@@ -279,7 +279,7 @@ final class TipPanel extends JPanel implements DoNotAskOption {
   private void doSetTip(@NotNull TipAndTrickBean tip, @NotNull List<? extends TextParagraph> tipContent) {
     saveCurrentTipLikenessState();
     myCurrentLikenessState = getLikenessState(tip);
-    myFeedbackToolbar.updateActionsImmediately();
+    myFeedbackToolbar.updateActionsAsync();
     myCurrentTip = tip;
 
     if (Registry.is("tips.of.the.day.show.group.label", false)) {
