@@ -25,7 +25,7 @@ interface MavenProjectImporter {
     @JvmStatic
     fun createStaticImporter(project: Project,
                              projectsTree: MavenProjectsTree,
-                             projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                             projectsToImportWithChanges: Map<MavenProject, MavenProjectChangesBase>,
                              modelsProvider: IdeModifiableModelsProvider,
                              importingSettings: MavenImportingSettings,
                              parentImportingActivity: StructuredIdeActivity): MavenProjectImporter {
@@ -38,7 +38,7 @@ interface MavenProjectImporter {
     @JvmStatic
     fun createImporter(project: Project,
                        projectsTree: MavenProjectsTree,
-                       projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                       projectsToImportWithChanges: Map<MavenProject, MavenProjectChangesBase>,
                        modelsProvider: IdeModifiableModelsProvider,
                        importingSettings: MavenImportingSettings,
                        previewModule: Module?,
@@ -109,7 +109,7 @@ interface MavenProjectImporter {
 
     private fun createImporter(project: Project,
                                projectsTree: MavenProjectsTree,
-                               projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                               projectsToImportWithChanges: Map<MavenProject, MavenProjectChangesBase>,
                                modelsProvider: IdeModifiableModelsProvider,
                                importingSettings: MavenImportingSettings,
                                previewModule: Module?): MavenProjectImporter {

@@ -50,14 +50,14 @@ class MavenFolderResolver(private val project: Project) {
   }
 
   private suspend fun resolveFolders(mavenProjects: Collection<MavenProject>,
-                                     progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChanges> {
+                                     progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChangesBase> {
     val console = MavenSourceGenerationConsole(project)
     try {
       console.start()
       val tree = projectsManager.projectsTree
       val mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree)
       val projectMultiMap = MavenUtil.groupByBasedir(mavenProjectsToResolve, tree)
-      val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChanges>()
+      val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChangesBase>()
       for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
         console.startSourceGeneration(baseDir)
         val chunk = resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter, console)
@@ -75,7 +75,7 @@ class MavenFolderResolver(private val project: Project) {
                                      mavenProjects: Collection<MavenProject>,
                                      tree: MavenProjectsTree,
                                      progressReporter: RawProgressReporter,
-                                     console: MavenSourceGenerationConsole): Map<MavenProject, MavenProjectChanges> {
+                                     console: MavenSourceGenerationConsole): Map<MavenProject, MavenProjectChangesBase> {
     val goal = projectsManager.importingSettings.updateFoldersOnImportPhase
 
     val fileToProject = mavenProjects.associateBy({ File(it.file.path) }, { it })
@@ -100,12 +100,12 @@ class MavenFolderResolver(private val project: Project) {
       projectsManager.embeddersManager.release(embedder)
     }
 
-    val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChanges>()
+    val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChangesBase>()
     for (goalResult in goalResults) {
       val mavenProject = fileToProject.getOrDefault(goalResult.file, null)
       if (null != mavenProject && MavenUtil.shouldResetDependenciesAndFolders(goalResult.problems)) {
         val changes = mavenProject.setFolders(goalResult.folders)
-        projectsWithChanges[mavenProject] = changes
+        projectsWithChanges[mavenProject] = if (changes.hasChanges()) MavenProjectChangesBase.ALL else MavenProjectChangesBase.NONE
         tree.fireFoldersResolved(Pair.create(mavenProject, changes))
       }
     }

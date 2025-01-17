@@ -14,7 +14,7 @@ import org.jetbrains.idea.maven.project.*
 
 internal class StaticWorkspaceProjectImporter(
   projectsTree: MavenProjectsTree,
-  projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+  projectsToImportWithChanges: Map<MavenProject, MavenProjectChangesBase>,
   importingSettings: MavenImportingSettings,
   modifiableModelsProvider: IdeModifiableModelsProvider,
   project: Project
