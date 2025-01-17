@@ -757,6 +757,7 @@
       <module fileurl="file://$PROJECT_DIR$/jps/model-impl/intellij.platform.jps.model.impl.iml" filepath="$PROJECT_DIR$/jps/model-impl/intellij.platform.jps.model.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/intellij.platform.jps.model.serialization.iml" filepath="$PROJECT_DIR$/jps/model-serialization/intellij.platform.jps.model.serialization.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/intellij.platform.jps.model.serialization.tests.iml" filepath="$PROJECT_DIR$/jps/model-serialization/intellij.platform.jps.model.serialization.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jps/model-test-framework/intellij.platform.jps.model.testFramework.iml" filepath="$PROJECT_DIR$/jps/model-test-framework/intellij.platform.jps.model.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-impl/intellij.platform.jps.model.tests.iml" filepath="$PROJECT_DIR$/jps/model-impl/intellij.platform.jps.model.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/kernel/shared/intellij.platform.kernel.iml" filepath="$PROJECT_DIR$/platform/kernel/shared/intellij.platform.kernel.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/kernel/backend/intellij.platform.kernel.backend.iml" filepath="$PROJECT_DIR$/platform/kernel/backend/intellij.platform.kernel.backend.iml" />

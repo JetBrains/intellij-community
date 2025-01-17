@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.testFramework" scope="TEST" />
   </component>
 </module>

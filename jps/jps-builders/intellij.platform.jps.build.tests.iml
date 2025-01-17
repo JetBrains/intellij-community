@@ -73,5 +73,6 @@
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="mvstore" level="project" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.testFramework" scope="TEST" />
   </component>
 </module>
