@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.Disposable;
@@ -175,7 +175,7 @@ public class SdkDetector {
     }
   }
 
-  private static void detectAllSdks(@NotNull Project project, @NotNull ProgressIndicator indicator, @NotNull DetectedSdkListener callback) {
+  private static void detectAllSdks(@Nullable Project project, @NotNull ProgressIndicator indicator, @NotNull DetectedSdkListener callback) {
     try {
       callback.onSearchStarted();
       indicator.setIndeterminate(false);
