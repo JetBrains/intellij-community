@@ -128,7 +128,7 @@ public class JavaHomeFinderBasic {
           .plus(JavaHomeFinder.JDK_VERSION_KEY, version)
           .plus(SdkType.VERSION_KEY, version.displayVersionString());
       }
-      return info.plus(SdkType.IS_SYMLINK_KEY, Files.isSymbolicLink(Path.of(path)));
+      return info;
     }).collect(Collectors.toSet());
 
   }

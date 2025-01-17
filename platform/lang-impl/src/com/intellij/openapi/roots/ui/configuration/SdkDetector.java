@@ -20,7 +20,9 @@ import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -218,36 +220,46 @@ public class SdkDetector {
       Collection<KeyFMap> suggestedPaths = type.collectSdkDetails(project);
       for (KeyFMap info : suggestedPaths) {
         indicator.checkCanceled();
+        var updatedInfo = info;
 
-        final String path = info.get(SdkType.HOMEPATH_KEY);
-        if (path == null) continue;
+        final String home = info.get(SdkType.HOMEPATH_KEY);
+        if (home == null) continue;
 
+        final Path path = Paths.get(home);
         try {
           //a sanity check first
-          if (!Files.exists(Paths.get(path))) continue;
-          if (!type.isValidSdkHome(path)) continue;
+          if (!Files.exists(path)) continue;
+          if (!type.isValidSdkHome(home)) continue;
         }
         catch (Exception e) {
-          LOG.warn("Failed to process detected SDK for " + type + " at " + path + ". " + e.getMessage(), e);
+          LOG.warn("Failed to process detected SDK for " + type + " at " + home + ". " + e.getMessage(), e);
           continue;
         }
 
         String version = info.get(SdkType.VERSION_KEY); // might have been detected earlier (e.g. to sort results)
         if (version == null) {
           try {
-              version = type.getVersionString(path);
+              version = type.getVersionString(home);
           }
           catch (Exception e) {
-            LOG.warn("Failed to get the detected SDK version for " + type + " at " + path + ". " + e.getMessage(), e);
+            LOG.warn("Failed to get the detected SDK version for " + type + " at " + home + ". " + e.getMessage(), e);
             continue;
           }
           if (version == null) {
-            LOG.warn("No version is returned for detected SDK " + type + " at " + path);
+            LOG.warn("No version is returned for detected SDK " + type + " at " + home);
             continue;
           }
         }
 
-        callback.onSdkDetected(type, version, path, info);
+        if (info.get(SdkType.IS_SYMLINK_KEY) == null) {
+          try {
+            var containsSymlink = !path.toRealPath().equals(path);
+            updatedInfo = info.plus(SdkType.IS_SYMLINK_KEY, containsSymlink);
+          }
+          catch (IOException ignored) {}
+        }
+
+        callback.onSdkDetected(type, version, home, updatedInfo);
       }
     }
     catch (ProcessCanceledException e) {

@@ -63,8 +63,9 @@ import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component
-import java.nio.file.Files
+import java.io.IOException
 import java.nio.file.Path
+import java.nio.file.Paths
 import javax.accessibility.AccessibleContext
 import javax.swing.Icon
 import javax.swing.JList
@@ -514,10 +515,16 @@ private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
   }
   SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance(), null, path) { path: String ->
     val version = JavaSdk.getInstance().getVersionString(path)
-    val comboItem = DetectedJdk(version ?: "", path, Files.isSymbolicLink(Path.of(path)))
+    val comboItem = DetectedJdk(version ?: "", path, containsSymbolicLink(path))
     combo.addItem(comboItem)
     combo.selectedItem = comboItem
   }
+}
+
+private fun containsSymbolicLink(path: String): Boolean {
+  val p = Paths.get(path)
+  return try { p.toRealPath() != p }
+         catch (_: IOException) { false }
 }
 
 private fun computeRegisteredSdks(key: EelDescriptor?): List<ExistingJdk> {
@@ -615,12 +622,12 @@ private fun findExistingJdksEel(eelDescriptor: EelDescriptor): List<DetectedJdk>
   val jdks = JavaHomeFinder.findJdks(eelDescriptor, false)
 
   return jdks.mapNotNull {
-    val path = it.get(SdkType.HOMEPATH_KEY)
+    val path = it.get(SdkType.HOMEPATH_KEY) ?: return@mapNotNull null
     val version = it.get(JavaHomeFinder.JDK_VERSION_KEY)
-    val symlink = it.get(SdkType.IS_SYMLINK_KEY) ?: false
+    val symlink = it.get(SdkType.IS_SYMLINK_KEY) ?: containsSymbolicLink(path)
 
     when {
-      path != null && version != null && javaSdk.isValidSdkHome(path) -> DetectedJdk(version.displayVersionString(), path, symlink)
+      version != null && javaSdk.isValidSdkHome(path) -> DetectedJdk(version.displayVersionString(), path, symlink)
       else -> null
     }
   }

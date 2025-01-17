@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
@@ -115,8 +114,7 @@ public abstract class SdkType implements SdkTypeId {
   public @Unmodifiable @NotNull Collection<KeyFMap> collectSdkDetails(@Nullable Project project) {
     return ContainerUtil.map(suggestHomePaths(project), homePath -> {
       var info = KeyFMap.EMPTY_MAP
-        .plus(HOMEPATH_KEY, homePath)
-        .plus(IS_SYMLINK_KEY, Files.isSymbolicLink(Path.of(homePath)));
+        .plus(HOMEPATH_KEY, homePath);
       var version = getVersionString(homePath);
       if (version != null) info = info.plus(VERSION_KEY, version);
       return info;
