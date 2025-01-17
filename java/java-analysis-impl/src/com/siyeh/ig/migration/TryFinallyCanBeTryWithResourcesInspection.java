@@ -271,7 +271,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
           shouldDeleteStatement = findAutoCloseableVariables(finallyBlock, statement, collectedVariables, catchSectionsToMigrate);
         } else {
           isPrefixOfTryStatements = false;
-          shouldDeleteStatement = findAutoClosableVariableWithoutTry(finallyBlock, statement, collectedVariables, catchSectionsToMigrate);
+          shouldDeleteStatement = findAutoClosableVariableWithoutTry(finallyBlock, statement, collectedVariables);
         }
         closedVariableStatementIndices.set(i, shouldDeleteStatement);
       }
@@ -446,9 +446,8 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
   }
 
   private static boolean findAutoClosableVariableWithoutTry(@NotNull PsiCodeBlock finallyBlock,
-                                                            PsiStatement statement,
-                                                            @NotNull Set<? super PsiVariable> variables,
-                                                            @NotNull List<? super PsiCatchSection> catchSectionsToMigrate) {
+                                                            @Nullable PsiStatement statement,
+                                                            @NotNull Set<? super PsiVariable> variables) {
     if (statement instanceof PsiIfStatement ifStatement) {
       if (ifStatement.getElseBranch() != null) return false;
       final PsiExpression condition = ifStatement.getCondition();
@@ -472,11 +471,11 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       final PsiStatement thenBranch = ifStatement.getThenBranch();
       final PsiVariable resourceVariable;
       if (thenBranch instanceof PsiExpressionStatement) {
-        resourceVariable = findAutoCloseableVariable(finallyBlock, thenBranch, catchSectionsToMigrate);
+        resourceVariable = findAutoCloseableVariable(finallyBlock, thenBranch);
       }
       else if (thenBranch instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        resourceVariable = findAutoCloseableVariable(finallyBlock, ControlFlowUtils.getOnlyStatementInBlock(codeBlock), catchSectionsToMigrate);
+        resourceVariable = findAutoCloseableVariable(finallyBlock, ControlFlowUtils.getOnlyStatementInBlock(codeBlock));
       }
       else {
         return false;
@@ -520,9 +519,9 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
            PsiTreeUtil.getParentOfType(variable, true, PsiAnonymousClass.class, PsiLambdaExpression.class);
   }
 
-  private static @Nullable PsiVariable findAutoCloseableVariable(@NotNull PsiCodeBlock finallyBlock, PsiStatement statement, @NotNull List<? super PsiCatchSection> catchSectionsToMigrate) {
+  private static @Nullable PsiVariable findAutoCloseableVariable(@NotNull PsiCodeBlock finallyBlock, @Nullable PsiStatement statement) {
     Set<PsiVariable> variables = new HashSet<>(1);
-    if (!findAutoCloseableVariables(finallyBlock, statement, variables, catchSectionsToMigrate)) return null;
+    if (!findAutoCloseableVariables(finallyBlock, statement, variables, null)) return null;
     if (variables.isEmpty()) {
       return null;
     }
@@ -532,21 +531,23 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
   }
 
   private static boolean findAutoCloseableVariables(@NotNull PsiCodeBlock finallyBlock,
-                                                    @NotNull PsiStatement statement,
+                                                    @Nullable PsiStatement statement,
                                                     @NotNull Set<? super PsiVariable> variables,
-                                                    @NotNull List<? super PsiCatchSection> catchSectionsToMigrate) {
-    if (findAutoClosableVariableWithoutTry(finallyBlock, statement, variables, catchSectionsToMigrate)) return true;
+                                                    @Nullable List<? super PsiCatchSection> catchSectionsToMigrate) {
+    if (findAutoClosableVariableWithoutTry(finallyBlock, statement, variables)) return true;
     if (statement instanceof PsiTryStatement tryStatement) {
       if (tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) return true;
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (tryBlock == null) return true;
       PsiStatement[] tryStatements = tryBlock.getStatements();
       for (PsiStatement tryStmt : tryStatements) {
-        if (!findAutoClosableVariableWithoutTry(finallyBlock, tryStmt, variables, catchSectionsToMigrate)) {
+        if (!findAutoClosableVariableWithoutTry(finallyBlock, tryStmt, variables)) {
           return false;
         }
       }
-      catchSectionsToMigrate.addAll(Arrays.asList(tryStatement.getCatchSections()));
+      if (catchSectionsToMigrate != null) {
+        catchSectionsToMigrate.addAll(Arrays.asList(tryStatement.getCatchSections()));
+      }
       return true;
     }
     return false;
@@ -603,7 +604,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
 
     private final @NotNull Set<? extends PsiVariable> collectedVariables;
 
-    public VariableUsedInsideContextVisitor(@NotNull Set<? extends PsiVariable> collectedVariables) {
+    private VariableUsedInsideContextVisitor(@NotNull Set<? extends PsiVariable> collectedVariables) {
       this.collectedVariables = collectedVariables;
     }
     @Override
