@@ -262,15 +262,15 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     return entry is ModuleOutputEntry && context.getFrontendModuleFilter().isModuleIncluded(entry.moduleName)
   }
   
-  suspend fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<Path>): Path {
+  suspend fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<Path>): String {
     val mainLocation = paths.singleOrNull { it.parent?.pathString == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
                        paths.singleOrNull { pathToEntries[it]?.any { entry -> isIncludedInEmbeddedFrontend(entry.origin) } == true } ?:
                        paths.singleOrNull { it.parent?.name in setOf("client", "frontend", "frontend-split") }
     if (mainLocation != null) {
-      return mainLocation
+      return mainLocation.invariantSeparatorsPathString
     }
-    val sorted = paths.sorted()
+    val sorted = paths.map { it.invariantSeparatorsPathString }.sorted()
     Span.current().addEvent("cannot choose the main location for '${moduleId.stringId}' among $sorted, the first one will be used")
     return sorted.first()
   }
@@ -279,7 +279,7 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
   for ((moduleId, paths) in moduleIdsToPaths) {
     val distinctPaths = paths.distinct()
     if (distinctPaths.size > 1) {
-      mainPaths[moduleId] = chooseMainLocation(moduleId, distinctPaths).pathString
+      mainPaths[moduleId] = chooseMainLocation(moduleId, distinctPaths)
     }
   }
   return mainPaths
