@@ -19,7 +19,6 @@ jvm_library(
     "//platform/diff-api:diff",
     "//plugins/textmate/core",
     "//platform/indexing-impl",
-    "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:jackson",
@@ -27,6 +26,9 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinx-serialization-core",
     "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:caffeine",
+    "//fleet/fastutil",
+    "@lib//:fastutil-min",
   ],
   runtime_deps = [":textmate_resources"]
 )
@@ -47,7 +49,6 @@ jvm_library(
     "//plugins/textmate/core",
     "//plugins/textmate/core:core_test_lib",
     "//platform/indexing-impl",
-    "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:jackson",
@@ -58,6 +59,9 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "@lib//:caffeine",
+    "//fleet/fastutil",
+    "@lib//:fastutil-min",
   ],
   runtime_deps = [":textmate_resources"]
 )

@@ -43,8 +43,6 @@ jvm_library(
     "//xml/dom-openapi:dom",
     "//platform/util/coroutines",
     "//platform/backend/observation",
-    "//platform/eel",
-    "//platform/eel-impl",
     "//platform/eel-provider",
     "//platform/util/concurrency",
   ],
@@ -91,7 +89,6 @@ jvm_library(
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel",
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel_test_lib",
     "//platform/eel-provider",
-    "//platform/eel",
   ]
 )
 

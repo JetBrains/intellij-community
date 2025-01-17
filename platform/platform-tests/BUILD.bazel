@@ -119,7 +119,6 @@ jvm_library(
     "//platform/buildData",
     "@lib//:ktor-server-cio",
     "//platform/ui.jcef:ui-jcef",
-    "//platform/eel",
     "@lib//:rhino",
     "//platform/eel-impl",
     "@lib//:junit5Pioneer",

@@ -18,12 +18,14 @@ jvm_library(
     "//fleet/reporting/api:fleet-reporting-api",
     "//fleet/preferences",
     "//fleet/util/os:fleet-util-os",
+    "//fleet/fastutil",
     "@lib//:slf4j-api",
     "@lib//:kotlinx-datetime-jvm",
   ],
   exports = [
     "//fleet/util/logging/api:fleet-util-logging-api",
     "@lib//:kotlinx-collections-immutable",
+    "//fleet/fastutil",
   ]
 )
 ### auto-generated section `build fleet.util.core` end

@@ -50,7 +50,6 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/threadDumpParser",
     "//java/debugger/shared:java-debugger-impl-shared",
-    "//platform/eel",
     "//platform/eel-provider",
     "//java/codeserver/highlighting:java-codeserver-highlighting",
   ],

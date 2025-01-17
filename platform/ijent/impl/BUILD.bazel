@@ -20,7 +20,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-nio-fs",
     "//platform/diagnostic/telemetry",
-    "//platform/eel",
     "//platform/eel-impl",
     "//platform/ijent",
     "//platform/eel-provider",

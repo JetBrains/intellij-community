@@ -59,7 +59,6 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:netty-codec-protobuf",
-    "//platform/eel",
     "//platform/eel-provider",
   ],
   exports = ["//java/compiler/openapi:java-compiler"]

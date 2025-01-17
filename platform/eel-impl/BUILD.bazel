@@ -13,7 +13,6 @@ jvm_library(
     "//platform/util/base",
     "//platform/extensions",
     "//platform/util",
-    "//platform/eel",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
     "//platform/core-api:core",

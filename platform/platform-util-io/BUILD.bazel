@@ -21,7 +21,6 @@ jvm_library(
     "//platform/util",
     "@lib//:jna",
     "//platform/diagnostic",
-    "//platform/eel",
     "//platform/eel-provider",
   ],
   runtime_deps = [":ide-util-io_resources"]

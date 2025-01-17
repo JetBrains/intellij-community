@@ -75,7 +75,6 @@ jvm_library(
     "//platform/ijent/buildConstants:community-buildConstants",
     "//platform/markdown-utils",
     "@lib//:snakeyaml",
-    "//platform/eel",
     "//platform/eel-provider",
   ],
   runtime_deps = [":core_resources"]

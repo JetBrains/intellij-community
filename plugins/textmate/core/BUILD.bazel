@@ -9,8 +9,6 @@ jvm_library(
   deps = [
     "@lib//:joni",
     "@lib//:jetbrains-annotations",
-    "@lib//:fastutil-min",
-    "@lib//:caffeine",
     "//platform/util/xmlDom",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
@@ -19,11 +17,9 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:slf4j-api",
     "@lib//:kotlinx-collections-immutable",
+    "//fleet/fastutil",
   ],
-  exports = [
-    "@lib//:joni",
-    "@lib//:caffeine",
-  ]
+  exports = ["@lib//:joni"]
 )
 
 jvm_library(
@@ -35,8 +31,6 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:joni",
     "@lib//:jetbrains-annotations",
-    "@lib//:fastutil-min",
-    "@lib//:caffeine",
     "//platform/util/xmlDom",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
@@ -47,6 +41,7 @@ jvm_library(
     "@lib//:kotlinx-collections-immutable",
     "@lib//:kotlin-test",
     "//platform/util",
+    "//fleet/fastutil",
   ]
 )
 

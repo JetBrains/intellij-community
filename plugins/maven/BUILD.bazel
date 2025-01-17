@@ -91,7 +91,6 @@ jvm_library(
     "//plugins/maven/maven-server-telemetry:server-telemetry",
     "@lib//:asm",
     "//platform/eel-provider",
-    "//platform/eel",
     "//platform/ijent",
     "//platform/eel-impl",
     "@lib//:opentelemetry",

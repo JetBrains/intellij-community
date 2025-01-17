@@ -24,6 +24,7 @@ jvm_library(
     "@lib//:guava",
     "//platform/lang-impl",
     "//platform/vcs-log/graph-api:vcs-log-graph",
+    "@lib//:kotlin-stdlib",
     "//platform/util",
     "@lib//:miglayout-swing",
     "//platform/diff-impl",

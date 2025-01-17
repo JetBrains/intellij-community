@@ -25,6 +25,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/ide-core-impl",
+    "//platform/util-ex",
   ],
   runtime_deps = [":scriptDebugger-backend_resources"]
 )

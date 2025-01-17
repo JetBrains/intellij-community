@@ -38,7 +38,6 @@ jvm_library(
     "//platform/progress/shared:ide-progress",
     "//platform/eel-impl",
     "//platform/eel-provider",
-    "//platform/eel",
   ],
   runtime_deps = [":sdk_resources"]
 )
@@ -77,7 +76,6 @@ jvm_library(
     "@lib//:junit5",
     "//platform/eel-impl",
     "//platform/eel-provider",
-    "//platform/eel",
   ],
   runtime_deps = [":sdk_resources"]
 )

@@ -28,6 +28,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jackson",
     "@lib//:jackson-databind",
+    "//platform/util/jdom",
   ],
   runtime_deps = [":devkit_resources"]
 )
@@ -57,6 +58,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jackson",
     "@lib//:jackson-databind",
+    "//platform/util/jdom",
   ],
   runtime_deps = [":devkit_resources"]
 )

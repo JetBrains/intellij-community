@@ -28,13 +28,15 @@ jvm_library(
     "//platform/ml-api:ml",
     "//platform/statistics",
     "@lib//:kotlin-reflect",
-    "@lib//:jetbrains-mlapi-ml-building-blocks",
     "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
     "//platform/ide-core-impl",
+    "@lib//:jetbrains-mlapi-ml-tools",
+    "@lib//:jetbrains-mlapi-ml-tools-suspendable",
   ],
   exports = [
-    "@lib//:jetbrains-mlapi-ml-building-blocks",
     "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
+    "@lib//:jetbrains-mlapi-ml-tools",
+    "@lib//:jetbrains-mlapi-ml-tools-suspendable",
   ],
   runtime_deps = [":ml-impl_resources"]
 )
@@ -65,9 +67,10 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "@lib//:kotlin-reflect",
-    "@lib//:jetbrains-mlapi-ml-building-blocks",
     "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
     "//platform/ide-core-impl",
+    "@lib//:jetbrains-mlapi-ml-tools",
+    "@lib//:jetbrains-mlapi-ml-tools-suspendable",
   ],
   runtime_deps = [":ml-impl_resources"]
 )

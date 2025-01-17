@@ -242,7 +242,6 @@ jvm_library(
     "//platform/feedback",
     "@lib//:kotlinx-datetime-jvm",
     "//platform/platform-impl/remote:ide-remote",
-    "//platform/ml-tools",
     "//platform/platform-impl/ui:ide-ui",
     "@lib//:jackson-module-kotlin",
     "@lib//:ap-validation",

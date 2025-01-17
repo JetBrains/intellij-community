@@ -105,7 +105,6 @@ jvm_library(
     "//platform/platform-impl/internal:ide-internal",
     "//platform/util/concurrency",
     "//platform/platform-impl/ui:ide-ui",
-    "//platform/eel",
     "//platform/eel-impl",
     "//platform/eel-provider",
     "//platform/foldings",
@@ -193,7 +192,6 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel",
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel_test_lib",
-    "//platform/eel",
     "//platform/eel-provider",
   ]
 )

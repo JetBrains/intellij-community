@@ -104,6 +104,7 @@ jvm_library(
     "@lib//:opentelemetry-semconv-provided",
     "@lib//:opentelemetry-extension-kotlin-provided",
     "//platform/platform-impl/ui:ide-ui",
+    "@lib//:assert_j",
   ],
   runtime_deps = [":terminal_resources"]
 )

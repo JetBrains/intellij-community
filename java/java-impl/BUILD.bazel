@@ -68,8 +68,6 @@ jvm_library(
     "//platform/markdown-utils",
     "@lib//:jetbrains-markdown",
     "//platform/threadDumpParser",
-    "//platform/eel",
-    "//platform/eel-impl",
     "//platform/eel-provider",
     "//platform/bookmarks",
     "//platform/todo",
