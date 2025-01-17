@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.*
@@ -61,7 +62,7 @@ object MavenEelUtil : MavenUtil() {
 
   @JvmStatic
   suspend fun Project?.resolveM2DirAsync(): Path {
-    return this?.getEelDescriptor()?.upgrade().resolveM2Dir()
+    return this?.filterAcceptable()?.getEelDescriptor()?.upgrade().resolveM2Dir()
   }
 
   suspend fun <T> resolveUsingEel(project: Project?, ordinary: suspend () -> T, eel: suspend (EelApi) -> T?): T {
@@ -69,8 +70,10 @@ object MavenEelUtil : MavenUtil() {
       MavenLog.LOG.error("resolveEelAware: Project is null")
     }
 
-    return project?.getEelDescriptor()?.upgrade()?.let { eel(it) } ?: ordinary.invoke()
+    return project?.filterAcceptable()?.getEelDescriptor()?.upgrade()?.let { eel(it) } ?: ordinary.invoke()
   }
+
+  private fun Project.filterAcceptable(): Project? = takeIf { !it.isDefault && it !is DummyProject }
 
   @JvmStatic
   fun EelApi.resolveUserSettingsFile(overriddenUserSettingsFile: String?): Path {
