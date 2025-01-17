@@ -419,9 +419,10 @@ internal fun CoroutineScope.showIndicator(
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
     withContext(progressManagerTracer.span("Progress: ${taskInfo.title}")) {
       withContext(Dispatchers.EDT) {
-        LOG.trace { "Showing indicator for task: $taskInfo" }
-        val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
         try {
+          LOG.trace { "Showing indicator for task: ${taskInfo.title}" }
+          val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
+
           indicator.start() // must be after showIndicatorInUI
           try {
             if (indicatorAdded) {
