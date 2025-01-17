@@ -234,6 +234,25 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/autoImports/callablesDeclaredInClasses")
+        public static class CallablesDeclaredInClasses extends AbstractQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("noImportOfPartiallyPrivateCallables.test")
+            public void testNoImportOfPartiallyPrivateCallables() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportOfPartiallyPrivateCallables.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/autoImports/innerClass")
         public static class InnerClass extends AbstractQuickFixMultiFileTest {
             @java.lang.Override

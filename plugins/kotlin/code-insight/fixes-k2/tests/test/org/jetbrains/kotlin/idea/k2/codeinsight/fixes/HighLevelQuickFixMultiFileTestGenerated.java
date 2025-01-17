@@ -122,6 +122,25 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/callablesDeclaredInClasses")
+        public static class CallablesDeclaredInClasses extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("noImportOfPartiallyPrivateCallables.test")
+            public void testNoImportOfPartiallyPrivateCallables() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/callablesDeclaredInClasses/noImportOfPartiallyPrivateCallables.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/innerClass")
         public static class InnerClass extends AbstractHighLevelQuickFixMultiFileTest {
             @java.lang.Override
