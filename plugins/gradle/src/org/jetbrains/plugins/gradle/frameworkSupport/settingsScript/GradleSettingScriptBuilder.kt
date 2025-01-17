@@ -18,7 +18,7 @@ interface GradleSettingScriptBuilder<Self: GradleSettingScriptBuilder<Self>> : S
 
   fun includeBuild(name: String): Self
 
-  fun pluginManagement(configure: ScriptTreeBuilder.() -> Unit)
+  fun pluginManagement(configure: ScriptTreeBuilder.() -> Unit): Self
 
   fun enableFeaturePreview(featureName: String): Self
 
@@ -37,8 +37,8 @@ interface GradleSettingScriptBuilder<Self: GradleSettingScriptBuilder<Self>> : S
     @JvmStatic
     fun create(useKotlinDsl: Boolean): GradleSettingScriptBuilder<*> {
       return when (useKotlinDsl) {
-        true -> KotlinDslGradleSettingScriptBuilder()
-        else -> GroovyDslGradleSettingScriptBuilder()
+        true -> KotlinDslGradleSettingScriptBuilder.Impl()
+        else -> GroovyDslGradleSettingScriptBuilder.Impl()
       }
     }
   }

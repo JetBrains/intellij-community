@@ -9,36 +9,38 @@ import kotlin.apply as applyKt
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScriptBuilder<BSB>>(
-  gradleVersion: GradleVersion
-) : AbstractGradleBuildScriptBuilder<BSB>(gradleVersion) {
+abstract class GroovyDslGradleBuildScriptBuilder<Self : GroovyDslGradleBuildScriptBuilder<Self>>(
+  gradleVersion: GradleVersion,
+) : AbstractGradleBuildScriptBuilder<Self>(gradleVersion) {
 
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit) =
+  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self =
     withPostfix {
       callIfNotEmpty("test", configure)
     }
 
-  override fun withKotlinJvmPlugin(version: String?) = apply {
+  override fun withKotlinJvmPlugin(version: String?): Self = apply {
     withMavenCentral()
     withPlugin("org.jetbrains.kotlin.jvm", version)
   }
 
-  override fun withKotlinTest() = apply {
+  override fun withKotlinTest(): Self = apply {
     withMavenCentral()
-    // version is inherited from the Kotlin plugin
+    // The kotlin-test dependency version is inherited from the Kotlin plugin
     addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
     configureTestTask {
       call("useJUnitPlatform")
     }
   }
 
-  override fun ScriptTreeBuilder.mavenRepository(url: String) = applyKt {
+  override fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder = applyKt {
     call("maven") {
       assign("url", url)
     }
   }
 
-  override fun generate() = GroovyScriptBuilder().generate(generateTree())
+  override fun generate(): String {
+    return GroovyScriptBuilder().generate(generateTree())
+  }
 
   internal class Impl(gradleVersion: GradleVersion) : GroovyDslGradleBuildScriptBuilder<Impl>(gradleVersion) {
     override fun apply(action: Impl.() -> Unit) = applyKt(action)

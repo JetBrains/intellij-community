@@ -6,11 +6,15 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.KotlinScriptBuilder
 import kotlin.apply as applyKt
 
 @ApiStatus.Internal
-class KotlinDslGradleSettingScriptBuilder : AbstractGradleSettingScriptBuilder<KotlinDslGradleSettingScriptBuilder>() {
-
-  override fun apply(action: KotlinDslGradleSettingScriptBuilder.() -> Unit) = applyKt(action)
+@ApiStatus.NonExtendable
+abstract class KotlinDslGradleSettingScriptBuilder<Self : KotlinDslGradleSettingScriptBuilder<Self>>
+  : AbstractGradleSettingScriptBuilder<Self>() {
 
   override fun generate(): String {
     return KotlinScriptBuilder().generate(generateTree())
+  }
+
+  internal class Impl : KotlinDslGradleSettingScriptBuilder<Impl>() {
+    override fun apply(action: Impl.() -> Unit) = applyKt(action)
   }
 }

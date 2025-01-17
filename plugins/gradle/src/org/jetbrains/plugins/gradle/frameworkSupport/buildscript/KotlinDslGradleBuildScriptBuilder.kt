@@ -9,13 +9,11 @@ import kotlin.apply as applyKt
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-abstract class KotlinDslGradleBuildScriptBuilder<BSB : KotlinDslGradleBuildScriptBuilder<BSB>>(
-  gradleVersion: GradleVersion
-) : AbstractGradleBuildScriptBuilder<BSB>(gradleVersion) {
+abstract class KotlinDslGradleBuildScriptBuilder<Self : KotlinDslGradleBuildScriptBuilder<Self>>(
+  gradleVersion: GradleVersion,
+) : AbstractGradleBuildScriptBuilder<Self>(gradleVersion) {
 
-  override fun generate() = KotlinScriptBuilder().generate(generateTree())
-
-  override fun withKotlinJvmPlugin(version: String?) = apply {
+  override fun withKotlinJvmPlugin(version: String?): Self = apply {
     withMavenCentral()
     withPlugin {
       if (version != null) {
@@ -26,7 +24,7 @@ abstract class KotlinDslGradleBuildScriptBuilder<BSB : KotlinDslGradleBuildScrip
     }
   }
 
-  override fun withKotlinTest() = apply {
+  override fun withKotlinTest(): Self = apply {
     withMavenCentral()
     addTestImplementationDependency(call("kotlin", "test"))
     configureTestTask {
@@ -34,13 +32,17 @@ abstract class KotlinDslGradleBuildScriptBuilder<BSB : KotlinDslGradleBuildScrip
     }
   }
 
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit) =
+  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self =
     withPostfix {
       callIfNotEmpty("tasks.test", configure)
     }
 
-  override fun ScriptTreeBuilder.mavenRepository(url: String) = applyKt {
+  override fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder = applyKt {
     call("maven", "url" to url)
+  }
+
+  override fun generate(): String {
+    return KotlinScriptBuilder().generate(generateTree())
   }
 
   internal class Impl(gradleVersion: GradleVersion) : KotlinDslGradleBuildScriptBuilder<Impl>(gradleVersion) {
