@@ -315,6 +315,30 @@ class ExtraUsageOfAutoCloseableInFinally {
 }
 
 class NestedCatchSections {
+  static class A extends RuntimeException {
+    A(String message) {
+      super(message);
+    }
+  }
+
+  static class B extends RuntimeException {
+    B(String message) {
+      super(message);
+    }
+  }
+
+  static class C extends RuntimeException {
+    C(String message) {
+      super(message);
+    }
+  }
+
+  static class D extends RuntimeException {
+    D(String message) {
+      super(message);
+    }
+  }
+
   interface MyAutoCloseable extends AutoCloseable {
     @Override
     void close();
@@ -356,6 +380,40 @@ class NestedCatchSections {
       try {
         stream.close();
       } catch (IOException e) {
+      }
+    }
+  }
+
+  void disjointExceptionsInOuterAndInnerCatch(InputStream stream) {
+    try {
+      System.out.println(1);
+    } catch (A | B e) {
+
+    } finally {
+      try {
+        stream.close();
+      } catch (C | IOException e) {
+
+      }
+    }
+  }
+
+  void disjointExceptionsInDoubleInnerCatch(InputStream stream, InputStream stream2) {
+    try {
+      System.out.println(1);
+    }
+    finally {
+      try {
+        stream.close();
+      }
+      catch (A | IOException e) {
+
+      }
+      try {
+        stream2.close();
+      }
+      catch (B | IOException e) {
+
       }
     }
   }
