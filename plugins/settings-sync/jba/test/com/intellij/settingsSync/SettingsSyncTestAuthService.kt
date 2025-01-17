@@ -14,7 +14,7 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
     val loginName = "testLogin"
     val email = "testEmail@example.com"
     val presentableName = "presentableName"
-    return SettingsSyncUserData(loginName, email)
+    return SettingsSyncUserData(id, "MOCK", loginName, email, presentableName)
   }
 
   override fun getAvailableUserAccounts(): List<SettingsSyncUserData> {

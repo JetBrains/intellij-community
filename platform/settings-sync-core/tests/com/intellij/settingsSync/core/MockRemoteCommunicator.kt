@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import kotlin.isInitialized
 
+internal val MOCK_CODE = "MOCK"
+
 internal class MockRemoteCommunicator(override val userId: String) : AbstractServerCommunicator() {
   private val filesAndVersions = mutableMapOf<String, Version>()
   private val versionIdStorage = mutableMapOf<String, String>()
@@ -147,10 +149,10 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
 
 internal class MockCommunicatorProvider (
   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
-  override val authService: SettingsSyncAuthService = MockAuthService(SettingsSyncUserData("", "")),
+  override val authService: SettingsSyncAuthService = MockAuthService(SettingsSyncUserData("mockId", MOCK_CODE, "", "")),
 ): SettingsSyncCommunicatorProvider {
   override val providerCode: String
-    get() = "MOCK"
+    get() = MOCK_CODE
 
   override fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator? = remoteCommunicator
 }
@@ -159,7 +161,7 @@ internal class MockAuthService (
   private val userData: SettingsSyncUserData
 ): SettingsSyncAuthService {
   override val providerCode: String
-    get() = "MOCK"
+    get() = MOCK_CODE
   override val providerName: String
     get() = TODO("Not yet implemented")
   override val icon: Icon?

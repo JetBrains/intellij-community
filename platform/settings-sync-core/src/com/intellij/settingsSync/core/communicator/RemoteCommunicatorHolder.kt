@@ -74,7 +74,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
   }
 
   fun getDefaultProvider(): SettingsSyncCommunicatorProvider? {
-    return getProvider(DEFAULT_PROVIDER_CODE)!!
+    return getProvider(DEFAULT_PROVIDER_CODE)
   }
 
   fun getProvider(providerCode: String): SettingsSyncCommunicatorProvider? {

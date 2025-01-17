@@ -463,7 +463,7 @@ internal class GitSettingsLogTest {
     val jbaEmail = "some-jba-email@jba-mail.com"
     val jbaName = "JBA Name"
 
-    userData = SettingsSyncUserData(jbaName, jbaEmail)
+    userData = SettingsSyncUserData("mockId", MOCK_CODE, jbaName, jbaEmail)
     checkUsernameEmail(jbaName, jbaEmail)
   }
 

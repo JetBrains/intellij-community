@@ -65,9 +65,12 @@ internal abstract class SettingsSyncTestBase {
         providerEP.unregisterExtension(it)
       }
     }
-    providerEP.registerExtension(MockCommunicatorProvider(
+    val mockCommunicatorProvider = MockCommunicatorProvider(
       remoteCommunicator
-    ), disposable)
+    )
+    providerEP.registerExtension(mockCommunicatorProvider, disposable)
+    SettingsSyncLocalSettings.getInstance().providerCode = mockCommunicatorProvider.providerCode
+    SettingsSyncLocalSettings.getInstance().userId = "dummyUserId"
 
     val serverState = remoteCommunicator.checkServerState()
     if (serverState != ServerState.FileNotExists) {
