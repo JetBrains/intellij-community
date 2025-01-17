@@ -25,6 +25,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 @Service(Service.Level.APP)
 private class ChangesProcessingService(private val coroutineScope: CoroutineScope) : Disposable.Default {
@@ -145,6 +147,7 @@ class SourceFileChangesCollectorImpl(
 ) : SourceFileChangesCollector<VirtualFile>, Disposable.Default {
   @OptIn(ExperimentalCoroutinesApi::class)
   private val limitedDispatcher = Dispatchers.Default.limitedParallelism(1)
+  private val lock = ReentrantLock()
 
   @Volatile
   private var currentChanges: MutableSet<VirtualFile> = hashSetOf()
@@ -157,7 +160,7 @@ class SourceFileChangesCollectorImpl(
     ChangesProcessingService.getInstance().addCollector(this)
   }
 
-  override fun getChanges(): Set<VirtualFile> = currentChanges
+  override fun getChanges(): Set<VirtualFile> = lock.withLock { currentChanges.toHashSet() }
   override fun resetChanges() {
     lastResetTimeStamp = System.currentTimeMillis()
     currentChanges = hashSetOf()
@@ -168,11 +171,13 @@ class SourceFileChangesCollectorImpl(
     file: VirtualFile, document: Document,
   ) = coroutineScope.launch(limitedDispatcher) {
     val currentChanges = currentChanges
-    if (hasChangesSinceLastReset) {
-      currentChanges.add(file)
-    }
-    else {
-      currentChanges.remove(file)
+    lock.withLock {
+      if (hasChangesSinceLastReset) {
+        currentChanges.add(file)
+      }
+      else {
+        currentChanges.remove(file)
+      }
     }
 
     val isEmpty = currentChanges.isEmpty()
