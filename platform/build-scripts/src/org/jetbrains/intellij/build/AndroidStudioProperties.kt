@@ -335,7 +335,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
   }
 
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "_ANDROID_STUDIO_SYSTEM_SELECTOR_${if (appInfo.isEAP) "Preview" else ""}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+    "_ANDROID_STUDIO_SYSTEM_SELECTOR_"
 
   override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio-$buildNumber"
 
