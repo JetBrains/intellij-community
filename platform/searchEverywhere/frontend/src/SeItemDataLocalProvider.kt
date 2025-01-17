@@ -15,11 +15,12 @@ import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeItemDataLocalProvider(private val provider: SeItemsProvider): SeItemDataProvider {
+class SeItemDataLocalProvider(private val provider: SeItemsProvider,
+                              private val sessionRef: DurableRef<SeSessionEntity>): SeItemDataProvider {
   override val id: SeProviderId
     get() = SeProviderId(provider.id)
 
-  override fun getItems(sessionRef: DurableRef<SeSessionEntity>, params: SeParams): Flow<SeItemData> {
+  override fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
       provider.collectItems(params, object : SeItemsProvider.Collector {
         override suspend fun put(item: SeItem): Boolean {
@@ -29,5 +30,12 @@ class SeItemDataLocalProvider(private val provider: SeItemsProvider): SeItemData
         }
       })
     }
+  }
+
+  override suspend fun itemSelected(itemData: SeItemData,
+                                    modifiers: Int,
+                                    searchText: String): Boolean {
+    val item = itemData.fetchItemIfExists() ?: return false
+    return provider.itemSelected(item, modifiers, searchText)
   }
 }

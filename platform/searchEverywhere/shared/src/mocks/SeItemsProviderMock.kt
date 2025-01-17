@@ -49,6 +49,11 @@ class SeItemsProviderMock(
       }
     }
   }
+
+  override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
+    println("item selected: ${item.presentation().text} - ${item}")
+    return true
+  }
 }
 
 @ApiStatus.Internal

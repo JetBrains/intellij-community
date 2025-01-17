@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 class SeTabHelper private constructor(val project: Project,
                                       private val sessionRef: DurableRef<SeSessionEntity>,
-                                      providers: Map<SeProviderId, SeItemDataProvider>) {
+                                      private val providers: Map<SeProviderId, SeItemDataProvider>) {
   private val searchDispatcher: SeDispatcher
 
   init {
@@ -28,6 +28,11 @@ class SeTabHelper private constructor(val project: Project,
 
   fun getItems(params: SeParams): Flow<SeItemData> =
     searchDispatcher.getItems(sessionRef, params, emptyList())
+
+  suspend fun itemSelected(itemData: SeItemData, modifiers: Int, searchText: String): Boolean {
+    val provider = providers[itemData.providerId] ?: return false
+    return provider.itemSelected(itemData, modifiers, searchText)
+  }
 
   companion object {
     private const val SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT: Int = 30
@@ -54,13 +59,13 @@ class SeTabHelper private constructor(val project: Project,
         }.filter {
           allProviderIds.contains(SeProviderId(it.id))
         }.toList().associate { provider ->
-          SeProviderId(provider.id) to SeItemDataLocalProvider(provider)
+          SeProviderId(provider.id) to SeItemDataLocalProvider(provider, sessionRef)
         }
 
       val remoteProviderIds = allProviderIds - localProviders.keys.toSet()
 
       val frontendProviders = remoteProviderIds.associateWith { providerId ->
-        SeItemDataFrontendProvider(project.projectId(), providerId)
+        SeItemDataFrontendProvider(project.projectId(), providerId, sessionRef)
       }
 
       val providers = frontendProviders + localProviders

@@ -10,9 +10,13 @@ import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SePopupManager {
+class SePopupProvider: SePopupManager {
+  private var currentPopup: JBPopup? = null
+
   fun createPopup(vm: SePopupVm, project: Project): JBPopup {
-    val panel = SePopupContentPane(vm)
+    closePopup()
+
+    val panel = SePopupContentPane(vm, this)
 
     val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel.preferableFocusedComponent)
       .setProject(project)
@@ -29,10 +33,17 @@ class SePopupManager {
 
     Disposer.register(popup, panel)
 
+    currentPopup = popup
+
     return popup
   }
 
   companion object {
     const val LOCATION_SETTINGS_KEY: String = "search.everywhere.popup"
+  }
+
+  override fun closePopup() {
+    currentPopup?.cancel()
+    currentPopup = null
   }
 }

@@ -22,8 +22,9 @@ class SePopupVm(val coroutineScope: CoroutineScope,
                 private val onClose: suspend () -> Unit) {
 
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(0)
+  val currentTab: SeTabVm get() = tabVms[currentTabIndex.value.coerceIn(tabVms.indices)]
 
-  val currentTab: Flow<SeTabVm>
+  val currentTabFlow: Flow<SeTabVm>
   val searchResults: Flow<Flow<SeItemData>>
 
   val searchPattern = MutableStateFlow(initialSearchPattern ?: "")
@@ -36,15 +37,19 @@ class SePopupVm(val coroutineScope: CoroutineScope,
     check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
 
     val activeTab = tabVms.first()
-    currentTab = currentTabIndex.map {
+    currentTabFlow = currentTabIndex.map {
       tabVms[it.coerceIn(tabVms.indices)]
     }.withPrevious().map { (prev, next) ->
       prev?.setActive(false)
       next.setActive(true)
       next
     }
-    searchResults = currentTab.flatMapLatest { it.searchResults }
+    searchResults = currentTabFlow.flatMapLatest { it.searchResults }
     activeTab.setActive(true)
+  }
+
+  suspend fun itemSelected(item: SeItemData, modifiers: Int): Boolean {
+    return currentTab.itemSelected(item, modifiers, searchPattern.value)
   }
 
   fun dispose() {

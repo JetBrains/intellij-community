@@ -24,6 +24,11 @@ class SeTabMock(override val name: String,
 
   override fun getFilterEditor(): ObservableOptionEditor<SeFilterData>? = null
 
+  override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
+    println("Item selected: ${item.presentation.text}")
+    return true
+  }
+
   companion object {
     suspend fun create(project: Project,
                        sessionRef: DurableRef<SeSessionEntity>,

@@ -27,7 +27,7 @@ class SeDispatcher(
     val accumulator = SeResultsAccumulator(providersAndLimits, alreadyFoundResults)
 
     return providers.asFlow().flatMapMerge { provider ->
-      provider.getItems(sessionRef, params).mapNotNull {
+      provider.getItems(params).mapNotNull {
         val event = accumulator.add(it)
         when {
           event.isAdded || event.isReplaced -> it

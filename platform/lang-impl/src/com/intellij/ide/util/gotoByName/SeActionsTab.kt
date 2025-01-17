@@ -26,6 +26,10 @@ class SeActionsTab(private val helper: SeTabHelper): SeTab {
 
   override fun getItems(params: SeParams): Flow<SeItemData> = helper.getItems(params)
   override fun getFilterEditor(): ObservableOptionEditor<SeFilterData> = SeActionsFilterEditor()
+
+  override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
+    return helper.itemSelected(item, modifiers, searchText)
+  }
 }
 
 @ApiStatus.Internal

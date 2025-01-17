@@ -4,8 +4,6 @@ package com.intellij.platform.searchEverywhere.api
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.SeSessionEntity
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -13,5 +11,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 interface SeItemDataProvider {
   val id: SeProviderId
 
-  fun getItems(sessionRef: DurableRef<SeSessionEntity>, params: SeParams): Flow<SeItemData>
+  fun getItems(params: SeParams): Flow<SeItemData>
+
+  suspend fun itemSelected(itemData: SeItemData,
+                           modifiers: Int,
+                           searchText: String): Boolean
 }

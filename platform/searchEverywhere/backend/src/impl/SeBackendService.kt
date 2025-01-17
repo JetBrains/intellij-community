@@ -13,7 +13,6 @@ import com.intellij.platform.searchEverywhere.api.SeItemDataProvider
 import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Providers
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Session
-import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.jetbrains.rhizomedb.entities
 import fleet.kernel.DurableRef
 import fleet.kernel.change
@@ -28,7 +27,7 @@ class SeBackendService(val project: Project) {
   suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>, providerId: SeProviderId, params: SeParams): Flow<SeItemData> {
     val provider = getProviders(sessionRef)[providerId]
 
-    return provider?.getItems(sessionRef, params) ?: emptyFlow()
+    return provider?.getItems(params) ?: emptyFlow()
   }
 
   private suspend fun getProviders(sessionRef: DurableRef<SeSessionEntity>): Map<SeProviderId, SeItemDataProvider> =
@@ -44,7 +43,7 @@ class SeBackendService(val project: Project) {
             val providers = SeItemsProviderFactory.EP_NAME.extensionList.associate { factory ->
               val provider = factory.getItemsProvider(project)
               val id = SeProviderId(provider.id)
-              id to SeItemDataBackendProvider(id, provider)
+              id to SeItemDataBackendProvider(id, provider, sessionRef)
             }
 
             SeBackendItemDataProvidersHolderEntity.new {
@@ -60,15 +59,10 @@ class SeBackendService(val project: Project) {
       existingHolderEntities.first().providers
     } ?: emptyMap()
 
-  suspend fun itemSelected(itemEntityRef: DurableRef<SeItemEntity>) {
-    val item = itemEntityRef.derefOrNull()?.findItemOrNull()
+  suspend fun itemSelected(sessionRef: DurableRef<SeSessionEntity>, itemData: SeItemData, modifiers: Int, searchText: String): Boolean {
+    val provider = getProviders(sessionRef)[itemData.providerId] ?: return false
 
-    if (item == null) {
-      println("item not found: $itemEntityRef")
-      return
-    }
-
-    println("item selected: ${item.presentation().text}")
+    return provider.itemSelected(itemData, modifiers, searchText)
   }
 
   companion object {

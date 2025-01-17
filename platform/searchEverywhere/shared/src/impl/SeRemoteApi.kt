@@ -22,7 +22,11 @@ interface SeRemoteApi: RemoteApi<Unit> {
                        providerId: SeProviderId,
                        params: SeParams): Flow<SeItemData>
 
-  suspend fun itemSelected(projectId: ProjectId, itemEntityRef: DurableRef<SeItemEntity>)
+  suspend fun itemSelected(projectId: ProjectId,
+                           sessionRef: DurableRef<SeSessionEntity>,
+                           itemData: SeItemData,
+                           modifiers: Int,
+                           searchText: String): Boolean
 
   companion object {
     @JvmStatic

@@ -15,4 +15,6 @@ interface SeTab {
   fun getItems(params: SeParams): Flow<SeItemData>
 
   fun getFilterEditor(): ObservableOptionEditor<SeFilterData>?
+
+  suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean
 }

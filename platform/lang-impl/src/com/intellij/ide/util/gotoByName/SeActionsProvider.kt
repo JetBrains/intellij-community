@@ -28,13 +28,17 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val filter = SeActionsFilterData.fromTabData(params.filterData)
-    processItems(params.text, filter.includeDisabled) { value, weight ->
-      val item = ActionSearchItem(weight, value)
+    processItems(params.text, filter.includeDisabled) { value ->
+      val item = SeActionItem(value)
       collector.put(item)
     }
   }
 
-  private suspend fun processItems(text: String, includeDisabled: Boolean, processor: suspend (MatchedValue, Int) -> Boolean) {
+  override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
+    TODO()
+  }
+
+  private suspend fun processItems(text: String, includeDisabled: Boolean, processor: suspend (MatchedValue) -> Boolean) {
     model.buildGroupMappings()
     runSuspendingUpdateSessionForActionSearch(model.getUpdateSession()) { presentationProvider ->
       if (text.isEmpty() && isRecentsShown()) {
@@ -46,19 +50,19 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
     }
   }
 
-  private fun CoroutineScope.processAllItems(text: String, includeDisabled: Boolean, presentationProvider: suspend (AnAction) -> Presentation, processor: suspend (MatchedValue, Int) -> Boolean) {
+  private fun CoroutineScope.processAllItems(text: String, includeDisabled: Boolean, presentationProvider: suspend (AnAction) -> Presentation, processor: suspend (MatchedValue) -> Boolean) {
     asyncProvider.filterElements(this, presentationProvider, text) { matchedValue ->
       if (includeDisabled) {
         val enabled = (matchedValue.value as? GotoActionModel.ActionWrapper)?.isAvailable != false
         if (!enabled) return@filterElements true
       }
 
-      processor(matchedValue, matchedValue.matchingDegree)
+      processor(matchedValue)
     }
 
   }
 
-  private fun CoroutineScope.processRecents(text: String, includeDisabled: Boolean, presentationProvider: suspend (AnAction) -> Presentation, processor: suspend (MatchedValue, Int) -> Boolean) {
+  private fun CoroutineScope.processRecents(text: String, includeDisabled: Boolean, presentationProvider: suspend (AnAction) -> Presentation, processor: suspend (MatchedValue) -> Boolean) {
     val actionIDs: Set<String> = ActionHistoryManager.getInstance().state.ids
     asyncProvider.processActions(this, presentationProvider, text, actionIDs) { matchedValue ->
       if (!includeDisabled) {
@@ -66,7 +70,7 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
         if (!enabled) return@processActions true
       }
 
-      processor(matchedValue, matchedValue.matchingDegree)
+      processor(matchedValue)
     }
   }
 
@@ -76,7 +80,7 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
 }
 
 @ApiStatus.Internal
-class ActionSearchItem(private val weight: Int, private val matchedValue: MatchedValue): SeItem {
-  override fun weight(): Int = weight
+class SeActionItem(val matchedValue: MatchedValue): SeItem {
+  override fun weight(): Int = matchedValue.matchingDegree
   override fun presentation(): SeItemPresentation = ActionPresentationProvider.invoke(matchedValue)
 }

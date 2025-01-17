@@ -16,12 +16,19 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeItemDataFrontendProvider(private val projectId: ProjectId,
-                                 override val id: SeProviderId): SeItemDataProvider {
-  override fun getItems(sessionRef: DurableRef<SeSessionEntity>, params: SeParams): Flow<SeItemData> {
+                                 override val id: SeProviderId,
+                                 private val sessionRef: DurableRef<SeSessionEntity>): SeItemDataProvider {
+  override fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
       SeRemoteApi.getInstance().getItems(projectId, sessionRef, id, params).collectLatest {
         send(it)
       }
     }
+  }
+
+  override suspend fun itemSelected(itemData: SeItemData,
+                                    modifiers: Int,
+                                    searchText: String): Boolean {
+    return SeRemoteApi.getInstance().itemSelected(projectId, sessionRef, itemData, modifiers, searchText)
   }
 }

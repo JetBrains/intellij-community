@@ -25,6 +25,10 @@ class SeFilesTab(val helper: SeTabHelper): SeTab {
     helper.getItems(params)
 
   override fun getFilterEditor(): ObservableOptionEditor<SeFilterData> = SeFilesFilterEditor()
+
+  override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
+    return helper.itemSelected(item, modifiers, searchText)
+  }
 }
 
 @Internal

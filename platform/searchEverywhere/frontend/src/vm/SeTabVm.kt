@@ -46,4 +46,8 @@ class SeTabVm(
   fun setActive(isActive: Boolean) {
     isActiveFlow.value = isActive
   }
+
+  suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
+    return tab.itemSelected(item, modifiers, searchText)
+  }
 }

@@ -41,4 +41,9 @@ class SeFilesProvider(val project: Project, private val legacyContributor: Searc
       })
     }
   }
+
+  override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
+    val legacyItem = (item as? SeFileItem)?.legacyItem ?: return false
+    return legacyContributor.synchronousContributor.processSelectedItem(legacyItem, modifiers, searchText)
+  }
 }
