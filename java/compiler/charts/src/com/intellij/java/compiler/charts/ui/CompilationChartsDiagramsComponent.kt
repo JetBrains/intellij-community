@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.ide.ui.UISettings
-import com.intellij.java.compiler.charts.CompilationChartsViewModel
-import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
-import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
-import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
+import com.intellij.java.compiler.charts.impl.CompilationChartsImpl.FilterImpl
+import com.intellij.java.compiler.charts.impl.CompilationChartsViewModel
+import com.intellij.java.compiler.charts.impl.CompilationChartsViewModel.Filter
+import com.intellij.java.compiler.charts.impl.EventDeclaration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -18,7 +18,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
-import java.util.concurrent.ConcurrentSkipListSet
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JButton
 import javax.swing.JViewport
 import javax.swing.SwingUtilities
@@ -30,12 +30,9 @@ class CompilationChartsDiagramsComponent(
   private val zoom: Zoom,
   private val viewport: JViewport,
 ) : JBPanelWithEmptyText(BorderLayout()) {
-  val modules: CompilationChartsViewModel.ViewModules = CompilationChartsViewModel.ViewModules()
-  val stats: Map<CpuMemoryStatisticsType, MutableSet<CompilationChartsViewModel.StatisticData>> = mapOf(MEMORY to ConcurrentSkipListSet(), CPU to ConcurrentSkipListSet())
-  var cpu: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
-  var memory: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
-  val statistic: Statistic = Statistic()
-  var cpuMemory: CpuMemoryStatisticsType = MEMORY
+  val uiModel: UIModel = UIModel({isDirty.set(true)}, { cleanCache() })
+  val isDirty: AtomicBoolean = AtomicBoolean(false)
+  var filter: Filter = FilterImpl()
   var offset: Int = 0
   private val usageInfo: CompilationChartsUsageInfo
   private val charts: Charts
@@ -52,22 +49,6 @@ class CompilationChartsDiagramsComponent(
     isBorderPainted = false
   }
 
-  private val usages: Map<CpuMemoryStatisticsType, ChartUsage> = mapOf(
-    MEMORY to ChartUsage(zoom, "memory", UsageModel()).apply {
-      format = { stat -> "${stat.data / (1024 * 1024)} MB" }
-      color {
-        background = Colors.Memory.BACKGROUND
-        border = Colors.Memory.BORDER
-      }
-    },
-    CPU to ChartUsage(zoom, "cpu", UsageModel()).apply {
-      format = { stat -> "${stat.data} %" }
-      color {
-        background = Colors.Cpu.BACKGROUND
-        border = Colors.Cpu.BORDER
-      }
-    })
-
   init {
     add(focusableEmptyButton, BorderLayout.NORTH)
     addMouseWheelListener { e ->
@@ -80,22 +61,22 @@ class CompilationChartsDiagramsComponent(
       }
     }
 
-    charts = charts(vm, zoom, { cleanCache() }) {
+    charts = charts(zoom) {
       progress {
         height = Settings.Block.HEIGHT
 
         block {
           border = Settings.Block.BORDER
           padding = Settings.Block.PADDING
-          color = { m -> Colors.getBlock(m.target.isTest).ENABLED }
-          outline = { m -> Colors.getBlock(m.target.isTest).BORDER }
-          selected = { m -> Colors.getBlock(m.target.isTest).SELECTED }
+          color = { m -> Colors.getBlock(m.key.test).ENABLED }
+          outline = { m -> Colors.getBlock(m.key.test).BORDER }
+          selected = { m -> Colors.getBlock(m.key.test).SELECTED }
         }
         background {
           color = { row -> Colors.Background.getRowColor(row) }
         }
       }
-      usage = usages[MEMORY]!!
+      usage = vm.statisticType().type()
       axis {
         stroke = floatArrayOf(5f, 5f)
         distance = Settings.Axis.DISTANCE
@@ -121,7 +102,7 @@ class CompilationChartsDiagramsComponent(
     usageInfo = CompilationChartsUsageInfo(this, charts, zoom)
     addMouseMotionListener(usageInfo)
 
-    ApplicationManager.getApplication().getMessageBus().connect(vm.disposable)
+    ApplicationManager.getApplication().getMessageBus().connect(vm.disposable())
       .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { scheme -> smartDraw(true, false) })
 
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, object : Magnificator {
@@ -130,10 +111,11 @@ class CompilationChartsDiagramsComponent(
 
     AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts component", 1)
       .scheduleWithFixedDelay({ if (hasNewData()) smartDraw() }, 0, Settings.Refresh.timeout, Settings.Refresh.unit)
-      .also { feature -> Disposer.register(vm.disposable) { -> feature.cancel(true) } }
+      .also { feature -> Disposer.register(vm.disposable()) { -> feature.cancel(true) } }
   }
 
   internal fun cleanCache() {
+    images.forEach { _, img -> img.flush() }
     images.clear()
     imageRequestCount.clear()
     charts.settings.mouse.clear()
@@ -153,13 +135,14 @@ class CompilationChartsDiagramsComponent(
     if (g2d !is Graphics2D) return
     charts.model {
       progress {
-        model = if (flush) modules.data else mutableMapOf()
-        filter = modules.filter
+        model = uiModel.modules()
+        threads = uiModel.threads()
+        filter = this@CompilationChartsDiagramsComponent.filter
         currentTime = if (flush) System.nanoTime() else currentTime
       }
-      usage(usages[cpuMemory]!!) {
-        model = if (flush) stats[cpuMemory]!! else mutableSetOf()
-        maximum = cpuMemory.max(vm.statistics)
+      usage(vm.statisticType().type()) {
+        model = uiModel.statistics(vm.statisticType().clazz())
+        maximum = vm.statisticType().maximum()
       }
     }
 
@@ -219,6 +202,7 @@ class CompilationChartsDiagramsComponent(
           }
           else {
             val img = UIUtil.createImage(this, area.width.roundToInt(), area.height.roundToInt(), BufferedImage.TYPE_INT_ARGB)
+            images[index]?.flush()
             images[index] = img
             val chartGraphics = ChartGraphics(img.createGraphics(), -area.x, -area.y)
             draw(chartGraphics)
@@ -231,9 +215,7 @@ class CompilationChartsDiagramsComponent(
 
   private fun hasNewData(): Boolean {
     if (!flush) return false
-    if (modules.data.isNotEmpty()) return true
-    if (stats[cpuMemory]!!.isNotEmpty()) return true
-    return false
+    return isDirty.getAndSet(false)
   }
 
   private class IDESettings {
@@ -248,5 +230,13 @@ class CompilationChartsDiagramsComponent(
 
     private fun scale() = UISettings.getInstance().ideScale
     private fun color() = EditorColorsManager.getInstance().globalScheme
+  }
+
+  private fun EventDeclaration.type(): ChartUsage = ChartUsage(zoom, UsageModel()).apply {
+    format = layout()
+    color {
+      background = color().background()
+      border = color().border()
+    }
   }
 }

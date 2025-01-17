@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.java.compiler.charts.CompilationChartsBundle
-import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
+import com.intellij.java.compiler.charts.impl.ModuleKey
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
@@ -30,7 +30,7 @@ interface CompilationChartsAction {
   }
 }
 
-class OpenDirectoryAction(private val project: Project, private val key: EventKey, private val close: () -> Unit) : CompilationChartsAction {
+class OpenDirectoryAction(private val project: Project, private val key: ModuleKey, private val close: () -> Unit) : CompilationChartsAction {
   override fun isAccessible(): Boolean = true
   override fun position(): CompilationChartsAction.Position = CompilationChartsAction.Position.LEFT
   override fun draw(row: Row) {

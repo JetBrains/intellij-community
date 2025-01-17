@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.ui.ColorUtil
@@ -8,18 +8,7 @@ import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import kotlin.math.hypot
-
- fun <E> MutableSet<E>.getAndClean(): MutableSet<E> {
-  val result = HashSet(this)
-  removeAll(result)
-  return result
-}
-
- fun <K, V> MutableMap<K, V>.getAndClean(): MutableMap<K, V> {
-  val result = HashMap(this)
-  result.entries.forEach { this.remove(it.key, it.value) }
-  return result
-}
+import kotlin.math.roundToInt
 
 internal fun Path2D.Double.curveTo(neighbour: DoubleArray) {
 
@@ -44,7 +33,8 @@ internal fun Path2D.Double.curveTo(neighbour: DoubleArray) {
   if (slope1 == 0.0) {
     tan1 = 0.0
     tan2 = 0.0
-  } else {
+  }
+  else {
     val a = tan1 / slope1
     val b = tan2 / slope1
     val h = hypot(a, b)
@@ -94,6 +84,12 @@ internal fun compareWithViewport(startTime: Long, finishTime: Long?, settings: C
   return 0
 }
 
-fun Color.alpha(alpha: Double): Color {
-  return ColorUtil.withAlpha(this, alpha)
+fun Color.alpha(alpha: Double): Color = ColorUtil.withAlpha(this, alpha)
+
+@Suppress("UseJBColor")
+fun Color.alpha(background: Color, alpha: Double): Color {
+  val red = (alpha * red + (1 - alpha) * background.red).roundToInt()
+  val green = (alpha * green + (1 - alpha) * background.green).roundToInt()
+  val blue = (alpha * blue + (1 - alpha) * background.blue).roundToInt()
+  return Color(red, green, blue)
 }

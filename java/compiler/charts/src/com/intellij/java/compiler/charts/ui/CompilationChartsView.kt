@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
-import com.intellij.java.compiler.charts.CompilationChartsViewModel
-import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
-import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
+import com.intellij.java.compiler.charts.impl.CompilationChartsViewModel
+import com.intellij.java.compiler.charts.ui.CompilationChartsTopic.*
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -16,7 +15,7 @@ import com.jetbrains.rd.util.reactive.IViewableList
 import javax.swing.JViewport
 import javax.swing.ScrollPaneConstants
 
-class CompilationChartsView(project: Project, private val vm: CompilationChartsViewModel) : BorderLayoutPanel(), UiDataProvider {
+class CompilationChartsView(project: Project, vm: CompilationChartsViewModel) : BorderLayoutPanel(), UiDataProvider {
   private val diagrams: CompilationChartsDiagramsComponent
   private val rightAdhesionScrollBarListener: RightAdhesionScrollBarListener
 
@@ -43,45 +42,24 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
 
     scroll.setViewportView(diagrams)
 
-    val panel = ActionPanel(project, vm, scroll.viewport)
+    val panel = ActionPanel(project, vm, diagrams, scroll.viewport)
     panel.border = JBUI.Borders.customLineBottom(JBColor.border())
     addToTop(panel)
     addToCenter(scroll)
 
-    vm.modules.get().advise(vm.lifetime) { module ->
-      module.newValueOpt?.let { diagrams.modules.data[module.key] = it }
-      ?: diagrams.modules.data.remove(module.key)
-
-      diagrams.statistic.time(vm.modules.start)
-      diagrams.statistic.time(vm.modules.end)
-
-      panel.updateLabel(vm.modules.get().keys, vm.filter.value)
+    vm.subscribe(MODULE) { module ->
+      val modules = module.newValueOpt ?: return@subscribe
+      diagrams.uiModel.addAll(modules)
+      //panel.updateLabel(vm.modules.get().keys, vm.filter.value) todo
     }
 
-    vm.statistics.cpu.advise(vm.lifetime) { statistics ->
-      if (statistics !is IViewableList.Event.Add) return@advise
-      diagrams.stats[CPU]!!.add(statistics.newValue)
-
-      diagrams.statistic.cpu(statistics.newValueOpt?.data)
-      diagrams.statistic.time(statistics.newValueOpt?.time)
+    vm.subscribe(STATISTIC) { statistic ->
+      if (statistic !is IViewableList.Event.Add) return@subscribe
+      diagrams.uiModel.add(statistic.newValue)
     }
 
-    vm.statistics.memoryUsed.advise(vm.lifetime) { statistics ->
-      if (statistics !is IViewableList.Event.Add) return@advise
-      diagrams.stats[MEMORY]!!.add(statistics.newValue)
-
-      diagrams.statistic.memory(statistics.newValueOpt?.data)
-      diagrams.statistic.maxMemory = vm.statistics.maxMemory
-      diagrams.statistic.time(statistics.newValueOpt?.time)
-    }
-
-    vm.filter.advise(vm.lifetime) { filter ->
-      diagrams.modules.filter = filter
-      diagrams.smartDraw(true, false)
-    }
-
-    vm.cpuMemory.advise(vm.lifetime) { filter ->
-      diagrams.cpuMemory = filter
+    vm.subscribe(FILTER) { filter ->
+      diagrams.filter = filter
       diagrams.smartDraw(true, false)
     }
   }
@@ -112,23 +90,3 @@ enum class ZoomEvent {
 
 
 internal val COMPILATION_CHARTS_VIEW_KEY = DataKey.create<CompilationChartsView>("CompilationChartsView")
-
-data class Statistic(var start: Long, var end: Long, var maxMemory: Long, var maxCpu: Long = 100) {
-  constructor() : this(Long.MAX_VALUE, 0, 0, 0)
-
-  fun time(time: Long?) {
-    if (time == null) return
-    if (start > time) start = time
-    if (end < time) end = time
-  }
-
-  fun memory(memory: Long?) {
-    if (memory == null) return
-    if (maxMemory < memory) maxMemory = memory
-  }
-
-  fun cpu(cpu: Long?) {
-    if (cpu == null) return
-    if (maxCpu < cpu) maxCpu = cpu
-  }
-}

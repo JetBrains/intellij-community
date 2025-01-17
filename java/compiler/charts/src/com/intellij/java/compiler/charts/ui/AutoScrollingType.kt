@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
 class AutoScrollingType {
   private var type: Type = Type.YES
 
-  fun isEnabled() = type != Type.DISABLED
-  fun isActive() = type == Type.YES
+  fun isEnabled(): Boolean = type != Type.DISABLED
+  fun isActive(): Boolean = type == Type.YES
 
   fun start() {
     type = Type.YES

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.icons.AllIcons
@@ -18,7 +18,7 @@ object Colors {
   }
 
   const val NO_ALPHA: Double = 1.0
-  const val FILTERED_ALPHA: Double = 0.25
+  const val FILTERED_ALPHA: Double = 0.35
 
   @Suppress("PropertyName")
   interface Block {
@@ -124,4 +124,8 @@ object Settings {
     fun rootIcon(test: Boolean): Icon = if(test)  AllIcons.Modules.TestRoot else  AllIcons.Modules.SourceRoot
     val EDIT_ICON: Icon = AllIcons.Actions.EditSource
   }
+}
+
+object Constants {
+  const val COMPILATION_CHARTS_MAGNIFICATION_KEY: String = "compilation.charts.mac.magnificationGesture"
 }
