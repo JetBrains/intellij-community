@@ -56,6 +56,9 @@
     <extensionPoint qualifiedName="com.intellij.webSymbols.inspectionToolMapping"
                     beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.problemQuickFixProvider"
+                    interface="com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.highlightInLanguage"
                     beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP"
                     dynamic="true"/>

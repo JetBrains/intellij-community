@@ -22,6 +22,7 @@ import com.intellij.webSymbols.WebSymbolApiStatus.Companion.getMessage
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
+import com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
@@ -144,9 +145,11 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
       .toList()
   }
 
-  private open class NameSegmentReference(private val element: PsiElement,
-                                          private val rangeInElement: TextRange,
-                                          protected val nameSegments: Collection<WebSymbolNameSegment>)
+  private open class NameSegmentReference(
+    private val element: PsiElement,
+    private val rangeInElement: TextRange,
+    protected val nameSegments: Collection<WebSymbolNameSegment>,
+  )
     : WebSymbolReference {
 
     override fun getElement(): PsiElement = element
@@ -168,11 +171,13 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   }
 
-  private class NameSegmentReferenceWithProblem(element: PsiElement,
-                                                rangeInElement: TextRange,
-                                                nameSegments: Collection<WebSymbolNameSegment>,
-                                                private val apiStatus: WebSymbolApiStatus?,
-                                                private val problemOnly: Boolean)
+  private class NameSegmentReferenceWithProblem(
+    element: PsiElement,
+    rangeInElement: TextRange,
+    nameSegments: Collection<WebSymbolNameSegment>,
+    private val apiStatus: WebSymbolApiStatus?,
+    private val problemOnly: Boolean,
+  )
     : NameSegmentReference(element, rangeInElement, nameSegments) {
 
     override fun resolveReference(): Collection<WebSymbol> =
@@ -194,7 +199,8 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
               element, TextRange(segment.start, segment.end),
               toolMapping?.getProblemMessage(segment.displayName)
               ?: problemKind.getDefaultProblemMessage(segment.displayName),
-              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true,
+              *WebSymbolsProblemQuickFixProvider.getQuickFixes(element, segment, problemKind).toTypedArray()
             )
           )
         }.firstOrNull()

@@ -26,17 +26,22 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
   protected abstract val providedSymbolKinds: Set<WebSymbolQualifiedKind>
 
   override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (WebSymbolsScope) -> Unit) {
+    getRootScope()
+      ?.let { findBestMatchingScope(it) }
+      ?.let { consumer(it) }
+  }
+
+  protected fun getRootScope(): WebSymbolsPsiScope? {
     val manager = CachedValuesManager.getManager(location.project)
-    val rootPsiElement = rootPsiElement ?: return
+    val rootPsiElement = rootPsiElement ?: return null
     val scopeBuilderProvider = scopesBuilderProvider
     val providedSymbolKinds = providedSymbolKinds
-    val rootScope = manager
+    return manager
       .getCachedValue(rootPsiElement, manager.getKeyForClass(this.javaClass), {
         val holder = WebSymbolsPsiScopesHolder(rootPsiElement, providedSymbolKinds)
         scopeBuilderProvider(rootPsiElement, holder)?.let { rootPsiElement.accept(it) }
-        CachedValueProvider.Result.create(holder.topLevelScope, PsiModificationTracker.MODIFICATION_COUNT)
+        CachedValueProvider.Result.create(holder.topLevelScope, rootPsiElement, PsiModificationTracker.MODIFICATION_COUNT)
       }, false)
-    findBestMatchingScope(rootScope)?.let(consumer)
   }
 
   override fun equals(other: Any?): Boolean =
@@ -61,7 +66,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       }
 
     init {
-      scopes.add(WebSymbolsPsiScopeImpl(rootElement, null, providedSymbolKinds, emptySet()))
+      scopes.add(WebSymbolsPsiScopeImpl(rootElement, emptyMap(), null, providedSymbolKinds, emptySet()))
     }
 
     fun currentScope(): WebSymbolsScope =
@@ -71,8 +76,14 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       scopes.pop()
     }
 
-    fun pushScope(scopePsiElement: PsiElement, exclusiveSymbolKinds: Set<WebSymbolQualifiedKind> = emptySet()) {
-      scopes.push(WebSymbolsPsiScopeImpl(scopePsiElement, currentScope() as WebSymbolsPsiScopeImpl, providedSymbolKinds, exclusiveSymbolKinds))
+    fun pushScope(
+      scopePsiElement: PsiElement,
+      properties: Map<String, Any> = emptyMap(),
+      exclusiveSymbolKinds: Set<WebSymbolQualifiedKind> = emptySet(),
+    ) {
+      scopes.push(WebSymbolsPsiScopeImpl(scopePsiElement, properties,
+                                         currentScope() as WebSymbolsPsiScopeImpl,
+                                         providedSymbolKinds, exclusiveSymbolKinds))
     }
 
     fun addSymbol(symbol: WebSymbol) {
@@ -89,10 +100,12 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
   protected interface WebSymbolsPsiScope : WebSymbolsScope {
     val source: PsiElement
     val parent: WebSymbolsPsiScope?
+    val properties: Map<String, Any>
   }
 
   private class WebSymbolsPsiScopeImpl(
     override val source: PsiElement,
+    override val properties: Map<String, Any>,
     override val parent: WebSymbolsPsiScopeImpl?,
     private val providedSymbolKinds: Set<WebSymbolQualifiedKind>,
     private val exclusiveSymbolKinds: Set<WebSymbolQualifiedKind>,
