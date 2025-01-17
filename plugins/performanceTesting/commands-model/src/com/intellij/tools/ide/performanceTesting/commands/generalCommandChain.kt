@@ -1257,6 +1257,6 @@ fun <T : CommandChain> T.refreshVfsAfterMassChange(span: MassVfsRefreshSpan): T 
   addCommand("${CMD_PREFIX}measureVfsMassUpdate REFRESH ${span.spanName}")
 }
 
-fun <T : CommandChain> T.waitForVfsRefresh(): T = apply {
-  addCommand("${CMD_PREFIX}waitForVfsRefresh")
+fun <T : CommandChain> T.waitForVfsRefreshSelectedEditor(): T = apply {
+  addCommand("${CMD_PREFIX}waitForVfsRefreshSelectedEditor")
 }
