@@ -1471,6 +1471,7 @@ c:com.intellij.help.impl.HelpManagerImpl
 - invokeHelp(java.lang.String):V
 com.intellij.ide.AboutPopupDescriptionProvider
 - a:getDescription():java.lang.String
+- getExtendedDescription():java.lang.String
 f:com.intellij.ide.ChangeProjectIconPalette
 - com.intellij.util.ui.ColorPalette
 - <init>(I):V

@@ -10,15 +10,12 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.Version
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.UnixUtil.getGlibcVersion
+import com.intellij.util.UnixUtil
 import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.io.path.name
-import kotlin.streams.asSequence
 
 internal class OsDataCollector : ApplicationUsagesCollector() {
   private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "Solaris", "Other")
@@ -64,12 +61,12 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
       TIMEZONE.metric(tz))
     when {
       SystemInfo.isLinux -> {
-        val (distro, release) = getReleaseData()
-        val isUnderWsl = detectIsUnderWsl()
-        val glibcVersion = getGlibcVersion()
-        val linuxMetrics = mutableListOf<EventPair<*>>(DISTRO.with(distro), RELEASE.with(release), UNDER_WSL.with(isUnderWsl))
-        if (glibcVersion != null) {
-          linuxMetrics.add(GLIBC.with(glibcVersion.toString()))
+        val distroInfo = UnixUtil.getOsInfo()
+        val linuxMetrics = mutableListOf<EventPair<*>>(DISTRO.with(DISTROS.coerce(distroInfo.distro)),
+                                                       RELEASE.with(distroInfo.release),
+                                                       UNDER_WSL.with(distroInfo.isUnderWsl))
+        if (distroInfo.glibcVersion != null) {
+          linuxMetrics.add(GLIBC.with(distroInfo.glibcVersion.toString()))
         }
         metrics += LINUX.metric(*linuxMetrics.toTypedArray())
       }
@@ -97,32 +94,6 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   private fun getShell(): String? =
     if (SystemInfo.isWindows) null
     else SHELLS.coerce(runCatching { System.getenv("SHELL")?.let { Path.of(it).name } }.getOrNull())
-
-  // https://www.freedesktop.org/software/systemd/man/os-release.html
-  private fun getReleaseData(): Pair<String, String?> =
-    try {
-      Files.lines(Path.of("/etc/os-release")).use { lines ->
-        val fields = setOf("ID", "VERSION_ID")
-        val values = lines.asSequence()
-          .map { it.split('=') }
-          .filter { it.size == 2 && it[0] in fields }
-          .associate { it[0] to it[1].trim('"') }
-        val distro = DISTROS.coerce(values["ID"])
-        distro to values["VERSION_ID"]
-      }
-    }
-    catch (ignored: IOException) {
-      "unknown" to null
-    }
-
-  private fun detectIsUnderWsl(): Boolean =
-    try {
-      @Suppress("SpellCheckingInspection") val kernel = Files.readString(Path.of("/proc/sys/kernel/osrelease"))
-      kernel.contains("-microsoft-")
-    }
-    catch (e: IOException) {
-      false
-    }
 
   private fun List<String>.coerce(value: String?): String =
     when (value) {

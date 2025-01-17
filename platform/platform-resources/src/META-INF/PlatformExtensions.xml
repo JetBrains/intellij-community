@@ -1033,6 +1033,9 @@
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
     <statistics.collectorExtension implementation="com.intellij.ide.actions.DragEditorTabsFusEventFields"/>
 
+    <applicationInitializedListener implementation="com.intellij.ide.OsDataLoggerApplicationInitializedListener"/>
+    <aboutPopupDescriptionProvider implementation="com.intellij.ide.OsDataLoggerAboutPopupDescriptionProvider"/>
+
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"
                                            allowOnStartup="true"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
