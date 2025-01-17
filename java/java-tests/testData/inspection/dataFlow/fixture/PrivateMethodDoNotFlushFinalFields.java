@@ -24,3 +24,23 @@ record A() {
   Object getObj(String s, B b) {return new Object();}
 }
 record B() {}
+
+// IDEA-365762
+class Test {
+  private final @Nullable Object finalField;
+
+  public Test(@Nullable Object finalField) {
+    this.finalField = finalField;
+  }
+
+  public void test() {
+    if (finalField != null) {
+      finalField.toString();
+      nop();
+      finalField.toString(); 
+    }
+  }
+
+  private void nop() {
+  }
+}
