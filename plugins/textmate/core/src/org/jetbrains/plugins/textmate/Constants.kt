@@ -102,10 +102,10 @@ interface Constants {
 
     // we should depend on intellij util classes as little as possible
     val DEFAULT_SMART_TYPING_BRACE_PAIRS: Set<TextMateAutoClosingPair> = setOf(
-      TextMateAutoClosingPair("\"", "\"", null),
-      TextMateAutoClosingPair("'", "'", null),
-      TextMateAutoClosingPair("[", "]", null),
-      TextMateAutoClosingPair("{", "}", null),
-      TextMateAutoClosingPair("(", ")", null))
+      TextMateAutoClosingPair("\"", "\"", 0),
+      TextMateAutoClosingPair("'", "'", 0),
+      TextMateAutoClosingPair("[", "]", 0),
+      TextMateAutoClosingPair("{", "}", 0),
+      TextMateAutoClosingPair("(", ")", 0))
   }
 }

@@ -13,7 +13,7 @@ class PreferencesTest {
     val preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE)
     val preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.basic"))
     assertEquals(1, preferences.size.toLong())
-    assertEquals(setOf(TextMateAutoClosingPair("\"", "\"", null)),
+    assertEquals(setOf(TextMateAutoClosingPair("\"", "\"", 0)),
                  preferences[0].smartTypingPairs)
     assertEquals(setOf(TextMateBracePair("`", "`")), preferences[0].highlightingPairs)
   }
@@ -23,7 +23,7 @@ class PreferencesTest {
     val preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE)
     val preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("source.php string"))
     assertEquals(1, preferences.size.toLong())
-    assertEquals(setOf(TextMateAutoClosingPair("(", ")", null)),
+    assertEquals(setOf(TextMateAutoClosingPair("(", ")", 0)),
                  preferences[0].smartTypingPairs)
     assertEquals(setOf(TextMateBracePair("[", "]")), preferences[0].highlightingPairs)
   }
@@ -33,11 +33,11 @@ class PreferencesTest {
     val preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE)
     val preferences = preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html source.php string.quoted.double.php"))
     assertEquals(2, preferences.size.toLong())
-    assertEquals(setOf(TextMateAutoClosingPair("(", ")", null)),
+    assertEquals(setOf(TextMateAutoClosingPair("(", ")", 0)),
                  preferences[0].smartTypingPairs)
     assertEquals(setOf(TextMateBracePair("[", "]")), preferences[0].highlightingPairs)
 
-    assertEquals(setOf(TextMateAutoClosingPair("\"", "\"", null)),
+    assertEquals(setOf(TextMateAutoClosingPair("\"", "\"", 0)),
                  preferences[1].smartTypingPairs)
     assertEquals(setOf(TextMateBracePair("`", "`")), preferences[1].highlightingPairs)
   }
@@ -46,8 +46,8 @@ class PreferencesTest {
   fun loadingWithTheSameScope() {
     val preferencesRegistry = loadPreferences(TestUtil.PREFERENCES_TEST_BUNDLE)
     val preferences: Preferences = mergeAll(preferencesRegistry.getPreferences(TestUtil.scopeFromString("same.scope")))
-    assertEquals(setOf(TextMateAutoClosingPair("[", "]", null),
-                       TextMateAutoClosingPair("(", ")", null)), preferences.smartTypingPairs)
+    assertEquals(setOf(TextMateAutoClosingPair("[", "]", 0),
+                       TextMateAutoClosingPair("(", ")", 0)), preferences.smartTypingPairs)
   }
 
   @Test
@@ -65,9 +65,9 @@ class PreferencesTest {
     val preferences: Preferences = mergeAll(
       preferencesRegistry.getPreferences(TestUtil.scopeFromString("text.html.markdown markup.raw")))
     assertEquals(setOf(
-      TextMateAutoClosingPair("{", "}", null),
-      TextMateAutoClosingPair("(", ")", null),
-      TextMateAutoClosingPair("\"", "\"", null)
+      TextMateAutoClosingPair("{", "}", 0),
+      TextMateAutoClosingPair("(", ")", 0),
+      TextMateAutoClosingPair("\"", "\"", 0)
     ), preferences.smartTypingPairs)
   }
 

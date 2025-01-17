@@ -277,7 +277,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
           emptySet()
         }
         else {
-          pairs.mapTo(HashSet(pairs.size)) { TextMateBracePair(interner.intern(it.left), interner.intern(it.right)) }
+          pairs.mapTo(HashSet(pairs.size)) { it.copy(left = interner.intern(it.left), right = interner.intern(it.right)) }
         }
       }
       val internedSmartTypingPairs = preferences.smartTypingPairs?.let { pairs ->
@@ -285,7 +285,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
           emptySet()
         }
         else {
-          pairs.mapTo(HashSet(pairs.size)) { TextMateAutoClosingPair(interner.intern(it.left.toString()), interner.intern(it.right.toString()), it.notIn) }
+          pairs.mapTo(HashSet(pairs.size)) { it.copy(left = interner.intern(it.left.toString()), right = interner.intern(it.right.toString())) }
         }
       }
       val internedSurroundingPairs = preferences.surroundingPairs?.let { pairs ->
@@ -293,7 +293,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
           emptySet()
         }
         else {
-          pairs.mapTo(HashSet(pairs.size)) { TextMateBracePair(interner.intern(it.left), interner.intern(it.right)) }
+          pairs.mapTo(HashSet(pairs.size)) { it.copy(left = interner.intern(it.left), right = interner.intern(it.right)) }
         }
       }
       preferenceRegistry.addPreferences(Preferences(scopeName,

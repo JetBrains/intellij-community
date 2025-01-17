@@ -132,7 +132,7 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
     plist.getPlistValue(Constants.SETTINGS_KEY)?.plist?.let { settings ->
       val highlightingPairs = PreferencesReadUtil.readPairs(settings.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY))
       val smartTypingPairs = PreferencesReadUtil.readPairs(settings.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY))
-        ?.map { TextMateAutoClosingPair(it.left, it.right, null) }
+        ?.map { TextMateAutoClosingPair(it.left, it.right, 0) }
         ?.toSet()
       val indentationRules = PreferencesReadUtil.loadIndentationRules(settings)
       val variables = settings.getPlistValue(Constants.SHELL_VARIABLES_KEY)?.let { variables ->
