@@ -387,7 +387,7 @@ class EditorCellView(
     return Rectangle(0, inputBounds.y, editor.contentSize.width, height)
   }
 
-  fun updateFrameVisibility(selected: Boolean): Unit = _controllers.forEach { it.updateFrameVisibility(selected) }
+  fun updateFrameVisibility(selected: Boolean): Unit = _controllers.forEach { it.updateFrameVisibility(selected, interval) }
 
   private fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
     _controllers.filterIsInstance<CellExecutionStatusView>().firstOrNull()

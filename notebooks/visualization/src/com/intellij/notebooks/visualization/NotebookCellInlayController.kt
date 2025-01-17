@@ -93,6 +93,6 @@ interface NotebookCellInlayController {
 
   fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval, cellView: EditorCellView) {}
 
-  fun updateFrameVisibility(isVisible: Boolean) {}
+  fun updateFrameVisibility(isVisible: Boolean, interval: NotebookCellLines.Interval,) {}
 
 }
