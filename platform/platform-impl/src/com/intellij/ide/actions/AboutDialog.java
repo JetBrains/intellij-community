@@ -49,6 +49,7 @@ import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -204,12 +205,11 @@ public final class AboutDialog extends DialogWrapper {
     lines.add("");
     myInfo.add(MessageFormat.format("VM: {0} by {1}", vmVersion, vmVendor));
 
-    //Print extra information from plugins
-    ExtensionPointName<AboutPopupDescriptionProvider> ep = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
-    for (AboutPopupDescriptionProvider aboutInfoProvider : ep.getExtensions()) {
+    // Print extra information from plugins
+    for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensionList()) {
       String description = aboutInfoProvider.getDescription();
       if (description != null) {
-        lines.add(description);
+        lines.add(cleanupDescriptionText(description, false));
         lines.add("");
       }
     }
@@ -298,9 +298,9 @@ public final class AboutDialog extends DialogWrapper {
     text.append(SystemInfo.getOsNameAndVersion()).append('\n');
 
     for (var aboutInfoProvider : EP_NAME.getExtensionList()) {
-      var description = aboutInfoProvider.getDescription();
+      var description = aboutInfoProvider.getExtendedDescription();
       if (description != null) {
-        text.append(description).append('\n');
+        text.append(cleanupDescriptionText(description, true)).append('\n');
       }
     }
 
@@ -343,6 +343,17 @@ public final class AboutDialog extends DialogWrapper {
     return text.toString();
   }
 
+  private static @NotNull String cleanupDescriptionText(@NotNull String description, boolean allowMultiline) {
+    var textOnly = Jsoup.parse(description).text().trim();
+    if (allowMultiline) {
+      return textOnly;
+    } else {
+      return textOnly.replace("\r\n", " ")
+        .replace("\r", " ")
+        .replace("\n", " ");
+    }
+  }
+
   private static void showOssInfo(JComponent component) {
     @NlsSafe String licenseText;
     try {
@@ -359,7 +370,7 @@ public final class AboutDialog extends DialogWrapper {
             }
             matcher.appendTail(sb);
             content = sb.toString();
-            if (StartupUiUtil.isUnderDarcula()) {
+            if (StartupUiUtil.INSTANCE.isDarkTheme()) {
               content = content.replace("779dbd", "5676a0");
             }
             return content;
