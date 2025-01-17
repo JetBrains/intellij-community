@@ -3,6 +3,7 @@ package com.siyeh.igtest.migration.try_finally_can_be_try_with_resources;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.BufferedInputStream;
 import java.io.*;
 
 class TryFinallyCanBeTryWithResources {
@@ -430,6 +431,47 @@ class NestedCatchSections {
       catch (B | IOException e) {
 
       }
+    }
+  }
+}
+
+class UsageOfDependentVariablesInFinally {
+  private native InputStream createStream();
+
+  void inFinally() throws IOException {
+    InputStream stream = createStream();
+    BufferedInputStream buffered = new BufferedInputStream(stream);
+    try {
+      System.out.println(buffered.read());
+    } finally {
+      System.out.println(buffered.read());
+      stream.close();
+    }
+  }
+
+  void inInnerCatchStatement() throws IOException {
+    InputStream stream = createStream();
+    BufferedInputStream buffered = new BufferedInputStream(stream);
+    try {
+      System.out.println(buffered.read());
+    } finally {
+      try {
+        stream.close();
+      } catch (IOException e) {
+        buffered.read();
+      }
+    }
+  }
+
+  void respectsVariablesBefore() throws IOException {
+    int x = 10;
+    InputStream stream = createStream();
+    <warning descr="'try' can use automatic resource management">try</warning> {
+      System.out.println(x);
+    }
+    finally {
+      stream.close();
+      System.out.println(x);
     }
   }
 }

@@ -335,10 +335,11 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
         PsiVariable variable = lastNonTryVar.myVariable;
         PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
         List<PsiStatement> statements = collectStatementsBetween(statement, tryStatement);
+
         boolean varUsedNotInTry = StreamEx.of(statements)
           .flatMap(stmt -> StreamEx.ofTree((PsiElement)stmt, e -> StreamEx.of(e.getChildren())))
           .select(PsiLocalVariable.class)
-          .anyMatch(variable1 -> isVariableUsedOutsideContext(variable1, tryStatement));
+          .anyMatch(variable1 -> isVariableUsedOutsideContext(variable1, tryStatement) || isVariableUsedInsdieContext(variable1, finallyBlock));
         if (varUsedNotInTry) return null;
       }
       return new Context(resourceVariables, new HashSet<>(statementsToDelete), mergedCatchSections);
@@ -390,7 +391,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
   }
 
   private static boolean resourceVariablesUsedInFinally(@NotNull PsiCodeBlock finallyBlock, @NotNull Set<? extends PsiVariable> collectedVariables) {
-    VariableUsedInsideContextVisitor visitor = new VariableUsedInsideContextVisitor(collectedVariables);
+    AutoCloseableVariableUsedVisitor visitor = new AutoCloseableVariableUsedVisitor(collectedVariables);
     finallyBlock.accept(visitor);
     return visitor.isVariableUsed();
   }
@@ -433,10 +434,14 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     }
   }
 
-
+  private static boolean isVariableUsedInsdieContext(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    VariableUsedWithContextVisitor visitor = new VariableUsedWithContextVisitor(variable, null);
+    context.accept(visitor);
+    return visitor.isVariableUsed();
+  }
 
   private static boolean isVariableUsedOutsideContext(PsiVariable variable, PsiElement context) {
-    final VariableUsedOutsideContextVisitor visitor = new VariableUsedOutsideContextVisitor(variable, context);
+    final VariableUsedWithContextVisitor visitor = new VariableUsedWithContextVisitor(variable, context);
     final PsiElement declarationScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
     if (declarationScope == null) {
       return true;
@@ -585,7 +590,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     return ExpressionUtils.isReferenceTo(assignmentExpression.getLExpression(), variable);
   }
 
-  private static class VariableUsedWithContextVisitor extends JavaRecursiveElementWalkingVisitor {
+  private static class VariableUsedVisitorBase extends JavaRecursiveElementWalkingVisitor {
     protected boolean used;
 
     @Override
@@ -600,11 +605,11 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
   }
 
 
-  private static class VariableUsedInsideContextVisitor extends VariableUsedWithContextVisitor {
+  private static class AutoCloseableVariableUsedVisitor extends VariableUsedVisitorBase {
 
     private final @NotNull Set<? extends PsiVariable> collectedVariables;
 
-    private VariableUsedInsideContextVisitor(@NotNull Set<? extends PsiVariable> collectedVariables) {
+    private AutoCloseableVariableUsedVisitor(@NotNull Set<? extends PsiVariable> collectedVariables) {
       this.collectedVariables = collectedVariables;
     }
     @Override
@@ -647,17 +652,18 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     }
   }
 
-  private static class VariableUsedOutsideContextVisitor extends VariableUsedWithContextVisitor {
+  private static class VariableUsedWithContextVisitor extends VariableUsedVisitorBase {
     private final @NotNull PsiVariable variable;
-    private final PsiElement skipContext;
+    private final @Nullable PsiElement skipContext;
 
-    VariableUsedOutsideContextVisitor(@NotNull PsiVariable variable, PsiElement skipContext) {
+    VariableUsedWithContextVisitor(@NotNull PsiVariable variable, @Nullable PsiElement skipContext) {
       this.variable = variable;
       this.skipContext = skipContext;
     }
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
+      if (used) return;
       if (element.equals(skipContext)) {
         return;
       }
