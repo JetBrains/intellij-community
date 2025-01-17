@@ -15,6 +15,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStack.AdditionalDisplayInfo
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -196,6 +197,9 @@ data class StackInfo internal constructor(
     description = loadingText
     @Suppress("SSBasedInspection")
     session.project.service<XDebuggerExecutionStackDescriptionService>().getExecutionStackDescription(stack, session).asCompletableFuture().whenCompleteAsync { result: String?, exception: Throwable? ->
+      if (exception is CancellationException) {
+        return@whenCompleteAsync
+      }
       if (exception != null) {
         logger.error(exception)
       }
