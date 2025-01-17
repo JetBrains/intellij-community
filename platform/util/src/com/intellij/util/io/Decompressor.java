@@ -170,6 +170,7 @@ public abstract class Decompressor {
       }
 
       @Override
+      @SuppressWarnings("deprecation")
       protected void openStream() throws IOException {
         myZip = new org.apache.commons.compress.archivers.zip.ZipFile(Files.newByteChannel(mySource));
         myEntries = myZip.getEntries();
@@ -257,7 +258,7 @@ public abstract class Decompressor {
   }
 
   /**
-   * Policy for handling symbolic links which point to outside of archive.
+   * Policy for handling symbolic links which point outside the archive.
    * <p>Example:</p>
    * {@code foo -> /opt/foo}
    * <p>or</p>
@@ -353,9 +354,8 @@ public abstract class Decompressor {
     try {
       Deque<Path> extractedPaths = new ArrayDeque<>();
 
-      // we'd like to keep a contact to invoke filter once per entry
-      // since it was something implicit, and the introduction of
-      // retry breaks the contract
+      // we'd like to keep a contact to invoke the filter once per entry,
+      // since it was implicit and the introduction of retry breaks the contract
       boolean proceedToNext = true;
 
       Entry entry = null;
@@ -545,32 +545,18 @@ public abstract class Decompressor {
   }
 
   /**
-   * Speficies action to be taken from the {@code com.intellij.util.io.Decompressor#errorHandler}
+   * Specifies an action to be taken from the {@code com.intellij.util.io.Decompressor#errorHandler}.
    */
   public enum ErrorHandlerChoice {
-    /**
-     * Extraction should be aborted and already extracted entities should be cleaned
-     */
+    /** Extraction should be aborted and already extracted entities should be cleaned */
     ABORT,
-
-    /**
-     * Do not handle error, just rethrow the exception
-     */
+    /** Do not handle error, just rethrow the exception */
     BAIL_OUT,
-
-    /**
-     * Retry failed entry extraction
-     */
+    /** Retry failed entry extraction */
     RETRY,
-
-    /**
-     * Skip this entry from extraction
-     */
+    /** Skip this entry from extraction */
     SKIP,
-
-    /**
-     * Skip this entry for extraction and ignore any further IOExceptions during this archive extraction
-     */
+    /** Skip this entry for extraction and ignore any further IOExceptions during this archive extraction */
     SKIP_ALL
   }
 }
