@@ -538,6 +538,16 @@
       <with attribute="implementationClass" implements="com.intellij.internal.ml.MLFeatureProvider"/>
     </extensionPoint>
 
+    <extensionPoint qualifiedName="com.intellij.platform.ml.environmentExtender"
+                    interface="com.intellij.platform.ml.environment.EnvironmentExtender"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.descriptor"
+                    interface="com.intellij.platform.ml.TierDescriptor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.taskListener"
+                    interface="com.intellij.platform.ml.monitoring.MLTaskGroupListener"
+                    dynamic="true"/>
+
     <extensionPoint name="defender.config" interface="com.intellij.diagnostic.WindowsDefenderChecker$Extension" dynamic="true" />
     <extensionPoint name="authorizationProvider" interface="com.intellij.ide.impl.AuthorizationProvider" dynamic="true" />
     <extensionPoint name="flsConfigurationProvider" interface="com.intellij.ide.impl.FLSConfigurationProvider" dynamic="true" />
