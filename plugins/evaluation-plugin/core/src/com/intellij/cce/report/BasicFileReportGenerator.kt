@@ -83,19 +83,19 @@ open class BasicFileReportGenerator(
     return StringBuilder().run {
       val delimiter = "&int;"
       val offsets = sessions.flatten()
-        .map { it.offset }.distinct().sorted()
+        .map { it.offset }
+        .distinct()
+        .sorted()
       val unfilteredSessionGroups = offsets.map { offset -> sessions.map { session -> session.find { it.offset == offset } } }
-      val sessionGroups = unfilteredSessionGroups.filterIndexed {index, session -> if (index == 0) {
-        true
-      } else  {
-        val previousSession = unfilteredSessionGroups[index - 1].filterNotNull().first()
-        val currentSession = session.filterNotNull().first()
-        val LOG = logger<BasicFileReportGenerator>()
-        if(previousSession.offset + textToInsert(previousSession).length > currentSession.offset)
-        LOG.warn("Removing sessionId ${currentSession.id} because of overlapping with sessionId ${previousSession.id}")
-        return@filterIndexed previousSession.offset + textToInsert(previousSession).length <= currentSession.offset
-        }
-      }
+      val sessionGroups = unfilteredSessionGroups.take(1) + unfilteredSessionGroups.zipWithNext()
+        .filter { (prev, current) ->
+          val previousSession = prev.filterNotNull().first()
+          val currentSession = current.filterNotNull().first()
+          val offsetDiff = currentSession.offset - (previousSession.offset + textToInsert(previousSession).length)
+          if (offsetDiff < 0)
+            LOG.warn("Removing sessionId ${currentSession.id} because of overlapping with sessionId ${previousSession.id}")
+          offsetDiff >= 0
+        }.map { it.second }
 
       var offset = 0
 
@@ -136,4 +136,8 @@ open class BasicFileReportGenerator(
       id = "${session?.id} $lookupOrder"
       +text
     }
+
+  companion object {
+    private val LOG = thisLogger()
+  }
 }
