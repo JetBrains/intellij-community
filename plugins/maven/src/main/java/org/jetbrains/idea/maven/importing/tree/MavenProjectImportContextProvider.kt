@@ -2,9 +2,14 @@
 package org.jetbrains.idea.maven.importing.tree
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.COMPILED
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.SOURCES
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
@@ -17,21 +22,28 @@ import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestTargetLanguageL
 import org.jetbrains.idea.maven.importing.MavenImportUtil.hasExecutionsForTests
 import org.jetbrains.idea.maven.importing.MavenImportUtil.hasTestCompilerArgs
 import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompilerTestSupport
+import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.selectScope
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
-import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.*
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter.Companion.JAVADOC_TYPE
+import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.SupportedRequestType
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.util.*
 import java.util.function.Function
 
+private const val INITIAL_CAPACITY_TEST_DEPENDENCY_LIST: Int = 4
+private val IMPORTED_CLASSIFIERS = setOf("client")
+
 internal class MavenProjectImportContextProvider(
   private val myProject: Project,
   private val myProjectsTree: MavenProjectsTree,
-  private val myImportingSettings: MavenImportingSettings,
+  private val dependencyTypes: Set<String>,
   private val myMavenProjectToModuleName: Map<MavenProject, String>,
 ) {
 
@@ -75,11 +87,8 @@ internal class MavenProjectImportContextProvider(
   private fun getFlattenModuleDataDependencyContext(context: ModuleImportDataContext): ModuleImportDataDependencyContext {
     val allModuleDataWithDependencies: MutableList<MavenTreeModuleImportData> = ArrayList<MavenTreeModuleImportData>()
 
-    val dependencyProvider =
-      MavenModuleImportDependencyProvider(context.moduleImportDataByMavenId, myImportingSettings, myProjectsTree)
-
     for (importData in context.importData) {
-      val importDataWithDependencies = dependencyProvider.getDependencies(importData)
+      val importDataWithDependencies = getDependencies(context, importData)
       val mavenModuleImportDataList = splitToModules(importDataWithDependencies)
       for (moduleImportData in mavenModuleImportDataList) {
         allModuleDataWithDependencies.add(moduleImportData)
@@ -87,6 +96,183 @@ internal class MavenProjectImportContextProvider(
     }
 
     return ModuleImportDataDependencyContext(allModuleDataWithDependencies)
+  }
+
+  private fun getDependencies(context: ModuleImportDataContext, importData: MavenProjectImportData): MavenModuleImportDataWithDependencies {
+    val mavenProject = importData.mavenProject
+
+    MavenLog.LOG.debug("Creating dependencies for $mavenProject: ${mavenProject.dependencies.size}")
+
+    val mainDependencies: MutableList<MavenImportDependency<*>> = ArrayList(mavenProject.dependencies.size)
+    val testDependencies: MutableList<MavenImportDependency<*>> = ArrayList(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST)
+
+    addMainDependencyToTestModule(importData, testDependencies)
+    val otherTestModules = importData.otherTestModules
+    for (artifact in mavenProject.dependencies) {
+      for (dependency in getDependency(context, artifact, mavenProject)) {
+        if (otherTestModules.isNotEmpty() && dependency.scope == DependencyScope.TEST) {
+          testDependencies.add(dependency)
+        }
+        else {
+          mainDependencies.add(dependency)
+        }
+      }
+    }
+    return MavenModuleImportDataWithDependencies(importData, mainDependencies, testDependencies)
+  }
+
+  private fun getDependency(context: ModuleImportDataContext, artifact: MavenArtifact, mavenProject: MavenProject): List<MavenImportDependency<*>> {
+    val dependencyType = artifact.type
+    MavenLog.LOG.trace("Creating dependency from $mavenProject to $artifact, type $dependencyType")
+
+    if (!dependencyTypes.contains(dependencyType)
+        && !mavenProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT).contains(dependencyType)) {
+      MavenLog.LOG.trace("Dependency skipped")
+      return emptyList()
+    }
+
+    val scope = selectScope(artifact.scope)
+
+    val depProject = myProjectsTree.findProject(artifact.mavenId)
+
+    if (depProject != null) {
+      MavenLog.LOG.trace("Dependency project $depProject")
+
+      if (depProject === mavenProject) {
+        MavenLog.LOG.trace("Project depends on itself")
+        return emptyList()
+      }
+
+      val mavenProjectImportData = context.moduleImportDataByMavenId[depProject.mavenId]
+
+      val depProjectIgnored = myProjectsTree.isIgnored(depProject)
+      if (mavenProjectImportData == null || depProjectIgnored) {
+        MavenLog.LOG.trace("Created base dependency, project ignored: $depProjectIgnored, import data: $mavenProjectImportData")
+        return listOf<MavenImportDependency<*>>(BaseDependency(createCopyForLocalRepo(artifact, mavenProject), scope))
+      }
+      else {
+        val result = ArrayList<MavenImportDependency<*>>()
+        val isTestJar = MavenConstants.TYPE_TEST_JAR == dependencyType || "tests" == artifact.classifier
+        val moduleName = getModuleName(mavenProjectImportData, isTestJar)
+
+        ContainerUtil.addIfNotNull(result, createAttachArtifactDependency(depProject, scope, artifact))
+
+        val classifier = artifact.classifier
+        if (classifier != null && IMPORTED_CLASSIFIERS.contains(classifier)
+            && !isTestJar
+            && "system" != artifact.scope
+            && "false" != System.getProperty("idea.maven.classifier.dep")) {
+          MavenLog.LOG.trace("Created library dependency")
+          result.add(LibraryDependency(createCopyForLocalRepo(artifact, mavenProject), mavenProject, scope))
+        }
+
+        MavenLog.LOG.trace("Created module dependency")
+        result.add(ModuleDependency(moduleName, scope, isTestJar))
+        return result
+      }
+    }
+    else if ("system" == artifact.scope) {
+      MavenLog.LOG.trace("Created system dependency")
+      return listOf<MavenImportDependency<*>>(SystemDependency(artifact, scope))
+    }
+    else {
+      val isBundle = "bundle" == dependencyType
+      val finalArtifact = if (isBundle) {
+        MavenArtifact(
+          artifact.groupId,
+          artifact.artifactId,
+          artifact.version,
+          artifact.baseVersion,
+          "jar",
+          artifact.classifier,
+          artifact.scope,
+          artifact.isOptional,
+          "jar",
+          null,
+          mavenProject.localRepositoryPath.toFile(),
+          false, false
+        )
+      }
+      else artifact
+
+      MavenLog.LOG.trace("Created base dependency, bundle: $isBundle")
+      return listOf<MavenImportDependency<*>>(BaseDependency(finalArtifact, scope))
+    }
+  }
+
+  private fun createCopyForLocalRepo(artifact: MavenArtifact, project: MavenProject): MavenArtifact {
+    return MavenArtifact(
+      artifact.groupId,
+      artifact.artifactId,
+      artifact.version,
+      artifact.baseVersion,
+      artifact.type,
+      artifact.classifier,
+      artifact.scope,
+      artifact.isOptional,
+      artifact.extension,
+      null,
+      project.localRepositoryPath.toFile(),
+      false, false
+    )
+  }
+
+  private fun addMainDependencyToTestModule(importData: MavenProjectImportData,
+                                            testDependencies: MutableList<MavenImportDependency<*>>) {
+    importData.otherMainModules.forEach {
+      testDependencies.add(
+        ModuleDependency(it.moduleName, DependencyScope.COMPILE, false)
+      )
+    }
+  }
+
+  private fun getModuleName(data: MavenProjectImportData, isTestJar: Boolean): String {
+    val otherModule = if (isTestJar) data.otherTestModules.firstOrNull() else data.otherMainModules.firstOrNull()
+    return otherModule?.moduleName ?: data.moduleData.moduleName
+  }
+
+  private fun createAttachArtifactDependency(mavenProject: MavenProject,
+                                             scope: DependencyScope,
+                                             artifact: MavenArtifact): AttachedJarDependency? {
+    val buildHelperCfg = mavenProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact")
+    if (buildHelperCfg == null) return null
+
+    val roots = ArrayList<Pair<String, LibraryRootTypeId>>()
+    var create = false
+
+    for (artifactsElement in buildHelperCfg.getChildren("artifacts")) {
+      for (artifactElement in artifactsElement.getChildren("artifact")) {
+        val typeString = artifactElement.getChildTextTrim("type")
+        if (typeString != null && typeString != "jar") continue
+
+        val filePath = artifactElement.getChildTextTrim("file")
+        if (StringUtil.isEmpty(filePath)) continue
+
+        val classifier = artifactElement.getChildTextTrim("classifier")
+        when (classifier) {
+          "sources" -> {
+            roots.add(Pair(filePath, SOURCES))
+          }
+          "javadoc" -> {
+            roots.add(Pair(filePath, JAVADOC_TYPE))
+          }
+          else -> {
+            roots.add(Pair(filePath, COMPILED))
+          }
+        }
+
+        create = true
+      }
+    }
+
+    return if (create) AttachedJarDependency(getAttachedJarsLibName(artifact), roots, scope) else null
+  }
+
+  private fun getAttachedJarsLibName(artifact: MavenArtifact): String {
+    var libraryName = artifact.getLibraryName()
+    assert(libraryName.startsWith(MavenArtifact.MAVEN_LIB_PREFIX))
+    libraryName = MavenArtifact.MAVEN_LIB_PREFIX + "ATTACHED-JAR: " + libraryName.substring(MavenArtifact.MAVEN_LIB_PREFIX.length)
+    return libraryName
   }
 
   private data class LanguageLevels(

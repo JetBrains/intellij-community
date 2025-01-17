@@ -240,7 +240,7 @@ internal open class WorkspaceProjectImporter(
     contextData: UserDataHolderBase,
     stats: WorkspaceImportStats,
   ): List<MavenProjectWithModulesData<ModuleEntity>> {
-    val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings,
+    val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings.dependencyTypesAsSet,
                                                     mavenProjectToModuleName).getContext(projectsToImport)
 
     val entitySourceNamesBeforeImport = FileInDirectorySourceNames.from(storageBeforeImport)
