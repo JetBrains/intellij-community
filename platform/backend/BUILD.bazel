@@ -1,3 +1,8 @@
 ### auto-generated section `build intellij.platform.backend` start
 load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "backend",
+  visibility = ["//visibility:public"]
+)
 ### auto-generated section `build intellij.platform.backend` end

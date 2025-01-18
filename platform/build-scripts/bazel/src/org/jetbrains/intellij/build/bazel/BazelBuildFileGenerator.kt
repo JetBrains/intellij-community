@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
@@ -337,7 +337,8 @@ internal class BazelBuildFileGenerator(
         // see community/plugins/kotlin/base/frontend-agnostic/README.md
         module.name != "kotlin.base.frontend-agnostic" &&
         // also a marker module like frontend-agnostic above
-        module.name != "intellij.platform.monolith"
+        module.name != "intellij.platform.monolith" &&
+        module.name != "intellij.platform.backend"
       }) {
         option("name", moduleDescriptor.targetName)
         visibility(arrayOf("//visibility:public"))
