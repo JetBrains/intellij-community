@@ -634,7 +634,7 @@ object PluginManagerCore {
       }
     }
 
-    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap { descriptor ->
+    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(disabler = { descriptor ->
       val disabledPlugins = context.disabledPlugins
       val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, disabledPlugins, pluginErrorsById)
       if (loadingError != null) {
@@ -642,7 +642,7 @@ object PluginManagerCore {
       }
       descriptor.isEnabled = descriptor.isEnabled() && loadingError == null && !context.expiredPlugins.contains(descriptor.getPluginId())
       !descriptor.isEnabled()
-    }
+    })
     for (loadingError in additionalErrors) {
       registerLoadingError(loadingError)
     }
