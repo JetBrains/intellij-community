@@ -1,7 +1,7 @@
 module(name = "rules_jvm", version = "0.1")
 
 bazel_dep(name = "bazel_worker_api", version = "0.0.4")
-bazel_dep(name = "rules_java", version = "8.6.3")
+bazel_dep(name = "rules_java", version = "8.7.1")
 bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.5")
 bazel_dep(name = "rules_graalvm", version = "0.11.3")
 bazel_dep(name = "lib")

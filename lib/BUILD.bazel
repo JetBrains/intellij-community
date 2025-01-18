@@ -6802,8 +6802,8 @@ java_import(
 
 java_import(
   name = "memoryfilesystem",
-  jars = ["@memoryfilesystem-2_8_0_http//file"],
-  srcjar = "@memoryfilesystem-2_8_0-sources_http//file",
+  jars = ["@memoryfilesystem-2_8_1_http//file"],
+  srcjar = "@memoryfilesystem-2_8_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9382,8 +9382,8 @@ java_import(
 
 java_import(
   name = "snakeyaml-engine",
-  jars = ["@snakeyaml-engine-2_8_http//file"],
-  srcjar = "@snakeyaml-engine-2_8-sources_http//file",
+  jars = ["@snakeyaml-engine-2_9_http//file"],
+  srcjar = "@snakeyaml-engine-2_9-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9818,8 +9818,8 @@ kt_jvm_import(
 
 java_import(
   name = "zstd-jni",
-  jars = ["@zstd-jni-1_5_6-8_http//file"],
-  srcjar = "@zstd-jni-1_5_6-8-sources_http//file",
+  jars = ["@zstd-jni-1_5_6-9_http//file"],
+  srcjar = "@zstd-jni-1_5_6-9-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -1,7 +1,7 @@
 module(name = "lib")
 
 bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.5")
-bazel_dep(name = "rules_java", version = "8.6.3")
+bazel_dep(name = "rules_java", version = "8.7.1")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 
 archive_override(
@@ -9527,17 +9527,17 @@ http_file(
 )
 
 http_file(
-  name = "memoryfilesystem-2_8_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.0/memoryfilesystem-2.8.0.jar",
-  sha256 = "c98b4dae95e5ac8b6dc48d184bdedf463730959d6db02709930dcd0bd910d68c",
-  downloaded_file_path = "memoryfilesystem-2.8.0.jar"
+  name = "memoryfilesystem-2_8_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.1/memoryfilesystem-2.8.1.jar",
+  sha256 = "4926485c107e0f44c0037a3cca7c10f1ef1c57844a13837f99fd8e848a74a00b",
+  downloaded_file_path = "memoryfilesystem-2.8.1.jar"
 )
 
 http_file(
-  name = "memoryfilesystem-2_8_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.0/memoryfilesystem-2.8.0-sources.jar",
-  sha256 = "4c3d4d1f208539093c769b2a2d7d58b29115009d9a2fc556eac673f43aa2dc1b",
-  downloaded_file_path = "memoryfilesystem-2.8.0-sources.jar"
+  name = "memoryfilesystem-2_8_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.1/memoryfilesystem-2.8.1-sources.jar",
+  sha256 = "3a77a98bac219228f3ddb301e4650ec03176e6f52c67130f4eddbbfe0d9212e4",
+  downloaded_file_path = "memoryfilesystem-2.8.1-sources.jar"
 )
 
 http_file(
@@ -12075,17 +12075,17 @@ http_file(
 )
 
 http_file(
-  name = "snakeyaml-engine-2_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/snakeyaml/snakeyaml-engine/2.8/snakeyaml-engine-2.8.jar",
-  sha256 = "32571d6e539f1794a1cdfc8b2f656e14387a39635202e389af05509e52916720",
-  downloaded_file_path = "snakeyaml-engine-2.8.jar"
+  name = "snakeyaml-engine-2_9_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/snakeyaml/snakeyaml-engine/2.9/snakeyaml-engine-2.9.jar",
+  sha256 = "2f7a957461b6d70c0005e2c35b78a1c97bef6c446704c0ee9393ce98e4958ba8",
+  downloaded_file_path = "snakeyaml-engine-2.9.jar"
 )
 
 http_file(
-  name = "snakeyaml-engine-2_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/snakeyaml/snakeyaml-engine/2.8/snakeyaml-engine-2.8-sources.jar",
-  sha256 = "18a19d37d92a9a73e329f1520922c823e7cad86c5d3faa1b36b38b5cad62df34",
-  downloaded_file_path = "snakeyaml-engine-2.8-sources.jar"
+  name = "snakeyaml-engine-2_9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/snakeyaml/snakeyaml-engine/2.9/snakeyaml-engine-2.9-sources.jar",
+  sha256 = "9534d9fed25fa34149bcc563cf257423c241457058fc87734b38df9a0633d590",
+  downloaded_file_path = "snakeyaml-engine-2.9-sources.jar"
 )
 
 http_file(
@@ -12719,17 +12719,17 @@ http_file(
 )
 
 http_file(
-  name = "zstd-jni-1_5_6-8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.6-8/zstd-jni-1.5.6-8.jar",
-  sha256 = "57081e5c898cff772f97f5d96f5e74c7d8370797520e652b5d2a33b98e3cfc96",
-  downloaded_file_path = "zstd-jni-1.5.6-8.jar"
+  name = "zstd-jni-1_5_6-9_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.6-9/zstd-jni-1.5.6-9.jar",
+  sha256 = "e122143e2abb041b6384e43c9a79980fe3d2ff3d9610ea20b29231ea518772b2",
+  downloaded_file_path = "zstd-jni-1.5.6-9.jar"
 )
 
 http_file(
-  name = "zstd-jni-1_5_6-8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.6-8/zstd-jni-1.5.6-8-sources.jar",
-  sha256 = "386b45263361ca5c45acb6f66ba74abea742525dd600961c5b91592e7967eff3",
-  downloaded_file_path = "zstd-jni-1.5.6-8-sources.jar"
+  name = "zstd-jni-1_5_6-9-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.6-9/zstd-jni-1.5.6-9-sources.jar",
+  sha256 = "45b9059f2637e71235272bb4ba14134a79945811d0f36f181da4b4ce1c4ad15a",
+  downloaded_file_path = "zstd-jni-1.5.6-9-sources.jar"
 )
 
 http_file(
