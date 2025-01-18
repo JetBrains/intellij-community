@@ -21,9 +21,9 @@ import java.io.File
 class MavenFolderResolver(private val project: Project) {
   private val projectsManager: MavenProjectsManager = MavenProjectsManager.getInstance(project)
 
-  suspend fun resolveFoldersAndImport() = resolveFoldersAndImport(projectsManager.projects)
+  suspend fun resolveFoldersAndImport(): Unit = resolveFoldersAndImport(projectsManager.projects)
 
-  suspend fun resolveFoldersAndImport(projects: Collection<MavenProject>) {
+  suspend fun resolveFoldersAndImport(projects: List<MavenProject>) {
     withBackgroundProgress(project, MavenProjectBundle.message("maven.updating.folders"), true) {
       reportRawProgress { reporter ->
         doResolveFoldersAndImport(projects, reporter)
@@ -31,7 +31,7 @@ class MavenFolderResolver(private val project: Project) {
     }
   }
 
-  private suspend fun doResolveFoldersAndImport(projects: Collection<MavenProject>, progressReporter: RawProgressReporter) {
+  private suspend fun doResolveFoldersAndImport(projects: List<MavenProject>, progressReporter: RawProgressReporter) {
     resolveFolders(projects, progressReporter)
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209

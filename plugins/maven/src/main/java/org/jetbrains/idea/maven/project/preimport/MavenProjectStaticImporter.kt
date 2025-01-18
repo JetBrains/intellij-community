@@ -75,7 +75,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       val mavenProjectMappings = HashMap<MavenProject, List<MavenProject>>()
       val allProjects = forest.flatMap { it.projects() }.toList()
       visitor.map(allProjects)
-      val projectChanges = HashMap<MavenProject, MavenProjectModifications>()
+      val projectChanges = mutableListOf<MavenProject>()
       val existingTree = if (!commit) null else MavenProjectsManager.getInstance(project).let { if (it.isMavenizedProject) it.projectsTree else null }
 
       forest.forEach { tree ->
@@ -83,11 +83,10 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
         tree.root?.let(roots::add)
 
         if (existingTree == null || reimportExistingFiles) {
-          projectChanges.putAll(tree.projects().associateWith { MavenProjectModifications.ALL })
+          projectChanges.addAll(tree.projects())
         }
         else {
-          projectChanges.putAll(
-            tree.projects().filter { existingTree.findProject(it.file) == null }.associateWith { MavenProjectModifications.ALL })
+          projectChanges.addAll(tree.projects().filter { existingTree.findProject(it.file) == null })
         }
       }
 

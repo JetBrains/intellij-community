@@ -59,7 +59,7 @@ var WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE: Boolean = false
 
 internal open class WorkspaceProjectImporter(
   protected val myProjectsTree: MavenProjectsTree,
-  protected val projectsToImportWithChanges: Map<MavenProject, MavenProjectModifications>,
+  protected val projectsToImport: List<MavenProject>,
   protected val myImportingSettings: MavenImportingSettings,
   protected val myModifiableModelsProvider: IdeModifiableModelsProvider,
   protected val myProject: Project,
@@ -79,7 +79,7 @@ internal open class WorkspaceProjectImporter(
     val storageBeforeImport = WorkspaceModel.getInstance(myProject).currentSnapshot
 
     val projectChangesInfo = tracer.spanBuilder("collectProjectChanges").use {
-      collectProjectChanges(storageBeforeImport, projectsToImportWithChanges, migratedToExternalStorage)
+      collectProjectChanges(storageBeforeImport, projectsToImport, migratedToExternalStorage)
     }
 
     if (!projectChangesInfo.hasChanges) return emptyList()
@@ -169,7 +169,7 @@ internal open class WorkspaceProjectImporter(
 
   private fun collectProjectChanges(
     storageBeforeImport: EntityStorage,
-    originalProjectsChanges: Map<MavenProject, MavenProjectModifications>,
+    originalProjectsChanges: List<MavenProject>,
     migratedToExternalStorage: Boolean,
   ): ProjectChangesInfo {
     val mavenProjectsTreeSettingsEntity = storageBeforeImport.entities(MavenProjectsTreeSettingsEntity::class.java).firstOrNull()
@@ -188,7 +188,7 @@ internal open class WorkspaceProjectImporter(
       }
       else {
         val newProjectToImport = it.path !in projectFilesFromPreviousImport
-        if (newProjectToImport) MavenProjectModifications.ALL else originalProjectsChanges.getOrDefault(it, MavenProjectModifications.NONE)
+        if (newProjectToImport || originalProjectsChanges.contains(it)) MavenProjectModifications.ALL else MavenProjectModifications.NONE
       }
     }
 

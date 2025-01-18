@@ -1901,7 +1901,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun resolveFoldersAndImport() {
-    MavenFolderResolver(projectsManager.project).resolveFoldersAndImport(projectsManager.getProjects())
+    MavenFolderResolver(projectsManager.project).resolveFoldersAndImport(projectsManager.projects)
   }
 
   private fun createProjectSubDirsWithFile(vararg dirs: String) {
