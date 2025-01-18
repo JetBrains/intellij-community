@@ -36,8 +36,8 @@ internal class ShowBytecodeAction : AnAction() {
     val editor = event.getData<Editor>(CommonDataKeys.EDITOR) ?: return
     val psiFile = event.getData<PsiFile>(CommonDataKeys.PSI_FILE) ?: return
     val psiElement = psiFile.findElementAt(editor.caretModel.offset) ?: return
-    val psiClass = BytecodeViewerManager.getContainingClass(psiElement) ?: return
-    val clsFile = BytecodeViewerManager.findClassFile(psiClass) ?: return
+    val psiClass = ByteCodeViewerManager.getContainingClass(psiElement) ?: return
+    val clsFile = ByteCodeViewerManager.findClassFile(psiClass) ?: return
     val panel = BytecodeToolWindowPanel(project, psiFile)
     @Suppress("HardCodedStringLiteral")
     val content = toolWindow.contentManager.contents.firstOrNull { it.description == clsFile.path }

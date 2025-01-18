@@ -96,7 +96,7 @@ internal class BytecodeToolWindowPanel(private val project: Project, private val
 
     val selectedPsiElement = getPsiElement(project, sourceEditor)
     if (selectedPsiElement == null) return
-    val containingClass = BytecodeViewerManager.getContainingClass(selectedPsiElement)
+    val containingClass = ByteCodeViewerManager.getContainingClass(selectedPsiElement)
     if (containingClass == null) {
       bytecodeEditor.getSelectionModel().removeSelection()
       return
@@ -206,7 +206,7 @@ internal class BytecodeToolWindowPanel(private val project: Project, private val
         val selectedPsiElement = getPsiElement(project, selectedEditor)
         if (selectedPsiElement == null) return@computeCancellable null
 
-        val containingClass = BytecodeViewerManager.getContainingClass(selectedPsiElement)
+        val containingClass = ByteCodeViewerManager.getContainingClass(selectedPsiElement)
         if (containingClass == null) return@computeCancellable null
 
         //CancellationUtil.sleepCancellable(1000); // Uncomment if you want to make sure we continue to not freeze the IDE

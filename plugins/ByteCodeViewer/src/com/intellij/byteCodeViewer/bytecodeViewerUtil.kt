@@ -59,9 +59,9 @@ internal data class Bytecode(val withDebugInfo: String, val withoutDebugInfo: St
  * @return a Pair where the first value is a bytecode with debug info included, and the second value is without any debug info
  */
 internal fun getByteCodeVariants(psiElement: PsiElement): Bytecode? {
-  val containingClass = BytecodeViewerManager.getContainingClass(psiElement) ?: return null
+  val containingClass = ByteCodeViewerManager.getContainingClass(psiElement) ?: return null
   try {
-    val bytes = BytecodeViewerManager.loadClassFileBytes(containingClass) ?: return null
+    val bytes = ByteCodeViewerManager.loadClassFileBytes(containingClass) ?: return null
     val withDebugInfoWriter = StringWriter()
     PrintWriter(withDebugInfoWriter).use { printWriter ->
       val textifier = Textifier()

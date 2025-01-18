@@ -16,7 +16,7 @@ import com.intellij.psi.util.parentsOfType
 import java.io.File
 import java.util.*
 
-object BytecodeViewerManager {
+object ByteCodeViewerManager {
   private val CLASS_SEARCHER_EP = ExtensionPointName<ClassSearcher>("ByteCodeViewer.classSearcher")
 
   private fun PsiClass.containingClassFileClass(): PsiClass {
