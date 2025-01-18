@@ -70,37 +70,38 @@ internal class MavenProjectImportContextProvider(
     val allModuleDataWithDependencies: MutableList<MavenTreeModuleImportData> = ArrayList<MavenTreeModuleImportData>()
 
     for (importData in allModules) {
-      val importDataWithDependencies = getDependencies(moduleImportDataByMavenId, importData)
-      val mavenModuleImportDataList = splitToModules(importDataWithDependencies)
+      val mavenProject = importData.mavenProject
+
+      MavenLog.LOG.debug("Creating dependencies for $mavenProject: ${mavenProject.dependencies.size}")
+
+      val mainDependencies: MutableList<MavenImportDependency<*>> = ArrayList(mavenProject.dependencies.size)
+      val testDependencies: MutableList<MavenImportDependency<*>> = ArrayList(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST)
+
+      // add 'main' dependency to 'test' module
+      importData.otherMainModules.forEach {
+        testDependencies.add(
+          ModuleDependency(it.moduleName, DependencyScope.COMPILE, false)
+        )
+      }
+
+      val otherTestModules = importData.otherTestModules
+      for (artifact in mavenProject.dependencies) {
+        for (dependency in getDependency(moduleImportDataByMavenId, artifact, mavenProject)) {
+          if (otherTestModules.isNotEmpty() && dependency.scope == DependencyScope.TEST) {
+            testDependencies.add(dependency)
+          }
+          else {
+            mainDependencies.add(dependency)
+          }
+        }
+      }
+      val mavenModuleImportDataList = splitToModules(importData, mainDependencies, testDependencies)
       for (moduleImportData in mavenModuleImportDataList) {
         allModuleDataWithDependencies.add(moduleImportData)
       }
     }
 
     return allModuleDataWithDependencies
-  }
-
-  private fun getDependencies(moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>, importData: MavenProjectImportData): MavenModuleImportDataWithDependencies {
-    val mavenProject = importData.mavenProject
-
-    MavenLog.LOG.debug("Creating dependencies for $mavenProject: ${mavenProject.dependencies.size}")
-
-    val mainDependencies: MutableList<MavenImportDependency<*>> = ArrayList(mavenProject.dependencies.size)
-    val testDependencies: MutableList<MavenImportDependency<*>> = ArrayList(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST)
-
-    addMainDependencyToTestModule(importData, testDependencies)
-    val otherTestModules = importData.otherTestModules
-    for (artifact in mavenProject.dependencies) {
-      for (dependency in getDependency(moduleImportDataByMavenId, artifact, mavenProject)) {
-        if (otherTestModules.isNotEmpty() && dependency.scope == DependencyScope.TEST) {
-          testDependencies.add(dependency)
-        }
-        else {
-          mainDependencies.add(dependency)
-        }
-      }
-    }
-    return MavenModuleImportDataWithDependencies(importData, mainDependencies, testDependencies)
   }
 
   private fun getDependency(moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>, artifact: MavenArtifact, mavenProject: MavenProject): List<MavenImportDependency<*>> {
@@ -182,6 +183,42 @@ internal class MavenProjectImportContextProvider(
     }
   }
 
+  private fun splitToModules(
+    importData: MavenProjectImportData,
+    mainDependencies: List<MavenImportDependency<*>>,
+    testDependencies: List<MavenImportDependency<*>>,
+  ): List<MavenTreeModuleImportData> {
+    val otherModules = importData.otherModules
+    val project = importData.mavenProject
+    val moduleData = importData.moduleData
+    val changes = importData.changes
+
+    if (otherModules.isNotEmpty()) {
+      val result = ArrayList<MavenTreeModuleImportData>(3)
+      result.add(MavenTreeModuleImportData(
+        project, moduleData, mutableListOf<MavenImportDependency<*>>(), importData.changes
+      ))
+      val dependencies = testDependencies + mainDependencies
+
+      for (anotherModuleData in otherModules) {
+        if (anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY || anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) {
+          result.add(MavenTreeModuleImportData(project, anotherModuleData, mainDependencies, changes))
+        }
+        if (anotherModuleData.type == StandardMavenModuleType.TEST_ONLY) {
+          result.add(MavenTreeModuleImportData(project, anotherModuleData, dependencies, changes))
+        }
+      }
+
+      return result
+    }
+
+    return listOf(MavenTreeModuleImportData(
+      project, moduleData,
+      mainDependencies + testDependencies,
+      changes
+    ))
+  }
+
   private fun createCopyForLocalRepo(artifact: MavenArtifact, project: MavenProject): MavenArtifact {
     return MavenArtifact(
       artifact.groupId,
@@ -197,15 +234,6 @@ internal class MavenProjectImportContextProvider(
       project.localRepositoryPath.toFile(),
       false, false
     )
-  }
-
-  private fun addMainDependencyToTestModule(importData: MavenProjectImportData,
-                                            testDependencies: MutableList<MavenImportDependency<*>>) {
-    importData.otherMainModules.forEach {
-      testDependencies.add(
-        ModuleDependency(it.moduleName, DependencyScope.COMPILE, false)
-      )
-    }
   }
 
   private fun getModuleName(data: MavenProjectImportData, isTestJar: Boolean): String {
@@ -255,18 +283,6 @@ internal class MavenProjectImportContextProvider(
     assert(libraryName.startsWith(MavenArtifact.MAVEN_LIB_PREFIX))
     libraryName = MavenArtifact.MAVEN_LIB_PREFIX + "ATTACHED-JAR: " + libraryName.substring(MavenArtifact.MAVEN_LIB_PREFIX.length)
     return libraryName
-  }
-
-  private data class LanguageLevels(
-    val sourceLevel: LanguageLevel?,
-    val testSourceLevel: LanguageLevel?,
-    val targetLevel: LanguageLevel?,
-    val testTargetLevel: LanguageLevel?,
-  ) {
-    fun mainAndTestLevelsDiffer(): Boolean {
-      return (testSourceLevel != null && testSourceLevel != sourceLevel)
-             || (testTargetLevel != null && testTargetLevel != targetLevel)
-    }
   }
 
   private fun getLanguageLevels(project: MavenProject): LanguageLevels {
@@ -354,47 +370,17 @@ internal class MavenProjectImportContextProvider(
       return getModuleImportDataSingle(project, moduleName, changes, languageLevels)
     }
   }
-
-  private fun splitToModules(dataWithDependencies: MavenModuleImportDataWithDependencies): List<MavenTreeModuleImportData> {
-    val otherModules = dataWithDependencies.moduleImportData.otherModules
-    val project = dataWithDependencies.moduleImportData.mavenProject
-    val moduleData = dataWithDependencies.moduleImportData.moduleData
-    val changes = dataWithDependencies.moduleImportData.changes
-
-    if (otherModules.isNotEmpty()) {
-      val result = ArrayList<MavenTreeModuleImportData>(3)
-      result.add(MavenTreeModuleImportData(
-        project, moduleData, mutableListOf<MavenImportDependency<*>>(), dataWithDependencies.moduleImportData.changes
-      ))
-      val dependencies = dataWithDependencies.testDependencies + dataWithDependencies.mainDependencies
-
-      for (anotherModuleData in otherModules) {
-        if (anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY || anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) {
-          result.add(MavenTreeModuleImportData(project, anotherModuleData, dataWithDependencies.mainDependencies, changes))
-        }
-        if (anotherModuleData.type == StandardMavenModuleType.TEST_ONLY) {
-          result.add(MavenTreeModuleImportData(project, anotherModuleData, dependencies, changes))
-        }
-      }
-
-      return result
-    }
-
-    return listOf(MavenTreeModuleImportData(
-      project, moduleData,
-      dataWithDependencies.mainDependencies + dataWithDependencies.testDependencies,
-      changes
-    ))
-  }
 }
 
-private class MavenModuleImportDataWithDependencies(
-  val moduleImportData: MavenProjectImportData,
-  val mainDependencies: List<MavenImportDependency<*>>,
-  val testDependencies: List<MavenImportDependency<*>> = emptyList(),
+private data class LanguageLevels(
+  val sourceLevel: LanguageLevel?,
+  val testSourceLevel: LanguageLevel?,
+  val targetLevel: LanguageLevel?,
+  val testTargetLevel: LanguageLevel?,
 ) {
-  override fun toString(): String {
-    return moduleImportData.mavenProject.mavenId.toString()
+  fun mainAndTestLevelsDiffer(): Boolean {
+    return (testSourceLevel != null && testSourceLevel != sourceLevel)
+           || (testTargetLevel != null && testTargetLevel != targetLevel)
   }
 }
 
