@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.psi.PsiFile;
@@ -20,10 +20,7 @@ import javax.xml.namespace.QName;
 import java.util.Collections;
 import java.util.Set;
 
-/**
-* @author Gregory.Shrago
-*/
-public class XPathSupportProxyImpl extends XPathSupportProxy {
+final class XPathSupportProxyImpl extends XPathSupportProxy {
   private static class Provider extends ContextProvider {
     private final XmlTokenImpl myDummyContext = new XmlTokenImpl(XmlTokenType.XML_CONTENT_EMPTY, "") {
       @Override

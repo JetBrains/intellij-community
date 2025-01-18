@@ -331,7 +331,7 @@ f:com.intellij.structuralsearch.StructuralSearchUtil
 c:com.intellij.structuralsearch.UnsupportedPatternException
 - com.intellij.structuralsearch.StructuralSearchException
 - <init>(java.lang.String):V
-c:com.intellij.structuralsearch.XmlStructuralSearchProfile
+f:com.intellij.structuralsearch.XmlStructuralSearchProfile
 - com.intellij.structuralsearch.StructuralSearchProfile
 - <init>():V
 - checkReplacementPattern(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):V
@@ -876,11 +876,9 @@ c:com.intellij.structuralsearch.plugin.replace.impl.Replacer
 - s:testReplace(java.lang.String,java.lang.String,java.lang.String,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.openapi.project.Project,Z,Z,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.lang.Language):java.lang.String
 f:com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil
 - s:copySpacesAndCommentsBefore(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement[],java.lang.String,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-c:com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand
+f:com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand
 - com.intellij.structuralsearch.plugin.ui.SearchCommand
 - <init>(com.intellij.structuralsearch.plugin.ui.Configuration,com.intellij.structuralsearch.plugin.ui.SearchContext):V
-- p:createUsageViewContext():com.intellij.structuralsearch.plugin.ui.UsageViewContext
-- p:foundUsage(com.intellij.structuralsearch.MatchResult,com.intellij.usages.Usage):V
 c:com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration
 - com.intellij.structuralsearch.plugin.ui.Configuration
 - sf:REPLACEMENT_VARIABLE_SUFFIX:java.lang.String
@@ -1217,7 +1215,7 @@ c:com.intellij.structuralsearch.plugin.ui.filters.TextFilter
 - hasFilter():Z
 - isApplicable(java.util.List,Z,Z):Z
 - p:setLabel(com.intellij.ui.SimpleColoredComponent):V
-c:com.intellij.structuralsearch.plugin.ui.filters.TypeFilter
+f:com.intellij.structuralsearch.plugin.ui.filters.TypeFilter
 - com.intellij.structuralsearch.plugin.ui.filters.FilterAction
 - <init>():V
 - clearFilter():V
@@ -1225,7 +1223,6 @@ c:com.intellij.structuralsearch.plugin.ui.filters.TypeFilter
 - getShortText(com.intellij.structuralsearch.NamedScriptableDefinition):java.lang.String
 - hasFilter():Z
 - isApplicable(java.util.List,Z,Z):Z
-- p:setLabel(com.intellij.ui.SimpleColoredComponent):V
 c:com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink
 - com.intellij.structuralsearch.DefaultMatchResultSink
 - <init>():V

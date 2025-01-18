@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.CommonBundle;
@@ -34,10 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -79,9 +76,6 @@ import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
-import static com.intellij.openapi.util.Pair.pair;
 
 public final class ShowAffectedTestsAction extends AnAction {
   @Override
@@ -157,7 +151,7 @@ public final class ShowAffectedTestsAction extends AnAction {
 
   private static void showDiscoveredTestsByPsiClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AnActionEvent e) {
     if (DumbService.isDumb(project)) return;
-    DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
+    DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(CommonDataKeys.EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
     String presentableName = PsiFormatUtil.formatClass(psiClass, PsiFormatUtilBase.SHOW_NAME);
     DiscoveredTestsTree tree = showTree(project, dataContext, presentableName, e.getPlace());
@@ -174,7 +168,7 @@ public final class ShowAffectedTestsAction extends AnAction {
   private static void showDiscoveredTestsByPsiMethod(@NotNull Project project, @NotNull PsiMethod method, @NotNull AnActionEvent e) {
     Couple<String> key = getMethodKey(method);
     if (key == null) return;
-    DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
+    DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(CommonDataKeys.EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
     String presentableName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
     DiscoveredTestsTree tree = showTree(project, dataContext, presentableName, e.getPlace());
@@ -270,9 +264,9 @@ public final class ShowAffectedTestsAction extends AnAction {
   }
 
   private static @NotNull List<VirtualFile> findFilesInContext(@NotNull AnActionEvent event) {
-    VirtualFile[] virtualFiles = event.getData(VIRTUAL_FILE_ARRAY);
+    VirtualFile[] virtualFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles == null || virtualFiles.length == 0) {
-      PsiFile file = event.getData(PSI_FILE);
+      PsiFile file = event.getData(CommonDataKeys.PSI_FILE);
       if (file != null) {
         virtualFiles = new VirtualFile[]{file.getVirtualFile()};
       }
@@ -293,8 +287,8 @@ public final class ShowAffectedTestsAction extends AnAction {
   }
 
   private static @Nullable PsiElement findElementAtCaret(@NotNull AnActionEvent e) {
-    Editor editor = e.getData(EDITOR);
-    PsiFile file = e.getData(PSI_FILE);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (editor == null || file == null) return null;
     int offset = editor.getCaretModel().getOffset();
     PsiElement at = file.findElementAt(offset);
@@ -474,7 +468,7 @@ public final class ShowAffectedTestsAction extends AnAction {
       .toList();
 
     getRunConfigurationProducers(project).stream()
-      .map(producer -> pair(producer, ContainerUtil.filter(testMethods, producer::isApplicable)))
+      .map(producer -> Pair.pair(producer, ContainerUtil.filter(testMethods, producer::isApplicable)))
       .max(Comparator.comparingInt(p -> p.second.size()))
       .map(p -> {
         @SuppressWarnings("unchecked") Location<PsiMethod>[] locations = p.second.toArray(new Location[0]);

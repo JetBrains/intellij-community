@@ -53,6 +53,7 @@
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.base.jps" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="kotlin.base.platforms" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.scripting" />

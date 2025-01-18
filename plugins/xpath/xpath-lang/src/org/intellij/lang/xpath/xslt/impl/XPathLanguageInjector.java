@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class XPathLanguageInjector implements MultiHostInjector {
+final class XPathLanguageInjector implements MultiHostInjector {
     private static final Key<Pair<String, TextRange[]>> CACHED_FILES = Key.create("CACHED_FILES");
 
     public XPathLanguageInjector() {

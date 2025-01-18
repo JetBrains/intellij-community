@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />

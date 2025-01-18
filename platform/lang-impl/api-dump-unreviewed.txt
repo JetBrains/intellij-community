@@ -5455,6 +5455,10 @@ f:com.intellij.codeInsight.template.impl.WrapWithCustomTemplateAction
 - <init>(com.intellij.codeInsight.template.CustomLiveTemplate,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,java.util.Set,java.lang.Runnable):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - perform():V
+f:com.intellij.codeInsight.template.impl.actions.ListTemplatesAction
+- com.intellij.codeInsight.actions.BaseCodeInsightAction
+- com.intellij.openapi.project.DumbAware
+- <init>():V
 c:com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
 - <init>():V

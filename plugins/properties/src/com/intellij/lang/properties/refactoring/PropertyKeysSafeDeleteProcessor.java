@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.refactoring;
 
 import com.intellij.lang.properties.IProperty;
@@ -20,15 +20,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Dmitry Batkovich
- */
-public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
-
+final class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   @Override
-  public @Nullable Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
-                                                                        @Nullable Module module,
-                                                                        @NotNull Collection<? extends PsiElement> allElementsToDelete) {
+  public @NotNull Collection<? extends PsiElement> getElementsToSearch(@NotNull PsiElement element,
+                                                                       @Nullable Module module,
+                                                                       @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     return Collections.singleton(element);
   }
 
@@ -38,7 +34,7 @@ public class PropertyKeysSafeDeleteProcessor extends SafeDeleteProcessorDelegate
   }
 
   @Override
-  public @Nullable NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete, @NotNull List<? super UsageInfo> result) {
+  public @NotNull NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete, @NotNull List<? super UsageInfo> result) {
     SafeDeleteProcessor.findGenericElementUsages(element, result, allElementsToDelete);
     return new NonCodeUsageSearchInfo(SafeDeleteProcessor.getDefaultInsideDeletedCondition(allElementsToDelete), element);
   }

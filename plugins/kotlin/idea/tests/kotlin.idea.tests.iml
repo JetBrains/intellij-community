@@ -28,7 +28,9 @@
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="library" scope="TEST" name="vavr" level="project" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="library" scope="TEST" name="kotlinc.android-extensions-compiler-plugin" level="project" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />

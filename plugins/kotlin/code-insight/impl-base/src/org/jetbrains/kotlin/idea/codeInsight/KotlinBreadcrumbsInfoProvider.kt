@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -11,16 +11,16 @@ import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import com.intellij.usageView.UsageViewShortNameLocation
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
-import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.renderer.render
-import kotlin.reflect.KClass
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.util.match
+import kotlin.reflect.KClass
 
 class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
     override fun isShownByDefault(): Boolean = !UISettings.getInstance().showMembersInNavigationBar

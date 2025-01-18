@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.xml.namespace.QName;
 
-public class XsltStuffProvider implements UsageGroupingRuleProvider {
+public final class XsltStuffProvider implements UsageGroupingRuleProvider {
 
   @SuppressWarnings({"unchecked"})
   public static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{

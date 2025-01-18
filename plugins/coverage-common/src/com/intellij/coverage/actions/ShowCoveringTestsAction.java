@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -38,7 +37,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
-public class ShowCoveringTestsAction extends AnAction {
+public final class ShowCoveringTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
 
   private final CoverageSuitesBundle myBundle;

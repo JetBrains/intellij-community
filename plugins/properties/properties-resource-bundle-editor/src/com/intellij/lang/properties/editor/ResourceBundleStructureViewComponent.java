@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -36,7 +36,7 @@ import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
+public final class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
   private static final Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
 
   private final ResourceBundle myResourceBundle;
