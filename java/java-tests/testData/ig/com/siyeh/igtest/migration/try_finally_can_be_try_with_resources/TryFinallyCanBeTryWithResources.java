@@ -150,6 +150,19 @@ class AutoCloseableResourceInitializedInFinally {
     }
   }
 
+  private void twoVariables() {
+    MyAutoCloseable closeable1 = create();
+    try {
+      System.out.println(1);
+    } finally {
+      closeable1.close();
+      MyAutoCloseable closeable2 = create();
+      if (closeable2 != null) {
+        closeable2.close();
+      }
+    }
+  }
+
   private void finallyInsideFinallySimple() {
     try {
       System.out.println(1);
