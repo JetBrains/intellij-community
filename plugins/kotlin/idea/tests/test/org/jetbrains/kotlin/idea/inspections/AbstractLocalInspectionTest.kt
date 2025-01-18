@@ -22,7 +22,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
-import junit.framework.TestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
@@ -101,7 +101,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
 
         val fileText = FileUtil.loadFile(mainFile, true)
-        TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
+        assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
         withCustomCompilerOptions(fileText, project, module) {
             val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.toInt()
@@ -160,16 +160,37 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     private fun checkForUnexpectedErrors(beforeCheck: Boolean) {
-        val ktFile = file as? KtFile ?: return
-        val fileText = ktFile.text
-        val skipErrorsBeforeCheck = InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")
-        val skipErrorsAfterCheck = InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")
-        if (beforeCheck && !skipErrorsBeforeCheck || !beforeCheck && !skipErrorsAfterCheck) {
-            checkForUnexpectedErrors(fileText, beforeCheck)
+        val fileText = (file as? KtFile)?.text ?: return
+        if (beforeCheck) {
+            val skipErrorsBeforeCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
+                fileText,
+                *skipErrorsBeforeCheckDirectives.toTypedArray()
+            ).isNotEmpty()
+            if (!skipErrorsBeforeCheck) {
+                checkForErrorsBefore(fileText)
+            }
+        } else {
+            val skipErrorsAfterCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
+                fileText,
+                *skipErrorsAfterCheckDirectives.toTypedArray()
+            ).isNotEmpty()
+            if (!skipErrorsAfterCheck) {
+                checkForErrorsAfter(fileText)
+            }
         }
     }
 
-    protected open fun checkForUnexpectedErrors(fileText: String, beforeCheck: Boolean) {
+    protected open val skipErrorsBeforeCheckDirectives: List<String> =
+        listOf(DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
+
+    protected open val skipErrorsAfterCheckDirectives: List<String> =
+        listOf(DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
+
+    protected open fun checkForErrorsBefore(fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
+    }
+
+    protected open fun checkForErrorsAfter(fileText: String) {
         DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
     }
 
@@ -409,7 +430,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         dispatchAllEventsInIdeEventQueue()
         try {
             myFixture.checkResultByFile("${afterFileAbsolutePath.fileName}")
-        } catch (e: FileComparisonFailedError) {
+        } catch (_: FileComparisonFailedError) {
             KotlinTestUtils.assertEqualsToFile(
                 File(testDataDirectory, "${afterFileAbsolutePath.fileName}"),
                 editor.document.text

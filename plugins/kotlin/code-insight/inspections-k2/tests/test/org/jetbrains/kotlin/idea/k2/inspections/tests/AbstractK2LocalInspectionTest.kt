@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
 import org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -42,19 +41,18 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
 
     override val inspectionFileName: String = ".k2Inspection"
 
-    override fun checkForUnexpectedErrors(fileText: String, beforeCheck: Boolean) {
-        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, IgnoreTests.DIRECTIVES.IGNORE_K2, DISABLE_ERRORS_DIRECTIVE, DISABLE_K2_ERRORS_DIRECTIVE).isNotEmpty()) {
-            return
-        }
+    override val skipErrorsBeforeCheckDirectives: List<String>
+        get() = super.skipErrorsBeforeCheckDirectives + IgnoreTests.DIRECTIVES.IGNORE_K2 + DISABLE_K2_ERRORS_DIRECTIVE
 
-        val directives =
-            if (beforeCheck) {
-                arrayOf("// K2-ERROR:", "// ERROR:")
-            } else {
-                arrayOf("// K2-AFTER-ERROR:", "// AFTER-ERROR:")
-            }
+    override val skipErrorsAfterCheckDirectives: List<String>
+        get() = super.skipErrorsAfterCheckDirectives + IgnoreTests.DIRECTIVES.IGNORE_K2 + DISABLE_K2_ERRORS_DIRECTIVE
 
-        checkForUnexpected(file as KtFile, "errors", KaSeverity.ERROR, *directives)
+    override fun checkForErrorsBefore(fileText: String) {
+        checkForUnexpected(file as KtFile, "errors", KaSeverity.ERROR, "// K2-ERROR:", "// ERROR:")
+    }
+
+    override fun checkForErrorsAfter(fileText: String) {
+        checkForUnexpected(file as KtFile, "errors", KaSeverity.ERROR, "// K2-AFTER-ERROR:", "// AFTER-ERROR:")
     }
 
     @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
