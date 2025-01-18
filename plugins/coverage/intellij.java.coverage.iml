@@ -104,6 +104,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.coverage.agent" />
     <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

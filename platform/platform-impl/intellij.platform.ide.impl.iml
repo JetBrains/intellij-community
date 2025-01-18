@@ -46,6 +46,7 @@
     <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="library" name="gson" level="project" />

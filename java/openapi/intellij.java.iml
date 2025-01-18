@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.xml.dom" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.java.resources.en" exported="" />
     <orderEntry type="module" module-name="intellij.java.psi" exported="" />
     <orderEntry type="module" module-name="intellij.java.indexing" exported="" />

@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" exported="" />
     <orderEntry type="module" module-name="intellij.jsp" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />

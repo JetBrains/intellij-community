@@ -15,7 +15,10 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="library" name="jackson" level="project" />

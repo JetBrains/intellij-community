@@ -57,6 +57,7 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module-library">
       <library name="terminal-completion-db-with-extensions" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-db-with-extensions:0.5.0">

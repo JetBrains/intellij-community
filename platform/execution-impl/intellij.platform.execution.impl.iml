@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.macro" exported="" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />
     <orderEntry type="library" name="StreamEx" level="project" />

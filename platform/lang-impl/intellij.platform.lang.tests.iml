@@ -18,6 +18,7 @@
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
