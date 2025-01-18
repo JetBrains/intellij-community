@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-object BytecodeViewerBundle {
+internal object BytecodeViewerBundle {
   private const val BUNDLE: @NonNls String = "messages.BytecodeViewerBundle"
 
   private val INSTANCE = DynamicBundle(BytecodeViewerBundle::class.java, BUNDLE)
