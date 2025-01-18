@@ -176,6 +176,20 @@ public final class FilesDelta {
     }
   }
 
+  // used by Bazel
+  @SuppressWarnings("unused")
+  public void initRecompile(@NotNull Map<BuildRootDescriptor, Set<Path>> filesToRecompile) {
+    lockData();
+    try {
+      assert this.filesToRecompile.isEmpty();
+      assert this.deletedPaths.isEmpty();
+      this.filesToRecompile.putAll(filesToRecompile);
+    }
+    finally {
+      unlockData();
+    }
+  }
+
   public boolean markRecompileIfNotDeleted(@NotNull BuildRootDescriptor root, @NotNull Path file) {
     lockData();
     try {
@@ -306,20 +320,6 @@ public final class FilesDelta {
     lockData();
     try {
       return filesToRecompile.remove(root);
-    }
-    finally {
-      unlockData();
-    }
-  }
-
-  // used by Bazel
-  @SuppressWarnings("unused")
-  public void clearRecompile(@NotNull List<BuildRootDescriptor> roots) {
-    lockData();
-    try {
-      for (BuildRootDescriptor root : roots) {
-        filesToRecompile.remove(root);
-      }
     }
     finally {
       unlockData();
