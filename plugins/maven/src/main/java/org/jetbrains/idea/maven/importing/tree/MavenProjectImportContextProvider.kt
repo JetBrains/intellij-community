@@ -70,38 +70,65 @@ internal class MavenProjectImportContextProvider(
     val allModuleDataWithDependencies: MutableList<MavenTreeModuleImportData> = ArrayList<MavenTreeModuleImportData>()
 
     for (importData in allModules) {
-      val mavenProject = importData.mavenProject
-
-      MavenLog.LOG.debug("Creating dependencies for $mavenProject: ${mavenProject.dependencies.size}")
-
-      val mainDependencies: MutableList<MavenImportDependency<*>> = ArrayList(mavenProject.dependencies.size)
-      val testDependencies: MutableList<MavenImportDependency<*>> = ArrayList(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST)
-
-      // add 'main' dependency to 'test' module
-      importData.otherMainModules.forEach {
-        testDependencies.add(
-          ModuleDependency(it.moduleName, DependencyScope.COMPILE, false)
-        )
-      }
-
-      val otherTestModules = importData.otherTestModules
-      for (artifact in mavenProject.dependencies) {
-        for (dependency in getDependency(moduleImportDataByMavenId, artifact, mavenProject)) {
-          if (otherTestModules.isNotEmpty() && dependency.scope == DependencyScope.TEST) {
-            testDependencies.add(dependency)
-          }
-          else {
-            mainDependencies.add(dependency)
-          }
-        }
-      }
-      val mavenModuleImportDataList = splitToModules(importData, mainDependencies, testDependencies)
+      val mavenModuleImportDataList = splitToModules(importData, moduleImportDataByMavenId)
       for (moduleImportData in mavenModuleImportDataList) {
         allModuleDataWithDependencies.add(moduleImportData)
       }
     }
 
     return allModuleDataWithDependencies
+  }
+
+  private fun splitToModules(importData: MavenProjectImportData, moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>): List<MavenTreeModuleImportData> {
+    val submodules = importData.submodules
+    val project = importData.mavenProject
+    val module = importData.module
+    val changes = importData.changes
+
+    val mavenProject = importData.mavenProject
+
+    MavenLog.LOG.debug("Creating dependencies for $mavenProject: ${mavenProject.dependencies.size}")
+
+    val mainDependencies: MutableList<MavenImportDependency<*>> = ArrayList(mavenProject.dependencies.size)
+    val testDependencies: MutableList<MavenImportDependency<*>> = ArrayList(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST)
+
+    // add 'main' dependency to 'test' module
+    importData.mainSubmodules.forEach {
+      testDependencies.add(
+        ModuleDependency(it.moduleName, DependencyScope.COMPILE, false)
+      )
+    }
+
+    val testSubmodules = importData.testSubmodules
+    for (artifact in mavenProject.dependencies) {
+      for (dependency in getDependency(moduleImportDataByMavenId, artifact, mavenProject)) {
+        if (testSubmodules.isNotEmpty() && dependency.scope == DependencyScope.TEST) {
+          testDependencies.add(dependency)
+        }
+        else {
+          mainDependencies.add(dependency)
+        }
+      }
+    }
+
+    if (submodules.isEmpty()) return listOf(MavenTreeModuleImportData(project, module, mainDependencies + testDependencies, changes))
+
+    val result = ArrayList<MavenTreeModuleImportData>(3)
+    result.add(MavenTreeModuleImportData(
+      project, module, mutableListOf<MavenImportDependency<*>>(), importData.changes
+    ))
+    val dependencies = testDependencies + mainDependencies
+
+    for (submodule in submodules) {
+      if (submodule.type == StandardMavenModuleType.MAIN_ONLY || submodule.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) {
+        result.add(MavenTreeModuleImportData(project, submodule, mainDependencies, changes))
+      }
+      if (submodule.type == StandardMavenModuleType.TEST_ONLY) {
+        result.add(MavenTreeModuleImportData(project, submodule, dependencies, changes))
+      }
+    }
+
+    return result
   }
 
   private fun getDependency(moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>, artifact: MavenArtifact, mavenProject: MavenProject): List<MavenImportDependency<*>> {
@@ -183,42 +210,6 @@ internal class MavenProjectImportContextProvider(
     }
   }
 
-  private fun splitToModules(
-    importData: MavenProjectImportData,
-    mainDependencies: List<MavenImportDependency<*>>,
-    testDependencies: List<MavenImportDependency<*>>,
-  ): List<MavenTreeModuleImportData> {
-    val otherModules = importData.otherModules
-    val project = importData.mavenProject
-    val moduleData = importData.moduleData
-    val changes = importData.changes
-
-    if (otherModules.isNotEmpty()) {
-      val result = ArrayList<MavenTreeModuleImportData>(3)
-      result.add(MavenTreeModuleImportData(
-        project, moduleData, mutableListOf<MavenImportDependency<*>>(), importData.changes
-      ))
-      val dependencies = testDependencies + mainDependencies
-
-      for (anotherModuleData in otherModules) {
-        if (anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY || anotherModuleData.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) {
-          result.add(MavenTreeModuleImportData(project, anotherModuleData, mainDependencies, changes))
-        }
-        if (anotherModuleData.type == StandardMavenModuleType.TEST_ONLY) {
-          result.add(MavenTreeModuleImportData(project, anotherModuleData, dependencies, changes))
-        }
-      }
-
-      return result
-    }
-
-    return listOf(MavenTreeModuleImportData(
-      project, moduleData,
-      mainDependencies + testDependencies,
-      changes
-    ))
-  }
-
   private fun createCopyForLocalRepo(artifact: MavenArtifact, project: MavenProject): MavenArtifact {
     return MavenArtifact(
       artifact.groupId,
@@ -237,8 +228,8 @@ internal class MavenProjectImportContextProvider(
   }
 
   private fun getModuleName(data: MavenProjectImportData, isTestJar: Boolean): String {
-    val otherModule = if (isTestJar) data.otherTestModules.firstOrNull() else data.otherMainModules.firstOrNull()
-    return otherModule?.moduleName ?: data.moduleData.moduleName
+    val submodule = if (isTestJar) data.testSubmodules.firstOrNull() else data.mainSubmodules.firstOrNull()
+    return submodule?.moduleName ?: data.module.moduleName
   }
 
   private fun createAttachArtifactDependency(mavenProject: MavenProject,
@@ -386,13 +377,13 @@ private data class LanguageLevels(
 
 private class MavenProjectImportData(
   val mavenProject: MavenProject,
-  val moduleData: ModuleData,
+  val module: ModuleData,
   val changes: MavenProjectModifications,
-  val otherModules: List<ModuleData>,
+  val submodules: List<ModuleData>,
 ) {
 
-  val otherMainModules = otherModules.filter { it.type == StandardMavenModuleType.MAIN_ONLY || it.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL }
-  val otherTestModules = otherModules.filter { it.type == StandardMavenModuleType.TEST_ONLY }
+  val mainSubmodules = submodules.filter { it.type == StandardMavenModuleType.MAIN_ONLY || it.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL }
+  val testSubmodules = submodules.filter { it.type == StandardMavenModuleType.TEST_ONLY }
 
   override fun toString(): String {
     return mavenProject.mavenId.toString()
