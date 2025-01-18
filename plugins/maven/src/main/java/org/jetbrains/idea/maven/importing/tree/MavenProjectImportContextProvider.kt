@@ -115,10 +115,15 @@ internal class MavenProjectImportContextProvider(
 
     val result = mutableListOf(MavenTreeModuleImportData(project, module, emptyList(), changes))
 
+    val defaultMainSubmodule = importData.defaultMainSubmodule
+    val additionalMainDependencies =
+      if (null == defaultMainSubmodule) emptyList()
+      else listOf(ModuleDependency(defaultMainSubmodule.moduleName, DependencyScope.COMPILE, false))
+
     for (submodule in submodules) {
       val dependencies = when (submodule.type) {
         StandardMavenModuleType.MAIN_ONLY -> mainDependencies
-        StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> mainDependencies
+        StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> mainDependencies + additionalMainDependencies
         StandardMavenModuleType.TEST_ONLY -> testDependencies + mainDependencies
         else -> null
       } ?: continue
@@ -379,6 +384,7 @@ private class MavenProjectImportData(
   val submodules: List<ModuleData>,
 ) {
 
+  val defaultMainSubmodule = submodules.firstOrNull { it.type == StandardMavenModuleType.MAIN_ONLY }
   val mainSubmodules = submodules.filter { it.type == StandardMavenModuleType.MAIN_ONLY || it.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL }
   val testSubmodules = submodules.filter { it.type == StandardMavenModuleType.TEST_ONLY }
 
