@@ -113,19 +113,16 @@ internal class MavenProjectImportContextProvider(
 
     if (submodules.isEmpty()) return listOf(MavenTreeModuleImportData(project, module, mainDependencies + testDependencies, changes))
 
-    val result = ArrayList<MavenTreeModuleImportData>(3)
-    result.add(MavenTreeModuleImportData(
-      project, module, mutableListOf<MavenImportDependency<*>>(), importData.changes
-    ))
-    val dependencies = testDependencies + mainDependencies
+    val result = mutableListOf(MavenTreeModuleImportData(project, module, emptyList(), changes))
 
     for (submodule in submodules) {
-      if (submodule.type == StandardMavenModuleType.MAIN_ONLY || submodule.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) {
-        result.add(MavenTreeModuleImportData(project, submodule, mainDependencies, changes))
-      }
-      if (submodule.type == StandardMavenModuleType.TEST_ONLY) {
-        result.add(MavenTreeModuleImportData(project, submodule, dependencies, changes))
-      }
+      val dependencies = when (submodule.type) {
+        StandardMavenModuleType.MAIN_ONLY -> mainDependencies
+        StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> mainDependencies
+        StandardMavenModuleType.TEST_ONLY -> testDependencies + mainDependencies
+        else -> null
+      } ?: continue
+      result.add(MavenTreeModuleImportData(project, submodule, dependencies, changes))
     }
 
     return result
