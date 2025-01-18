@@ -3,12 +3,10 @@ package com.intellij.byteCodeViewer
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -27,12 +25,6 @@ private val LOG = fileLogger()
 @Contract("null -> false")
 internal fun isValidFileType(fileType: FileType?): Boolean {
   return fileType === JavaClassFileType.INSTANCE || fileType === JavaFileType.INSTANCE
-}
-
-internal fun isMarkedForCompilation(project: Project, virtualFile: VirtualFile): Boolean {
-  val compilerManager = CompilerManager.getInstance(project)
-  val compileScope = compilerManager.createFilesCompileScope(arrayOf(virtualFile))
-  return !compilerManager.isUpToDate(compileScope)
 }
 
 internal fun getPsiElement(project: Project, editor: Editor): PsiElement? {
