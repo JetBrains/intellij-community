@@ -503,7 +503,6 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
         if (!(target instanceof PsiLocalVariable || target instanceof PsiParameter) || target instanceof PsiResourceVariable) return false;
         PsiVariable variable = (PsiVariable)target;
         if (!isAutoCloseable(variable)) return false;
-        if (isInDifferentAnonymousClassOrLambda(referenceExpression, variable)) return false;
         variables.add(variable);
         return true;
       }
@@ -516,12 +515,6 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
 
   private static boolean isAutoCloseableDeclaredInFinallyBlock(@NotNull PsiCodeBlock block, @NotNull PsiVariable variable) {
     return variable instanceof PsiLocalVariable && PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true) == block;
-  }
-
-  private static boolean isInDifferentAnonymousClassOrLambda(@NotNull PsiElement referenceExpression,
-                                                             @NotNull PsiElement variable) {
-    return PsiTreeUtil.getParentOfType(referenceExpression, true, PsiAnonymousClass.class, PsiLambdaExpression.class) !=
-           PsiTreeUtil.getParentOfType(variable, true, PsiAnonymousClass.class, PsiLambdaExpression.class);
   }
 
   private static @Nullable PsiVariable findAutoCloseableVariable(@Nullable PsiStatement statement) {
@@ -617,23 +610,22 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
 
       super.visitReferenceExpression(referenceExpression);
 
-      if (referenceExpression.getParent() instanceof PsiMethodCallExpression) {
-        PsiExpression qualifier = referenceExpression.getQualifierExpression();
-        PsiVariable variable = ExpressionUtils.resolveVariable(qualifier);
-
-        if (!collectedVariables.contains(variable)) return;
-
-        if (variable != null && !isCloseMethodCalled(referenceExpression) && isAutoCloseable(variable)) {
-          used = true;
-        }
-      } else if (referenceExpression.getParent() instanceof PsiExpressionList) {
-        PsiVariable variable = ExpressionUtils.resolveVariable(referenceExpression);
-        if (!collectedVariables.contains(variable)) return;
-
-        if (variable != null && isAutoCloseable(variable)) {
-          used = true;
-        }
+      PsiVariable variable = ExpressionUtils.resolveVariable(referenceExpression);
+      if (variable == null || !collectedVariables.contains(variable)) return;
+      if (isInDifferentAnonymousClassOrLambda(referenceExpression, variable)) {
+        used = true;
+        return;
       }
+      PsiElement parent = referenceExpression.getParent();
+      if ((parent instanceof PsiMethodCallExpression && !isCloseMethodCalled(referenceExpression)) || parent instanceof PsiExpressionList) {
+        used = true;
+      }
+    }
+
+    private static boolean isInDifferentAnonymousClassOrLambda(@NotNull PsiElement referenceExpression,
+                                                               @NotNull PsiElement variable) {
+      return PsiTreeUtil.getParentOfType(referenceExpression, true, PsiAnonymousClass.class, PsiLambdaExpression.class) !=
+             PsiTreeUtil.getParentOfType(variable, true, PsiAnonymousClass.class, PsiLambdaExpression.class);
     }
 
     private static boolean isCloseMethodCalled(@NotNull PsiReferenceExpression referenceExpression) {

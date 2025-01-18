@@ -215,6 +215,40 @@ class AutoCloseableResourceInLambdaOrAnonymousClass {
     };
   }
 
+  private void twoVariablesWithAnonymousClass() throws Exception  {
+    MyAutoCloseable closeable1 = create();
+    MyAutoCloseable closeable = new MyAutoCloseable() {
+      @Override
+      public void close() {
+        MyAutoCloseable closeable2 = create();
+        try {
+          System.out.println(1);
+        } finally {
+          closeable1.close();
+          closeable2.close();
+        }
+      }
+    };
+  }
+
+  private void twoVariablesWithLambdaExpression() throws Exception  {
+    AutoCloseable closeable1 = create();
+    Runnable r = () -> {
+      AutoCloseable closeable2 = create();
+      try {
+        System.out.println(1);
+      }
+      finally {
+        try {
+          closeable1.close();
+          closeable2.close();
+        }
+        catch (Exception e) {
+        }
+      }
+    };
+  }
+
   private MyAutoCloseable getDelegate(MyAutoCloseable orig) {
     MyAutoCloseable result = null;
     MyAutoCloseable another = create();
