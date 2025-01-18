@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -59,6 +60,10 @@ enum class JvmBuilderFlags {
 }
 
 fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap<JvmBuilderFlags>, workingDir: Path) {
+  // @todo check for  -Xskip-prerelease-check -Xallow-unstable-dependencies during import
+  kotlinArgs.skipPrereleaseCheck = true
+  kotlinArgs.allowUnstableDependencies = true
+
   kotlinArgs.noStdlib = true
   kotlinArgs.disableStandardScript = true
 
