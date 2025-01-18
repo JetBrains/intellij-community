@@ -1,6 +1,7 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import numpy as np
 import io
+import base64
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
@@ -13,10 +14,11 @@ CSV_FORMAT_SEPARATOR = '~'
 is_pd = False
 try:
     import pandas as pd
+
     version = pd.__version__
     majorVersion = int(version[0])
     pd.set_option('display.max_colwidth', None)
-    is_pd = majorVersion>=1
+    is_pd = majorVersion >= 1
     is_pd = True
 except:
     pass
@@ -81,6 +83,34 @@ def display_data_csv(table, start_index=None, end_index=None):
     __compute_data(table, ipython_display)
 
 
+def get_bytes(arr):
+    # type: (np.ndarray) -> str
+    try:
+        from PIL import Image
+
+        if not (np.issubdtype(arr.dtype, np.floating) or np.issubdtype(arr.dtype, np.integer)):
+            raise ValueError("Error: Only numeric array types are supported.")
+
+        if arr.ndim == 1:
+            arr = np.expand_dims(arr, axis=0)
+
+        arr_min, arr_max = np.min(arr), np.max(arr)
+        if arr_min == arr_max:  # handle constant values
+            arr = np.full_like(arr, 127, dtype=np.uint8)
+        else:
+            arr = ((arr - arr_min) / (arr_max - arr_min) * 255).astype(np.uint8)
+
+        mode = 'L' if arr.ndim == 2 else 'RGB'
+        bytes_buffer = io.BytesIO()
+        image = Image.fromarray(arr, mode=mode)
+        image.save(bytes_buffer, format="PNG")
+        return base64.b64encode(bytes_buffer.getvalue()).decode("utf-8")
+    except ImportError:
+        return "Error: Pillow library is not installed."
+    except Exception as e:
+        return "Error: {}".format(e)
+
+
 class _NpTable:
     def __init__(self, np_array, format=None):
         self.array = np_array
@@ -126,18 +156,18 @@ class _NpTable:
         html.append('<thead>\n'
                     '<tr style="text-align: right;">\n'
                     '<th></th>\n')
-        html += self._collect_cols_names()
+        html += self.__collect_cols_names()
         html.append('</tr>\n'
                     '</thead>\n')
 
         # tbody
-        html += self._collect_values(None)
+        html += self.__collect_values(None)
 
         html.append('</table>\n')
 
         return "".join(html)
 
-    def _collect_cols_names(self):
+    def __collect_cols_names(self):
         if self.type == ONE_DIM:
             return ['<th>0</th>\n']
 
@@ -146,7 +176,7 @@ class _NpTable:
 
         return ['<th>{}</th>\n'.format(i) for i in range(len(self.array[0]))]
 
-    def _collect_values(self, max_cols):
+    def __collect_values(self, max_cols):
         html = ['<tbody>\n']
         rows = self.array.shape[0]
         for row_num in range(rows):
@@ -177,8 +207,7 @@ class _NpTable:
         html.append('</tbody>\n')
         return html
 
-
-    def to_csv(self, na_rep = "None", float_format=None, sep=CSV_FORMAT_SEPARATOR):
+    def to_csv(self, na_rep="None", float_format=None, sep=CSV_FORMAT_SEPARATOR):
         csv_stream = io.StringIO()
         np_array_without_nones = np.where(self.array == None, np.nan, self.array)
         if float_format is None or float_format == 'null':
@@ -186,12 +215,12 @@ class _NpTable:
 
         np.savetxt(csv_stream, np_array_without_nones, delimiter=sep, fmt=float_format)
         csv_string = csv_stream.getvalue()
-        csv_rows_with_index = self._insert_index_at_rows_begging_csv(csv_string)
+        csv_rows_with_index = self.__insert_index_at_rows_begging_csv(csv_string)
 
-        col_names = self._collect_col_names_csv()
+        col_names = self.__collect_col_names_csv()
         return col_names + "\n" + csv_rows_with_index
 
-    def _insert_index_at_rows_begging_csv(self, csv_string):
+    def __insert_index_at_rows_begging_csv(self, csv_string):
         # type: (str) -> str
         csv_rows = csv_string.split('\n')
         csv_rows_with_index = []
@@ -199,7 +228,7 @@ class _NpTable:
             csv_rows_with_index.append(str(row_index) + CSV_FORMAT_SEPARATOR + csv_rows[row_index])
         return "\n".join(csv_rows_with_index)
 
-    def _collect_col_names_csv(self):
+    def __collect_col_names_csv(self):
         if self.type == ONE_DIM:
             return '{}0'.format(CSV_FORMAT_SEPARATOR)
 
@@ -224,7 +253,7 @@ class _NpTable:
 
         cols, orders = sort_keys
         if 0 in cols:
-            return self._sort_by_index(True in orders)
+            return self.__sort_by_index(True in orders)
 
         if self.type == ONE_DIM:
             extended = np.column_stack((self.indexes, self.array))
@@ -261,7 +290,7 @@ class _NpTable:
         self.array = extended[:, 1:]
         return self
 
-    def _sort_by_index(self, order):
+    def __sort_by_index(self, order):
         if order:
             return self
         self.array = self.array[::-1]
@@ -306,7 +335,8 @@ def __create_table(command, start_index=None, end_index=None, format=None):
             return sorted_df_slice
         return sorted_df
 
-    return _NpTable(np_array, format=format).sort(sort_keys).slice(start_index, end_index)
+    return _NpTable(np_array, format=format).sort(sort_keys).slice(start_index,
+                                                                   end_index)
 
 
 def __compute_data(arr, fun, format=None):

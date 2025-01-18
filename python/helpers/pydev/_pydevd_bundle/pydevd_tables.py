@@ -12,6 +12,7 @@ class TableCommandType:
     SLICE_CSV = "SLICE_CSV"
     DESCRIBE = "DF_DESCRIBE"
     VISUALIZATION_DATA = "VISUALIZATION_DATA"
+    IMAGE = "IMAGE"
 
 
 def is_error_on_eval(val):
@@ -57,6 +58,9 @@ def exec_table_command(init_command, command_type, start_index, end_index, forma
         res.append(table_provider.get_data(table, False, start_index, end_index, format))
     elif command_type == TableCommandType.SLICE_CSV:
         res.append(table_provider.get_data(table, True, start_index, end_index, format))
+
+    elif command_type == TableCommandType.IMAGE:
+        res.append(table_provider.get_bytes(table))
 
     return True, ''.join(res)
 

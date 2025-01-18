@@ -8,5 +8,6 @@ enum class TableCommandType {
   SLICE,
   SLICE_CSV,
   DF_DESCRIBE,
-  VISUALIZATION_DATA
+  VISUALIZATION_DATA,
+  IMAGE
 }
