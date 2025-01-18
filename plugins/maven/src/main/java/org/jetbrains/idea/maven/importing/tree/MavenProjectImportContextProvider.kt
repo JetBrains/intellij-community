@@ -170,7 +170,7 @@ internal class MavenProjectImportContextProvider(
             && "system" != artifact.scope
             && "false" != System.getProperty("idea.maven.classifier.dep")) {
           MavenLog.LOG.trace("Created library dependency")
-          result.add(LibraryDependency(createCopyForLocalRepo(artifact, mavenProject), mavenProject, scope))
+          result.add(LibraryDependency(createCopyForLocalRepo(artifact, mavenProject), scope))
         }
 
         MavenLog.LOG.trace("Created module dependency")
