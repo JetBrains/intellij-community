@@ -339,7 +339,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
         boolean varUsedNotInTry = StreamEx.of(statements)
           .flatMap(stmt -> StreamEx.ofTree((PsiElement)stmt, e -> StreamEx.of(e.getChildren())))
           .select(PsiLocalVariable.class)
-          .anyMatch(variable1 -> isVariableUsedOutsideContext(variable1, tryStatement) || isVariableUsedInsdieContext(variable1, finallyBlock));
+          .anyMatch(variable1 -> isVariableUsedOutsideContext(variable1, tryStatement) || isVariableUsedInsideContext(variable1, finallyBlock));
         if (varUsedNotInTry) return null;
       }
       return new Context(resourceVariables, new HashSet<>(statementsToDelete), mergedCatchSections);
@@ -434,7 +434,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
     }
   }
 
-  private static boolean isVariableUsedInsdieContext(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+  private static boolean isVariableUsedInsideContext(@NotNull PsiVariable variable, @NotNull PsiElement context) {
     VariableUsedWithContextVisitor visitor = new VariableUsedWithContextVisitor(variable, null);
     context.accept(visitor);
     return visitor.isVariableUsed();

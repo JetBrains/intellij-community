@@ -474,4 +474,18 @@ class UsageOfDependentVariablesInFinally {
       System.out.println(x);
     }
   }
+
+  void variableBetweenTwoAutoCloseables() throws IOException {
+    InputStream stream = createStream();
+    BufferedInputStream buffered = new BufferedInputStream(stream);
+    InputStream stream2 = createStream();
+    try {
+      System.out.println(buffered.read());
+    }
+    finally {
+      System.out.println(buffered.read());
+      stream.close();
+      stream2.close();
+    }
+  }
 }
