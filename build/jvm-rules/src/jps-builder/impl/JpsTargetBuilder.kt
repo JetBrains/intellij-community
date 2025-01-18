@@ -6,8 +6,13 @@ package org.jetbrains.bazel.jvm.jps.impl
 import com.intellij.openapi.util.text.Formats.formatDuration
 import com.intellij.tracing.Tracer
 import com.intellij.tracing.Tracer.start
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
+import it.unimi.dsi.fastutil.objects.ObjectArraySet
+import org.jetbrains.bazel.jvm.jps.LoadStateResult
+import org.jetbrains.bazel.jvm.jps.RemovedFileInfo
 import org.jetbrains.bazel.jvm.jps.RequestLog
 import org.jetbrains.jps.ModuleChunk
+import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.FileProcessor
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl
@@ -18,6 +23,8 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.incremental.*
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.OutputConsumer
 import org.jetbrains.jps.incremental.fs.BuildFSState
+import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
+import org.jetbrains.jps.incremental.fs.BuildFSState.NEXT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.jps.incremental.messages.*
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
@@ -41,7 +48,12 @@ internal class JpsTargetBuilder(
   private val builderToDuration = HashMap<Builder, AtomicLong>()
   private val numberOfSourcesProcessedByBuilder = HashMap<Builder, AtomicInteger>()
 
-  fun build(context: CompileContextImpl, moduleTarget: BazelModuleBuildTarget, builders: Array<ModuleLevelBuilder>): Int {
+  fun build(
+    context: CompileContextImpl,
+    moduleTarget: BazelModuleBuildTarget,
+    builders: Array<ModuleLevelBuilder>,
+    buildState: LoadStateResult?,
+  ): Int {
     try {
       val buildSpan = Tracer.start("JpsTargetBuilder.runBuild")
       context.setDone(0.0f)
@@ -53,8 +65,8 @@ internal class JpsTargetBuilder(
       allModuleLevelBuildersBuildStartedSpan.complete()
 
       try {
-        val span = start("Building targets")
-        buildTarget(context = context, target = moduleTarget, builders = builders)
+        val span = start("build target")
+        buildTarget(context = context, target = moduleTarget, builders = builders, buildState = buildState)
         span.complete()
       }
       finally {
@@ -98,60 +110,37 @@ internal class JpsTargetBuilder(
     return 0
   }
 
-  private fun deleteAndCollectDeleted(file: Path, deletedPaths: MutableList<Path>, parentDirs: MutableSet<Path>): Boolean {
-    val deleted = Files.deleteIfExists(file)
-    if (deleted) {
-      deletedPaths.add(file)
-      file.parent?.let {
-        parentDirs.add(it)
-      }
-    }
-    return deleted
-  }
-
-  private fun processDeletedPaths(context: CompileContext, target: ModuleBuildTarget, deletedFiles: List<Path>): Boolean {
-    val dirsToDelete = HashSet<Path>()
+  private fun processDeletedPaths(context: CompileContext, target: ModuleBuildTarget, deletedFiles: List<RemovedFileInfo>): Boolean {
+    val dirsToDelete = LinkedHashSet<Path>()
     var doneSomething = false
-    val sourceToOutputStorage = dataManager.sourceToOutputMapping
     // actually delete outputs associated with removed paths
-    for (deletedFile in deletedFiles) {
+    for (item in deletedFiles) {
       // deleting outputs corresponding to a non-existing source
-      val outputs = sourceToOutputStorage.getOutputs(deletedFile)
-      if (!outputs.isNullOrEmpty()) {
-        val deletedOutputFiles = ArrayList<Path>()
-        for (output in outputs) {
-          val deleted = deleteAndCollectDeleted(output, deletedOutputFiles, dirsToDelete)
-          if (deleted) {
-            doneSomething = true
+      val deletedOutputFiles = ArrayList<Path>()
+      for (output in item.outputs) {
+        val deleted = Files.deleteIfExists(output)
+        if (deleted) {
+          deletedOutputFiles.add(output)
+          output.parent?.let {
+            dirsToDelete.add(it)
           }
-        }
-        if (!deletedOutputFiles.isEmpty()) {
-          log.info("Deleted files: $deletedOutputFiles")
-          context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
         }
       }
-
-      // check if the deleted source was associated with a form
-      val sourceToFormMap = dataManager.sourceToForm
-      val boundForms = sourceToFormMap.getOutputs(deletedFile)
-      if (boundForms != null) {
-        for (formFile in boundForms) {
-          if (Files.exists(formFile)) {
-            FSOperations.markDirty(context, CompilationRound.CURRENT, formFile.toFile())
-          }
-        }
-        sourceToFormMap.remove(deletedFile)
+      if (!deletedOutputFiles.isEmpty()) {
+        doneSomething = true
+        log.info("Deleted files: $deletedOutputFiles")
+        context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
       }
     }
 
     val existing = Utils.REMOVED_SOURCES_KEY.get(context).get(target)
     if (existing == null) {
-      Utils.REMOVED_SOURCES_KEY.set(context, java.util.Map.of(target, deletedFiles as Collection<Path>))
+      Utils.REMOVED_SOURCES_KEY.set(context, java.util.Map.of(target, deletedFiles.map { it.sourceFile } as Collection<Path>))
     }
     else {
       val set = LinkedHashSet<Path>()
       set.addAll(existing)
-      set.addAll(deletedFiles)
+      deletedFiles.mapTo(set) { it.sourceFile }
       Utils.REMOVED_SOURCES_KEY.set(context, java.util.Map.of(target, set as Collection<Path>))
     }
 
@@ -224,9 +213,9 @@ internal class JpsTargetBuilder(
 
             outputConsumer.setCurrentBuilderName(builder.presentableName)
 
-            val deletedFiles = fsState.getAndClearDeletedPaths(target).asSequence().map { Path.of(it) }.sorted().toList()
-            if (!deletedFiles.isEmpty()) {
-              processDeletedPaths(context, target, deletedFiles)
+            val deletedFiles = fsState.getAndClearDeletedPaths(target)
+            require(deletedFiles.isEmpty()) {
+              "Unexpected files to delete: $deletedFiles"
             }
 
             val start = System.nanoTime()
@@ -294,7 +283,12 @@ internal class JpsTargetBuilder(
     return doneSomething
   }
 
-  private fun buildTarget(context: CompileContext, target: BazelModuleBuildTarget, builders: Array<ModuleLevelBuilder>) {
+  private fun buildTarget(
+    context: CompileContext,
+    target: BazelModuleBuildTarget,
+    builders: Array<ModuleLevelBuilder>,
+    buildState: LoadStateResult?,
+  ) {
     val targets = java.util.Set.of<BuildTarget<*>>(target)
     try {
       context.setCompilationStartStamp(targets, System.currentTimeMillis())
@@ -304,12 +298,26 @@ internal class JpsTargetBuilder(
 
       val fsState = context.projectDescriptor.fsState
       require(!fsState.isInitialScanPerformed(target))
-      val deletedFiles = if (isCleanBuild) {
+      val deletedFiles = if (isCleanBuild || buildState == null) {
         initFsStateForCleanBuild(context = context, target = target)
         java.util.List.of()
       }
       else {
-        initTargetFsStateForNonInitialBuild(context = context, target = target, log = log, dataManager = dataManager)
+        val projectDescriptor = context.projectDescriptor
+        require(context.getUserData(CURRENT_ROUND_DELTA_KEY) == null)
+        require(context.getUserData(NEXT_ROUND_DELTA_KEY) == null)
+        // linked - stable results
+        val buildRootIndex = projectDescriptor.buildRootIndex as BazelBuildRootIndex
+        val k = Array<BuildRootDescriptor>(buildState.changedFiles.size) {
+          buildRootIndex.fileToDescriptors.get(buildState.changedFiles.get(it))!!
+        }
+        val v = Array<Set<Path>>(buildState.changedFiles.size) {
+          ObjectArraySet(arrayOf(buildState.changedFiles.get(it)))
+        }
+        val fsState = projectDescriptor.fsState
+        fsState.getDelta(target).initRecompile(Object2ObjectArrayMap(k, v))
+        fsState.markInitialScanPerformed(target)
+        buildState.deletedFiles
       }
 
       var doneSomething = if (deletedFiles.isEmpty()) false else processDeletedPaths(context, target, deletedFiles)

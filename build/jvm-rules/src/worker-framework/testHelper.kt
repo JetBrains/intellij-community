@@ -43,7 +43,6 @@ fun getTestWorkerPaths(): TestWorkerPaths {
 
 private fun getBazelExecRoot(currentWorkingDir: Path): Path {
   val process = ProcessBuilder("bazelisk", "info", "execution_root")
-    .redirectErrorStream(true)
     .directory(currentWorkingDir.toFile())
     .start()
 
@@ -52,7 +51,7 @@ private fun getBazelExecRoot(currentWorkingDir: Path): Path {
   if (exitCode == 0) {
     val result = Path.of(output)
     require(Files.isDirectory(result)) {
-      "Not a directory: $result (currentWorkingDir=$currentWorkingDir"
+      "Not a directory: $result (currentWorkingDir=$currentWorkingDir)"
     }
     return result
   }

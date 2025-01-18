@@ -48,8 +48,14 @@ internal fun testSerialization() {
     try {
       saveBuildState(buildStateFile = file, list = sourceDescriptors, relativizer = relativizer, allocator = allocator)
 
-      val result = loadBuildState(file, relativizer, allocator, null)
-      if (result!!.keys.sorted() != sourceDescriptors.map { it.sourceFile }) {
+      val result = loadBuildState(
+        buildStateFile = file,
+        relativizer = relativizer,
+        allocator = allocator,
+        log = null,
+        actualDigestMap = sourceDescriptors.associate { it.sourceFile to it.digest!! },
+      )!!.map
+      if (result.keys.sorted() != sourceDescriptors.map { it.sourceFile }) {
         throw AssertionError("Expected: $sourceDescriptors, actual: $result")
       }
       if (result.values.sortedBy { it.sourceFile } != sourceDescriptors.asList()) {

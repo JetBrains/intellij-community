@@ -29,6 +29,7 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import org.jetbrains.jps.incremental.storage.RelativePathType
 import org.jetbrains.jps.incremental.storage.StorageManager
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.kotlin.config.IncrementalCompilation
@@ -37,6 +38,9 @@ import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.coroutineContext
+
+// if more than 50% files were changed, perform a full rebuild
+private const val thresholdPercentage = 0.5
 
 // Please note: for performance reasons, we do not set `jps.new.storage.compact.on.close` to true.
 // As a result, the database file on disk may grow to some extent.
@@ -147,12 +151,39 @@ suspend fun buildUsingJps(
 
   val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
   val typeAwareRelativizer = relativizer.typeAwareRelativizer!!
-  val buildState = loadBuildState(buildStateFile, typeAwareRelativizer, allocator, log)
+  val buildState = loadBuildState(
+    buildStateFile = buildStateFile,
+    relativizer = typeAwareRelativizer,
+    allocator = allocator,
+    log = log,
+    actualDigestMap = sourceFileToDigest,
+  )
   if (buildState == null) {
     FileUtilRt.deleteRecursively(dataDir)
     FileUtilRt.deleteRecursively(classOutDir)
 
     isRebuild = true
+  }
+
+  if (buildState != null) {
+    if (log.isDebugEnabled) {
+      log.info(
+        "changed: ${buildState.changedFiles.joinToString(separator = "\n") { typeAwareRelativizer.toRelative(it, RelativePathType.SOURCE) }.prependIndent("  ")}" +
+          "\ndeleted: ${buildState.deletedFiles.joinToString(separator = "\n") { typeAwareRelativizer.toRelative(it.sourceFile, RelativePathType.SOURCE) }.prependIndent("  ")}"
+      )
+    }
+
+    val incrementalEffort = buildState.changedFiles.size + buildState.deletedFiles.size
+    val rebuildThreshold = sourceFileToDigest.size * thresholdPercentage
+    val isFullRebuild = incrementalEffort >= rebuildThreshold
+    val message = "incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=$isFullRebuild"
+    log.info(message)
+    if (isFullRebuild) {
+      FileUtilRt.deleteRecursively(dataDir)
+      FileUtilRt.deleteRecursively(classOutDir)
+
+      isRebuild = true
+    }
   }
 
   var exitCode = initAndBuild(
@@ -169,11 +200,16 @@ suspend fun buildUsingJps(
     buildDataProvider = BazelBuildDataProvider(
       relativizer = typeAwareRelativizer,
       actualDigestMap = sourceFileToDigest,
-      sourceToDescriptor = buildState ?: HashMap(sourceFileToDigest.size),
+      sourceToDescriptor = buildState?.map ?: HashMap<Path, SourceDescriptor>(sourceFileToDigest.size).also {
+        for (entry in sourceFileToDigest) {
+          it.put(entry.key, SourceDescriptor(sourceFile = entry.key, digest = null, outputs = null))
+        }
+      },
       storeFile = buildStateFile,
       allocator = allocator,
       isCleanBuild = isRebuild,
     ),
+    buildState = buildState.takeIf { !isRebuild },
   )
   if (exitCode == -1) {
     log.resetState()
@@ -196,6 +232,7 @@ suspend fun buildUsingJps(
         allocator = allocator,
         isCleanBuild = true,
       ),
+      buildState = null,
     )
   }
 
@@ -214,6 +251,7 @@ private suspend fun initAndBuild(
   relativizer: PathRelativizerService,
   jpsModel: JpsModel,
   buildDataProvider: BazelBuildDataProvider,
+  buildState: LoadStateResult?,
 ): Int {
   if (messageHandler.isDebugEnabled) {
     messageHandler.info("build (isRebuild=$isRebuild)")
@@ -266,7 +304,7 @@ private suspend fun initAndBuild(
         log = messageHandler,
         isCleanBuild = storageInitializer.isCleanBuild,
         dataManager = buildDataProvider,
-      ).build(context = context, moduleTarget = moduleTarget, builders = builders)
+      ).build(context = context, moduleTarget = moduleTarget, builders = builders, buildState = buildState)
       if (exitCode == 0) {
         try {
           postBuild(

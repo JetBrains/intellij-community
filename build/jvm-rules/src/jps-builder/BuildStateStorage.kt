@@ -24,6 +24,8 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
+// https://observablehq.com/@huggingface/apache-arrow-quick-view
+
 private const val STATE_FILE_FORMAT_VERSION = 1.toString()
 private const val VERSION_META_NAME = "version"
 
@@ -50,7 +52,8 @@ fun loadBuildState(
   relativizer: PathTypeAwareRelativizer,
   allocator: RootAllocator,
   log: RequestLog?,
-): HashMap<Path, SourceDescriptor>? {
+  actualDigestMap: Map<Path, ByteArray>,
+): LoadStateResult? {
   try {
     FileChannel.open(buildStateFile, READ_FILE_OPTION).use { fileChannel ->
       VectorSchemaRoot.create(sourceDescriptorSchema, allocator).use { root ->
@@ -70,7 +73,11 @@ fun loadBuildState(
             return null
           }
 
-          return doLoad(fileReader.vectorSchemaRoot, relativizer)
+          return doLoad(
+            root = fileReader.vectorSchemaRoot,
+            actualDigestMap = actualDigestMap,
+            relativizer = relativizer,
+          )
         }
       }
     }
@@ -145,35 +152,73 @@ fun saveBuildState(buildStateFile: Path, list: Array<SourceDescriptor>, relativi
   }
 }
 
-private fun doLoad(root: VectorSchemaRoot, relativizer: PathTypeAwareRelativizer): HashMap<Path, SourceDescriptor> {
+// do not use an open-addressing hash map or immutable map - see https://stackoverflow.com/a/16303438
+data class LoadStateResult(
+  @JvmField val map: HashMap<Path, SourceDescriptor>,
+  @JvmField val changedFiles: List<Path>,
+  @JvmField val deletedFiles: List<RemovedFileInfo>,
+)
+
+class RemovedFileInfo(
+  @JvmField val sourceFile: Path,
+  @JvmField val outputs: List<Path>,
+)
+
+private fun doLoad(
+  root: VectorSchemaRoot,
+  actualDigestMap: Map<Path, ByteArray>,
+  relativizer: PathTypeAwareRelativizer,
+): LoadStateResult {
   val sourceFileVector = root.getVector(sourceFileField) as VarCharVector
   val digestVector = root.getVector(digestField) as FixedSizeBinaryVector
   val outputListVector = root.getVector(outputListField) as ListVector
   val outputListInnerVector = outputListVector.addOrGetVector<VarCharVector>(notNullUtfStringFieldType).vector
 
-  val result = HashMap<Path, SourceDescriptor>(root.rowCount)
+  // init a new state
+  val result = HashMap<Path, SourceDescriptor>(actualDigestMap.size)
+  val newFiles = HashMap(actualDigestMap)
   var outputIndex = 0
+  val changedFiles = ArrayList<Path>()
+  val deletedFiles = ArrayList<RemovedFileInfo>()
   for (rowIndex in 0 until root.rowCount) {
     val sourceFile = relativizer.toAbsoluteFile(String(sourceFileVector.get(rowIndex)), RelativePathType.SOURCE)
     val digest = if (digestVector.isNull(rowIndex)) null else digestVector.get(rowIndex)
-    val outputs = if (outputListVector.isNull(rowIndex)) {
-      null
+    val outputs: Array<String>?
+    if (outputListVector.isNull(rowIndex)) {
+      outputs = null
     }
     else {
       val start = outputListVector.getElementStartIndex(rowIndex)
       val end = outputListVector.getElementEndIndex(rowIndex)
-      Array<String>(end - start) {
+      outputs = Array<String>(end - start) {
         String(outputListInnerVector.get(it + start))
-      }.asList()
+      }
     }
 
-    result.put(sourceFile, SourceDescriptor(
-      sourceFile = sourceFile,
-      digest = digest,
-      outputs = outputs,
-    ))
+    // check the status of the stored source file
+    val actualDigest = newFiles.remove(sourceFile)
+    if (actualDigest == null) {
+      // removed
+      if (!outputs.isNullOrEmpty()) {
+        deletedFiles.add(RemovedFileInfo(
+          sourceFile = sourceFile,
+          outputs = outputs.map { relativizer.toAbsoluteFile(it, RelativePathType.OUTPUT) },
+        ))
+      }
+    }
+    else {
+      val changed = digest.contentEquals(actualDigest)
+      result.put(sourceFile, SourceDescriptor(sourceFile = sourceFile, digest = digest.takeIf { !changed }, outputs = outputs?.asList()))
+    }
+
     outputIndex++
   }
 
-  return result
+  // if a file was not removed from newFiles, it means that file is unknown and so, a new one
+  for (entry in newFiles) {
+    // for now, missing digest means that file is changed (not compiled)
+    result.put(entry.key, SourceDescriptor(sourceFile = entry.key, digest = null, outputs = null))
+  }
+
+  return LoadStateResult(map = result, changedFiles = changedFiles, deletedFiles = deletedFiles)
 }

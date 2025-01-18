@@ -26,7 +26,7 @@ internal object TestJpsBuildWorker {
     val baseDir = testPaths.baseDir
     //val sources = collectSources(sourceDirPath = "platform/platform-impl/src", paths = testPaths)
 
-    val testModule = TestModules.PLATFORM_BOOTSTRAP
+    val testModule = TestModules.PLATFORM_IMPL
     val sources = collectSources(sourceDirPath = testModule.sourcePath, paths = testPaths)
     val testParams = testModule.getParams(baseDir)
 
