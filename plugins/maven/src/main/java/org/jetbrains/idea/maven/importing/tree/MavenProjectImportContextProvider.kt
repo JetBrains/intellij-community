@@ -364,11 +364,6 @@ internal class MavenProjectImportContextProvider(
     }
   }
 
-  private class ModuleImportDataContext(
-    val importData: List<MavenProjectImportData>,
-    val moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
-  )
-
   private fun splitToModules(dataWithDependencies: MavenModuleImportDataWithDependencies): List<MavenTreeModuleImportData> {
     val otherModules = dataWithDependencies.moduleImportData.otherModules
     val project = dataWithDependencies.moduleImportData.mavenProject
@@ -402,4 +397,32 @@ internal class MavenProjectImportContextProvider(
   }
 }
 
+private class ModuleImportDataContext(
+  val importData: List<MavenProjectImportData>,
+  val moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
+)
 
+private class MavenModuleImportDataWithDependencies(
+  val moduleImportData: MavenProjectImportData,
+  val mainDependencies: List<MavenImportDependency<*>>,
+  val testDependencies: List<MavenImportDependency<*>> = emptyList(),
+) {
+  override fun toString(): String {
+    return moduleImportData.mavenProject.mavenId.toString()
+  }
+}
+
+private class MavenProjectImportData(
+  val mavenProject: MavenProject,
+  val moduleData: ModuleData,
+  val changes: MavenProjectModifications,
+  val otherModules: List<ModuleData>,
+) {
+
+  val otherMainModules = otherModules.filter { it.type == StandardMavenModuleType.MAIN_ONLY || it.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL }
+  val otherTestModules = otherModules.filter { it.type == StandardMavenModuleType.TEST_ONLY }
+
+  override fun toString(): String {
+    return mavenProject.mavenId.toString()
+  }
+}

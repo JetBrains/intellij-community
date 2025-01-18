@@ -50,28 +50,3 @@ internal open class MavenTreeModuleImportData(
   val dependencies: List<MavenImportDependency<*>>,
   val changes: MavenProjectModifications,
 ) : MavenModuleImportData(mavenProject, moduleData)
-
-internal class MavenProjectImportData(
-  val mavenProject: MavenProject,
-  val moduleData: ModuleData,
-  val changes: MavenProjectModifications,
-  val otherModules: List<ModuleData>,
-) {
-
-  val otherMainModules = otherModules.filter { it.type == StandardMavenModuleType.MAIN_ONLY || it.type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL }
-  val otherTestModules = otherModules.filter { it.type == StandardMavenModuleType.TEST_ONLY }
-
-  override fun toString(): String {
-    return mavenProject.mavenId.toString()
-  }
-}
-
-internal class MavenModuleImportDataWithDependencies @JvmOverloads constructor(
-  val moduleImportData: MavenProjectImportData,
-  val mainDependencies: List<MavenImportDependency<*>>,
-  val testDependencies: List<MavenImportDependency<*>> = emptyList(),
-) {
-  override fun toString(): String {
-    return moduleImportData.mavenProject.mavenId.toString()
-  }
-}
