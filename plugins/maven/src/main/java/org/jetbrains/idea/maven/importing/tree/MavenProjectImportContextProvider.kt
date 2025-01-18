@@ -48,16 +48,11 @@ internal class MavenProjectImportContextProvider(
 ) {
 
   fun getAllModules(projectsWithChanges: Map<MavenProject, MavenProjectModifications>): List<MavenTreeModuleImportData> {
-    val importDataContext = getModuleImportDataContext(projectsWithChanges)
-    return getFlattenModuleDataDependencyContext(importDataContext)
-  }
-
-  private fun getModuleImportDataContext(projectsToImportWithChanges: Map<MavenProject, MavenProjectModifications>): ModuleImportDataContext {
     val allModules: MutableList<MavenProjectImportData> = ArrayList<MavenProjectImportData>()
     val moduleImportDataByMavenId: MutableMap<MavenId, MavenProjectImportData> = TreeMap<MavenId, MavenProjectImportData>(
       Comparator.comparing<MavenId?, String?>(Function { obj: MavenId? -> obj!!.getKey() }))
 
-    for (each in projectsToImportWithChanges.entries) {
+    for (each in projectsWithChanges.entries) {
       val project = each.key
       val changes = each.value
 
@@ -72,14 +67,10 @@ internal class MavenProjectImportContextProvider(
       allModules.add(mavenProjectImportData)
     }
 
-    return ModuleImportDataContext(allModules, moduleImportDataByMavenId)
-  }
-
-  private fun getFlattenModuleDataDependencyContext(context: ModuleImportDataContext): List<MavenTreeModuleImportData> {
     val allModuleDataWithDependencies: MutableList<MavenTreeModuleImportData> = ArrayList<MavenTreeModuleImportData>()
 
-    for (importData in context.importData) {
-      val importDataWithDependencies = getDependencies(context.moduleImportDataByMavenId, importData)
+    for (importData in allModules) {
+      val importDataWithDependencies = getDependencies(moduleImportDataByMavenId, importData)
       val mavenModuleImportDataList = splitToModules(importDataWithDependencies)
       for (moduleImportData in mavenModuleImportDataList) {
         allModuleDataWithDependencies.add(moduleImportData)
@@ -396,11 +387,6 @@ internal class MavenProjectImportContextProvider(
     ))
   }
 }
-
-private class ModuleImportDataContext(
-  val importData: List<MavenProjectImportData>,
-  val moduleImportDataByMavenId: Map<MavenId, MavenProjectImportData>,
-)
 
 private class MavenModuleImportDataWithDependencies(
   val moduleImportData: MavenProjectImportData,
