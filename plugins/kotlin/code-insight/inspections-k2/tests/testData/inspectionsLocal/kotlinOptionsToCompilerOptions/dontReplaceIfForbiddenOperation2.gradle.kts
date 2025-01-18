@@ -1,4 +1,6 @@
 // PROBLEM: none
+// DISABLE-K2-ERRORS
+// TODO: KTIJ-32773
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {

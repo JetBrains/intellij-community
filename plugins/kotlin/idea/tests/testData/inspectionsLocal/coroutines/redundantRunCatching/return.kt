@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // PROBLEM: none
+// K2-ERROR: Return type mismatch: expected 'Int', actual 'Unit'.
 
 fun foo(a: Int) = kotlin.runCatching<caret> {
     if (a % 2 == 0) return

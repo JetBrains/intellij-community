@@ -1,4 +1,6 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
+// DISABLE-K2-ERRORS
+// TODO: KTIJ-32773
 plugins {
     kotlin("jvm") version "2.0.0"
 }

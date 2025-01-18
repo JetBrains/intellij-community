@@ -11,7 +11,7 @@ import kotlin.io.path.Path
 
 abstract class AbstractK2MultiFileLocalInspectionTest: AbstractMultiFileLocalInspectionTest() {
 
-    override fun checkForUnexpectedErrors(fileText: String) {}
+    override fun checkForUnexpectedErrors(fileText: String, beforeCheck: Boolean) {}
 
     override fun tearDown() {
         runAll(

@@ -109,7 +109,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 return@withCustomCompilerOptions
             }
 
-            checkForUnexpectedErrors()
+            checkForUnexpectedErrors(beforeCheck = true)
 
             val extraFileNames = findExtraFilesForTest(mainFile)
 
@@ -159,15 +159,17 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         return extraFileNames
     }
 
-    private fun checkForUnexpectedErrors() {
+    private fun checkForUnexpectedErrors(beforeCheck: Boolean) {
         val ktFile = file as? KtFile ?: return
         val fileText = ktFile.text
-        if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
-            checkForUnexpectedErrors(fileText)
+        val skipErrorsBeforeCheck = InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")
+        val skipErrorsAfterCheck = InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")
+        if (beforeCheck && !skipErrorsBeforeCheck || !beforeCheck && !skipErrorsAfterCheck) {
+            checkForUnexpectedErrors(fileText, beforeCheck)
         }
     }
 
-    protected open fun checkForUnexpectedErrors(fileText: String) {
+    protected open fun checkForUnexpectedErrors(fileText: String, beforeCheck: Boolean) {
         DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
     }
 
@@ -414,7 +416,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        checkForUnexpectedErrors()
+        checkForUnexpectedErrors(beforeCheck = false)
     }
 
     private fun createAfterFileIfItDoesNotExist(path: Path) {

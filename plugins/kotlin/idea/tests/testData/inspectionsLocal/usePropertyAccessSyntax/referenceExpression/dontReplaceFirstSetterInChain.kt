@@ -1,4 +1,5 @@
 // PROBLEM: none
+// K2-ERROR: Unresolved reference 'setValue'.
 
 import java.io.File
 

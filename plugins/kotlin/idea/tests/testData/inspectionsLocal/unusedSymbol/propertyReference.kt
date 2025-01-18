@@ -1,4 +1,5 @@
 // PROBLEM: none
+// K2-ERROR: Unresolved reference 'KProperty0'.
 
 val a5<caret> = ""
 

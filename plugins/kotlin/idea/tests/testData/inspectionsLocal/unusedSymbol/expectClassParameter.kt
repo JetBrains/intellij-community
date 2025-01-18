@@ -1,4 +1,14 @@
 // PROBLEM: none
+// K2-ERROR: 'expect' and 'actual' declarations can be used only in multiplatform projects. Learn more about Kotlin Multiplatform: https://kotl.in/multiplatform-setup
+// K2-ERROR: 'expect' and 'actual' declarations can be used only in multiplatform projects. Learn more about Kotlin Multiplatform: https://kotl.in/multiplatform-setup
+// K2-ERROR: 'expect' and 'actual' declarations can be used only in multiplatform projects. Learn more about Kotlin Multiplatform: https://kotl.in/multiplatform-setup
+// K2-ERROR: 'expect' and 'actual' declarations can be used only in multiplatform projects. Learn more about Kotlin Multiplatform: https://kotl.in/multiplatform-setup
+// K2-ERROR: 'expect' and 'actual' declarations can be used only in multiplatform projects. Learn more about Kotlin Multiplatform: https://kotl.in/multiplatform-setup
+// K2-ERROR: 'expect' and 'actual' declarations can be used only in multiplatform projects. Learn more about Kotlin Multiplatform: https://kotl.in/multiplatform-setup
+// K2-ERROR: CtrParams23: expect and corresponding actual are declared in the same module.
+// K2-ERROR: CtrParams23: expect and corresponding actual are declared in the same module.
+// K2-ERROR: op: expect and corresponding actual are declared in the same module.
+// K2-ERROR: op: expect and corresponding actual are declared in the same module.
 
 //common
 expect fun op(expectParameter: String)

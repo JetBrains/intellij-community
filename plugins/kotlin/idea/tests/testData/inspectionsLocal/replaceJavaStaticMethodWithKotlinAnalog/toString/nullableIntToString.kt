@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// K2-ERROR: Argument type mismatch: actual type is 'Int?', but 'Int' was expected.
 
 fun foo() {
     val a: Int? = 5

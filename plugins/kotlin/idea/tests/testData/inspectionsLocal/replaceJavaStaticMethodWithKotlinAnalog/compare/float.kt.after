@@ -1,4 +1,6 @@
 // WITH_STDLIB
+// K2-ERROR: Argument type mismatch: actual type is 'Double', but 'Float' was expected.
+// K2-ERROR: Argument type mismatch: actual type is 'Double', but 'Float' was expected.
 
 fun foo() {
     val t = 5.0.compareTo(6.0)

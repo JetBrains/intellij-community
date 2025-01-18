@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// K2-ERROR: Missing return statement.
 
 class Foo {
     companion object Bar {

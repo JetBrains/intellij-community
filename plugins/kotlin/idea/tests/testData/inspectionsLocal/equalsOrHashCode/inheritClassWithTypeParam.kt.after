@@ -1,6 +1,6 @@
 // ERROR: Unresolved reference: javaClass
 // ERROR: Unresolved reference: javaClass
-
+// K2-ERROR:
 open class Base<T>(t: T) {
     override fun hashCode(): Int = 0
     override fun equals(foo: Any?) = false

@@ -1,4 +1,5 @@
 // PROBLEM: none
+// DISABLE-K2-ERRORS
 expect abstract class Bar
 
 expect class Foo : Bar {

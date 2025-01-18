@@ -1,4 +1,8 @@
 // PROBLEM: none
+// K2-ERROR: 'infix' modifier is required on 'FirNamedFunctionSymbol kotlin/Any.hashCode'.
+// K2-ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'E (of fun <E> E.foo)'.
+// K2-ERROR: Syntax error: Qualified expression without selector.
+// K2-ERROR: Too many arguments for 'fun hashCode(): Int'.
 package my.simple.name
 
 fun <T, E, D> foo(a: T, b: E, c: D) = a!!.hashCode() + b!!.hashCode() + c!!.hashCode()

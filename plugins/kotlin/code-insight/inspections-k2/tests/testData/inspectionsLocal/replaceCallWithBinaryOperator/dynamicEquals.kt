@@ -1,5 +1,7 @@
 // JS_WITH_STDLIB
 // HIGHLIGHT: INFORMATION
+// K2-ERROR: Unsupported [dynamic type].
+// K2-AFTER-ERROR: Unsupported [dynamic type].
 fun foo(a: dynamic, b: String): Boolean {
     return a.<caret>equals(b)
 }

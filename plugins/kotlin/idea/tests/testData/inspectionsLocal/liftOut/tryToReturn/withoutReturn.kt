@@ -1,4 +1,5 @@
 // ERROR: A 'return' expression required in a function with a block body ('{...}')
+// K2-ERROR: Missing return statement.
 // PROBLEM: none
 fun doSomething() {}
 
