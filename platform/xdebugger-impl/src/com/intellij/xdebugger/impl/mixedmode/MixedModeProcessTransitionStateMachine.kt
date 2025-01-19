@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.mixedmode
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -273,7 +274,11 @@ class MixedModeProcessTransitionStateMachine(
             changeState(OnlyHighStoppedWaitingForLowStepToComplete(currentState.high))
           }
           is HighLevelRunToAddressStarted -> {
-            high.asXDebugProcess.runToPosition(currentState.sourcePosition, currentState.high)
+            runBlocking(stateMachineHelperScope.coroutineContext) {
+              withContext(Dispatchers.EDT) {
+                high.asXDebugProcess.runToPosition(currentState.sourcePosition, currentState.high)
+              }
+            }
             changeState(HighLevelRunToAddressStartedLowRun())
           }
           else -> throwTransitionIsNotImplemented(event)
