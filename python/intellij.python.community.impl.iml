@@ -159,7 +159,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.remote" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
-    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="ap-validation" level="project" />
   </component>
 </module>
