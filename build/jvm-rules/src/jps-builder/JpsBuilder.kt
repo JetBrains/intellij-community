@@ -18,6 +18,7 @@ import org.jetbrains.bazel.jvm.jps.state.STATE_FILE_FORMAT_VERSION
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.jps.state.VERSION_META_NAME
+import org.jetbrains.bazel.jvm.jps.state.createInitialSourceMap
 import org.jetbrains.bazel.jvm.jps.state.loadBuildState
 import org.jetbrains.bazel.jvm.jps.state.saveBuildState
 import org.jetbrains.bazel.jvm.kotlin.ArgMap
@@ -208,11 +209,7 @@ suspend fun buildUsingJps(
     buildDataProvider = BazelBuildDataProvider(
       relativizer = typeAwareRelativizer,
       actualDigestMap = sourceFileToDigest,
-      sourceToDescriptor = buildState?.map ?: hashMap<Path, SourceDescriptor>(sourceFileToDigest.size).also {
-        for (entry in sourceFileToDigest) {
-          it.put(entry.key, SourceDescriptor(sourceFile = entry.key, digest = null, outputs = null))
-        }
-      },
+      sourceToDescriptor = buildState?.map ?: createInitialSourceMap(sourceFileToDigest),
       storeFile = buildStateFile,
       allocator = allocator,
       isCleanBuild = isRebuild,
@@ -354,10 +351,10 @@ private suspend fun initAndBuild(
         }
         catch (e: Throwable) {
           // in case of any error during packaging - clear build
-          storageManager.forceClose()
-          projectDescriptor.release()
+          //storageManager.forceClose()
+          //projectDescriptor.release()
 
-          storageInitializer.clearStorage()
+          //storageInitializer.clearStorage()
 
           throw e
         }

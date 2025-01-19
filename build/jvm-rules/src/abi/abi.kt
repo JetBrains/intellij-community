@@ -10,27 +10,66 @@ import java.nio.ByteBuffer
 import java.nio.file.Path
 import kotlin.metadata.*
 import kotlin.metadata.jvm.KotlinClassMetadata
+import kotlin.metadata.jvm.KotlinModuleMetadata
+import kotlin.metadata.jvm.UnstableMetadataApi
 import kotlin.metadata.jvm.getterSignature
 import kotlin.metadata.jvm.localDelegatedProperties
 import kotlin.metadata.jvm.signature
 
-suspend fun writeAbi(abiJar: Path, classChannel: Channel<Pair<ByteArray, ByteArray>>) {
+class JarContentToProcess(
+  @JvmField val name: ByteArray,
+  @JvmField val data: ByteArray,
+  @JvmField val isKotlinModuleMetadata: Boolean,
+)
+
+@OptIn(UnstableMetadataApi::class)
+suspend fun writeAbi(abiJar: Path, classChannel: Channel<JarContentToProcess>) {
   writeZipUsingTempFile(abiJar, indexWriter = null) { stream ->
     val classesToBeDeleted = HashSet<String>()
-    for ((name, classData) in classChannel) {
+    //val deletedFileLevelMethods = HashSet<Pair<String, String>>()
+    var kotlinModuleMetadata: JarContentToProcess? = null
+    for (item in classChannel) {
+      if (item.isKotlinModuleMetadata) {
+        kotlinModuleMetadata = item
+        continue
+      }
+
+
       val classWriter = ClassWriter(0)
       val abiClassVisitor = AbiClassVisitor(
         classVisitor = classWriter,
         classesToBeDeleted = classesToBeDeleted,
         treatInternalAsPrivate = false,
       )
-      ClassReader(classData).accept(abiClassVisitor, ClassReader.SKIP_CODE or ClassReader.SKIP_FRAMES)
+      ClassReader(item.data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES)
       if (!abiClassVisitor.isApiClass) {
         continue
       }
 
       val abiData = classWriter.toByteArray()
-      stream.writeDataRawEntryWithoutCrc(ByteBuffer.wrap(abiData), name)
+      stream.writeDataRawEntryWithoutCrc(ByteBuffer.wrap(abiData), item.name)
+    }
+
+    if (kotlinModuleMetadata != null) {
+      val parsed = requireNotNull(KotlinModuleMetadata.read(kotlinModuleMetadata.data)) {
+        "Unsuccessful parsing of Kotlin module metadata for ABI generation: ${kotlinModuleMetadata.name.decodeToString()}"
+      }
+
+      val iterator = parsed.kmModule.packageParts.iterator()
+      var isChanged = false
+      while (iterator.hasNext()) {
+        val (_, kmPackageParts) = iterator.next()
+
+        kmPackageParts.fileFacades.removeIf { it in classesToBeDeleted }
+        if (kmPackageParts.fileFacades.isEmpty() && kmPackageParts.multiFileClassParts.isEmpty()) {
+          iterator.remove()
+          isChanged = true
+          continue
+        }
+      }
+
+      val newData = if (isChanged) { parsed.write() } else kotlinModuleMetadata.data
+      stream.writeDataRawEntryWithoutCrc(ByteBuffer.wrap(newData), kotlinModuleMetadata.name)
     }
   }
 }
@@ -46,6 +85,8 @@ internal class AbiClassVisitor(
   // tracks if this class has any public API members
   var isApiClass: Boolean = true
     private set
+
+  private var className: String? = null
 
   private val visibleAnnotations = ArrayList<AnnotationNode>()
   private val invisibleAnnotations = ArrayList<AnnotationNode>()
@@ -70,7 +111,8 @@ internal class AbiClassVisitor(
   }
 
   override fun visit(version: Int, access: Int, name: String, signature: String?, superName: String?, interfaces: Array<String>?) {
-    isApiClass = (access and Opcodes.ACC_PUBLIC) != 0
+    isApiClass = (access and (Opcodes.ACC_PUBLIC or Opcodes.ACC_PROTECTED)) != 0
+    className = name
     if (isApiClass) {
       val visibility = getKotlinMetaClass()?.visibility
       if (visibility == null || !isPrivateVisibility(visibility, treatInternalAsPrivate)) {
@@ -92,9 +134,10 @@ internal class AbiClassVisitor(
     signature: String?,
     value: Any?,
   ): FieldVisitor? {
-    if ((access and Opcodes.ACC_PUBLIC) == 0) {
+    if ((access and (Opcodes.ACC_PUBLIC or Opcodes.ACC_PROTECTED)) == 0) {
       return null
     }
+
     if (treatInternalAsPrivate && isFieldKotlinInternal(name)) {
       return null
     }
@@ -111,14 +154,14 @@ internal class AbiClassVisitor(
     signature: String?,
     exceptions: Array<String>?,
   ): MethodVisitor? {
-    if ((access and Opcodes.ACC_PUBLIC) == 0) {
+    if ((access and (Opcodes.ACC_PUBLIC or Opcodes.ACC_PROTECTED)) == 0) {
       return null
     }
     if (treatInternalAsPrivate && isMethodKotlinInternal(name)) {
       return null
     }
 
-    val method = MethodNode(api, access, name, descriptor, signature, exceptions)
+    val method = MethodNode(Opcodes.API_VERSION, access, name, descriptor, signature, exceptions)
     methods.add(method)
     //return ReplaceWithEmptyBody(method, (Type.getArgumentsAndReturnSizes(method.desc) shr 2) - 1)
     return method
@@ -138,7 +181,6 @@ internal class AbiClassVisitor(
         classVisitor = cv,
         classesToBeDeleted = classesToBeDeleted,
         treatInternalAsPrivate = treatInternalAsPrivate,
-
       )
     }
 
@@ -195,46 +237,6 @@ internal class AbiClassVisitor(
   }
 
   private fun getKotlinMetaClass(): KmClass? = (kotlinMetadata?.second as? KotlinClassMetadata.Class)?.kmClass
-}
-
-// now, we're not passing the writer to the superclass for our radical changes
-private class ReplaceWithEmptyBody(
-  private val targetWriter: MethodVisitor,
-  private val newMaxLocals: Int,
-) : MethodVisitor(Opcodes.API_VERSION) {
-  // we're only override the minimum to create a code attribute with a sole RETURN
-  override fun visitMaxs(maxStack: Int, maxLocals: Int) {
-    targetWriter.visitMaxs(0, newMaxLocals)
-  }
-
-  override fun visitCode() {
-    targetWriter.visitCode()
-    targetWriter.visitInsn(Opcodes.RETURN)
-  }
-
-  override fun visitEnd() {
-    targetWriter.visitEnd()
-  }
-
-  override fun visitAnnotation(desc: String?, visible: Boolean): AnnotationVisitor {
-    return targetWriter.visitAnnotation(desc, visible)
-  }
-
-  override fun visitParameter(name: String?, access: Int) {
-    targetWriter.visitParameter(name, access)
-  }
-}
-
-private class MethodBodyStripper(mv: MethodVisitor) : MethodVisitor(Opcodes.API_VERSION, mv) {
-  override fun visitCode() {
-    super.visitCode()
-    mv.visitInsn(Opcodes.RETURN)
-  }
-
-  override fun visitMaxs(maxStack: Int, maxLocals: Int) {
-    // indicate no stack and locals required for stripped body
-    super.visitMaxs(0, 0)
-  }
 }
 
 private fun transformAndWriteKotlinMetadata(
@@ -332,6 +334,7 @@ private fun isPrivateVisibility(visibility: Visibility, treatInternalAsPrivate: 
     visibility == Visibility.LOCAL ||
     (treatInternalAsPrivate && visibility == Visibility.INTERNAL)
 }
+
 
 private fun removePrivateDeclarationsForDeclarationContainer(
   container: KmDeclarationContainer,

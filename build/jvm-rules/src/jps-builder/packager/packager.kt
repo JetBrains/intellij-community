@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage")
 
 package org.jetbrains.bazel.jvm.jps
@@ -6,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.bazel.jvm.abi.JarContentToProcess
 import org.jetbrains.bazel.jvm.abi.writeAbi
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.NoSuchFileException
@@ -43,6 +45,7 @@ suspend fun packageToJar(
   classOutDir: Path,
   log: RequestLog
 ) {
+  //var abiJar = Path.of(outJar.toString() + ".abi.jar")
   if (abiJar == null) {
     withContext(Dispatchers.IO) {
       createJar(
@@ -56,7 +59,7 @@ suspend fun packageToJar(
     return
   }
 
-  val classChannel = Channel<Pair<ByteArray, ByteArray>>(capacity = 8)
+  val classChannel = Channel<JarContentToProcess>(capacity = 8)
   withContext(Dispatchers.IO) {
     launch {
       createJar(
@@ -80,7 +83,7 @@ private suspend fun createJar(
   outJar: Path,
   sourceDescriptors: Array<SourceDescriptor>,
   classOutDir: Path,
-  abiChannel: Channel<Pair<ByteArray, ByteArray>>?,
+  abiChannel: Channel<JarContentToProcess>?,
   messageHandler: RequestLog,
 ) {
   val packageIndexBuilder = PackageIndexBuilder()
@@ -98,14 +101,22 @@ private suspend fun createJar(
         packageIndexBuilder.addFile(name = path, addClassDir = false)
         try {
           val file = classOutDir.resolve(path)
-          if (abiChannel != null && path.endsWith(".class")) {
-            val name = path.toByteArray()
-            val classData = stream.fileAndGetData(name, file)
-            abiChannel.send(name to classData)
+          if (abiChannel != null) {
+            val isClass = path.endsWith(".class")
+            val isKotlinMetadata = !isClass && path.endsWith(".kotlin_module")
+            if (isClass || isKotlinMetadata) {
+              val name = path.toByteArray()
+              val classData = stream.fileAndGetData(name, file)
+              abiChannel.send(JarContentToProcess(
+                name = name,
+                data = classData,
+                isKotlinModuleMetadata = isKotlinMetadata,
+              ))
+              continue
+            }
           }
-          else {
-            stream.file(nameString = path, file = file)
-          }
+
+          stream.file(nameString = path, file = file)
         }
         catch (_: NoSuchFileException) {
           messageHandler.warn("output file exists in src-to-output mapping, but not found on disk: $path (classOutDir=$classOutDir)")

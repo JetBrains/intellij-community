@@ -59,6 +59,12 @@ archive_override(
     integrity = "sha256-jWDqcTgDWbeBqISkF4XFI/WbgeejFJVXMIDsv2oX/ww=",
 )
 
+http_file(
+    name = "jps-standalone_http",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-build-standalone-62c99800f7c7213d95af147c9b7b125b1d63a0de.jar",
+    downloaded_file_path = "jps-standalone-62c99800f7c7213d95af147c9b7b125b1d63a0de.jar",
+)
+
 ### auto-generated section `libraries` start
 http_file(
     name = "protobuf-java",

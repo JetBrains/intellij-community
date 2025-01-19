@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.jps.state
@@ -17,14 +18,12 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.jps.RequestLog
 import org.jetbrains.bazel.jvm.jps.SourceDescriptor
 import org.jetbrains.bazel.jvm.jps.emptyList
-import org.jetbrains.bazel.jvm.jps.emptyMap
 import org.jetbrains.bazel.jvm.jps.hashMap
 import org.jetbrains.intellij.build.io.writeFileUsingTempFile
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
 import org.jetbrains.kotlin.utils.addToStdlib.enumSetOf
 import java.io.IOException
-import java.lang.Long
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -62,10 +61,11 @@ private fun checkConfiguration(
   }
 
   for (kind in TargetConfigurationDigestProperty.entries) {
-    val storedHash = metadata.get(kind.name)?.let { Long.parseUnsignedLong(metadata.get(kind.name), Character.MAX_RADIX) }
-    val hash = targetDigests.get(kind)
-    if (hash != storedHash) {
-      return "configuration digest mismatch (${kind.description}): expected $hash, got $storedHash"
+    val storedHashAsString = metadata.get(kind.name)?.let { metadata.get(kind.name) }
+    val actualHash = targetDigests.get(kind)
+    if (actualHash != java.lang.Long.parseUnsignedLong(storedHashAsString, Character.MAX_RADIX)) {
+      val expectedAsString = java.lang.Long.toUnsignedString(actualHash, Character.MAX_RADIX)
+      return "configuration digest mismatch (${kind.description}): expected $expectedAsString, got $storedHashAsString"
     }
   }
   return null
@@ -111,7 +111,7 @@ internal fun loadBuildState(
             else {
               return LoadStateResult(
                 rebuildRequested = rebuildRequested,
-                map = emptyMap(),
+                map = createInitialSourceMap(actualDigestMap),
                 changedFiles = emptyList(),
                 deletedFiles = emptyList(),
               )
@@ -139,6 +139,14 @@ internal fun loadBuildState(
     // will be deleted by caller
     return null
   }
+}
+
+internal fun createInitialSourceMap(actualDigestMap: Map<Path, ByteArray>): Map<Path, SourceDescriptor> {
+  val result = hashMap<Path, SourceDescriptor>(actualDigestMap.size)
+  for ((path, digest) in actualDigestMap) {
+    result.put(path, SourceDescriptor(sourceFile = path, digest = digest, outputs = null))
+  }
+  return result
 }
 
 fun saveBuildState(
@@ -242,7 +250,8 @@ private fun doLoad(
     else {
       val start = outputListVector.getElementStartIndex(rowIndex)
       val end = outputListVector.getElementEndIndex(rowIndex)
-      outputs = Array<String>(end - start) {
+      val size = end - start
+      outputs = if (size == 0) null else Array<String>(size) {
         String(outputListInnerVector.get(it + start))
       }
     }
@@ -251,7 +260,7 @@ private fun doLoad(
     val actualDigest = newFiles.remove(sourceFile)
     if (actualDigest == null) {
       // removed
-      if (!outputs.isNullOrEmpty()) {
+      if (outputs != null) {
         deletedFiles.add(RemovedFileInfo(
           sourceFile = sourceFile,
           outputs = outputs.map { relativizer.toAbsoluteFile(it, RelativePathType.OUTPUT) },
@@ -259,7 +268,7 @@ private fun doLoad(
       }
     }
     else {
-      val changed = digest.contentEquals(actualDigest)
+      val changed = !digest.contentEquals(actualDigest)
       result.put(sourceFile, SourceDescriptor(sourceFile = sourceFile, digest = digest.takeIf { !changed }, outputs = outputs?.asList()))
     }
 

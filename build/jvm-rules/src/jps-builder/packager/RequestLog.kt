@@ -6,6 +6,7 @@ package org.jetbrains.bazel.jvm.jps
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
+import org.jetbrains.jps.incremental.messages.ProgressMessage
 
 class RequestLog(
   @PublishedApi @JvmField internal val out: Appendable,
@@ -52,6 +53,7 @@ class RequestLog(
           else -> message.sourcePath + "(" + message.line + ":" + message.column + "): " + message.messageText
         }
       }
+      is ProgressMessage -> return
 
       else -> message.messageText
     }

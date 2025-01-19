@@ -588,7 +588,7 @@ def _run_jps_builder(
 
     outputs = [output_jar]
     abi_jar = output_jar
-    if False and not "kt_abi_plugin_incompatible" in ctx.attr.tags:
+    if not "kt_abi_plugin_incompatible" in ctx.attr.tags:
         abi_jar = ctx.actions.declare_file(ctx.label.name + ".abi.jar")
         outputs.append(abi_jar)
         args.add("--abi-out", abi_jar)
