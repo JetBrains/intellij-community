@@ -833,22 +833,22 @@ class MavenProject(val file: VirtualFile) {
     return sourceEncoding
   }
 
-  val sourceLevel: String?
+  internal val sourceLevel: String?
     get() {
       return getCompilerLevel(false, "source")
     }
 
-  val targetLevel: String?
+  internal val targetLevel: String?
     get() {
       return getCompilerLevel(false, "target")
     }
 
-  val releaseLevel: String?
+  internal val releaseLevel: String?
     get() {
       return getCompilerLevel(false, "release")
     }
 
-  val testSourceLevel: String?
+  internal val testSourceLevel: String?
     get() {
       getCompilerLevel(true, "source")?.let { return it }
       // ok, try production compiler configs with testSource
@@ -856,14 +856,14 @@ class MavenProject(val file: VirtualFile) {
 
     }
 
-  val testTargetLevel: String?
+  internal val testTargetLevel: String?
     get() {
       return getCompilerLevel(true, "target")?.let { return it }
       // ok, try production compiler configs with testTarget
       return getCompilerLevel(false, "testTarget")
     }
 
-  val testReleaseLevel: String?
+  internal val testReleaseLevel: String?
     get() {
       return getCompilerLevel(true, "release")?.let { return it }
       // ok, try production compiler configs with testRelease

@@ -2,11 +2,13 @@
 package com.intellij.maven.testFramework
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
+import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
@@ -31,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.backend.observation.Observation
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.CodeStyleSettingsTracker
@@ -711,6 +714,24 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       Messages.NO
     }
     return counter
+  }
+
+  protected fun getSourceLanguageLevel(): LanguageLevel? {
+    return getSourceLanguageLevelForModule("project")
+  }
+
+  protected fun getTargetLanguageLevel(): LanguageLevel? {
+    return getTargetLanguageLevelForModule("project")
+  }
+
+  protected fun getSourceLanguageLevelForModule(moduleName: String): LanguageLevel? {
+    return LanguageLevelUtil.getCustomLanguageLevel(getModule("project"))
+  }
+
+  protected fun getTargetLanguageLevelForModule(moduleName: String): LanguageLevel? {
+    val compilerConfiguration = CompilerConfiguration.getInstance(project)
+    val targetLevel = compilerConfiguration.getBytecodeTargetLevel(getModule("project")) ?: return null
+    return LanguageLevel.parse(targetLevel)
   }
 
   protected fun runWithoutStaticSync() {

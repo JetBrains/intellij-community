@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
@@ -498,24 +497,39 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals("1.7", mavenProject.sourceLevel)
-    assertEquals("1.7", mavenProject.targetLevel)
+    assertEquals(LanguageLevel.JDK_1_7, getSourceLanguageLevel())
+    assertEquals(LanguageLevel.JDK_1_7, getTargetLanguageLevel())
   }
 
   @Test
   fun testCompilerPluginConfigurationFromPropertiesOverride() = runBlocking {
     createProjectPom("""
-                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><properties>
-                               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-                               <maven.compiler.source>1.7</maven.compiler.source>
-                               <maven.compiler.target>1.7</maven.compiler.target>
-                       </properties><build>  <plugins>    <plugin>      <groupId>org.apache.maven.plugins</groupId>      <artifactId>maven-compiler-plugin</artifactId>      <configuration>        <target>1.4</target>        <source>1.4</source>      </configuration>    </plugin>  </plugins></build>
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                         <maven.compiler.source>1.7</maven.compiler.source>
+                         <maven.compiler.target>1.7</maven.compiler.target>
+                       </properties>
+                       <build>
+                         <plugins>
+                           <plugin>      
+                             <groupId>org.apache.maven.plugins</groupId>
+                             <artifactId>maven-compiler-plugin</artifactId>
+                             <configuration>
+                               <target>1.4</target> 
+                               <source>1.4</source>
+                             </configuration>
+                           </plugin>
+                         </plugins>
+                       </build>
                        """.trimIndent())
 
     importProjectAsync()
 
-    assertEquals("1.4", mavenProject.sourceLevel)
-    assertEquals("1.4", mavenProject.targetLevel)
+    assertEquals(LanguageLevel.JDK_1_4, getSourceLanguageLevel())
+    assertEquals(LanguageLevel.JDK_1_4, getTargetLanguageLevel())
   }
 
   @Test
@@ -540,8 +554,8 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals(LanguageLevel.JDK_1_7, LanguageLevel.parse(
-      mavenProject.releaseLevel))
+    assertEquals(LanguageLevel.JDK_1_7, getSourceLanguageLevel())
+    assertEquals(LanguageLevel.JDK_1_7, getTargetLanguageLevel())
   }
 
   @Test
