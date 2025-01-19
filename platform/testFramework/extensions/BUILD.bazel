@@ -22,6 +22,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/util/jdom",
     "@lib//:memoryfilesystem",
+    "@lib//:junit4",
     "@lib//:assert_j",
     "@lib//:snakeyaml",
     "@lib//:fastutil-min",

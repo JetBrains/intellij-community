@@ -14,6 +14,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/structure-view-impl:structureView-impl",
+    "//platform/refactoring",
     "//platform/platform-impl:ide-impl",
     "//platform/indexing-impl",
     "//platform/ide-core-impl",

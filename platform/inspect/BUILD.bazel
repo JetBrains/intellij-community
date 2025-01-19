@@ -52,6 +52,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/lang-impl",
+    "@lib//:junit4",
     "//platform/extensions",
     "//platform/analysis-api:analysis",
     "//platform/util/jdom",

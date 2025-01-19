@@ -49,6 +49,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/util/jdom",
     "//platform/projectModel-impl",
+    "//jps/model-test-framework:model-testFramework",
   ],
   runtime_deps = ["//platform/workspace/jps"]
 )

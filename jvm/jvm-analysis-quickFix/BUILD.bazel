@@ -14,7 +14,6 @@ jvm_library(
     "//uast/uast-common:uast",
     "//platform/lang-api:lang",
     "//java/java-analysis-api:analysis",
-  ],
-  exports = ["//jvm/jvm-analysis-refactoring:analysis-refactoring"]
+  ]
 )
 ### auto-generated section `build intellij.jvm.analysis.quickFix` end

@@ -17,8 +17,10 @@ jvm_library(
     "//plugins/grazie/src:core",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-api:core",
+    "//platform/util",
     "//platform/util-ex",
     "//platform/code-style-api:codeStyle",
+    "//xml/xml-frontback:frontback",
     "//xml/impl",
   ],
   runtime_deps = [":xml_resources"]

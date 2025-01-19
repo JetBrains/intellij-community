@@ -32,6 +32,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//xml/impl",
     "//platform/util/progress",
+    "//platform/usageView",
     "//plugins/IntelliLang:xml-langInjection",
     "//xml/dom-openapi:dom",
     "//xml/dom-impl",

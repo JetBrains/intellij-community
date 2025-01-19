@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:assert_j",
     "//xml/dom-impl",
     "//jvm/jvm-analysis-api:analysis",
+    "//platform/usageView",
     "//plugins/devkit/devkit-tests:testFramework",
     "//plugins/devkit/devkit-tests:testFramework_test_lib",
     "//platform/testFramework",

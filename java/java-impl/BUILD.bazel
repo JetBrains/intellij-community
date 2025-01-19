@@ -21,6 +21,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/vcs-api:vcs",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/usageView",
     "//platform/execution-impl",
     "//java/jsp-openapi:jsp",
     "//platform/ide-core-impl",

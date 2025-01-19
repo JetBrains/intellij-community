@@ -61,6 +61,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
     "//platform/util/text-matching",
+    "@lib//:junit4",
     "//platform/lang-impl",
     "@lib//:kotlinx-serialization-core",
     "//platform/ml-api:ml",
@@ -71,6 +72,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "@lib//:jetbrains-mlapi-ml-tools",
     "@lib//:jetbrains-mlapi-ml-tools-suspendable",
+    "//platform/statistics/testFramework",
   ],
   runtime_deps = [":ml-impl_resources"]
 )

@@ -19,6 +19,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
     "//java/java-impl:impl",
+    "//platform/usageView",
+    "//jvm/jvm-analysis-refactoring:analysis-refactoring",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//platform/ide-core-impl",

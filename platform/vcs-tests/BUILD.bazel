@@ -15,6 +15,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/diff-api:diff",
     "//platform/analysis-api:analysis",
+    "@lib//:junit4",
     "//platform/indexing-impl",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",

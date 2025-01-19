@@ -16,6 +16,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/ide-core",
     "//platform/core-ui",
+    "//xml/xml-frontback:frontback",
     "//platform/util:util-ui",
     "//platform/lang-impl",
   ]
@@ -38,6 +39,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/ide-core",
     "//platform/core-ui",
+    "//xml/xml-frontback:frontback",
     "//platform/util:util-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

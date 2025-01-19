@@ -16,6 +16,9 @@ jvm_library(
     "//java/testFramework",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//jvm/jvm-analysis-impl:analysis-impl",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//java/java-impl-refactorings:impl-refactorings",
     "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
   ]
 )

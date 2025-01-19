@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
     "//java/openapi:java",
+    "//platform/usageView",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
     "//platform/testFramework",

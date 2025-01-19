@@ -57,6 +57,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
     "@lib//:junit5Pioneer",
+    "//platform/statistics/testFramework",
   ],
   runtime_deps = ["//platform/core-api:core"]
 )

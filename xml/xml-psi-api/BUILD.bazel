@@ -21,7 +21,6 @@ jvm_library(
     "//platform/editor-ui-api:editor",
     "@lib//:kotlin-stdlib",
   ],
-  exports = ["//xml/xml-frontback:frontback"],
   runtime_deps = [":psi_resources"]
 )
 ### auto-generated section `build intellij.xml.psi` end

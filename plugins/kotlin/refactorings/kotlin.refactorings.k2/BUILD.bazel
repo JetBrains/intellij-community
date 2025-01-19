@@ -28,6 +28,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//platform/usageView",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//java/java-psi-api:psi",
     "//platform/core-api:core",

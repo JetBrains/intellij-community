@@ -21,6 +21,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/util:util-ui",
     "//platform/analysis-api:analysis",
+    "//platform/refactoring",
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/usageView",

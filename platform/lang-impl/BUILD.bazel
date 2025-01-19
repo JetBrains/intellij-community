@@ -36,6 +36,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
     "//platform/projectModel-impl",
+    "//platform/refactoring",
     "//platform/workspace/jps",
     "@lib//:swingx",
     "@lib//:guava",
@@ -111,8 +112,8 @@ jvm_library(
   ],
   exports = [
     "//platform/lang-api:lang",
-    "//platform/usageView",
     "//platform/usageView-impl",
+    "//platform/refactoring",
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/util",
@@ -148,6 +149,7 @@ jvm_library(
     "@lib//:cli-parser",
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
+    "//platform/refactoring",
     "@lib//:assert_j",
     "//platform/projectModel-impl",
     "//platform/ide-core-impl",
@@ -193,6 +195,7 @@ jvm_library(
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel",
     "//platform/testFramework/junit5/eel:testFramework-junit5-eel_test_lib",
     "//platform/eel-provider",
+    "//platform/statistics/testFramework",
   ]
 )
 

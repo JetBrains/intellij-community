@@ -20,11 +20,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util:util-ui",
   ],
-  exports = [
-    "//xml/xml-psi-api:psi",
-    "//xml/xml-analysis-api:analysis",
-    "//xml/xml-structure-view-api:structureView",
-  ],
+  exports = ["//xml/xml-analysis-api:analysis"],
   runtime_deps = [":xml_resources"]
 )
 ### auto-generated section `build intellij.xml` end

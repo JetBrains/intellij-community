@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
     "//platform/core-api:core",
     "//platform/util",
   ]
@@ -20,6 +21,7 @@ jvm_library(
   associates = [":observation"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
     "//platform/core-api:core",
     "//platform/util",
     "@lib//:junit5",

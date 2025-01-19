@@ -39,6 +39,7 @@ jvm_library(
     "@lib//:jackson-module-kotlin",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "@lib//:junit4",
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
     "//tools/intellij.tools.ide.util.common:ide-util-common",

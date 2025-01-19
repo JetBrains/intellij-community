@@ -10,6 +10,7 @@ jvm_library(
     "//platform/eel",
     "//platform/util",
     "//platform/core-api:core",
+    "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-stdlib",
     "//platform/util/coroutines",
   ],

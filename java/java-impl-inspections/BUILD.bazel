@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:asm",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
+    "//platform/usageView",
     "//platform/backend/workspace",
     "//platform/core-ui",
     "//platform/util/text-matching",

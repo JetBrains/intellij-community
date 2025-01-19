@@ -21,6 +21,7 @@ jvm_library(
     "//platform/testRunner",
     "//platform/diff-api:diff",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/usageView",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/lvcs-api:lvcs",
@@ -31,7 +32,6 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
   ],
-  exports = ["//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent"],
   runtime_deps = [":coverage_resources"]
 )
 
@@ -52,6 +52,7 @@ jvm_library(
     "//platform/testRunner:testRunner_test_lib",
     "//platform/diff-api:diff",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/usageView",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/lvcs-api:lvcs",

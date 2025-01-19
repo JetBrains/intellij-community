@@ -49,6 +49,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "@lib//:jcef",
+    "@lib//:junit4",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//xml/xml-frontback:frontback",

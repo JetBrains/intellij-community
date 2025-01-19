@@ -24,6 +24,7 @@ jvm_library(
     "//java/compiler/openapi:java-compiler",
     "//platform/platform-impl:ide-impl",
     "//java/java-impl:impl",
+    "//jvm/jvm-analysis-refactoring:analysis-refactoring",
     "//java/java-indexing-api:indexing",
     "//platform/smRunner",
     "//java/debugger/impl:java-debugger-impl",

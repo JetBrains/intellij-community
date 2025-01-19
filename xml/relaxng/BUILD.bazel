@@ -26,6 +26,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/indexing-impl",
     "//platform/core-ui",
+    "//xml/xml-frontback:frontback",
     "//platform/util/jdom",
   ],
   runtime_deps = [":relaxng_resources"]
@@ -53,6 +54,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/indexing-impl",
     "//platform/core-ui",
+    "//xml/xml-frontback:frontback",
     "//platform/util/jdom",
   ],
   runtime_deps = [":relaxng_resources"]

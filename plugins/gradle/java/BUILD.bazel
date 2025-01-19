@@ -21,6 +21,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//java/idea-ui:ui",
     "//platform/observable:ide-observable",
+    "//platform/usageView",
     "//platform/lang-api:lang",
     "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
     "//platform/ide-core-impl",
@@ -88,6 +89,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//platform/observable:ide-observable",
+    "//java/java-runtime:rt",
     "//plugins/gradle/java",
     "//plugins/gradle:gradle-tests_test_lib",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
@@ -123,6 +125,7 @@ jvm_library(
     "//plugins/maven",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
+    "//platform/statistics/testFramework",
   ]
 )
 

@@ -43,6 +43,7 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/diff-impl",
     "@lib//:fastutil-min",
+    "@lib//:junit4",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",

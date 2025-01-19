@@ -2422,10 +2422,10 @@ http_file(
 )
 
 http_file(
-  name = "guava-33_3_1-jre_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.3.1-jre/guava-33.3.1-jre.jar",
-  sha256 = "4bf0e2c5af8e4525c96e8fde17a4f7307f97f8478f11c4c8e35a0e3298ae4e90",
-  downloaded_file_path = "guava-33.3.1-jre.jar"
+  name = "guava-33_4_0-jre_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.4.0-jre/guava-33.4.0-jre.jar",
+  sha256 = "b918c98a7e44dbe94ebd9fe3e40cddaadb5a93e6a78eb6008b42df237241e538",
+  downloaded_file_path = "guava-33.4.0-jre.jar"
 )
 
 http_file(
@@ -2443,10 +2443,10 @@ http_file(
 )
 
 http_file(
-  name = "guava-33_3_1-jre-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.3.1-jre/guava-33.3.1-jre-sources.jar",
-  sha256 = "b7cbdad958b791f2a036abff7724570bf9836531c460966f8a3d0df8eaa1c21d",
-  downloaded_file_path = "guava-33.3.1-jre-sources.jar"
+  name = "guava-33_4_0-jre-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/guava/guava/33.4.0-jre/guava-33.4.0-jre-sources.jar",
+  sha256 = "55ef6603b6ab1f6e3ae810b127561650ed682eb5f3fb50a212a658a74087b457",
+  downloaded_file_path = "guava-33.4.0-jre-sources.jar"
 )
 
 http_file(

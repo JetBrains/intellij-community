@@ -30,6 +30,7 @@ jvm_library(
     "//java/debugger/impl:java-debugger-impl",
     "//platform/testRunner",
     "//platform/vcs-api:vcs",
+    "//platform/usageView",
     "//platform/ide-core-impl",
     "//java/compiler/openapi:java-compiler",
     "//java/debugger/openapi:java-debugger",

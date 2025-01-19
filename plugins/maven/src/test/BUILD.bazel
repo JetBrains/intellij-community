@@ -50,6 +50,7 @@ jvm_library(
     "@lib//:hash4j",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-serialization-core",
+    "//platform/statistics/testFramework",
   ]
 )
 

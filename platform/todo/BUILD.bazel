@@ -17,6 +17,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:stream_ex",
     "//platform/platform-impl:ide-impl",
+    "//platform/usageView",
     "//platform/indexing-impl",
     "//platform/editor-ui-ex:editor-ex",
   ],

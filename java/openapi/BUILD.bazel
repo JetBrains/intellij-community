@@ -33,6 +33,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/vcs-api:vcs",
     "//xml/dom-openapi:dom",
+    "//platform/refactoring",
     "//resources-en:java-resources-en",
     "//java/java-psi-api:psi",
     "//java/java-indexing-api:indexing",

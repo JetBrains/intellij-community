@@ -20,6 +20,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:caffeine",
     "//platform/lang-impl",
+    "//platform/usageView",
     "//platform/statistics",
     "//platform/ml-impl",
     "//platform/platform-impl/internal:ide-internal",
@@ -54,6 +55,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:caffeine",
     "//platform/lang-impl",
+    "//platform/usageView",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/ml-impl",
@@ -75,6 +77,7 @@ jvm_library(
     "//plugins/search-everywhere-ml:searchEverywhereMl",
     "//plugins/search-everywhere-ml:searchEverywhereMl_test_lib",
     "//platform/bookmarks",
+    "//platform/statistics/testFramework",
   ],
   runtime_deps = [":searchEverywhereMl-ranking-core_resources"]
 )

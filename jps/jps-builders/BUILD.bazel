@@ -86,6 +86,7 @@ jvm_library(
     "@lib//:platform-jps-build-tests-jqwik",
     "@lib//:mvstore",
     "@lib//:memoryfilesystem",
+    "//jps/model-test-framework:model-testFramework",
   ]
 )
 

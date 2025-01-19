@@ -17,6 +17,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//jvm/jvm-analysis-kotlin-tests-shared:analysis-kotlin-tests-shared_test_lib",
   ],

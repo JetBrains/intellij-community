@@ -18,6 +18,7 @@ jvm_library(
     "//platform/lang-impl",
     "//images",
     "//platform/platform-impl:ide-impl",
+    "//xml/xml-frontback:frontback",
     "//platform/indexing-impl",
     "//platform/core-ui",
   ],

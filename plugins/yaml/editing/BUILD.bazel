@@ -20,6 +20,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/util:util-ui",
+    "//platform/refactoring",
     "//platform/core-ui",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-serialization-core",

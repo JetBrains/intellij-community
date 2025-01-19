@@ -11,6 +11,7 @@ jvm_test(
     "//java/testFramework",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//plugins/junit/testFramework",
   ]
 )

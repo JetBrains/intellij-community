@@ -16,6 +16,7 @@ jvm_library(
     "//plugins/xpath",
     "//plugins/xslt-debugger/engine:xslt-debugger-rt",
     "//platform/lang-api:lang",
+    "//xml/xml-frontback:frontback",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/xdebugger-api:debugger",

@@ -23,6 +23,7 @@ jvm_library(
     "//platform/smRunner:smRunner_test_lib",
     "//aether-dependency-resolver:java-aetherDependencyResolver",
     "//aether-dependency-resolver:java-aetherDependencyResolver_test_lib",
+    "//java/java-runtime:rt",
     "//platform/core-ui",
     "//plugins/testng_rt:testng-rt",
     "//platform/platform-util-io:ide-util-io",

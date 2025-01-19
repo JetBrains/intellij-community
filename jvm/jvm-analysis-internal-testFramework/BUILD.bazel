@@ -15,11 +15,6 @@ jvm_library(
     "//java/openapi:java",
     "//java/execution/impl:java-execution-impl",
     "//java/testFramework",
-  ],
-  exports = [
-    "//jvm/jvm-analysis-impl:analysis-impl",
-    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
-    "//java/java-impl-refactorings:impl-refactorings",
   ]
 )
 ### auto-generated section `build intellij.jvm.analysis.internal.testFramework` end

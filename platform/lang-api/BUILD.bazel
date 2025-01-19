@@ -41,7 +41,6 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/execution",
-    "//platform/refactoring",
   ],
   runtime_deps = [":lang_resources"]
 )

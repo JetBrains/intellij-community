@@ -65,6 +65,7 @@ jvm_test(
     "//platform/ml-impl:ml-impl_test_lib",
     "@lib//:ngram-slp",
     "//platform/lang-impl",
+    "//platform/statistics/testFramework",
   ],
   runtime_deps = [":filePrediction_resources"]
 )

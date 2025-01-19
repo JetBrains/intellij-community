@@ -22,9 +22,7 @@ jvm_library(
   exports = [
     "//xml/xml-psi-api:psi",
     "//platform/analysis-api:analysis",
-    "//platform/core-api:core",
     "//platform/extensions",
-    "//platform/util",
   ],
   runtime_deps = [":analysis_resources"]
 )

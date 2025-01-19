@@ -24,6 +24,7 @@ jvm_library(
     "//platform/macro",
     "@lib//:miglayout-swing",
     "@lib//:guava",
+    "//platform/refactoring",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins:ide-core-plugins",
     "@lib//:stream_ex",

@@ -24,6 +24,7 @@ jvm_library(
     "@lib//:gson",
     "//RegExpSupport:regexp",
     "//platform/indexing-impl",
+    "//platform/refactoring",
     "//platform/statistics",
     "@lib//:fastutil-min",
     "//platform/core-ui",

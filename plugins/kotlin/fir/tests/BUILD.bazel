@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:kotlinc-low-level-api-fir",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/usageView",
     "//platform/core-api:core",
     "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
     "//platform/testFramework",

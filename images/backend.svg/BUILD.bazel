@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//images",
     "@lib//:kotlin-stdlib",
+    "//xml/xml-frontback:frontback",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/lang-api:lang",
     "//platform/core-impl",

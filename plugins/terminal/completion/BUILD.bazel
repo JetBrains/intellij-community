@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:terminal-completion-terminal-completion-spec",
     "//platform/util",
+    "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]

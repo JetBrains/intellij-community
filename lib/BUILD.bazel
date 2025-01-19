@@ -1873,7 +1873,7 @@ java_library(
 java_library(
   name = "guava",
   exports = [
-    ":guava-33_3_1-jre_http_import",
+    ":guava-33_4_0-jre_http_import",
     ":failureaccess-1_0_2_http_import",
     ":j2objc-annotations-3_0_0_http_import",
   ],
@@ -1881,9 +1881,9 @@ java_library(
 )
 
 java_import(
-  name = "guava-33_3_1-jre_http_import",
-  jars = ["@guava-33_3_1-jre_http//file"],
-  srcjar = "@guava-33_3_1-jre-sources_http//file"
+  name = "guava-33_4_0-jre_http_import",
+  jars = ["@guava-33_4_0-jre_http//file"],
+  srcjar = "@guava-33_4_0-jre-sources_http//file"
 )
 
 java_import(

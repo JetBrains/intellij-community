@@ -40,8 +40,10 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "@lib//:junit4",
     "@lib//:assert_j",
     "//platform/testFramework/extensions:testExtensions",
+    "//jps/model-test-framework:model-testFramework",
   ]
 )
 

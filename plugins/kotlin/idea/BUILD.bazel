@@ -65,6 +65,7 @@ jvm_library(
     "//plugins/kotlin/base/facet:kotlin-base-facet",
     "//plugins/kotlin/base/jps:kotlin-base-jps",
     "//plugins/kotlin/base/compiler-configuration-ui:kotlin-base-compiler-configuration-ui",
+    "//platform/usageView",
     "//plugins/kotlin/base/platforms:kotlin-base-platforms",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/scripting:kotlin-base-scripting",

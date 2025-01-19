@@ -15,7 +15,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
   ],
   exports = [
-    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
     "//plugins/junit",
     "//java/java-frontback-psi-api:frontback-psi",
   ]

@@ -22,6 +22,7 @@ jvm_library(
     "@lib//:guava",
     "@lib//:stream_ex",
     "//platform/xdebugger-api:debugger",
+    "//platform/usageView",
     "//platform/statistics",
     "//platform/core-ui",
     "//python/python-sdk:sdk",

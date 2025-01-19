@@ -11,6 +11,7 @@ jvm_library(
     "//platform/util:util-ui",
     "//platform/util",
     "//platform/core-api:core",
+    "@lib//:kotlinx-coroutines-core",
     "//platform/util/concurrency",
     "//platform/core-ui",
     "@lib//:kotlin-stdlib",

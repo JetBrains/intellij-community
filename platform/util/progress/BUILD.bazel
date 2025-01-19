@@ -49,6 +49,7 @@ jvm_library(
     "//platform/util/progress",
     "//platform/testFramework/common",
     "//platform/util",
+    "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]

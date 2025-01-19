@@ -18,6 +18,7 @@ jvm_test(
     "//platform/smRunner:smRunner_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//java/java-runtime:rt",
     "@lib//:junit5",
     "@lib//:junit5Launcher",
     "@lib//:stream_ex",
