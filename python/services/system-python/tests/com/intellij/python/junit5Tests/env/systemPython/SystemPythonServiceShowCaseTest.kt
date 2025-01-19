@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.env.systemPython
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.executeProcess
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -10,6 +11,7 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.assertFail
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.python.junit5Tests.randomBinary
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.psi.LanguageLevel
@@ -60,5 +62,9 @@ class SystemPythonServiceShowCaseTest {
 
     allPythons = SystemPythonService().findSystemPythons()
     assertThat("Broken python returned", allPythons, not(hasItem(newPython)))
+
+    if (SystemInfo.isWindows) {
+      deleteCheckLocking(venvPath)
+    }
   }
 }
