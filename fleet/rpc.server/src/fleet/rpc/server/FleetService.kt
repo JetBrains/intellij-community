@@ -11,14 +11,14 @@ class FleetService private constructor(
   val serviceId: UID,
 ) {
   companion object {
-    suspend fun service(
+    suspend fun <T> service(
       providerId: UID,
       transportFactory: FleetTransportFactory,
       services: RpcServiceLocator,
       rpcInterceptor: RpcExecutorMiddleware = RpcExecutorMiddleware,
       rpcCallDispatcher: CoroutineDispatcher? = null,
-      body: suspend CoroutineScope.(FleetService) -> Unit,
-    ) {
+      body: suspend CoroutineScope.(FleetService) -> T,
+    ): T =
       coroutineScope {
         launch {
           connectionLoop(debugName = "RpcExecutor for service provider ${providerId}") { cc ->
@@ -41,6 +41,5 @@ class FleetService private constructor(
           body(FleetService(serviceId = providerId))
         }
       }
-    }
   }
 }
