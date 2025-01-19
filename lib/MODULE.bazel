@@ -4144,31 +4144,31 @@ http_file(
 )
 
 http_file(
-  name = "joni-2_2_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/joni/joni/2.2.1/joni-2.2.1.jar",
-  sha256 = "b3e4b657a3ed1d8f684114f6baa462d553a5932a865c1574695498dda8577748",
-  downloaded_file_path = "joni-2.2.1.jar"
+  name = "joni-2_2_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/joni/joni/2.2.3/joni-2.2.3.jar",
+  sha256 = "7ea54221f5f91deff2e860fe986eefe208b59fa04300e54c505c5c0c08d55e9a",
+  downloaded_file_path = "joni-2.2.3.jar"
 )
 
 http_file(
-  name = "jcodings-1_0_58_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58.jar",
-  sha256 = "e2f85def67d6848a7a41c648248645689e3990d17ab8f253ab2fd7e69407df67",
-  downloaded_file_path = "jcodings-1.0.58.jar"
+  name = "jcodings-1_0_61_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61.jar",
+  sha256 = "3238c68a2f86cec53cc184ad26df8352db87bb22a419bd17fb4acdfbb0bc40f0",
+  downloaded_file_path = "jcodings-1.0.61.jar"
 )
 
 http_file(
-  name = "joni-2_2_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/joni/joni/2.2.1/joni-2.2.1-sources.jar",
-  sha256 = "bdd849a2fc92ddacc89a83a8bded6e3af05d20a5d1694b2582e9b0ffad6f76cb",
-  downloaded_file_path = "joni-2.2.1-sources.jar"
+  name = "joni-2_2_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/joni/joni/2.2.3/joni-2.2.3-sources.jar",
+  sha256 = "32955919ba01468d8104f7dd1d6602f314624e5b3dd209053eb7b6112ce3772b",
+  downloaded_file_path = "joni-2.2.3-sources.jar"
 )
 
 http_file(
-  name = "jcodings-1_0_58-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58-sources.jar",
-  sha256 = "91c824da6e678974aeb95b9021659fd4912fa7cf3a738438aca9f42fc643d214",
-  downloaded_file_path = "jcodings-1.0.58-sources.jar"
+  name = "jcodings-1_0_61-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jruby/jcodings/jcodings/1.0.61/jcodings-1.0.61-sources.jar",
+  sha256 = "863aa9337bc85ac0b6bfe3544c21cb0c8ef3c39328862f2091fee361b4ccae2c",
+  downloaded_file_path = "jcodings-1.0.61-sources.jar"
 )
 
 http_file(
@@ -5439,17 +5439,17 @@ http_file(
 )
 
 http_file(
-  name = "kotlinx-html-jvm-0_11_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-html-jvm/0.11.0/kotlinx-html-jvm-0.11.0.jar",
-  sha256 = "e276fd903e32532ff63744713a3d1025e7a50f0f78ac46fbe5910e1596fd1c3d",
-  downloaded_file_path = "kotlinx-html-jvm-0.11.0.jar"
+  name = "kotlinx-html-jvm-0_12_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-html-jvm/0.12.0/kotlinx-html-jvm-0.12.0.jar",
+  sha256 = "f854126f39acbd963fd54e0cd226000a151a76f7225ee28185d52f44e262befb",
+  downloaded_file_path = "kotlinx-html-jvm-0.12.0.jar"
 )
 
 http_file(
-  name = "kotlinx-html-jvm-0_11_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-html-jvm/0.11.0/kotlinx-html-jvm-0.11.0-sources.jar",
-  sha256 = "b4e5b60457faa476dfe6aa7fc3e554427f4cfdf8703fcb55602ae426c31ed3e4",
-  downloaded_file_path = "kotlinx-html-jvm-0.11.0-sources.jar"
+  name = "kotlinx-html-jvm-0_12_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-html-jvm/0.12.0/kotlinx-html-jvm-0.12.0-sources.jar",
+  sha256 = "58083e72e92c79dec4de05056ee1bbf56ff87fcebf0d82c0886c366a90830df0",
+  downloaded_file_path = "kotlinx-html-jvm-0.12.0-sources.jar"
 )
 
 http_file(

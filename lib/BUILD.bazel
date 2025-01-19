@@ -3017,22 +3017,22 @@ java_import(
 java_library(
   name = "joni",
   exports = [
-    ":joni-2_2_1_http_import",
-    ":jcodings-1_0_58_http_import",
+    ":joni-2_2_3_http_import",
+    ":jcodings-1_0_61_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "joni-2_2_1_http_import",
-  jars = ["@joni-2_2_1_http//file"],
-  srcjar = "@joni-2_2_1-sources_http//file"
+  name = "joni-2_2_3_http_import",
+  jars = ["@joni-2_2_3_http//file"],
+  srcjar = "@joni-2_2_3-sources_http//file"
 )
 
 java_import(
-  name = "jcodings-1_0_58_http_import",
-  jars = ["@jcodings-1_0_58_http//file"],
-  srcjar = "@jcodings-1_0_58-sources_http//file"
+  name = "jcodings-1_0_61_http_import",
+  jars = ["@jcodings-1_0_61_http//file"],
+  srcjar = "@jcodings-1_0_61-sources_http//file"
 )
 
 java_import(
@@ -3968,8 +3968,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "kotlinx-html-jvm",
-  jar = "@kotlinx-html-jvm-0_11_0_http//file",
-  srcjar = "@kotlinx-html-jvm-0_11_0-sources_http//file",
+  jar = "@kotlinx-html-jvm-0_12_0_http//file",
+  srcjar = "@kotlinx-html-jvm-0_12_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
