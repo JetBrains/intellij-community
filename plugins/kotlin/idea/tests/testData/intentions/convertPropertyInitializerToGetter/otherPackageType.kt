@@ -1,3 +1,4 @@
+// K2-AFTER-ERROR: Unresolved reference 'Foo'.
 import foo.Bar
 
 class Test {

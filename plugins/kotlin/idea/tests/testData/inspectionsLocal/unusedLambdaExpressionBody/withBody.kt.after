@@ -1,9 +1,11 @@
 // "Remove '=' token from function declaration" "true"
-// ERROR: Unresolved reference: println
+
 fun foo() {
     bar()
 }
 
+fun f() {}
+
 fun bar() {
-    println()
+    f()
 }

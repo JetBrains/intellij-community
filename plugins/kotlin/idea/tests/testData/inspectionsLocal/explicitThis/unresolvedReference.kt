@@ -1,4 +1,5 @@
 // PROBLEM: none
+// ERROR: Unresolved reference: foo
 // K2-ERROR: Unresolved reference 'foo'.
 
 class JJ () {

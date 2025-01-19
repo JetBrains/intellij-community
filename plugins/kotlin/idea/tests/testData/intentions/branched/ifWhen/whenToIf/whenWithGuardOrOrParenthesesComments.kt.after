@@ -1,5 +1,6 @@
 // WITH_STDLIB
 // IGNORE_K1
+// K2-ERROR: The feature "when guards" is experimental and should be enabled explicitly. This can be done by supplying the compiler argument '-Xwhen-guards', but note that no stability guarantees are provided.
 
 private fun test(s: Any) {
     // 1

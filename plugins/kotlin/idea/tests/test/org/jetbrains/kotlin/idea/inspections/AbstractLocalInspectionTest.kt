@@ -109,15 +109,16 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 return@withCustomCompilerOptions
             }
 
-            checkForUnexpectedErrors(beforeCheck = true)
 
             val extraFileNames = findExtraFilesForTest(mainFile)
 
             myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
 
-            if ((myFixture.file as? KtFile)?.isScript() == true) {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
+            val ktFile = myFixture.file as KtFile
+            if (ktFile.isScript()) {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(ktFile)
             }
+            checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = true)
 
             doTestFor(mainFile, inspection, fileText)
 
@@ -159,15 +160,14 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         return extraFileNames
     }
 
-    private fun checkForUnexpectedErrors(beforeCheck: Boolean) {
-        val fileText = (file as? KtFile)?.text ?: return
+    private fun checkForUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String, beforeCheck: Boolean) {
         if (beforeCheck) {
             val skipErrorsBeforeCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
                 fileText,
                 *skipErrorsBeforeCheckDirectives.toTypedArray()
             ).isNotEmpty()
             if (!skipErrorsBeforeCheck) {
-                checkForErrorsBefore(fileText)
+                checkForErrorsBefore(mainFile, ktFile, fileText)
             }
         } else {
             val skipErrorsAfterCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
@@ -175,23 +175,23 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 *skipErrorsAfterCheckDirectives.toTypedArray()
             ).isNotEmpty()
             if (!skipErrorsAfterCheck) {
-                checkForErrorsAfter(fileText)
+                checkForErrorsAfter(mainFile, ktFile, fileText)
             }
         }
     }
 
     protected open val skipErrorsBeforeCheckDirectives: List<String> =
-        listOf(DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
 
     protected open val skipErrorsAfterCheckDirectives: List<String> =
-        listOf(DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
 
-    protected open fun checkForErrorsBefore(fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
+    protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
     }
 
-    protected open fun checkForErrorsAfter(fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
+    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, directive = "// AFTER_ERROR:")
     }
 
     protected fun runInspectionWithFixesAndCheck(
@@ -437,7 +437,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        checkForUnexpectedErrors(beforeCheck = false)
+        checkForUnexpectedErrors(mainFile, file as KtFile, fileText, beforeCheck = false)
     }
 
     private fun createAfterFileIfItDoesNotExist(path: Path) {

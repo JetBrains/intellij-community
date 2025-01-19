@@ -1,5 +1,6 @@
 // IS_APPLICABLE: false
 // ERROR: Function invocation 'test()' expected
+// K2-ERROR: Function invocation 'test()' expected.
 
 package one.two.three
 

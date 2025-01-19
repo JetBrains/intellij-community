@@ -1,5 +1,4 @@
 // PROBLEM: none
-// ERROR: 'operator' modifier is not applicable to function: last parameter should not have a default value or be a vararg.
 // ERROR: 'operator' modifier is inapplicable on this function: last parameter should not have a default value or be a vararg
 // IGNORE_K2
 

@@ -1,4 +1,5 @@
 // PROBLEM: none
+// DISABLE-ERRORS
 // DISABLE-K2-ERRORS
 expect abstract class Bar
 

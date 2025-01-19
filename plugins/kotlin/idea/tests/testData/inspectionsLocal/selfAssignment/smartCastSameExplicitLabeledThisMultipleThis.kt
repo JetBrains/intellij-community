@@ -1,6 +1,5 @@
 // PROBLEM: Variable 'foo' is assigned to itself
-// IGNORE_K1
-
+// WITH_STDLIB
 class Foo {
     var foo: Int = 1
 }

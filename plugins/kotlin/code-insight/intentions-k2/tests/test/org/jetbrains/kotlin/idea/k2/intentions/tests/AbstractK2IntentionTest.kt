@@ -5,20 +5,24 @@ package org.jetbrains.kotlin.idea.k2.intentions.tests
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTestBase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
     override fun intentionFileName(): String = ".k2Intention"
 
-    override fun afterFileNameSuffix(ktFilePath: File): String {
-        return if (ktFilePath.resolveSibling(ktFilePath.name + AFTER_K2_EXTENSION).exists()) AFTER_K2_EXTENSION
-        else super.afterFileNameSuffix(ktFilePath)
-    }
+    override fun afterFileNameSuffix(ktFilePath: File): String =
+        if (ktFilePath.resolveSibling(ktFilePath.name + AFTER_K2_EXTENSION).exists()) {
+            AFTER_K2_EXTENSION
+        } else {
+            super.afterFileNameSuffix(ktFilePath)
+        }
 
     override fun fileName(): String {
         val fileName = super.fileName()
@@ -41,8 +45,19 @@ abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
         super.doTestFor(mainFile, pathToFiles, intentionAction, fileText)
     }
 
-    override fun checkForErrorsAfter(fileText: String) {}
-    override fun checkForErrorsBefore(fileText: String) {}
+    override val skipErrorsBeforeCheckDirectives: List<String>
+        get() = super.skipErrorsBeforeCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
+
+    override val skipErrorsAfterCheckDirectives: List<String>
+        get() = super.skipErrorsAfterCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
+
+    override fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsBefore(mainFile, ktFile, fileText)
+    }
+
+    override fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
+    }
 
     override fun tearDown() {
         runAll(

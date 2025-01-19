@@ -5,11 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.hints.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModCommand
-import com.intellij.modcommand.ModCommandAction
-import com.intellij.modcommand.ModCommandExecutor
-import com.intellij.modcommand.ModDisplayMessage
+import com.intellij.modcommand.*
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
@@ -34,6 +30,7 @@ import org.jetbrains.kotlin.idea.base.test.registerDirectiveBasedChooserOptionIn
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -133,7 +130,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             val pathToFiles = mapOf(*(sourceFilePaths zip psiFiles).toTypedArray())
 
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
-            if ((myFixture.file as? KtFile)?.isScript() == true) {
+            val ktFile = myFixture.file as KtFile
+            if (ktFile.isScript()) {
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
             }
 
@@ -146,11 +144,11 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                             if (Runtime.version().feature() < minJavaVersion.toInt()) return@configureRegistryAndRun
                         }
 
-                        checkForErrorsBefore(fileText)
+                        checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = true)
 
                         doTestFor(mainFile, pathToFiles, intentionAction, fileText)
 
-                        checkForErrorsAfter(fileText)
+                        checkForUnexpectedErrors(mainFile, ktFile, fileText, beforeCheck = false)
 
                         PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
                     } finally {
@@ -161,37 +159,46 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         }
     }
 
-    protected open fun checkForErrorsAfter(fileText: String) {
-        val file = this.file
+    protected open val skipErrorsBeforeCheckDirectives: List<String> =
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_BEFORE")
 
-        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
-        if (file is KtFile &&
-            isApplicableDirective(fileText) &&
-            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER") &&
-            !InTextDirectivesUtils.isDirectiveDefined(fileText, disableTestDirective)
-        ) {
-            if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
-                DirectiveBasedActionUtils.checkForUnexpectedWarnings(
-                    file,
-                    disabledByDefault = false,
-                    directiveName = "AFTER-WARNING"
-                )
+    protected open val skipErrorsAfterCheckDirectives: List<String> =
+        listOf(IgnoreTests.DIRECTIVES.of(pluginMode), DISABLE_ERRORS_DIRECTIVE, "// SKIP_ERRORS_AFTER")
+
+    private fun checkForUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String, beforeCheck: Boolean) {
+        if (beforeCheck) {
+            val skipErrorsBeforeCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
+                fileText,
+                *skipErrorsBeforeCheckDirectives.toTypedArray()
+            ).isNotEmpty()
+            if (!skipErrorsBeforeCheck) {
+                checkForErrorsBefore(mainFile, ktFile, fileText)
             }
-
-            DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
+        } else {
+            val skipErrorsAfterCheck = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
+                fileText,
+                *skipErrorsAfterCheckDirectives.toTypedArray()
+            ).isNotEmpty()
+            if (!skipErrorsAfterCheck && isApplicableDirective(fileText)) {
+                checkForErrorsAfter(mainFile, ktFile, fileText)
+            }
         }
     }
 
-    protected open fun checkForErrorsBefore(fileText: String) {
-        val file = this.file
+    protected open fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
+    }
 
-        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
-        if (file is KtFile &&
-            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE") &&
-            !InTextDirectivesUtils.isDirectiveDefined(fileText, disableTestDirective)
-        ) {
-            DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
+    protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
+            DirectiveBasedActionUtils.checkForUnexpectedWarnings(
+                ktFile,
+                disabledByDefault = false,
+                directiveName = "AFTER-WARNING"
+            )
         }
+
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile)
     }
 
     protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {

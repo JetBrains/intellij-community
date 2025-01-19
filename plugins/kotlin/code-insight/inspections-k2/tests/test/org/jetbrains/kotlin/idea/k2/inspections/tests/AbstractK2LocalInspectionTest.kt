@@ -22,9 +22,9 @@ import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
 import org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
@@ -42,58 +42,17 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
     override val inspectionFileName: String = ".k2Inspection"
 
     override val skipErrorsBeforeCheckDirectives: List<String>
-        get() = super.skipErrorsBeforeCheckDirectives + IgnoreTests.DIRECTIVES.IGNORE_K2 + DISABLE_K2_ERRORS_DIRECTIVE
+        get() = super.skipErrorsBeforeCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
 
     override val skipErrorsAfterCheckDirectives: List<String>
-        get() = super.skipErrorsAfterCheckDirectives + IgnoreTests.DIRECTIVES.IGNORE_K2 + DISABLE_K2_ERRORS_DIRECTIVE
+        get() = super.skipErrorsAfterCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
 
-    override fun checkForErrorsBefore(fileText: String) {
-        checkForUnexpected(file as KtFile, "errors", KaSeverity.ERROR, "// K2-ERROR:", "// ERROR:")
+    override fun checkForErrorsBefore(mainFile: File,ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsBefore(mainFile, ktFile, fileText)
     }
 
-    override fun checkForErrorsAfter(fileText: String) {
-        checkForUnexpected(file as KtFile, "errors", KaSeverity.ERROR, "// K2-AFTER-ERROR:", "// AFTER-ERROR:")
-    }
-
-    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
-    private fun checkForUnexpected(
-        file: KtFile,
-        name: String,
-        severity: KaSeverity,
-        vararg directives: String,
-    ) {
-        val fileText = file.text
-        val (directive, lines) = directives.firstNotNullOfOrNull { directive ->
-            val lines = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, directive)
-            lines.takeIf { it.isNotEmpty() }?.let { directive to it }
-        } ?: (directives.first() to emptyList())
-
-        val expected = lines
-            .filter { it.isNotBlank() }
-            .sorted()
-            .map { "$directive $it" }
-
-        val actual =
-            allowAnalysisOnEdt {
-                analyze(file) {
-                    val diagnostics = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-                    diagnostics
-                        .filter { it.severity == severity }
-                        .map { "$directive ${it.defaultMessage.replace("\n", "<br>")}" }
-                        .sorted()
-                }
-            }
-
-        if (actual.isEmpty() && expected.isEmpty()) return
-
-        if (actual != expected) {
-            UsefulTestCase.assertOrderedEquals(
-                "All actual $name should be mentioned in test data with '$directive' directive. " +
-                        "But no unnecessary $name should be mentioned, file:\n$fileText",
-                actual,
-                expected,
-            )
-        }
+    override fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
     }
 
     override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory)

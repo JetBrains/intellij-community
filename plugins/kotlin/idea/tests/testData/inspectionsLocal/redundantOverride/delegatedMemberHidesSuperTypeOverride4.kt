@@ -1,3 +1,6 @@
+// ERROR: 'test2' overrides nothing
+// ERROR: Too many arguments for public open fun test2(): Unit defined in Bar
+
 interface Foo {
     fun test(arg: Int)
 }

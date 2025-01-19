@@ -26,9 +26,7 @@ import kotlin.test.assertTrue
 
 object DirectiveBasedActionUtils {
     const val DISABLE_ERRORS_DIRECTIVE: String = "// DISABLE-ERRORS"
-    const val DISABLE_K2_ERRORS_DIRECTIVE: String = "// DISABLE-K2-ERRORS"
-    const val DISABLE_WARNINGS_DIRECTIVE: String = "// DISABLE-K2-WARNINGS"
-    const val DISABLE_K2_WARNINGS_DIRECTIVE: String = "// DISABLE-WARNINGS"
+    const val DISABLE_WARNINGS_DIRECTIVE: String = "// DISABLE-WARNINGS"
     const val ENABLE_WARNINGS_DIRECTIVE: String = "// ENABLE-WARNINGS"
     const val PRIORITY_DIRECTIVE = "PRIORITY"
 
@@ -40,12 +38,16 @@ object DirectiveBasedActionUtils {
      */
     const val ACTION_DIRECTIVE: String = "// ACTION:"
 
-    fun checkForUnexpectedErrors(file: KtFile, diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }) {
+    fun checkForUnexpectedErrors(
+        file: KtFile,
+        directive: String = "// ERROR:",
+        diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }
+    ) {
         if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
             return
         }
 
-        checkForUnexpected(file, diagnosticsProvider, "// ERROR:", "errors", Severity.ERROR)
+        checkForUnexpected(file, diagnosticsProvider, directive, "errors", Severity.ERROR)
     }
 
     fun checkForUnexpectedWarnings(

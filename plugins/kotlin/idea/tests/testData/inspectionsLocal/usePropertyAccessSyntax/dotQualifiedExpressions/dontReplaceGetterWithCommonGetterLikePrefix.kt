@@ -1,4 +1,5 @@
 // PROBLEM: none
+// ERROR: Unresolved reference: Foo
 // K2-ERROR: Unresolved reference 'Foo'.
 // K2-ERROR: Unresolved reference 'getIfReady'.
 
