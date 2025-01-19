@@ -1,0 +1,52 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.compiler
+
+import com.intellij.maven.testFramework.MavenCompilingTestCase
+import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.runBlocking
+import org.junit.Test
+
+class MultiReleaseOutputTest : MavenCompilingTestCase() {
+  override fun setUp() {
+    super.setUp()
+    Registry.get("maven.sync.compileSourceRoots.and.multiReleaseOutput").setValue("true", testRootDisposable)
+  }
+
+  @Test
+  fun `test basic`() = runBlocking {
+    createProjectSubFile("src/main/java/A.java", "class A {}")
+    createProjectSubFile("src/main/java-additional/B.java", "class B extends A {}")
+
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <plugins>
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <executions>
+                <execution>
+                  <id>additionalSourceRoot</id>
+                  <configuration>
+                    <multiReleaseOutput>true</multiReleaseOutput>
+                    <compileSourceRoots>
+                      <root>${'$'}{project.basedir}/src/main/java-additional</root>
+                    </compileSourceRoots>
+                  </configuration>
+                </execution>
+              </executions>
+          </plugin>
+        </plugins>
+      </build>
+      """.trimIndent()
+    )
+
+    assertModules("project", "project.main", "project.additionalSourceRoot", "project.test")
+    compileModules("project", "project.main", "project.additionalSourceRoot", "project.test")
+
+    assertExists("target/classes/A.class")
+    assertExists("target/classes/B.class")
+  }
+}
