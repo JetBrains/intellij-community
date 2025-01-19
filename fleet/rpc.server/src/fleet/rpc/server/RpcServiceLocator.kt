@@ -20,7 +20,7 @@ data class ServiceImplementation(
   val serviceScope: CoroutineScope?,
 )
 
-interface RpcServiceLocator {
+fun interface RpcServiceLocator {
   fun resolve(serviceId: InstanceId): ServiceImplementation?
 }
 
