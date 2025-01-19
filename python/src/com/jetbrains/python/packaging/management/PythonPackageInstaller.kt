@@ -1,10 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.packaging
+package com.jetbrains.python.packaging.management
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackageSpecificationBase
@@ -15,6 +16,7 @@ class PythonPackagesInstaller {
     @JvmStatic
     fun installPackages(
       project: Project,
+      sdk: Sdk,
       requirements: List<PyRequirement>?,
       extraArgs: List<String>,
       indicator: ProgressIndicator,
