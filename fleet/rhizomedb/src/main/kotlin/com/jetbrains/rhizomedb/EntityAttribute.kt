@@ -68,7 +68,7 @@ fun <E : Entity, T : Any> EntityAttribute<E, T>.all(): Set<Pair<E, T>> = DbConte
  * Column query.
  * Returns a set of all values of the given attribute
  * */
-fun <E : Entity, T : Any> EntityAttribute<E, T>.allValues(): Set<T> = DbContext.threadBound.allValues(this)
+fun <E : Entity, T : Any> EntityAttribute<E, T>.values(): Set<T> = DbContext.threadBound.values(this)
 
 /**
  * Returns a single pair of [Entity] and [T] if exactly one [Entity] has this [EntityAttribute].
@@ -288,8 +288,8 @@ fun <E : Entity, V : Any> DbContext<Q>.all(attribute: EntityAttribute<E, V>): Se
  * Column query.
  * Returns a set of all values of the given attribute
  * */
-fun <E : Entity, V : Any> DbContext<Q>.allValues(attribute: EntityAttribute<E, V>): Set<V> =
-  impl.allValues(attribute)
+fun <E : Entity, V : Any> DbContext<Q>.values(attribute: EntityAttribute<E, V>): Set<V> =
+  impl.values(attribute)
 
 /**
  * Column query.
@@ -307,7 +307,7 @@ fun <E : Entity, V : Any> Q.all(attribute: EntityAttribute<E, V>): Set<Pair<E, V
  * Column query.
  * Returns a set of pairs of [Entity] and the corresponding attribute's value.
  * */
-fun <E : Entity, V : Any> Q.allValues(attribute: EntityAttribute<E, V>): Set<V> =
+fun <E : Entity, V : Any> Q.values(attribute: EntityAttribute<E, V>): Set<V> =
   queryIndex(IndexQuery.Column(attribute.attr))
     .mapTo(HashSet()) { datom ->
       fromIndexValue(attribute, datom.value)
