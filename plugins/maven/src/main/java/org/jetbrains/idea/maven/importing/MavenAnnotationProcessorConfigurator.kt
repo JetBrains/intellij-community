@@ -21,8 +21,11 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
+import org.jetbrains.idea.maven.importing.MavenImportUtil.annotationProcessorOptions
 import org.jetbrains.idea.maven.importing.MavenImportUtil.declaredAnnotationProcessors
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getAllCompilerConfigs
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessorDirectory
+import org.jetbrains.idea.maven.importing.MavenImportUtil.procMode
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId

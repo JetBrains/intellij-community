@@ -251,95 +251,6 @@ class MavenProject(val file: VirtualFile) {
     return buildDirectory + (if (testSources) "/generated-test-sources" else "/generated-sources")
   }
 
-  fun getAnnotationProcessorDirectory(testSources: Boolean): @NlsSafe String {
-    if (procMode == ProcMode.NONE) {
-      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
-      val cfg: Element? = getPluginGoalConfiguration(bscMavenPlugin, if (testSources) "process-test" else "process")
-      if (bscMavenPlugin != null && cfg == null) {
-        return buildDirectory + (if (testSources) "/generated-sources/apt-test" else "/generated-sources/apt")
-      }
-      if (cfg != null) {
-        var out: String? = findChildValueByPath(cfg, "outputDirectory")
-        if (out == null) {
-          out = findChildValueByPath(cfg, "defaultOutputDirectory")
-          if (out == null) {
-            return buildDirectory + (if (testSources) "/generated-sources/apt-test" else "/generated-sources/apt")
-          }
-        }
-
-        if (!File(out).isAbsolute) {
-          out = "$directory/$out"
-        }
-
-        return out
-      }
-    }
-
-    val def: String = getGeneratedSourcesDirectory(testSources) + (if (testSources) "/test-annotations" else "/annotations")
-    return findChildValueByPath(
-      compilerConfig, if (testSources) "generatedTestSourcesDirectory" else "generatedSourcesDirectory", def)!!
-  }
-
-  val procMode: ProcMode
-    get() {
-      var compilerConfiguration: Element? = getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin",
-                                                                            "default-compile")
-      if (compilerConfiguration == null) {
-        compilerConfiguration = compilerConfig
-      }
-
-      if (compilerConfiguration == null) {
-        return ProcMode.BOTH
-      }
-
-      val procElement: Element? = compilerConfiguration.getChild("proc")
-      if (procElement != null) {
-        val procMode: String = procElement.value
-        return if (("only".equals(procMode, ignoreCase = true))) ProcMode.ONLY
-        else if (("none".equals(procMode, ignoreCase = true))) ProcMode.NONE else ProcMode.BOTH
-      }
-
-      val compilerArgument: String? = compilerConfiguration.getChildTextTrim("compilerArgument")
-      if ("-proc:none" == compilerArgument) {
-        return ProcMode.NONE
-      }
-      if ("-proc:only" == compilerArgument) {
-        return ProcMode.ONLY
-      }
-
-      val compilerArguments: Element? = compilerConfiguration.getChild("compilerArgs")
-      if (compilerArguments != null) {
-        for (element: Element in compilerArguments.children) {
-          val arg: String = element.value
-          if ("-proc:none" == arg) {
-            return ProcMode.NONE
-          }
-          if ("-proc:only" == arg) {
-            return ProcMode.ONLY
-          }
-        }
-      }
-
-      return ProcMode.BOTH
-    }
-
-
-  val annotationProcessorOptions: Map<String, String>
-    get() {
-      val compilerConfig: Element? = compilerConfig
-      if (compilerConfig == null) {
-        return emptyMap()
-      }
-      if (procMode != ProcMode.NONE) {
-        return getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig)
-      }
-      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
-      if (bscMavenPlugin != null) {
-        return getAnnotationProcessorOptionsFromProcessorPlugin(bscMavenPlugin)
-      }
-      return emptyMap()
-    }
-
   val outputDirectory: @NlsSafe String
     get() = myState.outputDirectory!!
 
@@ -732,12 +643,6 @@ class MavenProject(val file: VirtualFile) {
     return if (goal == null) plugin.configurationElement else plugin.getGoalConfiguration(goal)
   }
 
-  private fun getPluginExecutionConfiguration(groupId: String?, artifactId: String?, executionId: String): Element? {
-    val plugin: MavenPlugin? = findPlugin(groupId, artifactId)
-    if (plugin == null) return null
-    return plugin.getExecutionConfiguration(executionId)
-  }
-
   @JvmOverloads
   fun findPlugin(groupId: String?, artifactId: String?, explicitlyDeclaredOnly: Boolean = false): MavenPlugin? {
     val plugins: List<MavenPlugin> = if (explicitlyDeclaredOnly) declaredPlugins else plugins
@@ -776,14 +681,6 @@ class MavenProject(val file: VirtualFile) {
     }
     return sourceEncoding
   }
-
-  private val compilerConfig: Element?
-    get() {
-      val executionConfiguration: Element? =
-        getPluginExecutionConfiguration("org.apache.maven.plugins", "maven-compiler-plugin", "default-compile")
-      if (executionConfiguration != null) return executionConfiguration
-      return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
-    }
 
   val properties: Properties
     get() {
@@ -913,80 +810,6 @@ class MavenProject(val file: VirtualFile) {
       catch (e: ClassNotFoundException) {
         throw IOException(e)
       }
-    }
-
-    private fun getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig: Element): Map<String, String> {
-      val res: MutableMap<String, String> = LinkedHashMap()
-
-      val compilerArgument: String? = compilerConfig.getChildText("compilerArgument")
-      addAnnotationProcessorOptionFromParameterString(compilerArgument, res)
-
-      val compilerArgs: Element? = compilerConfig.getChild("compilerArgs")
-      if (compilerArgs != null) {
-        for (e: Element in compilerArgs.children) {
-          if (!StringUtil.equals(e.name, "arg")) continue
-          val arg: String = e.textTrim
-          addAnnotationProcessorOption(arg, res)
-        }
-      }
-
-      val compilerArguments: Element? = compilerConfig.getChild("compilerArguments")
-      if (compilerArguments != null) {
-        for (e: Element in compilerArguments.children) {
-          var name: String = e.name
-          name = name.removePrefix("-")
-
-          if (name.length > 1 && name[0] == 'A') {
-            res[name.substring(1)] = e.textTrim
-          }
-        }
-      }
-      return res
-    }
-
-    private fun addAnnotationProcessorOptionFromParameterString(compilerArguments: String?, res: MutableMap<String, String>) {
-      if (!compilerArguments.isNullOrBlank()) {
-        val parametersList = ParametersList()
-        parametersList.addParametersString(compilerArguments)
-
-        for (param: String in parametersList.parameters) {
-          addAnnotationProcessorOption(param, res)
-        }
-      }
-    }
-
-    private fun addAnnotationProcessorOption(compilerArg: String?, optionsMap: MutableMap<String, String>) {
-      if (compilerArg == null || compilerArg.trim { it <= ' ' }.isEmpty()) return
-
-      if (compilerArg.startsWith("-A")) {
-        val idx: Int = compilerArg.indexOf('=', 3)
-        if (idx >= 0) {
-          optionsMap[compilerArg.substring(2, idx)] = compilerArg.substring(idx + 1)
-        }
-        else {
-          optionsMap[compilerArg.substring(2)] = ""
-        }
-      }
-    }
-
-    private fun getAnnotationProcessorOptionsFromProcessorPlugin(bscMavenPlugin: MavenPlugin): Map<String, String> {
-      var cfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
-      if (cfg == null) {
-        cfg = bscMavenPlugin.configurationElement
-      }
-      val res: LinkedHashMap<String, String> = LinkedHashMap()
-      if (cfg != null) {
-        val compilerArguments = cfg.getChildText("compilerArguments")
-        addAnnotationProcessorOptionFromParameterString(compilerArguments, res)
-
-        val optionsElement: Element? = cfg.getChild("options")
-        if (optionsElement != null) {
-          for (option: Element in optionsElement.children) {
-            res[option.name] = option.text
-          }
-        }
-      }
-      return res
     }
 
     @JvmStatic

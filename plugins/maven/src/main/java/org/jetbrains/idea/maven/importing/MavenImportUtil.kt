@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.build.events.MessageEvent
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.ParametersList
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -41,6 +42,7 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.PrefixStringEncoder
+import java.io.File
 import java.util.function.Supplier
 
 @ApiStatus.Internal
@@ -130,7 +132,7 @@ object MavenImportUtil {
   }
 
   internal fun hasTestCompilerArgs(project: MavenProject): Boolean {
-    val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID) ?: return false
+    val plugin = project.findCompilerPlugin() ?: return false
     val executions = plugin.executions
     if (executions == null || executions.isEmpty()) {
       return hasTestCompilerArgs(plugin.configurationElement)
@@ -145,7 +147,7 @@ object MavenImportUtil {
   }
 
   internal fun hasExecutionsForTests(project: MavenProject): Boolean {
-    val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+    val plugin = project.findCompilerPlugin()
     if (plugin == null) return false
     val executions = plugin.executions
     if (executions == null || executions.isEmpty()) return false
@@ -177,7 +179,7 @@ object MavenImportUtil {
   }
 
   private fun compilerExecutions(project: MavenProject): List<MavenPlugin.Execution> {
-    val plugin = project.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID) ?: return emptyList()
+    val plugin = project.findCompilerPlugin() ?: return emptyList()
     return plugin.executions ?: return emptyList()
   }
 
@@ -251,7 +253,7 @@ object MavenImportUtil {
   }
 
   internal fun getDefaultLevel(mavenProject: MavenProject): LanguageLevel {
-    val plugin = mavenProject.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+    val plugin = mavenProject.findCompilerPlugin()
     if (plugin != null && plugin.version != null) {
       //https://github.com/apache/maven-compiler-plugin/blob/master/src/main/java/org/apache/maven/plugin/compiler/AbstractCompilerMojo.java
       // consider "source" parameter documentation.
@@ -369,7 +371,7 @@ object MavenImportUtil {
     val result = ArrayList<Element>(1)
     this.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)?.let(result::add)
 
-    this.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+    this.findCompilerPlugin()
       ?.executions?.filter { it.goals.contains("compile") }
       ?.filter { it.phase != "none" }
       ?.mapNotNull { it.configurationElement }
@@ -441,20 +443,20 @@ object MavenImportUtil {
     get() {
       val configurations: List<Element> = compileExecutionConfigurations
       if (!configurations.isEmpty()) return configurations
-      val configuration: Element? = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
+      val configuration: Element? = getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
       return ContainerUtil.createMaybeSingletonList(configuration)
     }
 
   private val MavenProject.compileExecutionConfigurations: List<Element>
     get() {
-      val plugin: MavenPlugin? = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+      val plugin: MavenPlugin? = findCompilerPlugin()
       if (plugin == null) return emptyList()
       return plugin.compileExecutionConfigurations
     }
 
   private val MavenProject.testCompilerConfigs: List<Element>
     get() {
-      val plugin: MavenPlugin? = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+      val plugin: MavenPlugin? = findCompilerPlugin()
       if (plugin == null) return emptyList()
       return plugin.testCompileExecutionConfigurations
     }
@@ -494,5 +496,185 @@ object MavenImportUtil {
       }
     }
     return result
+  }
+
+  internal val MavenProject.annotationProcessorOptions: Map<String, String>
+    get() {
+      val compilerConfig: Element? = compilerConfig
+      if (compilerConfig == null) {
+        return emptyMap()
+      }
+      if (procMode != ProcMode.NONE) {
+        return getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig)
+      }
+      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
+      if (bscMavenPlugin != null) {
+        return getAnnotationProcessorOptionsFromProcessorPlugin(bscMavenPlugin)
+      }
+      return emptyMap()
+    }
+
+  private fun MavenProject.getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig: Element): Map<String, String> {
+    val res: MutableMap<String, String> = LinkedHashMap()
+
+    val compilerArgument: String? = compilerConfig.getChildText("compilerArgument")
+    addAnnotationProcessorOptionFromParameterString(compilerArgument, res)
+
+    val compilerArgs: Element? = compilerConfig.getChild("compilerArgs")
+    if (compilerArgs != null) {
+      for (e: Element in compilerArgs.children) {
+        if (!StringUtil.equals(e.name, "arg")) continue
+        val arg: String = e.textTrim
+        addAnnotationProcessorOption(arg, res)
+      }
+    }
+
+    val compilerArguments: Element? = compilerConfig.getChild("compilerArguments")
+    if (compilerArguments != null) {
+      for (e: Element in compilerArguments.children) {
+        var name: String = e.name
+        name = name.removePrefix("-")
+
+        if (name.length > 1 && name[0] == 'A') {
+          res[name.substring(1)] = e.textTrim
+        }
+      }
+    }
+    return res
+  }
+
+  private fun MavenProject.getAnnotationProcessorOptionsFromProcessorPlugin(bscMavenPlugin: MavenPlugin): Map<String, String> {
+    var cfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
+    if (cfg == null) {
+      cfg = bscMavenPlugin.configurationElement
+    }
+    val res: java.util.LinkedHashMap<String, String> = LinkedHashMap()
+    if (cfg != null) {
+      val compilerArguments = cfg.getChildText("compilerArguments")
+      addAnnotationProcessorOptionFromParameterString(compilerArguments, res)
+
+      val optionsElement: Element? = cfg.getChild("options")
+      if (optionsElement != null) {
+        for (option: Element in optionsElement.children) {
+          res[option.name] = option.text
+        }
+      }
+    }
+    return res
+  }
+
+  private fun MavenProject.addAnnotationProcessorOptionFromParameterString(compilerArguments: String?, res: MutableMap<String, String>) {
+    if (!compilerArguments.isNullOrBlank()) {
+      val parametersList = ParametersList()
+      parametersList.addParametersString(compilerArguments)
+
+      for (param: String in parametersList.parameters) {
+        addAnnotationProcessorOption(param, res)
+      }
+    }
+  }
+
+  private fun addAnnotationProcessorOption(compilerArg: String?, optionsMap: MutableMap<String, String>) {
+    if (compilerArg == null || compilerArg.trim { it <= ' ' }.isEmpty()) return
+
+    if (compilerArg.startsWith("-A")) {
+      val idx: Int = compilerArg.indexOf('=', 3)
+      if (idx >= 0) {
+        optionsMap[compilerArg.substring(2, idx)] = compilerArg.substring(idx + 1)
+      }
+      else {
+        optionsMap[compilerArg.substring(2)] = ""
+      }
+    }
+  }
+
+  internal val MavenProject.procMode: ProcMode
+    get() {
+      var compilerConfiguration: Element? = getPluginExecutionConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID,
+                                                                            "default-compile")
+      if (compilerConfiguration == null) {
+        compilerConfiguration = compilerConfig
+      }
+
+      if (compilerConfiguration == null) {
+        return ProcMode.BOTH
+      }
+
+      val procElement: Element? = compilerConfiguration.getChild("proc")
+      if (procElement != null) {
+        val procMode: String = procElement.value
+        return if (("only".equals(procMode, ignoreCase = true))) ProcMode.ONLY
+        else if (("none".equals(procMode, ignoreCase = true))) ProcMode.NONE else ProcMode.BOTH
+      }
+
+      val compilerArgument: String? = compilerConfiguration.getChildTextTrim("compilerArgument")
+      if ("-proc:none" == compilerArgument) {
+        return ProcMode.NONE
+      }
+      if ("-proc:only" == compilerArgument) {
+        return ProcMode.ONLY
+      }
+
+      val compilerArguments: Element? = compilerConfiguration.getChild("compilerArgs")
+      if (compilerArguments != null) {
+        for (element: Element in compilerArguments.children) {
+          val arg: String = element.value
+          if ("-proc:none" == arg) {
+            return ProcMode.NONE
+          }
+          if ("-proc:only" == arg) {
+            return ProcMode.ONLY
+          }
+        }
+      }
+
+      return ProcMode.BOTH
+    }
+
+  private fun MavenProject.getPluginExecutionConfiguration(groupId: String?, artifactId: String?, executionId: String): Element? {
+    val plugin: MavenPlugin? = findPlugin(groupId, artifactId)
+    if (plugin == null) return null
+    return plugin.getExecutionConfiguration(executionId)
+  }
+
+  internal fun MavenProject.getAnnotationProcessorDirectory(testSources: Boolean): @NlsSafe String {
+    if (procMode == ProcMode.NONE) {
+      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
+      val cfg: Element? = getPluginGoalConfiguration(bscMavenPlugin, if (testSources) "process-test" else "process")
+      if (bscMavenPlugin != null && cfg == null) {
+        return buildDirectory + (if (testSources) "/generated-sources/apt-test" else "/generated-sources/apt")
+      }
+      if (cfg != null) {
+        var out: String? = findChildValueByPath(cfg, "outputDirectory")
+        if (out == null) {
+          out = findChildValueByPath(cfg, "defaultOutputDirectory")
+          if (out == null) {
+            return buildDirectory + (if (testSources) "/generated-sources/apt-test" else "/generated-sources/apt")
+          }
+        }
+
+        if (!File(out).isAbsolute) {
+          out = "$directory/$out"
+        }
+
+        return out
+      }
+    }
+
+    val def: String = getGeneratedSourcesDirectory(testSources) + (if (testSources) "/test-annotations" else "/annotations")
+    return findChildValueByPath(
+      compilerConfig, if (testSources) "generatedTestSourcesDirectory" else "generatedSourcesDirectory", def)!!
+  }
+
+  private val MavenProject.compilerConfig: Element?
+    get() {
+      val executionConfiguration: Element? =
+        getPluginExecutionConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID, "default-compile")
+      if (executionConfiguration != null) return executionConfiguration
+      return getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+    }
+
+  private fun MavenProject.findCompilerPlugin(): MavenPlugin? {
+    return findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
   }
 }
