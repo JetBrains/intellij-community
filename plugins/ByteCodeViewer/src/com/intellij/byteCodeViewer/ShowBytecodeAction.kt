@@ -11,7 +11,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiFile
 import com.intellij.ui.content.ContentFactory
-import java.io.File
 
 internal class ShowBytecodeAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -39,10 +38,9 @@ internal class ShowBytecodeAction : AnAction() {
     val psiClass = ByteCodeViewerManager.getContainingClass(psiElement) ?: return
     val clsFile = ByteCodeViewerManager.findClassFile(psiClass) ?: return
     val panel = BytecodeToolWindowPanel(project, psiFile)
-    @Suppress("HardCodedStringLiteral")
-    val content = toolWindow.contentManager.contents.firstOrNull { it.description == clsFile.path }
-                  ?: ContentFactory.getInstance().createContent(panel, clsFile.path.substringAfterLast(File.separatorChar), false).apply {
-                    description = clsFile.path
+    val content = toolWindow.contentManager.contents.firstOrNull { it.description == clsFile.presentableUrl }
+                  ?: ContentFactory.getInstance().createContent(panel, clsFile.presentableName, false).apply {
+                    description = clsFile.presentableUrl
                   }
     toolWindow.contentManager.addContent(content)
     toolWindow.contentManager.setSelectedContent(content)
