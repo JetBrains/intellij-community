@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStackWithNativeThreadId
@@ -91,12 +90,12 @@ class XMixedModeExecutionStack(
   suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
       logger.info("Preparation for frame computation completed")
 
-      val lowLevelAcc = MyAccumulatingContainer()
+      val lowLevelAcc = XAccumulatingStackFrameContainer()
       lowLevelExecutionStack.computeStackFrames(firstFrameIndex, lowLevelAcc)
       val lowLevelFrames = measureTimedValue { lowLevelAcc.frames.await() }.also { logger.info("Low level frames loaded in ${it.duration}") }.value
       logger.info("Low level frames obtained")
 
-      val highLevelAcc = MyAccumulatingContainer()
+      val highLevelAcc = XAccumulatingStackFrameContainer()
       if (highLevelExecutionStack == null) {
         logger.trace("No high level stack, adding low level frames")
         container.addStackFrames(lowLevelFrames, true)
@@ -128,22 +127,6 @@ class XMixedModeExecutionStack(
         }
       }
     }
-
-  private class MyAccumulatingContainer : XStackFrameContainer {
-    private val mutableFrames = mutableListOf<XStackFrame>()
-
-    val frames: CompletableDeferred<List<XStackFrame>> = CompletableDeferred<List<XStackFrame>>()
-
-    override fun addStackFrames(stackFrames: List<XStackFrame?>, last: Boolean) {
-      mutableFrames.addAll(stackFrames.filterNotNull())
-      if (last)
-        frames.complete(mutableFrames)
-    }
-
-    override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-      frames.completeExceptionally(Exception(errorMessage))
-    }
-  }
 }
 
 val XDebugSession.mixedModeExecutionStack: XMixedModeExecutionStack?
