@@ -410,19 +410,33 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
     git.reset().setRef(IDE_REF_NAME).setMode(ResetCommand.ResetType.HARD).call()
 
     // 2. merge with cloud
-    val mergeResult = git.merge().include(cloud).call()
-    LOG.info("Merge of master&ide@${master.objectId.short} with cloud@${cloud.objectId.short}: $mergeResult")
-    if (mergeResult.mergeStatus == CONFLICTING) {
-      val conflictingFiles = mergeResult.conflicts.keys.toMutableList()
-      LOG.info("Merge of master&ide with cloud failed with conflicts in files: ${conflictingFiles}")
+    val ideBranchTip = getBranchTip(ide)
+    val cloudBranchTip = getBranchTip(cloud)
 
-      val ideBranchTip = getBranchTip(ide)
-      val cloudBranchTip = getBranchTip(cloud)
+    // plugin.json and settings provider files should not be merged by git
+    // - record which of those file differ and perform manual merge afterward
+    val pluginJsonPath = "$METAINFO_FOLDER/$PLUGINS_FILE"
+    val pluginJsonManualMerge = shouldMergeFileManually(pluginJsonPath, ideBranchTip, cloudBranchTip)
+    val settingsProviderManualMerge = mutableListOf<String>()
+    SettingsProvider.SETTINGS_PROVIDER_EP.forEachExtensionSafe(Consumer {
+      val relativePath = "$METAINFO_FOLDER/${it.id}/${it.fileName}"
+      if (shouldMergeFileManually(relativePath, ideBranchTip, cloudBranchTip)) {
+        settingsProviderManualMerge.add(relativePath)
+      }
+    })
+    val manualMerge = pluginJsonManualMerge || settingsProviderManualMerge.isNotEmpty()
+
+    val mergeResult = git.merge().include(cloud).setCommit(!manualMerge).call()
+    LOG.info("Merge of master&ide@${master.objectId.short} with cloud@${cloud.objectId.short}: $mergeResult")
+
+    if (manualMerge || mergeResult.mergeStatus == CONFLICTING) {
+      val conflictingFiles = mergeResult.conflicts?.keys?.toMutableList() ?: mutableListOf()
+      if (conflictingFiles.isNotEmpty()) {
+        LOG.info("Merge of master&ide with cloud failed with conflicts in files: ${conflictingFiles}")
+      }
 
       val addCommand = git.add()
-      val pluginJsonPath = conflictingFiles.find { it == "$METAINFO_FOLDER/$PLUGINS_FILE" }
-      if (pluginJsonPath != null) {
-        SettingsSyncEventsStatistics.MERGE_CONFLICT_OCCURRED.log(SettingsSyncEventsStatistics.MergeConflictType.PLUGINS_JSON)
+      if (pluginJsonManualMerge) {
         val mergedContent = mergePluginJson(pluginJsonPath, ideBranchTip, cloudBranchTip)
         pluginsFile.write(mergedContent)
         addCommand.addFilepattern(pluginJsonPath)
@@ -438,9 +452,9 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
 
       SettingsProvider.SETTINGS_PROVIDER_EP.forEachExtensionSafe(Consumer {
         val relativePath = "$METAINFO_FOLDER/${it.id}/${it.fileName}"
-        val file = settingsSyncStorage.resolve(relativePath)
-        if (file.exists() && conflictingFiles.contains(relativePath)) {
+        if (settingsProviderManualMerge.contains(relativePath)) {
           val mergedContent = mergeSettingsProviderFile(it, relativePath, ideBranchTip, cloudBranchTip)
+          val file = settingsSyncStorage.resolve(relativePath)
           file.write(mergedContent)
           addCommand.addFilepattern(relativePath)
           conflictingFiles -= relativePath
@@ -577,6 +591,15 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
       walk.markStart(repository.parseCommit(commit1.toObjectId()))
       walk.markStart(repository.parseCommit(commit2.toObjectId()))
       return walk.next()
+    }
+  }
+
+  private fun shouldMergeFileManually(file: String, branch1: RevCommit, branch2: RevCommit): Boolean {
+    TreeWalk.forPath(repository, file, branch1.tree, branch2.tree).use { treeWalk ->
+      val zeroId = ObjectId.zeroId()
+      val id1 = treeWalk.getObjectId(0)
+      val id2 = treeWalk.getObjectId(1)
+      return id1 != id2 && id1 != zeroId && id2 != zeroId
     }
   }
 
