@@ -30,7 +30,7 @@ data class TestWorkerPaths(
 
 fun getTestWorkerPaths(): TestWorkerPaths {
   val userHomeDir = Path.of(System.getProperty("user.home"))
-  val ideaProjectDirName = if (Runtime.getRuntime().availableProcessors() >= 20) "idea-push" else "idea-second"
+  val ideaProjectDirName = if (Runtime.getRuntime().availableProcessors() >= 20) "idea-push" else "idea"
   val projectDir = userHomeDir.resolve("projects/$ideaProjectDirName")
   val communityDir = projectDir.resolve("community")
   val baseDir = getBazelExecRoot(projectDir)

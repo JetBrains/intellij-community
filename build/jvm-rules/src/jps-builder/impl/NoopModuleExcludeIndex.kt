@@ -2,6 +2,7 @@
 package org.jetbrains.bazel.jvm.jps.impl
 
 import com.intellij.openapi.util.io.FileFilters
+import org.jetbrains.bazel.jvm.jps.emptyList
 import org.jetbrains.jps.indices.ModuleExcludeIndex
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.File

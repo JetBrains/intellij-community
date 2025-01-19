@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
-package org.jetbrains.bazel.jvm.jps
+package org.jetbrains.bazel.jvm.jps.state
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.FixedSizeBinaryVector
@@ -14,20 +14,27 @@ import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.bazel.jvm.jps.RequestLog
+import org.jetbrains.bazel.jvm.jps.SourceDescriptor
+import org.jetbrains.bazel.jvm.jps.emptyList
+import org.jetbrains.bazel.jvm.jps.emptyMap
+import org.jetbrains.bazel.jvm.jps.hashMap
 import org.jetbrains.intellij.build.io.writeFileUsingTempFile
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
 import org.jetbrains.kotlin.utils.addToStdlib.enumSetOf
 import java.io.IOException
+import java.lang.Long
 import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import kotlin.collections.iterator
 
 // https://observablehq.com/@huggingface/apache-arrow-quick-view
 
-private const val STATE_FILE_FORMAT_VERSION = 1.toString()
-private const val VERSION_META_NAME = "version"
+internal const val STATE_FILE_FORMAT_VERSION = 1.toString()
+internal const val VERSION_META_NAME = "version"
 
 private val WRITE_FILE_OPTION = enumSetOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE)
 private val READ_FILE_OPTION = enumSetOf(StandardOpenOption.READ)
@@ -44,41 +51,79 @@ private val outputListField = Field(
 
 private val sourceDescriptorSchema = Schema(java.util.List.of(sourceFileField, digestField, outputListField))
 
-private val stateFileMetadata = java.util.Map.of(VERSION_META_NAME, STATE_FILE_FORMAT_VERSION)
+// returns a reason to force rebuild
+private fun checkConfiguration(
+  metadata: Map<String, String>,
+  targetDigests: TargetConfigurationDigestContainer,
+): String? {
+  val formatVersion = metadata.get(VERSION_META_NAME)
+  if (formatVersion != STATE_FILE_FORMAT_VERSION) {
+    return "format version mismatch: expected $STATE_FILE_FORMAT_VERSION, actual $formatVersion"
+  }
+
+  for (kind in TargetConfigurationDigestProperty.entries) {
+    val storedHash = metadata.get(kind.name)?.let { Long.parseUnsignedLong(metadata.get(kind.name), Character.MAX_RADIX) }
+    val hash = targetDigests.get(kind)
+    if (hash != storedHash) {
+      return "configuration digest mismatch (${kind.description}): expected $hash, got $storedHash"
+    }
+  }
+  return null
+}
 
 @VisibleForTesting
 fun loadBuildState(
   buildStateFile: Path,
   relativizer: PathTypeAwareRelativizer,
   allocator: RootAllocator,
+  actualDigestMap: Map<Path, ByteArray>,
+): LoadStateResult? {
+  return loadBuildState(
+    buildStateFile = buildStateFile,
+    relativizer = relativizer,
+    allocator = allocator,
+    actualDigestMap = actualDigestMap,
+    log = null,
+    targetDigests = null,
+  )
+}
+
+internal fun loadBuildState(
+  buildStateFile: Path,
+  relativizer: PathTypeAwareRelativizer,
+  allocator: RootAllocator,
   log: RequestLog?,
   actualDigestMap: Map<Path, ByteArray>,
+  targetDigests: TargetConfigurationDigestContainer?,
 ): LoadStateResult? {
   try {
     FileChannel.open(buildStateFile, READ_FILE_OPTION).use { fileChannel ->
-      VectorSchemaRoot.create(sourceDescriptorSchema, allocator).use { root ->
-        ArrowFileReader(fileChannel, allocator).use { fileReader ->
-          // metadata is available only after loading batch
-          fileReader.loadNextBatch()
+      ArrowFileReader(fileChannel, allocator).use { fileReader ->
+        // metadata is available only after loading batch
+        fileReader.loadNextBatch()
 
-          val formatVersion = fileReader.metaData.get(VERSION_META_NAME)
-          if (formatVersion != STATE_FILE_FORMAT_VERSION) {
-            val message = "format version mismatch: expected $STATE_FILE_FORMAT_VERSION, actual $formatVersion"
+        if (targetDigests != null) {
+          val rebuildRequested = checkConfiguration(metadata = fileReader.metaData, targetDigests = targetDigests)
+          if (rebuildRequested != null) {
             if (log == null) {
-              throw IOException(message)
+              throw IOException(rebuildRequested)
             }
             else {
-              log.warn(message)
+              return LoadStateResult(
+                rebuildRequested = rebuildRequested,
+                map = emptyMap(),
+                changedFiles = emptyList(),
+                deletedFiles = emptyList(),
+              )
             }
-            return null
           }
-
-          return doLoad(
-            root = fileReader.vectorSchemaRoot,
-            actualDigestMap = actualDigestMap,
-            relativizer = relativizer,
-          )
         }
+
+        return doLoad(
+          root = fileReader.vectorSchemaRoot,
+          actualDigestMap = actualDigestMap,
+          relativizer = relativizer,
+        )
       }
     }
   }
@@ -96,8 +141,13 @@ fun loadBuildState(
   }
 }
 
-@VisibleForTesting
-fun saveBuildState(buildStateFile: Path, list: Array<SourceDescriptor>, relativizer: PathTypeAwareRelativizer, allocator: RootAllocator) {
+fun saveBuildState(
+  buildStateFile: Path,
+  list: Array<SourceDescriptor>,
+  relativizer: PathTypeAwareRelativizer,
+  metadata: Map<String, String>,
+  allocator: RootAllocator,
+) {
   VectorSchemaRoot.create(sourceDescriptorSchema, allocator).use { root ->
     val sourceFileVector = root.getVector("sourceFile") as VarCharVector
     val digestVector = root.getVector("digest") as FixedSizeBinaryVector
@@ -142,7 +192,7 @@ fun saveBuildState(buildStateFile: Path, list: Array<SourceDescriptor>, relativi
 
     writeFileUsingTempFile(buildStateFile) { tempFile ->
       FileChannel.open(tempFile, WRITE_FILE_OPTION).use { fileChannel ->
-        ArrowFileWriter(root, null, fileChannel, stateFileMetadata).use { fileWriter ->
+        ArrowFileWriter(root, null, fileChannel, metadata).use { fileWriter ->
           fileWriter.start()
           fileWriter.writeBatch()
           fileWriter.end()
@@ -154,7 +204,9 @@ fun saveBuildState(buildStateFile: Path, list: Array<SourceDescriptor>, relativi
 
 // do not use an open-addressing hash map or immutable map - see https://stackoverflow.com/a/16303438
 data class LoadStateResult(
-  @JvmField val map: HashMap<Path, SourceDescriptor>,
+  @JvmField val rebuildRequested: String?,
+
+  @JvmField val map: Map<Path, SourceDescriptor>,
   @JvmField val changedFiles: List<Path>,
   @JvmField val deletedFiles: List<RemovedFileInfo>,
 )
@@ -175,8 +227,8 @@ private fun doLoad(
   val outputListInnerVector = outputListVector.addOrGetVector<VarCharVector>(notNullUtfStringFieldType).vector
 
   // init a new state
-  val result = HashMap<Path, SourceDescriptor>(actualDigestMap.size)
-  val newFiles = HashMap(actualDigestMap)
+  val result = hashMap<Path, SourceDescriptor>(actualDigestMap.size)
+  val newFiles = hashMap(actualDigestMap)
   var outputIndex = 0
   val changedFiles = ArrayList<Path>()
   val deletedFiles = ArrayList<RemovedFileInfo>()
@@ -220,5 +272,5 @@ private fun doLoad(
     result.put(entry.key, SourceDescriptor(sourceFile = entry.key, digest = null, outputs = null))
   }
 
-  return LoadStateResult(map = result, changedFiles = changedFiles, deletedFiles = deletedFiles)
+  return LoadStateResult(map = result, changedFiles = changedFiles, deletedFiles = deletedFiles, rebuildRequested = null)
 }

@@ -12,6 +12,7 @@ kt_jvm_library(
         "@lib//:kotlin-stdlib",
         "//:kotlinx-coroutines-core",
         "@lib//:asm",
+        "@lib//:fastutil-min",
         "//zip:build-zip",
         "//src/jps-builder:jps-standalone",
         "//:kotlin-metadata",

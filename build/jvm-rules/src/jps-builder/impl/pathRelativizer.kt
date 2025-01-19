@@ -16,7 +16,8 @@ private const val OUT_ID_PREFIX = "@"
 internal fun createPathRelativizer(baseDir: Path, classOutDir: Path): PathRelativizerService {
   val baseDirPrefix = "${baseDir.invariantSeparatorsPathString}/"
   // Bazel may use paths with `../`
-  val parentOfBaseDirPrefix = "${baseDir.parent.invariantSeparatorsPathString}/"
+  val baseDirParent = baseDir.parent
+  val parentOfBaseDirPrefix = "${baseDirParent.invariantSeparatorsPathString}/"
   val outBaseDirPrefix = "${classOutDir.invariantSeparatorsPathString}/"
 
   val typeAwareRelativizer = object : PathTypeAwareRelativizer {
@@ -43,7 +44,7 @@ internal fun createPathRelativizer(baseDir: Path, classOutDir: Path): PathRelati
 
     override fun toAbsoluteFile(path: String, type: RelativePathType): Path {
       return when (type) {
-        RelativePathType.SOURCE -> baseDir.resolve(path)
+        RelativePathType.SOURCE -> if (path.startsWith("../")) baseDirParent.resolve(path.substring(3)) else baseDir.resolve(path)
         RelativePathType.OUTPUT -> classOutDir.resolve(path)
       }
     }

@@ -249,7 +249,6 @@ internal class BazelKotlinBuilder(
     )
 
     val actualExitCode = if (proposedExitCode == OK && fsOperations.hasMarkedDirty) ADDITIONAL_PASS_REQUIRED else proposedExitCode
-    log.debug("build result: $actualExitCode")
     context.testingContext?.buildLogger?.buildFinished(actualExitCode)
     return actualExitCode
   }

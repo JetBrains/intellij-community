@@ -17,7 +17,6 @@ data class SourceDescriptor(
   @JvmField var digest: ByteArray? = null,
   @JvmField var outputs: List<String>? = null,
 ) {
-  //fun isEmpty(): Boolean = digest == null && outputs.isNullOrEmpty()
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is SourceDescriptor) return false
@@ -87,7 +86,7 @@ private suspend fun createJar(
   val packageIndexBuilder = PackageIndexBuilder()
   writeZipUsingTempFile(outJar, packageIndexBuilder.indexWriter) { stream ->
     // output file maybe associated with more than one output file
-    val uniqueGuard = HashSet<String>(sourceDescriptors.size + 10)
+    val uniqueGuard = hashSet<String>(sourceDescriptors.size + 10)
 
     for (sourceDescriptor in sourceDescriptors) {
       for (path in sourceDescriptor.outputs ?: continue) {

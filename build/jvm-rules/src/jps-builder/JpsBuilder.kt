@@ -6,14 +6,20 @@ package org.jetbrains.bazel.jvm.jps
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtilRt
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import kotlinx.coroutines.*
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.jps.impl.*
+import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
+import org.jetbrains.bazel.jvm.jps.state.STATE_FILE_FORMAT_VERSION
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
-import org.jetbrains.bazel.jvm.jps.state.saveTargetState
+import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
+import org.jetbrains.bazel.jvm.jps.state.VERSION_META_NAME
+import org.jetbrains.bazel.jvm.jps.state.loadBuildState
+import org.jetbrains.bazel.jvm.jps.state.saveBuildState
 import org.jetbrains.bazel.jvm.kotlin.ArgMap
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
@@ -29,8 +35,8 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
-import org.jetbrains.jps.incremental.storage.StorageManager
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.jps.incremental.KotlinCompilerReferenceIndexBuilder
@@ -82,8 +88,8 @@ class JpsBuildWorker private constructor(private val allocator: RootAllocator) :
   }
 
   override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int {
-    val dependencyFileToDigest = HashMap<Path, ByteArray>()
-    val sourceFileToDigest = HashMap<Path, ByteArray>(request.inputs.size)
+    val dependencyFileToDigest = hashMap<Path, ByteArray>()
+    val sourceFileToDigest = hashMap<Path, ByteArray>(request.inputs.size)
     val sources = ArrayList<Path>()
     for (input in request.inputs) {
       if (input.path.endsWith(".kt") || input.path.endsWith(".java")) {
@@ -146,44 +152,46 @@ suspend fun buildUsingJps(
 
   val relativizer = createPathRelativizer(baseDir = baseDir, classOutDir = classOutDir)
 
-  // if class output dir doesn't exist, make sure that we do not to use existing cache - pass `isRebuild` as true in this case
-  var isRebuild = Files.notExists(classOutDir)
+  // if class output dir doesn't exist, make sure that we do not to use existing cache -
+  // set `isRebuild` to true and clear caches in this case
+  var isRebuild = false
+  if (Files.notExists(dataDir)) {
+    FileUtilRt.deleteRecursively(classOutDir)
+    isRebuild = true
+  }
+  else if (Files.notExists(classOutDir)) {
+    FileUtilRt.deleteRecursively(dataDir)
+    isRebuild = true
+  }
 
   val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
   val typeAwareRelativizer = relativizer.typeAwareRelativizer!!
-  val buildState = loadBuildState(
-    buildStateFile = buildStateFile,
-    relativizer = typeAwareRelativizer,
-    allocator = allocator,
+  val buildState = if (isRebuild) {
+    null
+  }
+  else {
+    loadBuildState(
+      buildStateFile = buildStateFile,
+      relativizer = typeAwareRelativizer,
+      allocator = allocator,
+      log = log,
+      actualDigestMap = sourceFileToDigest,
+      targetDigests = targetDigests,
+    )
+  }
+
+  val forceFullRebuild = buildState != null && checkIsFullRebuildRequired(
+    buildState = buildState,
     log = log,
-    actualDigestMap = sourceFileToDigest,
+    typeAwareRelativizer = typeAwareRelativizer,
+    sourceFileCount = sourceFileToDigest.size,
   )
-  if (buildState == null) {
+
+  if (forceFullRebuild) {
     FileUtilRt.deleteRecursively(dataDir)
     FileUtilRt.deleteRecursively(classOutDir)
 
     isRebuild = true
-  }
-
-  if (buildState != null) {
-    if (log.isDebugEnabled) {
-      log.info(
-        "changed: ${buildState.changedFiles.joinToString(separator = "\n") { typeAwareRelativizer.toRelative(it, RelativePathType.SOURCE) }.prependIndent("  ")}" +
-          "\ndeleted: ${buildState.deletedFiles.joinToString(separator = "\n") { typeAwareRelativizer.toRelative(it.sourceFile, RelativePathType.SOURCE) }.prependIndent("  ")}"
-      )
-    }
-
-    val incrementalEffort = buildState.changedFiles.size + buildState.deletedFiles.size
-    val rebuildThreshold = sourceFileToDigest.size * thresholdPercentage
-    val isFullRebuild = incrementalEffort >= rebuildThreshold
-    val message = "incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=$isFullRebuild"
-    log.info(message)
-    if (isFullRebuild) {
-      FileUtilRt.deleteRecursively(dataDir)
-      FileUtilRt.deleteRecursively(classOutDir)
-
-      isRebuild = true
-    }
   }
 
   var exitCode = initAndBuild(
@@ -200,7 +208,7 @@ suspend fun buildUsingJps(
     buildDataProvider = BazelBuildDataProvider(
       relativizer = typeAwareRelativizer,
       actualDigestMap = sourceFileToDigest,
-      sourceToDescriptor = buildState?.map ?: HashMap<Path, SourceDescriptor>(sourceFileToDigest.size).also {
+      sourceToDescriptor = buildState?.map ?: hashMap<Path, SourceDescriptor>(sourceFileToDigest.size).also {
         for (entry in sourceFileToDigest) {
           it.put(entry.key, SourceDescriptor(sourceFile = entry.key, digest = null, outputs = null))
         }
@@ -227,7 +235,7 @@ suspend fun buildUsingJps(
       buildDataProvider = BazelBuildDataProvider(
         relativizer = typeAwareRelativizer,
         actualDigestMap = sourceFileToDigest,
-        sourceToDescriptor = HashMap(sourceFileToDigest.size),
+        sourceToDescriptor = hashMap(sourceFileToDigest.size),
         storeFile = buildStateFile,
         allocator = allocator,
         isCleanBuild = true,
@@ -237,6 +245,32 @@ suspend fun buildUsingJps(
   }
 
   return exitCode
+}
+
+private fun checkIsFullRebuildRequired(
+  buildState: LoadStateResult,
+  log: RequestLog,
+  typeAwareRelativizer: PathTypeAwareRelativizer,
+  sourceFileCount: Int
+): Boolean {
+  if (buildState.rebuildRequested != null) {
+    log.warn(buildState.rebuildRequested)
+
+    return true
+  }
+
+  if (log.isDebugEnabled) {
+    log.info(
+      "changed ${buildState.changedFiles.size} files: ${buildState.changedFiles.joinToString(separator = "\n") { typeAwareRelativizer.toRelative(it, RelativePathType.SOURCE) }.prependIndent("  ")}" +
+        "\ndeleted ${buildState.deletedFiles.size} files: ${buildState.deletedFiles.joinToString(separator = "\n") { typeAwareRelativizer.toRelative(it.sourceFile, RelativePathType.SOURCE) }.prependIndent("  ")}"
+    )
+  }
+
+  val incrementalEffort = buildState.changedFiles.size + buildState.deletedFiles.size
+  val rebuildThreshold = sourceFileCount * thresholdPercentage
+  val forceFullRebuild = incrementalEffort >= rebuildThreshold
+  log.info("incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=$forceFullRebuild")
+  return forceFullRebuild
 }
 
 private suspend fun initAndBuild(
@@ -262,7 +296,7 @@ private suspend fun initAndBuild(
     storageInitializer.clearAndInit(messageHandler)
   }
   else {
-    storageInitializer.init(messageHandler, targetDigests)
+    storageInitializer.init(messageHandler)
   }
 
   try {
@@ -315,7 +349,6 @@ private suspend fun initAndBuild(
             classOutDir = classOutDir,
             context = context,
             targetDigests = targetDigests,
-            storageManager = storageManager,
             buildDataProvider = buildDataProvider,
           )
         }
@@ -344,6 +377,8 @@ private suspend fun initAndBuild(
   }
 }
 
+private val stateFileMetaNames = arrayOf(VERSION_META_NAME) + TargetConfigurationDigestProperty.entries.map { it.name }
+
 private suspend fun postBuild(
   messageHandler: RequestLog,
   moduleTarget: ModuleBuildTarget,
@@ -352,20 +387,12 @@ private suspend fun postBuild(
   classOutDir: Path,
   context: CompileContextImpl,
   targetDigests: TargetConfigurationDigestContainer,
-  storageManager: StorageManager,
   buildDataProvider: BazelBuildDataProvider,
 ) {
   coroutineScope {
     val dataManager = context.projectDescriptor.dataManager
     val sourceDescriptors = buildDataProvider.getFinalList()
     launch(CoroutineName("save caches")) {
-      // save config state only in the end
-      saveTargetState(
-        targetDigests = targetDigests,
-        manager = context.projectDescriptor.dataManager.targetStateManager as BazelBuildTargetStateManager,
-        storageManager = storageManager,
-      )
-
       dataManager.flush(/* memoryCachesOnly = */ false)
 
       ensureActive()
@@ -374,6 +401,12 @@ private suspend fun postBuild(
         buildStateFile = buildDataProvider.storeFile,
         list = sourceDescriptors,
         relativizer = buildDataProvider.relativizer,
+        metadata = Object2ObjectArrayMap(
+          stateFileMetaNames,
+          arrayOf(STATE_FILE_FORMAT_VERSION) + TargetConfigurationDigestProperty.entries.map {
+            java.lang.Long.toUnsignedString(targetDigests.get(it), Character.MAX_RADIX)
+          },
+        ),
         allocator = buildDataProvider.allocator,
       )
     }

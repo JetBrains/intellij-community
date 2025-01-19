@@ -4,16 +4,18 @@
 package org.jetbrains.bazel.jvm.jps
 
 import org.jetbrains.jps.builders.AdditionalRootsProviderService
-import org.jetbrains.jps.builders.PreloadedDataExtension
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
+import org.jetbrains.jps.builders.java.JavaBuilderExtension
 import org.jetbrains.jps.builders.java.JavaCompilingTool
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.BuilderService
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
 import org.jetbrains.jps.model.*
+import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.service.JpsServiceManager
 import org.jetbrains.jps.service.SharedThreadPool
+import java.io.File
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -34,7 +36,16 @@ internal class BazelJpsServiceManager : JpsServiceManager() {
     extensions.put(AdditionalRootsProviderService::class.java, listOf())
     extensions.put(ExcludedJavaSourceRootProvider::class.java, listOf())
     // exclude CleanupTempDirectoryExtension
-    extensions.put(PreloadedDataExtension::class.java, listOf())
+    extensions.put(JavaBuilderExtension::class.java, listOf(
+      object : JavaBuilderExtension() {
+        @Suppress("RemoveRedundantQualifierName")
+        private val javaModuleTypes = java.util.Set.of(JpsJavaModuleType.INSTANCE)
+
+        override fun shouldHonorFileEncodingForCompilation(file: File): Boolean = false
+
+        override fun getCompilableModuleTypes() = javaModuleTypes
+      }
+    ))
 
     services.put(SharedThreadPool::class.java, BazelSharedThreadPool)
     services.put(JpsEncodingConfigurationService::class.java, DummyJpsEncodingConfigurationService)

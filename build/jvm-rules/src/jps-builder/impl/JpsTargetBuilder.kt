@@ -4,38 +4,37 @@
 package org.jetbrains.bazel.jvm.jps.impl
 
 import com.intellij.openapi.util.text.Formats.formatDuration
-import com.intellij.tracing.Tracer
 import com.intellij.tracing.Tracer.start
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
-import org.jetbrains.bazel.jvm.jps.LoadStateResult
-import org.jetbrains.bazel.jvm.jps.RemovedFileInfo
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.jps.RequestLog
+import org.jetbrains.bazel.jvm.jps.hashMap
+import org.jetbrains.bazel.jvm.jps.linkedSet
+import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
+import org.jetbrains.bazel.jvm.jps.state.RemovedFileInfo
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.FileProcessor
-import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.incremental.*
-import org.jetbrains.jps.incremental.ModuleLevelBuilder.OutputConsumer
 import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.BuildFSState.NEXT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.jps.incremental.messages.*
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.concurrent.Volatile
+import kotlin.coroutines.coroutineContext
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlin.time.toJavaDuration
@@ -45,17 +44,17 @@ internal class JpsTargetBuilder(
   private val isCleanBuild: Boolean,
   private val dataManager: BazelBuildDataProvider,
 ) {
-  private val builderToDuration = HashMap<Builder, AtomicLong>()
-  private val numberOfSourcesProcessedByBuilder = HashMap<Builder, AtomicInteger>()
+  private val builderToDuration = hashMap<Builder, AtomicLong>()
+  private val numberOfSourcesProcessedByBuilder = hashMap<Builder, AtomicInteger>()
 
-  fun build(
+  suspend fun build(
     context: CompileContextImpl,
     moduleTarget: BazelModuleBuildTarget,
     builders: Array<ModuleLevelBuilder>,
     buildState: LoadStateResult?,
   ): Int {
     try {
-      val buildSpan = Tracer.start("JpsTargetBuilder.runBuild")
+      val buildSpan = start("JpsTargetBuilder.runBuild")
       context.setDone(0.0f)
       context.addBuildListener(ChainedTargetsBuildListener(context, dataManager))
       val allModuleLevelBuildersBuildStartedSpan = start("All ModuleLevelBuilder.buildStarted")
@@ -110,46 +109,8 @@ internal class JpsTargetBuilder(
     return 0
   }
 
-  private fun processDeletedPaths(context: CompileContext, target: ModuleBuildTarget, deletedFiles: List<RemovedFileInfo>): Boolean {
-    val dirsToDelete = LinkedHashSet<Path>()
-    var doneSomething = false
-    // actually delete outputs associated with removed paths
-    for (item in deletedFiles) {
-      // deleting outputs corresponding to a non-existing source
-      val deletedOutputFiles = ArrayList<Path>()
-      for (output in item.outputs) {
-        val deleted = Files.deleteIfExists(output)
-        if (deleted) {
-          deletedOutputFiles.add(output)
-          output.parent?.let {
-            dirsToDelete.add(it)
-          }
-        }
-      }
-      if (!deletedOutputFiles.isEmpty()) {
-        doneSomething = true
-        log.info("Deleted files: $deletedOutputFiles")
-        context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
-      }
-    }
-
-    val existing = Utils.REMOVED_SOURCES_KEY.get(context).get(target)
-    if (existing == null) {
-      Utils.REMOVED_SOURCES_KEY.set(context, java.util.Map.of(target, deletedFiles.map { it.sourceFile } as Collection<Path>))
-    }
-    else {
-      val set = LinkedHashSet<Path>()
-      set.addAll(existing)
-      deletedFiles.mapTo(set) { it.sourceFile }
-      Utils.REMOVED_SOURCES_KEY.set(context, java.util.Map.of(target, set as Collection<Path>))
-    }
-
-    FSOperations.pruneEmptyDirs(context, dirsToDelete)
-    return doneSomething
-  }
-
   // return true if changed something, false otherwise
-  private fun runModuleLevelBuilders(
+  private suspend fun runModuleLevelBuilders(
     context: CompileContext,
     target: BazelModuleBuildTarget,
     builders: Array<ModuleLevelBuilder>,
@@ -164,15 +125,12 @@ internal class JpsTargetBuilder(
     }
 
     var doneSomething = false
-    val outputConsumer = ChunkBuildOutputConsumerImpl(context)
+    val outputConsumer = ChunkBuildOutputConsumerImpl(context = context, target = target, dataManager = dataManager)
     try {
-      val projectDescriptor = context.projectDescriptor
-      val fsState = projectDescriptor.fsState
+      val fsState = context.projectDescriptor.fsState
       val dirtyFilesHolder = object : DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
         override fun processDirtyFiles(processor: FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>) {
-          for (target in chunk.targets) {
-            fsState.processFilesToRecompile(context, target, processor)
-          }
+          fsState.processFilesToRecompile(context, target, processor)
         }
       }
 
@@ -183,22 +141,12 @@ internal class JpsTargetBuilder(
         fsState.beforeNextRoundStart(context, chunk)
 
         if (!isCleanBuild) {
-          val cleanedSources = BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder)
-          for (entry in cleanedSources.entries) {
-            val files = entry.value.keys
-            if (files.isEmpty()) {
-              continue
-            }
-
-            val mapping = dataManager.sourceToOutputMapping
-            for (sourceFile in files) {
-              val outputs = entry.value.get(sourceFile)!!
-              mapping.setOutputs(sourceFile, outputs)
-              if (!outputs.isEmpty()) {
-                log.info("Some outputs were not removed for $sourceFile source file: $outputs")
-              }
-            }
-          }
+          cleanOutputsCorrespondingToChangedFiles(
+            context = context,
+            log = log,
+            target = target,
+            dataManager = dataManager,
+          )
         }
 
         try {
@@ -227,13 +175,15 @@ internal class JpsTargetBuilder(
               processedFiles = outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore,
             )
 
-            doneSomething = doneSomething or (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE)
-
+            if (buildResult != null && buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE) {
+              doneSomething = true
+            }
             if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
               throw StopBuildException("Builder ${builder.presentableName} requested build stop")
             }
 
-            context.checkCanceled()
+            coroutineContext.ensureActive()
+
             if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
               nextPassRequired = true
             }
@@ -283,7 +233,7 @@ internal class JpsTargetBuilder(
     return doneSomething
   }
 
-  private fun buildTarget(
+  private suspend fun buildTarget(
     context: CompileContext,
     target: BazelModuleBuildTarget,
     builders: Array<ModuleLevelBuilder>,
@@ -293,14 +243,14 @@ internal class JpsTargetBuilder(
     try {
       context.setCompilationStartStamp(targets, System.currentTimeMillis())
 
-      sendBuildingTargetMessages(targets, BuildingTargetProgressMessage.Event.STARTED)
       Utils.ERRORS_DETECTED_KEY.set(context, false)
+
+      var doneSomething = false
 
       val fsState = context.projectDescriptor.fsState
       require(!fsState.isInitialScanPerformed(target))
-      val deletedFiles = if (isCleanBuild || buildState == null) {
+      if (isCleanBuild || buildState == null) {
         initFsStateForCleanBuild(context = context, target = target)
-        java.util.List.of()
       }
       else {
         val projectDescriptor = context.projectDescriptor
@@ -317,14 +267,16 @@ internal class JpsTargetBuilder(
         val fsState = projectDescriptor.fsState
         fsState.getDelta(target).initRecompile(Object2ObjectArrayMap(k, v))
         fsState.markInitialScanPerformed(target)
-        buildState.deletedFiles
-      }
 
-      var doneSomething = if (deletedFiles.isEmpty()) false else processDeletedPaths(context, target, deletedFiles)
+        val deletedFiles = buildState.deletedFiles
+        if (!deletedFiles.isEmpty()) {
+          doneSomething = deleteOutputsAssociatedWithDeletedPaths(context = context, target = target, deletedFiles = deletedFiles, log = log)
+        }
+      }
 
       fsState.beforeChunkBuildStart(context, targets)
 
-      val runBuildersSpan = Tracer.start("runBuilders")
+      val runBuildersSpan = start("runBuilders")
       if (runModuleLevelBuilders(context, target, builders)) {
         doneSomething = true
       }
@@ -334,27 +286,13 @@ internal class JpsTargetBuilder(
       fsState.clearContextChunk(context)
 
       if (doneSomething) {
-        BuildOperations.markTargetsUpToDate(context, targets)
+        markTargetUpToDate(context = context, target = target, dataManager = dataManager)
       }
-    }
-    catch (e: BuildDataCorruptedException) {
-      throw e
-    }
-    catch (e: ProjectBuildException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      val message = StringBuilder()
-      message.append(target.presentableName).append(": ").append(e.javaClass.getName())
-      e.message?.let {
-        message.append(": ").append(it)
-      }
-      throw ProjectBuildException(message.toString(), e)
     }
     finally {
       try {
-        // restore deleted paths that were not processed by 'integrate'
-        val map = Utils.REMOVED_SOURCES_KEY.get(context)
+        // restore deleted paths that were not processed
+        val map = context.getUserData(Utils.REMOVED_SOURCES_KEY)
         if (map != null) {
           val fsState = context.projectDescriptor.fsState
           for (entry in map.entries) {
@@ -365,93 +303,14 @@ internal class JpsTargetBuilder(
         }
       }
       finally {
-        Utils.REMOVED_SOURCES_KEY.set(context, null)
-        sendBuildingTargetMessages(targets, BuildingTargetProgressMessage.Event.FINISHED)
+        context.putUserData(Utils.REMOVED_SOURCES_KEY, null)
       }
     }
-  }
-
-  private fun sendBuildingTargetMessages(targets: Set<BuildTarget<*>>, event: BuildingTargetProgressMessage.Event) {
-    log.processMessage(BuildingTargetProgressMessage(targets, event))
   }
 
   private fun storeBuilderStatistics(builder: Builder, elapsedTime: Long, processedFiles: Int) {
     builderToDuration.computeIfAbsent(builder) { AtomicLong() }.addAndGet(elapsedTime)
     numberOfSourcesProcessedByBuilder.computeIfAbsent(builder) { AtomicInteger() }.addAndGet(processedFiles)
-  }
-}
-
-private class ChunkBuildOutputConsumerImpl(private val context: CompileContext) : OutputConsumer {
-  private val targetToConsumer = HashMap<BuildTarget<*>, BuildOutputConsumerImpl>()
-  private val classes = HashMap<String, CompiledClass>()
-  private val targetToClassesMap = HashMap<BuildTarget<*>, MutableCollection<CompiledClass>>()
-  private val outputToBuilderNameMap = Collections.synchronizedMap(HashMap<File, String>())
-
-  @Volatile
-  private var currentBuilderName: String? = null
-
-  fun setCurrentBuilderName(builderName: String?) {
-    currentBuilderName = builderName
-  }
-
-  override fun getTargetCompiledClasses(target: BuildTarget<*>): Collection<CompiledClass> {
-    return targetToClassesMap.get(target) ?: return java.util.List.of()
-  }
-
-  override fun getCompiledClasses(): MutableMap<String, CompiledClass> = Collections.unmodifiableMap(classes)
-
-  override fun lookupClassBytes(className: String?): BinaryContent? = classes.get(className)?.content
-
-  override fun registerCompiledClass(target: BuildTarget<*>?, compiled: CompiledClass) {
-    val className = compiled.className
-    if (className != null) {
-      classes.put(className, compiled)
-      if (target != null) {
-        var classes = targetToClassesMap.get(target)
-        if (classes == null) {
-          classes = ArrayList<CompiledClass>()
-          targetToClassesMap.put(target, classes)
-        }
-        classes.add(compiled)
-      }
-    }
-    if (target != null) {
-      registerOutputFile(target = target, outputFile = compiled.outputFile, sourcePaths = compiled.sourceFilesPaths)
-    }
-  }
-
-  override fun registerOutputFile(target: BuildTarget<*>, outputFile: File, sourcePaths: Collection<String>) {
-    val currentBuilder = currentBuilderName
-    if (currentBuilder != null) {
-      val previousBuilder = outputToBuilderNameMap.put(outputFile, currentBuilder)
-      if (previousBuilder != null && previousBuilder != currentBuilder) {
-        val source = if (sourcePaths.isEmpty()) null else sourcePaths.iterator().next()
-        context.processMessage(CompilerMessage(
-          currentBuilder, BuildMessage.Kind.ERROR, "Output file \"${outputFile}\" has already been registered by \"$previousBuilder\"", source
-        ))
-      }
-    }
-    var consumer = targetToConsumer.get(target)
-    if (consumer == null) {
-      consumer = BuildOutputConsumerImpl(target, context)
-      targetToConsumer.put(target, consumer)
-    }
-    consumer.registerOutputFile(outputFile, sourcePaths)
-  }
-
-  fun fireFileGeneratedEvents() {
-    for (consumer in targetToConsumer.values) {
-      consumer.fireFileGeneratedEvent()
-    }
-  }
-
-  fun getNumberOfProcessedSources(): Int = targetToConsumer.values.sumOf { it.numberOfProcessedSources }
-
-  fun clear() {
-    targetToConsumer.clear()
-    classes.clear()
-    targetToClassesMap.clear()
-    outputToBuilderNameMap.clear()
   }
 }
 
@@ -487,6 +346,48 @@ private class ChainedTargetsBuildListener(private val context: CompileContextImp
       fsState.registerDeleted(context, rootDescriptor.target, file)
     }
   }
+}
+
+private fun deleteOutputsAssociatedWithDeletedPaths(
+  context: CompileContext,
+  target: ModuleBuildTarget,
+  deletedFiles: List<RemovedFileInfo>,
+  log: RequestLog,
+): Boolean {
+  val dirsToDelete = linkedSet<Path>()
+  var doneSomething = false
+  // delete outputs associated with removed paths
+  for (item in deletedFiles) {
+    val deletedOutputFiles = ArrayList<Path>()
+    for (output in item.outputs) {
+      val deleted = Files.deleteIfExists(output)
+      if (deleted) {
+        deletedOutputFiles.add(output)
+        output.parent?.let {
+          dirsToDelete.add(it)
+        }
+      }
+    }
+    if (!deletedOutputFiles.isEmpty()) {
+      doneSomething = true
+      log.info("Deleted files: $deletedOutputFiles")
+      context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
+    }
+  }
+
+  val removedSources = context.getUserData(Utils.REMOVED_SOURCES_KEY)?.get(target)
+  if (removedSources == null) {
+    Utils.REMOVED_SOURCES_KEY.set(context, java.util.Map.of(target, deletedFiles.map { it.sourceFile } as Collection<Path>))
+  }
+  else {
+    val set = linkedSet<Path>()
+    set.addAll(removedSources)
+    deletedFiles.mapTo(set) { it.sourceFile }
+    context.putUserData(Utils.REMOVED_SOURCES_KEY, java.util.Map.of(target, set as Collection<Path>))
+  }
+
+  FSOperations.pruneEmptyDirs(context, dirsToDelete)
+  return doneSomething
 }
 
 internal fun reportRebuiltModules(context: CompileContextImpl) {

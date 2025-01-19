@@ -9,8 +9,6 @@ import org.h2.mvstore.MVStore
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.loadJpsProject
-import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
-import org.jetbrains.bazel.jvm.jps.state.checkConfiguration
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
@@ -48,7 +46,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
       .also { storageManager = it }
   }
 
-  suspend fun init(messageHandler: RequestLog, targetDigests: TargetConfigurationDigestContainer): StorageManager {
+  suspend fun init(messageHandler: RequestLog): StorageManager {
     val logger = createLogger(messageHandler)
     coroutineContext.ensureActive()
 
@@ -61,7 +59,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
     }
     Files.createDirectories(dataDir)
 
-    var store = try {
+    val store = try {
       tryOpenMvStore(file = cacheDbFile, readOnly = false, autoCommitDelay = 0, logger = logger)
     }
     catch (e: Throwable) {
@@ -70,22 +68,6 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
 
       return StorageManager(cacheDbFile, createStoreAfterClear(logger))
         .also { storageManager = it }
-    }
-
-    val reasonToRebuild = try {
-      checkConfiguration(store, targetDigests)
-    }
-    catch (e: Throwable) {
-      store.closeImmediately()
-      "Cannot open cache storage: ${e.stackTraceToString()}"
-    }
-
-    if (reasonToRebuild != null) {
-      store.closeImmediately()
-
-      messageHandler.info("rebuild: $reasonToRebuild")
-      clearStorage()
-      store = createStoreAfterClear(logger)
     }
 
     return StorageManager(cacheDbFile, store)

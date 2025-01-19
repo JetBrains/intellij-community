@@ -24,7 +24,6 @@ internal object TestJpsBuildWorker {
   fun main(startupArgs: Array<String>) {
     val testPaths = getTestWorkerPaths()
     val baseDir = testPaths.baseDir
-    //val sources = collectSources(sourceDirPath = "platform/platform-impl/src", paths = testPaths)
 
     val testModule = TestModules.PLATFORM_IMPL
     val sources = collectSources(sourceDirPath = testModule.sourcePath, paths = testPaths)
@@ -34,6 +33,7 @@ internal object TestJpsBuildWorker {
       // IDEA console is bad and outdated, write to file and use modern tooling to view logs
       // ${dateTimeFormatter.format(LocalDateTime.now())}
       val logFile = testPaths.userHomeDir.resolve("kotlin-worker/log.ndjson")
+      Files.createDirectories(logFile.parent)
       configureGlobalJps(LogWriter(coroutineScope, PrintStream(Files.newOutputStream(logFile)), closeWriterOnShutdown = true))
 
       val args = parseArgs(testParams.lines().toTypedArray())

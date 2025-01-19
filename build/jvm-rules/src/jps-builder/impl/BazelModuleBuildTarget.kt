@@ -22,7 +22,7 @@ import java.io.File
 import java.nio.file.Path
 
 internal class BazelModuleBuildTarget(
-  outDir: Path,
+  @JvmField val outDir: Path,
   module: JpsModule,
   private val sources: List<Path>,
 ) : ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION) {

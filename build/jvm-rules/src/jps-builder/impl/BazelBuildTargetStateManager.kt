@@ -4,8 +4,6 @@
 package org.jetbrains.bazel.jvm.jps.impl
 
 import com.intellij.openapi.util.Pair
-import org.jetbrains.bazel.jvm.jps.state.TargetStateContainer
-import org.jetbrains.bazel.jvm.jps.state.TargetStateProperty
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.cmdline.ProjectDescriptor
@@ -13,9 +11,7 @@ import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
 import org.jetbrains.jps.incremental.storage.BuildTargetStateManager
 
-internal class BazelBuildTargetStateManager(
-  val state: TargetStateContainer,
-) : BuildTargetStateManager {
+internal object BazelBuildTargetStateManager : BuildTargetStateManager {
   override fun getBuildTargetId(target: BuildTarget<*>): Int = 1
 
   override fun getTargetConfiguration(target: BuildTarget<*>): BuildTargetConfiguration {
@@ -28,26 +24,26 @@ internal class BazelBuildTargetStateManager(
   }
 
   override fun getLastSuccessfulRebuildDuration(): Long {
-    return state.get(TargetStateProperty.LastSuccessfulRebuildDuration)
+    throw IllegalStateException()
   }
 
   override fun setLastSuccessfulRebuildDuration(duration: Long) {
-    state.set(TargetStateProperty.LastSuccessfulRebuildDuration, duration)
+    throw IllegalStateException()
   }
 
   override fun getAverageBuildTime(type: BuildTargetType<*>): Long {
-    return state.get(TargetStateProperty.AverageBuildTime)
+    throw IllegalStateException()
   }
 
   override fun setAverageBuildTime(type: BuildTargetType<*>, time: Long) {
-    state.set(TargetStateProperty.AverageBuildTime, time)
+    throw IllegalStateException()
   }
 
   override fun save() {
   }
 
   override fun clean() {
-    throw UnsupportedOperationException()
+    throw IllegalStateException()
   }
 
   override fun storeNonExistentOutputRoots(target: BuildTarget<*>, context: CompileContext) {

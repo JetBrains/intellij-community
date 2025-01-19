@@ -13,7 +13,7 @@ import java.nio.file.attribute.BasicFileAttributes
 internal class BazelBuildDataProvider(
   @JvmField val relativizer: PathTypeAwareRelativizer,
   actualDigestMap: Map<Path, ByteArray>,
-  private val sourceToDescriptor: HashMap<Path, SourceDescriptor>,
+  private val sourceToDescriptor: Map<Path, SourceDescriptor>,
   @JvmField val storeFile: Path,
   @JvmField val allocator: RootAllocator,
   @JvmField val isCleanBuild: Boolean,
@@ -76,15 +76,21 @@ internal class BazelBuildDataProvider(
 
 internal class BazelStampStorage(
   private val actualDigestMap: Map<Path, ByteArray>,
-  private val map: HashMap<Path, SourceDescriptor>,
+  private val map: Map<Path, SourceDescriptor>,
 ) : StampsStorage<ByteArray> {
   override fun updateStamp(sourceFile: Path, buildTarget: BuildTarget<*>?, currentFileTimestamp: Long) {
-    val actualDigest = requireNotNull(actualDigestMap.get(sourceFile)) {
-      "No digest is provided for $sourceFile"
-    }
+    throw IllegalStateException()
+  }
 
+  fun markAsUpToDate(sourceFiles: Collection<Path>) {
     synchronized(map) {
-      map.computeIfAbsent(sourceFile) { SourceDescriptor(sourceFile = it) }.digest = actualDigest
+      for (sourceFile in sourceFiles) {
+        val actualDigest = requireNotNull(actualDigestMap.get(sourceFile)) {
+          "No digest is provided for $sourceFile"
+        }
+
+        requireNotNull(map.get(sourceFile)) { "Source file is unknown: $sourceFile" }.digest = actualDigest
+      }
     }
   }
 
@@ -105,7 +111,7 @@ internal class BazelStampStorage(
 }
 
 internal class BazelSourceToOutputMapping(
-  private val map: HashMap<Path, SourceDescriptor>,
+  private val map: Map<Path, SourceDescriptor>,
   private val relativizer: PathTypeAwareRelativizer,
 ) : SourceToOutputMapping {
   override fun setOutputs(sourceFile: Path, outputPaths: List<Path>) {
@@ -115,18 +121,24 @@ internal class BazelSourceToOutputMapping(
         map.get(sourceFile) ?: return
       }
       else {
-        map.computeIfAbsent(sourceFile) { SourceDescriptor(sourceFile = it) }
+        getDescriptorOrError(sourceFile)
       }
 
       value.outputs = relativeOutputPaths
     }
   }
 
+  private fun getDescriptorOrError(sourceFile: Path): SourceDescriptor {
+    return requireNotNull(map.get(sourceFile)) { "Source file is unknown: $sourceFile" }
+  }
+
   override fun appendOutput(sourcePath: String, outputPath: String) {
-    val sourceFile = Path.of(sourcePath)
-    val relativeOutputPath = relativizer.toRelative(outputPath, RelativePathType.OUTPUT)
+    appendRawRelativeOutput(Path.of(sourcePath), relativizer.toRelative(outputPath, RelativePathType.OUTPUT))
+  }
+
+  fun appendRawRelativeOutput(sourceFile: Path, relativeOutputPath: String) {
     synchronized(map) {
-      val sourceInfo = map.computeIfAbsent(sourceFile) { SourceDescriptor(sourceFile = it) }
+      val sourceInfo = getDescriptorOrError(sourceFile)
       val existingOutputs = sourceInfo.outputs
       if (existingOutputs == null) {
         sourceInfo.outputs = java.util.List.of(relativeOutputPath)
@@ -140,6 +152,14 @@ internal class BazelSourceToOutputMapping(
   override fun remove(sourceFile: Path) {
     synchronized(map) {
       map.get(sourceFile)?.outputs = null
+    }
+  }
+
+  fun remove(sourceFiles: Collection<Path>) {
+    synchronized(map) {
+      for (sourceFile in sourceFiles) {
+        map.get(sourceFile)?.outputs = null
+      }
     }
   }
 
@@ -162,11 +182,23 @@ internal class BazelSourceToOutputMapping(
 
   override fun getOutputs(sourcePath: String): Collection<String>? {
     val sourceFile = Path.of(sourcePath)
-    return synchronized(map) { map.get(sourceFile)?.outputs }?.map { relativizer.toAbsolute(it, RelativePathType.OUTPUT) }
+    return synchronized(map) { map.get(sourceFile)?.outputs }
+      ?.map { relativizer.toAbsolute(it, RelativePathType.OUTPUT) }
   }
 
   override fun getOutputs(sourceFile: Path): Collection<Path>? {
-    return synchronized(map) { map.get(sourceFile)?.outputs }?.map { relativizer.toAbsoluteFile(it, RelativePathType.OUTPUT) }
+    return synchronized(map) { map.get(sourceFile)?.outputs }
+      ?.map { relativizer.toAbsoluteFile(it, RelativePathType.OUTPUT) }
+  }
+
+  fun getAndClearOutputs(sourceFile: Path): MutableList<Path>? {
+    synchronized(map) {
+      // must be not null - probably, later we should add warning here
+      val descriptor = map.get(sourceFile) ?: return null
+      val result = descriptor.outputs?.takeIf { it.isNotEmpty() } ?: return null
+      descriptor.outputs = null
+      return result.mapTo(ArrayList(result.size)) { relativizer.toAbsoluteFile(it, RelativePathType.OUTPUT) }
+    }
   }
 
   fun getDescriptor(sourceFile: Path): SourceDescriptor? {

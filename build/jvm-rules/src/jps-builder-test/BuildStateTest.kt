@@ -4,8 +4,8 @@ package org.jetbrains.bazel.jvm.jps.test
 
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.jps.SourceDescriptor
-import org.jetbrains.bazel.jvm.jps.loadBuildState
-import org.jetbrains.bazel.jvm.jps.saveBuildState
+import org.jetbrains.bazel.jvm.jps.state.loadBuildState
+import org.jetbrains.bazel.jvm.jps.state.saveBuildState
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
 import java.nio.file.Files
@@ -46,13 +46,18 @@ internal fun testSerialization() {
   val file = Files.createTempFile("test", ".arrow")
   RootAllocator(Long.MAX_VALUE).use { allocator ->
     try {
-      saveBuildState(buildStateFile = file, list = sourceDescriptors, relativizer = relativizer, allocator = allocator)
+      saveBuildState(
+        buildStateFile = file,
+        list = sourceDescriptors,
+        relativizer = relativizer,
+        metadata = mapOf("version" to "1"),
+        allocator = allocator,
+      )
 
       val result = loadBuildState(
         buildStateFile = file,
         relativizer = relativizer,
         allocator = allocator,
-        log = null,
         actualDigestMap = sourceDescriptors.associate { it.sourceFile to it.digest!! },
       )!!.map
       if (result.keys.sorted() != sourceDescriptors.map { it.sourceFile }) {

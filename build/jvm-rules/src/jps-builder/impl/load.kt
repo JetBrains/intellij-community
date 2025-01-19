@@ -2,7 +2,6 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
-import org.jetbrains.bazel.jvm.jps.state.loadTargetState
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.BuildTargetIndex
 import org.jetbrains.jps.builders.BuildTargetRegistry.ModuleTargetSelector
@@ -35,7 +34,7 @@ internal fun loadJpsProject(
   val dataPaths = BuildDataPathsImpl(dataStorageRoot)
   val dataManager = BuildDataManager.createSingleDb(
     /* dataPaths = */ dataPaths,
-    /* targetStateManager = */ BazelBuildTargetStateManager(loadTargetState(storageManager)),
+    /* targetStateManager = */ BazelBuildTargetStateManager,
     /* relativizer = */ relativizer,
     /* versionManager = */ NoopBuildDataVersionManager,
     /* buildDataProvider = */ buildDataProvider,
