@@ -24,6 +24,8 @@ import com.intellij.util.containers.ContainerUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
+import kotlin.Metadata;
+import kotlin.jvm.JvmStatic;
 import kotlin.text.StringsKt;
 import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +127,7 @@ public class Invoker implements InvokerMBean {
 
     Object instance;
     try {
-      instance = findInstance(call, callTarget.clazz());
+      instance = findInstance(call, callTarget);
     }
     catch (Exception e) {
       //we need to ignore caching check and not throw error
@@ -328,20 +330,43 @@ public class Invoker implements InvokerMBean {
     int argCount = call.getArgs().length;
 
     List<Method> availableMethods = Arrays.stream(clazz.getMethods()).toList();
+
+    if (call instanceof UtilityCall) {
+      availableMethods = availableMethods.stream().filter(m -> Modifier.isStatic(m.getModifiers())).toList();
+      if (isKotlinClass(clazz)) {
+        Class<?> companionClass =
+          ContainerUtil.find(clazz.getDeclaredClasses(), c -> c.getName().equals(call.getClassName() + "$Companion"));
+        if (companionClass != null) {
+          clazz = companionClass;
+          List<Method> companionNotStaticMethods = Arrays.stream(clazz.getMethods())
+            .filter(m -> m.getAnnotation(JvmStatic.class) == null)
+            .toList();
+          availableMethods = ContainerUtil.concat(availableMethods, companionNotStaticMethods);
+        }
+      }
+    }
+
     List<Method> targetMethods = availableMethods.stream()
       .filter(m -> m.getName().equals(call.getMethodName()) && argCount == m.getParameterCount())
       .toList();
 
     if (targetMethods.isEmpty()) {
-      throw new IllegalStateException(
-        String.format(
-          "No method '%s' with parameter count %s in class %s. If your method is companion method in Kotlin, don't forget to add @JvmStatic." +
-          // https://youtrack.jetbrains.com/issue/AT-1744/Driver-make-it-not-neccessary-to-add-JvmStatic-to-kotlin-companion-methods
-          "\nAvailable methods: %n%s",
-          call.getMethodName(), argCount, call.getClassName(),
-          availableMethods.stream().map(it -> it.toString())
-            .collect(Collectors.joining(" - " + System.lineSeparator()))
-        ));
+      StringBuilder message = new StringBuilder(
+        String.format("No method '%s' with parameter count %s in class %s.", call.getMethodName(), argCount, call.getClassName())
+      );
+      if (call instanceof UtilityCall && isKotlinClass(clazz)) {
+        message.append(
+          " For utility call only static methods were checked. If there is a companion object, its methods were also checked.");
+        if (isKotlinClass(clazz)) {
+          message.append(" If there is a companion object, its methods were also checked.");
+        }
+      }
+      message.append(
+        String.format("\nAvailable methods: %n%s",
+                      availableMethods.stream().map(it -> it.toString())
+                        .collect(Collectors.joining(" - " + System.lineSeparator())))
+      );
+      throw new IllegalStateException(message.toString());
     }
 
     if (targetMethods.size() > 1) {
@@ -421,7 +446,8 @@ public class Invoker implements InvokerMBean {
     return plugin.getClassLoader();
   }
 
-  private @Nullable Object findInstance(RemoteCall call, Class<?> clazz) {
+  private @Nullable Object findInstance(RemoteCall call, CallTarget callTarget) {
+    Class<?> clazz = callTarget.clazz();
     if (call instanceof ServiceCall) {
       Object projectInstance = null;
       Ref projectRef = ((ServiceCall)call).getProjectRef();
@@ -464,10 +490,40 @@ public class Invoker implements InvokerMBean {
     }
 
     if (call instanceof UtilityCall) {
-      return null;
+      int modifiers = callTarget.targetMethod().getModifiers();
+      if (Modifier.isStatic(modifiers)) {
+        return null;
+      }
+
+      Object instance;
+      if (clazz.getName().endsWith("$Companion")) { //getting an instance of companion class
+        try {
+          instance = clazz.getEnclosingClass().getDeclaredField("Companion").get(null);
+        }
+        catch (NoSuchFieldException | IllegalAccessException e) {
+          throw new DriverIllegalStateException(
+            String.format("Failed to get an instance of a companion class %s", clazz.getName()), e
+          );
+        }
+      }
+      else { //getting an instance of Kotlin object
+        try {
+          instance = clazz.getDeclaredField("INSTANCE").get(null);
+        }
+        catch (NoSuchFieldException | IllegalAccessException e) {
+          throw new DriverIllegalStateException(
+            String.format("Failed to get an instance of a Kotlin object %s", clazz.getName()), e
+          );
+        }
+      }
+      return instance;
     }
 
     throw new UnsupportedOperationException("Unsupported call type " + call);
+  }
+
+  private static boolean isKotlinClass(Class<?> clazz) {
+    return clazz.getAnnotation(Metadata.class) != null;
   }
 
   private static @Nullable Class<?> findServiceInterface(@NotNull Class<?> clazz, @NotNull String serviceInterface) {
