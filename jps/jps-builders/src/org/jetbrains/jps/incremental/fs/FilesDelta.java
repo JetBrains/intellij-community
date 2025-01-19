@@ -295,7 +295,7 @@ public final class FilesDelta {
     return map;
   }
 
-  public @NotNull @UnmodifiableView Map<BuildRootDescriptor, Set<Path>> getSourceMapToRecompile() {
+  public @NotNull Map<BuildRootDescriptor, Set<Path>> getSourceMapToRecompile() {
     LOG.assertTrue(dataLock.isHeldByCurrentThread(), "FilesDelta data must be locked by querying thread");
     return filesToRecompile;
   }

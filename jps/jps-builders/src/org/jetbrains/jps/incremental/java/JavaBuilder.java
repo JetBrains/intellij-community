@@ -138,11 +138,14 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
   private static final class CompilableModuleTypesHolder {
     // avoid loading extensions on JavaBuilder.class load. Init compilable types atomically on demand
-    static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
+    static final Set<JpsModuleType<?>> compilableModuleTypes;
+
     static {
+      List<JpsModuleType<?>> types = new ArrayList<>();
       for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
-        ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
+        types.addAll(extension.getCompilableModuleTypes());
       }
+      compilableModuleTypes = Set.copyOf(types);
     }
   }
 
@@ -261,7 +264,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     try {
       Set<File> filesToCompile = FileCollectionFactory.createCanonicalFileLinkedSet();
       dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
-        if (JAVA_SOURCES_FILTER.accept(file) && CompilableModuleTypesHolder.ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
+        if (JAVA_SOURCES_FILTER.accept(file) && CompilableModuleTypesHolder.compilableModuleTypes.contains(target.getModule().getModuleType())) {
           filesToCompile.add(file);
         }
         return true;

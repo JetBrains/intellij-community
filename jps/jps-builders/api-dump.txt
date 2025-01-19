@@ -2553,7 +2553,7 @@ c:org.jetbrains.jps.incremental.messages.CustomBuilderMessage
 - getMessageType():java.lang.String
 f:org.jetbrains.jps.incremental.messages.DoneSomethingNotification
 - org.jetbrains.jps.incremental.messages.BuildMessage
-- s:INSTANCE:org.jetbrains.jps.incremental.messages.DoneSomethingNotification
+- sf:INSTANCE:org.jetbrains.jps.incremental.messages.DoneSomethingNotification
 f:org.jetbrains.jps.incremental.messages.FileDeletedEvent
 - org.jetbrains.jps.incremental.messages.BuildMessage
 - <init>(java.util.Collection):V
