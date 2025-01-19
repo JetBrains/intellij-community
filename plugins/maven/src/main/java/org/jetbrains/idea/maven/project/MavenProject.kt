@@ -340,48 +340,6 @@ class MavenProject(val file: VirtualFile) {
       return emptyMap()
     }
 
-  val declaredAnnotationProcessors: List<String>
-    get() {
-      return compilerConfigs.flatMap { getDeclaredAnnotationProcessors(it) }
-    }
-
-  private fun getDeclaredAnnotationProcessors(compilerConfig: Element): MutableList<String> {
-    val result: MutableList<String> = ArrayList()
-    if (procMode != ProcMode.NONE) {
-      val processors: Element? = compilerConfig.getChild("annotationProcessors")
-      if (processors != null) {
-        for (element: Element in processors.getChildren("annotationProcessor")) {
-          val processorClassName: String = element.textTrim
-          if (!processorClassName.isEmpty()) {
-            result.add(processorClassName)
-          }
-        }
-      }
-    }
-    else {
-      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
-      if (bscMavenPlugin != null) {
-        var bscCfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
-        if (bscCfg == null) {
-          bscCfg = bscMavenPlugin.configurationElement
-        }
-
-        if (bscCfg != null) {
-          val bscProcessors: Element? = bscCfg.getChild("processors")
-          if (bscProcessors != null) {
-            for (element: Element in bscProcessors.getChildren("processor")) {
-              val processorClassName: String = element.textTrim
-              if (!processorClassName.isEmpty()) {
-                result.add(processorClassName)
-              }
-            }
-          }
-        }
-      }
-    }
-    return result
-  }
-
   val outputDirectory: @NlsSafe String
     get() = myState.outputDirectory!!
 
@@ -780,20 +738,6 @@ class MavenProject(val file: VirtualFile) {
     return plugin.getExecutionConfiguration(executionId)
   }
 
-  private val compileExecutionConfigurations: List<Element>
-    get() {
-      val plugin: MavenPlugin? = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
-      if (plugin == null) return emptyList()
-      return plugin.compileExecutionConfigurations
-    }
-
-  private val testCompileExecutionConfigurations: List<Element>
-    get() {
-      val plugin: MavenPlugin? = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
-      if (plugin == null) return emptyList()
-      return plugin.testCompileExecutionConfigurations
-    }
-
   @JvmOverloads
   fun findPlugin(groupId: String?, artifactId: String?, explicitlyDeclaredOnly: Boolean = false): MavenPlugin? {
     val plugins: List<MavenPlugin> = if (explicitlyDeclaredOnly) declaredPlugins else plugins
@@ -833,62 +777,6 @@ class MavenProject(val file: VirtualFile) {
     return sourceEncoding
   }
 
-  internal val sourceLevel: String?
-    get() {
-      return getCompilerLevel(false, "source")
-    }
-
-  internal val targetLevel: String?
-    get() {
-      return getCompilerLevel(false, "target")
-    }
-
-  internal val releaseLevel: String?
-    get() {
-      return getCompilerLevel(false, "release")
-    }
-
-  internal val testSourceLevel: String?
-    get() {
-      getCompilerLevel(true, "source")?.let { return it }
-      // ok, try production compiler configs with testSource
-      return getCompilerLevel(false, "testSource")
-
-    }
-
-  internal val testTargetLevel: String?
-    get() {
-      return getCompilerLevel(true, "target")?.let { return it }
-      // ok, try production compiler configs with testTarget
-      return getCompilerLevel(false, "testTarget")
-    }
-
-  internal val testReleaseLevel: String?
-    get() {
-      return getCompilerLevel(true, "release")?.let { return it }
-      // ok, try production compiler configs with testRelease
-      return getCompilerLevel(false, "testRelease")
-    }
-
-  private fun getCompilerLevel(forTests: Boolean, level: String): String? {
-    val configs: List<Element> = if (forTests) testCompilerConfigs else compilerConfigs
-    val fallbackProperty = if (forTests) "test${level.replaceFirstChar { it.titlecase() }}" else level
-    if (configs.size == 1) return getCompilerLevel(level, configs[0], "maven.compiler.$fallbackProperty")
-    return configs
-             .mapNotNull { findChildValueByPath(it, level) }
-             .map { LanguageLevel.parse(it) ?: LanguageLevel.HIGHEST }
-             .maxWithOrNull(Comparator.naturalOrder())
-             ?.toJavaVersion()?.toFeatureString() ?: myState.properties!!.getProperty("maven.compiler.$fallbackProperty")
-  }
-
-  private fun getCompilerLevel(level: String, config: Element, fallbackProperty: String): String? {
-    var result: String? = findChildValueByPath(config, level)
-    if (result == null) {
-      result = myState.properties!!.getProperty(fallbackProperty)
-    }
-    return result
-  }
-
   private val compilerConfig: Element?
     get() {
       val executionConfiguration: Element? =
@@ -896,17 +784,6 @@ class MavenProject(val file: VirtualFile) {
       if (executionConfiguration != null) return executionConfiguration
       return getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
     }
-
-  private val compilerConfigs: List<Element>
-    get() {
-      val configurations: List<Element> = compileExecutionConfigurations
-      if (!configurations.isEmpty()) return configurations
-      val configuration: Element? = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
-      return ContainerUtil.createMaybeSingletonList(configuration)
-    }
-
-  private val testCompilerConfigs: List<Element> = testCompileExecutionConfigurations
-
 
   val properties: Properties
     get() {

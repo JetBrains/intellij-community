@@ -28,13 +28,16 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProject.ProcMode
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.PrefixStringEncoder
@@ -371,6 +374,125 @@ object MavenImportUtil {
       ?.filter { it.phase != "none" }
       ?.mapNotNull { it.configurationElement }
       ?.forEach(result::add)
+    return result
+  }
+
+  internal val MavenProject.declaredAnnotationProcessors: List<String>
+    get() {
+      return compilerConfigs.flatMap { getDeclaredAnnotationProcessors(it) }
+    }
+
+  private val MavenProject.sourceLevel: String?
+    get() {
+      return getCompilerLevel(false, "source")
+    }
+
+  private val MavenProject.targetLevel: String?
+    get() {
+      return getCompilerLevel(false, "target")
+    }
+
+  private val MavenProject.releaseLevel: String?
+    get() {
+      return getCompilerLevel(false, "release")
+    }
+
+  private val MavenProject.testSourceLevel: String?
+    get() {
+      getCompilerLevel(true, "source")?.let { return it }
+      // ok, try production compiler configs with testSource
+      return getCompilerLevel(false, "testSource")
+    }
+
+  private val MavenProject.testTargetLevel: String?
+    get() {
+      return getCompilerLevel(true, "target")?.let { return it }
+      // ok, try production compiler configs with testTarget
+      return getCompilerLevel(false, "testTarget")
+    }
+
+  private val MavenProject.testReleaseLevel: String?
+    get() {
+      return getCompilerLevel(true, "release")?.let { return it }
+      // ok, try production compiler configs with testRelease
+      return getCompilerLevel(false, "testRelease")
+    }
+
+  private fun MavenProject.getCompilerLevel(forTests: Boolean, level: String): String? {
+    val configs: List<Element> = if (forTests) testCompilerConfigs else compilerConfigs
+    val fallbackProperty = if (forTests) "test${level.replaceFirstChar { it.titlecase() }}" else level
+    if (configs.size == 1) return getCompilerLevel(level, configs[0], "maven.compiler.$fallbackProperty")
+    return configs
+             .mapNotNull { findChildValueByPath(it, level) }
+             .map { LanguageLevel.parse(it) ?: LanguageLevel.HIGHEST }
+             .maxWithOrNull(java.util.Comparator.naturalOrder())
+             ?.toJavaVersion()?.toFeatureString() ?: properties.getProperty("maven.compiler.$fallbackProperty")
+  }
+
+  private fun MavenProject.getCompilerLevel(level: String, config: Element, fallbackProperty: String): String? {
+    var result: String? = findChildValueByPath(config, level)
+    if (result == null) {
+      result = properties.getProperty(fallbackProperty)
+    }
+    return result
+  }
+
+  private val MavenProject.compilerConfigs: List<Element>
+    get() {
+      val configurations: List<Element> = compileExecutionConfigurations
+      if (!configurations.isEmpty()) return configurations
+      val configuration: Element? = getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
+      return ContainerUtil.createMaybeSingletonList(configuration)
+    }
+
+  private val MavenProject.compileExecutionConfigurations: List<Element>
+    get() {
+      val plugin: MavenPlugin? = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+      if (plugin == null) return emptyList()
+      return plugin.compileExecutionConfigurations
+    }
+
+  private val MavenProject.testCompilerConfigs: List<Element>
+    get() {
+      val plugin: MavenPlugin? = findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+      if (plugin == null) return emptyList()
+      return plugin.testCompileExecutionConfigurations
+    }
+
+  private fun MavenProject.getDeclaredAnnotationProcessors(compilerConfig: Element): MutableList<String> {
+    val result: MutableList<String> = ArrayList()
+    if (procMode != ProcMode.NONE) {
+      val processors: Element? = compilerConfig.getChild("annotationProcessors")
+      if (processors != null) {
+        for (element: Element in processors.getChildren("annotationProcessor")) {
+          val processorClassName: String = element.textTrim
+          if (!processorClassName.isEmpty()) {
+            result.add(processorClassName)
+          }
+        }
+      }
+    }
+    else {
+      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
+      if (bscMavenPlugin != null) {
+        var bscCfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
+        if (bscCfg == null) {
+          bscCfg = bscMavenPlugin.configurationElement
+        }
+
+        if (bscCfg != null) {
+          val bscProcessors: Element? = bscCfg.getChild("processors")
+          if (bscProcessors != null) {
+            for (element: Element in bscProcessors.getChildren("processor")) {
+              val processorClassName: String = element.textTrim
+              if (!processorClassName.isEmpty()) {
+                result.add(processorClassName)
+              }
+            }
+          }
+        }
+      }
+    }
     return result
   }
 }
