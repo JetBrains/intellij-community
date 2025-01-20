@@ -353,8 +353,9 @@ public class Invoker implements InvokerMBean {
         String.format("No method '%s' with parameter count %s in class %s.", call.getMethodName(), argCount, call.getClassName())
       );
       if (call instanceof UtilityCall && isKotlinClass(clazz)) {
-        message.append(
-          " For utility call only static methods were checked. If there is a companion object, its methods were also checked.");
+        message
+          .append(System.lineSeparator())
+          .append("For utility call only static methods were checked. If there is a companion object, its methods were also checked.");
       }
       message.append(
         String.format("\nAvailable methods: %n%s",
