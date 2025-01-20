@@ -45,7 +45,6 @@ import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.filter
-import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -101,31 +100,22 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
     LOG.trace { "Task received: title=$title, project=$project" }
 
-    val context = currentCoroutineContext()
-    val taskStorage = TaskStorage.getInstance()
-
+    val taskSuspender = retrieveSuspender(suspender)
     val pipe = cs.createProgressPipe()
 
-    val taskSuspender = retrieveSuspender(suspender)
-
-    val taskInfoEntity = taskStorage.addTask(project, title, cancellation, taskSuspender.getSuspendableInfo())
-    val entityId = taskInfoEntity.eid
-    LOG.trace { "Task added to storage: entityId=$entityId, title=$title" }
+    val taskContext = currentCoroutineContext()
+    val taskInfoEntityJob = cs.createTaskInfoEntity(project, title, cancellation, taskSuspender, taskContext, pipe)
 
     try {
       taskSuspender?.attachTask()
-      subscribeToTask(taskInfoEntity, context, taskSuspender, pipe)
       withContext(taskSuspender?.asContextElement() ?: EmptyCoroutineContext) {
         pipe.collectProgressUpdates(action)
       }
     }
     finally {
-      LOG.trace { "Task finished: entityId=$entityId, title=$title" }
-      withContext(NonCancellable) {
-        taskStorage.removeTask(taskInfoEntity)
-        LOG.trace { "Task removed from storage: entityId=$entityId, title=$title" }
-      }
+      LOG.trace { "Task finished: title=$title" }
       taskSuspender?.detachTask()
+      taskInfoEntityJob.cancel()
     }
   }
 
@@ -137,19 +127,42 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
   }
 
-  private fun CoroutineScope.subscribeToTask(
+  private fun CoroutineScope.createTaskInfoEntity(
+    project: Project,
+    title: String,
+    cancellation: TaskCancellation,
+    suspender: TaskSuspender?,
+    taskContext: CoroutineContext,
+    pipe: ProgressPipe,
+  ): Job = launch {
+    val taskStorage = TaskStorage.getInstance()
+
+    val taskInfoEntity = taskStorage.addTask(project, title, cancellation, suspender.getSuspendableInfo())
+    val entityId = taskInfoEntity.eid
+    LOG.trace { "Task added to storage: entityId=$entityId, title=$title" }
+
+    try {
+      subscribeToTask(taskInfoEntity, taskContext, suspender, pipe)
+    }
+    finally {
+      withContext(NonCancellable) {
+        taskStorage.removeTask(taskInfoEntity)
+        LOG.trace { "Task removed from storage: entityId=$entityId, title=$title" }
+      }
+    }
+  }
+
+  private suspend fun subscribeToTask(
     taskInfo: TaskInfoEntity,
     taskContext: CoroutineContext,
     taskSuspender: TaskSuspender?,
     pipe: ProgressPipe,
   ) {
-    launch {
+    coroutineScope {
       withKernel {
-        tryWithEntities(taskInfo) {
-          subscribeToTaskCancellation(taskInfo, taskContext)
-          subscribeToTaskSuspensionChanges(taskInfo, taskSuspender)
-          subscribeToTaskUpdates(taskInfo, pipe)
-        }
+        subscribeToTaskCancellation(taskInfo, taskContext)
+        subscribeToTaskSuspensionChanges(taskInfo, taskSuspender)
+        subscribeToTaskUpdates(taskInfo, pipe)
       }
     }
   }
