@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.*;
@@ -58,6 +58,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   public DebugProcessImpl myDebugProcess;
   private final List<Throwable> myException = new SmartList<>();
   protected boolean myWasUsedOnlyDefaultSuspendPolicy = true;
+  protected boolean myLogAllCommands;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myLogAllCommands = false; // reset for every test
+  }
 
   private static class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -77,6 +84,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void resume(SuspendContextImpl context) {
+    if (myLogAllCommands) {
+      printContext("Resuming ", context);
+    }
     DebugProcessImpl debugProcess = context.getDebugProcess();
     context.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOWEST));
   }
@@ -86,16 +96,25 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void stepInto(SuspendContextImpl context, boolean ignoreFilters) {
+    if (myLogAllCommands) {
+      printContext("Stepping into ", context);
+    }
     DebugProcessImpl debugProcess = context.getDebugProcess();
     context.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, ignoreFilters, null));
   }
 
   protected void stepOver(SuspendContextImpl context) {
+    if (myLogAllCommands) {
+      printContext("Stepping over ", context);
+    }
     DebugProcessImpl debugProcess = context.getDebugProcess();
     context.getManagerThread().schedule(debugProcess.createStepOverCommand(context, false));
   }
 
   protected void stepOut(SuspendContextImpl context) {
+    if (myLogAllCommands) {
+      printContext("Stepping out ", context);
+    }
     DebugProcessImpl debugProcess = context.getDebugProcess();
     context.getManagerThread().schedule(debugProcess.createStepOutCommand(context));
   }
@@ -205,11 +224,15 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return sourcePosition.getFile().getVirtualFile().getName() + ":" + line;
   }
 
-  /** Prints the location of the given context, in the format "file.ext:12345". */
   protected void printContext(StackFrameContext context) {
+    printContext("", context);
+  }
+
+  /** Prints the location of the given context, in the format "file.ext:12345". */
+  protected void printContext(@NotNull String prefix, StackFrameContext context) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (context.getFrameProxy() != null) {
-        systemPrintln(toDisplayableString(Objects.requireNonNull(PositionUtil.getSourcePosition(context))));
+        systemPrintln(prefix + toDisplayableString(Objects.requireNonNull(PositionUtil.getSourcePosition(context))));
       }
       else {
         systemPrintln("Context thread is null");
@@ -595,9 +618,15 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
     private void pausedImpl(SuspendContextImpl suspendContext) {
       try {
+        if (myLogAllCommands) {
+          printContext("Stopped at ", suspendContext);
+        }
+
         if (myScriptRunnables.isEmpty() && myRepeatingRunnables.isEmpty()) {
-          print("resuming ", ProcessOutputTypes.SYSTEM);
-          printContext(suspendContext);
+          if (!myLogAllCommands) { // for compatibility
+            print("resuming ", ProcessOutputTypes.SYSTEM);
+            printContext(suspendContext);
+          }
           resume(suspendContext);
           return;
         }
