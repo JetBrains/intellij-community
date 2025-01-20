@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.editor.Document;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated scriptDebugger.ui is deprecated
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class PsiVisitors {
 
   @ApiStatus.Internal
@@ -53,7 +53,7 @@ public final class PsiVisitors {
   /**
    * @deprecated Use a specific visitor suitable for your task, the purpose of this one is unclear.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract static class FilteringPsiRecursiveElementWalkingVisitor extends PsiRecursiveElementWalkingVisitor {
     @Override
     public void visitElement(@NotNull PsiElement element) {
