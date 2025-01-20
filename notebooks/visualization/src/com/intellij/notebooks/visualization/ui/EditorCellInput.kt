@@ -31,7 +31,7 @@ class EditorCellInput(
       Disposer.register(this, it)
     }
 
-  val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this, ::getFoldingBounds)
+  val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this)
 
   val cellActionsToolbar: EditorCellActionsToolbarManager? =
     if (Registry.`is`("jupyter.per.cell.management.actions.toolbar")) EditorCellActionsToolbarManager(editor, cell)

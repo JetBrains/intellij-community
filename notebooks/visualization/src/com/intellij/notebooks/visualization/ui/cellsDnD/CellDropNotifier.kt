@@ -6,6 +6,6 @@ interface CellDropNotifier {
   fun cellDropped(event: CellDropEvent)
   
   companion object {
-    val CELL_DROP_TOPIC = Topic.create("Cell drop", CellDropNotifier::class.java)
+    val CELL_DROP_TOPIC: Topic<CellDropNotifier> = Topic.create("Cell drop", CellDropNotifier::class.java)
   }
 }

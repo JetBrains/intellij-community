@@ -1,6 +1,7 @@
 package com.intellij.notebooks.visualization.ui.cellsDnD
 
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.getCell
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
@@ -11,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.ui.JBUI
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseAdapter
@@ -23,7 +23,6 @@ import javax.swing.SwingUtilities
 class EditorCellDraggableBar(
   private val editor: EditorImpl,
   private val cellInput: EditorCellInput,
-  private val yAndHeightSupplier: () -> Pair<Int, Int>,
 ) : Disposable {
   private var panel: JComponent? = null
 
@@ -36,11 +35,22 @@ class EditorCellDraggableBar(
   }
 
   fun updateBounds() {
-    val panel = panel ?: return
-    val (y, height) = yAndHeightSupplier.invoke()
-    // TODO: fix overlap with the run icon
-    val x = editor.gutterComponentEx.iconAreaOffset
-    panel.setBounds(x, y, DRAGGABLE_BAR_WIDTH, height)
+    panel?.let {
+      val inlays = cellInput.getBlockElementsInRange()
+
+      val lowerInlayBounds = inlays.lastOrNull {
+        it.properties.isShownAbove == false &&
+        it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY
+      }?.bounds ?: return@let
+
+      val x = editor.gutterComponentEx.iconAreaOffset
+      val width = editor.gutterComponentEx.getIconsAreaWidth()
+
+      val y = lowerInlayBounds.y
+      val height = lowerInlayBounds.height
+
+      it.setBounds(x, y, width, height)
+    }
   }
 
   private fun createAndAddDraggableBar() {
@@ -71,8 +81,8 @@ class EditorCellDraggableBar(
     private var currentlyHighlightedCell: EditorCell? = null
 
     init {
-      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      isOpaque = false
+      cursor = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR)  // todo: need to find a better cursor
+      isOpaque = true
 
       addMouseListener(object : MouseAdapter() {
         override fun mousePressed(e: MouseEvent) {
@@ -111,6 +121,12 @@ class EditorCellDraggableBar(
       })
     }
 
+    fun getCellUnderCursor(editorPoint: Point): EditorCell? {
+      val offset = editor.xyToLogicalPosition(editorPoint).let { editor.logicalPositionToOffset(it) }
+      val line = editor.document.getLineNumber(offset)
+      return NotebookCellInlayManager.get(editor)?.getCell(editor.getCell(line).ordinal)
+    }
+
     private fun handleDrag(currentLocationOnScreen: Point) {
       val editorLocationOnScreen = editor.contentComponent.locationOnScreen
       val x = currentLocationOnScreen.x - editorLocationOnScreen.x
@@ -131,15 +147,6 @@ class EditorCellDraggableBar(
       it.view?.removeHighlightAbovePanel()
     }
 
-    fun getCellUnderCursor(editorPoint: Point): EditorCell? {
-      val offset = editor.xyToLogicalPosition(editorPoint).let { editor.logicalPositionToOffset(it) }
-      val line = editor.document.getLineNumber(offset)
-      return NotebookCellInlayManager.get(editor)?.getCell(editor.getCell(line).ordinal)
-    }
-
   }
 
-  companion object {
-    private val DRAGGABLE_BAR_WIDTH = JBUI.scale(10)
-  }
 }
