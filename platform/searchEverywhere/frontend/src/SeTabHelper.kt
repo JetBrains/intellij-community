@@ -22,8 +22,7 @@ class SeTabHelper private constructor(val project: Project,
   private val searchDispatcher: SeDispatcher
 
   init {
-    val providerLimit = if (providers.size > 1) MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT else SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
-    searchDispatcher = SeDispatcher(providers.values, providers.values.associate { it.id to providerLimit })
+    searchDispatcher = SeDispatcher(providers.values, providers.values.associate { it.id to Int.MAX_VALUE })
   }
 
   fun getItems(params: SeParams): Flow<SeItemData> =
@@ -35,8 +34,6 @@ class SeTabHelper private constructor(val project: Project,
   }
 
   companion object {
-    private const val SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT: Int = 30
-    private const val MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT: Int = 15
     private val LOG = Logger.getInstance(SeTabHelper::class.java)
 
     suspend fun create(project: Project,

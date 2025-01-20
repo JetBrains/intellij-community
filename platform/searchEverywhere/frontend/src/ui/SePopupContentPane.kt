@@ -80,6 +80,17 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
         }
       }
     }
+
+    val verticalScrollBar = resultsScrollPane.verticalScrollBar
+    verticalScrollBar.addAdjustmentListener { adjustmentEvent ->
+      val yetToScrollHeight = verticalScrollBar.maximum - verticalScrollBar.model.extent - adjustmentEvent.value
+
+      if (verticalScrollBar.model.extent > 0 && yetToScrollHeight < 50) {
+        vm.shouldLoadMore = true
+      } else if (yetToScrollHeight > resultsScrollPane.height / 2) {
+        vm.shouldLoadMore = false
+      }
+    }
   }
 
   private fun createListPane(resultList: JBList<*>): JScrollPane {

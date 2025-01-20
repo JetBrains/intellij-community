@@ -33,6 +33,10 @@ class SePopupVm(val coroutineScope: CoroutineScope,
     SeTabVm(coroutineScope, it, searchPattern)
   }
 
+  var shouldLoadMore: Boolean
+    get() = currentTab.shouldLoadMore
+    set(value) { currentTab.shouldLoadMore = value }
+
   init {
     check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
 
