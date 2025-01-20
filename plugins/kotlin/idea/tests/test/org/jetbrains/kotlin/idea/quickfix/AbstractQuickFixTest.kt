@@ -251,8 +251,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
             val hint = myFixture.file.actionHint(contents.replace("\${file}", fileName, ignoreCase = true))
             actionHint = hint
-            val intention = runInEdtAndGet { findActionWithText(hint.expectedText) }
-            if (hint.shouldPresent()) {
+
+            val actionShouldBeAvailable = hint.shouldPresent()
+            val intention = runInEdtAndGet { findActionWithText(hint.expectedText, acceptMatchByFamilyName = !actionShouldBeAvailable) }
+
+            if (actionShouldBeAvailable) {
                 if (intention == null) {
                     fail(
                         "Action with text '" + hint.expectedText + "' not found\n${myFixture.availableIntentions.size} available actions:\n" +
@@ -340,7 +343,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             UIUtil.dispatchAllInvocationEvents()
 
             if (!shouldBeAvailableAfterExecution()) {
-                var action = findActionWithText(hint.expectedText)
+                var action = findActionWithText(hint.expectedText, acceptMatchByFamilyName = true)
                 action = if (action == null) null else IntentionActionDelegate.unwrap(action)
                 if (action != null && !Comparing.equal(element, PsiUtilBase.getElementAtCaret(editor))) {
                     fail("Action '${hint.expectedText}' (${action.javaClass}) is still available after its invocation in test " + fileName)
@@ -398,9 +401,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         }
     }
 
-    private fun findActionWithText(text: String): IntentionAction? {
+    private fun findActionWithText(text: String, acceptMatchByFamilyName: Boolean): IntentionAction? {
         val pattern = IntentionActionNamePattern(text)
-        val intention = pattern.findActionByPattern(myFixture.availableIntentions, false)
+        val intention = pattern.findActionByPattern(myFixture.availableIntentions, acceptMatchByFamilyName)
         if (intention != null) return intention
 
         // Support warning suppression
