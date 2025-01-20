@@ -30,6 +30,11 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
+/**
+ * @see MasterController
+ * @deprecated not used anymore, and is internal
+ */
+@Deprecated(forRemoval = true)
 public final class MasterDetailPopupBuilder implements MasterController {
   private static final Color BORDER_COLOR = Gray._135;
 
