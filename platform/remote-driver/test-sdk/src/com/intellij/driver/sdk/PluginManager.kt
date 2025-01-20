@@ -5,7 +5,7 @@ import com.intellij.driver.client.Remote
 
 fun Driver.getPlugin(id: String) = utility(PluginManagerCore::class).getPlugin(utility(PluginId::class).getId(id))
 
-fun Driver.getEnabledPluginsIds()= utility(PluginManagerCore::class).getLoadedPlugins()
+fun Driver.getEnabledPluginsIds() = utility(PluginManagerCore::class).getLoadedPlugins()
 
 @Remote("com.intellij.openapi.extensions.PluginId")
 interface PluginId {
@@ -24,4 +24,5 @@ interface PluginDescriptor {
   fun getPluginId(): PluginId
   fun isBundled(): Boolean
   fun isEnabled(): Boolean
+  fun getName(): String
 }
