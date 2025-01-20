@@ -169,34 +169,6 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
         provider.registerQuickFixes(reference, fixes)
       }
     }
-
-    companion object {
-      private fun createInstallAndImportQuickFix(packageName: String, asName: String?): LocalQuickFix? {
-        return if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName))
-          InstallAndImportPackageQuickFix(packageName, asName)
-        else
-          null
-      }
-
-      private fun suppressHintForAutoImport(node: PyElement, importFix: AutoImportQuickFix): Boolean {
-        // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
-        // as a quickfix but no popup balloon (PY-2312)
-        if (!isCall(node) && importFix.hasOnlyFunctions()) {
-          return true
-        }
-        // if we're in a class context and the class defines a variable with the same name, offer auto-import only as quickfix,
-        // not as popup
-        val containingClass = PsiTreeUtil.getParentOfType(node, PyClass::class.java)
-        return containingClass != null && (containingClass.findMethodByName(importFix.nameToImport, true, null) != null ||
-                                           containingClass.findInstanceAttribute(importFix.nameToImport, true) != null)
-      }
-
-      private fun isCall(node: PyElement): Boolean {
-        val callExpression = PsiTreeUtil.getParentOfType(node,
-                                                         PyCallExpression::class.java)
-        return callExpression != null && node === callExpression.callee
-      }
-    }
   }
 
   companion object {
@@ -207,6 +179,32 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
 
       val inspectionProfile: InspectionProfile = InspectionProjectProfileManager.getInstance(element.project).currentProfile
       return inspectionProfile.getUnwrappedTool(SHORT_NAME_KEY.toString(), element) as PyUnresolvedReferencesInspection?
+    }
+
+    private fun createInstallAndImportQuickFix(packageName: String, asName: String?): LocalQuickFix? {
+      return if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName))
+        InstallAndImportPackageQuickFix(packageName, asName)
+      else
+        null
+    }
+
+    private fun suppressHintForAutoImport(node: PyElement, importFix: AutoImportQuickFix): Boolean {
+      // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
+      // as a quickfix but no popup balloon (PY-2312)
+      if (!isCall(node) && importFix.hasOnlyFunctions()) {
+        return true
+      }
+      // if we're in a class context and the class defines a variable with the same name, offer auto-import only as quickfix,
+      // not as popup
+      val containingClass = PsiTreeUtil.getParentOfType(node, PyClass::class.java)
+      return containingClass != null && (containingClass.findMethodByName(importFix.nameToImport, true, null) != null ||
+                                         containingClass.findInstanceAttribute(importFix.nameToImport, true) != null)
+    }
+
+    private fun isCall(node: PyElement): Boolean {
+      val callExpression = PsiTreeUtil.getParentOfType(node,
+                                                       PyCallExpression::class.java)
+      return callExpression != null && node === callExpression.callee
     }
   }
 }
