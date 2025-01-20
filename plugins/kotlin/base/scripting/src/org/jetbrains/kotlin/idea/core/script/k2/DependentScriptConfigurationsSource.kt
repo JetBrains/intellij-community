@@ -45,14 +45,11 @@ import kotlin.script.experimental.jvm.jvm
 class DependentScriptConfigurationsSource(override val project: Project, val coroutineScope: CoroutineScope) :
     ScriptConfigurationsSource<BaseScriptModel>(project) {
 
-    var sourceSupplier: (VirtualFileUrl) -> KotlinScriptEntitySource = { KotlinDependentScriptModuleEntitySource(it) }
-
     private val loadPersistedConfigurations by lazy {
         val scriptUrls = ScriptsWithLoadedDependenciesStorage.getInstance(project).state.scripts
         val manager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
         val scripts = scriptUrls.mapNotNull { manager.getOrCreateFromUrl(it).virtualFile }.toSet()
 
-        println("scripts=$scripts")
         if (scripts.isEmpty()) return@lazy
         DependencyResolutionService.getInstance(project).resolveInBackground {
             updateDependenciesAndCreateModules(scripts.map { BaseScriptModel(it) })
