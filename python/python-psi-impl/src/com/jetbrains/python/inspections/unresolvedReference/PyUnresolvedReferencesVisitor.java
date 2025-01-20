@@ -375,15 +375,15 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         ContainerUtil.addIfNotNull(fixes, getCreateClassFix(refText, element));
       }
     }
-    ProblemHighlightType hl_type;
+    ProblemHighlightType hlType;
     if (severity == HighlightSeverity.WARNING) {
-      hl_type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+      hlType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     }
     else if (severity == HighlightSeverity.ERROR) {
-      hl_type = ProblemHighlightType.GENERIC_ERROR;
+      hlType = ProblemHighlightType.GENERIC_ERROR;
     }
     else {
-      hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
+      hlType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
     }
 
     ContainerUtil.addAll(fixes, getImportStatementQuickFixes(element));
@@ -393,7 +393,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     if (!installPackageQuickFixes.isEmpty()) {
       ContainerUtil.addAll(fixes, installPackageQuickFixes);
       PyPackageInstallAllProblemInfo problemInfo =
-        new PyPackageInstallAllProblemInfo(node, description, hl_type, refName, fixes);
+        new PyPackageInstallAllProblemInfo(node, description, hlType, refName, fixes);
       myUnresolvedRefs.add(problemInfo);
       isAddedToInstallAllFix = true;
     }
@@ -404,7 +404,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
     getPluginQuickFixes(fixes, reference);
     if (!isAddedToInstallAllFix) {
-      registerProblem(node, description, hl_type, null, rangeInElement, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      registerProblem(node, description, hlType, null, rangeInElement, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
