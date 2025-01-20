@@ -69,7 +69,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -631,28 +631,43 @@ public final class IncProjectBuilder {
   private void cleanOutputRoots(@NotNull CompileContext context, boolean cleanCaches) throws ProjectBuildException {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     ProjectBuildException projectBuildException = null;
-    final ExecutorService cleanupExecutor = SharedThreadPool.getInstance().createBoundedExecutor("IncProjectBuilder Output Cleanup Pool", MAX_BUILDER_THREADS);
-    final List<Future<?>> cleanupTasks = new ArrayList<>();
+
+    var targetCleanup = new Consumer<BuildTarget<?>>() {
+      final ExecutorService executor = SharedThreadPool.getInstance().createBoundedExecutor("IncProjectBuilder Output Cleanup Pool", MAX_BUILDER_THREADS);
+      final List<Future<?>> tasks = new ArrayList<>();
+      @Override
+      public void accept(BuildTarget<?> target) {
+        if (SYNC_DELETE) {
+          clearOutputFilesUninterruptibly(context, target);
+        }
+        else {
+          tasks.add(executor.submit(() -> clearOutputFilesUninterruptibly(context, target)));
+        }
+      }
+
+      void waitForTasks() {
+        for (Future<?> task : tasks) {
+          try {
+            task.get();
+          }
+          catch (Throwable e) {
+            LOG.info(e);
+          }
+        }
+      }
+    };
+
     final long cleanStart = System.nanoTime();
     try {
       final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(projectDescriptor.getProject());
-      
-      Function<Runnable, Future<?>> cleanup = runnable -> {
-        if (SYNC_DELETE) {
-          runnable.run();
-          return CompletableFuture.completedFuture(null);
-        }
-        return cleanupExecutor.submit(runnable);
-      };
-
       if (configuration.isClearOutputDirectoryOnRebuild()) {
-        clearOutputs(context, cleanup, cleanupTasks);
+        clearOutputs(context, targetCleanup);
       }
       else {
         for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
           context.checkCanceled();
           if (context.getScope().isBuildForced(target)) {
-            cleanupTasks.add(cleanup.apply(() -> clearOutputFilesUninterruptibly(context, target)));
+            targetCleanup.accept(target);
           }
         }
       }
@@ -676,14 +691,8 @@ public final class IncProjectBuilder {
       projectBuildException = e;
     }
     finally {
-      for (Future<?> task : cleanupTasks) {
-        try {
-          task.get();
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
-      }
+      targetCleanup.waitForTasks();
+
       LOG.info("Cleaned output directories in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - cleanStart) + " ms");
       if (cleanCaches) {
         try {
@@ -897,9 +906,7 @@ public final class IncProjectBuilder {
     }
   }
 
-  private void clearOutputs(@NotNull CompileContext context,
-                            @NotNull Function<Runnable, Future<?>> cleanupExecutor,
-                            @NotNull List<Future<?>> cleanupTasks) throws ProjectBuildException {
+  private void clearOutputs(@NotNull CompileContext context, @NotNull Consumer<BuildTarget<?>> targetCleanup) throws ProjectBuildException {
     MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
     Set<File> allSourceRoots = FileCollectionFactory.createCanonicalFileSet();
 
@@ -912,7 +919,7 @@ public final class IncProjectBuilder {
         }
       }
       else if (context.getScope().isBuildForced(target)) {
-        cleanupTasks.add(cleanupExecutor.apply(() -> clearOutputFilesUninterruptibly(context, target)));
+        targetCleanup.accept(target);
       }
     }
 
@@ -993,7 +1000,7 @@ public final class IncProjectBuilder {
         // clean only those files we are aware of
         for (BuildTarget<?> target : rootTargets) {
           if (compileScope.isBuildForced(target)) {
-            cleanupTasks.add(cleanupExecutor.apply(() -> clearOutputFilesUninterruptibly(context, target)));
+            targetCleanup.accept(target);
           }
         }
       }
