@@ -35,6 +35,7 @@ import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextA
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
+import java.io.ByteArrayInputStream
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -211,7 +212,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
         BundleType.SUBLIME -> readSublimeBundle(directory)
         BundleType.VSCODE -> readVSCBundle { relativePath: String ->
           try {
-            return@readVSCBundle Files.newInputStream(directory.resolve(relativePath))
+            return@readVSCBundle ByteArrayInputStream(Files.readAllBytes(directory.resolve(relativePath)))
           }
           catch (_: NoSuchFileException) {
             LOG.warn("Cannot find referenced file `$relativePath` in bundle `$directory`")
