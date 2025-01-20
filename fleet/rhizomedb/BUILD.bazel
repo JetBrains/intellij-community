@@ -18,7 +18,6 @@ jvm_library(
   deps = [
     "//fleet/util/core:fleet-util-core",
     "@lib//:kotlin-stdlib",
-    "@lib//:fastutil-min",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-serialization-core",

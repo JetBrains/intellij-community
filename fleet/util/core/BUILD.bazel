@@ -13,7 +13,6 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-coroutines-slf4j",
     "//fleet/util/logging/api:fleet-util-logging-api",
-    "@lib//:fastutil-min",
     "@lib//:kotlinx-collections-immutable",
     "//fleet/reporting/api:fleet-reporting-api",
     "//fleet/preferences",

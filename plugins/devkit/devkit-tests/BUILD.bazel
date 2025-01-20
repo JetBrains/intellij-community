@@ -27,6 +27,8 @@ jvm_library(
     "//java/compiler/openapi:java-compiler",
     "//jvm/jvm-analysis-api:analysis",
     "//xml/xml-analysis-impl:analysis-impl",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
   ]
 )
 

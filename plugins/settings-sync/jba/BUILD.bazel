@@ -1,20 +1,20 @@
-### auto-generated section `build intellij.settingsSync.jba` start
+### auto-generated section `build intellij.settingsSync` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "settingsSync-jba_resources",
+  name = "settingsSync_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "settingsSync-jba",
-  module_name = "intellij.settingsSync.jba",
+  name = "settingsSync",
+  module_name = "intellij.settingsSync",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/settings-sync:settingsSync",
+    "//platform/settings-sync-core:settingsSync-core",
     "//platform/core-ui",
     "//platform/ide-core",
     "//platform/platform-impl:ide-impl",
@@ -22,19 +22,21 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:cloud-config-client",
     "//platform/statistics",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/util/progress",
   ],
-  runtime_deps = [":settingsSync-jba_resources"]
+  runtime_deps = [":settingsSync_resources"]
 )
 
 jvm_library(
-  name = "settingsSync-jba_test_lib",
+  name = "settingsSync_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":settingsSync-jba"],
+  associates = [":settingsSync"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/settings-sync:settingsSync",
-    "//plugins/settings-sync:settingsSync_test_lib",
+    "//platform/settings-sync-core:settingsSync-core",
+    "//platform/settings-sync-core:settingsSync-core_test_lib",
     "//platform/core-ui",
     "//platform/ide-core",
     "//platform/platform-impl:ide-impl",
@@ -46,13 +48,16 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "@lib//:mockito",
+    "//platform/util/progress",
   ],
-  runtime_deps = [":settingsSync-jba_resources"]
+  runtime_deps = [":settingsSync_resources"]
 )
 
 jvm_test(
-  name = "settingsSync-jba_test",
-  runtime_deps = [":settingsSync-jba_test_lib"]
+  name = "settingsSync_test",
+  runtime_deps = [":settingsSync_test_lib"]
 )
-### auto-generated section `build intellij.settingsSync.jba` end
+### auto-generated section `build intellij.settingsSync` end

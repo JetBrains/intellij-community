@@ -38,6 +38,7 @@ jvm_library(
     "@lib//:jna",
     "//python/services/system-python:python-community-services-systemPython",
     "//platform/eel",
+    "//python/services/shared:python-community-services-shared",
   ],
   runtime_deps = [":pycharm-community-ide-impl_resources"]
 )

@@ -1,15 +1,15 @@
-### auto-generated section `build intellij.settingsSync` start
+### auto-generated section `build intellij.settingsSync.core` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "settingsSync_resources",
+  name = "settingsSync-core_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "settingsSync",
-  module_name = "intellij.settingsSync",
+  name = "settingsSync-core",
+  module_name = "intellij.settingsSync.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
@@ -34,17 +34,24 @@ jvm_library(
     "//platform/statistics",
     "//platform/workspace/jps",
     "//platform/editor-ui-ex:editor-ex",
-    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/observable:ide-observable",
+    "//plugins/git4idea:vcs-git",
+    "//platform/vcs-api:vcs",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-impl",
+    "//platform/diff-impl",
   ],
   exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
-  runtime_deps = [":settingsSync_resources"]
+  runtime_deps = [":settingsSync-core_resources"]
 )
 
 jvm_library(
-  name = "settingsSync_test_lib",
+  name = "settingsSync-core_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
-  associates = [":settingsSync"],
+  associates = [":settingsSync-core"],
   deps = [
     "//platform/platform-api:ide",
     "//platform/configuration-store-impl:configurationStore-impl",
@@ -60,7 +67,6 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-reflect",
     "//platform/util/progress",
-    "@lib//:cloud-config-client",
     "//platform/lang-impl",
     "//platform/util/jdom",
     "//platform/core-ui",
@@ -78,15 +84,25 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "//plugins/performanceTesting/core:performanceTesting",
-    "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "@lib//:mockito",
+    "//platform/observable:ide-observable",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//platform/vcs-api:vcs",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/diff-impl",
   ],
-  runtime_deps = [":settingsSync_resources"]
+  runtime_deps = [":settingsSync-core_resources"]
 )
 
 jvm_test(
-  name = "settingsSync_test",
-  runtime_deps = [":settingsSync_test_lib"]
+  name = "settingsSync-core_test",
+  runtime_deps = [":settingsSync-core_test_lib"]
 )
-### auto-generated section `build intellij.settingsSync` end
+### auto-generated section `build intellij.settingsSync.core` end
