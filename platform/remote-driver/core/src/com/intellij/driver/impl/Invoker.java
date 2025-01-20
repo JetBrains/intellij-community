@@ -485,30 +485,32 @@ public class Invoker implements InvokerMBean {
     }
 
     if (call instanceof UtilityCall) {
+      Object instance = null;
       int modifiers = callTarget.targetMethod().getModifiers();
       if (Modifier.isStatic(modifiers)) {
-        return null;
+        return instance;
       }
 
-      Object instance;
-      if (clazz.getName().endsWith("$Companion")) { //getting an instance of companion class
-        try {
-          instance = clazz.getEnclosingClass().getDeclaredField("Companion").get(null);
+      if(isKotlinClass(clazz)) {
+        if (clazz.getName().endsWith("$Companion")) { //getting an instance of companion class
+          try {
+            instance = clazz.getEnclosingClass().getDeclaredField("Companion").get(null);
+          }
+          catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new DriverIllegalStateException(
+              String.format("Failed to get an instance of a companion class %s", clazz.getName()), e
+            );
+          }
         }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-          throw new DriverIllegalStateException(
-            String.format("Failed to get an instance of a companion class %s", clazz.getName()), e
-          );
-        }
-      }
-      else { //getting an instance of Kotlin object
-        try {
-          instance = clazz.getDeclaredField("INSTANCE").get(null);
-        }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-          throw new DriverIllegalStateException(
-            String.format("Failed to get an instance of a Kotlin object %s", clazz.getName()), e
-          );
+        else { //getting an instance of Kotlin object
+          try {
+            instance = clazz.getDeclaredField("INSTANCE").get(null);
+          }
+          catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new DriverIllegalStateException(
+              String.format("Failed to get an instance of a Kotlin object %s", clazz.getName()), e
+            );
+          }
         }
       }
       return instance;
