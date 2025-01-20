@@ -595,7 +595,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       if (stateSpec.defaultStateAsResource) {
         return emptyList()
       }
-      throw AssertionError("No storage specified")
+      throw AssertionError("No storage specified for ${component}")
     }
 
     return sortStoragesByDeprecated(storages)
