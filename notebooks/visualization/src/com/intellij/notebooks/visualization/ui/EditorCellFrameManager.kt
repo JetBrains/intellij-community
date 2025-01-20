@@ -59,8 +59,13 @@ class EditorCellFrameManager(
     removeRightBorder(layerController)
 
     val inlays = view.input.getBlockElementsInRange()
-    val upperInlayBounds = inlays.firstOrNull { it.properties.isShownAbove == true }?.bounds ?: return
-    val lowerInlayBounds = inlays.lastOrNull { it.properties.isShownAbove == false }?.bounds ?: return
+    val upperInlayBounds = inlays.firstOrNull {
+      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY &&
+      it.properties.isShownAbove == true }?.bounds ?: return
+
+    val lowerInlayBounds = inlays.lastOrNull {
+      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY &&
+      it.properties.isShownAbove == false }?.bounds ?: return
 
     val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
     val lineStartY = (upperInlayBounds.y + upperInlayBounds.height).toDouble()
