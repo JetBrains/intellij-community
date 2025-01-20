@@ -19,8 +19,8 @@ class WithoutHighlightErrorsSessionRatio : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach { lookup ->
-        val highlights = lookup.additionalInfo.getOrDefault(AIA_HIGHLIGHT_ERRORS, "") as String
-        val withoutErrors = if (highlights.split("\n").any { it.startsWith("[ERROR]") }) 0 else 1
+        val highlights = lookup.additionalList(AIA_HIGHLIGHT_ERRORS) ?: emptyList()
+        val withoutErrors = if (highlights.any { it.startsWith("[ERROR]") }) 0 else 1
         sample.add(withoutErrors)
         fileSample.add(withoutErrors)
       }

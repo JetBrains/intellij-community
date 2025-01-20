@@ -2,9 +2,13 @@
 package com.intellij.cce.java.visitor
 
 import com.intellij.cce.core.*
+import com.intellij.cce.evaluable.INTERNAL_API_CALLS_PROPERTY
+import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
+import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.ide.actions.QualifiedNameProviderUtil
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.psi.*
 import com.intellij.psi.util.startOffset
 
@@ -24,6 +28,7 @@ class JavaCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor
 
   override fun visitMethod(method: PsiMethod) {
     val methodProperties = SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {
+      put(METHOD_NAME_PROPERTY, method.name)
       QualifiedNameProviderUtil.getQualifiedName(method)?.let {
         put(TokenLocationProperty.METHOD_QUALIFIED_NAME.key, it)
       }
@@ -33,6 +38,13 @@ class JavaCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor
       if (method.containingClass?.name?.endsWith("Test") == true) { // TODO normal condition
         put(TokenLocationProperty.TEST_SOURCE.key, true.toString())
       }
+
+      val (internalApiCalls, internalRelevantFiles) = runBlockingCancellable {
+        extractInternalApiCallsAndRelevantFiles(method)
+      }
+
+      put(INTERNAL_API_CALLS_PROPERTY, internalApiCalls.sorted().joinToString("\n"))
+      put(INTERNAL_RELEVANT_FILES_PROPERTY, internalRelevantFiles.sorted().joinToString("\n"))
     }
 
     codeFragment?.addChild(CodeToken(method.text, method.startOffset, methodProperties))

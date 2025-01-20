@@ -19,8 +19,8 @@ class PreservedApi : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach { lookup ->
-        val apis = lookup.additionalInfo.getOrDefault(AIA_ERASED_APIS, "") as String
-        val value = if (apis.split("\n").any { it.isNotEmpty() }) 0 else 1
+        val apis = lookup.additionalList(AIA_ERASED_APIS) ?: emptyList()
+        val value = if (apis.isNotEmpty()) 0 else 1
         sample.add(value)
         fileSample.add(value)
       }

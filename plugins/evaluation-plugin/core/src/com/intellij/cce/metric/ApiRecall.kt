@@ -1,6 +1,9 @@
 package com.intellij.cce.metric
 
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
+import com.intellij.cce.evaluable.AIA_GROUND_TRUTH_INTERNAL_API_CALLS
+import com.intellij.cce.evaluable.AIA_PREDICTED_API_CALLS
 import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.Sample
 
@@ -19,8 +22,8 @@ class ApiRecall : Metric {
     sessions
       .flatMap { it.lookups }
       .forEach {
-        val predictedApiCalls = it.additionalInfo["predicted_api_calls"] as List<String>
-        val groundTruthApiCalls = it.additionalInfo["ground_truth_internal_api_calls"] as List<String>
+        val predictedApiCalls = it.additionalList(AIA_PREDICTED_API_CALLS) ?: emptyList()
+        val groundTruthApiCalls = it.additionalList(AIA_GROUND_TRUTH_INTERNAL_API_CALLS) ?: emptyList()
         val apiRecall = calculateApiRecallForLookupSnippets(predictedApiCalls, groundTruthApiCalls)
         fileSample.add(apiRecall)
         sample.add(apiRecall)
@@ -42,3 +45,6 @@ class ApiRecall : Metric {
     return intersection.size.toDouble() / uniqueGroundTruthApiCalls.size.toDouble()
   }
 }
+
+internal fun Lookup.additionalList(key: String): List<String>? =
+  additionalInfo[key]?.let { it as String}?.split("\n")?.filter { it.isNotEmpty() }
