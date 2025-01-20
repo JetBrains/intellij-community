@@ -9,6 +9,7 @@ kt_jvm_library(
         "//src/worker-framework",
         "//zip:build-zip",
         "//:protobuf-java",
+        "@lib//:opentelemetry",
         "@bazel_tools//src/main/protobuf:deps_java_proto",
     ],
     visibility = ["//visibility:public"],

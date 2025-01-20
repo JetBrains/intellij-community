@@ -9,13 +9,20 @@ java_proto_library(
 
 kt_jvm_library(
     name = "worker-framework",
-    srcs = glob(["*.kt", "logging/*.kt"], exclude = ["*Test.kt"]),
+    srcs = glob(["*.kt"], exclude = ["*Test.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
+        "@lib//:opentelemetry",
+        "@lib//:opentelemetry-semconv",
+        "//:opentelemetry-exporter-logging-otlp",
         "//:kotlinx-coroutines-core",
         "//:protobuf-java",
         "@lib//:jetbrains-annotations",
+    ],
+    runtime_deps = [
+        "@lib//:opentelemetry-exporter-otlp-common",
+        "@lib//:jackson",
     ],
     visibility = ["//visibility:public"],
 )

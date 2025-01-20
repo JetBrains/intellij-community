@@ -2,10 +2,12 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.bazel.jvm.jps.RequestLog
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.FileProcessor
@@ -37,9 +39,9 @@ internal fun initFsStateForCleanBuild(context: CompileContext, target: BuildTarg
 
 internal fun cleanOutputsCorrespondingToChangedFiles(
   context: CompileContext,
-  log: RequestLog,
   target: BazelModuleBuildTarget,
   dataManager: BazelBuildDataProvider,
+  span: Span,
 ) {
   val dirsToDelete = HashSet<Path>()
   val deletedOutputFiles = ArrayList<Path>()
@@ -63,14 +65,20 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
             }
           }
           catch (e: IOException) {
-            log.warn("cannot delete output file (sourceFile=$sourceFile): $outputFile: $e")
+            span.recordException(e, Attributes.of(
+              AttributeKey.stringKey("message"), "cannot delete output file",
+              AttributeKey.stringKey("sourceFile"), sourceFile.toString(),
+            ))
           }
         }
       }
       finally {
         if (outputs.isNotEmpty()) {
           sourceToOutputMapping.setOutputs(sourceFile, outputs)
-          log.warn("Some outputs were not removed for $sourceFile source file: $outputs")
+          span.addEvent("some outputs were not removed", Attributes.of(
+            AttributeKey.stringKey("sourceFile"), sourceFile.toString(),
+            AttributeKey.stringArrayKey("outputs"), outputs.map { it.toString() },
+          ))
         }
       }
       return true
@@ -78,8 +86,10 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
   })
 
   if (!deletedOutputFiles.isEmpty()) {
-    if (JavaBuilderUtil.isCompileJavaIncrementally(context) && log.isDebugEnabled) {
-      log.info("allDeletedOutputPaths: $deletedOutputFiles")
+    if (JavaBuilderUtil.isCompileJavaIncrementally(context) && span.isRecording) {
+      span.addEvent("allDeletedOutputPaths", Attributes.of(
+        AttributeKey.stringArrayKey("deletedOutputFiles"), deletedOutputFiles.map { it.toString() },
+      ))
     }
 
     context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
@@ -107,7 +117,7 @@ internal suspend fun markTargetUpToDate(
   val delta = fsState.getDelta(target)
   delta.lockData()
   try {
-    val rootToRecompile = delta.getSourceMapToRecompile()
+    val rootToRecompile = delta.sourceMapToRecompile
     if (!rootToRecompile.isEmpty()) {
       for (entry in rootToRecompile) {
         dataManager.stampStorage.markAsUpToDate(entry.value)

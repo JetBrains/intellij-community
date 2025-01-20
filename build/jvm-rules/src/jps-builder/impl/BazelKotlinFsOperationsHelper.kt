@@ -1,8 +1,11 @@
 @file:Suppress("HardCodedStringLiteral", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "DialogTitleCapitalization", "UnstableApiUsage", "ReplaceGetOrSet")
+
 package org.jetbrains.bazel.jvm.jps.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
-import org.jetbrains.bazel.jvm.jps.RequestLog
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.FileProcessor
@@ -21,7 +24,7 @@ internal class BazelKotlinFsOperationsHelper(
   private val context: CompileContext,
   private val chunk: ModuleChunk,
   private val dirtyFilesHolder: KotlinDirtySourceFilesHolder,
-  private val log: RequestLog,
+  private val span: Span,
   private val dataManager: BazelBuildDataProvider,
 ) {
   internal var hasMarkedDirty = false
@@ -62,7 +65,7 @@ internal class BazelKotlinFsOperationsHelper(
       }
     }
 
-    markFilesImpl(files, currentRound = true) { it.exists() }
+    markFilesImpl(files, currentRound = true, span = span) { it.exists() }
   }
 
   /**
@@ -82,7 +85,7 @@ internal class BazelKotlinFsOperationsHelper(
       dirtyFileToRoot[file] = root
     }
 
-    markFilesImpl(files.asSequence(), currentRound = true) { it.exists() }
+    markFilesImpl(files.asSequence(), currentRound = true, span = span) { it.exists() }
     cleanOutputsForNewDirtyFilesInCurrentRound(target, dirtyFileToRoot)
   }
 
@@ -100,11 +103,11 @@ internal class BazelKotlinFsOperationsHelper(
   }
 
   fun markFiles(files: Sequence<File>) {
-    markFilesImpl(files, currentRound = false) { it.exists() }
+    markFilesImpl(files, currentRound = false, span = span) { it.exists() }
   }
 
   fun markInChunkOrDependents(files: Sequence<File>, excludeFiles: Set<File>) {
-    markFilesImpl(files, currentRound = false) {
+    markFilesImpl(files, currentRound = false, span = span) {
       !excludeFiles.contains(it) && it.exists()
     }
   }
@@ -112,6 +115,7 @@ internal class BazelKotlinFsOperationsHelper(
   private inline fun markFilesImpl(
     files: Sequence<File>,
     currentRound: Boolean,
+    span: Span,
     shouldMark: (File) -> Boolean
   ) {
     val filesToMark = files.filterTo(HashSet(), shouldMark)
@@ -130,6 +134,9 @@ internal class BazelKotlinFsOperationsHelper(
     for (fileToMark in filesToMark) {
       FSOperations.markDirty(context, compilationRound, fileToMark)
     }
-    log.debug("Mark dirty: $filesToMark ($compilationRound)")
+    span.addEvent("mark dirty", Attributes.of(
+      AttributeKey.stringArrayKey("filesToMark"), filesToMark.map { it.toString() },
+      AttributeKey.stringKey("compilationRound"), compilationRound.name,
+    ))
   }
 }

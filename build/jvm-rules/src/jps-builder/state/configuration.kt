@@ -19,4 +19,10 @@ internal value class TargetConfigurationDigestContainer(
   fun set(kind: TargetConfigurationDigestProperty, hash: Long) {
     list[kind.ordinal] = hash
   }
+
+  fun asString(): List<String> {
+    return TargetConfigurationDigestProperty.entries.map { kind ->
+      java.lang.Long.toUnsignedString(list[kind.ordinal], Character.MAX_RADIX)
+    }
+  }
 }

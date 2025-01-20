@@ -6,6 +6,11 @@ package org.jetbrains.bazel.jvm.jps
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.HtmlChunk.span
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.context.Context
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import kotlinx.coroutines.*
 import org.apache.arrow.memory.RootAllocator
@@ -24,8 +29,8 @@ import org.jetbrains.bazel.jvm.jps.state.saveBuildState
 import org.jetbrains.bazel.jvm.kotlin.ArgMap
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
-import org.jetbrains.bazel.jvm.logging.LogWriter
 import org.jetbrains.bazel.jvm.processRequests
+import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
@@ -36,8 +41,6 @@ import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
-import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
-import org.jetbrains.jps.incremental.storage.RelativePathType
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.jps.incremental.KotlinCompilerReferenceIndexBuilder
@@ -61,8 +64,11 @@ private fun configureKotlincHome() {
   System.setProperty("jps.kotlin.home", singleFile.parent.toString())
 }
 
-fun configureGlobalJps(logWriter: LogWriter) {
-  Logger.setFactory { BazelLogger(category = IdeaLogRecordFormatter.smartAbbreviate(it), writer = logWriter) }
+fun configureGlobalJps(tracer: Tracer, scope: CoroutineScope) {
+  val globalSpanForIJLogger = tracer.spanBuilder("global").startSpan()
+  scope.coroutineContext.job.invokeOnCompletion { globalSpanForIJLogger.end() }
+
+  Logger.setFactory { BazelLogger(category = IdeaLogRecordFormatter.smartAbbreviate(it), span = globalSpanForIJLogger) }
   System.setProperty("jps.service.manager.impl", BazelJpsServiceManager::class.java.name)
   System.setProperty("jps.backward.ref.index.builder.fs.case.sensitive", "true")
   System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Runtime.getRuntime().availableProcessors().toString())
@@ -74,7 +80,7 @@ fun configureGlobalJps(logWriter: LogWriter) {
   configureKotlincHome()
 }
 
-class JpsBuildWorker private constructor(private val allocator: RootAllocator) : WorkRequestExecutor {
+internal class JpsBuildWorker private constructor(private val allocator: RootAllocator) : WorkRequestExecutor {
   companion object {
     @JvmStatic
     fun main(startupArgs: Array<String>) {
@@ -82,13 +88,14 @@ class JpsBuildWorker private constructor(private val allocator: RootAllocator) :
         processRequests(
           startupArgs = startupArgs,
           executor = JpsBuildWorker(allocator),
-          setup = { configureGlobalJps(it) },
+          setup = { tracer, scope -> configureGlobalJps(tracer = tracer, scope = scope) },
+          serviceName = "jps-builder"
         )
       }
     }
   }
 
-  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int {
+  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracingContext: Context, tracer: Tracer): Int {
     val dependencyFileToDigest = hashMap<Path, ByteArray>()
     val sourceFileToDigest = hashMap<Path, ByteArray>(request.inputs.size)
     val sources = ArrayList<Path>()
@@ -103,16 +110,30 @@ class JpsBuildWorker private constructor(private val allocator: RootAllocator) :
       }
     }
 
-    return buildUsingJps(
-      baseDir = baseDir,
-      args = parseArgs(request.arguments),
-      out = writer,
-      sources = sources,
-      dependencyFileToDigest = dependencyFileToDigest,
-      isDebugEnabled = request.verbosity > 0,
-      sourceFileToDigest = sourceFileToDigest,
-      allocator = allocator,
-    )
+    val isDebugEnabled = request.verbosity > 0
+    if (isDebugEnabled) {
+      tracer.spanBuilder("build")
+        .setParent(tracingContext)
+        .setAttribute(AttributeKey.stringArrayKey("sourceFileToDigest"), sourceFileToDigest.map { it.toString() })
+        .setAttribute(AttributeKey.stringArrayKey("dependencyFileToDigest"), dependencyFileToDigest.map { it.toString() })
+    }
+    else {
+      tracer.spanBuilder("build")
+    }.use { span ->
+      return buildUsingJps(
+        baseDir = baseDir,
+        args = parseArgs(request.arguments),
+        out = writer,
+        sources = sources,
+        dependencyFileToDigest = dependencyFileToDigest,
+        isDebugEnabled = isDebugEnabled,
+        sourceFileToDigest = sourceFileToDigest,
+        allocator = allocator,
+        parentSpan = span,
+        tracer = tracer,
+        tracingContext = tracingContext.with(span),
+      )
+    }
   }
 }
 
@@ -126,8 +147,11 @@ suspend fun buildUsingJps(
   sourceFileToDigest: Map<Path, ByteArray>,
   isDebugEnabled: Boolean,
   allocator: RootAllocator,
+  parentSpan: Span,
+  tracer: Tracer,
+  tracingContext: Context,
 ): Int {
-  val log = RequestLog(out = out, isDebugEnabled = isDebugEnabled)
+  val log = RequestLog(out = out, parentSpan = parentSpan, tracer = tracer)
 
   val abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() }
   val outJar = baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize()
@@ -143,13 +167,21 @@ suspend fun buildUsingJps(
     args = args,
     classPathRootDir = baseDir,
     classOutDir = classOutDir,
-    dependencyFileToDigest = dependencyFileToDigest
+    dependencyFileToDigest = dependencyFileToDigest,
   )
   val moduleTarget = BazelModuleBuildTarget(
     outDir = classOutDir,
     module = jpsModel.project.modules.single(),
     sources = sources,
   )
+
+  if (isDebugEnabled) {
+    parentSpan.setAttribute("outJar", outJar.toString())
+    parentSpan.setAttribute("abiJar", abiJar?.toString() ?: "")
+    for (kind in TargetConfigurationDigestProperty.entries) {
+      parentSpan.setAttribute(kind.name, targetDigests.get(kind))
+    }
+  }
 
   val relativizer = createPathRelativizer(baseDir = baseDir, classOutDir = classOutDir)
 
@@ -167,32 +199,36 @@ suspend fun buildUsingJps(
 
   val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
   val typeAwareRelativizer = relativizer.typeAwareRelativizer!!
-  val buildState = if (isRebuild) {
-    null
-  }
-  else {
-    loadBuildState(
-      buildStateFile = buildStateFile,
-      relativizer = typeAwareRelativizer,
-      allocator = allocator,
+  val buildState = tracer.spanBuilder("load and check state").setParent(tracingContext).use { parentSpan ->
+    val buildState = if (isRebuild) {
+      null
+    }
+    else {
+      loadBuildState(
+        buildStateFile = buildStateFile,
+        relativizer = typeAwareRelativizer,
+        allocator = allocator,
+        actualDigestMap = sourceFileToDigest,
+        targetDigests = targetDigests,
+        parentSpan = parentSpan,
+      )
+    }
+
+    val forceFullRebuild = buildState != null && checkIsFullRebuildRequired(
+      buildState = buildState,
       log = log,
-      actualDigestMap = sourceFileToDigest,
-      targetDigests = targetDigests,
+      sourceFileCount = sourceFileToDigest.size,
+      parentSpan = parentSpan,
     )
-  }
 
-  val forceFullRebuild = buildState != null && checkIsFullRebuildRequired(
-    buildState = buildState,
-    log = log,
-    typeAwareRelativizer = typeAwareRelativizer,
-    sourceFileCount = sourceFileToDigest.size,
-  )
+    if (forceFullRebuild) {
+      FileUtilRt.deleteRecursively(dataDir)
+      FileUtilRt.deleteRecursively(classOutDir)
 
-  if (forceFullRebuild) {
-    FileUtilRt.deleteRecursively(dataDir)
-    FileUtilRt.deleteRecursively(classOutDir)
+      isRebuild = true
+    }
 
-    isRebuild = true
+    buildState
   }
 
   var exitCode = initAndBuild(
@@ -215,6 +251,8 @@ suspend fun buildUsingJps(
       isCleanBuild = isRebuild,
     ),
     buildState = buildState.takeIf { !isRebuild },
+    tracingContext = tracingContext,
+    parentSpan = parentSpan,
   )
   if (exitCode == -1) {
     log.resetState()
@@ -238,6 +276,8 @@ suspend fun buildUsingJps(
         isCleanBuild = true,
       ),
       buildState = null,
+      tracingContext = tracingContext,
+      parentSpan = parentSpan,
     )
   }
 
@@ -247,26 +287,28 @@ suspend fun buildUsingJps(
 private fun checkIsFullRebuildRequired(
   buildState: LoadStateResult,
   log: RequestLog,
-  typeAwareRelativizer: PathTypeAwareRelativizer,
-  sourceFileCount: Int
+  sourceFileCount: Int,
+  parentSpan: Span
 ): Boolean {
   if (buildState.rebuildRequested != null) {
-    log.warn(buildState.rebuildRequested)
-
+    parentSpan.setAttribute("rebuildRequested", buildState.rebuildRequested)
     return true
-  }
-
-  if (log.isDebugEnabled) {
-    log.info(
-      "changed ${buildState.changedFiles.size} files: ${buildState.changedFiles.joinToString(separator = "\n") { typeAwareRelativizer.toRelative(it, RelativePathType.SOURCE) }.prependIndent("  ")}" +
-        "\ndeleted ${buildState.deletedFiles.size} files: ${buildState.deletedFiles.joinToString(separator = "\n") { typeAwareRelativizer.toRelative(it.sourceFile, RelativePathType.SOURCE) }.prependIndent("  ")}"
-    )
   }
 
   val incrementalEffort = buildState.changedFiles.size + buildState.deletedFiles.size
   val rebuildThreshold = sourceFileCount * thresholdPercentage
   val forceFullRebuild = incrementalEffort >= rebuildThreshold
-  log.info("incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=$forceFullRebuild")
+  log.out.appendLine("incrementalEffort=$incrementalEffort, rebuildThreshold=$rebuildThreshold, isFullRebuild=$forceFullRebuild")
+
+  if (parentSpan.isRecording) {
+    // do not use toRelative - print as is to show the actual path
+    parentSpan.setAttribute(AttributeKey.stringArrayKey("changedFiles"), buildState.changedFiles.map { it.toString() })
+    parentSpan.setAttribute(AttributeKey.stringArrayKey("deletedFiles"), buildState.deletedFiles.map { it.toString() })
+
+    parentSpan.setAttribute("incrementalEffort", incrementalEffort.toLong())
+    parentSpan.setAttribute("rebuildThreshold", rebuildThreshold)
+    parentSpan.setAttribute("forceFullRebuild", forceFullRebuild)
+  }
   return forceFullRebuild
 }
 
@@ -283,19 +325,19 @@ private suspend fun initAndBuild(
   jpsModel: JpsModel,
   buildDataProvider: BazelBuildDataProvider,
   buildState: LoadStateResult?,
+  tracingContext: Context,
+  parentSpan: Span,
 ): Int {
-  if (messageHandler.isDebugEnabled) {
-    messageHandler.info("build (isRebuild=$isRebuild)")
-  }
-
+  val tracer = messageHandler.tracer
   val storageInitializer = StorageInitializer(dataDir = dataDir, classOutDir = classOutDir)
-  val storageManager = if (isRebuild) {
-    storageInitializer.clearAndInit(messageHandler)
+  val storageManager = tracer.spanBuilder("init storage").setParent(tracingContext).use { span ->
+    if (isRebuild) {
+        storageInitializer.clearAndInit(span)
+      }
+      else {
+        storageInitializer.init(span)
+      }
   }
-  else {
-    storageInitializer.init(messageHandler)
-  }
-
   try {
     val projectDescriptor = storageInitializer.createProjectDescriptor(
       messageHandler = messageHandler,
@@ -303,6 +345,7 @@ private suspend fun initAndBuild(
       moduleTarget = moduleTarget,
       relativizer = relativizer,
       buildDataProvider = buildDataProvider,
+      span = parentSpan,
     )
     try {
       val compileScope = CompileScopeImpl(
@@ -323,23 +366,29 @@ private suspend fun initAndBuild(
         },
       )
 
-      val builders = arrayOf(
-        JavaBuilder(BazelSharedThreadPool),
-        //NotNullInstrumentingBuilder(),
-        JavaBackwardReferenceIndexBuilder(),
-        BazelKotlinBuilder(isKotlinBuilderInDumbMode = false, log = messageHandler, dataManager = buildDataProvider),
-        KotlinCompilerReferenceIndexBuilder(),
-      )
-      builders.sortBy { it.category.ordinal }
-      val exitCode = JpsTargetBuilder(
-        log = messageHandler,
-        isCleanBuild = storageInitializer.isCleanBuild,
-        dataManager = buildDataProvider,
-      ).build(context = context, moduleTarget = moduleTarget, builders = builders, buildState = buildState)
+      val exitCode = tracer.spanBuilder("compile")
+        .setParent(tracingContext)
+        .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
+        .use { span ->
+          val builders = arrayOf(
+            JavaBuilder(BazelSharedThreadPool),
+            //NotNullInstrumentingBuilder(),
+            JavaBackwardReferenceIndexBuilder(),
+            BazelKotlinBuilder(isKotlinBuilderInDumbMode = false, span = span, dataManager = buildDataProvider),
+            KotlinCompilerReferenceIndexBuilder(),
+          )
+          builders.sortBy { it.category.ordinal }
+
+          JpsTargetBuilder(
+            log = messageHandler,
+            isCleanBuild = storageInitializer.isCleanBuild,
+            dataManager = buildDataProvider,
+            span = span,
+          ).build(context = context, moduleTarget = moduleTarget, builders = builders, buildState = buildState)
+        }
       if (exitCode == 0) {
         try {
           postBuild(
-            messageHandler = messageHandler,
             moduleTarget = moduleTarget,
             outJar = outJar,
             abiJar = abiJar,
@@ -347,6 +396,8 @@ private suspend fun initAndBuild(
             context = context,
             targetDigests = targetDigests,
             buildDataProvider = buildDataProvider,
+            tracingContext = tracingContext,
+            tracer = tracer,
           )
         }
         catch (e: Throwable) {
@@ -362,7 +413,7 @@ private suspend fun initAndBuild(
       return exitCode
     }
     catch (e: RebuildRequestedException) {
-      messageHandler.info("RebuildRequestedException: ${e.cause?.message}: ${e.stackTraceToString()}")
+      parentSpan.recordException(e)
       return -1
     }
     finally {
@@ -377,7 +428,6 @@ private suspend fun initAndBuild(
 private val stateFileMetaNames = arrayOf(VERSION_META_NAME) + TargetConfigurationDigestProperty.entries.map { it.name }
 
 private suspend fun postBuild(
-  messageHandler: RequestLog,
   moduleTarget: ModuleBuildTarget,
   outJar: Path,
   abiJar: Path?,
@@ -385,6 +435,8 @@ private suspend fun postBuild(
   context: CompileContextImpl,
   targetDigests: TargetConfigurationDigestContainer,
   buildDataProvider: BazelBuildDataProvider,
+  tracingContext: Context,
+  tracer: Tracer,
 ) {
   coroutineScope {
     val dataManager = context.projectDescriptor.dataManager
@@ -400,9 +452,7 @@ private suspend fun postBuild(
         relativizer = buildDataProvider.relativizer,
         metadata = Object2ObjectArrayMap(
           stateFileMetaNames,
-          arrayOf(STATE_FILE_FORMAT_VERSION) + TargetConfigurationDigestProperty.entries.map {
-            java.lang.Long.toUnsignedString(targetDigests.get(it), Character.MAX_RADIX)
-          },
+          arrayOf(STATE_FILE_FORMAT_VERSION) + targetDigests.asString(),
         ),
         allocator = buildDataProvider.allocator,
       )
@@ -417,13 +467,13 @@ private suspend fun postBuild(
 
     launch(CoroutineName("create output JAR and ABI JAR")) {
       // pack to jar
-      messageHandler.measureTime("pack and abi") {
+      tracer.spanBuilder("create output JAR and ABI JAR").setParent(tracingContext).use { span ->
         packageToJar(
           outJar = outJar,
           abiJar = abiJar,
           sourceDescriptors = sourceDescriptors,
           classOutDir = classOutDir,
-          log = messageHandler,
+          span = span,
         )
       }
     }

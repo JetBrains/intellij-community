@@ -1,7 +1,9 @@
 @file:Suppress("HardCodedStringLiteral", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "DialogTitleCapitalization", "UnstableApiUsage", "ReplaceGetOrSet")
 package org.jetbrains.bazel.jvm.jps.impl
 
-import org.jetbrains.bazel.jvm.jps.RequestLog
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.FileProcessor
@@ -64,8 +66,8 @@ private val classesToLoadByParent = ClassCondition { className ->
 internal class BazelKotlinBuilder(
   private val isKotlinBuilderInDumbMode: Boolean,
   private val enableLookupStorageFillingInDumbMode: Boolean = false,
-  private val log: RequestLog,
   private val dataManager: BazelBuildDataProvider,
+  private val span: Span,
 ) : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
   companion object {
     const val JPS_KOTLIN_HOME_PROPERTY = "jps.kotlin.home"
@@ -110,7 +112,7 @@ internal class BazelKotlinBuilder(
       kotlinContext.reportUnsupportedTargets()
     }
 
-    log.info("Total Kotlin global compile context initialization time: $time ms")
+    span.addEvent("total Kotlin global compile context initialization time: $time ms")
 
     return kotlinContext
   }
@@ -172,7 +174,7 @@ internal class BazelKotlinBuilder(
         }
       }
     )
-    val fsOperations = BazelKotlinFsOperationsHelper(context, chunk, dirtyFilesHolder, log, dataManager = dataManager)
+    val fsOperations = BazelKotlinFsOperationsHelper(context, chunk, dirtyFilesHolder, span, dataManager = dataManager)
 
     val representativeTarget = kotlinContext.targetsBinding[chunk.representativeTarget()] ?: return
 
@@ -217,7 +219,7 @@ internal class BazelKotlinBuilder(
       changeCollector = changesCollector,
       caches = incrementalCaches.values,
       lookupStorageManager = kotlinContext.lookupStorageManager,
-      reporter = BazelJpsICReporter(log),
+      reporter = BazelJpsICReporter(span),
     )
 
     fsOperations.markFilesForCurrentRound(affectedByRemovedClasses.dirtyFiles.asSequence() + affectedByRemovedClasses.forceRecompileTogether)
@@ -235,8 +237,8 @@ internal class BazelKotlinBuilder(
       context = context,
       chunk = chunk,
       dirtyFilesHolder = kotlinDirtyFilesHolder,
-      log = log,
       dataManager = dataManager,
+      span = span,
     )
     val proposedExitCode = doBuild(
       chunk = chunk,
@@ -421,7 +423,7 @@ internal class BazelKotlinBuilder(
           lookupStorageManager = kotlinContext.lookupStorageManager,
           fsOperations = fsOperations,
           caches = incrementalCaches.values,
-          reporter = BazelJpsICReporter(log),
+          reporter = BazelJpsICReporter(span),
         )
       }
     }
@@ -471,8 +473,8 @@ internal class BazelKotlinBuilder(
     context: CompileContext,
   ) {
     val allDirtyFiles = dirtyFilesHolder.allDirtyFiles
-    if (log.isDebugEnabled) {
-      log.debug("compiling files: $allDirtyFiles")
+    if (span.isRecording) {
+      span.addEvent("compiling files", Attributes.of(AttributeKey.stringArrayKey("allDirtyFiles"), allDirtyFiles.map { it.path }))
     }
     JavaBuilderUtil.registerFilesToCompile(context, allDirtyFiles)
   }
@@ -591,15 +593,12 @@ internal class BazelKotlinBuilder(
   }
 }
 
-private class BazelJpsICReporter(private val log: RequestLog) : ICReporterBase() {
+private class BazelJpsICReporter(private val span: Span) : ICReporterBase() {
   override fun reportCompileIteration(incremental: Boolean, sourceFiles: Collection<File>, exitCode: ExitCode) {
   }
 
   override fun report(message: () -> String, severity: ReportSeverity) {
-    // Currently, all severity levels are mapped to debug
-    if (log.isDebugEnabled) {
-      log.debug(message())
-    }
+    span.addEvent(message())
   }
 }
 

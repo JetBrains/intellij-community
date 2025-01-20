@@ -13,6 +13,7 @@ kt_jvm_library(
         "//:kotlinx-coroutines-core",
         "@lib//:asm",
         "@lib//:fastutil-min",
+        "@lib//:opentelemetry",
         "//zip:build-zip",
         "//src/jps-builder:jps-standalone",
         "//:kotlin-metadata",

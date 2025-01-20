@@ -3,17 +3,18 @@
 
 package org.jetbrains.bazel.jvm.jps.test
 
+import io.opentelemetry.context.Context
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.TestModules
 import org.jetbrains.bazel.jvm.collectSources
+import org.jetbrains.bazel.jvm.configureOpenTelemetry
 import org.jetbrains.bazel.jvm.getTestWorkerPaths
 import org.jetbrains.bazel.jvm.jps.buildUsingJps
 import org.jetbrains.bazel.jvm.jps.configureGlobalJps
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
-import org.jetbrains.bazel.jvm.logging.LogWriter
 import org.jetbrains.bazel.jvm.performTestInvocation
-import java.io.PrintStream
+import org.jetbrains.bazel.jvm.use
 import java.nio.file.Files
 import java.security.MessageDigest
 import kotlin.io.path.ExperimentalPathApi
@@ -32,33 +33,39 @@ internal object TestJpsBuildWorker {
     performTestInvocation { out, coroutineScope ->
       // IDEA console is bad and outdated, write to file and use modern tooling to view logs
       // ${dateTimeFormatter.format(LocalDateTime.now())}
-      val logFile = testPaths.userHomeDir.resolve("kotlin-worker/log.ndjson")
+      val logFile = testPaths.userHomeDir.resolve("kotlin-worker/log.jsonl")
       Files.createDirectories(logFile.parent)
-      configureGlobalJps(LogWriter(coroutineScope, PrintStream(Files.newOutputStream(logFile)), closeWriterOnShutdown = true))
+      val tracer = configureOpenTelemetry(Files.newOutputStream(logFile), "test-builder").getTracer("test-builder")
+      configureGlobalJps(tracer, coroutineScope)
 
       val args = parseArgs(testParams.lines().toTypedArray())
       val messageDigest = MessageDigest.getInstance("SHA-256")
       RootAllocator(Long.MAX_VALUE).use { allocator ->
-        buildUsingJps(
-          baseDir = baseDir,
-          args = args,
-          out = out,
-          sources = sources,
-          dependencyFileToDigest = args.optionalList(JvmBuilderFlags.CLASSPATH).associate {
-            val file = baseDir.resolve(it).normalize()
-            val digest = messageDigest.digest(Files.readAllBytes(file))
-            messageDigest.reset()
-            file to digest
-          },
-          sourceFileToDigest = sources.associate {
-            val file = baseDir.resolve(it).normalize()
-            val digest = messageDigest.digest(Files.readAllBytes(file))
-            messageDigest.reset()
-            file to digest
-          },
-          isDebugEnabled = true,
-          allocator = allocator,
-        )
+        tracer.spanBuilder("build").use { span ->
+          buildUsingJps(
+            baseDir = baseDir,
+            args = args,
+            out = out,
+            sources = sources,
+            dependencyFileToDigest = args.optionalList(JvmBuilderFlags.CLASSPATH).associate {
+              val file = baseDir.resolve(it).normalize()
+              val digest = messageDigest.digest(Files.readAllBytes(file))
+              messageDigest.reset()
+              file to digest
+            },
+            sourceFileToDigest = sources.associate {
+              val file = baseDir.resolve(it).normalize()
+              val digest = messageDigest.digest(Files.readAllBytes(file))
+              messageDigest.reset()
+              file to digest
+            },
+            isDebugEnabled = true,
+            allocator = allocator,
+            tracingContext = Context.current(),
+            parentSpan = span,
+            tracer = tracer,
+          )
+        }
       }
     }
   }

@@ -3,6 +3,9 @@
 
 package org.jetbrains.bazel.jvm.jps.state
 
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.FixedSizeBinaryVector
 import org.apache.arrow.vector.VarCharVector
@@ -15,7 +18,6 @@ import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.bazel.jvm.jps.RequestLog
 import org.jetbrains.bazel.jvm.jps.SourceDescriptor
 import org.jetbrains.bazel.jvm.jps.emptyList
 import org.jetbrains.bazel.jvm.jps.hashMap
@@ -83,8 +85,8 @@ fun loadBuildState(
     relativizer = relativizer,
     allocator = allocator,
     actualDigestMap = actualDigestMap,
-    log = null,
     targetDigests = null,
+    parentSpan = null,
   )
 }
 
@@ -92,9 +94,9 @@ internal fun loadBuildState(
   buildStateFile: Path,
   relativizer: PathTypeAwareRelativizer,
   allocator: RootAllocator,
-  log: RequestLog?,
   actualDigestMap: Map<Path, ByteArray>,
   targetDigests: TargetConfigurationDigestContainer?,
+  parentSpan: Span?,
 ): LoadStateResult? {
   try {
     FileChannel.open(buildStateFile, READ_FILE_OPTION).use { fileChannel ->
@@ -105,7 +107,7 @@ internal fun loadBuildState(
         if (targetDigests != null) {
           val rebuildRequested = checkConfiguration(metadata = fileReader.metaData, targetDigests = targetDigests)
           if (rebuildRequested != null) {
-            if (log == null) {
+            if (parentSpan == null) {
               throw IOException(rebuildRequested)
             }
             else {
@@ -131,11 +133,14 @@ internal fun loadBuildState(
     return null
   }
   catch (e: Throwable) {
-    if (log == null) {
+    if (parentSpan == null) {
       throw e
     }
 
-    log.error("cannot load $buildStateFile", e)
+    parentSpan.recordException(e, Attributes.of(
+      AttributeKey.stringKey("message"), "cannot load build state file",
+      AttributeKey.stringKey("buildStateFile"), buildStateFile.toString(),
+    ))
     // will be deleted by caller
     return null
   }

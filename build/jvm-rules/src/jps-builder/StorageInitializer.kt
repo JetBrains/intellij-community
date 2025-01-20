@@ -4,10 +4,15 @@
 package org.jetbrains.bazel.jvm.jps
 
 import com.intellij.openapi.util.io.FileUtilRt
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.StatusCode
 import kotlinx.coroutines.ensureActive
 import org.h2.mvstore.MVStore
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
+import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.impl.loadJpsProject
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.fs.BuildFSState
@@ -32,7 +37,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
   var isCleanBuild: Boolean = false
     private set
 
-  fun clearAndInit(messageHandler: RequestLog): StorageManager {
+  fun clearAndInit(span: Span): StorageManager {
     isCheckRebuildRequired = false
     wasCleared = true
     isCleanBuild = true
@@ -40,20 +45,20 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
     clearStorage()
 
     Files.createDirectories(dataDir)
-    val logger = createLogger(messageHandler)
+    val logger = createLogger(span)
     val store = tryOpenMvStore(file = cacheDbFile, readOnly = false, autoCommitDelay = 0, logger = logger)
     return StorageManager(cacheDbFile, store)
       .also { storageManager = it }
   }
 
-  suspend fun init(messageHandler: RequestLog): StorageManager {
-    val logger = createLogger(messageHandler)
+  suspend fun init(span: Span): StorageManager {
+    val logger = createLogger(span)
     coroutineContext.ensureActive()
 
     isCleanBuild = Files.notExists(cacheDbFile)
 
     if (isCleanBuild && Files.isDirectory(dataDir)) {
-      messageHandler.info("remove $dataDir and $classOutDir because no cache db file found: $cacheDbFile")
+      span.addEvent("remove $dataDir and $classOutDir because no cache db file found: $cacheDbFile")
       // if no db file, make sure that data dir is also not reused
       deleteDirs()
     }
@@ -63,7 +68,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
       tryOpenMvStore(file = cacheDbFile, readOnly = false, autoCommitDelay = 0, logger = logger)
     }
     catch (e: Throwable) {
-      messageHandler.info("rebuild due to internal error: ${e.stackTraceToString()}")
+      span.recordException(e, Attributes.of(AttributeKey.stringKey("message"), "rebuild due to internal error"))
       clearStorage()
 
       return StorageManager(cacheDbFile, createStoreAfterClear(logger))
@@ -83,14 +88,11 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
     return tryOpenMvStore(file = cacheDbFile, readOnly = false, autoCommitDelay = 0, logger = logger)
   }
 
-  private fun createLogger(messageHandler: RequestLog): StoreLogger {
+  private fun createLogger(span: Span): StoreLogger {
     return { m: String, e: Throwable, isWarn: Boolean ->
-      val message = "$m: ${e.stackTraceToString()}"
-      if (isWarn) {
-        messageHandler.warn(message)
-      }
-      else {
-        messageHandler.error(message)
+      span.recordException(e, Attributes.of(AttributeKey.stringKey("message"), m))
+      if (!isWarn) {
+        span.setStatus(StatusCode.ERROR)
       }
     }
   }
@@ -101,6 +103,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
     moduleTarget: BazelModuleBuildTarget,
     relativizer: PathRelativizerService,
     buildDataProvider: BazelBuildDataProvider,
+    span: Span,
   ): ProjectDescriptor {
     try {
       return loadJpsProject(
@@ -121,7 +124,9 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
         throw e
       }
 
-      messageHandler.warn("Cannot open cache storage: ${e.stackTraceToString()}")
+      span.recordException(e, Attributes.of(
+        AttributeKey.stringKey("message"), "cannot open cache storage",
+      ))
     }
 
     return createProjectDescriptor(
@@ -130,6 +135,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
       moduleTarget = moduleTarget,
       relativizer = relativizer,
       buildDataProvider = buildDataProvider,
+      span = span,
     )
   }
 

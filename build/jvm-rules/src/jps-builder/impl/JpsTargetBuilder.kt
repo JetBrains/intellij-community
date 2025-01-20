@@ -5,10 +5,12 @@ package org.jetbrains.bazel.jvm.jps.impl
 
 import com.intellij.openapi.util.text.Formats.formatDuration
 import com.intellij.tracing.Tracer.start
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.bazel.jvm.jps.RequestLog
 import org.jetbrains.bazel.jvm.jps.hashMap
 import org.jetbrains.bazel.jvm.jps.linkedSet
 import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
@@ -41,6 +43,7 @@ import kotlin.time.toJavaDuration
 
 internal class JpsTargetBuilder(
   private val log: RequestLog,
+  private val span: Span,
   private val isCleanBuild: Boolean,
   private val dataManager: BazelBuildDataProvider,
 ) {
@@ -81,7 +84,7 @@ internal class JpsTargetBuilder(
         val message = "Build duration: ${builder.presentableName} took ${formatDuration(time.toJavaDuration())}; " +
           processedSources + " sources processed" +
           (if (processedSources == 0) "" else " (${time.inWholeMilliseconds / processedSources} ms per file)")
-        log.info(message)
+        span.addEvent(message)
       }
     }
     catch (e: StopBuildException) {
@@ -92,13 +95,23 @@ internal class JpsTargetBuilder(
       return if (log.hasErrors()) 1 else 0
     }
     catch (e: BuildDataCorruptedException) {
-      log.warn("Internal caches are corrupted or have outdated format, forcing project rebuild: $e")
+      span.recordException(
+        e,
+        Attributes.of(
+          AttributeKey.stringKey("message"), "internal caches are corrupted or have outdated format, forcing project rebuild"
+        )
+      )
       throw RebuildRequestedException(e)
     }
     catch (e: ProjectBuildException) {
       val cause = e.cause
       if (cause is IOException || cause is BuildDataCorruptedException || (cause is RuntimeException && cause.cause is IOException)) {
-        log.warn("Internal caches are corrupted or have outdated format, forcing project rebuild: $e")
+        span.recordException(
+          e,
+          Attributes.of(
+            AttributeKey.stringKey("message"), "internal caches are corrupted or have outdated format, forcing project rebuild"
+          )
+        )
         throw RebuildRequestedException(cause)
       }
       else {
@@ -143,9 +156,9 @@ internal class JpsTargetBuilder(
         if (!isCleanBuild) {
           cleanOutputsCorrespondingToChangedFiles(
             context = context,
-            log = log,
             target = target,
             dataManager = dataManager,
+            span = span,
           )
         }
 
@@ -201,7 +214,9 @@ internal class JpsTargetBuilder(
                 break
               }
               else {
-                log.debug("Builder ${builder.presentableName} requested second chunk rebuild")
+                span.addEvent("builder requested second chunk rebuild", Attributes.of(
+                  AttributeKey.stringKey("builder"), builder.presentableName,
+                ))
               }
             }
 
@@ -270,7 +285,12 @@ internal class JpsTargetBuilder(
 
         val deletedFiles = buildState.deletedFiles
         if (!deletedFiles.isEmpty()) {
-          doneSomething = deleteOutputsAssociatedWithDeletedPaths(context = context, target = target, deletedFiles = deletedFiles, log = log)
+          doneSomething = deleteOutputsAssociatedWithDeletedPaths(
+            context = context,
+            target = target,
+            deletedFiles = deletedFiles,
+            span = span,
+          )
         }
       }
 
@@ -352,7 +372,7 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
   context: CompileContext,
   target: ModuleBuildTarget,
   deletedFiles: List<RemovedFileInfo>,
-  log: RequestLog,
+  span: Span,
 ): Boolean {
   val dirsToDelete = linkedSet<Path>()
   var doneSomething = false
@@ -370,7 +390,12 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
     }
     if (!deletedOutputFiles.isEmpty()) {
       doneSomething = true
-      log.info("Deleted files: $deletedOutputFiles")
+      if (span.isRecording) {
+        span.addEvent(
+          "deleted files",
+          Attributes.of(AttributeKey.stringArrayKey("deletedOutputFiles"), deletedOutputFiles.map { it.toString() }),
+        )
+      }
       context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
     }
   }

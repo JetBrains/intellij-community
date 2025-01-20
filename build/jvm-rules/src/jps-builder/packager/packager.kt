@@ -3,6 +3,9 @@
 
 package org.jetbrains.bazel.jvm.jps
 
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -43,7 +46,7 @@ suspend fun packageToJar(
   abiJar: Path?,
   sourceDescriptors: Array<SourceDescriptor>,
   classOutDir: Path,
-  log: RequestLog
+  span: Span,
 ) {
   //var abiJar = Path.of(outJar.toString() + ".abi.jar")
   if (abiJar == null) {
@@ -53,7 +56,7 @@ suspend fun packageToJar(
         sourceDescriptors = sourceDescriptors,
         classOutDir = classOutDir,
         abiChannel = null,
-        messageHandler = log,
+        span = span,
       )
     }
     return
@@ -67,7 +70,7 @@ suspend fun packageToJar(
         sourceDescriptors = sourceDescriptors,
         classOutDir = classOutDir,
         abiChannel = classChannel,
-        messageHandler = log,
+        span = span,
       )
       classChannel.close()
     }
@@ -84,7 +87,7 @@ private suspend fun createJar(
   sourceDescriptors: Array<SourceDescriptor>,
   classOutDir: Path,
   abiChannel: Channel<JarContentToProcess>?,
-  messageHandler: RequestLog,
+  span: Span,
 ) {
   val packageIndexBuilder = PackageIndexBuilder()
   writeZipUsingTempFile(outJar, packageIndexBuilder.indexWriter) { stream ->
@@ -119,7 +122,13 @@ private suspend fun createJar(
           stream.file(nameString = path, file = file)
         }
         catch (_: NoSuchFileException) {
-          messageHandler.warn("output file exists in src-to-output mapping, but not found on disk: $path (classOutDir=$classOutDir)")
+          span.addEvent(
+            "output file exists in src-to-output mapping, but not found on disk",
+            Attributes.of(
+              AttributeKey.stringKey("path"), path,
+              AttributeKey.stringKey("classOutDir"), classOutDir.toString()
+            ),
+          )
         }
       }
     }

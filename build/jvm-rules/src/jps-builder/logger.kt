@@ -5,17 +5,15 @@ package org.jetbrains.bazel.jvm.jps
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.bazel.jvm.logging.LogEvent
-import org.jetbrains.bazel.jvm.logging.LogWriter
-import java.time.Instant
-
-private val levelToNameMap = enumValues<LogLevel>().associateWith { if ((it == LogLevel.INFO)) null else it.name.lowercase() }
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 
 // klogging uses a separate coroutine for log even instead of adding to the channel
 // write to System.err as Bazel expects for worker log
-internal class BazelLogger(category: String, private val writer: LogWriter) : Logger() {
+internal class BazelLogger(category: String, private val span: Span) : Logger() {
   private val maxLevel = LogLevel.INFO
-  private val categoryContext = arrayOf<Any>("c", category.trimStart('#'))
+  private val sharedAttributes = Attributes.of(AttributeKey.stringKey("category"), category)
 
   override fun isDebugEnabled(): Boolean = maxLevel >= LogLevel.DEBUG
 
@@ -33,19 +31,15 @@ internal class BazelLogger(category: String, private val writer: LogWriter) : Lo
     addEvent(LogLevel.DEBUG, message, t)
   }
 
-  @Suppress("ReplaceGetOrSet")
   private fun addEvent(level: LogLevel, message: String, t: Throwable?) {
     if (level > maxLevel) {
       return
     }
 
-    writer.log(LogEvent(
-      timestamp = Instant.now(),
-      message = message,
-      context = categoryContext,
-      level = levelToNameMap.get(level),
-      exception = t,
-    ))
+    span.addEvent(message, sharedAttributes)
+    t?.let {
+      span.recordException(it, sharedAttributes)
+    }
   }
 
   override fun info(message: String, t: Throwable?) {

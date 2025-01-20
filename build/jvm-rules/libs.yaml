@@ -51,3 +51,5 @@
         - ":arrow-memory-netty-buffer-patch"
     - id: org.apache.arrow:arrow-memory-netty-buffer-patch
       version: 18.1.0
+    - id: io.opentelemetry:opentelemetry-exporter-logging-otlp
+      version: 1.45.0

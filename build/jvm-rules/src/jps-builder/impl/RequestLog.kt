@@ -1,47 +1,26 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("HardCodedStringLiteral")
 
-package org.jetbrains.bazel.jvm.jps
+package org.jetbrains.bazel.jvm.jps.impl
 
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.Tracer
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
 import org.jetbrains.jps.incremental.messages.ProgressMessage
 
-class RequestLog(
-  @PublishedApi @JvmField internal val out: Appendable,
-  @JvmField val isDebugEnabled: Boolean,
+internal class RequestLog(
+  @JvmField val out: Appendable,
+  @JvmField val parentSpan: Span,
+  @JvmField val tracer: Tracer,
 ) : MessageHandler {
   @Volatile
   private var hasErrors = false
 
   fun resetState() {
     hasErrors = false
-  }
-
-  fun warn(message: String) {
-    out.appendLine("WARN: $message")
-  }
-
-  fun error(message: String) {
-    out.appendLine("ERROR: $message")
-  }
-
-  fun error(message: String, error: Throwable) {
-    out.appendLine("ERROR: $message\n${error.stackTraceToString().prependIndent("  ")}")
-  }
-
-  fun info(message: String) {
-    out.appendLine("INFO: $message")
-  }
-
-  fun debug(message: String) {
-    out.appendLine("DEBUG: $message")
-  }
-
-  inline fun measureTime(label: String, block: () -> Unit) {
-    val duration = kotlin.time.measureTime(block)
-    out.appendLine("TIME: $label: $duration")
   }
 
   override fun processMessage(message: BuildMessage) {
@@ -63,10 +42,11 @@ class RequestLog(
     }
 
     if (message.kind == BuildMessage.Kind.ERROR) {
+      parentSpan.addEvent("compilation error", Attributes.of(AttributeKey.stringKey("message"), messageText))
       out.appendLine("Error: $messageText")
       hasErrors = true
     }
-    else if (message.kind !== BuildMessage.Kind.PROGRESS || !messageText.startsWith("Compiled") && !messageText.startsWith("Copying")) {
+    else if (!messageText.startsWith("Compiled") && !messageText.startsWith("Copying")) {
       out.appendLine(messageText)
     }
   }

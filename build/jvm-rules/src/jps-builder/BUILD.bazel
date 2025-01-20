@@ -10,6 +10,7 @@ kt_jvm_library(
     deps = [
         "@lib//:kotlin-stdlib",
         "@lib//:fastutil-min",
+        "@lib//:opentelemetry",
         "//src/compiler-util",
         "//src/worker-framework",
         "@rules_java//java/runfiles",

@@ -184,4 +184,11 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "opentelemetry-exporter-logging-otlp",
+    jar = "@opentelemetry-exporter-logging-otlp//file",
+    source_jar = "@opentelemetry-exporter-logging-otlp-sources//file",
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `libraries` end

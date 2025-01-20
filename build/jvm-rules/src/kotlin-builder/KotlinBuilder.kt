@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
+import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.context.Context
 import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.processRequests
@@ -11,10 +13,10 @@ object KotlinBuildWorker : WorkRequestExecutor {
   @JvmStatic
   fun main(startupArgs: Array<String>) {
     org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentUtil
-    processRequests(startupArgs, this)
+    processRequests(startupArgs = startupArgs, executor = this, serviceName = "kotlin-builder")
   }
 
-  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path): Int {
+  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracingContext: Context, tracer: Tracer): Int {
     val sources = request.inputs.asSequence()
       .filter { it.path.endsWith(".kt") || it.path.endsWith(".java") }
       .map { baseDir.resolve(it.path).normalize() }
