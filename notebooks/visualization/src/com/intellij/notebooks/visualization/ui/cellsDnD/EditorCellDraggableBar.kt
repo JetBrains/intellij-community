@@ -1,5 +1,6 @@
 package com.intellij.notebooks.visualization.ui.cellsDnD
 
+import com.intellij.icons.AllIcons
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
@@ -13,6 +14,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.registry.Registry
 import java.awt.Cursor
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -29,6 +32,8 @@ class EditorCellDraggableBar(
   private val boundsChangeListener = object : JupyterBoundsChangeListener {
     override fun boundsChanged() = updateBounds()
   }
+
+  private val dragIcon = AllIcons.General.Drag
 
   init {
     if (Registry.`is`("jupyter.editor.dnd.cells")) createAndAddDraggableBar()
@@ -82,7 +87,7 @@ class EditorCellDraggableBar(
 
     init {
       cursor = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR)  // todo: need to find a better cursor
-      isOpaque = true
+      isOpaque = false
 
       addMouseListener(object : MouseAdapter() {
         override fun mousePressed(e: MouseEvent) {
@@ -125,6 +130,16 @@ class EditorCellDraggableBar(
       val offset = editor.xyToLogicalPosition(editorPoint).let { editor.logicalPositionToOffset(it) }
       val line = editor.document.getLineNumber(offset)
       return NotebookCellInlayManager.get(editor)?.getCell(editor.getCell(line).ordinal)
+    }
+
+    override fun paintComponent(g: Graphics?) {
+      super.paintComponent(g)
+      val g2d = g as Graphics2D
+
+      // todo: deal with empty lower panels - in such case, icon does not fit
+      val iconX = (width - dragIcon.iconWidth) / 2
+      val iconY = (height - dragIcon.iconHeight) / 2
+      dragIcon.paintIcon(this, g2d, iconX, iconY)
     }
 
     private fun handleDrag(currentLocationOnScreen: Point) {
