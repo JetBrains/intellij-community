@@ -72,7 +72,7 @@ public final class PyNumericViewUtil {
       }
     }
     else {
-      throw new IllegalArgumentException("Not a valid python complex value: " + pyComplexValue);
+      throw new NumberFormatException("Not a valid python complex value: " + pyComplexValue);
     }
     return null;
   }
