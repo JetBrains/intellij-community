@@ -147,9 +147,9 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean =
             if (paramType != null && paramType.isFunctionalType()) {
                 return true
             }
-            val calls = (resolveCall as KaErrorCallInfo).candidateCalls.filterIsInstance<KaSimpleFunctionCall>()
+            val calls = (resolveCall as? KaErrorCallInfo)?.candidateCalls?.filterIsInstance<KaSimpleFunctionCall>() ?: return false
 
-            return calls.isEmpty() || calls.all { functionalCall ->
+            return calls.all { functionalCall ->
                 val lastParameter = functionalCall.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()
                 val lastParameterType = lastParameter?.returnType
                 lastParameterType != null && lastParameterType.isFunctionalType()
