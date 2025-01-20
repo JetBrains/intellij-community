@@ -29,14 +29,14 @@ class EelMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
 
   override fun isApplicable(project: Project): Boolean {
     // TODO: should we use eel also for local environments?
-    return project.getEelDescriptor() != LocalEelDescriptor
+    return !project.isDefault && project.getEelDescriptor() != LocalEelDescriptor
   }
 }
 
 class EelRemotePathTransformFactory : RemotePathTransformerFactory {
   override fun isApplicable(project: Project): Boolean {
     // TODO: should we use eel also for local environments?
-    return project.getEelDescriptor() != LocalEelDescriptor
+    return !project.isDefault && project.getEelDescriptor() != LocalEelDescriptor
   }
 
   override fun createTransformer(project: Project): RemotePathTransformerFactory.Transformer {
