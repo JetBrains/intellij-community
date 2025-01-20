@@ -2,9 +2,7 @@
 package com.intellij.byteCodeViewer
 
 import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -15,59 +13,60 @@ import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiFile
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiClass
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.util.Textifier
+import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor
 import java.awt.BorderLayout
+import java.io.IOException
+import java.io.PrintWriter
+import java.io.StringWriter
 import javax.swing.JPanel
 import kotlin.math.min
 
-internal class BytecodeToolWindowPanel(private val project: Project, private val file: PsiFile) : JPanel(BorderLayout()), Disposable {
+internal class BytecodeToolWindowPanel(
+  private val project: Project,
+  private val psiClass: PsiClass,
+  private val classFile: VirtualFile
+) : JPanel(BorderLayout()), Disposable {
   private val bytecodeEditor: Editor = EditorFactory.getInstance()
     .createEditor(EditorFactory.getInstance().createDocument(""), project, JavaClassFileType.INSTANCE, true)
-    .also { bytecodeEditor ->
-      setBorder(null)
-      val byteCode = generateBytecodeText() ?: return@also
-      runWriteAction {
-        bytecodeEditor.document.putUserData<String?>(BYTECODE_WITH_DEBUG_INFO, byteCode.withDebugInfo)
-        bytecodeEditor.document.setText(StringUtil.convertLineSeparators(byteCode.withoutDebugInfo))
-      }
-
-      val sourceEditor = FileEditorManager.getInstance(project).getSelectedTextEditor()?.takeIf {
-        it.virtualFile == file.virtualFile
-      } ?: return@also
-
-      updateBytecodeSelection(sourceEditor, bytecodeEditor)
-
-      EditorFactory.getInstance().getEventMulticaster().addSelectionListener(object : SelectionListener {
-        override fun selectionChanged(e: SelectionEvent) {
-          if (e.editor != sourceEditor) return
-          updateBytecodeSelection(sourceEditor, bytecodeEditor)
-        }
-      }, this@BytecodeToolWindowPanel)
-    }
 
   init {
     add(bytecodeEditor.getComponent())
+    setBorder(null)
+
+    setEditorText()
+    EditorFactory.getInstance().getEventMulticaster().addSelectionListener(object : SelectionListener {
+      override fun selectionChanged(e: SelectionEvent) {
+        val sourceEditor = selectedMatchingEditor()
+        if (e.editor != sourceEditor) return
+        updateBytecodeSelection(sourceEditor)
+      }
+    }, this@BytecodeToolWindowPanel)
   }
 
-  /** Update only text selection ranges. Do not read bytecode again.
-   *
-   * @param sourceEditor an editor that displays Java code (either real source Java or decompiled Java). If not, this method does nothing.
-   */
-  @RequiresEdt
-  private fun updateBytecodeSelection(sourceEditor: Editor, bytecodeEditor: Editor) {
-    if (sourceEditor.getCaretModel().getCaretCount() != 1) return
-    val virtualFile = sourceEditor.virtualFile ?: return
-    if (virtualFile.fileType !== JavaFileType.INSTANCE) return
-
-    val selectedPsiElement = getPsiElement(project, sourceEditor)
-    if (selectedPsiElement == null) return
-    val containingClass = ByteCodeViewerManager.getContainingClass(selectedPsiElement)
-    if (containingClass == null) {
-      bytecodeEditor.getSelectionModel().removeSelection()
-      return
+  fun setEditorText() {
+    val byteCodeText = deserializeBytecode()
+    bytecodeEditor.document.putUserData(BYTECODE_WITH_DEBUG_INFO, byteCodeText) // include debug info for selection matching
+    runWriteAction {
+      val byteCodeToShow = if (BytecodeViewerSettings.getInstance().state.showDebugInfo) byteCodeText else removeDebugInfo(byteCodeText)
+      bytecodeEditor.document.setText(byteCodeToShow)
     }
+
+    val sourceEditor = selectedMatchingEditor() ?: return
+    updateBytecodeSelection(sourceEditor)
+  }
+
+  private fun selectedMatchingEditor(): Editor? {
+    return FileEditorManager.getInstance(project).getSelectedTextEditor()?.takeIf {
+      it.virtualFile == psiClass.containingFile.virtualFile
+    }
+  }
+
+  private fun updateBytecodeSelection(sourceEditor: Editor) {
+    if (sourceEditor.getCaretModel().getCaretCount() != 1) return
 
     val sourceStartOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionStart()
     val sourceEndOffset = sourceEditor.getCaretModel().getCurrentCaret().getSelectionEnd()
@@ -112,10 +111,19 @@ internal class BytecodeToolWindowPanel(private val project: Project, private val
     bytecodeEditor.getSelectionModel().setSelection(startOffset, endOffset)
   }
 
-  private fun generateBytecodeText(): Bytecode? = runReadAction {
-    val selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() ?: return@runReadAction null
-    val psiElement = getPsiElement(project, selectedEditor) ?: return@runReadAction null
-    getByteCodeVariants(psiElement)
+  private fun deserializeBytecode(): String {
+    try {
+      val bytes = classFile.contentsToByteArray(false)
+      val stringWriter = StringWriter()
+      PrintWriter(stringWriter).use { printWriter ->
+        ClassReader(bytes).accept(TraceClassVisitor(null, Textifier(), printWriter), ClassReader.SKIP_FRAMES)
+      }
+      return stringWriter.toString()
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+      return BytecodeViewerBundle.message("deserialization.error")
+    }
   }
 
   override fun dispose() {

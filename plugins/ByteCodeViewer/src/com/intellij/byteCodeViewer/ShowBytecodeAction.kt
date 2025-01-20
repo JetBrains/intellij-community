@@ -2,10 +2,7 @@
 package com.intellij.byteCodeViewer
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
@@ -35,13 +32,35 @@ internal class ShowBytecodeAction : AnAction() {
     val psiElement = psiFile.findElementAt(editor.caretModel.offset) ?: return
     val psiClass = ByteCodeViewerManager.getContainingClass(psiElement) ?: return
     val clsFile = ByteCodeViewerManager.findClassFile(psiClass) ?: return
-    val panel = BytecodeToolWindowPanel(project, psiFile)
+    val panel = BytecodeToolWindowPanel(project, psiClass, clsFile)
     val content = toolWindow.contentManager.contents.firstOrNull { it.description == clsFile.presentableUrl }
                   ?: ContentFactory.getInstance().createContent(panel, clsFile.presentableName, false).apply {
                     description = clsFile.presentableUrl
                   }
     toolWindow.contentManager.addContent(content)
     toolWindow.contentManager.setSelectedContent(content)
+    toolWindow.setAdditionalGearActions(createActionGroup())
     toolWindow.activate(null)
+  }
+
+  private fun createActionGroup(): ActionGroup {
+    val action = object : ToggleAction(BytecodeViewerBundle.messagePointer("action.show.debug.action.name")) {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+      override fun isSelected(e: AnActionEvent): Boolean {
+        return BytecodeViewerSettings.getInstance().state.showDebugInfo
+      }
+
+      override fun setSelected(e: AnActionEvent, state: Boolean) {
+        BytecodeViewerSettings.getInstance().state.showDebugInfo = state
+        val project = e.project ?: return
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(BytecodeToolWindowPanel.TOOL_WINDOW_ID) ?: return
+        toolWindow.contentManager.contents.forEach {
+          val panel = it.component as? BytecodeToolWindowPanel ?: return@forEach
+          panel.setEditorText()
+        }
+      }
+    }
+    return DefaultActionGroup(action)
   }
 }
