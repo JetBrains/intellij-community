@@ -112,8 +112,6 @@ public final class JBCefApp {
           LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
         else if (SystemInfo.isWindows)
           LOG.debug("Out-of-process jcef mode is temporarily disabled in Windows");
-        else if (SystemInfo.isLinux)
-          LOG.debug("Out-of-process jcef mode is temporarily disabled in Linux");
         else
           isTemporaryDisabled = false;
       }
