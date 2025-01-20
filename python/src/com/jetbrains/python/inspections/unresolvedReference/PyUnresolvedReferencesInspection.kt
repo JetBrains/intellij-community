@@ -67,7 +67,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       node: PyElement,
       reference: PsiReference,
       refName: String,
-    ): Iterable<LocalQuickFix> {
+    ): List<LocalQuickFix> {
       if (reference !is PyImportReference) {
         return emptyList()
       }
@@ -106,7 +106,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       return listOf(InstallAllPackagesQuickFix(myUnresolvedRefs.map { it.refName }.distinct()))
     }
 
-    public override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): Iterable<LocalQuickFix> {
+    public override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> {
       val result: MutableList<LocalQuickFix> = ArrayList(2)
       if (qualifiedNames.size == 1) {
         val qualifiedName = qualifiedNames[0]
@@ -118,7 +118,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       return result
     }
 
-    public override fun getImportStatementQuickFixes(element: PsiElement): Iterable<LocalQuickFix> {
+    public override fun getImportStatementQuickFixes(element: PsiElement): List<LocalQuickFix> {
       val importStatementBase = PsiTreeUtil.getParentOfType(element,
                                                             PyImportStatementBase::class.java)
       if ((importStatementBase != null) && GenerateBinaryStubsFix.isApplicable(importStatementBase)) {
@@ -128,7 +128,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       return emptyList()
     }
 
-    override fun getAutoImportFixes(node: PyElement, reference: PsiReference, element: PsiElement): Iterable<LocalQuickFix> {
+    override fun getAutoImportFixes(node: PyElement, reference: PsiReference, element: PsiElement): List<LocalQuickFix> {
       // look in other imported modules for this whole name
       if (!PythonImportUtils.isImportable(element)) {
         return emptyList()

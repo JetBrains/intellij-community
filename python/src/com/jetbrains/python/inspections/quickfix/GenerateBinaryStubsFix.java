@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 
@@ -54,7 +53,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
    * @param importStatementBase statement to fix
    * @return pack of fixes
    */
-  public static @NotNull Collection<LocalQuickFix> generateFixes(final @NotNull PyImportStatementBase importStatementBase) {
+  public static @NotNull List<LocalQuickFix> generateFixes(final @NotNull PyImportStatementBase importStatementBase) {
     final List<String> names = importStatementBase.getFullyQualifiedObjectNames();
     final List<LocalQuickFix> result = new ArrayList<>(names.size());
     if (importStatementBase instanceof PyFromImportStatement && names.isEmpty()) {
