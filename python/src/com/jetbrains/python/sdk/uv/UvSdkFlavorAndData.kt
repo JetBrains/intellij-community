@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.uv
 
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -34,6 +35,8 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
 
   companion object {
     private const val IS_UV = "IS_UV"
+    private const val UV_WORKING_DIR = "UV_WORKING_DIR"
+    private const val USE_PIP = "USE_PIP"
 
     @JvmStatic
     fun load(element: Element): UvSdkAdditionalData? {
