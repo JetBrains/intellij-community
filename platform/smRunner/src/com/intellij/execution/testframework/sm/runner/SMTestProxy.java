@@ -880,24 +880,29 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
    * @see SMTestProxy#setTerminated
    */
   private void setTerminated(long endTime) {
-    if (myState.isFinal()) {
-      return;
-    }
+    //some framework can mark suite as passed even if they contain running items,
+    //so let's check everything but update only running items
+    boolean beforeIsFinal = myState.isFinal();
     if (myEndTime == null) {
       myEndTime = endTime;
     }
-    myState = TerminatedState.INSTANCE;
-    Long startTime = myStartTime;
-    if (!myIsSuite && startTime != null) {
-      setDuration(endTime - startTime);
-    } else if (!myIsSuite) {
-      setDuration(0);
+    if (!beforeIsFinal) {
+      myState = TerminatedState.INSTANCE;
+      Long startTime = myStartTime;
+      if (!myIsSuite && startTime != null) {
+        setDuration(endTime - startTime);
+      }
+      else if (!myIsSuite) {
+        setDuration(0);
+      }
     }
     final List<? extends SMTestProxy> children = getChildren();
     for (SMTestProxy child : children) {
       child.setTerminated(endTime);
     }
-    fireOnNewPrintable(myState);
+    if (!beforeIsFinal) {
+      fireOnNewPrintable(myState);
+    }
   }
 
   /**

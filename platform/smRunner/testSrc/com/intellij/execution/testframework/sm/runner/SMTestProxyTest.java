@@ -1170,6 +1170,39 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNotNull(child2.getEndTimeMillis());
   }
 
+  public void testTerminatedWithNonFinished() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy suite1 = createSuiteProxy("suite1", root);
+    SMTestProxy suite2 = createSuiteProxy("suite2", root);
+
+    root.setStarted();
+
+    suite1.setStarted();
+    suite1.setFinished();
+
+    SMTestProxy test1 = createTestProxy("test1", suite1);
+    SMTestProxy test2 = createTestProxy("test2", suite2);
+
+    test1.setStarted();
+    suite2.setStarted();
+    test2.setStarted();
+
+    root.setTerminated();
+
+    assertNotNull(root.getEndTimeMillis());
+    assertNotNull(suite1.getEndTimeMillis());
+    assertNotNull(suite2.getEndTimeMillis());
+    assertNotNull(test1.getEndTimeMillis());
+    assertNotNull(test2.getEndTimeMillis());
+
+    assertTrue(root.wasTerminated());
+    assertTrue(suite1.isPassed());
+    assertTrue(suite2.wasTerminated());
+    assertTrue(test1.wasTerminated());
+    assertTrue(test2.wasTerminated());
+  }
+
+
   private static void assertDisplayTimeEqualsToSumOfChildren(@NotNull SMTestProxy node) {
     List<? extends SMTestProxy> children = node.collectChildren(new Filter<>() {
       @Override
