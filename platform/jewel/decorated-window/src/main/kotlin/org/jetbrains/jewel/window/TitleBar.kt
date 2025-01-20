@@ -1,8 +1,10 @@
 package org.jetbrains.jewel.window
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -77,6 +79,7 @@ internal fun DecoratedWindowScope.TitleBarImpl(
     gradientStartColor: Color = Color.Unspecified,
     style: TitleBarStyle = JewelTheme.defaultTitleBarStyle,
     applyTitleBar: (Dp, DecoratedWindowState) -> PaddingValues,
+    backgroundContent: @Composable () -> Unit = {},
     content: @Composable TitleBarScope.(DecoratedWindowState) -> Unit,
 ) {
     val titleBarInfo = LocalTitleBarInfo.current
@@ -102,19 +105,7 @@ internal fun DecoratedWindowScope.TitleBarImpl(
             }
         }
 
-    Layout(
-        content = {
-            CompositionLocalProvider(
-                LocalContentColor provides style.colors.content,
-                LocalIconButtonStyle provides style.iconButtonStyle,
-                LocalDefaultDropdownStyle provides style.dropdownStyle,
-            ) {
-                OverrideDarkMode(background.isDark()) {
-                    val scope = TitleBarScopeImpl(titleBarInfo.title, titleBarInfo.icon)
-                    scope.content(state)
-                }
-            }
-        },
+    Box(
         modifier =
             modifier
                 .background(backgroundBrush)
@@ -122,9 +113,26 @@ internal fun DecoratedWindowScope.TitleBarImpl(
                 .layoutId(TITLE_BAR_LAYOUT_ID)
                 .height(style.metrics.height)
                 .onSizeChanged { with(density) { applyTitleBar(it.height.toDp(), state) } }
-                .fillMaxWidth(),
-        measurePolicy = rememberTitleBarMeasurePolicy(window, state, applyTitleBar),
-    )
+                .fillMaxWidth()
+    ) {
+        backgroundContent()
+        Layout(
+            content = {
+                CompositionLocalProvider(
+                    LocalContentColor provides style.colors.content,
+                    LocalIconButtonStyle provides style.iconButtonStyle,
+                    LocalDefaultDropdownStyle provides style.dropdownStyle,
+                ) {
+                    OverrideDarkMode(background.isDark()) {
+                        val scope = TitleBarScopeImpl(titleBarInfo.title, titleBarInfo.icon)
+                        scope.content(state)
+                    }
+                }
+            },
+            modifier = modifier.fillMaxSize(),
+            measurePolicy = rememberTitleBarMeasurePolicy(window, state, applyTitleBar),
+        )
+    }
 
     Spacer(Modifier.layoutId(TITLE_BAR_BORDER_LAYOUT_ID).height(1.dp).fillMaxWidth().background(style.colors.border))
 }
