@@ -130,22 +130,24 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testLanguageLevelX() = runBlocking {
-    importProjectAsync(("<groupId>test</groupId>" +
-                   "<artifactId>project</artifactId>" +
-                   "<version>1</version>" +
-                   "<build>" +
-                   "  <plugins>" +
-                   "    <plugin>" +
-                   "      <groupId>org.apache.maven.plugins</groupId>" +
-                   "      <artifactId>maven-compiler-plugin</artifactId>" +
-                   "      <configuration>" +
-                   "        <source>99</source>" +
-                   "      </configuration>" +
-                   "    </plugin>" +
-                   "  </plugins>" +
-                   "</build>"))
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <source>99</source>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    """.trimIndent())
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule())
+    assertEquals(defaultLanguageLevel, getLanguageLevelForModule())
   }
 
   @Test
