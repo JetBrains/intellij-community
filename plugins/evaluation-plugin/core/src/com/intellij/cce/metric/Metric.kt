@@ -2,10 +2,26 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
+import com.intellij.openapi.diagnostic.Logger
+
+private val LOG: Logger = Logger.getInstance(Metric::class.java)
 
 interface Metric {
+  val supportsIndividualScores: Boolean
+    get() = false
+
   fun evaluate(sessions: List<Session>): Number
 
+  fun evaluateWithIndividualScores(sessions: List<Session>): MetricEvaluationResult {
+    if (!supportsIndividualScores) {
+      LOG.warn("$name does not support individual scores; evaluateWithIndividualScores will return an empty map.")
+    }
+    val overallScore = evaluate(sessions)
+    return MetricEvaluationResult(
+      overallScore = overallScore,
+      sessionIndividualScores = emptyMap()
+    )
+  }
   fun confidenceInterval(): Pair<Double, Double>? = null
 
   val value: Double
