@@ -5,37 +5,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
-import com.intellij.util.graph.Graph
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.Collections.emptyList
-
-/**
- * A graph which determines the order in which modules from the platform and the plugins are processed.
- * The graph has a node for each module, and there is an edge from a module to other modules that depend on it.
- */
-@ApiStatus.Internal
-class ModuleGraph internal constructor(
-  private val modules: Collection<IdeaPluginDescriptorImpl>,
-  private val directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-  private val directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-) : Graph<IdeaPluginDescriptorImpl> {
-  override fun getNodes(): Collection<IdeaPluginDescriptorImpl> = modules
-
-  fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> = directDependencies.getOrDefault(descriptor, emptyList())
-
-  override fun getIn(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependencies(descriptor).iterator()
-
-  override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = directDependents.getOrDefault(descriptor, emptyList()).iterator()
-
-  internal fun sorted(topologicalComparator: Comparator<IdeaPluginDescriptorImpl>): ModuleGraph {
-    return ModuleGraph(
-      modules = modules.sortedWith(topologicalComparator),
-      directDependencies = copySorted(directDependencies, topologicalComparator),
-      directDependents = copySorted(directDependents, topologicalComparator)
-    )
-  }
-}
 
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
@@ -169,17 +140,6 @@ internal fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorIm
       else -> comparator.compare(o1, o2)
     }
   }
-}
-
-private fun copySorted(
-  map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-  comparator: Comparator<IdeaPluginDescriptorImpl>,
-): Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> {
-  val result = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(map.size)
-  for (element in map.entries) {
-    result.put(element.key, element.value.sortedWith(comparator))
-  }
-  return result
 }
 
 private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
