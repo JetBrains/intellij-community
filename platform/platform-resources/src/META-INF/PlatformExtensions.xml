@@ -1825,7 +1825,7 @@
       order="before moduleBridgeLoaderService"/>
     <applicationActivity implementation="com.intellij.ide.SwingTooltipManagerCustomizer"/>
     <registryKey key="rhizome.progress"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Progress will be reported and collected through Rhizome DB. See PlatformTaskSupport for more info"/>
     <pluginRepositoryAuthProvider implementation="com.intellij.ide.plugins.auth.EnvironmentVariablePluginRepositoryAuthProvider" />
     <applicationService serviceInterface="com.intellij.auth.GenericAuthService"
