@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 
 /**
@@ -225,22 +226,19 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
         var emptyText = list.getEmptyText();
         emptyText.clear();
         emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.1"));
-        emptyText.appendLine(
-          IdeBundle.message("popup.new.element.empty.text.2"),
-          SimpleTextAttributes.LINK_ATTRIBUTES,
-          linkActionEvent -> {
-            Disposer.dispose(popup);
-            var component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-            if (component != null) {
-              var inputEvent = linkActionEvent.getSource() instanceof InputEvent linkInputEvent ? linkInputEvent : null;
-              var actionManager = ActionManager.getInstance();
-              actionManager.tryToExecute(actionManager.getAction("NewFile"), inputEvent, component, EMPTY_TEXT_LINK_PLACE, true);
-            }
+        ActionListener emptyTextAction = linkActionEvent -> {
+          Disposer.dispose(popup);
+          var component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+          if (component != null) {
+            var inputEvent = linkActionEvent.getSource() instanceof InputEvent linkInputEvent ? linkInputEvent : null;
+            var actionManager = ActionManager.getInstance();
+            actionManager.tryToExecute(actionManager.getAction("NewFile"), inputEvent, component, EMPTY_TEXT_LINK_PLACE, true);
           }
-        );
+        };
+        emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.2"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, emptyTextAction);
         // The capitalization is wrong here because this line continues the previous one.
         //noinspection DialogTitleCapitalization
-        emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.3"));
+        emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.3"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, emptyTextAction);
       }
     }
 
