@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ public final class ControlFlowUtils {
       return whileStatementMayCompleteNormally(whileStatement);
     }
     else if (statement instanceof PsiDoWhileStatement doWhileStatement) {
-      return doWhileStatementMayCompleteNormally(doWhileStatement, psiMethod);
+      return doWhileStatementMayCompleteNormally(doWhileStatement);
     }
     else if (statement instanceof PsiSynchronizedStatement synchronizedStatement) {
       return codeBlockMayCompleteNormally(synchronizedStatement.getBody(), psiMethod);
@@ -147,33 +147,23 @@ public final class ControlFlowUtils {
     return BoolUtils.isTrue(loopStatement.getCondition());
   }
 
-  private static boolean doWhileStatementMayCompleteNormally(@NotNull PsiDoWhileStatement loopStatement, @Nullable PsiMethod method) {
-    final PsiExpression condition = loopStatement.getCondition();
-    final Object value = ExpressionUtils.computeConstantExpression(condition);
-    final PsiStatement body = loopStatement.getBody();
-    return statementMayCompleteNormally(body, method) && value != Boolean.TRUE
-           || statementContainsBreakToStatementOrAncestor(loopStatement) || statementContainsContinueToAncestor(loopStatement);
+  private static boolean doWhileStatementMayCompleteNormally(@NotNull PsiDoWhileStatement loopStatement) {
+    return conditionalLoopStatementMayCompleteNormally(loopStatement);
   }
 
   private static boolean whileStatementMayCompleteNormally(@NotNull PsiWhileStatement loopStatement) {
-    final PsiExpression condition = loopStatement.getCondition();
-    final Object value = ExpressionUtils.computeConstantExpression(condition);
-    return value != Boolean.TRUE || statementContainsBreakToStatementOrAncestor(loopStatement) || statementContainsContinueToAncestor(loopStatement);
+    return conditionalLoopStatementMayCompleteNormally(loopStatement);
   }
 
   private static boolean forStatementMayCompleteNormally(@NotNull PsiForStatement loopStatement) {
-    if (statementContainsBreakToStatementOrAncestor(loopStatement)) {
-      return true;
-    }
-    if (statementContainsContinueToAncestor(loopStatement)) {
-      return true;
-    }
+    return conditionalLoopStatementMayCompleteNormally(loopStatement);
+  }
+
+  private static boolean conditionalLoopStatementMayCompleteNormally(@NotNull PsiConditionalLoopStatement loopStatement) {
     final PsiExpression condition = loopStatement.getCondition();
-    if (condition == null) {
-      return false;
-    }
     final Object value = ExpressionUtils.computeConstantExpression(condition);
-    return Boolean.TRUE != value;
+    return value != Boolean.TRUE
+           || statementContainsBreakToStatementOrAncestor(loopStatement) || statementContainsContinueToAncestor(loopStatement);
   }
 
   private static boolean switchStatementMayCompleteNormally(@NotNull PsiSwitchStatement switchStatement, @Nullable PsiMethod method) {
@@ -211,7 +201,8 @@ public final class ControlFlowUtils {
           continue;
         }
         // this information doesn't exist in spec draft (14.22) for pattern in switch as expected
-        // but for now javac considers the switch statement containing at least either case default label element or an unconditional pattern "incomplete normally"
+        // but for now javac considers the switch statement containing at least either
+        // case default label element or an unconditional pattern "incomplete normally"
         PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
         if (labelElementList == null) {
           continue;
@@ -229,7 +220,8 @@ public final class ControlFlowUtils {
         return true;
       }
     }
-    // todo actually there is no information about an impact of enum constants on switch statements being complete normally in spec (Unreachable statements)
+    // Actually there is no information about an impact of enum constants on switch statements completing normally in the spec
+    // (Unreachable statements)
     // todo comparing to javac that produces some false-negative highlighting in enum switch statements containing all possible constants
     final boolean isEnum = isEnumSwitch(switchStatement);
     if (!hasDefaultCase && !hasUnconditionalPattern && !isEnum) {
