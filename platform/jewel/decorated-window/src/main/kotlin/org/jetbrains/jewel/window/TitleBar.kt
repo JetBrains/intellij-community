@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
+import java.awt.Window
+import kotlin.math.max
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
@@ -49,8 +51,6 @@ import org.jetbrains.jewel.ui.util.isDark
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 import org.jetbrains.jewel.window.utils.DesktopPlatform
 import org.jetbrains.jewel.window.utils.macos.MacUtil
-import java.awt.Window
-import kotlin.math.max
 
 internal const val TITLE_BAR_COMPONENT_LAYOUT_ID_PREFIX = "__TITLE_BAR_"
 
