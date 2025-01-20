@@ -8,7 +8,7 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -351,8 +351,7 @@ object MavenImportUtil {
   internal fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {
     return WriteAction.compute<Module?, RuntimeException?>(ThrowableComputable {
       val modulePath = contentRoot.toNioPath().resolve(project.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION)
-      val module = getInstance(project)
-        .newModule(modulePath, ModuleTypeManager.getInstance().getDefaultModuleType().id)
+      val module = ModuleManager.getInstance(project).newModule(modulePath, ModuleTypeManager.getInstance().getDefaultModuleType().id)
       val modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel()
       modifiableModel.addContentEntry(contentRoot)
       modifiableModel.commit()
