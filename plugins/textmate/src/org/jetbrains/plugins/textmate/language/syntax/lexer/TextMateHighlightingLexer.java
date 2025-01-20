@@ -13,6 +13,7 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorC
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.regex.CachingRegexFactory;
 import org.jetbrains.plugins.textmate.regex.RegexFactory;
+import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory;
 import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 
 import java.util.LinkedList;
@@ -36,7 +37,7 @@ public class TextMateHighlightingLexer extends LexerBase {
    */
   public TextMateHighlightingLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
                                    int lineLimit) {
-    RegexFactory regexFactory = new CachingRegexFactory(new JoniRegexFactory());
+    RegexFactory regexFactory = new CachingRegexFactory(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
     TextMateSelectorCachingWeigher weigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
     TextMateCachingSyntaxMatcher syntaxMatcher = new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexFactory, weigher));
     myLexer = new TextMateLexerCore(languageDescriptor, syntaxMatcher, lineLimit, false);

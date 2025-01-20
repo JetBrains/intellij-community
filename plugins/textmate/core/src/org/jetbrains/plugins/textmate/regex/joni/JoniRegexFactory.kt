@@ -26,7 +26,7 @@ class JoniRegexFactory : RegexFactory {
       LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", regexString, e::class.java.getName(), e.message)
       FAILED_REGEX
     }
-    return JoniRegexFacade(regex, regexString.contains("\\G"))
+    return JoniRegexFacade(regex)
   }
 
   override fun string(string: CharSequence): TextMateString {
