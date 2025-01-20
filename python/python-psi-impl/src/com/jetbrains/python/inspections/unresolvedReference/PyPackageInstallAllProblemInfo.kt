@@ -10,5 +10,5 @@ data class PyPackageInstallAllProblemInfo(
   val descriptionTemplate: @InspectionMessage String,
   val highlightType: ProblemHighlightType,
   val refName: String,
-  val fixes: MutableList<LocalQuickFix>,
+  val fixes: List<LocalQuickFix>,
 )
