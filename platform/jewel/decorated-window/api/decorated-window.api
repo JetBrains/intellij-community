@@ -49,6 +49,13 @@ public abstract interface class com/jetbrains/WindowMove {
 	public abstract fun startMovingTogetherWithMouse (Ljava/awt/Window;I)V
 }
 
+public final class org/jetbrains/jewel/window/ComposableSingletons$TitleBarKt {
+	public static final field INSTANCE Lorg/jetbrains/jewel/window/ComposableSingletons$TitleBarKt;
+	public static field lambda-1 Lkotlin/jvm/functions/Function2;
+	public fun <init> ()V
+	public final fun getLambda-1$decorated_window ()Lkotlin/jvm/functions/Function2;
+}
+
 public final class org/jetbrains/jewel/window/DecoratedWindowKt {
 	public static final fun DecoratedWindow (Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/window/WindowState;ZLjava/lang/String;Landroidx/compose/ui/graphics/painter/Painter;ZZZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/window/styling/DecoratedWindowStyle;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;III)V
 }
