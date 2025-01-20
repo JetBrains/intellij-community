@@ -205,6 +205,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitFragment(@NotNull PsiFragment fragment) {
     super.visitFragment(fragment);
     checkIllegalUnicodeEscapes(fragment);
+    if (!hasErrorResults()) myLiteralChecker.checkFragmentError(fragment);
   }
 
   @Override
@@ -410,6 +411,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       visitExpression(expression);
       if (hasErrorResults()) return;
     }
+    JavaResolveResult[] results = resolveOptimised(expression);
+    if (results == null) return;
+    JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+
+    PsiElement resolved = result.getElement();
     PsiElement parent = expression.getParent();
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
@@ -426,7 +432,12 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults() && resultForIncompleteCode != null) {
       myExpressionChecker.checkExpressionRequired(expression, resultForIncompleteCode);
     }
+    if (!hasErrorResults() && resolved instanceof PsiField field) {
+      myExpressionChecker.checkIllegalForwardReferenceToField(expression, field);
+    }
   }
+  
+  
 
   @Override
   public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
@@ -536,6 +547,21 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     else if (refGrandParent instanceof PsiMethod method && referenceList == method.getThrowsList()) {
       report(JavaErrorKinds.METHOD_THROWS_CLASS_NAME_EXPECTED.create(ref));
+    }
+  }
+
+  private JavaResolveResult @Nullable [] resolveOptimised(@NotNull PsiReferenceExpression expression) {
+    try {
+      if (expression instanceof PsiReferenceExpressionImpl) {
+        PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
+        return JavaResolveUtil.resolveWithContainingFile(expression, resolver, true, true, myFile);
+      }
+      else {
+        return expression.multiResolve(true);
+      }
+    }
+    catch (IndexNotReadyException e) {
+      return null;
     }
   }
 

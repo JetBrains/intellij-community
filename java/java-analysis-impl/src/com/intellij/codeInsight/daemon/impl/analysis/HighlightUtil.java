@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ContainerProvider;
+import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.JavaModuleSystemEx;
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes;
+import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -18,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -1268,67 +1270,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  private static HighlightInfo.Builder checkTextBlockNewlineAfterOpeningQuotes(@NotNull PsiElement expression,
-                                                                               String text,
-                                                                               @Nullable Ref<? super String> description) {
-    int i = 3;
-    char c = text.charAt(i);
-    while (PsiLiteralUtil.isTextBlockWhiteSpace(c)) {
-      i++;
-      c = text.charAt(i);
-    }
-    if (c != '\n' && c != '\r') {
-      String message = JavaErrorBundle.message("text.block.new.line");
-      if (description != null) {
-        description.set(message);
-      }
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression, TextRange.from(0, 3)).descriptionAndTooltip(message);
-    }
-    return null;
-  }
-
-  public static HighlightInfo.Builder checkFragmentError(PsiFragment fragment) {
-    String text = InjectedLanguageManager.getInstance(fragment.getProject()).getUnescapedText(fragment);
-    if (fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
-      final HighlightInfo.Builder info1 = checkTextBlockNewlineAfterOpeningQuotes(fragment, text, null);
-      if (info1 != null) return info1;
-    }
-    int length = text.length();
-    if (fragment.getTokenType() == JavaTokenType.STRING_TEMPLATE_END) {
-      if (!StringUtil.endsWithChar(text, '\"') || length == 1) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(fragment)
-          .descriptionAndTooltip(JavaErrorBundle.message("illegal.line.end.in.string.literal"));
-      }
-    }
-    if (text.endsWith("\\{")) {
-      text = text.substring(0, length - 2);
-      length -= 2;
-    }
-    StringBuilder chars = new StringBuilder(length);
-    int[] offsets = new int[length + 1];
-    boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, offsets, fragment.isTextBlock());
-    if (!success) {
-      String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(fragment, calculateErrorRange(text, offsets[chars.length()]))
-        .descriptionAndTooltip(message);
-    }
-    return null;
-  }
-
-  private static @NotNull TextRange calculateErrorRange(@NotNull String rawText, int start) {
-    int end;
-    if (rawText.charAt(start + 1) == 'u') {
-      end = start + 2;
-      while (rawText.charAt(end) == 'u') end++;
-      end += 4;
-    }
-    else end = start + 2;
-    return new TextRange(start, end);
-  }
-
-
   static @NotNull UnhandledExceptions collectUnhandledExceptions(@NotNull PsiTryStatement statement) {
     UnhandledExceptions thrownTypes = UnhandledExceptions.EMPTY;
 
@@ -1959,93 +1900,6 @@ public final class HighlightUtil {
     YieldFinder finder = new YieldFinder();
     scope.accept(finder);
     return finder.hasYield;
-  }
-
-  /**
-   * See JLS 8.3.3.
-   */
-  static HighlightInfo.Builder checkIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField) {
-    Boolean isIllegalForwardReference = isIllegalForwardReferenceToField(expression, referencedField, false);
-    if (isIllegalForwardReference == null) return null;
-    String key = referencedField instanceof PsiEnumConstant
-                 ? (isIllegalForwardReference ? "illegal.forward.reference.enum" : "illegal.self.reference.enum")
-                 : (isIllegalForwardReference ? "illegal.forward.reference" : "illegal.self.reference");
-    String description = JavaErrorBundle.message(key, referencedField.getName());
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
-  }
-
-  public static Boolean isIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression,
-                                                         @NotNull PsiField referencedField,
-                                                         boolean acceptQualified) {
-    PsiClass containingClass = referencedField.getContainingClass();
-    if (containingClass == null) return null;
-    if (expression.getContainingFile() != referencedField.getContainingFile()) return null;
-    TextRange fieldRange = referencedField.getTextRange();
-    if (fieldRange == null || expression.getTextRange().getStartOffset() >= fieldRange.getEndOffset()) return null;
-    if (!acceptQualified) {
-      if (containingClass.isEnum()) {
-        if (isLegalForwardReferenceInEnum(expression, referencedField, containingClass)) return null;
-      }
-      // simple reference can be illegal (JLS 8.3.3)
-      else if (expression.getQualifierExpression() != null) return null;
-    }
-    PsiField initField = findEnclosingFieldInitializer(expression);
-    PsiClassInitializer classInitializer = findParentClassInitializer(expression);
-    if (initField == null && classInitializer == null) return null;
-    // instance initializers may access static fields
-    boolean isStaticClassInitializer = classInitializer != null && classInitializer.hasModifierProperty(PsiModifier.STATIC);
-    boolean isStaticInitField = initField != null && initField.hasModifierProperty(PsiModifier.STATIC);
-    boolean inStaticContext = isStaticInitField || isStaticClassInitializer;
-    if (!inStaticContext && referencedField.hasModifierProperty(PsiModifier.STATIC)) return null;
-    if (PsiUtil.isOnAssignmentLeftHand(expression) && !PsiUtil.isAccessedForReading(expression)) return null;
-    if (!containingClass.getManager().areElementsEquivalent(containingClass, PsiTreeUtil.getParentOfType(expression, PsiClass.class))) {
-      return null;
-    }
-    return initField != referencedField;
-  }
-
-  private static boolean isLegalForwardReferenceInEnum(@NotNull PsiReferenceExpression expression,
-                                                       @NotNull PsiField referencedField,
-                                                       @NotNull PsiClass containingClass) {
-    PsiExpression qualifierExpr = expression.getQualifierExpression();
-    // simple reference can be illegal (JLS 8.3.3)
-    if (qualifierExpr == null) return false;
-    if (!(qualifierExpr instanceof PsiReferenceExpression referenceExpression)) return true;
-
-    PsiElement qualifiedReference = referenceExpression.resolve();
-    if (containingClass.equals(qualifiedReference)) {
-      // static fields that are constant variables (4.12.4) are initialized before other static fields (12.4.2),
-      // so a qualified reference to the constant variable is possible.
-      return PsiUtil.isCompileTimeConstant(referencedField);
-    }
-    return true;
-  }
-
-  /**
-   * @return field that has initializer with this element as subexpression or null if not found
-   */
-  static PsiField findEnclosingFieldInitializer(@NotNull PsiElement entry) {
-    PsiElement element = entry;
-    while (element != null) {
-      PsiElement parent = element.getParent();
-      if (parent instanceof PsiField field) {
-        if (element == field.getInitializer()) return field;
-        if (field instanceof PsiEnumConstant enumConstant && element == enumConstant.getArgumentList()) return field;
-      }
-      if (element instanceof PsiClass || element instanceof PsiMethod) return null;
-      element = parent;
-    }
-    return null;
-  }
-
-  private static PsiClassInitializer findParentClassInitializer(@NotNull PsiElement root) {
-    PsiElement element = root;
-    while (element != null) {
-      if (element instanceof PsiClassInitializer) return (PsiClassInitializer)element;
-      if (element instanceof PsiClass || element instanceof PsiMethod) return null;
-      element = element.getParent();
-    }
-    return null;
   }
 
 

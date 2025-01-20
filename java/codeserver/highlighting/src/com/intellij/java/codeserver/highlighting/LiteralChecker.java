@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
@@ -187,7 +188,7 @@ final class LiteralChecker {
     }
   }
 
-  private void checkTextBlockNewlineAfterOpeningQuotes(@NotNull PsiLiteralExpression expression, @NotNull String text) {
+  private void checkTextBlockNewlineAfterOpeningQuotes(@NotNull PsiLiteralValue expression, @NotNull String text) {
     int i = 3;
     char c = text.charAt(i);
     while (PsiLiteralUtil.isTextBlockWhiteSpace(c)) {
@@ -226,6 +227,31 @@ final class LiteralChecker {
         myVisitor.report(JavaErrorKinds.LITERAL_ILLEGAL_UNDERSCORE.create(expression));
         return;
       }
+    }
+  }
+
+  void checkFragmentError(@NotNull PsiFragment fragment) {
+    String text = InjectedLanguageManager.getInstance(fragment.getProject()).getUnescapedText(fragment);
+    if (fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
+      checkTextBlockNewlineAfterOpeningQuotes(fragment, text);
+      if (myVisitor.hasErrorResults()) return;
+    }
+    int length = text.length();
+    if (fragment.getTokenType() == JavaTokenType.STRING_TEMPLATE_END) {
+      if (!StringUtil.endsWithChar(text, '\"') || length == 1) {
+        myVisitor.report(JavaErrorKinds.LITERAL_STRING_ILLEGAL_LINE_END.create(fragment));
+        return;
+      }
+    }
+    if (text.endsWith("\\{")) {
+      text = text.substring(0, length - 2);
+      length -= 2;
+    }
+    StringBuilder chars = new StringBuilder(length);
+    int[] offsets = new int[length + 1];
+    boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, offsets, fragment.isTextBlock());
+    if (!success) {
+      myVisitor.report(JavaErrorKinds.LITERAL_STRING_ILLEGAL_ESCAPE.create(fragment, calculateErrorRange(text, offsets[chars.length()])));
     }
   }
 

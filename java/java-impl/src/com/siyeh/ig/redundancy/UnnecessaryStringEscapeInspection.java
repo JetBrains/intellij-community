@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
@@ -210,10 +208,7 @@ public final class UnnecessaryStringEscapeInspection extends BaseInspection impl
     @Override
     public void visitFragment(@NotNull PsiFragment fragment) {
       super.visitFragment(fragment);
-      HighlightInfo.Builder error = HighlightUtil.checkFragmentError(fragment);
-      if (error != null) {
-        return;
-      }
+      if (JavaErrorCollector.findSingleError(fragment) != null) return;
 
       InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getCurrentFile().getProject());
       final String text = manager.getUnescapedText(fragment);

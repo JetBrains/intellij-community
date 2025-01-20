@@ -280,6 +280,22 @@ final class ExpressionChecker {
     }
   }
 
+  /**
+   * See JLS 8.3.3.
+   */
+  void checkIllegalForwardReferenceToField(@NotNull PsiReferenceExpression expression, @NotNull PsiField referencedField) {
+    JavaPsiReferenceUtil.ForwardReferenceProblem problem = JavaPsiReferenceUtil.checkForwardReference(expression, referencedField, false);
+    if (problem == JavaPsiReferenceUtil.ForwardReferenceProblem.LEGAL) return;
+    var errorKind = referencedField instanceof PsiEnumConstant
+                    ? (problem == JavaPsiReferenceUtil.ForwardReferenceProblem.ILLEGAL_FORWARD_REFERENCE
+                       ? JavaErrorKinds.REFERENCE_ENUM_FORWARD
+                       : JavaErrorKinds.REFERENCE_ENUM_SELF)
+                    : (problem == JavaPsiReferenceUtil.ForwardReferenceProblem.ILLEGAL_FORWARD_REFERENCE
+                       ? JavaErrorKinds.REFERENCE_FIELD_FORWARD
+                       : JavaErrorKinds.REFERENCE_FIELD_SELF);
+    myVisitor.report(errorKind.create(expression, referencedField));
+  }
+
   void checkMethodCall(@NotNull PsiMethodCallExpression methodCall) {
     PsiExpressionList list = methodCall.getArgumentList();
     PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();

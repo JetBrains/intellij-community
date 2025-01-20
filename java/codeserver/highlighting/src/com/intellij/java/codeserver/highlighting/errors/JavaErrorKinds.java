@@ -570,6 +570,18 @@ public final class JavaErrorKinds {
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "reference.local.class.other.switch.branch")
       .withHighlightType((ref, cls) -> JavaErrorHighlightType.WRONG_REF)
       .withRawDescription((ref, cls) -> message("reference.local.class.other.switch.branch", formatClass(cls)));
+  public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_FIELD_FORWARD =
+    parameterized(PsiReferenceExpression.class, PsiField.class, "reference.field.forward")
+      .withRawDescription((ref, field) -> message("reference.field.forward", field.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_FIELD_SELF =
+    parameterized(PsiReferenceExpression.class, PsiField.class, "reference.field.self")
+      .withRawDescription((ref, field) -> message("reference.field.self", field.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_ENUM_FORWARD =
+    parameterized(PsiReferenceExpression.class, PsiField.class, "reference.enum.forward")
+      .withRawDescription((ref, field) -> message("reference.enum.forward", field.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_ENUM_SELF =
+    parameterized(PsiReferenceExpression.class, PsiField.class, "reference.enum.self")
+      .withRawDescription((ref, field) -> message("reference.enum.self", field.getName()));
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
   
@@ -594,13 +606,13 @@ public final class JavaErrorKinds {
   public static final Simple<PsiLiteralExpression> LITERAL_CHARACTER_TOO_LONG = error("literal.character.too.long");
   public static final Simple<PsiLiteralExpression> LITERAL_CHARACTER_EMPTY = error("literal.character.empty");
   public static final Simple<PsiLiteralExpression> LITERAL_CHARACTER_UNCLOSED = error("literal.character.unclosed");
-  public static final Parameterized<PsiLiteralExpression, @NotNull TextRange> LITERAL_STRING_ILLEGAL_ESCAPE =
-    parameterized(PsiLiteralExpression.class, TextRange.class, "literal.string.illegal.escape").withRange((psi, range) -> range);
-  public static final Simple<PsiLiteralExpression> LITERAL_STRING_ILLEGAL_LINE_END = error("literal.string.illegal.line.end");
+  public static final Parameterized<PsiLiteralValue, @NotNull TextRange> LITERAL_STRING_ILLEGAL_ESCAPE =
+    parameterized(PsiLiteralValue.class, TextRange.class, "literal.string.illegal.escape").withRange((psi, range) -> range);
+  public static final Simple<PsiLiteralValue> LITERAL_STRING_ILLEGAL_LINE_END = error("literal.string.illegal.line.end");
   public static final Simple<PsiLiteralExpression> LITERAL_TEXT_BLOCK_UNCLOSED = 
     error(PsiLiteralExpression.class, "literal.text.block.unclosed").withRange(e -> TextRange.from(e.getTextLength(), 0));
-  public static final Simple<PsiLiteralExpression> LITERAL_TEXT_BLOCK_NO_NEW_LINE = 
-    error(PsiLiteralExpression.class, "literal.text.block.no.new.line").withRange(e -> TextRange.create(0, 3));
+  public static final Simple<PsiLiteralValue> LITERAL_TEXT_BLOCK_NO_NEW_LINE = 
+    error(PsiLiteralValue.class, "literal.text.block.no.new.line").withRange(e -> TextRange.create(0, 3));
   
   public static final Simple<PsiMethodCallExpression> CALL_SUPER_ENUM_CONSTRUCTOR = error("call.super.enum.constructor");
   public static final Parameterized<PsiExpression, PsiClass> CALL_SUPER_QUALIFIER_NOT_INNER_CLASS = 

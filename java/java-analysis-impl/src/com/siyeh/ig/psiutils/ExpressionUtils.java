@@ -4,7 +4,6 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
@@ -19,6 +18,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.JavaPsiReferenceUtil.ForwardReferenceProblem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
@@ -1287,7 +1287,8 @@ public final class ExpressionUtils {
              .find(ref -> {
                PsiElement target = ref.resolve();
                return target == array ||
-                      target instanceof PsiField && HighlightUtil.isIllegalForwardReferenceToField(ref, (PsiField)target, true) != null;
+                      target instanceof PsiField field &&
+                      JavaPsiReferenceUtil.checkForwardReference(ref, field, true) != ForwardReferenceProblem.LEGAL;
              }) != null;
   }
 

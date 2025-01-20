@@ -798,12 +798,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitFragment(@NotNull PsiFragment fragment) {
-    super.visitFragment(fragment);
-    if (!hasErrorResults()) add(HighlightUtil.checkFragmentError(fragment));
-  }
-
-  @Override
   public void visitMethod(@NotNull PsiMethod method) {
     super.visitMethod(method);
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(method.getBody()));
@@ -1121,13 +1115,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (!hasErrorResults() && resolved instanceof PsiField) {
-      try {
-        add(HighlightUtil.checkIllegalForwardReferenceToField(expression, (PsiField)resolved));
-      }
-      catch (IndexNotReadyException ignored) {
-      }
-    }
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkAccessStaticFieldFromEnumConstructor(expression, result));
     if (!hasErrorResults()) add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
     PsiExpression qualifierExpression = expression.getQualifierExpression();

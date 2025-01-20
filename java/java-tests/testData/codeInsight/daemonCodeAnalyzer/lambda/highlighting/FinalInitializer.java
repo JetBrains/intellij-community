@@ -1,6 +1,6 @@
 class MyTest {
   final Runnable lambdaRunnable = () -> {
-    System.out.println(<error descr="Variable 'o' might not have been initialized">o</error>);
+    System.out.println(<error descr="Cannot read value of field 'o' before the field's definition">o</error>);
   };
 
   final Object o;
