@@ -190,7 +190,7 @@ data class StackInfo internal constructor(
 
     val stack = this.stack ?: return
 
-    descriptionService.getExecutionStackDescription(stack, session).asCompletableFuture().whenCompleteAsync { result: String?, exception: Throwable? ->
+    descriptionService.getExecutionStackDescription(stack, session).asCompletableFuture().whenCompleteAsync { result: XDebuggerExecutionStackDescription?, exception: Throwable? ->
       if (exception is CancellationException) {
         return@whenCompleteAsync
       }
@@ -199,7 +199,7 @@ data class StackInfo internal constructor(
       }
       if (result != null) {
         @Suppress("HardCodedStringLiteral")
-        description = result
+        description = result.shortDescription
       }
     }
   }
