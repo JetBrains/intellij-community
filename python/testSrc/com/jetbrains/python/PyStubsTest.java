@@ -859,6 +859,14 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-75291
+  public void testTypeAliasNameIndex() {
+    getTestFile();
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
+    assertEquals(1, PyTypeAliasNameIndex.find("PublicType", myFixture.getProject(), scope).size());
+    assertEquals(0, PyTypeAliasNameIndex.find("_PrivateType", myFixture.getProject(), scope).size());
+  }
+
   // PY-18866
   public void testUnresolvedTypingSymbol() {
     final PyFile file = getTestFile();

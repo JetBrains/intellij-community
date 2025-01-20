@@ -425,6 +425,10 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'decimal.Decimal'");
   }
 
+  public void testTypeAliasStatement() {
+    doMultiFileAutoImportTest("Import 'lib.ExampleType'");
+  }
+
   private void doTestProposedImportsOrdering(String @NotNull ... expected) {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());
