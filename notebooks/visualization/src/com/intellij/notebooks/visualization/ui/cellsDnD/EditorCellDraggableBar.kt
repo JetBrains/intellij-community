@@ -7,7 +7,6 @@ import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.getCell
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
-import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.EditorCellInput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -83,7 +82,7 @@ class EditorCellDraggableBar(
     private var isDragging = false
     private var dragStartPoint: Point? = null
 
-    private var currentlyHighlightedCell: EditorCell? = null
+    private var currentlyHighlightedCell: CellDropTarget = CellDropTarget.NoCell
 
     init {
       cursor = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR)  // todo: need to find a better cursor
@@ -126,10 +125,17 @@ class EditorCellDraggableBar(
       })
     }
 
-    fun getCellUnderCursor(editorPoint: Point): EditorCell? {
-      val offset = editor.xyToLogicalPosition(editorPoint).let { editor.logicalPositionToOffset(it) }
-      val line = editor.document.getLineNumber(offset)
-      return NotebookCellInlayManager.get(editor)?.getCell(editor.getCell(line).ordinal)
+    fun getCellUnderCursor(editorPoint: Point): CellDropTarget {
+      val notebookCellManager = NotebookCellInlayManager.get(editor) ?: return CellDropTarget.NoCell
+
+      // Check if the point is below the bounds of the last cell
+      notebookCellManager.getCell(notebookCellManager.cells.lastIndex).view?.calculateBounds()?.let { lastCellBounds ->
+        if (editorPoint.y > lastCellBounds.maxY) return CellDropTarget.BelowLastCell
+      }
+
+      val line = editor.document.getLineNumber(editor.xyToLogicalPosition(editorPoint).let(editor::logicalPositionToOffset))
+      val realCell = notebookCellManager.getCell(editor.getCell(line).ordinal)
+      return CellDropTarget.TargetCell(realCell)
     }
 
     override fun paintComponent(g: Graphics?) {
@@ -151,17 +157,19 @@ class EditorCellDraggableBar(
       updateDropIndicator(cellUnderCursor)
     }
 
-    private fun updateDropIndicator(targetCell: EditorCell?) {
+    private fun updateDropIndicator(targetCell: CellDropTarget) {
       deleteDropIndicator()
       currentlyHighlightedCell = targetCell
 
-      targetCell?.let {  it.view?.highlightAbovePanel() }
+      when (targetCell) {
+        is CellDropTarget.TargetCell -> targetCell.cell.view?.highlightAbovePanel()
+        else -> { }
+      }
     }
 
-    private fun deleteDropIndicator() = currentlyHighlightedCell?.let {
-      it.view?.removeHighlightAbovePanel()
+    private fun deleteDropIndicator() {
+      (currentlyHighlightedCell as? CellDropTarget.TargetCell)?.cell?.view?.removeHighlightAbovePanel()
     }
-
   }
 
 }

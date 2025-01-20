@@ -57,12 +57,12 @@ class NotebookAboveCellDelimiterPanel(
     }
   }
 
-  fun addHighlight() {
+  fun addDropHighlight() {
     isHighlighted = true
     delimiterPanel?.repaint()
   }
 
-  fun removeHighlight() {
+  fun removeDropHighlight() {
     isHighlighted = false
     delimiterPanel?.repaint()
   }

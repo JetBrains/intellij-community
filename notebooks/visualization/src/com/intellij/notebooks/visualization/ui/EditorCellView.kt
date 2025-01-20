@@ -402,10 +402,10 @@ class EditorCellView(
   }
 
   fun highlightAbovePanel(): Unit? =
-    _controllers.filterIsInstance<HighlightableCellPanel>().firstOrNull()?.addHighlight()
+    _controllers.filterIsInstance<DropHighlightableCellPanel>().firstOrNull()?.addDropHighlight()
 
   fun removeHighlightAbovePanel(): Unit? =
-    _controllers.filterIsInstance<HighlightableCellPanel>().firstOrNull()?.removeHighlight()
+    _controllers.filterIsInstance<DropHighlightableCellPanel>().firstOrNull()?.removeDropHighlight()
 
   internal data class NotebookCellDataProvider(
     val editor: Editor,
