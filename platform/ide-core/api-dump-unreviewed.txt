@@ -2985,6 +2985,7 @@ com.intellij.util.proxy.ProtocolDefaultPorts
 - sf:HTTP:I
 - sf:SSL:I
 f:com.intellij.util.ui.ShowingScopeKt
+f:com.intellij.util.ui.UiScopeKt
 com.intellij.util.ui.update.Activatable
 - hideNotify():V
 - showNotify():V

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.openapi.application.AccessToken
@@ -24,33 +24,32 @@ private val sequence = AtomicLong() // needed to distinguish updates with the sa
  * A simplified version, which does not compute any additional data when the UI component becomes shown.
  */
 @Experimental
+@Deprecated("Use launchOnShow or launchOnceOnShow")
 fun Component.showingScope(
   debugName: String,
   context: CoroutineContext = EmptyCoroutineContext,
   block: suspend CoroutineScope.() -> Unit,
 ): Job {
+  @Suppress("DEPRECATION")
   return showingScope(debugName, context, {}) {
     block()
   }
 }
 
 /**
- * Launches [block] in a coroutine, which is bound to the [UI Component][this] [visibility][com.intellij.ui.ComponentUtil.isShowing].
+ * This was the first design. It's now deprecated in favor of [launchOnShow]/[launchOnceOnShow].
  *
- * [uiData] is used to synchronously compute data **in the same** EDT event where an [HierarchyListener][hierarchy event] was fired.
- * If [uiData] returns a non-null value, [block] with the computed value is run in a new coroutine.
- * Once the component is removed from the hierarchy, the coroutine is canceled.
- * The [block] may be executed several times if the component is repeatedly added/removed from the hierarchy.
- *
- * Cancelling the returned Job brings back the state before calling this function.
- * Exceptions from the [block] also cancel the returned Job, effectively cleaning up the whole thing.
+ * 1. Exceptions from the [block] also cancel the returned Job.
  * For example, to execute some logic on the first time the component is shown, one can throw a CancellationException:
  * ```
  * myLabel.showingScope(myDebugName) {
  *   shownForTheFirstTimeEver(myLabel)
  *   throw CancellationException()
- * }
  * ```
+ * Instead, [launchOnceOnShow] should be used.
+ * In case of [launchOnShow], the [block] will be restarted even if the previous invocation threw an exception.
+ *
+ * 2. Synchronous [uiData] is not supported, the logic can be moved to the first line of [block].
  *
  * @param debugName name to use as [CoroutineName]
  * @param context additional context of the coroutine.
@@ -58,6 +57,7 @@ fun Component.showingScope(
  * @param uiData a function, which is called in the same EDT event when the component becomes showing
  */
 @Experimental
+@Deprecated("Use launchOnShow or launchOnceOnShow")
 fun <T : Any, C : Component> C.showingScope(
   debugName: String,
   context: CoroutineContext = EmptyCoroutineContext,
