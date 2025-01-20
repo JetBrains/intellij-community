@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl
+import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -131,6 +133,7 @@ internal class ReworkedTerminalView(
 
     terminalPanel = TerminalPanel(initialContent = outputModel.editor)
 
+    (outputModel.editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(EmptySoftWrapPainter)
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
   }
