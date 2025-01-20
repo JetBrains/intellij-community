@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQuickFixHelper
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.createRenameUnresolvedReferenceFix
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 
 class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<PsiReference>() {
@@ -25,6 +27,10 @@ class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFix
         analyze(ktElement) {
             for (quickFix in ImportQuickFixProvider.getFixes(ktElement)) {
                 registrar.register(quickFix)
+            }
+
+            if (ktElement is KtNameReferenceExpression) {
+                createRenameUnresolvedReferenceFix(ktElement)?.let { action -> registrar.register(action) }
             }
         }
     }

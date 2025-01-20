@@ -32,3 +32,4 @@ fun foo(a: A, b: B) {
     bar(b.x())
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RenameUnresolvedReferenceFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.RenameUnresolvedReferenceFix

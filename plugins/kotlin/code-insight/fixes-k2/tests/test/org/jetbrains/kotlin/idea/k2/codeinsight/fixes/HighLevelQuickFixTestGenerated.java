@@ -13091,6 +13091,50 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/renameUnresolvedReference")
+    public static class RenameUnresolvedReference extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("qualifiedFunRef.kt")
+        public void testQualifiedFunRef() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/renameUnresolvedReference/qualifiedFunRef.kt");
+        }
+
+        @TestMetadata("qualifiedPropertyRef.kt")
+        public void testQualifiedPropertyRef() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/renameUnresolvedReference/qualifiedPropertyRef.kt");
+        }
+
+        @TestMetadata("typeRef.kt")
+        public void testTypeRef() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/renameUnresolvedReference/typeRef.kt");
+        }
+
+        @TestMetadata("unqualifiedFunRef.kt")
+        public void testUnqualifiedFunRef() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/renameUnresolvedReference/unqualifiedFunRef.kt");
+        }
+
+        @TestMetadata("unqualifiedPropertyRef.kt")
+        public void testUnqualifiedPropertyRef() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/renameUnresolvedReference/unqualifiedPropertyRef.kt");
+        }
+
+        @TestMetadata("unqualifiedPropertyRefWithPackageError.kt")
+        public void testUnqualifiedPropertyRefWithPackageError() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/renameUnresolvedReference/unqualifiedPropertyRefWithPackageError.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/unnecessaryLateinit")
     public static class UnnecessaryLateinit extends AbstractHighLevelQuickFixTest {
         @java.lang.Override

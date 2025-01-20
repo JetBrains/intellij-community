@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQu
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ExpectedReferenceFoundPackageFixFactory
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixFactories
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecationFixFactory
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.ReplaceProtectedToPublishedApiCallFixFactory
@@ -511,6 +512,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(DeprecationFixFactory.deprecatedAliasWarning)
 
         registerFactory(UnsupportedFeatureFixFactory.unsupportedFeature)
+        registerFactory(ExpectedReferenceFoundPackageFixFactory.renameFactory)
 
         registerFactory(ChangeMemberFunctionSignatureFixFactory.nothingToOverrideFixFactory)
         registerFactory(OverrideAccessorFunctionFixFactory.nothingToOverrideFixFactory)

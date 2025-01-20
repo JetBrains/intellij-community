@@ -701,8 +701,14 @@ object K2SemanticMatcher {
     ): Boolean {
         if (areNonCallsMatchingByResolve(targetExpression, patternExpression, context)) return true
 
-        val targetCallInfo = targetExpression.resolveToCall() ?: return false
-        val patternCallInfo = patternExpression.resolveToCall() ?: return false
+        val targetCallInfo = targetExpression.resolveToCall()
+        val patternCallInfo = patternExpression.resolveToCall()
+
+        if (targetCallInfo == null && patternCallInfo == null) {
+            return areUnresolvedCallsMatchingByResolve(targetExpression, patternExpression, context)
+        } else if (targetCallInfo == null || patternCallInfo == null) {
+            return false
+        }
 
         if (targetCallInfo is KaErrorCallInfo && patternCallInfo is KaErrorCallInfo) {
             if (targetCallInfo.isUnresolvedCall() != patternCallInfo.isUnresolvedCall()) return false
