@@ -331,18 +331,16 @@ public class Invoker implements InvokerMBean {
 
     List<Method> availableMethods = Arrays.stream(clazz.getMethods()).toList();
 
-    if (call instanceof UtilityCall) {
-      availableMethods = availableMethods.stream().filter(m -> Modifier.isStatic(m.getModifiers())).toList();
-      if (isKotlinClass(clazz)) {
-        Class<?> companionClass =
-          ContainerUtil.find(clazz.getDeclaredClasses(), c -> c.getName().equals(call.getClassName() + "$Companion"));
-        if (companionClass != null) {
-          clazz = companionClass;
-          List<Method> companionNotStaticMethods = Arrays.stream(clazz.getMethods())
-            .filter(m -> m.getAnnotation(JvmStatic.class) == null)
-            .toList();
-          availableMethods = ContainerUtil.concat(availableMethods, companionNotStaticMethods);
-        }
+    if (call instanceof UtilityCall && isKotlinClass(clazz)) {
+      Class<?> companionClass =
+        ContainerUtil.find(clazz.getDeclaredClasses(), c -> c.getName().equals(call.getClassName() + "$Companion"));
+      if (companionClass != null) {
+        clazz = companionClass;
+        availableMethods = availableMethods.stream().filter(m -> Modifier.isStatic(m.getModifiers())).toList();
+        List<Method> companionNotStaticMethods = Arrays.stream(clazz.getMethods())
+          .filter(m -> m.getAnnotation(JvmStatic.class) == null)
+          .toList();
+        availableMethods = ContainerUtil.concat(availableMethods, companionNotStaticMethods);
       }
     }
 
@@ -357,9 +355,6 @@ public class Invoker implements InvokerMBean {
       if (call instanceof UtilityCall && isKotlinClass(clazz)) {
         message.append(
           " For utility call only static methods were checked. If there is a companion object, its methods were also checked.");
-        if (isKotlinClass(clazz)) {
-          message.append(" If there is a companion object, its methods were also checked.");
-        }
       }
       message.append(
         String.format("\nAvailable methods: %n%s",
