@@ -230,7 +230,7 @@ class TextMateLexerCore(
       }
 
       if (linePosition != endPosition) {
-        lineByteOffset = linePosition + byteOffsetByCharOffset(line, linePosition, endPosition)
+        lineByteOffset = lineByteOffset + byteOffsetByCharOffset(line, linePosition, endPosition)
         linePosition = endPosition
       }
 

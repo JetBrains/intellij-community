@@ -13,10 +13,8 @@ object RegexUtil {
       return 0
     }
     var result = 0
-    var i = startOffset
-    while (i < targetOffset) {
-      result += UTF8Encoding.INSTANCE.codeToMbcLength(charSequence[i].code)
-      i++
+    charSequence.subSequence(startOffset, targetOffset).codePoints().forEach { codePoint ->
+      result += UTF8Encoding.INSTANCE.codeToMbcLength(codePoint)
     }
     return result
   }
