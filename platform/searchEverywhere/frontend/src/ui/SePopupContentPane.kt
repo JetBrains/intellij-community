@@ -192,6 +192,7 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
   }
 }
 
+@Internal
 interface SePopupManager {
   fun closePopup()
 }

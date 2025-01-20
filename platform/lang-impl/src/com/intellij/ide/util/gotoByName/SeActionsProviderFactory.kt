@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +18,10 @@ class SeActionsProviderFactory: SeItemsProviderFactory {
     // TODO: This is unacceptable here, rewrite ActionsContributor
     return runBlockingCancellable {
       withContext(Dispatchers.EDT) {
-        SeActionsProvider()
+        // TODO: Provide proper context
+        SeActionsAdaptedProvider(project, ActionSearchEverywhereContributor(project,
+                                                                            WindowManagerEx.getInstanceEx().getFocusedComponent(project),
+                                                                            null))
       }
     }
   }
