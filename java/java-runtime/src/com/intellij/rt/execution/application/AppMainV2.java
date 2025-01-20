@@ -209,6 +209,8 @@ public final class AppMainV2 {
       Class<?> last = classesToVisit.removeLast();
       Method[] declaredMethods = last.getDeclaredMethods();
       for (Method method : declaredMethods) {
+        //it is impossible to call non-static method for abstract class
+        if (Modifier.isAbstract(aClass.getModifiers()) && !Modifier.isStatic(method.getModifiers())) continue;
         MainMethodStatus status = getMainMethodStatus(method, java21Preview ? MainMethodSearchMode.NON_STATIC_METHOD : MainMethodSearchMode.ALL_METHOD);
         if (status == MainMethodStatus.WithArgs) {
           return method;
