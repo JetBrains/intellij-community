@@ -6,7 +6,9 @@ import com.intellij.formatting.engine.ExpandableIndent;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -708,17 +710,25 @@ public final class FormatterImpl extends FormatterEx
         throw new FormattingModelInconsistencyException("Uncommitted document");
       }
       if (document.getTextLength() != file.getTextLength()) {
+        Attachment documentAttachment = new Attachment("document.txt", document.getText());
+        Attachment fileAttachment = new Attachment("file.txt", file.getText());
+
         throw new FormattingModelInconsistencyException(
           "Document length " + document.getTextLength() +
-          " doesn't match PSI file length " + file.getTextLength() + ", language: " + file.getLanguage()
+          " doesn't match PSI file length " + file.getTextLength() + ", language: " + file.getLanguage(),
+          new Attachment[]{documentAttachment, fileAttachment}
         );
       }
     }
   }
 
-  private static final class FormattingModelInconsistencyException extends Exception {
+  private static final class FormattingModelInconsistencyException extends RuntimeExceptionWithAttachments {
     FormattingModelInconsistencyException(String message) {
       super(message);
+    }
+
+    FormattingModelInconsistencyException(String message, Attachment[] attachments) {
+      super(message, attachments);
     }
   }
 
