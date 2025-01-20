@@ -245,7 +245,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       final ScopeOwner owner = ScopeUtil.getScopeOwner(importElement);
       if (visibleName != null && owner != null) {
         final Collection<PsiElement> allWrites = ScopeUtil.getElementsOfAccessType(visibleName, owner, ReadWriteInstruction.ACCESS.WRITE);
-        final boolean hasWriteInsideGuard = allWrites.stream().anyMatch(e -> PsiTreeUtil.isAncestor(guard, e, false));
+        final boolean hasWriteInsideGuard = ContainerUtil.exists(allWrites, e -> PsiTreeUtil.isAncestor(guard, e, false));
         if (!hasWriteInsideGuard && !shouldSkipMissingWriteInsideGuard(guard, visibleName)) {
           myImportsInsideGuard.add(importElement);
         }
@@ -538,8 +538,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   public void addInstallAllImports() {
-    List<String> refNames = myUnresolvedRefs.stream().map(it -> it.getRefName()).distinct().toList();
-
+    Set<String> refNames = ContainerUtil.map2Set(myUnresolvedRefs, it -> it.getRefName());
     for (PyPackageInstallAllProblemInfo unresolved : myUnresolvedRefs) {
       var quickFixes = unresolved.getFixes();
 
@@ -556,7 +555,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     final List<PyInspectionExtension> extensions = PyInspectionExtension.EP_NAME.getExtensionList();
     final List<PsiElement> unused = collectUnusedImportElements();
     for (PsiElement element : unused) {
-      if (extensions.stream().anyMatch(extension -> extension.ignoreUnused(element, myTypeEvalContext))) {
+      if (ContainerUtil.exists(extensions, extension -> extension.ignoreUnused(element, myTypeEvalContext))) {
         continue;
       }
       if (element.getTextLength() > 0) {
@@ -611,7 +610,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     // Remove those unsed, that are reported to be skipped by extension points
     final Set<PyImportedNameDefiner> unusedImportToSkip = new HashSet<>();
     for (final PyImportedNameDefiner unusedImport : unusedImports) {
-      if (PyInspectionExtension.EP_NAME.getExtensionList().stream().anyMatch(o -> o.ignoreUnusedImports(unusedImport))) {
+      if (ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(), o -> o.ignoreUnusedImports(unusedImport))) {
         unusedImportToSkip.add(unusedImport);
       }
     }
