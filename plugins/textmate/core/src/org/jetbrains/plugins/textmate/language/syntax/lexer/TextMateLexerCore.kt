@@ -92,7 +92,7 @@ class TextMateLexerCore(
     var lastSuccessStateOccursCount = 0
     var lastMovedOffset = lineStartOffset
 
-    val matchBeginString = lineStartOffset == 0
+    val matchBeginString = lineStartOffset == 0 && linePosition == 0
     var anchorByteOffset = -1 // makes sense only for a line, cannot be used across lines
 
     val string = fromCharSequence(line)
