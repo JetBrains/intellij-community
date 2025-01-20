@@ -150,7 +150,9 @@ fun DbContext<Q>.buildDurableSnapshot(
   return DurableSnapshot(entities = entities.map { DurableSnapshot.DurableEntity(it.key, it.value) })
 }
 
-
+/**
+ * Snapshot relevant for the DB, parameterised with EID instead of UID.
+ */
 data class LocalSnaphost(
   val entities: List<SnapshotEntity>,
   val unknownAttributes: List<CreateEntity>,
@@ -164,7 +166,7 @@ data class LocalSnaphost(
   )
 }
 
-internal fun DbContext<Q>.prepareSnapshot(snapshot: DurableSnapshot, uidToEid: (UID) -> EID): LocalSnaphost {
+private fun DbContext<Q>.prepareSnapshot(snapshot: DurableSnapshot, uidToEid: (UID) -> EID): LocalSnaphost {
   data class MyEntity(
     val entityTypeEid: EID,
     val id: UID,
@@ -245,6 +247,7 @@ internal fun DbContext<Q>.prepareSnapshot(snapshot: DurableSnapshot, uidToEid: (
                                                    datom = Datom(eid, attribute, value.json, versionedValue.tx))
                 }
             }
+            @Suppress("UNCHECKED_CAST")
             Triple(attribute as Attribute<Any>, value, versionedValue.tx)
           },
         )
