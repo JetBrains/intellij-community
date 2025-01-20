@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.psi.PsiMember
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
 import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
@@ -26,6 +27,8 @@ internal open class CallableImportCandidatesProvider(
 
     protected open fun acceptsJavaCallable(javaCallable: PsiMember): Boolean =
         !javaCallable.isImported() && javaCallable.canBeImported()
+
+    protected open fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean = true
 
     context(KaSession)
     override fun collectCandidates(
@@ -57,6 +60,7 @@ internal open class CallableImportCandidatesProvider(
         }
 
         return candidates
+            .filter { acceptsCallableCandidate(it) }
             .filter { it.isVisible(fileSymbol) && it.callableId != null }
             .toList()
     }
@@ -71,6 +75,10 @@ internal class InfixCallableImportCandidatesProvider(
         kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD) && super.acceptsKotlinCallable(kotlinCallable)
 
     override fun acceptsJavaCallable(javaCallable: PsiMember): Boolean = false
+
+    override fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean {
+        return (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
+    }
 }
 
 
@@ -95,6 +103,7 @@ internal class DelegateMethodImportCandidatesProvider(
             receiverTypes = listOf(expressionType),
         ) { acceptsKotlinCallable(it) }
             .map { CallableImportCandidate(it) }
+            .filter { acceptsCallableCandidate(it) }
             .toList()
     }
 }
