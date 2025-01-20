@@ -410,22 +410,12 @@ object MavenImportUtil {
     }
 
   private fun MavenProject.getCompilerLevel(forTests: Boolean, level: String): String? {
-    val configs: List<Element> = if (forTests) testCompilerConfigs else compilerConfigs
-    val fallbackProperty = if (forTests) "test${level.replaceFirstChar { it.titlecase() }}" else level
-    if (configs.size == 1) return getCompilerLevel(level, configs[0], "maven.compiler.$fallbackProperty")
-    return configs
-             .mapNotNull { findChildValueByPath(it, level) }
-             .map { LanguageLevel.parse(it) ?: LanguageLevel.HIGHEST }
-             .maxWithOrNull(java.util.Comparator.naturalOrder())
-             ?.toJavaVersion()?.toFeatureString() ?: properties.getProperty("maven.compiler.$fallbackProperty")
-  }
-
-  private fun MavenProject.getCompilerLevel(level: String, config: Element, fallbackProperty: String): String? {
-    var result: String? = findChildValueByPath(config, level)
-    if (result == null) {
-      result = properties.getProperty(fallbackProperty)
-    }
-    return result
+    val configs = if (forTests) testCompilerConfigs else compilerConfigs
+    val fallbackPropertySuffix = if (forTests) "test${level.replaceFirstChar { it.titlecase() }}" else level
+    val fallbackProperty = "maven.compiler.$fallbackPropertySuffix"
+    val levels = configs.mapNotNull { LanguageLevel.parse(findChildValueByPath(it, level)) }
+    val maxLevel = levels.maxWithOrNull(Comparator.naturalOrder())?.toJavaVersion()?.toFeatureString()
+    return maxLevel ?: properties.getProperty(fallbackProperty)
   }
 
   private val MavenProject.compilerConfigs: List<Element>
