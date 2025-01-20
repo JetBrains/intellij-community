@@ -241,6 +241,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
       if (SystemInfoRt.isMac && !StartupUiUtil.isUnderDarcula()) {
         JButton done = new JButton(LangBundle.message("button.done"));
         done.setOpaque(false);
+        //noinspection HardCodedStringLiteral
         done.setMnemonic('o');
         done.addActionListener(actionListener);
         builder.setCommandButton(new ActiveComponent.Adapter() {
