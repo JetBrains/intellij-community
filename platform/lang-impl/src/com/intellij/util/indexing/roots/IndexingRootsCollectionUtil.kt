@@ -43,6 +43,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.function.Consumer
@@ -60,7 +61,7 @@ internal data class SdkRootsDescription(val sdk: SdkEntity,
 
   fun createIterators(storage: EntityStorage): Collection<IndexableFilesIterator> {
     val sdk = storage.sdkMap.getDataByEntity(sdk) ?: return emptyList()
-    return listOfNotNull(SdkIndexableFilesIteratorImpl.createIterator(sdk))
+    return listOf(SdkIndexableFilesIteratorImpl.createIterator(sdk))
   }
 }
 
@@ -312,7 +313,9 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
 
   fun getIteratorsFromRoots(libraryOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
                             sdkOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
-                            storage: EntityStorage): Iterators {
+                            storage: EntityStorage,
+                            project: Project): Iterators {
+    val moduleDependencyIndex = ModuleDependencyIndex.getInstance(project)
     val contentIterators = mutableListOf<IndexableFilesIterator>()
     for ((module, roots) in moduleRoots.entries) {
       contentIterators.addAll(IndexableEntityProviderMethods.createIterators(module, roots))
@@ -338,9 +341,11 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
           }
         }
         is SdkRootsDescription -> {
-          description.createIterators(storage).forEach { iterator ->
-            if (sdkOriginsToFilterDuplicates.add(iterator.origin)) {
-              externalIterators.add(iterator)
+          if (moduleDependencyIndex.hasDependencyOn(description.sdk.symbolicId)) {
+            description.createIterators(storage).forEach { iterator ->
+              if (sdkOriginsToFilterDuplicates.add(iterator.origin)) {
+                externalIterators.add(iterator)
+              }
             }
           }
         }
