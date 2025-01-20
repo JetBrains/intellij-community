@@ -171,6 +171,27 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
     super.visitEnumConstant(enumConstant);
     if (!hasErrorResults()) myClassChecker.checkEnumWithAbstractMethods(enumConstant);
+    if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(enumConstant);
+  }
+
+  @Override
+  public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+    super.visitTemplateExpression(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkTemplateExpression(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(expression);
+  }
+
+  @Override
+  public void visitTemplate(@NotNull PsiTemplate template) {
+    super.visitTemplate(template);
+    checkFeature(template, JavaFeature.STRING_TEMPLATES);
+    if (hasErrorResults()) return;
+
+    for (PsiExpression embeddedExpression : template.getEmbeddedExpressions()) {
+      if (PsiTypes.voidType().equals(embeddedExpression.getType())) {
+        report(JavaErrorKinds.STRING_TEMPLATE_VOID_NOT_ALLOWED_IN_EMBEDDED.create(embeddedExpression));
+      }
+    }
   }
 
   @Override
@@ -186,6 +207,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkAnonymousInheritProhibited(expression);
     if (!hasErrorResults()) myClassChecker.checkAnonymousSealedProhibited(expression);
     if (!hasErrorResults()) myExpressionChecker.checkQualifiedNew(expression, type, aClass);
+    if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(expression);
   }
 
   @Override
@@ -239,15 +261,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (functionalInterfaceType != null && !PsiTypesUtil.allTypeParametersResolved(expression, functionalInterfaceType)) return;
 
-    JavaResolveResult result;
-    JavaResolveResult[] results;
-    try {
-      results = expression.multiResolve(true);
-      result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-    }
-    catch (IndexNotReadyException e) {
-      return;
-    }
+    JavaResolveResult[] results = expression.multiResolve(true);
+    JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
     if (!hasErrorResults()) {
       boolean resolvedButNonApplicable = results.length == 1 && results[0] instanceof MethodCandidateInfo methodInfo &&
                                          !methodInfo.isApplicable() &&
@@ -262,6 +277,13 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         }
       }
     }
+    if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(expression);
+  }
+
+  @Override
+  public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
+    myExpressionChecker.checkUnhandledExceptions(statement);
+    if (!hasErrorResults()) visitStatement(statement);
   }
 
   @Override

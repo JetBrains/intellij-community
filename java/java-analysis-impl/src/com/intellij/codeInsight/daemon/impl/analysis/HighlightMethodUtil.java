@@ -209,12 +209,11 @@ public final class HighlightMethodUtil {
 
     boolean isDummy = isDummyConstructorCall(methodCall, resolveHelper, list, referenceToMethod);
     if (isDummy) return;
-    HighlightInfo.Builder builder;
+    HighlightInfo.Builder builder = null;
 
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     if (resolved instanceof PsiMethod psiMethod && resolveResult.isValidResult()) {
-      builder = HighlightUtil.checkUnhandledExceptions(methodCall);
-      if (builder == null && psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
           PsiElement element = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
@@ -246,7 +245,6 @@ public final class HighlightMethodUtil {
       PsiMethod resolvedMethod = candidateInfo != null ? candidateInfo.getElement() : null;
 
       if (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect()) {
-        builder = null;
       }
       else if (candidateInfo != null && !candidateInfo.isApplicable()) {
         if (candidateInfo.isTypeArgumentsApplicable()) {
@@ -278,9 +276,6 @@ public final class HighlightMethodUtil {
             builder = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, applicabilitySubstitutor, javaSdkVersion);
           }
         }
-      }
-      else {
-        builder = null;
       }
     }
     if (builder == null) {

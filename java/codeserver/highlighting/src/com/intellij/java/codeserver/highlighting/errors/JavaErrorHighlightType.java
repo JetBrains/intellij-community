@@ -18,5 +18,10 @@ public enum JavaErrorHighlightType {
   /**
    * Error highlighting for unresolved/unknown reference
    */
-  WRONG_REF
+  WRONG_REF,
+
+  /**
+   * Error highlighting for unhandled exception
+   */
+  UNHANDLED_EXCEPTION
 }

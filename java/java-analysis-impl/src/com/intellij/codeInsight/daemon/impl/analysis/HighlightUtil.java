@@ -839,42 +839,6 @@ public final class HighlightUtil {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
 
-  static HighlightInfo.Builder checkUnhandledExceptions(@NotNull PsiElement element) {
-    List<PsiClassType> unhandled = ExceptionUtil.getOwnUnhandledExceptions(element);
-    if (unhandled.isEmpty()) return null;
-    unhandled = ContainerUtil.filter(unhandled, type -> type.resolve() != null);
-    if (unhandled.isEmpty()) return null;
-
-    HighlightInfoType highlightType = getUnhandledExceptionHighlightType(element);
-    if (highlightType == null) return null;
-
-    TextRange textRange = computeRange(element);
-    String description = getUnhandledExceptionsDescriptor(unhandled);
-    HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(highlightType).range(textRange).descriptionAndTooltip(description);
-    HighlightFixUtil.registerUnhandledExceptionFixes(element, info);
-    ErrorFixExtensionPoint.registerFixes(info, element, "unhandled.exceptions");
-    return info;
-  }
-
-  private static TextRange computeRange(@NotNull PsiElement element) {
-    if (element instanceof PsiNewExpression newExpression) {
-      PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
-      if (reference != null) {
-        return reference.getTextRange();
-      }
-    }
-    if (element instanceof PsiEnumConstant constant) {
-      return constant.getNameIdentifier().getTextRange();
-    }
-    if (element instanceof PsiMethodCallExpression callExpression) {
-      PsiElement nameElement = callExpression.getMethodExpression().getReferenceNameElement();
-      if (nameElement != null) {
-        return nameElement.getTextRange();
-      }
-    }
-    return HighlightMethodUtil.getFixRange(element);
-  }
-
   static HighlightInfo.Builder checkUnhandledCloserExceptions(@NotNull PsiResourceListElement resource) {
     List<PsiClassType> unhandled = ExceptionUtil.getUnhandledCloserExceptions(resource, null);
     if (unhandled.isEmpty()) return null;
@@ -885,7 +849,7 @@ public final class HighlightUtil {
     String description = JavaErrorBundle.message("unhandled.close.exceptions", formatTypes(unhandled), unhandled.size(),
                               JavaErrorBundle.message("auto.closeable.resource"));
     HighlightInfo.Builder highlight = HighlightInfo.newHighlightInfo(highlightType).range(resource).descriptionAndTooltip(description);
-    HighlightFixUtil.registerUnhandledExceptionFixes(resource, highlight);
+    HighlightFixUtil.registerUnhandledExceptionFixes(resource, asConsumer(highlight));
     return highlight;
   }
 
@@ -1435,45 +1399,6 @@ public final class HighlightUtil {
       PsiType type = parameter.getType();
       return checkMustBeThrowable(type, parameter, true);
     }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkTemplateExpression(@NotNull PsiTemplateExpression templateExpression) {
-    HighlightInfo.Builder builder = checkFeature(templateExpression, JavaFeature.STRING_TEMPLATES,
-                                                 PsiUtil.getLanguageLevel(templateExpression), templateExpression.getContainingFile());
-    if (builder != null) return builder;
-    PsiExpression processor = templateExpression.getProcessor();
-    if (processor == null) {
-      String message = JavaErrorBundle.message("processor.missing.from.string.template.expression");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(templateExpression).descriptionAndTooltip(message)
-        .registerFix(new MissingStrProcessorFix(templateExpression), null, null, null, null);
-    }
-    PsiType type = processor.getType();
-    if (type == null) return null;
-
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(processor.getProject());
-    PsiClassType processorType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, processor.getResolveScope());
-    if (!TypeConversionUtil.isAssignable(processorType, type)) {
-      if (IncompleteModelUtil.isIncompleteModel(templateExpression) && IncompleteModelUtil.isPotentiallyConvertible(processorType, processor)) return null;
-      return createIncompatibleTypeHighlightInfo(processorType, type, processor.getTextRange(), 0);
-    }
-
-    PsiClass processorClass = processorType.resolve();
-    if (processorClass == null) return null;
-    for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
-      if (!TypeConversionUtil.isAssignable(processorType, classType)) continue;
-      PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-      PsiClass aClass = resolveResult.getElement();
-      if (aClass == null) continue;
-      PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(processorClass, aClass, resolveResult.getSubstitutor());
-      if (substitutor == null) continue;
-      Map<PsiTypeParameter, PsiType> substitutionMap = substitutor.getSubstitutionMap();
-      if (substitutionMap.isEmpty() || substitutionMap.containsValue(null)) {
-        String text = JavaErrorBundle.message("raw.processor.type.not.allowed", type.getPresentableText());
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(processor).descriptionAndTooltip(text);
-      }
-    }
-
     return null;
   }
 

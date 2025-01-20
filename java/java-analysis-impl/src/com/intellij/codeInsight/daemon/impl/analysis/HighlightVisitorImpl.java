@@ -229,6 +229,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     JavaErrorHighlightType javaHighlightType = error.highlightType();
     HighlightInfoType type = switch (javaHighlightType) {
       case ERROR, FILE_LEVEL_ERROR -> HighlightInfoType.ERROR;
+      case UNHANDLED_EXCEPTION -> HighlightInfoType.UNHANDLED_EXCEPTION;
       case WRONG_REF -> HighlightInfoType.WRONG_REF;
     };
     TextRange range = error.range();
@@ -526,7 +527,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       HighlightMethodUtil.checkConstructorCall(getProject(), type.resolveGenerics(), enumConstant, type, null, myJavaSdkVersion,
                                                enumConstant.getArgumentList(), myErrorSink);
     }
-    if (!hasErrorResults()) add(HighlightUtil.checkUnhandledExceptions(enumConstant));
   }
 
   @Override
@@ -774,28 +774,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
-    super.visitTemplateExpression(expression);
-
-    add(HighlightUtil.checkTemplateExpression(expression));
-    if (!hasErrorResults()) add(HighlightUtil.checkUnhandledExceptions(expression));
-  }
-
-  @Override
-  public void visitTemplate(@NotNull PsiTemplate template) {
-    super.visitTemplate(template);
-    add(checkFeature(template, JavaFeature.STRING_TEMPLATES));
-    if (hasErrorResults()) return;
-
-    for (PsiExpression embeddedExpression : template.getEmbeddedExpressions()) {
-      if (PsiTypes.voidType().equals(embeddedExpression.getType())) {
-        String message = JavaErrorBundle.message("expression.with.type.void.not.allowed.as.string.template.embedded.expression");
-        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(embeddedExpression).descriptionAndTooltip(message));
-      }
-    }
-  }
-
-  @Override
   public void visitMethod(@NotNull PsiMethod method) {
     super.visitMethod(method);
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(method.getBody()));
@@ -847,7 +825,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitNewExpression(@NotNull PsiNewExpression expression) {
     PsiType type = expression.getType();
-    add(HighlightUtil.checkUnhandledExceptions(expression));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
     try {
@@ -1241,10 +1218,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!hasErrorResults()) {
-      add(HighlightUtil.checkUnhandledExceptions(expression));
-    }
-
-    if (!hasErrorResults()) {
       boolean resolvedButNonApplicable = results.length == 1 && results[0] instanceof MethodCandidateInfo methodInfo &&
                                          !methodInfo.isApplicable() &&
                                          functionalInterfaceType != null;
@@ -1438,12 +1411,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       if (!hasErrorResults()) visitExpression(expr);
     }
-  }
-
-  @Override
-  public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
-    add(HighlightUtil.checkUnhandledExceptions(statement));
-    if (!hasErrorResults()) visitStatement(statement);
   }
 
   @Override

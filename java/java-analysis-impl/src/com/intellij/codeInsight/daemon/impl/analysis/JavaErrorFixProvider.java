@@ -212,17 +212,22 @@ final class JavaErrorFixProvider {
     fix(CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL, error -> myFactory.createAddDefaultConstructorFix(
       requireNonNull(error.context().psiClass().getSuperClass())));
     fix(CONSTRUCTOR_NO_DEFAULT, error -> myFactory.createAddDefaultConstructorFix(error.context()));
-    fix(EXCEPTION_UNHANDLED, error -> {
-      PsiClass psiClass = error.psi() instanceof PsiClass cls ? cls : 
-                          error.psi() instanceof PsiMethod method ? method.getContainingClass() :
-                          null;
-      return psiClass != null ? myFactory.createCreateConstructorMatchingSuperFix(psiClass) : null;
-    });
-    fix(EXCEPTION_UNHANDLED, error -> {
-      if (error.psi() instanceof PsiMethod method) {
-        return myFactory.createAddExceptionToThrowsFix(method, error.context());
+    multi(EXCEPTION_UNHANDLED, error -> {
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      PsiElement element = error.psi();
+      HighlightFixUtil.registerUnhandledExceptionFixes(element, registrar::add);
+      if (element instanceof PsiMethod method) {
+        registrar.add(myFactory.createAddExceptionToThrowsFix(method, error.context()));
+        PsiClass aClass = method.getContainingClass();
+        if (aClass != null) {
+          registrar.add(myFactory.createCreateConstructorMatchingSuperFix(aClass));
+        }
       }
-      return null;
+      else if (element instanceof PsiClass cls) {
+        registrar.add(myFactory.createCreateConstructorMatchingSuperFix(cls));
+      }
+      ErrorFixExtensionPoint.registerFixes(registrar::add, element, "unhandled.exceptions");
+      return registrar;
     });
   }
 
@@ -274,6 +279,7 @@ final class JavaErrorFixProvider {
         return registrar;
       }
     });
+    fix(STRING_TEMPLATE_PROCESSOR_MISSING, error -> new MissingStrProcessorFix(error.psi()));
   }
 
   private void createTypeFixes() {

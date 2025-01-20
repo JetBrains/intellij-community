@@ -176,23 +176,13 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @NotNull HighlightInfo.Builder info) {
+  static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @NotNull Consumer<? super CommonIntentionAction> info) {
     final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
-
-    IntentionAction action4 = quickFixFactory.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element);
-    info.registerFix(action4, null, null, null, null);
-
-    IntentionAction action3 = quickFixFactory.createAddExceptionToCatchFix();
-    info.registerFix(action3, null, null, null, null);
-
-    IntentionAction action2 = quickFixFactory.createAddExceptionToExistingCatch(element);
-    info.registerFix(action2, null, null, null, null);
-
-    IntentionAction action1 = quickFixFactory.createAddExceptionToThrowsFix(element);
-    info.registerFix(action1, null, null, null, null);
-
-    IntentionAction action = quickFixFactory.createSurroundWithTryCatchFix(element);
-    info.registerFix(action, null, null, null, null);
+    info.accept(quickFixFactory.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element));
+    info.accept(quickFixFactory.createAddExceptionToCatchFix());
+    info.accept(quickFixFactory.createAddExceptionToExistingCatch(element));
+    info.accept(quickFixFactory.createAddExceptionToThrowsFix(element));
+    info.accept(quickFixFactory.createSurroundWithTryCatchFix(element));
   }
 
   static void registerStaticProblemQuickFixAction(@Nullable HighlightInfo.Builder info, @NotNull PsiElement refElement, @NotNull PsiJavaCodeReferenceElement place) {

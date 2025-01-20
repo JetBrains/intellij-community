@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,29 @@ final class JavaErrorFormatUtil {
 
   static @NotNull String formatField(@NotNull PsiField field) {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+  }
+
+  static @Nullable TextRange getRange(@NotNull PsiElement element) {
+    if (element instanceof PsiMember member) {
+      return getMemberDeclarationTextRange(member);
+    }
+    if (element instanceof PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
+      if (reference != null) {
+        return reference.getTextRangeInParent();
+      }
+    }
+    if (element instanceof PsiMethodCallExpression callExpression) {
+      PsiElement nameElement = callExpression.getMethodExpression().getReferenceNameElement();
+      if (nameElement != null) {
+        return nameElement.getTextRangeInParent();
+      }
+    }
+    PsiElement nextSibling = element.getNextSibling();
+    if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
+      return TextRange.create(0, element.getTextLength() + 1);
+    }
+    return null;
   }
 
   static @NotNull TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {

@@ -1,15 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -308,6 +314,8 @@ final class ExpressionChecker {
 
     PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     if (resolved instanceof PsiMethod psiMethod && resolveResult.isValidResult()) {
+      checkUnhandledExceptions(methodCall);
+      if (myVisitor.hasErrorResults()) return;
       
     }
     else {
@@ -323,6 +331,67 @@ final class ExpressionChecker {
         myVisitor.report(JavaErrorKinds.CALL_EXPECTED.create(methodCall));
       }
     }
+  }
+
+  void checkTemplateExpression(@NotNull PsiTemplateExpression templateExpression) {
+    myVisitor.checkFeature(templateExpression, JavaFeature.STRING_TEMPLATES);
+    if (myVisitor.hasErrorResults()) return;
+    PsiExpression processor = templateExpression.getProcessor();
+    if (processor == null) {
+      myVisitor.report(JavaErrorKinds.STRING_TEMPLATE_PROCESSOR_MISSING.create(templateExpression));
+      return;
+    }
+    PsiType type = processor.getType();
+    if (type == null) return;
+
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(processor.getProject());
+    PsiClassType processorType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, processor.getResolveScope());
+    if (!TypeConversionUtil.isAssignable(processorType, type)) {
+      if (IncompleteModelUtil.isIncompleteModel(templateExpression) && IncompleteModelUtil.isPotentiallyConvertible(processorType, processor)) {
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(processor, new JavaIncompatibleTypeErrorContext(processorType, type)));
+      return;
+    }
+
+    PsiClass processorClass = processorType.resolve();
+    if (processorClass == null) return;
+    for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      if (!TypeConversionUtil.isAssignable(processorType, classType)) continue;
+      PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+      PsiClass aClass = resolveResult.getElement();
+      if (aClass == null) continue;
+      PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(processorClass, aClass, resolveResult.getSubstitutor());
+      if (substitutor == null) continue;
+      Map<PsiTypeParameter, PsiType> substitutionMap = substitutor.getSubstitutionMap();
+      if (substitutionMap.isEmpty() || substitutionMap.containsValue(null)) {
+        myVisitor.report(JavaErrorKinds.STRING_TEMPLATE_RAW_PROCESSOR.create(processor, type));
+        return;
+      }
+    }
+  }
+
+  private static boolean shouldHighlightUnhandledException(@NotNull PsiElement element) {
+    // JSP top-level errors are handled by UnhandledExceptionInJSP inspection
+    if (FileTypeUtils.isInServerPageFile(element)) {
+      PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiLambdaExpression.class);
+      if (targetMethod instanceof SyntheticElement) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  void checkUnhandledExceptions(@NotNull PsiElement element) {
+    List<PsiClassType> unhandled = ExceptionUtil.getOwnUnhandledExceptions(element);
+    if (unhandled.isEmpty()) return;
+    unhandled = ContainerUtil.filter(unhandled, type -> type.resolve() != null);
+    if (unhandled.isEmpty()) return;
+
+    if (!shouldHighlightUnhandledException(element)) return;
+
+    myVisitor.report(JavaErrorKinds.EXCEPTION_UNHANDLED.create(element, unhandled));
   }
 
   boolean isDummyConstructorCall(@NotNull PsiMethodCallExpression methodCall,

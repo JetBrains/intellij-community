@@ -501,7 +501,7 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiElement, Collection<PsiClassType>> EXCEPTION_UNHANDLED =
     error(PsiElement.class, "exception.unhandled")
-      .withRange(psi -> psi instanceof PsiMember member ? getMemberDeclarationTextRange(member) : null)
+      .withRange(JavaErrorFormatUtil::getRange)
       .<Collection<PsiClassType>>parameterized()
       .withRawDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
   public static final Parameterized<PsiTypeElement, InvalidDisjointTypeContext> EXCEPTION_MUST_BE_DISJOINT =
@@ -635,6 +635,13 @@ public final class JavaErrorKinds {
       .withRawDescription((psi, cls) -> message("call.super.qualifier.not.inner.class", formatClass(cls)));
   public static final Simple<PsiMethodCallExpression> CALL_EXPECTED = error("call.expected");
 
+  public static final Simple<PsiExpression> STRING_TEMPLATE_VOID_NOT_ALLOWED_IN_EMBEDDED =
+    error("string.template.void.not.allowed.in.embedded");
+  public static final Simple<PsiTemplateExpression> STRING_TEMPLATE_PROCESSOR_MISSING =
+    error("string.template.processor.missing");
+  public static final Parameterized<PsiExpression, PsiType> STRING_TEMPLATE_RAW_PROCESSOR =
+    parameterized(PsiExpression.class, PsiType.class, "string.template.raw.processor")
+      .withRawDescription((psi, type) -> message("string.template.raw.processor", type.getPresentableText()));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
