@@ -31,7 +31,7 @@ class MPSProperties : JetBrainsProductProperties() {
         scrambleMainJar = false
         /* main module for JetBrains Client isn't available in the intellij-community project,
            so this property is set only when PyCharm Community is built from the intellij-ultimate project. */
-        embeddedJetBrainsClientMainModule = null
+        embeddedFrontendRootModule = null
 
         productLayout.productImplementationModules = listOf(
             "intellij.platform.starter",
