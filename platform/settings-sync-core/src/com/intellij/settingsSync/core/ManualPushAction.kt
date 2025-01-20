@@ -13,6 +13,6 @@ class ManualPushAction : DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isSettingsSyncEnabledByKey() && SettingsSyncMain.isAvailable() && isSettingsSyncEnabledInSettings()
+    e.presentation.isEnabledAndVisible = SettingsSyncMain.isAvailable() && isSettingsSyncEnabledInSettings()
   }
 }

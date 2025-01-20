@@ -137,7 +137,6 @@ internal class SettingsSyncPanelHolder() {
                 .onIsModified {
                   holder.isModified()
                 }
-                .enabled(isModifiable(holder))
               comment(holder.description)
             }
             else {

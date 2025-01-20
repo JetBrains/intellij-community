@@ -2,6 +2,7 @@ package com.intellij.settingsSync.core
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.RoamingType
@@ -77,21 +78,19 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       SettingsSyncPluginManager.getInstance().pushChangesToIde(snapshot.plugins)
     }
 
-    if (!AppMode.isRemoteDevHost()) {
-      // 3. after that update the rest of changed settings
-      val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
-      writeStatesToAppConfig(regularFileStates)
+    // 3. after that update the rest of changed settings
+    val regularFileStates = snapshot.fileStates.filter { it != settingsSyncFileState }
+    writeStatesToAppConfig(regularFileStates)
 
-      // 4. apply changes from custom providers
-      for ((id, state) in snapshot.settingsFromProviders) {
-        val provider = findProviderById(id, state)
-        if (provider != null) {
-          LOG.debug("Applying settings for provider '$id'")
-          provider.applyNewSettings(state)
-        }
-        else {
-          LOG.warn("Couldn't find provider for id '$id' and state '${state.javaClass}'")
-        }
+    // 4. apply changes from custom providers
+    for ((id, state) in snapshot.settingsFromProviders) {
+      val provider = findProviderById(id, state)
+      if (provider != null) {
+        LOG.debug("Applying settings for provider '$id'")
+        provider.applyNewSettings(state)
+      }
+      else {
+        LOG.warn("Couldn't find provider for id '$id' and state '${state.javaClass}'")
       }
     }
     notifyRestartNeeded()
