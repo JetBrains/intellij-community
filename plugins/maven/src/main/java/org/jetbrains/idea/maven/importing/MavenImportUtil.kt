@@ -79,19 +79,19 @@ object MavenImportUtil {
   }
 
   internal fun getSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
-    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), true, false)
+    return getMavenLanguageLevel(mavenProject, true, false)
   }
 
   internal fun getTestSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
-    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), true, true)
+    return getMavenLanguageLevel(mavenProject, true, true)
   }
 
   internal fun getTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
-    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, false)
+    return getMavenLanguageLevel(mavenProject, false, false)
   }
 
   internal fun getTestTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
-    return getMavenLanguageLevel(mavenProject, isReleaseCompilerProp(mavenProject), false, true)
+    return getMavenLanguageLevel(mavenProject, false, true)
   }
 
   internal fun getLanguageLevel(mavenProject: MavenProject, supplier: Supplier<LanguageLevel?>): LanguageLevel {
@@ -209,23 +209,27 @@ object MavenImportUtil {
     return compileSourceRootEncoder.decode(suffix)
   }
 
-  private fun getMavenLanguageLevel(
-    mavenProject: MavenProject,
-    useReleaseCompilerProp: Boolean,
-    isSource: Boolean,
-    isTest: Boolean,
-  ): LanguageLevel? {
-    val mavenProjectReleaseLevel = if (useReleaseCompilerProp)
-      if (isTest) mavenProject.testReleaseLevel else mavenProject.releaseLevel
-    else
-      null
-    var level = LanguageLevel.parse(mavenProjectReleaseLevel)
-    if (level == null) {
-      val mavenProjectLanguageLevel = getMavenLanguageLevel(mavenProject, isTest, isSource)
-      level = LanguageLevel.parse(mavenProjectLanguageLevel)
-      if (level == null && (StringUtil.isNotEmpty(mavenProjectLanguageLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
-        level = LanguageLevel.HIGHEST
-      }
+  private fun getMavenLanguageLevel(mavenProject: MavenProject, isSource: Boolean, isTest: Boolean): LanguageLevel? {
+    val useReleaseCompilerProp = isReleaseCompilerProp(mavenProject)
+    val releaseLevel = if (useReleaseCompilerProp) getMavenLanguageLevelFromRelease(mavenProject, isTest) else null
+    return releaseLevel ?: getMavenLanguageLevelFromSourceOrTarget(mavenProject, isSource, isTest)
+  }
+
+  private fun getMavenLanguageLevelFromRelease(mavenProject: MavenProject, isTest: Boolean): LanguageLevel? {
+    val mavenProjectReleaseLevel = if (isTest) mavenProject.testReleaseLevel else mavenProject.releaseLevel
+    return LanguageLevel.parse(mavenProjectReleaseLevel)
+  }
+
+  private fun getMavenLanguageLevelFromSourceOrTarget(project: MavenProject, isSource: Boolean, isTest: Boolean): LanguageLevel? {
+    val mavenProjectLanguageLevel = if (isTest) {
+      if (isSource) project.testSourceLevel else project.testTargetLevel
+    }
+    else {
+      if (isSource) project.sourceLevel else project.targetLevel
+    }
+    var level = LanguageLevel.parse(mavenProjectLanguageLevel)
+    if (level == null && StringUtil.isNotEmpty(mavenProjectLanguageLevel)) {
+      level = LanguageLevel.HIGHEST
     }
     return level
   }
@@ -241,15 +245,6 @@ object MavenImportUtil {
       level = if (highestAcceptedLevel.isAtLeast(level)) LanguageLevel.HIGHEST else highestAcceptedLevel
     }
     return level
-  }
-
-  private fun getMavenLanguageLevel(project: MavenProject, test: Boolean, source: Boolean): String? {
-    if (test) {
-      return if (source) project.testSourceLevel else project.testTargetLevel
-    }
-    else {
-      return if (source) project.sourceLevel else project.targetLevel
-    }
   }
 
   internal fun getDefaultLevel(mavenProject: MavenProject): LanguageLevel {
