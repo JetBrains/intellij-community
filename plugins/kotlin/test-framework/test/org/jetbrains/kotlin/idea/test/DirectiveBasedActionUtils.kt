@@ -30,6 +30,9 @@ object DirectiveBasedActionUtils {
     const val ENABLE_WARNINGS_DIRECTIVE: String = "// ENABLE-WARNINGS"
     const val PRIORITY_DIRECTIVE = "PRIORITY"
 
+    const val ERROR_DIRECTIVE: String = "// ERROR:"
+    const val AFTER_ERROR_DIRECTIVE: String = "// AFTER_ERROR:"
+
     /**
      * If present in the test data file, checks that
      * - the corresponding quickfix is available at the <caret>,         t
@@ -40,7 +43,7 @@ object DirectiveBasedActionUtils {
 
     fun checkForUnexpectedErrors(
         file: KtFile,
-        directive: String = "// ERROR:",
+        directive: String = ERROR_DIRECTIVE,
         diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }
     ) {
         if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {

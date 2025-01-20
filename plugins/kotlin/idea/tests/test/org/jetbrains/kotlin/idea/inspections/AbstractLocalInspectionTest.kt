@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.AFTER_ERROR_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -191,7 +192,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, directive = "// AFTER_ERROR:")
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, directive = AFTER_ERROR_DIRECTIVE)
     }
 
     protected fun runInspectionWithFixesAndCheck(
