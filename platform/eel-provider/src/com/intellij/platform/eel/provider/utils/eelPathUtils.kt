@@ -346,11 +346,9 @@ object EelPathUtils {
     }
 
     scope.awaitCancellationAndInvoke {
-      withContext(Job()) {
-        when (val result = eelApi.fs.delete(tmpDir, true)) {
-          is EelResult.Ok -> Unit
-          is EelResult.Error -> thisLogger().warn("Failed to delete temporary directory $tmpDir: ${result.error}")
-        }
+      when (val result = eelApi.fs.delete(tmpDir, true)) {
+        is EelResult.Ok -> Unit
+        is EelResult.Error -> thisLogger().warn("Failed to delete temporary directory $tmpDir: ${result.error}")
       }
     }
 
