@@ -295,7 +295,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myProject.getMessageBus().syncPublisher(TOPIC).processStarted(processes.getLowDebugProcess());
     myProject.getMessageBus().syncPublisher(TOPIC).processStarted(processes.getHighDebugProcess());
 
-    session.initMixedMode(processes.getLowDebugProcess(), processes.getHighDebugProcess(), contentToReuse);
+    session.initMixedMode(processes, contentToReuse);
 
     addInlayToolbarReshowingIfNeeded(session);
 

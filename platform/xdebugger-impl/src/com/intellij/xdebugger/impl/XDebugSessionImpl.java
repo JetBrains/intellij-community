@@ -41,6 +41,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.mixedmode.XDebugSessionMixedModeExtension;
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeSuspendContext;
+import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcesses;
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess;
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -57,6 +58,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.util.BringDebuggeeInForegroundUtilsKt;
+import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -125,6 +127,8 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Nullable
   private XDebugSessionMixedModeExtension myMixedModeExtension;
+  @Nullable
+  public XMixedModeProcessesConfiguration mixedModeConfig;
 
   private volatile boolean breakpointsInitialized;
   private long myUserRequestStart;
@@ -333,22 +337,24 @@ public final class XDebugSessionImpl implements XDebugSession {
     return myAlternativeSourceHandler != null ? myAlternativeSourceHandler.getAlternativeSourceKindState() : ALWAYS_FALSE_STATE;
   }
 
-  void initMixedMode(@NotNull XDebugProcess process,
-                     @NotNull XDebugProcess mixedModeLowLevelProcess,
+  void initMixedMode(@NotNull XMixedModeDebugProcesses processes,
                      @Nullable RunContentDescriptor contentToReuse) {
-    myMixedModeLowLevelDebugProcess = mixedModeLowLevelProcess;
-    myMixedModeExtension = new XDebugSessionMixedModeExtension(this.myCoroutineScope, (XMixedModeHighLevelDebugProcess)process,
-                                          (XMixedModeLowLevelDebugProcess)mixedModeLowLevelProcess);
-      // add low level console since it more likely includes more information (since the low level process has started earlier)
-
-    var highAlternativeSourceHandler = process.getAlternativeSourceHandler();
-    var lowAlternativeSourceHandler = mixedModeLowLevelProcess.getAlternativeSourceHandler();
+    myMixedModeLowLevelDebugProcess = processes.getLowDebugProcess();
+    myMixedModeExtension = new XDebugSessionMixedModeExtension(this.myCoroutineScope,
+                                                               (XMixedModeHighLevelDebugProcess)processes.getHighDebugProcess(),
+                                                               (XMixedModeLowLevelDebugProcess)processes.getLowDebugProcess());
+    mixedModeConfig = processes.getConfig();
+    var highAlternativeSourceHandler = processes.getHighDebugProcess().getAlternativeSourceHandler();
+    var lowAlternativeSourceHandler = processes.getLowDebugProcess().getAlternativeSourceHandler();
 
     if (highAlternativeSourceHandler != null && lowAlternativeSourceHandler != null) {
       throw new UnsupportedOperationException("At most one alternative source handler is supported in mixed mode");
     }
 
-    init(process, contentToReuse, mixedModeLowLevelProcess.createConsole(),
+    var console = (processes.getConfig().getUseLowDebugProcessConsole()
+                   ? processes.getLowDebugProcess()
+                   : processes.getHighDebugProcess()).createConsole();
+    init(processes.getHighDebugProcess(), contentToReuse, console,
          highAlternativeSourceHandler != null ? highAlternativeSourceHandler : lowAlternativeSourceHandler);
   }
 

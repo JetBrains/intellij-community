@@ -4,7 +4,10 @@ package com.intellij.xdebugger.mixedMode
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 
-data class XMixedModeDebugProcesses(val lowDebugProcess : XDebugProcess, val highDebugProcess : XDebugProcess)
+data class XMixedModeProcessesConfiguration(val useLowDebugProcessConsole: Boolean)
+
+data class XMixedModeDebugProcesses(val lowDebugProcess : XDebugProcess, val highDebugProcess : XDebugProcess, val config : XMixedModeProcessesConfiguration)
+
 abstract class XMixedModeDebugProcessStarter {
   abstract fun start(session: XDebugSession): XMixedModeDebugProcesses
 }
