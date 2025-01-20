@@ -65,6 +65,7 @@ import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
+import fleet.util.logging.logger
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -126,6 +127,8 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create("TextPanel.widgetEffect")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
+
+    private val LOG = logger<IdeStatusBarImpl>()
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -488,32 +491,31 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
       val taskSuspender = BridgeTaskSuspender(indicator)
 
       withBackgroundProgress(project, info.title, cancellation, taskSuspender) {
-        val job1 = launch {
+        launch {
           reportRawProgress { reporter ->
             indicator.addStateDelegate(reporter.toBridgeIndicator())
             indicatorFinished.await() // Keeps the reporter active, so the indicator can report new statuses there
           }
         }
 
-        val job2 = launch {
-          try {
-            awaitCancellation()
-          }
-          finally {
-            // User can cancel the job from UI, which will cause the job cancellation,
-            // so we need to cancel the original indicator as well
-            if (indicator.isRunning) {
-              indicator.cancel()
-            }
-          }
-        }
-
-        // Wait for the indicator to finish under the "NonCancellable" block,
-        // so we won't stop reporting progress if the job has been canceled but the indicator is yet to finish.
-        withContext(NonCancellable) {
+        try {
           indicatorFinished.await()
-          job1.cancel()
-          job2.cancel()
+        }
+        catch (ex: CancellationException) {
+          // User can cancel the job from UI, which will cause the job cancellation,
+          // so we need to cancel the original indicator as well
+          if (indicator.isRunning) {
+            LOG.info("Progress \"${info.title}\" was cancelled from UI, cancelling $indicator")
+            indicator.cancel()
+          }
+          throw ex
+        }
+        finally {
+          // Wait for the indicator to finish under the "NonCancellable" block,
+          // so we won't stop showing the progress bar if the job has been canceled, but the indicator is yet to finish.
+          withContext(NonCancellable) {
+            indicatorFinished.await()
+          }
         }
       }
     }
