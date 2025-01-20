@@ -35,20 +35,21 @@ internal open class CallableImportCandidatesProvider(
         val explicitReceiver = positionContext.explicitReceiver
         val fileSymbol = getFileSymbol()
 
-        val candidates = buildList {
+        val candidates = sequence {
             if (explicitReceiver == null) {
-                addAll(indexProvider.getKotlinCallableSymbolsByName(unresolvedName) { declaration ->
+                yieldAll(indexProvider.getKotlinCallableSymbolsByName(unresolvedName) { declaration ->
                     // filter out extensions here, because they are added later with the use of information about receiver types
                     acceptsKotlinCallable(declaration) && !declaration.isExtensionDeclaration()
-                })
-                addAll(indexProvider.getJavaMethodsByName(unresolvedName) { acceptsJavaCallable(it) })
-                addAll(indexProvider.getJavaFieldsByName(unresolvedName) { acceptsJavaCallable(it) })
+                }.map { CallableImportCandidate(it) })
+
+                yieldAll(indexProvider.getJavaMethodsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate(it) })
+                yieldAll(indexProvider.getJavaFieldsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate(it) })
             }
 
             when (val context = positionContext) {
                 is KotlinSimpleNameReferencePositionContext -> {
                     val receiverTypes = collectReceiverTypesForElement(context.nameExpression, context.explicitReceiver)
-                    addAll(indexProvider.getExtensionCallableSymbolsByName(unresolvedName, receiverTypes) { acceptsKotlinCallable(it) })
+                    yieldAll(indexProvider.getExtensionCallableSymbolsByName(unresolvedName, receiverTypes) { acceptsKotlinCallable(it) }.map { CallableImportCandidate(it) })
                 }
 
                 else -> {}
@@ -56,8 +57,8 @@ internal open class CallableImportCandidatesProvider(
         }
 
         return candidates
-            .map { CallableImportCandidate(it) }
             .filter { it.isVisible(fileSymbol) && it.callableId != null }
+            .toList()
     }
 }
 
