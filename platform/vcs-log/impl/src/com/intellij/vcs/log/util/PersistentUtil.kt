@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util
 
+import com.intellij.codeInsight.navigation.LOG
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -11,6 +12,7 @@ import com.intellij.util.io.IOUtil
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.util.PersistentUtil.getPersistenceLogCacheDir
 import org.jetbrains.annotations.NonNls
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -50,10 +52,28 @@ internal sealed class StorageId(@NonNls protected val projectName: String, @NonN
   val baseDir: Path by lazy { getPersistenceLogCacheDir(projectName, logId) }
   abstract val storagePath: Path
 
-  fun cleanupAllStorageFiles() = FileUtil.deleteWithRenaming(storagePath)
+  fun cleanupAllStorageFiles(): Boolean {
+    val tempFileNameForDeletion = FileUtil.findSequentNonexistentFile(storagePath.parent.toFile(), storagePath.fileName.toString(), "")
+    val dirToDelete = try {
+      Files.move(storagePath, tempFileNameForDeletion.toPath())
+    } catch (e: IOException) {
+      LOG.warn("Failed to move $storagePath to $tempFileNameForDeletion", e)
+      storagePath
+    }
 
-  class Directory(projectName: String, @NonNls private val subdirName: String, logId: String,
-                  val version: Int) : StorageId(projectName, logId) {
+    return try {
+      FileUtil.delete(dirToDelete)
+      true
+    } catch (e: IOException) {
+      LOG.warn("Failed to delete $dirToDelete", e)
+      false
+    }
+  }
+
+  class Directory(
+    projectName: String, @NonNls private val subdirName: String, logId: String,
+    val version: Int,
+  ) : StorageId(projectName, logId) {
     override val storagePath: Path by lazy { baseDir.resolve(subdirName) }
 
     @JvmOverloads
