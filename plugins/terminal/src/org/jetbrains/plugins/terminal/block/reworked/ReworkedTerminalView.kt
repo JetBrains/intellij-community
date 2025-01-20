@@ -38,6 +38,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBack
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.VerticalSpaceInlayRenderer
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -241,6 +242,7 @@ internal class ReworkedTerminalView(
   private fun createOutputEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
     val document = createDocument()
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
 
@@ -253,6 +255,7 @@ internal class ReworkedTerminalView(
   private fun createAlternateBufferEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
     val document = createDocument()
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
     editor.useTerminalDefaultBackground(parentDisposable = this)
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER

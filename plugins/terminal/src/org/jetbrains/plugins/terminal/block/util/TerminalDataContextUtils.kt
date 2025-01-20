@@ -19,9 +19,13 @@ import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 
 @ApiStatus.Experimental
 object TerminalDataContextUtils {
+  // gen1
   internal val IS_PROMPT_EDITOR_KEY: Key<Boolean> = Key.create("PromptEditor")
   internal val IS_OUTPUT_EDITOR_KEY: Key<Boolean> = Key.create("OutputEditor")
   internal val IS_ALTERNATE_BUFFER_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferEditor")
+  // gen2
+  internal val IS_OUTPUT_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("OutputModelEditor")
+  internal val IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferModelEditor")
 
   val Editor.isPromptEditor: Boolean
     get() = getUserData(IS_PROMPT_EDITOR_KEY) == true
@@ -29,6 +33,10 @@ object TerminalDataContextUtils {
     get() = getUserData(IS_OUTPUT_EDITOR_KEY) == true
   val Editor.isAlternateBufferEditor: Boolean
     get() = getUserData(IS_ALTERNATE_BUFFER_EDITOR_KEY) == true
+  val Editor.isOutputModelEditor: Boolean
+    get() = getUserData(IS_OUTPUT_MODEL_EDITOR_KEY) == true
+  val Editor.isAlternateBufferModelEditor: Boolean
+    get() = getUserData(IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY) == true
   val Editor.terminalPromptModel: TerminalPromptModel?
     get() = getUserData(TerminalPromptModel.KEY)
 

@@ -171,6 +171,7 @@ internal abstract class TerminalEventDispatcher(
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",
       "TerminalResetFontSize",
+      "Terminal.CopySelectedText",
     )
 
     fun getActionsToSkip(): List<AnAction> {
