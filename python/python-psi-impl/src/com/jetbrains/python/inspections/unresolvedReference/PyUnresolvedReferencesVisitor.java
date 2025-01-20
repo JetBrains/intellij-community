@@ -538,12 +538,11 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
   public void addInstallAllImports() {
     Set<String> refNames = ContainerUtil.map2Set(myUnresolvedRefs, it -> it.getRefName());
+    LocalQuickFix installAllPackageQuickFixes = getInstallAllPackagesQuickFix();
     for (PyPackageInstallAllProblemInfo unresolved : myUnresolvedRefs) {
       var quickFixes = unresolved.getFixes();
-
       if (refNames.size() > 1) {
-        var installAllPackageQuickFixes = getInstallAllPackagesQuickFixes();
-        ContainerUtil.addAll(quickFixes, installAllPackageQuickFixes);
+        ContainerUtil.addIfNotNull(quickFixes, installAllPackageQuickFixes);
       }
       registerProblem(unresolved.getPsiElement(), unresolved.getDescriptionTemplate(), unresolved.getHighlightType(), null,
                       quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -912,13 +911,13 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   protected @NotNull List<LocalQuickFix> getInstallPackageQuickFixes(@NotNull PyElement node,
-                                                                @NotNull PsiReference reference,
-                                                                String refName) {
+                                                                     @NotNull PsiReference reference,
+                                                                     String refName) {
     return Collections.emptyList();
   }
 
-  protected @NotNull List<LocalQuickFix> getInstallAllPackagesQuickFixes() {
-    return Collections.emptyList();
+  protected @Nullable LocalQuickFix getInstallAllPackagesQuickFix() {
+    return null;
   }
 
   private static @Nullable LocalQuickFix getCreateFunctionQuickFix(@NotNull PyReferenceExpression expr) {

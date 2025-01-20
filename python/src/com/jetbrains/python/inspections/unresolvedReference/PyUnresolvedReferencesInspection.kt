@@ -102,8 +102,8 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       return packageCandidates.map { pkg: String -> InstallPackageQuickFix(pkg) }
     }
 
-    public override fun getInstallAllPackagesQuickFixes(): List<InstallAllPackagesQuickFix> {
-      return listOf(InstallAllPackagesQuickFix(myUnresolvedRefs.map { it.refName }.distinct()))
+    public override fun getInstallAllPackagesQuickFix(): InstallAllPackagesQuickFix? {
+      return InstallAllPackagesQuickFix(myUnresolvedRefs.map { it.refName }.distinct())
     }
 
     public override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> {
