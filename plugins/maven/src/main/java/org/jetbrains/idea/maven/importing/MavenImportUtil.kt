@@ -396,23 +396,17 @@ object MavenImportUtil {
 
   private val MavenProject.testSourceLevel: String?
     get() {
-      getCompilerLevel(true, "source")?.let { return it }
-      // ok, try production compiler configs with testSource
-      return getCompilerLevel(false, "testSource")
+      return getCompilerLevel(true, "source")
     }
 
   private val MavenProject.testTargetLevel: String?
     get() {
-      return getCompilerLevel(true, "target")?.let { return it }
-      // ok, try production compiler configs with testTarget
-      return getCompilerLevel(false, "testTarget")
+      return getCompilerLevel(true, "target")
     }
 
   private val MavenProject.testReleaseLevel: String?
     get() {
-      return getCompilerLevel(true, "release")?.let { return it }
-      // ok, try production compiler configs with testRelease
-      return getCompilerLevel(false, "testRelease")
+      return getCompilerLevel(true, "release")
     }
 
   private fun MavenProject.getCompilerLevel(forTests: Boolean, level: String): String? {
