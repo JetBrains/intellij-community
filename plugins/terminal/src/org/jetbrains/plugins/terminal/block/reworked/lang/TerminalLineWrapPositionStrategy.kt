@@ -20,7 +20,22 @@ internal class TerminalLineWrapPositionStrategy : LineWrapPositionStrategy {
     allowToBeyondMaxPreferredOffset: Boolean,
     isSoftWrap: Boolean,
   ): Int {
-    // Wrap after the last character that fits into the required with
+    // Wrap after the last character that fits into the required width
     return maxPreferredOffset - 1
+  }
+
+
+  /**
+   * By default, disallows breaking before low surrogate characters to prevent break inside of surrogate pairs.
+   */
+  override fun canWrapLineAtOffset(text: CharSequence, offset: Int): Boolean {
+    val c: Char = text[offset]
+    // Ensure no break occurs within surrogate pairs.
+    if (Character.isLowSurrogate(c)) {
+      if (offset - 1 >= 0 && Character.isHighSurrogate(text.get(offset - 1))) {
+        return false
+      }
+    }
+    return true
   }
 }

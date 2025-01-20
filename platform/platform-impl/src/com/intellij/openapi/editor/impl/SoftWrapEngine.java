@@ -162,32 +162,26 @@ public final class SoftWrapEngine {
   }
 
   private int calcSoftWrapOffset(int minOffset, int maxOffset, boolean preferMinOffset) {
+    if (myLineWrapPositionStrategy == null) {
+      myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
+    }
     if (!myEditor.getState().getDisableDefaultSoftWrapsCalculation()) {
-      if (canBreakBeforeOrAfterCodePoint(Character.codePointAt(myText, maxOffset))) return maxOffset;
+      if (myLineWrapPositionStrategy.canWrapLineAtOffset(myText, maxOffset))  return maxOffset;
       for (int i = 0, offset = maxOffset; i < BASIC_LOOK_BACK_LENGTH && offset >= minOffset; i++) {
         int prevOffset = Character.offsetByCodePoints(myText, offset, -1);
-        if (canBreakBeforeOrAfterCodePoint(Character.codePointAt(myText, prevOffset))) return offset;
+        if (myLineWrapPositionStrategy.canWrapLineAtOffset(myText, prevOffset)) return offset;
         //noinspection AssignmentToForLoopParameter
         offset = prevOffset;
       }
     }
 
-    if (myLineWrapPositionStrategy == null) {
-      myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
-    }
-
-    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myDocument, myEditor.getProject(),
-                                                                      minOffset - 1, maxOffset + 1, maxOffset + 1,
+    int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myDocument, myEditor.getProject(), minOffset - 1, maxOffset + 1, maxOffset + 1,
                                                                       false, true);
     if (wrapOffset < 0) return preferMinOffset ? minOffset : maxOffset;
     if (wrapOffset < minOffset) return minOffset;
     if (wrapOffset > maxOffset) return maxOffset;
     if (DocumentUtil.isInsideSurrogatePair(myDocument, wrapOffset)) return wrapOffset - 1;
     return wrapOffset;
-  }
-
-  private static boolean canBreakBeforeOrAfterCodePoint(int codePoint) {
-    return codePoint == ' ' || codePoint == '\t' || (codePoint >= 0x2f00 && codePoint < 0x10000 /* eastern languages unicode ranges */);
   }
 
   private int getEndOffsetUpperEstimate() {
