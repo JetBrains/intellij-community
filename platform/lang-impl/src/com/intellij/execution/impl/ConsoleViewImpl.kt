@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.execution.impl
@@ -894,39 +894,46 @@ open class ConsoleViewImpl protected constructor(
 
     layeredPane!!.startUpdating()
     val currentValue = heavyUpdateTicket
-    heavyAlarm.addRequest({
-                            if (!compositeFilter.shouldRunHeavy()) {
-                              return@addRequest
-                            }
+    heavyAlarm.addRequest(
+      request = {
+        if (!compositeFilter.shouldRunHeavy()) {
+          return@addRequest
+        }
 
-                            try {
-                              compositeFilter.applyHeavyFilter(documentCopy, startOffset, startLine) { additionalHighlight ->
-                                addFlushRequest(0, object : FlushRunnable(true) {
-                                  public override fun doRun() {
-                                    if (heavyUpdateTicket != currentValue) {
-                                      return
-                                    }
+        try {
+          compositeFilter.applyHeavyFilter(documentCopy, startOffset, startLine) { additionalHighlight ->
+            addFlushRequest(
+              0,
+              object : FlushRunnable(true) {
+                public override fun doRun() {
+                  if (heavyUpdateTicket != currentValue) {
+                    return
+                  }
 
-                                    val additionalAttributes = additionalHighlight.getTextAttributes(null)
-                                    if (additionalAttributes != null) {
-                                      val item = additionalHighlight.resultItems[0]
-                                      getHyperlinks()!!.addHighlighter(item.highlightStartOffset, item.highlightEndOffset, additionalAttributes)
-                                    }
-                                    else {
-                                      getHyperlinks()!!.highlightHyperlinks(additionalHighlight, 0)
-                                    }
-                                  }
-                                })
-                              }
-                            }
-                            catch (ignore: IndexNotReadyException) {
-                            }
-                            finally {
-                              if (heavyAlarm.activeRequestCount <= 1) { // only the current request
-                                UIUtil.invokeLaterIfNeeded { layeredPane!!.finishUpdating() }
-                              }
-                            }
-                          }, 0)
+                  val additionalAttributes = additionalHighlight.getTextAttributes(null)
+                  val hyperlinks = getHyperlinks()!!
+                  if (additionalAttributes == null) {
+                    hyperlinks.highlightHyperlinks(additionalHighlight, 0)
+                  }
+                  else {
+                    val item = additionalHighlight.resultItems[0]
+                    hyperlinks.addHighlighter(item.highlightStartOffset, item.highlightEndOffset, additionalAttributes)
+                  }
+                }
+              },
+            )
+          }
+        }
+        catch (_: IndexNotReadyException) {
+        }
+        finally {
+          if (heavyAlarm.activeRequestCount <= 1) { // only the current request
+            UIUtil.invokeLaterIfNeeded { layeredPane!!.finishUpdating() }
+          }
+        }
+      },
+      delayMillis = 0,
+    )
   }
 
   private data class FoldingInfo(val folding: ConsoleFolding, val region: FoldRegion?, val startLine: Int, val expanded: Boolean, val attachedToPreviousLine: Boolean)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.Filter;
@@ -16,7 +16,10 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Expirable;
@@ -34,8 +37,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class EditorHyperlinkSupport {
   private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
@@ -339,8 +342,8 @@ public final class EditorHyperlinkSupport {
     myFilterRunner.highlightHyperlinks(myProject, customFilter, Math.max(0, startLine), endLine, ETERNAL_TOKEN);
   }
 
-
-  void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
+  @ApiStatus.Internal
+  public void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
     int length = myEditor.getDocument().getTextLength();
     List<InlayProvider> inlayProviders = new SmartList<>();
     for (Filter.ResultItem resultItem : result.getResultItems()) {
