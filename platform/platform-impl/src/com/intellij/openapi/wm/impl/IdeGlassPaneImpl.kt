@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -571,11 +571,9 @@ internal interface FrameLoadingState {
 }
 
 internal fun executeOnCancelInEdt(coroutineScope: CoroutineScope, task: () -> Unit) {
-  coroutineScope.launch {
-    awaitCancellationAndInvoke {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        task()
-      }
+  coroutineScope.awaitCancellationAndInvoke {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      task()
     }
   }
 }

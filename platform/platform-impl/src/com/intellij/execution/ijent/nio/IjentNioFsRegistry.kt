@@ -8,7 +8,6 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.FileSystemAlreadyExistsException
@@ -52,10 +51,8 @@ fun CoroutineScope.registerIjentNioFs(ijent: IjentApi, root: String, internalNam
     ).getFileSystem(uri)
   }
 
-  this.launch {
-    awaitCancellationAndInvoke {
-      service.deregister(ijent.descriptor)
-    }
+  this.awaitCancellationAndInvoke {
+    service.deregister(ijent.descriptor)
   }
 
   // Compute a path after registration
