@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,18 +16,19 @@ import java.awt.event.MouseEvent;
 
 import static java.awt.Cursor.*;
 
-abstract class WindowMouseListener extends MouseAdapter implements MouseInputListener {
+@ApiStatus.Internal
+public abstract class WindowMouseListener extends MouseAdapter implements MouseInputListener {
+  private static final boolean moveAfterMouseRelease = StartupUiUtil.isWaylandToolkit();
   protected final Component myContent;
   @JdkConstants.CursorType int myCursorType;
   private Point myLocation;
-  private Rectangle myViewBounds;
+  private Rectangle viewBounds;
   private int mouseButton;
   private boolean wasDragged;
   private boolean leftMouseButtonOnly = false;
-  private static final boolean moveAfterMouseRelease = StartupUiUtil.isWaylandToolkit();
 
   /**
-   * @param content the window content to find a window, or {@code null} to use a component from a mouse event
+   * @param content the window content to find a window, or {@code null} to use a component from a mouse event eeeqweq3r
    */
   WindowMouseListener(Component content) {
     myContent = content;
@@ -109,7 +110,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
         if (start && myCursorType != CUSTOM_CURSOR) {
           mouseButton = event.getButton();
           myLocation = event.getLocationOnScreen();
-          myViewBounds = view.getBounds();
+          viewBounds = view.getBounds();
           event.consume();
         }
       }
@@ -122,19 +123,19 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   private void process(MouseEvent event, boolean mouseMove) {
     if (event.isConsumed()) return;
     if (mouseMove) wasDragged = true; // set dragged state when mouse dragged
-    if (myLocation != null && myViewBounds != null) {
+    if (myLocation != null && viewBounds != null) {
       Component content = getContent(event);
       Component view = getView(content);
       if (mouseMove && myCursorType == DEFAULT_CURSOR && jbrMoveSupported(view)) {
         // Enter in move mode only after mouse move, so double click is supported
         JBR.getWindowMove().startMovingTogetherWithMouse((Window)view, mouseButton);
         myLocation = null;
-        myViewBounds = null;
+        viewBounds = null;
         return;
       }
 
       if (view != null) {
-        Rectangle bounds = new Rectangle(myViewBounds);
+        Rectangle bounds = new Rectangle(viewBounds);
         int dx = event.getXOnScreen() - myLocation.x;
         int dy = event.getYOnScreen() - myLocation.y;
         if (myCursorType == DEFAULT_CURSOR && view instanceof Frame) {
@@ -161,12 +162,14 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
       if (!mouseMove) {
         setCursor(content, getPredefinedCursor(DEFAULT_CURSOR));
         myLocation = null;
-        if (wasDragged) myViewBounds = null; // no mouse clicked when mouse released after mouse dragged
+        if (wasDragged) {
+          viewBounds = null; // no mouse clicked when mouse released after mouse dragged
+        }
       }
       event.consume();
     }
-    else if (!mouseMove && myViewBounds != null) {
-      myViewBounds = null; // consume mouse clicked for consumed mouse released if no mouse dragged
+    else if (!mouseMove && viewBounds != null) {
+      viewBounds = null; // consume mouse clicked for consumed mouse released if no mouse dragged
       event.consume();
     }
   }
@@ -192,7 +195,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   /**
    * Sets the specified cursor for the specified content.
    * It can be overridden if another approach is used.
-   *
+   * <p>
    * Note: default implementation takes Component.getTreeLock()
    */
   protected void setCursor(@NotNull Component content, Cursor cursor) {
@@ -206,21 +209,21 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
     return myLocation != null;
   }
 
+  protected void notifyMoved() { }
+
+  protected void notifyResized() { }
+
   static boolean isStateSet(int mask, int state) {
     return mask == (mask & state);
   }
 
-  protected void notifyMoved() {}
-
-  protected void notifyResized() {}
-
   private static boolean jbrMoveSupported(Component component) {
     if (StartupUiUtil.isWaylandToolkit()) {
       return (component instanceof Window window) && window.getType() != Window.Type.POPUP;
-    } else {
+    }
+    else {
       // The JBR team states that isWindowMoveSupported works only for Frame/Dialog
-      return (component instanceof Frame || component instanceof Dialog)
-             && JBR.isWindowMoveSupported();
+      return (component instanceof Frame || component instanceof Dialog) && JBR.isWindowMoveSupported();
     }
   }
 }
