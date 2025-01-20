@@ -165,6 +165,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/classAndTypeAliasRedeclaration/classAndTypeAliasRedeclaration.test");
     }
 
+    @TestMetadata("classByPrimaryConstructorFromJava/classByPrimaryConstructor.test")
+    public void testClassByPrimaryConstructorFromJava_ClassByPrimaryConstructor() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/classByPrimaryConstructorFromJava/classByPrimaryConstructor.test");
+    }
+
     @TestMetadata("classByPrimaryConstructorWithSpace/classByPrimaryConstructorWithSpace.test")
     public void testClassByPrimaryConstructorWithSpace_ClassByPrimaryConstructorWithSpace() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/classByPrimaryConstructorWithSpace/classByPrimaryConstructorWithSpace.test");
