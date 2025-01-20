@@ -5,6 +5,7 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.BitUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -17,6 +18,7 @@ import java.awt.event.HierarchyListener
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 
 private val sequence = AtomicLong() // needed to distinguish updates with the same value
 
@@ -64,6 +66,9 @@ fun <T : Any, C : Component> C.showingScope(
   uiData: (component: C) -> T?,
   block: suspend CoroutineScope.(T) -> Unit,
 ): Job {
+  if (Registry.`is`("ide.showing.scope.compatibility.mode")) {
+    return compatibilityShowingScope(debugName, context, uiData, block)
+  }
   // Removal from the hierarchy triggers `state.value = Pair(0, null)`, which cancels the `uiCoroutine`
   // but keeps the owner coroutine (the one that runs `collect`).
   //
@@ -144,6 +149,38 @@ fun <T : Any, C : Component> C.showingScope(
           }
         }
       }
+    }
+  }
+}
+
+private fun <C : Component, T : Any> C.compatibilityShowingScope(
+  debugName: String,
+  context: CoroutineContext,
+  uiData: (C) -> T?,
+  block: suspend CoroutineScope.(T) -> Unit,
+): Job {
+  return launchOnShow(debugName, context) {
+    // semantic change: uiData is computed when the UI coroutine starts instead of when the component becomes visible
+    val data = uiData(this@compatibilityShowingScope)
+               ?: return@launchOnShow // null was ignored in showingScope
+    try {
+      block(data)
+    }
+    catch (t: Throwable) {
+      val ce = if (t is CancellationException) {
+        // First, check if `uiCoroutine` was canceled
+        currentCoroutineContext().ensureActive()
+        // If `uiCoroutine` is active, the exception must've been thrown manually
+        // => continue to cancellation of the owner.
+        t
+      }
+      else {
+        CancellationException(t)
+      }
+      @OptIn(ExperimentalCoroutinesApi::class)
+      checkNotNull(coroutineContext.job.parent) // `supervisorScope {}` inside `launchOnShow`
+        .cancel(ce)
+      throw t
     }
   }
 }
