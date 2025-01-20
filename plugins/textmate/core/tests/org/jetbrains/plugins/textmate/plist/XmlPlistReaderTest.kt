@@ -11,7 +11,6 @@ import org.jetbrains.plugins.textmate.plist.Plist.Companion.dateFormatter
 import org.junit.Assert
 import org.junit.Test
 import java.io.ByteArrayInputStream
-import java.nio.charset.StandardCharsets
 import java.util.*
 import kotlin.test.assertEquals
 
@@ -116,7 +115,7 @@ class XmlPlistReaderTest {
   }
 
   private fun read(string: String?): Plist {
-    return XmlPlistReader().read(ByteArrayInputStream(prepareText(string).toByteArray(StandardCharsets.UTF_8)))
+    return XmlPlistReader().read(ByteArrayInputStream(prepareText(string).toByteArray(Charsets.UTF_8)))
   }
 
   companion object {

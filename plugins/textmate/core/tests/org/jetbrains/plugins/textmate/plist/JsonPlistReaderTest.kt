@@ -9,7 +9,6 @@ import org.jetbrains.plugins.textmate.plist.PListValue.Companion.string
 import org.junit.Assert
 import org.junit.Test
 import java.io.ByteArrayInputStream
-import java.nio.charset.StandardCharsets
 import kotlin.test.assertEquals
 
 class JsonPlistReaderTest {
@@ -81,6 +80,6 @@ class JsonPlistReaderTest {
   }
 
   private fun read(string: String): Plist {
-    return JsonPlistReader().read(ByteArrayInputStream(string.toByteArray(StandardCharsets.UTF_8)))
+    return JsonPlistReader().read(ByteArrayInputStream(string.toByteArray(Charsets.UTF_8)))
   }
 }

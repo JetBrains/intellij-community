@@ -10,7 +10,6 @@ import org.joni.WarnCallback
 import org.joni.exception.JOniException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.nio.charset.StandardCharsets
 
 class JoniRegexFactory : RegexFactory {
   companion object {
@@ -19,7 +18,7 @@ class JoniRegexFactory : RegexFactory {
   }
 
   override fun regex(regexString: String): RegexFacade {
-    val bytes = regexString.toByteArray(StandardCharsets.UTF_8)
+    val bytes = regexString.toByteArray(Charsets.UTF_8)
     val regex = try {
       Regex(bytes, 0, bytes.size, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE, WarnCallback.NONE)
     }

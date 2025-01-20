@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer
 
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateString
-import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 
 internal object SyntaxMatchUtils {
@@ -47,7 +46,7 @@ internal object SyntaxMatchUtils {
           }
           if (hasGroupIndex && matchData.count() > groupIndex) {
             val range = matchData.byteOffset(groupIndex)
-            val replacement = String(matchingString.bytes, range.start, range.length, StandardCharsets.UTF_8)
+            val replacement = String(matchingString.bytes, range.start, range.length, Charsets.UTF_8)
             append(BACK_REFERENCE_REPLACEMENT_REGEX.matcher(replacement).replaceAll("\\\\$0"))
             charIndex = digitIndex
             continue
@@ -91,7 +90,7 @@ internal object SyntaxMatchUtils {
         if (groupIndex >= 0 && matchData.count() > groupIndex) {
           append(string, lastPosition, matcher.start())
           val range = matchData.byteOffset(groupIndex)
-          val capturedText = String(matchingString.bytes, range.start, range.length, StandardCharsets.UTF_8)
+          val capturedText = String(matchingString.bytes, range.start, range.length, Charsets.UTF_8)
           val replacement = capturedText.trimStart('.')
           val command = matcher.group(3)
           when (command) {

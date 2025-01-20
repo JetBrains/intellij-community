@@ -3,7 +3,6 @@ package org.jetbrains.plugins.textmate.plist
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.nio.charset.StandardCharsets
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
@@ -11,14 +10,14 @@ class CompositePlistReaderTest {
   @Test
   @Throws(IOException::class)
   fun parseJson() {
-    val read = CompositePlistReader().read(ByteArrayInputStream("{}".toByteArray(StandardCharsets.UTF_8)))
+    val read = CompositePlistReader().read(ByteArrayInputStream("{}".toByteArray(Charsets.UTF_8)))
     assertNotNull(read)
   }
 
   @Test
   @Throws(IOException::class)
   fun parseJsonWithNewline() {
-    val read = CompositePlistReader().read(ByteArrayInputStream("\n\n{}".toByteArray(StandardCharsets.UTF_8)))
+    val read = CompositePlistReader().read(ByteArrayInputStream("\n\n{}".toByteArray(Charsets.UTF_8)))
     assertNotNull(read)
   }
 
@@ -30,14 +29,14 @@ class CompositePlistReaderTest {
                                                                              <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
                                                                              <plist version="1.0">
                                                                              <dict><key>someKey</key><string>someValue</string></dict></plist>
-                                                                             """.trimIndent()).toByteArray(StandardCharsets.UTF_8)))
+                                                                             """.trimIndent()).toByteArray(Charsets.UTF_8)))
     assertNotNull(read)
   }
 
   @Test
   fun parseUnknown() {
     assertFailsWith(IOException::class) {
-      CompositePlistReader().read(ByteArrayInputStream("!!!".toByteArray(StandardCharsets.UTF_8)))
+      CompositePlistReader().read(ByteArrayInputStream("!!!".toByteArray(Charsets.UTF_8)))
     }
   }
 }

@@ -10,7 +10,6 @@ import org.joni.Region
 import org.joni.exception.JOniException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.nio.charset.StandardCharsets
 import kotlin.math.max
 
 class JoniRegexFacade(private val myRegex: Regex, private val hasGMatch: Boolean) : RegexFacade {
@@ -77,7 +76,7 @@ class JoniRegexFacade(private val myRegex: Regex, private val hasGMatch: Boolean
     private fun checkMatched(match: MatchData, string: TextMateString) {
       check(!(match.matched && match.byteOffset().end > string.bytes.size)) {
         "Match data out of bounds: " + match.byteOffset().start + " > " + string.bytes.size + "\n" + String(string.bytes,
-                                                                                                            StandardCharsets.UTF_8)
+                                                                                                            Charsets.UTF_8)
       }
     }
 
