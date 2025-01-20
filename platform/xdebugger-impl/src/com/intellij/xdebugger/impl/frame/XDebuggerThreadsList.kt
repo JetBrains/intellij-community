@@ -46,11 +46,8 @@ class XDebuggerThreadsList(
   companion object {
     val THREADS_LIST: DataKey<XDebuggerThreadsList> = DataKey.create("THREADS_LIST")
 
-    fun createDefault(): XDebuggerThreadsList {
-      return create(XDebuggerGroupedFrameListRenderer())
-    }
-
-    fun create(renderer: ListCellRenderer<StackInfo>): XDebuggerThreadsList {
+    fun createDefault(withDescription: Boolean): XDebuggerThreadsList {
+      val renderer = XDebuggerGroupedFrameListRenderer(withDescription)
       val list = XDebuggerThreadsList(renderer)
       list.doInit()
       return list
@@ -125,8 +122,8 @@ class XDebuggerThreadsList(
     model.removeAll()
   }
 
-  private class XDebuggerGroupedFrameListRenderer() : GroupedItemsListRenderer<StackInfo>(XDebuggerListItemDescriptor()) {
-    private val myOriginalRenderer = XDebuggerThreadsListRenderer()
+  private class XDebuggerGroupedFrameListRenderer(private val withDescription: Boolean) : GroupedItemsListRenderer<StackInfo>(XDebuggerListItemDescriptor()) {
+    private val myOriginalRenderer = XDebuggerThreadsListRenderer(withDescription)
 
     init {
       mySeparatorComponent.setCaptionCentered(false)
@@ -144,7 +141,7 @@ class XDebuggerThreadsList(
 
     override fun createItemComponent(): JComponent {
       createLabel()
-      return XDebuggerThreadsListRenderer()
+      return XDebuggerThreadsListRenderer(withDescription)
     }
   }
 
@@ -166,37 +163,34 @@ data class StackInfo internal constructor(
   @Nls val displayText: String,
   val icon: Icon?,
   @Nls val additionalDisplayText: AdditionalDisplayInfo?,
-  val stack: XExecutionStack?,
-  val session: XDebugSession?,
+  val stack: XExecutionStack?
 ) {
 
   companion object {
-    fun from(executionStack: XExecutionStack, session: XDebugSession): StackInfo = StackInfo(executionStack.displayName, executionStack.icon, executionStack.additionalDisplayInfo, executionStack, session)
-    fun error(@Nls error: String, session: XDebugSession): StackInfo = StackInfo(error, null, null, null, session)
+    fun from(executionStack: XExecutionStack): StackInfo = StackInfo(executionStack.displayName, executionStack.icon, executionStack.additionalDisplayInfo, executionStack)
+    fun error(@Nls error: String): StackInfo = StackInfo(error, null, null, null)
 
-    val LOADING: StackInfo = StackInfo(XDebuggerBundle.message("stack.frame.loading.text"), null, null, null, null)
+    val LOADING: StackInfo = StackInfo(XDebuggerBundle.message("stack.frame.loading.text"), null, null, null)
   }
 
   @Volatile
   @Nls
-  private var description: String? = null
+  private var description: String = if (stack == null) "" else IdeBundle.message("progress.text.loading")
 
   override fun toString(): String = displayText
 
   @Nls
   fun getDescription(): String {
-    val currentDescription = description
-    if (currentDescription != null) {
-      return currentDescription
-    }
+    return description
+  }
 
-    if (session == null || stack == null) {
-      return ""
-    }
-    @Nls val loadingText = IdeBundle.message("progress.text.loading")
-    description = loadingText
-    @Suppress("SSBasedInspection")
-    session.project.service<XDebuggerExecutionStackDescriptionService>().getExecutionStackDescription(stack, session).asCompletableFuture().whenCompleteAsync { result: String?, exception: Throwable? ->
+  internal fun requestDescription(session: XDebugSession) {
+    val descriptionService = session.project.service<XDebuggerExecutionStackDescriptionService>()
+    if (!(descriptionService.isAvailable())) return
+
+    val stack = this.stack ?: return
+
+    descriptionService.getExecutionStackDescription(stack, session).asCompletableFuture().whenCompleteAsync { result: String?, exception: Throwable? ->
       if (exception is CancellationException) {
         return@whenCompleteAsync
       }
@@ -208,8 +202,5 @@ data class StackInfo internal constructor(
         description = result
       }
     }
-    return loadingText
   }
-
-  fun supportsDescription(): Boolean = session?.project?.service<XDebuggerExecutionStackDescriptionService>()?.isAvailable() == true
 }

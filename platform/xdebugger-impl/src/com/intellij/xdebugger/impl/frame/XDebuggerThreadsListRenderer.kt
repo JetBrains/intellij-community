@@ -20,12 +20,12 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-internal class XDebuggerThreadsListRenderer() : ColoredListCellRenderer<StackInfo>() {
+internal class XDebuggerThreadsListRenderer(private val withDescription: Boolean) : ColoredListCellRenderer<StackInfo>() {
 
   private val threadDescriptionComponent = ThreadDescriptionComponent()
 
   override fun getListCellRendererComponent(list: JList<out StackInfo>, value: StackInfo, index: Int, selected: Boolean, hasFocus: Boolean): Component {
-    if (value.supportsDescription())
+    if (withDescription)
       return threadDescriptionComponent.customizeComponent(value, selected, hasFocus)
     else
       return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
@@ -75,7 +75,7 @@ internal class ThreadDescriptionComponent : JPanel(VerticalLayout(4)) {
     border = JBUI.Borders.empty(4)
   }
 
-  fun customizeComponent(item: StackInfo, selected: Boolean, hasFocus: Boolean): JComponent {
+  fun customizeComponent(value: StackInfo, selected: Boolean, hasFocus: Boolean): JComponent {
     threadNameLabel.clear()
     threadDescriptionLabel.clear()
 
@@ -103,14 +103,14 @@ internal class ThreadDescriptionComponent : JPanel(VerticalLayout(4)) {
     threadDescriptionLabel.foreground = foregroundValue
 
     updateScaleHelper.saveScaleAndUpdateUIIfChanged(this)
-    threadNameLabel.append(item.displayText)
-    item.additionalDisplayText?.let {
+    threadNameLabel.append(value.displayText)
+    value.additionalDisplayText?.let {
       threadNameLabel.append("   ")
       threadNameLabel.append(it.text, SimpleTextAttributes.GRAYED_ATTRIBUTES, it)
     }
-    threadNameLabel.icon = item.icon
+    threadNameLabel.icon = value.icon
 
-    threadDescriptionLabel.append(item.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES, JBUI.scale(16), SwingConstants.LEFT)
+    threadDescriptionLabel.append(value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES, JBUI.scale(16), SwingConstants.LEFT)
 
     //TODO [chernyaev] tooltip for thread panel
     //this.toolTipText = item.additionalDisplayText?.tooltip

@@ -5,7 +5,7 @@ import com.intellij.ide.OccurenceNavigator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListSpeedSearch
@@ -16,6 +16,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TextTransferable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -42,7 +43,9 @@ import javax.swing.JScrollPane
 class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private val myPauseDisposables = SequentialDisposables(this)
 
-  private val myThreadsList = XDebuggerThreadsList.createDefault()
+  private val supportsDescription: Boolean = debugTab.project.service<XDebuggerExecutionStackDescriptionService>().isAvailable()
+
+  private val myThreadsList = XDebuggerThreadsList.createDefault(supportsDescription)
   private val myFramesList = XDebuggerFramesList(debugTab.project)
 
   private val mySplitter: NonProportionalOnePixelSplitter
@@ -121,7 +124,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   init {
     val disposable = myPauseDisposables.next()
     myFramesManager = FramesManager(myFramesList, disposable)
-    myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable, debugTab)
+    myThreadsContainer = ThreadsContainer(myThreadsList, null, disposable)
     myPauseDisposables.terminateCurrent()
 
     val splitter = object : NonProportionalOnePixelSplitter(
@@ -133,6 +136,16 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     val minimumDimension = Dimension(JBUI.scale(26), 0)
     splitter.firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
       minimumSize = minimumDimension
+      if (supportsDescription) {
+        val session = debugTab.session ?: return@apply
+        val infoDescriptionRequester = StackInfoDescriptionRequester(myThreadsList, session)
+        this.viewport.addChangeListener(infoDescriptionRequester)
+        session.addSessionListener(object : XDebugSessionListener {
+          override fun sessionStopped() {
+            this@apply.viewport.removeChangeListener(infoDescriptionRequester)
+          }
+        })
+      }
     }
 
     val frameListWrapper = JPanel(BorderLayout(0, 0))
@@ -241,7 +254,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
           val newSelectedItemIndex = threads.model.items.indexOfFirst { it.stack == currentExecutionStack }
           if (newSelectedItemIndex != -1) {
             threads.selectedIndex = newSelectedItemIndex
-            myFramesManager.refresh(session)
+            myFramesManager.refresh()
             selectedStack = threads.selectedValue?.stack
           }
         }
@@ -255,7 +268,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       }
 
       if (event == SessionEvent.SETTINGS_CHANGED) {
-        myFramesManager.refresh(session)
+        myFramesManager.refresh()
       }
     }
   }
@@ -268,13 +281,13 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     val activeStack = suspendContext.activeExecutionStack
     activeStack?.setActive(session)
 
-    myThreadsContainer = ThreadsContainer(myThreadsList, activeStack, disposable, debugTab)
+    myThreadsContainer = ThreadsContainer(myThreadsList, activeStack, disposable)
     myThreadsContainer.start(suspendContext)
   }
 
   private fun XExecutionStack.setActive(session: XDebugSession) {
-    myFramesManager.setActive(this, session)
-    val currentFrame = myFramesManager.tryGetCurrentFrame(this, session) ?: return
+    myFramesManager.setActive(this)
+    val currentFrame = myFramesManager.tryGetCurrentFrame(this) ?: return
 
     session.setCurrentStackFrame(this, currentFrame)
   }
@@ -416,51 +429,47 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       })
     }
 
-    private fun XExecutionStack.getContainer(session: XDebugSession): FramesContainer {
-      return myMap.getOrPut(StackInfo.from(this, session)) {
+    private fun XExecutionStack.getContainer(): FramesContainer {
+      return myMap.getOrPut(StackInfo.from(this)) {
         FramesContainer(disposable, myFramesList, this)
       }
     }
 
-    fun setActive(stack: XExecutionStack, session: XDebugSession) {
+    fun setActive(stack: XExecutionStack) {
       val disposable = myActiveStackDisposables.next()
       myActiveStack = stack
-      stack.getContainer(session).setActive(disposable)
+      stack.getContainer().setActive(disposable)
     }
 
-    fun tryGetCurrentFrame(stack: XExecutionStack, session: XDebugSession): XStackFrame? {
-      return stack.getContainer(session).currentFrame
+    fun tryGetCurrentFrame(stack: XExecutionStack): XStackFrame? {
+      return stack.getContainer().currentFrame
     }
 
-    fun refresh(session: XDebugSession) {
+    fun refresh() {
       myMap.clear()
-      setActive(myActiveStack ?: return, session)
+      setActive(myActiveStack ?: return)
     }
   }
 
   private class ThreadsContainer(
     private val myThreadsList: XDebuggerThreadsList,
     private var myActiveStack: XExecutionStack?,
-    private val myDisposable: Disposable,
-    private val debugTab: XDebugSessionTab3) : XSuspendContext.XExecutionStackContainer {
+    private val myDisposable: Disposable
+  ) : XSuspendContext.XExecutionStackContainer {
     private var isProcessed = false
     private var isStarted = false
 
     companion object {
       private val loading = listOf(StackInfo.LOADING)
-
-      private val logger = Logger.getInstance(ThreadsContainer::class.java)
     }
 
     fun start(suspendContext: XSuspendContext) {
       UIUtil.invokeLaterIfNeeded {
         if (isStarted) return@invokeLaterIfNeeded
 
-        val session = getSession() ?: return@invokeLaterIfNeeded
-
         val activeStack = myActiveStack
         if (activeStack != null) {
-          myThreadsList.model.replaceAll(listOf(StackInfo.from(activeStack, session), StackInfo.LOADING))
+          myThreadsList.model.replaceAll(listOf(StackInfo.from(activeStack), StackInfo.LOADING))
         } else {
           myThreadsList.model.replaceAll(loading)
         }
@@ -473,22 +482,20 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
     override fun errorOccurred(errorMessage: String) {
       invokeIfNeeded {
-        val session = getSession() ?: return@invokeIfNeeded
         val model = myThreadsList.model
         // remove loading
         model.remove(model.size - 1)
-        model.add(listOf(StackInfo.error(errorMessage, session)))
+        model.add(listOf(StackInfo.error(errorMessage)))
         isProcessed = true
       }
     }
 
     override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
       invokeIfNeeded {
-        val session = getSession() ?: return@invokeIfNeeded
         val model = myThreadsList.model
         val insertIndex = model.size - 1
 
-        val threads = getThreadsList(executionStacks, session)
+        val threads = getThreadsList(executionStacks)
         if (threads.any()) {
           model.addAll(insertIndex, threads)
         }
@@ -507,20 +514,12 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       myActiveStack = null
     }
 
-    private fun getSession(): XDebugSessionImpl? {
-      val session = debugTab.session
-      if (session == null) {
-        logger.error("Session is expected to be attach to an instance of ${XDebugSessionTab3::class.java.simpleName}")
-      }
-      return session
-    }
-
-    private fun getThreadsList(executionStacks: List<XExecutionStack>, session: XDebugSession): List<StackInfo> {
+    private fun getThreadsList(executionStacks: List<XExecutionStack>): List<StackInfo> {
       var sequence = executionStacks.asSequence()
       if (myActiveStack != null) {
         sequence = sequence.filter { it != myActiveStack }
       }
-      return sequence.map { StackInfo.from(it, session) }.toList()
+      return sequence.map { StackInfo.from(it) }.toList()
     }
 
     private fun invokeIfNeeded(action: () -> Unit) {
@@ -533,4 +532,19 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       }
     }
   }
+}
+
+internal class StackInfoDescriptionRequester(
+  private val threadsList: XDebuggerThreadsList,
+  private val session: XDebugSessionImpl) : javax.swing.event.ChangeListener {
+    override fun stateChanged(e: javax.swing.event.ChangeEvent) {
+
+      val firstIndex = threadsList.firstVisibleIndex
+      val lastIndex = threadsList.lastVisibleIndex
+
+      if (firstIndex < 0 || lastIndex < 0) return
+      for (stackInfo in threadsList.model.items.subList(firstIndex, lastIndex + 1)) {
+        stackInfo.requestDescription(session)
+      }
+    }
 }
