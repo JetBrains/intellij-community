@@ -16,9 +16,7 @@ internal class ShowBytecodeAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
-    val file = event.getData<PsiFile>(CommonDataKeys.PSI_FILE) ?: return
-    val fileType = file.getFileType()
-    event.presentation.setEnabled(event.project != null && isValidFileType(fileType))
+    event.presentation.setEnabled(event.project != null)
     event.presentation.setIcon(AllIcons.FileTypes.JavaClass)
   }
 

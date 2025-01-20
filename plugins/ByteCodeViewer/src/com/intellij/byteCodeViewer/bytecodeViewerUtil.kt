@@ -1,17 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.byteCodeViewer
 
-import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiUtilBase
-import org.jetbrains.annotations.Contract
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.util.Textifier
@@ -21,11 +17,6 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 private val LOG = fileLogger()
-
-@Contract("null -> false")
-internal fun isValidFileType(fileType: FileType?): Boolean {
-  return fileType === JavaClassFileType.INSTANCE || fileType === JavaFileType.INSTANCE
-}
 
 internal fun getPsiElement(project: Project, editor: Editor): PsiElement? {
   fun findElementInFile(psiFile: PsiFile?, editor: Editor): PsiElement? {
