@@ -16,20 +16,21 @@ fun LongSet.toLongArray(): LongArray {
   return a
 }
 
-fun LongSet.mapNotNull(transform: (Long) -> Long?): LongArrayList {
-  val res = LongArrayList()
+fun <R> LongSet.mapNotNull(transform: (Long) -> R?): List<R> {
+  val res = mutableListOf<R>()
   val iter = this.values
   while (iter.hasNext()) {
     val element = iter.next()
-    if (transform(element) != null) {
-      res.add(element)
+    val transformed = transform(element)
+    if (transformed != null) {
+      res.add(transformed)
     }
   }
   return res
 }
 
-fun <V> LongSet.map(transform: (Long) -> V): Set<V> {
-  val res = HashSet<V>()
+fun <V> LongSet.map(transform: (Long) -> V): List<V> {
+  val res = mutableListOf<V>()
   val iter = this.values
   while (iter.hasNext()) {
     val element = iter.next()
@@ -59,4 +60,17 @@ fun LongSet.containsAll(other: LongSet): Boolean {
     if (!contains(iter.next())) return false
   }
   return true
+}
+
+inline fun LongSet.partition(predicate: (Long) -> Boolean): Pair<List<Long>, List<Long>> {
+  val first = ArrayList<Long>()
+  val second = ArrayList<Long>()
+  this.values.forEach {
+    if (predicate(it)) {
+      first.add(it)
+    } else {
+      second.add(it)
+    }
+  }
+  return Pair(first, second)
 }

@@ -17,13 +17,13 @@ inline fun MutableIntList.removeIf(predicate: (Int) -> Boolean): Boolean {
   return removed
 }
 
-fun MutableIntList.retainAll(elements: IntArrayList): Boolean {
+fun MutableIntList.retainAll(elements: IntList): Boolean {
   // Convert to Set for better runtime
   val elementsSet = IntOpenHashSet(elements)
   return removeIf{ elem -> !elementsSet.contains(elem) }
 }
 
-fun MutableIntList.removeAll(elements: IntArrayList): Boolean {
+fun MutableIntList.removeAll(elements: IntList): Boolean {
   var modified = false
   for (index in elements.indices) {
     if (removeValue(elements[index])) {
@@ -41,7 +41,7 @@ fun MutableIntList.removeAll(elements: IntArrayList): Boolean {
  * @param length the number of elements to add.
  * @since 8.3.0
  */
-fun MutableIntList.setElements(index: Int, a: IntArrayList, offset: Int, length: Int) { // We can't use AbstractList#ensureIndex, sadly.
+fun MutableIntList.setElements(index: Int, a: IntList, offset: Int, length: Int) { // We can't use AbstractList#ensureIndex, sadly.
   if (index < 0) throw IndexOutOfBoundsException("Index ($index) is negative")
   if (index > size) throw IndexOutOfBoundsException("Index ($index) is greater than list size ($size)")
   Arrays.ensureOffsetLength(a, offset, length)
@@ -59,7 +59,7 @@ fun MutableIntList.setElements(index: Int, a: IntArrayList, offset: Int, length:
  * @param a the array containing the elements.
  * @since 8.3.0
  */
-fun MutableIntList.setElements(a: IntArrayList) {
+fun MutableIntList.setElements(a: IntList) {
   setElements(0, a)
 }
 
@@ -68,7 +68,7 @@ fun MutableIntList.setElements(a: IntArrayList) {
  * @param a the array containing the elements.
  * @since 8.3.0
  */
-fun MutableIntList.setElements(index: Int, a: IntArrayList) {
+fun MutableIntList.setElements(index: Int, a: IntList) {
   setElements(index, a, 0, a.size)
 }
 

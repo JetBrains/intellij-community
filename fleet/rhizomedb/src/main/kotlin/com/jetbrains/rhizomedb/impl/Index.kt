@@ -4,6 +4,8 @@
 package com.jetbrains.rhizomedb.impl
 
 import com.jetbrains.rhizomedb.*
+import fleet.fastutil.ints.firstNotNullOfOrNull
+import fleet.fastutil.ints.forEach
 import fleet.util.letIf
 import kotlin.jvm.JvmInline
 

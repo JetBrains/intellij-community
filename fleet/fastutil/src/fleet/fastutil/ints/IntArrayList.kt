@@ -89,6 +89,10 @@ class IntArrayList: MutableIntList, Comparable<IntList> {
     while (i.hasNext()) this.add((i.next()))
   }
 
+  constructor(list: IntList): this() {
+    for (i in list.indices) this.add(list[i])
+  }
+
   /** Creates a new array list with given capacity.
    *
    * @param capacity the initial capacity of the array list (may be 0).
@@ -215,6 +219,10 @@ class IntArrayList: MutableIntList, Comparable<IntList> {
     a.copyInto(t, 0, 0, size)
     a = t
     check(size <= a.size)
+  }
+
+  override fun sort() {
+    this.a.sort(0, this.size)
   }
 
   /** Copies element of this type-specific list into the given array using optimized system calls.

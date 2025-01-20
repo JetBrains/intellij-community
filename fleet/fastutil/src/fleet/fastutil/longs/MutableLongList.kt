@@ -40,4 +40,6 @@ interface MutableLongList: LongList {
   fun addAll(index: Int, elements: LongList): Boolean
 
   fun clear()
+
+  fun sort()
 }

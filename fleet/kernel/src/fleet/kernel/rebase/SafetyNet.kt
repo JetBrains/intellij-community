@@ -3,7 +3,7 @@ package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
-import it.unimi.dsi.fastutil.ints.IntList
+import fleet.fastutil.ints.IntList
 
 internal fun Mut.preventReadsFromLocal(): Mut = intersectingPartitions(IntList.of(SchemaPart, SharedPart, CommonPart))
   .cachedQueryWithParts(IntList.of(SchemaPart, SharedPart, CommonPart))

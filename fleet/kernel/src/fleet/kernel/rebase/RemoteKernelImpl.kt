@@ -10,7 +10,7 @@ import fleet.util.UID
 import fleet.util.async.takeUntilInclusive
 import fleet.util.causeOfType
 import fleet.util.logging.KLoggers
-import it.unimi.dsi.fastutil.ints.IntList
+import fleet.fastutil.ints.IntList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consume

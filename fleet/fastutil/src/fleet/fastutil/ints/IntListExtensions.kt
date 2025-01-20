@@ -69,3 +69,13 @@ fun IntList.lastIndexOf(element: Int): Int {
   }
   return -1
 }
+
+fun <R> IntList.firstNotNullOfOrNull(transform: (Int) -> R?): R? {
+  for (index in this.indices) {
+    val result = transform(this[index])
+    if (result != null) {
+      return result
+    }
+  }
+  return null
+}

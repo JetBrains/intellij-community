@@ -1,6 +1,6 @@
 package com.jetbrains.rhizomedb
 
-import it.unimi.dsi.fastutil.ints.IntList
+import fleet.fastutil.ints.IntList
 
 /**
  * Represents a primitive db query. Every complex query is composed of [IndexQuery].

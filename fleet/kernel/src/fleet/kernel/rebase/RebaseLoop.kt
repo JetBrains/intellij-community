@@ -16,6 +16,8 @@ import fleet.util.async.conflateReduce
 import fleet.util.async.use
 import fleet.util.channels.channels
 import fleet.util.channels.use
+import fleet.fastutil.ints.IntMap
+import fleet.fastutil.ints.partition
 import fleet.util.logging.logger
 import kotlinx.collections.immutable.toPersistentHashMap
 import kotlinx.coroutines.*
@@ -69,7 +71,7 @@ internal typealias Timestamp = Long
 
 internal data class SpeculationData(
   val novelty: Novelty,
-  val idMappings: List<Map<EID, UID>>,
+  val idMappings: List<IntMap<UID>>,
 ) {
   companion object {
     fun empty(): SpeculationData {

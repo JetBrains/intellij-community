@@ -4,11 +4,11 @@ package fleet.kernel.rebase
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
 import fleet.rpc.core.AssumptionsViolatedException
-import fleet.util.IBifurcanVector
 import fleet.util.BifurcanVector
+import fleet.util.IBifurcanVector
 import fleet.util.UID
-import fleet.util.isEmpty
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.IntMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -212,7 +212,7 @@ internal fun RebaseLog.skipLocalChanges(): Pair<RebaseLog, List<RebaseLogEntry>>
   return Pair(l, ackChanges)
 }
 
-internal fun RebaseLog.speculativeIdMappings(): List<Map<EID, UID>> {
+internal fun RebaseLog.speculativeIdMappings(): List<IntMap<UID>> {
   return speculation.entries.map { entry -> entry.idMapping }
 }
 
@@ -263,7 +263,7 @@ internal val SharedBlock.sharedNovelty: Novelty
     }
 
 internal data class RebaseLogEntry(val sharedBlocks: List<SharedBlock>,
-                                   val idMapping: Map<EID, UID>,
+                                   val idMapping: IntMap<UID>,
                                    val dbBefore: DB,
                                    val dbAfter: DB,
                                    val transaction: Transaction?,
@@ -300,7 +300,7 @@ internal fun RebaseLogEntry.replay(base: DB): RebaseLogEntry? = let { logEntry -
     base == dbBefore -> logEntry
     else ->
       try {
-        val mutableIdMapping = HashMap<EID, UID>()
+        val mutableIdMapping = Int2ObjectOpenHashMap<UID>()
         val (sharedBlocksPrime, change) = base.changeAndReturn {
           context.alter(context.impl.collectingNovelty { datom ->
             if (datom.attr == uidAttribute()) {
@@ -339,7 +339,7 @@ internal fun RebaseLogEntry.replay(base: DB): RebaseLogEntry? = let { logEntry -
 
 internal fun RebaseLogEntry.reconsider(base: DB,
                                        encoder: InstructionEncoder,
-                                       speculativeIdMappings: List<Map<EID, UID>>): RebaseLogEntry {
+                                       speculativeIdMappings: List<IntMap<UID>>): RebaseLogEntry {
   return try {
     val mutableIdMapping = Int2ObjectOpenHashMap<UID>()
     val uidAttribute = uidAttribute()
@@ -348,7 +348,9 @@ internal fun RebaseLogEntry.reconsider(base: DB,
         mutableIdMapping.put(datom.eid, datom.value as UID)
       }
     }
+
     val idMappings = speculativeIdMappings + mutableIdMapping
+
 
     val (newSharedBlocks, change) = base.changeAndReturn {
       sharedBlocks.map { block ->
@@ -385,7 +387,7 @@ internal fun RebaseLogEntry.reconsider(base: DB,
 
     reconsidered(dbAfter = base,
                  dbBefore = base,
-                 idMapping = emptyMap(),
+                 idMapping = Int2ObjectOpenHashMap(),
                  newSharedBlocks = emptyList())
   }
 }
@@ -393,7 +395,7 @@ internal fun RebaseLogEntry.reconsider(base: DB,
 internal fun RebaseLogEntry.reconsidered(newSharedBlocks: List<SharedBlock>,
                                          dbBefore: DB,
                                          dbAfter: DB,
-                                         idMapping: Map<EID, UID>): RebaseLogEntry {
+                                         idMapping: IntMap<UID>): RebaseLogEntry {
   requireNotNull(transaction) // what are we reconsidering otherwise?
   return copy(sharedBlocks = newSharedBlocks,
               idMapping = idMapping,

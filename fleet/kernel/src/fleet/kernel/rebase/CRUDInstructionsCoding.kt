@@ -5,6 +5,7 @@ import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.EidGen
 import fleet.kernel.*
 import fleet.util.UID
+import fleet.fastutil.ints.map
 import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 

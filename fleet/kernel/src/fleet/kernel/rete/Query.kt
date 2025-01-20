@@ -3,7 +3,7 @@ package fleet.kernel.rete
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.rete.impl.*
-import it.unimi.dsi.fastutil.longs.LongSet
+import fleet.fastutil.longs.LongSet
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**

@@ -9,7 +9,6 @@ module fleet.kernel {
   requires kotlinx.coroutines.core;
   requires fleet.preferences;
   requires fleet.reporting.api;
-  requires it.unimi.dsi.fastutil;
 
   exports fleet.kernel;
   exports fleet.kernel.rebase;

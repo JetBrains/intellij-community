@@ -10,8 +10,8 @@ import fleet.util.async.catching
 import fleet.util.async.use
 import fleet.util.logging.KLogger
 import fleet.util.logging.logger
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.Serializable
@@ -67,7 +67,7 @@ suspend fun <T> withStorage(
             is SubscriptionEvent.First, is SubscriptionEvent.Reset -> {
               asOf(event.db) {
                 queryIndex(IndexQuery.LookupMany(Durable.StorageKeyAttr.attr as Attribute<StorageKey>, storageKey))
-                  .mapTo(storedEntitiesCache, Datom::eid)
+                  .forEach { storedEntitiesCache.add(it.eid) }
               }
               event.db
             }
@@ -213,7 +213,7 @@ private fun durableSnapshotWithPartitions(
       }
 
     queryIndex(IndexQuery.LookupMany(storageKeyAttr, storageKey)).forEach { datom -> dfs(datom.eid) }
-    val datoms = datomsToStore.values.flatten()
+    val datoms = datomsToStore.values.asSequence().toList().flatten()
     val snapshot = buildDurableSnapshot(datoms.asSequence(), serializationRestrictions)
     DurableSnapshotWithPartitions(snapshot = snapshot,
                                   partitions = datoms.mapNotNull { (e, a, v) ->

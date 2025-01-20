@@ -13,8 +13,8 @@ fun IntSet.toIntArray(): IntArray {
 }
 
 
-fun <V> LongSet.map(transform: (Long) -> V): Set<V> {
-  val res = HashSet<V>()
+fun <V> IntSet.map(transform: (Int) -> V): List<V> {
+  val res = ArrayList<V>()
   val iter = this.values
   while (iter.hasNext()) {
     val element = iter.next()
@@ -23,13 +23,14 @@ fun <V> LongSet.map(transform: (Long) -> V): Set<V> {
   return res
 }
 
-fun IntSet.mapNotNull(transform: (Int) -> Int?): IntArrayList {
-  val res = IntArrayList()
+fun <V> IntSet.mapNotNull(transform: (Int) -> V?): List<V> {
+  val res = ArrayList<V>()
   val iter = this.values
   while (iter.hasNext()) {
     val element = iter.next()
-    if (transform(element) != null) {
-      res.add(element)
+    val transformed = transform(element)
+    if (transformed != null) {
+      res.add(transformed)
     }
   }
   return res
@@ -56,4 +57,17 @@ fun IntSet.containsAll(other: IntSet): Boolean {
     if (!contains(iter.next())) return false
   }
   return true
+}
+
+inline fun IntSet.partition(predicate: (Int) -> Boolean): Pair<List<Int>, List<Int>> {
+  val first = ArrayList<Int>()
+  val second = ArrayList<Int>()
+  this.values.forEach {
+    if (predicate(it)) {
+      first.add(it)
+    } else {
+      second.add(it)
+    }
+  }
+  return Pair(first, second)
 }

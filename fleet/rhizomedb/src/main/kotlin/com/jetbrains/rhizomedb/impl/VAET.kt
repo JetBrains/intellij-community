@@ -58,7 +58,7 @@ internal value class VAET(private val trie: RadixTrie<IntMapWithEditor<Any>>) {
 
   inline fun refsTo(v: EID, crossinline sink: (Datom) -> Unit) {
     trie.get(v)?.let { aet ->
-      aet.map.forEach { (attr, value) ->
+      aet.map.entries.forEach { (attr, value) ->
         val a = Attribute<Any>(attr)
         when {
           a.schema.unique -> {

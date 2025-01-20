@@ -6,7 +6,7 @@ import com.jetbrains.rhizomedb.EID
 import fleet.kernel.rete.DatomPort
 import fleet.kernel.rete.RevalidationPort
 import fleet.kernel.rete.Subscription
-import it.unimi.dsi.fastutil.longs.LongSet
+import fleet.fastutil.longs.LongSet
 import kotlin.jvm.JvmInline
 
 @JvmInline

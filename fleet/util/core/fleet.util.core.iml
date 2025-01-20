@@ -35,7 +35,6 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
     <orderEntry type="module" module-name="fleet.util.logging.api" exported="" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" exported="" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="fleet.reporting.api" />
     <orderEntry type="module" module-name="fleet.preferences" />

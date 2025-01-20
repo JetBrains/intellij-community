@@ -4,8 +4,9 @@ package fleet.kernel.rete.impl
 import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Pattern
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.longs.LongSet
+import fleet.fastutil.longs.Long2ObjectOpenHashMap
+import fleet.fastutil.longs.LongSet
+import fleet.fastutil.longs.isEmpty
 
 internal class PatternIndex<T> {
   private val keyToPatterns = HashMap<T, LongSet>()
@@ -22,9 +23,9 @@ internal class PatternIndex<T> {
 
   fun update(key: T, newPatterns: LongSet) {
     val oldPatterns = keyToPatterns.remove(key)
-    oldPatterns?.iterator()?.let { iter ->
+    oldPatterns?.values?.let { iter ->
       while (iter.hasNext()) {
-        val oldP = iter.nextLong()
+        val oldP = iter.next()
         val keys = patternToKeys.get(oldP)
         if (keys != null && !newPatterns.contains(oldP)) {
           keys.remove(key)
@@ -35,9 +36,9 @@ internal class PatternIndex<T> {
       }
     }
 
-    newPatterns.iterator().let { iter ->
+    newPatterns.values.let { iter ->
       while (iter.hasNext()) {
-        val newP = iter.nextLong()
+        val newP = iter.next()
         if (oldPatterns == null || !oldPatterns.contains(newP)) {
           val keys = patternToKeys.get(newP)
           if (keys == null) {

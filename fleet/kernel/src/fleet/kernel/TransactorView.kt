@@ -7,8 +7,10 @@ import fleet.kernel.rebase.runOfferContributors
 import fleet.tracing.spannedScope
 import fleet.util.async.view
 import fleet.util.openmap.MutableOpenMap
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
+import fleet.fastutil.ints.IntArrayList
+import fleet.fastutil.ints.IntList
+import fleet.fastutil.ints.contains
+import fleet.fastutil.ints.retainAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
@@ -125,8 +127,11 @@ fun Q.overridingQueryPartitions(parts: IntList): Q = let { mut ->
   }
 }
 
-fun IntList.intersect(other: IntList): IntList =
-  IntArrayList((this as Iterable<Int>).intersect(other))
+fun IntList.intersect(other: IntList): IntList {
+  val result = IntArrayList(this)
+  result.retainAll(other)
+  return result
+}
 
 fun Q.intersectingPartitions(parts: IntList): Q = let { mut ->
   object : Q by mut {
@@ -157,7 +162,7 @@ fun Mut.expandAndMutateWithParts(parts: IntList): Mut = let { mut ->
 }
 
 private fun IntList.except(element: Int): IntList =
-  IntArrayList(this).apply { removeInt(element) }
+  IntArrayList(this).apply { removeAt(element) }
 
 private fun <T> ChangeScope.withTransactorView(kernelViewEntity: TransactorViewEntity2, body: ChangeScope.() -> T): T =
   let { changeScope ->

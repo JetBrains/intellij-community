@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
-import it.unimi.dsi.fastutil.ints.IntList
+import fleet.fastutil.ints.IntList
 
 /**
  * Represents [Entity] id.

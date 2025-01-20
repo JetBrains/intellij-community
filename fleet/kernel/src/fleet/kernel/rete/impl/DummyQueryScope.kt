@@ -4,7 +4,7 @@ package fleet.kernel.rete.impl
 import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.EID
 import fleet.kernel.rete.*
-import it.unimi.dsi.fastutil.longs.LongSet
+import fleet.fastutil.longs.LongSet
 
 internal object DummyQueryScope : QueryScope {
   override fun <T> Query<T>.producer(): Producer<T> = producerImpl()

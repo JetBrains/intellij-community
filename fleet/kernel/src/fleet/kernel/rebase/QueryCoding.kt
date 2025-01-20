@@ -5,7 +5,7 @@ import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
 import fleet.rpc.core.AssumptionsViolatedException
 import fleet.util.UID
-import it.unimi.dsi.fastutil.longs.LongArrayList
+import fleet.fastutil.longs.LongArrayList
 
 internal fun Mut.queryRecording(
   serContext: InstructionEncodingContext,
@@ -79,11 +79,11 @@ internal fun expandInstructionWithReadTracking(pipeline: DbContext<Q>, mut: Mut,
 
 private fun LongArrayList.trace(): Long {
   sort()
-  val i = iterator()
+  var i = 0
   var h = 1L
   var s = size
   while (s-- != 0) {
-    h = 31 * h + it.unimi.dsi.fastutil.HashCommon.mix(i.nextLong())
+    h = 31 * h + fleet.fastutil.HashCommon.mix(this[i++])
   }
   return h
 }

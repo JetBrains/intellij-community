@@ -2,7 +2,8 @@
 package com.jetbrains.rhizomedb
 
 import fleet.util.AtomicRef
-import it.unimi.dsi.fastutil.longs.LongArrayList
+import fleet.fastutil.longs.LongArrayList
+import fleet.fastutil.longs.toArray
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -104,6 +105,6 @@ internal fun <T> DbContext<Q>.cachedQueryImpl(queryCache: QueryCache, query: Cac
     }) {
       with(query) { query() }
     }
-    CachedQueryResult(result, patterns.toLongArray())
+    CachedQueryResult(result, patterns.toArray())
   }
 }

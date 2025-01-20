@@ -5,9 +5,11 @@ import com.jetbrains.rhizomedb.impl.EidGen
 import com.jetbrains.rhizomedb.impl.entityTypePossibleAttributes
 import com.jetbrains.rhizomedb.impl.generateSeed
 import fleet.util.reducible.*
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import it.unimi.dsi.fastutil.ints.IntSet
+import fleet.fastutil.ints.IntArrayList
+import fleet.fastutil.ints.IntOpenHashSet
+import fleet.fastutil.ints.IntSet
+import fleet.fastutil.ints.isNotEmpty
+import fleet.fastutil.ints.map
 
 fun DbContext<Q>.displayAttribute(attribute: Attribute<*>): String = impl.displayAttribute(attribute)
 fun Q.displayAttribute(attribute: Attribute<*>): String = 
@@ -105,7 +107,7 @@ fun Q.entitiesToRetract(eid: EID): IntSet {
   val stack = IntArrayList()
   stack.add(eid)
   while (stack.isNotEmpty()) {
-    val nextEID = stack.removeInt(stack.size - 1)
+    val nextEID = stack.removeAt(stack.size - 1)
     if (retractedEntities.add(nextEID)) {
       queryIndex(IndexQuery.Entity(nextEID)).forEach { datom ->
         if (datom.attr.schema.cascadeDelete) {

@@ -76,7 +76,7 @@ internal value class AEVT(private val trie: IntMapWithEditor<RadixTrie<Any>>) {
 
   fun all(): Sequence<Datom> = trie.let { aevt ->
     buildList {
-      aevt.map.forEach { (a, evt) ->
+      aevt.map.entries.forEach { (a, evt) ->
         val attr = Attribute<Any>(a)
         when (attr.schema.cardinality) {
           Cardinality.One ->

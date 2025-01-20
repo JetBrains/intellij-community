@@ -6,13 +6,15 @@ import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.get
 import fleet.kernel.*
 import fleet.util.UID
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.MutableIntMap
 
 class FollowerTransactorMiddleware(
   private val instructionEncoder: InstructionEncoder
 ) : TransactorMiddleware {
 
   override fun ChangeScope.performChange(next: ChangeScope.() -> Unit): Unit = run {
-    val idMapping: HashMap<EID, UID> = HashMap()
+    val idMapping: MutableIntMap<UID> = Int2ObjectOpenHashMap()
     val sharedBlocks: ArrayList<SharedBlock> = ArrayList()
     val sharedDbBefore = dbBefore.selectPartitions(setOf(SharedPart))
     val uidAttribute = uidAttribute()

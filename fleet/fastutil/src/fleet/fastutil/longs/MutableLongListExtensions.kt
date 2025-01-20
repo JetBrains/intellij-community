@@ -18,7 +18,7 @@ inline fun MutableLongList.removeIf(predicate: (Long) -> Boolean): Boolean {
   return removed
 }
 
-fun MutableLongList.retainAll(elements: LongArrayList): Boolean {
+fun MutableLongList.retainAll(elements: LongList): Boolean {
   // Convert to Set for better runtime
   val elementsSet = LongOpenHashSet(elements)
   return removeIf{ elem -> !elementsSet.contains(elem)
@@ -26,7 +26,7 @@ fun MutableLongList.retainAll(elements: LongArrayList): Boolean {
   }
 }
 
-fun MutableLongList.removeAll(elements: LongArrayList): Boolean {
+fun MutableLongList.removeAll(elements: LongList): Boolean {
   var modified = false
   for (index in elements.indices) {
     if (removeValue(elements[index])) {
@@ -44,7 +44,7 @@ fun MutableLongList.removeAll(elements: LongArrayList): Boolean {
  * @param length the number of elements to add.
  * @since 8.3.0
  */
-fun MutableLongList.setElements(index: Int, a: LongArrayList, offset: Int, length: Int) { // We can't use AbstractList#ensureIndex, sadly.
+fun MutableLongList.setElements(index: Int, a: LongList, offset: Int, length: Int) { // We can't use AbstractList#ensureIndex, sadly.
   if (index < 0) throw IndexOutOfBoundsException("Index ($index) is negative")
   if (index > size) throw IndexOutOfBoundsException("Index ($index) is greater than list size ($size)")
   Arrays.ensureOffsetLength(a, offset, length)
@@ -61,7 +61,7 @@ fun MutableLongList.setElements(index: Int, a: LongArrayList, offset: Int, lengt
  * @param a the array containing the elements.
  * @since 8.3.0
  */
-fun MutableLongList.setElements(a: LongArrayList) {
+fun MutableLongList.setElements(a: LongList) {
   setElements(0, a)
 }
 
@@ -70,7 +70,7 @@ fun MutableLongList.setElements(a: LongArrayList) {
  * @param a the array containing the elements.
  * @since 8.3.0
  */
-fun MutableLongList.setElements(index: Int, a: LongArrayList) {
+fun MutableLongList.setElements(index: Int, a: LongList) {
   setElements(index, a, 0, a.size)
 }
 

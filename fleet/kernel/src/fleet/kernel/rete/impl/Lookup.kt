@@ -5,7 +5,9 @@ import com.jetbrains.rhizomedb.*
 import fleet.kernel.rete.impl.adaptiveMapOf
 import fleet.kernel.rete.impl.adaptiveSetOf
 import fleet.kernel.rete.impl.removeIf
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.getOrPut
+import fleet.fastutil.ints.removeIf
 
 internal fun <T : Any> SubscriptionScope.getAttribute(query: Producer<EID>, attribute: Attribute<T>): Producer<T> = run {
   // eid -> #{input-matches}
@@ -49,7 +51,7 @@ internal fun <T : Any> SubscriptionScope.getAttribute(query: Producer<EID>, attr
   }
 
   Producer { emit ->
-    memory.forEach { eid, matches ->
+    memory.entries.forEach { (eid, matches) ->
       val datoms = DbContext.threadBound.queryIndex(IndexQuery.GetMany(eid, attribute))
       matches.matches.forEach { match ->
         datoms.forEach { datom ->

@@ -39,4 +39,6 @@ interface MutableIntList: IntList {
   fun addAll(index: Int, elements: IntList): Boolean
 
   fun clear()
+
+  fun sort()
 }

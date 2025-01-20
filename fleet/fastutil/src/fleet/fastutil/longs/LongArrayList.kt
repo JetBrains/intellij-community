@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.fastutil.longs
 
-import fleet.fastutil.ints.*
-
 /*
 	* Copyright (C) 2002-2024 Sebastiano Vigna
 	*
@@ -90,6 +88,10 @@ class LongArrayList: MutableLongList, Comparable<LongList> {
    */
   constructor(i: Iterator<Long>) : this() {
     while (i.hasNext()) this.add((i.next()))
+  }
+
+  constructor(list: LongList): this() {
+    for (i in list.indices) this.add(list[i])
   }
 
   /** Creates a new array list with given capacity.
@@ -220,6 +222,10 @@ class LongArrayList: MutableLongList, Comparable<LongList> {
     check(size <= a.size)
   }
 
+  override fun sort() {
+    this.a.sort(0, this.size)
+  }
+
   /** Copies element of this type-specific list into the given array using optimized system calls.
    *
    * @param from the start index (inclusive).
@@ -250,7 +256,6 @@ class LongArrayList: MutableLongList, Comparable<LongList> {
     a.copyInto(a, destinationOffset = from, startIndex = to, endIndex = size)
     size -= (to - from)
   }
-
 
   /** Adds elements to this type-specific list using optimized system calls.
    *

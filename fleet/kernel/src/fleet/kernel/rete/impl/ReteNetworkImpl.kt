@@ -6,8 +6,8 @@ import fleet.kernel.rete.*
 import fleet.kernel.rete.ReteNetwork
 import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.DatomEntry
 import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.RevalidationEntry
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.longs.LongSet
+import fleet.fastutil.longs.Long2ObjectOpenHashMap
+import fleet.fastutil.longs.LongSet
 import kotlinx.coroutines.flow.MutableStateFlow
 import fleet.util.PriorityQueue
 import kotlin.jvm.JvmInline
@@ -301,7 +301,7 @@ internal class ReteNetworkImpl(
       val db = lastKnownDb.value.dbOrThrow()
       val observerId = nextObserverId++
       val observerIdPair = NodeId(observerId, 0)
-      require(observerIdPair.id !in observers.keys) { "observer id is not unique" }
+      require(!observers.containsKey(observerIdPair.id)) { "observer id is not unique" }
       val observerNode = Node(observerIdPair)
       val queryScope = queryScope(observerNode, 0, IdGen(observerId), tracingKey)
       val prop = Propagation()
