@@ -9,6 +9,7 @@ import com.intellij.debugger.feedback.UsageTracker;
 import com.intellij.debugger.impl.DebugUtilsKt;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -41,6 +42,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class JavaExecutionStack extends XExecutionStack {
@@ -185,6 +187,11 @@ public class JavaExecutionStack extends XExecutionStack {
   @Override
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
     if (container.isObsolete()) return;
+    Objects.requireNonNull(myDebugProcess.getDebuggerContext().getManagerThread())
+      .schedule(PrioritizedTask.Priority.NORMAL, () -> computeStackFramesWithSuitableSuspendContext(firstFrameIndex, container));
+  }
+
+  private void computeStackFramesWithSuitableSuspendContext(int firstFrameIndex, XStackFrameContainer container) {
     SuspendContextImpl pausedContext = SuspendManagerUtil.getPausedSuspendingContext(myDebugProcess.getSuspendManager(), myThreadProxy);
     SuspendContextImpl context = pausedContext != null ? pausedContext : myDebugProcess.getDebuggerContext().getSuspendContext();
     if (context == null) return;
