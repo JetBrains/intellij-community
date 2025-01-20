@@ -1888,6 +1888,65 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/removeExplicitLambdaParameterTypes")
+    public static class RemoveExplicitLambdaParameterTypes extends AbstractSharedK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("invalidCursorPosition.kt")
+        public void testInvalidCursorPosition() throws Exception {
+            runTest("../testData/intentions/removeExplicitLambdaParameterTypes/invalidCursorPosition.kt");
+        }
+
+        @TestMetadata("lambdaWithLambdaAsParam.kt")
+        public void testLambdaWithLambdaAsParam() throws Exception {
+            runTest("../testData/intentions/removeExplicitLambdaParameterTypes/lambdaWithLambdaAsParam.kt");
+        }
+
+        @TestMetadata("multipleExplicitParams.kt")
+        public void testMultipleExplicitParams() throws Exception {
+            runTest("../testData/intentions/removeExplicitLambdaParameterTypes/multipleExplicitParams.kt");
+        }
+
+        @TestMetadata("paramTypeDeclared.kt")
+        public void testParamTypeDeclared() throws Exception {
+            runTest("../testData/intentions/removeExplicitLambdaParameterTypes/paramTypeDeclared.kt");
+        }
+
+        @TestMetadata("singleExplicitParam.kt")
+        public void testSingleExplicitParam() throws Exception {
+            runTest("../testData/intentions/removeExplicitLambdaParameterTypes/singleExplicitParam.kt");
+        }
+
+        @TestMetadata("typesAlreadyImplicit.kt")
+        public void testTypesAlreadyImplicit() throws Exception {
+            runTest("../testData/intentions/removeExplicitLambdaParameterTypes/typesAlreadyImplicit.kt");
+        }
+
+        @TestMetadata("withDestructuring.kt")
+        public void testWithDestructuring() throws Exception {
+            runTest("../testData/intentions/removeExplicitLambdaParameterTypes/withDestructuring.kt");
+        }
+
+        @TestMetadata("withDestructuringAndSimple.kt")
+        public void testWithDestructuringAndSimple() throws Exception {
+            runTest("../testData/intentions/removeExplicitLambdaParameterTypes/withDestructuringAndSimple.kt");
+        }
+
+        @TestMetadata("withDestructuringInMiddle.kt")
+        public void testWithDestructuringInMiddle() throws Exception {
+            runTest("../testData/intentions/removeExplicitLambdaParameterTypes/withDestructuringInMiddle.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/removeUnnecessaryParentheses")
     public static class RemoveUnnecessaryParentheses extends AbstractSharedK2IntentionTest {
         @java.lang.Override
