@@ -1,35 +1,31 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.wsl.ijent.nio.toggle
+package com.intellij.platform.ide.bootstrap.eel
 
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WslIjentAvailabilityService
+import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
 import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicBoolean
 
-@VisibleForTesting
-object IjentWslNioFsVmOptionsSetter {
+object MultiRoutingFileSystemVmOptionsSetter {
+  @VisibleForTesting
   fun ensureInVmOptionsImpl(
     isEnabled: Boolean,
     forceProductionOptions: Boolean,
@@ -124,7 +120,7 @@ object IjentWslNioFsVmOptionsSetter {
       }
       catch (err: IOException) {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
-          thisLogger().error("Failed to set VM Option for IJent file system", err)
+          logger<MultiRoutingFileSystemVmOptionsSetter>().error("Failed to set VM Option for IJent file system", err)
         }
       }
     }
@@ -132,52 +128,40 @@ object IjentWslNioFsVmOptionsSetter {
     return changedOptions
   }
 
-  internal class ApplicationListener : ApplicationActivationListener {
-    @Service
-    private class ServiceScope(coroutineScope: CoroutineScope) : CoroutineScope by coroutineScope {
-      val dialogMessageHasBeenShown = AtomicBoolean(false)
-    }
+  suspend fun onApplicationActivated() {
+    if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return
 
-    override fun applicationActivated(ideFrame: IdeFrame) {
-      if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return
+    val changedOptions = ensureInVmOptions()
+    when {
+      changedOptions.isEmpty() -> {
+        IjentWslNioFsToggler.instanceAsync().enableForAllWslDistributions()
+      }
 
-      val serviceScope = service<ServiceScope>()
-      if (serviceScope.dialogMessageHasBeenShown.getAndSet(true)) return
-
-      serviceScope.launch {
-        val changedOptions = ensureInVmOptions()
-        when {
-          changedOptions.isEmpty() -> {
-            IjentWslNioFsToggler.instanceAsync().enableForAllWslDistributions()
+      PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
+        logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
+          changedOptions.joinToString(
+            prefix = "This message is seen only in Dev Mode/Run from sources.\n" +
+                     "The value of the registry flag `$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY` for IJent FS " +
+                     "doesn't match the VM options.\n" +
+                     "Add the following VM options to the Run Configuration:\n",
+            separator = "\n",
+          ) { (k, v) ->
+            "  $k${v.orEmpty()}"
           }
+        )
+      }
 
-          PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
-            logger<IjentWslNioFsVmOptionsSetter>().warn(
-              changedOptions.joinToString(
-                prefix = "This message is seen only in Dev Mode/Run from sources.\n" +
-                         "The value of the registry flag `$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY` for IJent FS " +
-                         "doesn't match the VM options.\n" +
-                         "Add the following VM options to the Run Configuration:\n",
-                separator = "\n",
-              ) { (k, v) ->
-                "  $k${v.orEmpty()}"
-              }
-            )
-          }
-
-          else -> launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-            val doThat = Messages.OK == Messages.showOkCancelDialog(
-              null,
-              IdeBundle.message("ijent.wsl.fs.dialog.message"),
-              IdeBundle.message("ijent.wsl.fs.dialog.title"),
-              IdeBundle.message(if (ApplicationManager.getApplication().isRestartCapable) "ide.restart.action" else "ide.shutdown.action"),
-              CommonBundle.getCancelButtonText(),
-              AllIcons.General.Warning,
-            )
-            if (doThat) {
-              ApplicationManagerEx.getApplicationEx().restart(true)
-            }
-          }
+      else -> withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        val doThat = Messages.OK == Messages.showOkCancelDialog(
+          null,
+          IdeBundle.message("ijent.wsl.fs.dialog.message"),
+          IdeBundle.message("ijent.wsl.fs.dialog.title"),
+          IdeBundle.message(if (ApplicationManager.getApplication().isRestartCapable) "ide.restart.action" else "ide.shutdown.action"),
+          CommonBundle.getCancelButtonText(),
+          AllIcons.General.Warning,
+        )
+        if (doThat) {
+          ApplicationManagerEx.getApplicationEx().restart(true)
         }
       }
     }

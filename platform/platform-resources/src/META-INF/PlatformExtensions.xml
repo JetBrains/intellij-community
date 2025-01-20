@@ -1906,13 +1906,6 @@
     <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
 
-    <listener class="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsVmOptionsSetter$ApplicationListener"
-              topic="com.intellij.openapi.application.ApplicationActivationListener"
-              os="windows"/>
-    <listener class="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsRegistryListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener"
-              os="windows"/>
-
     <listener topic="com.intellij.ide.RegionSettings$RegionSettingsListener"
               class="com.intellij.internal.statistic.StatisticsRegionSettingsListener"/>
   </applicationListeners>
