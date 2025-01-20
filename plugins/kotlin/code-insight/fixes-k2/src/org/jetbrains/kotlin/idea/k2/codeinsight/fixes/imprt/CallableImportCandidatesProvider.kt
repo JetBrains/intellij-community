@@ -47,6 +47,12 @@ internal open class CallableImportCandidatesProvider(
 
                 yieldAll(indexProvider.getJavaMethodsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate.create(it) })
                 yieldAll(indexProvider.getJavaFieldsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate.create(it) })
+
+                yieldAll(
+                    indexProvider.getCallableSymbolsFromSubclassObjects(unresolvedName)
+                        .map { (dispatcherObject, callableSymbol) -> CallableImportCandidate.create(callableSymbol, dispatcherObject) }
+                        .filter { !it.symbol.isExtension }
+                )
             }
 
             when (val context = positionContext) {
@@ -56,6 +62,11 @@ internal open class CallableImportCandidatesProvider(
                         indexProvider.getExtensionCallableSymbolsByName(unresolvedName, receiverTypes) { acceptsKotlinCallable(it) }
                             .map { CallableImportCandidate.create(it) }
                     )
+                    
+                    yieldAll(
+                        indexProvider.getExtensionCallableSymbolsFromSubclassObjects(unresolvedName, receiverTypes)
+                            .map { (dispatcherObject, callableSymbol) -> CallableImportCandidate.create(callableSymbol, dispatcherObject) }
+                    )
                 }
 
                 else -> {}
@@ -63,6 +74,7 @@ internal open class CallableImportCandidatesProvider(
         }
 
         return candidates
+            .distinct()
             .filter { acceptsCallableCandidate(it) }
             .filter { it.isVisible(fileSymbol) && it.callableId != null }
             .toList()
