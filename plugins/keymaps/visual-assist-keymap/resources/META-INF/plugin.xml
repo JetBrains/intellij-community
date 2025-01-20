@@ -8,6 +8,7 @@
   Use this plugin if Visual Assist keymap is not pre-installed in your IDE.
 </description>
 <depends>com.intellij.modules.lang</depends>
+<depends>com.intellij.plugins.visualstudiokeymap</depends>
 <extensions defaultExtensionNs="com.intellij">
     <bundledKeymap file="Visual Assist.xml"/>
     <bundledKeymap file="Visual Assist OSX.xml"/>
