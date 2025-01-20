@@ -41,7 +41,7 @@ object TestUtil {
   const val PHP_VSC: @NonNls String = "php_vsc"
   const val SMARTY: @NonNls String = "smarty"
   const val TURTLE: @NonNls String = "turtle"
-  const val GIT: @NonNls String = "git"
+  const val GIT: @NonNls String = "git-base"
   const val RESTRUCTURED_TEXT: @NonNls String = "restructuredtext"
 
   @JvmStatic

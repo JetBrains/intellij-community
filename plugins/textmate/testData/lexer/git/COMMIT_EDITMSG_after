@@ -1,4 +1,4 @@
-text.git-commit;meta.scope.message.git-commit;meta.scope.subject.git-commit: [0, 2], {a
+text.git-commit;meta.scope.message.git-commit;meta.scope.subject.git-commit: [0, 1], {a}
+text.git-commit;meta.scope.message.git-commit: [1, 2], {
 }
-text.git-commit;meta.scope.metadata.git-commit;comment.line.number-sign.git-commit;punctuation.definition.comment.git-commit: [2, 3], {#}
-text.git-commit;meta.scope.metadata.git-commit;comment.line.number-sign.git-commit: [3, 68], { Please enter the commit message for your changes. Lines starting}
+text.git-commit;meta.scope.metadata.git-commit;comment.line.number-sign.git-commit: [2, 68], {# Please enter the commit message for your changes. Lines starting}
