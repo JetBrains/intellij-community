@@ -13,6 +13,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
@@ -25,10 +26,13 @@ import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import com.intellij.util.getValue
+import com.intellij.util.io.awaitFor
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCancellablePromise
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
@@ -43,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.time.Duration.Companion.seconds
 
@@ -866,5 +871,69 @@ class CancellationPropagationTest {
     }
     semaphore.timeoutWaitUp()
     job.cancel()
+  }
+
+  @Test
+  fun `coroutine non-cancellable section coherence`() = timeoutRunBlocking {
+    withContext(Dispatchers.Default) {
+      val canProceed = Job()
+      val coroutineStarted = Job()
+      val result = CompletableDeferred<Int>()
+      val orphanCoroutine = launch {
+        withContext(NonCancellable) {
+          coroutineStarted.complete()
+          // withContext creates a child job, so this computation is formally not `isNonCancellable`
+          assertFalse(Cancellation.isInNonCancelableSection())
+          canProceed.join()
+          Cancellation.checkCancelled()
+          result.complete(42)
+        }
+      }
+      coroutineStarted.join()
+      orphanCoroutine.cancel()
+      canProceed.complete()
+      assertEquals(42, result.await())
+    }
+  }
+
+  @Test
+  fun `ij non-cancellable section coherence`() = timeoutRunBlocking {
+    Cancellation.executeInNonCancelableSection {
+      assertTrue(Cancellation.isInNonCancelableSection())
+    }
+    Cancellation.executeInNonCancelableSection {
+      installThreadContext(Job(currentThreadContext().job), true).use {
+        assertFalse(Cancellation.isInNonCancelableSection())
+      }
+    }
+  }
+
+  @Test
+  fun `inner computations are still cancellable in non-cancellable section`() = timeoutRunBlocking {
+    val canProceedWithWa = Job()
+    val entryCounter = AtomicInteger(0)
+    launch {
+      canProceedWithWa.join()
+      writeAction {
+      }
+    }
+    launch {
+      Cancellation.executeInNonCancelableSection {
+        assertTrue(Cancellation.isInNonCancelableSection())
+        runBlockingCancellable {
+          readAction {
+            entryCounter.incrementAndGet()
+            canProceedWithWa.complete()
+            assertFalse(Cancellation.isInNonCancelableSection())
+            Thread.sleep(100) // ensure that pending WA is initiated
+            Cancellation.checkCancelled()
+            if (entryCounter.get() == 1) {
+              fail("Should not be executed")
+            }
+          }
+        }
+      }
+    }.join()
+    assertEquals(entryCounter.get(), 2)
   }
 }

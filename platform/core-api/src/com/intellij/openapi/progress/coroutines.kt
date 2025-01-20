@@ -139,7 +139,7 @@ fun <T> runBlockingCancellable(compensateParallelism: Boolean, action: suspend C
 private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
   assertBackgroundThreadOrWriteAction()
   return prepareThreadContext { ctx ->
-    if (!allowOrphan && ctx[Job] == null && !Cancellation.isInNonCancelableSection()) {
+    if (!allowOrphan && ctx[Job] == null) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
     try {
