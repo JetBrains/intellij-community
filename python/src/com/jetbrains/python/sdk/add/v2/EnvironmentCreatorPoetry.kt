@@ -27,6 +27,7 @@ import com.jetbrains.python.sdk.poetry.poetryToml
 import com.jetbrains.python.sdk.poetry.pyProjectToml
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
