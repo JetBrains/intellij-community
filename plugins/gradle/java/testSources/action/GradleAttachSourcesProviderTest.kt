@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.IndexingTestUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.internal.daemon.DaemonState
@@ -191,6 +192,8 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     assertThat(library.getRootFiles(OrderRootType.CLASSES))
       .hasSize(1)
       .allSatisfy(Consumer { assertEquals(dependencyJar, it.name) })
+
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject)
 
     val psiFile = runReadAction {
       JavaPsiFacade.getInstance(myProject).findClass(classFromDependency, GlobalSearchScope.allScope(myProject))!!.containingFile
