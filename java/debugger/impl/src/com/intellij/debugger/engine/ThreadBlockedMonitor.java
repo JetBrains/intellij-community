@@ -117,7 +117,7 @@ public class ThreadBlockedMonitor {
               ThreadReferenceProxyImpl threadProxy = process.getVirtualMachineProxy().getThreadReferenceProxy(blockingThread);
               SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(process.getSuspendManager(), threadProxy);
               getCommandManagerThread()
-                .invoke(process.createResumeThreadCommand(suspendingContext, threadProxy));
+                .invokeNow(process.createResumeThreadCommand(suspendingContext, threadProxy));
             }
           });
         }

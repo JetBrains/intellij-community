@@ -326,7 +326,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
         updateCaches(null);
       }
       else {
-        Objects.requireNonNull(context.getManagerThread()).invoke(new DebuggerCommandImpl() {
+        Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             if (!myProject.isDisposed()) {

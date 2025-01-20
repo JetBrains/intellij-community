@@ -427,6 +427,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         @Override
         public void extensionAdded(@NotNull PositionManagerFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
+          // Called on DMT for the first time, but on unspecified thread for the next calls
+          //noinspection deprecation
           getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () ->
           {
             PositionManager manager = extension.createPositionManager(DebugProcessEvents.this);
@@ -440,7 +442,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         @Override
         public void extensionRemoved(@NotNull PositionManagerFactory extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () -> {
+          getManagerThread().schedule(PrioritizedTask.Priority.NORMAL, () -> {
             PositionManager manager = mapping.remove(extension);
             if (manager != null) {
               myPositionManager.removePositionManager(manager);
@@ -492,7 +494,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void createStackCapturingBreakpoints() {
-    getManagerThread().invoke(PrioritizedTask.Priority.HIGH, () -> {
+    getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> {
       StackCapturingLineBreakpoint.deleteAll(this);
       StackCapturingLineBreakpoint.createAll(this);
     });

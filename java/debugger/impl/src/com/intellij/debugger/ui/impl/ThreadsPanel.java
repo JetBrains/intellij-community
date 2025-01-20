@@ -83,7 +83,7 @@ public final class ThreadsPanel extends DebuggerTreePanel {
             if (root != null) {
               DebuggerManagerThreadImpl managerThread = getContext().getManagerThread();
               if (managerThread != null) {
-                managerThread.invoke(new DebuggerCommandImpl() {
+                managerThread.schedule(new DebuggerCommandImpl() {
                   @Override
                   protected void action() {
                     try {

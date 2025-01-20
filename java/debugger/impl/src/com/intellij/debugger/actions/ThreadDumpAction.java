@@ -42,7 +42,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
-      Objects.requireNonNull(context.getManagerThread()).invoke(new DebuggerCommandImpl() {
+      Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() {
           final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();

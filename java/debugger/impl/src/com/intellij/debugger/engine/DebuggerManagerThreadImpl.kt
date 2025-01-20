@@ -84,14 +84,22 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
   private fun createScope() = parentScope.childScope("DebuggerManagerThreadImpl")
 
   override fun invokeAndWait(managerCommand: DebuggerCommandImpl) {
-    LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...")
+    LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.schedule(...)")
     super.invokeAndWait(managerCommand)
   }
 
+  fun invokeNow(managerCommand: DebuggerCommandImpl) {
+    assertIsManagerThread()
+    LOG.assertTrue(currentThread() === this) { "invokeNow from a different DebuggerManagerThread" }
+    setCommandManagerThread(managerCommand)
+    processEvent(managerCommand)
+  }
+
+  @Deprecated("Use invokeNow if in DebuggerManagerThread or schedule otherwise",
+              ReplaceWith("invokeNow(managerCommand)"))
   fun invoke(managerCommand: DebuggerCommandImpl) {
     if (currentThread() === this) {
-      setCommandManagerThread(managerCommand)
-      processEvent(managerCommand)
+      invokeNow(managerCommand)
     }
     else {
       if (isManagerThread()) {
@@ -101,6 +109,8 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
     }
   }
 
+  @Deprecated("Use invokeNow if in DebuggerManagerThread or schedule otherwise",
+              ReplaceWith("schedule(priority, runnable)"))
   fun invoke(priority: PrioritizedTask.Priority, runnable: Runnable) {
     invoke(object : DebuggerCommandImpl(priority) {
       override fun action() {
@@ -141,7 +151,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
   fun terminateAndInvoke(command: DebuggerCommandImpl, terminateTimeoutMillis: Int) {
     val currentCommand = myEvents.currentEvent
 
-    invoke(command)
+    schedule(command)
 
     if (currentCommand != null) {
       AppExecutorUtil.getAppScheduledExecutorService().schedule(
@@ -337,7 +347,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
 
     @JvmStatic
     fun assertIsManagerThread() {
-      LOG.assertTrue(isManagerThread(), "Should be invoked in manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...")
+      LOG.assertTrue(isManagerThread(), "Should be invoked in manager thread, use DebuggerManagerThreadImpl.schedule(...)")
     }
 
     @JvmStatic

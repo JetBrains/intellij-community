@@ -226,8 +226,8 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   private void saveNodeHistory(final StackFrameProxyImpl frameProxy) {
-    myJavaSession.getProcess().getManagerThread().invoke(PrioritizedTask.Priority.NORMAL,
-                                                         () -> myNodeManager.setHistoryByContext(frameProxy));
+    myJavaSession.getProcess().getManagerThread().schedule(PrioritizedTask.Priority.NORMAL,
+                                                           () -> myNodeManager.setHistoryByContext(frameProxy));
   }
 
   private DebuggerStateManager getDebuggerStateManager() {

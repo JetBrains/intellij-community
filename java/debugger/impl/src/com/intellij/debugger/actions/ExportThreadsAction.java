@@ -36,7 +36,7 @@ public class ExportThreadsAction extends AnAction {
       final DebugProcessImpl process = context.getDebugProcess();
       DebuggerManagerThreadImpl managerThread = context.getManagerThread();
       if (process != null && managerThread != null) {
-        managerThread.invoke(new DebuggerCommandImpl() {
+        managerThread.schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());

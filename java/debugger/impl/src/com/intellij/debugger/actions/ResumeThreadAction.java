@@ -41,7 +41,7 @@ public class ResumeThreadAction extends DebuggerAction {
           protected void action() {
             SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(debugProcess.getSuspendManager(), thread);
             if (suspendingContext != null) {
-              debuggerManagerThread.invoke(debugProcess.createResumeThreadCommand(suspendingContext, thread));
+              debuggerManagerThread.invokeNow(debugProcess.createResumeThreadCommand(suspendingContext, thread));
             }
             ApplicationManager.getApplication().invokeLater(() -> debuggerTreeNode.calcValue());
           }

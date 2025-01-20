@@ -209,7 +209,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void reloadRenderers() {
-    getManagerThread().invoke(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
+    getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
       @Override
       protected void action() {
         myNodeRenderersMap.clear();
@@ -2277,7 +2277,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       for (SuspendContextImpl suspendContext : suspendingContexts) {
         if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && suspendContext.getEventThread() == myThread) {
           getSession().getXDebugSession().sessionResumed();
-          getCommandManagerThread().invoke(createResumeCommand(suspendContext));
+          getCommandManagerThread().invokeNow(createResumeCommand(suspendContext));
         }
         else {
           DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().removeThreadFilter(context.getDebugProcess());

@@ -110,7 +110,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
       myIcon = DebuggerTreeRenderer.getDescriptorIcon(MessageDescriptor.EVALUATING);
       myText = DebuggerTreeRenderer.getDescriptorText(context, MessageDescriptor.EVALUATING, false);
 
-      Objects.requireNonNull(context.getManagerThread()).invoke(new DebuggerContextCommandImpl(context) {
+      Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context) {
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           runnable.run();

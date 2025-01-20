@@ -608,7 +608,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     public void paused(SuspendContextImpl suspendContext) {
       // Need to add SuspendContextCommandImpl because the stepping pause is not now in SuspendContextCommandImpl
       DebuggerManagerThreadImpl debuggerManagerThread = suspendContext.getManagerThread();
-      debuggerManagerThread.invoke(new SuspendContextCommandImpl(suspendContext) {
+      debuggerManagerThread.invokeNow(new SuspendContextCommandImpl(suspendContext) {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           pausedImpl(suspendContext);

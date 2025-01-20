@@ -25,6 +25,7 @@ public class FreezeThreadAction extends DebuggerAction {
     }
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+    if (debugProcess == null) return;
 
     for (final DebuggerTreeNodeImpl debuggerTreeNode : selectedNode) {
       ThreadDescriptorImpl threadDescriptor = ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor());
@@ -35,7 +36,7 @@ public class FreezeThreadAction extends DebuggerAction {
         debuggerManagerThread.schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
-            debuggerManagerThread.invoke(debugProcess.createFreezeThreadCommand(thread));
+            debuggerManagerThread.invokeNow(debugProcess.createFreezeThreadCommand(thread));
             ApplicationManager.getApplication().invokeLater(() -> debuggerTreeNode.calcValue());
           }
         });
