@@ -3,6 +3,8 @@
   <dependencies>
     <plugin id="PythonCore"/>
     <module name="intellij.platform.whatsNew"/>
+    <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.community.services.shared"/>
   </dependencies>
 
   <projectListeners>

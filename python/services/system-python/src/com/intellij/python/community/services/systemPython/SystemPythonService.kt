@@ -29,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus
 sealed interface SystemPythonService {
   /**
    * System pythons installed on OS.
-   * Sort pythons by [SystemPython.languageLevel] to find the highest one.
+   * Sort pythons by [SystemPython.languageLevel] to find the highest one
    */
   suspend fun findSystemPythons(eelApi: EelApi = localEel): Set<SystemPython>
 
@@ -53,7 +53,7 @@ fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplicati
 // Implementation
 
 @Service(APP)
-@State(name = "SystemPythonService")
+@State(name = "SystemPythonService", storages = [Storage("SystemPythonService.xml")], allowLoadInTests = true)
 private class SystemPythonServiceImpl : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, LocalizedErrorString> {
