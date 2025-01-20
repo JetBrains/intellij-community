@@ -158,7 +158,7 @@ private suspend fun downloadMissingLibrarySources(librariesWithMissingSources: L
       val configuration = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(context.project)
       val repositories = configuration?.repositories?.map { ArtifactRepositoryManager.createRemoteRepository(it.id, it.url) } ?: emptyList()
       val repositoryManager = ArtifactRepositoryManager(
-        getLocalArtifactRepositoryRoot(context.projectModel.global).toFile(), repositories,
+        getLocalArtifactRepositoryRoot(context.projectModel.global, span).toFile(), repositories,
         ProgressConsumer.DEAF
       )
       for (library in librariesWithMissingSources) {
@@ -184,11 +184,10 @@ private suspend fun downloadMissingLibrarySources(librariesWithMissingSources: L
     }
 }
 
-private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
+private fun getLocalArtifactRepositoryRoot(global: JpsGlobal, span: Span): Path {
   JpsModelSerializationDataService.getPathVariablesConfiguration(global)!!.getUserVariableValue("MAVEN_REPOSITORY")?.let {
     return Path.of(it)
   }
 
-  val root = System.getProperty("user.home", null)
-  return if (root == null) Path.of(".m2/repository") else Path.of(root, ".m2/repository")
+  return getMavenRepositoryPath(span)
 }

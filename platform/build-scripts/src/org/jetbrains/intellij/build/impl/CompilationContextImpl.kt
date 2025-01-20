@@ -25,6 +25,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JpsCompilationData
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
+import org.jetbrains.intellij.build.getMavenRepositoryPath
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
 import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
 import org.jetbrains.intellij.build.impl.compilation.checkCompilationOptions
@@ -67,6 +68,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.pathString
 import kotlin.io.path.relativeToOrNull
 
 @Obsolete
@@ -416,7 +418,9 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
   }
 
   spanBuilder("load project").use(Dispatchers.IO) { span ->
-    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", Path.of(System.getProperty("user.home"), ".m2/repository").invariantSeparatorsPathString)
+    val mavenRepositoryPath = getMavenRepositoryPath(span)
+
+    pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", mavenRepositoryPath.pathString)
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { it: Runnable -> launch(CoroutineName("loading project")) { it.run() } }, false)
     span.setAllAttributes(
