@@ -108,7 +108,8 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
       return myLogData.getMiniDetailsGetter().getCachedDataOrPlaceholder(index);
-    }, withEditorDiffPreview, this);
+    }, this);
+    myChangesBrowser.setShowDiffActionPreview(withEditorDiffPreview ? new VcsLogEditorDiffPreview(myChangesBrowser) : null);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                                            ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {

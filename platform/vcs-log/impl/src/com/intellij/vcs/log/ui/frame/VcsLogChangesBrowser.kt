@@ -66,7 +66,6 @@ import javax.swing.tree.DefaultTreeModel
 class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
                                                            private val uiProperties: VcsLogUiProperties,
                                                            private val dataGetter: (CommitId) -> VcsShortCommitDetails,
-                                                           isWithEditorDiffPreview: Boolean,
                                                            parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
   private val toolbarWrapper: Wrapper
@@ -100,8 +99,6 @@ class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
     }
 
     init()
-
-    showDiffActionPreview = if (isWithEditorDiffPreview) VcsLogEditorDiffPreview(this) else null
 
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
