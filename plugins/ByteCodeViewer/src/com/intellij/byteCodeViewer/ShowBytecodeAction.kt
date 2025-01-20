@@ -38,6 +38,7 @@ internal class ShowBytecodeAction : AnAction() {
                     description = clsFile.presentableUrl
                   }
     toolWindow.contentManager.addContent(content)
+    content.setDisposer(panel)
     toolWindow.contentManager.setSelectedContent(content)
     toolWindow.setAdditionalGearActions(createActionGroup())
     toolWindow.activate(null)
