@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.threadDumpParser;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.diagnostic.EventCountDumper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +32,7 @@ public final class ThreadDumpParser {
   private static final @NonNls String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
   private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at java\\.util\\.TimerThread\\.mainLoop");
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at javax\\.swing\\.TimerQueue\\.run");
-  private static final String AT_JAVA_LANG_OBJECT_WAIT = "at java.lang.Object.wait(";
+  private static final String AT_JAVA_LANG_OBJECT_WAIT = "java.lang.Object.wait(";
   private static final Pattern ourLockedOwnableSynchronizersPattern = Pattern.compile("- <(0x[\\da-f]+)> \\(.*\\)");
 
   private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ContainerUtil.ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
@@ -38,13 +41,74 @@ public final class ThreadDumpParser {
   private ThreadDumpParser() {
   }
 
-  public static @NotNull List<ThreadState> parse(String threadDump) {
+  private record ParsingResult(@NotNull List<ThreadState> threads, @Nullable StringBuilder coroutineDump) {
+  }
+
+  private static @Nullable ParsingResult tryParseAsJson(String threadDump) {
+    var firstCharPos = StringUtil.skipWhitespaceOrNewLineForward(threadDump, 0);
+    if (!threadDump.startsWith("{", firstCharPos)) {
+      return null;
+    }
+
+    JsonNode tree;
+    try {
+      tree = new ObjectMapper().readTree(threadDump);
+    }
+    catch (JsonProcessingException e) {
+      return null;
+    }
+
+    // Try to parse the output of jcmd's Thread.dump_to_file -format=json.
     List<ThreadState> result = new ArrayList<>();
+    var containers = tree.path("threadDump").path("threadContainers");
+    containers.elements().forEachRemaining(container -> {
+      container.path("threads").elements().forEachRemaining(thread -> {
+        var name = thread.path("name").asText();
+        var threadState = new ThreadState(name, "unknown");
+
+        var rawStackTrace = new StringBuilder();
+        thread.path("stack").elements().forEachRemaining(ste -> {
+          var text = ste.asText();
+          if (!text.isEmpty()) {
+            rawStackTrace.append("\n      ");
+            rawStackTrace.append(text);
+          }
+        });
+        var emptyStackTrace = rawStackTrace.isEmpty();
+
+        // No information in JSON dump, so we have some heuristics here: either check stack trace or
+        // check the name which is unlikely to be empty for platform threads in the current implementation.
+        var virtual = !emptyStackTrace && rawStackTrace.indexOf("java.lang.VirtualThread.run(") != -1 ||
+                      emptyStackTrace && name.isEmpty();
+        if (virtual) {
+          threadState.setVirtual(true);
+        }
+
+        var tid = thread.path("tid").asText();
+
+        var stackTrace = new StringBuilder();
+        stackTrace.append("#").append(tid);
+        stackTrace.append(" \"").append(name).append("\"");
+        if (virtual) {
+          stackTrace.append(" virtual");
+        }
+        stackTrace.append(rawStackTrace);
+
+        threadState.setStackTrace(stackTrace.toString(), emptyStackTrace);
+
+        result.add(threadState);
+      });
+    });
+    return new ParsingResult(result, null);
+  }
+
+  private static @NotNull ParsingResult parseAsText(String threadDump) {
+    List<ThreadState> threads = new ArrayList<>();
+    StringBuilder coroutineDump = null;
     StringBuilder lastThreadStack = new StringBuilder();
     ThreadState lastThreadState = null;
     boolean expectingThreadState = false;
     boolean haveNonEmptyStackTrace = false;
-    StringBuilder coroutineDump = null;
     for(@NonNls String line: StringUtil.tokenize(threadDump, "\r\n")) {
       if (EventCountDumper.EVENT_COUNTS_HEADER.equals(line)) {
         break;
@@ -65,7 +129,7 @@ public final class ThreadDumpParser {
           lastThreadState.setStackTrace(lastThreadStack.toString(), !haveNonEmptyStackTrace);
         }
         lastThreadState = state;
-        result.add(lastThreadState);
+        threads.add(lastThreadState);
         lastThreadStack.setLength(0);
         haveNonEmptyStackTrace = false;
         lastThreadStack.append(line).append("\n");
@@ -89,14 +153,24 @@ public final class ThreadDumpParser {
     if (lastThreadState != null) {
       lastThreadState.setStackTrace(lastThreadStack.toString(), !haveNonEmptyStackTrace);
     }
-    for(ThreadState threadState: result) {
+    return new ParsingResult(threads, coroutineDump);
+  }
+
+  public static @NotNull List<ThreadState> parse(String threadDump) {
+    ParsingResult result = tryParseAsJson(threadDump);
+    if (result == null) {
+      result = parseAsText(threadDump);
+    }
+
+    List<ThreadState> threads = result.threads;
+    for(ThreadState threadState: threads) {
       inferThreadStateDetail(threadState);
     }
-    for(ThreadState threadState: result) {
+    for(ThreadState threadState: threads) {
       String lockId = findWaitingForLock(threadState.getStackTrace());
-      ThreadState lockOwner = findLockOwner(result, lockId, true);
+      ThreadState lockOwner = findLockOwner(threads, lockId, true);
       if (lockOwner == null) {
-        lockOwner = findLockOwner(result, lockId, false);
+        lockOwner = findLockOwner(threads, lockId, false);
       }
       if (lockOwner != null) {
         if (threadState.isAwaitedBy(lockOwner)) {
@@ -106,13 +180,16 @@ public final class ThreadDumpParser {
         lockOwner.addWaitingThread(threadState);
       }
     }
-    sortThreads(result);
+    sortThreads(threads);
+
+    StringBuilder coroutineDump = result.coroutineDump;
     if (coroutineDump != null) {
       ThreadState coroutineState = new ThreadState("Coroutine dump", "undefined");
       coroutineState.setStackTrace(coroutineDump.toString(), false);
-      result.add(coroutineState);
+      threads.add(coroutineState);
     }
-    return result;
+
+    return threads;
   }
 
   private static @Nullable ThreadState findLockOwner(List<? extends ThreadState> result, @Nullable String lockId, boolean ignoreWaiting) {
@@ -182,16 +259,16 @@ public final class ThreadDumpParser {
 
   public static void inferThreadStateDetail(final ThreadState threadState) {
     @NonNls String stackTrace = threadState.getStackTrace();
-    if (stackTrace.contains("at java.net.PlainSocketImpl.socketAccept") ||
-        stackTrace.contains("at java.net.PlainDatagramSocketImpl.receive") ||
-        stackTrace.contains("at java.net.SocketInputStream.socketRead") ||
-        stackTrace.contains("at java.net.PlainSocketImpl.socketConnect")) {
+    if (stackTrace.contains("java.net.PlainSocketImpl.socketAccept") ||
+        stackTrace.contains("java.net.PlainDatagramSocketImpl.receive") ||
+        stackTrace.contains("java.net.SocketInputStream.socketRead") ||
+        stackTrace.contains("java.net.PlainSocketImpl.socketConnect")) {
       threadState.setOperation(ThreadOperation.Socket);
     }
-    else if (stackTrace.contains("at java.io.FileInputStream.readBytes")) {
+    else if (stackTrace.contains("java.io.FileInputStream.readBytes")) {
       threadState.setOperation(ThreadOperation.IO);
     }
-    else if (stackTrace.contains("at java.lang.Thread.sleep")) {
+    else if (stackTrace.contains("java.lang.Thread.sleep")) {
       final String javaThreadState = threadState.getJavaThreadState();
       if (!Thread.State.RUNNABLE.name().equals(javaThreadState)) {
         threadState.setThreadStateDetail("sleeping");   // JDK 1.6 sets this explicitly, but JDK 1.5 does not
