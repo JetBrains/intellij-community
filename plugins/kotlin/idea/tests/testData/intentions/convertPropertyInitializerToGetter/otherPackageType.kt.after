@@ -1,4 +1,4 @@
-// K2-AFTER-ERROR: Unresolved reference 'Foo'.
+// K2_AFTER_ERROR: Unresolved reference 'Foo'.
 import foo.Bar
 import foo.Foo
 

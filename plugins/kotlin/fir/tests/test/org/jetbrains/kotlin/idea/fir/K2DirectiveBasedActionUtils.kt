@@ -18,8 +18,8 @@ object K2DirectiveBasedActionUtils {
     const val DISABLE_K2_ERRORS_DIRECTIVE: String = "// DISABLE-K2-ERRORS"
     const val DISABLE_K2_WARNINGS_DIRECTIVE: String = "// DISABLE-K2-WARNINGS"
 
-    const val K2_ERROR_DIRECTIVE: String = "// K2-ERROR:"
-    const val K2_AFTER_ERROR_DIRECTIVE: String = "// K2-AFTER-ERROR:"
+    const val K2_ERROR_DIRECTIVE: String = "// K2_ERROR:"
+    const val K2_AFTER_ERROR_DIRECTIVE: String = "// K2_AFTER_ERROR:"
 
     fun checkForErrorsBefore(mainFile: File, ktFile: KtFile, fileText: String) {
         checkForUnexpected(mainFile, ktFile, fileText, "errors", KaSeverity.ERROR, K2_ERROR_DIRECTIVE, ERROR_DIRECTIVE)

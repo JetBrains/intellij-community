@@ -1,5 +1,5 @@
 // PRIORITY: LOW
-// K2-AFTER-ERROR: Syntax error: Incomplete code.
+// K2_AFTER_ERROR: Syntax error: Incomplete code.
 fun test(n: Int): String {
     return <caret>when (n) {
         is -> "String"

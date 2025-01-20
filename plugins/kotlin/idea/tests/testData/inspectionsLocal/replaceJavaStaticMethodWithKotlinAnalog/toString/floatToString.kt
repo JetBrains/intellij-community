@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// K2-ERROR: Argument type mismatch: actual type is 'Double', but 'Float' was expected.
+// K2_ERROR: Argument type mismatch: actual type is 'Double', but 'Float' was expected.
 // ERROR: The floating-point literal does not conform to the expected type Float
 
 fun foo() {

@@ -1,4 +1,4 @@
-// K2-ERROR: 'when' expression must be exhaustive. Add the 'false' branch or an 'else' branch.
+// K2_ERROR: 'when' expression must be exhaustive. Add the 'false' branch or an 'else' branch.
 // ERROR: 'when' expression must be exhaustive, add necessary 'false' branch or 'else' branch instead
 // PROBLEM: none
 

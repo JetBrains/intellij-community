@@ -2,12 +2,12 @@
 // ERROR: Unresolved reference: Foo
 // ERROR: Unresolved reference: bar
 // AFTER-WARNING: Parameter 'p' is never used
-// K2-ERROR: Missing return statement.
-// K2-ERROR: Unresolved reference 'Foo'.
-// K2-ERROR: Unresolved reference 'bar'.
-// K2-AFTER-ERROR: Missing return statement.
-// K2-AFTER-ERROR: Unresolved reference 'Foo'.
-// K2-AFTER-ERROR: Unresolved reference 'bar'.
+// K2_ERROR: Missing return statement.
+// K2_ERROR: Unresolved reference 'Foo'.
+// K2_ERROR: Unresolved reference 'bar'.
+// K2_AFTER_ERROR: Missing return statement.
+// K2_AFTER_ERROR: Unresolved reference 'Foo'.
+// K2_AFTER_ERROR: Unresolved reference 'bar'.
 
 class Owner {
     fun <caret>f(p: Foo): bar.Baz {

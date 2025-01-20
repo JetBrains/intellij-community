@@ -2,7 +2,7 @@
 // PROBLEM: none
 // COMPILER_ARGUMENTS: -XXLanguage:+BreakContinueInInlineLambdas
 // ERROR: The feature "break continue in inline lambdas" is only available since language version 2.2
-// K2-ERROR:
+// K2_ERROR:
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract

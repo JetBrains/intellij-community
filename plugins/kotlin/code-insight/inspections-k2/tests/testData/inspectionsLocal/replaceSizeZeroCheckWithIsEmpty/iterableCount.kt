@@ -1,5 +1,5 @@
 // PROBLEM: none
-// K2-ERROR: Function invocation 'count()' expected.
+// K2_ERROR: Function invocation 'count()' expected.
 // WITH_STDLIB
 
 fun test(items: Iterable<Int>) {

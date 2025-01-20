@@ -1,6 +1,6 @@
 // AFTER_ERROR: 'readResolve' hides member of supertype 'Super' and needs 'override' modifier
 // AFTER_ERROR: Cannot weaken access privilege 'internal' for 'readResolve' in 'Super'
-// K2-AFTER-ERROR: 'readResolve' hides member of supertype 'Super' and needs an 'override' modifier.
+// K2_AFTER_ERROR: 'readResolve' hides member of supertype 'Super' and needs an 'override' modifier.
 open class Super {
     internal fun readResolve(): Any = Foo
 }

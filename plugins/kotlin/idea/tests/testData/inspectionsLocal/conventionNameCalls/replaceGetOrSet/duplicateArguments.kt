@@ -1,6 +1,6 @@
 // PROBLEM: none
-// K2-ERROR: Argument already passed for this parameter.
-// K2-ERROR: No value passed for parameter 'b'.
+// K2_ERROR: Argument already passed for this parameter.
+// K2_ERROR: No value passed for parameter 'b'.
 // ERROR: An argument is already passed for this parameter
 // ERROR: No value passed for parameter 'b'
 fun test() {

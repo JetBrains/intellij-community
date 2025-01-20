@@ -1,4 +1,4 @@
-// K2-ERROR: Missing return statement.
+// K2_ERROR: Missing return statement.
 fun main(): @Anno <caret>String {}
 
 @Target(AnnotationTarget.TYPE)

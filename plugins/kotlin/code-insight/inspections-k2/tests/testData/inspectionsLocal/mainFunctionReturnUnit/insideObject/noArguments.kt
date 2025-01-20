@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // PROBLEM: none
-// K2-ERROR: Missing return statement.
+// K2_ERROR: Missing return statement.
 
 object Foo {
     @JvmStatic
