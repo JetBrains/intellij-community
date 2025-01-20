@@ -10933,6 +10933,225 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection")
+    public abstract static class ConcatenationToBuildCollection extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis")
+        public static class ExplicitThis extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/extensionFunction.kt");
+            }
+
+            @TestMetadata("extensionProperty.kt")
+            public void testExtensionProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/extensionProperty.kt");
+            }
+
+            @TestMetadata("insdeListInheritor.kt")
+            public void testInsdeListInheritor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/insdeListInheritor.kt");
+            }
+
+            @TestMetadata("insideBuilderOtherName.kt")
+            public void testInsideBuilderOtherName() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/insideBuilderOtherName.kt");
+            }
+
+            @TestMetadata("insideBuilderSameName.kt")
+            public void testInsideBuilderSameName() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/insideBuilderSameName.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis")
+        public static class ImplicitThis extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/extensionFunction.kt");
+            }
+
+            @TestMetadata("extensionProperty.kt")
+            public void testExtensionProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/extensionProperty.kt");
+            }
+
+            @TestMetadata("insdeListInheritor.kt")
+            public void testInsdeListInheritor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/insdeListInheritor.kt");
+            }
+
+            @TestMetadata("insideBuilderOtherName.kt")
+            public void testInsideBuilderOtherName() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/insideBuilderOtherName.kt");
+            }
+
+            @TestMetadata("insideBuilderSameName.kt")
+            public void testInsideBuilderSameName() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/insideBuilderSameName.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable")
+        public static class Inapplicable extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("caretAtCall.kt")
+            public void testCaretAtCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/caretAtCall.kt");
+            }
+
+            @TestMetadata("customList.kt")
+            public void testCustomList() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/customList.kt");
+            }
+
+            @TestMetadata("customOperator.kt")
+            public void testCustomOperator() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/customOperator.kt");
+            }
+
+            @TestMetadata("map.kt")
+            public void testMap() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/map.kt");
+            }
+
+            @TestMetadata("single.kt")
+            public void testSingle() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/single.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list")
+        public static class List extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("complexExpressions.kt")
+            public void testComplexExpressions() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/complexExpressions.kt");
+            }
+
+            @TestMetadata("mapTo.kt")
+            public void testMapTo() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/mapTo.kt");
+            }
+
+            @TestMetadata("mixedSetOfSequenceOf.kt")
+            public void testMixedSetOfSequenceOf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/mixedSetOfSequenceOf.kt");
+            }
+
+            @TestMetadata("multipleListOf.kt")
+            public void testMultipleListOf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/multipleListOf.kt");
+            }
+
+            @TestMetadata("parenthesis.kt")
+            public void testParenthesis() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/parenthesis.kt");
+            }
+
+            @TestMetadata("transformingOperations.kt")
+            public void testTransformingOperations() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/transformingOperations.kt");
+            }
+
+            @TestMetadata("transformingOperationsExplicitTypeArgs.kt")
+            public void testTransformingOperationsExplicitTypeArgs() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/transformingOperationsExplicitTypeArgs.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set")
+        public static class Set extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("complexExpressions.kt")
+            public void testComplexExpressions() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/complexExpressions.kt");
+            }
+
+            @TestMetadata("mapTo.kt")
+            public void testMapTo() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/mapTo.kt");
+            }
+
+            @TestMetadata("mixedSetOfSequenceOf.kt")
+            public void testMixedSetOfSequenceOf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/mixedSetOfSequenceOf.kt");
+            }
+
+            @TestMetadata("multipleSetOf.kt")
+            public void testMultipleSetOf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/multipleSetOf.kt");
+            }
+
+            @TestMetadata("parenthesis.kt")
+            public void testParenthesis() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/parenthesis.kt");
+            }
+
+            @TestMetadata("transformingOperations.kt")
+            public void testTransformingOperations() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/transformingOperations.kt");
+            }
+
+            @TestMetadata("transformingOperationsExplicitTypeArgs.kt")
+            public void testTransformingOperationsExplicitTypeArgs() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/transformingOperationsExplicitTypeArgs.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/moveMemberToTopLevel")
     public static class MoveMemberToTopLevel extends AbstractK2IntentionTest {
         @java.lang.Override

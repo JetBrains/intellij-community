@@ -580,6 +580,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 excludedDirectories = listOf(
                     "convertToMultiDollarString", // K2-only
                     "branched/ifWhen/ifToWhen/whenGuards", // K2-only
+                    "concatenationToBuildCollection", // K2-only
                 )
             )
         }

@@ -197,3 +197,10 @@ fun KtSecondaryConstructor.getOrCreateBody(): KtBlockExpression {
     val newBody = KtPsiFactory(project).createEmptyBody()
     return addAfter(newBody, anchor) as KtBlockExpression
 }
+
+
+fun KtCallExpression.getOrCreateValueArgumentList(): KtValueArgumentList {
+    valueArgumentList?.let { return it }
+    val newList = KtPsiFactory(project).createCallArguments("()")
+    return addAfter(newList, typeArgumentList ?: calleeExpression) as KtValueArgumentList
+}
