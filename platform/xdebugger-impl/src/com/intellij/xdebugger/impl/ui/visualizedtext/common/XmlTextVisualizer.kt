@@ -13,6 +13,7 @@ import com.intellij.xdebugger.ui.VisualizedContentTab
 import org.xml.sax.InputSource
 import java.io.StringReader
 import java.io.StringWriter
+import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
@@ -50,7 +51,7 @@ internal class XmlTextVisualizer : TextValueVisualizer {
 
     return try {
       val src = InputSource(StringReader(value))
-      val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+      val builder = createDocumentBuilder()
       builder.setErrorHandler(null) // suppress printing to stdout errors like "[Fatal Error] :1:1: Content is not allowed in prolog."
       val document = builder.parse(src)
 
@@ -75,4 +76,41 @@ internal class XmlTextVisualizer : TextValueVisualizer {
       // In an ideal world this class would be part of the optional module of the debugger plugin with a dependency on intellij.xml.psi.impl.
       FileTypeManager.getInstance().getStdFileType("XML")
 
+  @Suppress("HttpUrlsUsage")
+  fun createDocumentBuilder(): DocumentBuilder {
+    // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
+    val dbf = DocumentBuilderFactory.newDefaultInstance()
+    return try {
+      // Xerces 1 - http://xerces.apache.org/xerces-j/features.html#external-general-entities
+      // Xerces 2 - http://xerces.apache.org/xerces2-j/features.html#external-general-entities
+      // JDK7+ - http://xml.org/sax/features/external-general-entities
+      //This feature has to be used together with the following one, otherwise it will not protect you from XXE for sure
+      var feature = "http://xml.org/sax/features/external-general-entities"
+      dbf.setFeature(feature, false)
+
+      // Xerces 1 - http://xerces.apache.org/xerces-j/features.html#external-parameter-entities
+      // Xerces 2 - http://xerces.apache.org/xerces2-j/features.html#external-parameter-entities
+      // JDK7+ - http://xml.org/sax/features/external-parameter-entities
+      //This feature has to be used together with the previous one, otherwise it will not protect you from XXE for sure
+      feature = "http://xml.org/sax/features/external-parameter-entities"
+      dbf.setFeature(feature, false)
+
+      // Disable external DTDs as well
+      feature = "http://apache.org/xml/features/nonvalidating/load-external-dtd"
+      dbf.setFeature(feature, false)
+
+      // and these as well, per Timothy Morgan's 2014 paper: "XML Schema, DTD, and Entity Attacks"
+      dbf.isXIncludeAware = false
+      dbf.isExpandEntityReferences = false
+
+      // And, per Timothy Morgan: "If for some reason support for inline DOCTYPE is a requirement, then
+      // ensure the entity settings are disabled (as shown above) and beware that SSRF attacks
+      // (http://cwe.mitre.org/data/definitions/918.html) and denial
+      // of service attacks (such as a billion laughs or decompression bombs via "jar:") are a risk."
+      dbf.newDocumentBuilder()
+    }
+    catch (throwable: Throwable) {
+      throw IllegalStateException("Unable to create DOM parser", throwable)
+    }
+  }
 }

@@ -2,8 +2,13 @@
 package com.intellij.xdebugger.impl.ui.visualizedtext.common
 
 import com.intellij.idea.TestFor
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 
 class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer()) {
+
+  @get:Rule
+  val tempDir = TemporaryFolder()
 
   fun testSomeValidXml() {
     checkPositive(
@@ -60,5 +65,32 @@ class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer(
           </modification>
         </spml:modifyRequest>
       """.trimIndent())
+  }
+
+  @TestFor(issues = ["GO-18010"])
+  fun testXXEVulnerabilityPrevention() {
+    tempDir.create()
+    val secretFile = tempDir.newFile("secret")
+    secretFile.writeText("some secret password")
+    val secretPath = secretFile.absolutePath
+    checkPositive(
+      """
+        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <!DOCTYPE imp [
+          <!ENTITY file SYSTEM "file://$secretPath" >
+        ]><root>
+        <poc>&file;</poc>
+        </root>
+      """.trimIndent(),
+      """
+        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <root>
+            
+            <poc/>
+            
+        </root>
+        
+      """.trimIndent(),
+    )
   }
 }
