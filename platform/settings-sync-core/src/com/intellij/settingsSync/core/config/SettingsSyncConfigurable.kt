@@ -221,7 +221,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           }
           cell()
         }.layout(RowLayout.PARENT_GRID).topGap(TopGap.SMALL)
-          .visibleIf(remoteSettingsExist)
+          .visibleIf(remoteSettingsExist.and(enabledStatus))
 
         row {
           cell(syncConfigPanel)
@@ -266,6 +266,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                   }
                   SettingsSyncSettings.getInstance().syncEnabled = enabledStatus.get()
                 }
+                // clear the flag
+                remoteSettingsExist.set(false)
               }
             }
         }.topGap(TopGap.SMALL)
