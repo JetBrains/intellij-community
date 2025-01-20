@@ -13,8 +13,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import org.jetbrains.annotations.Nls
 
-class InstallAllPackagesQuickFix : LocalQuickFix {
-  var packageNames: List<String> = emptyList()
+class InstallAllPackagesQuickFix(private val packageNames: List<String>) : LocalQuickFix {
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement ?: return
