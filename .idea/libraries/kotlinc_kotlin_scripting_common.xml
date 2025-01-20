@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-scripting-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.2.0-dev-326">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.2.0-dev-326/kotlin-scripting-common-2.2.0-dev-326.jar">
-          <sha256sum>a777f1090bd81bea3b10de75df08ecf80a3aba982b0de0a7f7f3fac364c8b3a7</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-scripting-common">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.2.0-dev-326/kotlin-scripting-common-2.2.0-dev-326.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-scripting-common/2.2.255-dev-255/kotlin-scripting-common-2.2.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.2.0-dev-326/kotlin-scripting-common-2.2.0-dev-326-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-scripting-common/2.2.255-dev-255/kotlin-scripting-common-2.2.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
