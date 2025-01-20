@@ -222,7 +222,7 @@ class InProductNotificationDialog(project: Project?, val days: Int) :
 
   companion object {
     @JvmStatic
-    fun enabled(): Boolean = Registry.`is`("in.product.notification.enabled", true)
+    fun enabled(): Boolean = Registry.`is`("edu.pack.in.product.notification.enabled", true)
   }
 
   init {
