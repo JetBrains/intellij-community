@@ -273,9 +273,12 @@ object KotlinPositionContextDetector {
                 detectForTypeContext(parent, position, reference, nameExpression, explicitReceiver)
             }
 
-            parent is KtCallableReferenceExpression -> {
+            parent is KtCallableReferenceExpression && (parent.receiverExpression as? KtNameReferenceExpression)?.getIdentifier() != position -> {
                 KotlinCallableReferencePositionContext(
-                    position, reference, nameExpression, parent.receiverExpression
+                    position = position,
+                    reference = reference,
+                    nameExpression = nameExpression,
+                    explicitReceiver = parent.receiverExpression,
                 )
             }
 
