@@ -11,6 +11,7 @@ import com.jetbrains.rhizomedb.exists
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Provides the ability to control how tasks are stored in Rhizome DB
@@ -39,6 +40,8 @@ abstract class TaskStorage {
       return withKernel {
         val projectEntity = if (!project.isDefault) project.asEntity() else null
         taskInfoEntity = createTaskInfoEntity {
+          if (projectEntity?.exists() == false) throw CancellationException("Project entity doesn't exist anymore for $project")
+
           TaskInfoEntity.new {
             it[TaskInfoEntity.ProjectEntityType] = projectEntity
             it[TaskInfoEntity.TitleType] = title
