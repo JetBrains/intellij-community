@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
-import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -147,25 +147,24 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
         var frameInfo: FrameInfo? = null
 
         val managerThread = debuggerContext.managerThread
-        if (managerThread != null) {
-            executeOnDMT(managerThread) {
-                try {
-                    val frameProxy = hopelessAware {
-                        if (isUnitTestMode()) {
-                            DebugContextProvider.getDebuggerContext(project, contextElement)?.frameProxy
-                        } else {
-                            debuggerContext.frameProxy
-                        }
+        // Should be invoked now if on DMT
+        managerThread?.invoke(PrioritizedTask.Priority.LOW) {
+            try {
+                val frameProxy = hopelessAware {
+                    if (isUnitTestMode()) {
+                        DebugContextProvider.getDebuggerContext(project, contextElement)?.frameProxy
+                    } else {
+                        debuggerContext.frameProxy
                     }
-
-                    frameInfo = FrameInfo.from(debuggerContext.project, frameProxy)
-                } catch (_: AbsentInformationException) {
-                    // Debug info unavailable
-                } catch (_: InvalidStackFrameException) {
-                    // Thread is resumed, the frame we have is not valid anymore
-                } finally {
-                    semaphore.up()
                 }
+
+                frameInfo = FrameInfo.from(debuggerContext.project, frameProxy)
+            } catch (_: AbsentInformationException) {
+                // Debug info unavailable
+            } catch (_: InvalidStackFrameException) {
+                // Thread is resumed, the frame we have is not valid anymore
+            } finally {
+                semaphore.up()
             }
         }
 
