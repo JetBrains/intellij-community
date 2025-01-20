@@ -19,7 +19,7 @@ class SeTabVm(
   private val tab: SeTab,
   searchPattern: StateFlow<String>,
 ) {
-  val searchResults: StateFlow<Flow<SeItemData>> get() = _searchResults.asStateFlow()
+  val searchResults: StateFlow<Flow<SeListItem>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
   val filterEditor: ObservableOptionEditor<SeFilterData>? = tab.getFilterEditor()
 
@@ -28,7 +28,7 @@ class SeTabVm(
     get() = shouldLoadMoreFlow.value;
     set(value) { shouldLoadMoreFlow.value = value }
 
-  private val _searchResults: MutableStateFlow<Flow<SeItemData>> = MutableStateFlow(emptyFlow())
+  private val _searchResults: MutableStateFlow<Flow<SeListItem>> = MutableStateFlow(emptyFlow())
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
   init {
@@ -41,9 +41,15 @@ class SeTabVm(
         }.mapLatest { (searchPattern, filterData) ->
           val params = SeTextSearchParams(searchPattern, filterData)
 
-          tab.getItems(params).map { item ->
-            shouldLoadMoreFlow.first { it }
-            item
+          flow {
+            tab.getItems(params).map { item ->
+              shouldLoadMoreFlow.first { it }
+              item
+            }.onCompletion {
+              emit(SeListTerminalItem)
+            }.collect {
+              emit(SeListItemData(it))
+            }
           }
         }.collect {
           _searchResults.value = it

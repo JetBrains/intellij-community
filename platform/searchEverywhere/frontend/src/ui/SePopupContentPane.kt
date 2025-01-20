@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.searchEverywhere.frontend.vm.SeListItemData
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -42,13 +43,9 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
     resultList.setCellRenderer(listCellRenderer {
       when (val value = value) {
         is SeResultListItemRow -> text(value.item.presentation.text)
-        is SeResultListMoreRow -> text(IdeBundle.message("search.everywhere.points.more"))
+        is SeResultListMoreRow -> text(IdeBundle.message("search.everywhere.points.loading"))
       }
     })
-
-    resultList.selectionModel.addListSelectionListener {
-      println("ayay $it")
-    }
 
 //    registerSelectItemAction
 
@@ -60,14 +57,21 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
     textField.bindTextIn(vm.searchPattern, vm.coroutineScope)
 
     vm.coroutineScope.launch {
-      vm.searchResults.collectLatest {
+      vm.searchResults.collectLatest { resultsFlow ->
         withContext(Dispatchers.EDT) {
           resultListModel.removeAllElements()
         }
 
-        it.collect {
+        resultsFlow.collect { listItem ->
           withContext(Dispatchers.EDT) {
-            resultListModel.addElement(SeResultListItemRow(it))
+            if (!resultListModel.isEmpty && resultListModel.lastElement() is SeResultListMoreRow) {
+              resultListModel.removeElementAt(resultListModel.size() - 1)
+            }
+
+            (listItem as? SeListItemData)?.let { it ->
+              resultListModel.addElement(SeResultListItemRow(it.value))
+              resultListModel.addElement(SeResultListMoreRow)
+            }
           }
         }
       }
@@ -165,7 +169,6 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
     //stopSearching();
 
     if (indexes.size == 1 && resultListModel[indexes[0]] is SeResultListMoreRow) {
-      showMoreElements();
       return;
     }
 
@@ -188,10 +191,6 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
         resultList.repaint()
       }
     }
-  }
-
-  private fun showMoreElements() {
-    TODO()
   }
 
   private fun closePopup() {
