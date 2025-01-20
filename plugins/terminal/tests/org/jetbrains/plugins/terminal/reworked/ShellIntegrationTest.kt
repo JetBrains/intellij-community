@@ -182,12 +182,12 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, childScope("TerminalSession"), size)
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()
-      val promptFinishedEventDeferred = CompletableDeferred(false)
+      val promptFinishedEventDeferred = CompletableDeferred<Unit>(null)
       launch {
         for (events in session.outputChannel) {
           outputEvents.addAll(events)
           if (events.any { it is TerminalPromptFinishedEvent }) {
-            promptFinishedEventDeferred.complete(true)
+            promptFinishedEventDeferred.complete(Unit)
           }
         }
       }
