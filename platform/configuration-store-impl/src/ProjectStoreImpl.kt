@@ -162,7 +162,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
 
     if (!isUnitTestMode) {
-      val productWorkspaceFile = PathManager.getConfigDir().resolve("workspace/$projectWorkspaceId.xml")
+      val productWorkspaceFile = PathManager.getOriginalConfigDir().resolve("workspace/$projectWorkspaceId.xml")
       macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
       storageManager.setMacros(macros)
     }
