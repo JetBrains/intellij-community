@@ -59,9 +59,9 @@ internal data class SdkRootsDescription(val sdk: SdkEntity,
     return forSdkEntity(sdk.symbolicId, roots)
   }
 
-  fun createIterators(storage: EntityStorage): Collection<IndexableFilesIterator> {
-    val sdk = storage.sdkMap.getDataByEntity(sdk) ?: return emptyList()
-    return listOf(SdkIndexableFilesIteratorImpl.createIterator(sdk))
+  fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
+    val sdk = storage.sdkMap.getDataByEntity(sdk) ?: return null
+    return SdkIndexableFilesIteratorImpl.createIterator(sdk)
   }
 }
 
@@ -342,7 +342,7 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
         }
         is SdkRootsDescription -> {
           if (moduleDependencyIndex.hasDependencyOn(description.sdk.symbolicId)) {
-            description.createIterators(storage).forEach { iterator ->
+            description.createIterator(storage)?.let { iterator ->
               if (sdkOriginsToFilterDuplicates.add(iterator.origin)) {
                 externalIterators.add(iterator)
               }
