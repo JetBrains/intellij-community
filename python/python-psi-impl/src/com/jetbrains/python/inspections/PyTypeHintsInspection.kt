@@ -88,7 +88,9 @@ class PyTypeHintsInspection : PyInspection() {
 
       checkInstanceAndClassChecks(node)
 
-      if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) {
+      if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext) &&
+          !isInsideTypingAnnotatedMetadata(node)
+      ) {
         checkParenthesesOnGenerics(node)
       }
     }
@@ -686,9 +688,6 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkParenthesesOnGenerics(call: PyCallExpression) {
       val callee = call.callee
       if (callee is PyReferenceExpression) {
-        // Bail out if we're inside an Annotated[...] expression, and we're not the first argument
-        if (isInsideTypingAnnotatedMetadata(call)) return
-
         if (PyResolveUtil.resolveImportedElementQNameLocally(callee).any { PyTypingTypeProvider.GENERIC_CLASSES.contains(it.toString()) }) {
           registerProblem(call,
                           PyPsiBundle.message("INSP.type.hints.generics.should.be.specified.through.square.brackets"),
