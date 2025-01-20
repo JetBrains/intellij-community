@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.remote.Window
@@ -59,6 +60,12 @@ open class DialogUiComponent(data: ComponentData) : UiComponent(data) {
   fun setBounds(bounds: Rectangle) = windowComponent.setBounds(bounds.x, bounds.y, bounds.width, bounds.height)
 
   fun pressButton(text: String) = x("//div[@class='JButton' and @visible_text='$text']").click()
+
+  fun closeDialog() {
+    driver.withContext(OnDispatcher.EDT) {
+      windowComponent.dispose()
+    }
+  }
 }
 
 class FileChooserDialogUi(data: ComponentData) : DialogUiComponent(data) {
