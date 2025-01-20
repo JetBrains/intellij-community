@@ -4,18 +4,18 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/configuration-store-impl/src/ProjectStoreBridge.kt b/platform/configuration-store-impl/src/ProjectStoreBridge.kt
---- a/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(revision 7a36c2274a1ca4f8a2fd516ab254510dc174324a)
-+++ b/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(date 1654073872041)
-@@ -200,7 +200,7 @@
+--- a/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(revision f6a9881a92d5d27ffbfd5409c59c240a84e1d3cf)
++++ b/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(date 1737378000801)
+@@ -430,7 +430,7 @@
    val fileName = PathUtil.getFileName(filePath)
    val parentPath = PathUtil.getParentPath(filePath)
    val parentFileName = PathUtil.getFileName(parentPath)
--  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == ".idea") {
+-  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == Project.DIRECTORY_STORE_FOLDER) {
 +  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == ".mps") {
      collapsedPath = "\$PROJECT_FILE$"
      splitterClass = StateSplitterEx::class.java
    }
-@@ -229,7 +229,7 @@
+@@ -459,7 +459,7 @@
            }
          }
          if (StreamProviderFactory.EP_NAME.hasAnyExtensions(project)) {
