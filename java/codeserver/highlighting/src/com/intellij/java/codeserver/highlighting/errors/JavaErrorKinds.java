@@ -614,6 +614,21 @@ public final class JavaErrorKinds {
   public static final Simple<PsiLiteralValue> LITERAL_TEXT_BLOCK_NO_NEW_LINE = 
     error(PsiLiteralValue.class, "literal.text.block.no.new.line").withRange(e -> TextRange.create(0, 3));
   
+  public static final Parameterized<PsiKeyword, String> MODIFIER_NOT_ALLOWED = 
+    parameterized(PsiKeyword.class, String.class, "modifier.not.allowed")
+    .withRawDescription((keyword, text) -> message("modifier.not.allowed", text));
+  public static final Parameterized<PsiKeyword, String> MODIFIER_REPEATED = 
+    parameterized(PsiKeyword.class, String.class, "modifier.repeated")
+    .withRawDescription((keyword, text) -> message("modifier.repeated", text));
+  public static final Parameterized<PsiKeyword, String> MODIFIER_INCOMPATIBLE = 
+    parameterized(PsiKeyword.class, String.class, "modifier.incompatible")
+    .withRawDescription((keyword, text) -> message("modifier.incompatible", keyword.getText(), text));
+  public static final Parameterized<PsiKeyword, String> MODIFIER_NOT_ALLOWED_LOCAL_CLASS = 
+    parameterized(PsiKeyword.class, String.class, "modifier.not.allowed.local.class")
+    .withRawDescription((keyword, text) -> message("modifier.not.allowed.local.class", text));
+  public static final Parameterized<PsiKeyword, String> MODIFIER_NOT_ALLOWED_NON_SEALED = 
+    parameterized(PsiKeyword.class, String.class, "modifier.not.allowed.non.sealed");
+  
   public static final Simple<PsiMethodCallExpression> CALL_SUPER_ENUM_CONSTRUCTOR = error("call.super.enum.constructor");
   public static final Parameterized<PsiExpression, PsiClass> CALL_SUPER_QUALIFIER_NOT_INNER_CLASS = 
     parameterized(PsiExpression.class, PsiClass.class, "call.super.qualifier.not.inner.class")

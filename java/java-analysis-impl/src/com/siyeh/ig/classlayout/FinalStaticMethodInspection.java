@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.JavaPsiModifierUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -58,7 +58,7 @@ public final class FinalStaticMethodInspection extends BaseInspection {
           || !method.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      if (!HighlightUtil.isLegalModifierCombination(method.getModifierList())) {
+      if (!JavaPsiModifierUtil.isLegalModifierCombination(method.getModifierList())) {
         return;
       }
       registerModifierError(PsiModifier.FINAL, method, PsiModifier.FINAL);

@@ -36,7 +36,7 @@ public final class HighlightClassUtil {
     if (result == null || aClass == null) return;
     if (aClass.getContainingClass() != null) {
       PsiModifierList modifierList = aClass.getModifierList();
-      if (modifierList != null && HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, modifierList) == null) {
+      if (modifierList != null && JavaPsiModifierUtil.getIncompatibleModifier(PsiModifier.STATIC, modifierList) == null) {
         IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.STATIC, true, false);
         result.registerFix(action, null, null, null, null);
       }

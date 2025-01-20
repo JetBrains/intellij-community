@@ -45,6 +45,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
+  private final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private final @NotNull StatementChecker myStatementChecker = new StatementChecker(this);
   private final @NotNull LiteralChecker myLiteralChecker = new LiteralChecker(this);
@@ -364,6 +365,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitKeyword(keyword);
     if (!hasErrorResults()) myClassChecker.checkStaticDeclarationInInnerClass(keyword);
     if (!hasErrorResults()) myExpressionChecker.checkIllegalVoidType(keyword);
+    PsiElement parent = keyword.getParent();
+    if (parent instanceof PsiModifierList psiModifierList) {
+      if (!hasErrorResults()) myModifierChecker.checkNotAllowedModifier(keyword, psiModifierList);
+      if (!hasErrorResults()) myModifierChecker.checkIllegalModifierCombination(keyword, psiModifierList);
+    }
   }
 
   @Override

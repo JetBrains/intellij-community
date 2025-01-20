@@ -760,8 +760,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement parent = keyword.getParent();
     String text = keyword.getText();
     if (parent instanceof PsiModifierList psiModifierList) {
-      if (!hasErrorResults()) add(HighlightUtil.checkNotAllowedModifier(keyword, psiModifierList));
-      if (!hasErrorResults()) add(HighlightUtil.checkIllegalModifierCombination(keyword, psiModifierList));
       PsiElement pParent = psiModifierList.getParent();
       if (PsiModifier.ABSTRACT.equals(text) && pParent instanceof PsiMethod psiMethod) {
         if (!hasErrorResults()) {

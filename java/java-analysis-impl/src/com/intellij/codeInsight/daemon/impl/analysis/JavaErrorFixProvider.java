@@ -25,6 +25,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightRecordMethod;
+import com.intellij.psi.util.JavaPsiModifierUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -81,6 +82,7 @@ final class JavaErrorFixProvider {
       fix(kind, genericRemover);
     }
     
+    createModifierFixes();
     createClassFixes();
     createConstructorFixes();
     createMethodFixes();
@@ -95,6 +97,27 @@ final class JavaErrorFixProvider {
 
   public static JavaErrorFixProvider getInstance() {
     return ApplicationManager.getApplication().getService(JavaErrorFixProvider.class);
+  }
+
+  private void createModifierFixes() {
+    fix(MODIFIER_NOT_ALLOWED, error -> {
+      @SuppressWarnings("MagicConstant") @PsiModifier.ModifierConstant String modifier = error.context();
+      PsiModifierList list = (PsiModifierList)error.psi().getParent();
+      if (list.getParent() instanceof PsiClass aClass && !aClass.isInterface() 
+          && (PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier))) {
+        return myFactory.createChangeModifierFix();
+      }
+      return removeModifierFix((PsiModifierListOwner)list.getParent(), modifier);
+    });
+    JavaFixProvider<PsiKeyword, Object> removeModifier = error -> {
+      @SuppressWarnings("MagicConstant") @PsiModifier.ModifierConstant String modifier = error.psi().getText();
+      PsiModifierList list = (PsiModifierList)error.psi().getParent();
+      return removeModifierFix((PsiModifierListOwner)list.getParent(), modifier);
+    };
+    fix(MODIFIER_NOT_ALLOWED_LOCAL_CLASS, removeModifier);
+    fix(MODIFIER_REPEATED, removeModifier);
+    fix(MODIFIER_INCOMPATIBLE, removeModifier);
+    fix(MODIFIER_NOT_ALLOWED_NON_SEALED, removeModifier);
   }
 
   private void createMethodFixes() {
@@ -563,7 +586,7 @@ final class JavaErrorFixProvider {
 
   private @Nullable IntentionAction maybeAddModifierFix(@NotNull PsiModifierListOwner owner, @PsiModifier.ModifierConstant String modifier) {
     PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList != null && HighlightUtil.getIncompatibleModifier(modifier, modifierList) != null) return null;
+    if (modifierList != null && JavaPsiModifierUtil.getIncompatibleModifier(modifier, modifierList) != null) return null;
     return addModifierFix(owner, modifier);
   }
 
