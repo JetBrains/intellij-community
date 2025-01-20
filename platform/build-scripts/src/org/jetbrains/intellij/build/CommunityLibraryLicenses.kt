@@ -986,7 +986,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/package-search-api-models/blob/master/LICENSE")
       .suppliedByOrganizations("JetBrains Team"),
 
-    LibraryLicense("pip", version = "24.3.1", attachedTo = "intellij.python", url = "https://pip.pypa.io/")
+    LibraryLicense("pip", version = "20.3.4", attachedTo = "intellij.python", url = "https://pip.pypa.io/")
       .mit("https://github.com/pypa/pip/blob/main/LICENSE.txt"),
 
     LibraryLicense("plexus-archiver", libraryName = "plexus-archiver", url = "https://github.com/codehaus-plexus/plexus-archiver")
