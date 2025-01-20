@@ -171,6 +171,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
       @Override
       public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+        if (settings.isTemporary() && myState.excludedNewTypes.contains(settings.getType().getId())) {
+          // Always include newly added temporary configurations.
+          myShownConfigurations.add(settings.getConfiguration());
+        }
         if (!myUpdateStarted) {
           syncConfigurations();
           updateDashboardIfNeeded(settings);
