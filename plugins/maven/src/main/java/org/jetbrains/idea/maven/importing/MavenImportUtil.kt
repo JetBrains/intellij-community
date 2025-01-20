@@ -411,9 +411,9 @@ object MavenImportUtil {
 
   private fun MavenProject.getCompilerLevel(forTests: Boolean, level: String): String? {
     val configs = if (forTests) testCompilerConfigs else compilerConfigs
-    val fallbackPropertySuffix = if (forTests) "test${level.replaceFirstChar { it.titlecase() }}" else level
-    val fallbackProperty = "maven.compiler.$fallbackPropertySuffix"
-    val levels = configs.mapNotNull { LanguageLevel.parse(findChildValueByPath(it, level)) }
+    val finalLevel = if (forTests) "test${level.replaceFirstChar { it.titlecase() }}" else level
+    val fallbackProperty = "maven.compiler.$finalLevel"
+    val levels = configs.mapNotNull { LanguageLevel.parse(findChildValueByPath(it, finalLevel)) }
     val maxLevel = levels.maxWithOrNull(Comparator.naturalOrder())?.toJavaVersion()?.toFeatureString()
     return maxLevel ?: properties.getProperty(fallbackProperty)
   }
