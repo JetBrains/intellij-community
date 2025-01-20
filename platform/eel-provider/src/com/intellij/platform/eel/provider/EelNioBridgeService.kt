@@ -86,7 +86,7 @@ fun EelPath.asNioPathOrNull(): Path? {
 @Throws(IllegalArgumentException::class)
 fun Path.asEelPath(): EelPath {
   if (fileSystem != FileSystems.getDefault()) {
-    return throw IllegalArgumentException("Could not convert $this to EelPath: the path does not belong to the default NIO FileSystem")
+    throw IllegalArgumentException("Could not convert $this to EelPath: the path does not belong to the default NIO FileSystem")
   }
   val service = EelNioBridgeService.getInstanceSync()
   val descriptor = service.tryGetEelDescriptor(this) ?: return EelPath.parse(toString(), LocalEelDescriptor)
