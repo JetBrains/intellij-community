@@ -42,6 +42,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.Volatile
+import kotlin.time.measureTimedValue
 
 class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService() {
   private var builtinBundlesDisabled = false
@@ -246,14 +247,22 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     extensionMapping: MutableMap<TextMateFileNameMatcher, CharSequence>,
     syntaxTableBuilder: TextMateSyntaxTableBuilder,
   ): Boolean {
-    val reader = readBundle(directory)
-    if (reader != null) {
-      registerLanguageSupport(reader, extensionMapping, syntaxTableBuilder)
-      registerPreferences(reader)
-      registerSnippets(reader)
-      return true
+    val (result, duration) = measureTimedValue {
+      val reader = readBundle(directory)
+      if (reader != null) {
+        registerLanguageSupport(reader, extensionMapping, syntaxTableBuilder)
+        registerPreferences(reader)
+        registerSnippets(reader)
+        true
+      }
+      else {
+        false
+      }
     }
-    return false
+    if (result) {
+      LOG.debug("Bundle from `$directory` loaded in $duration")
+    }
+    return result
   }
 
   private fun registerSnippets(reader: TextMateBundleReader) {
