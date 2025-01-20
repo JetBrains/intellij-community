@@ -8,7 +8,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="rpc-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="fleet.util.logging.api" />
     <orderEntry type="module" module-name="fleet.rpc" exported="" />

@@ -38,7 +38,6 @@
     <orderEntry type="module" module-name="fleet.rhizomedb" exported="" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="rhizomedb-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="fleet.util.core" exported="" />
     <orderEntry type="module" module-name="fleet.rpc" exported="" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />

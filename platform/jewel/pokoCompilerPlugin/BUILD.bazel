@@ -1,9 +1,0 @@
-### auto-generated section `build intellij.platform.jewel.pokoCompilerPlugin` start
-load("@rules_java//java:defs.bzl", "java_library")
-
-java_library(
-  name = "pokoCompilerPlugin",
-  visibility = ["//visibility:public"],
-  runtime_deps = ["@lib//:poko-compiler-plugin"]
-)
-### auto-generated section `build intellij.platform.jewel.pokoCompilerPlugin` end
