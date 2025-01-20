@@ -43,16 +43,19 @@ internal open class CallableImportCandidatesProvider(
                 yieldAll(indexProvider.getKotlinCallableSymbolsByName(unresolvedName) { declaration ->
                     // filter out extensions here, because they are added later with the use of information about receiver types
                     acceptsKotlinCallable(declaration) && !declaration.isExtensionDeclaration()
-                }.map { CallableImportCandidate(it) })
+                }.map { CallableImportCandidate.create(it) })
 
-                yieldAll(indexProvider.getJavaMethodsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate(it) })
-                yieldAll(indexProvider.getJavaFieldsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate(it) })
+                yieldAll(indexProvider.getJavaMethodsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate.create(it) })
+                yieldAll(indexProvider.getJavaFieldsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate.create(it) })
             }
 
             when (val context = positionContext) {
                 is KotlinSimpleNameReferencePositionContext -> {
                     val receiverTypes = collectReceiverTypesForElement(context.nameExpression, context.explicitReceiver)
-                    yieldAll(indexProvider.getExtensionCallableSymbolsByName(unresolvedName, receiverTypes) { acceptsKotlinCallable(it) }.map { CallableImportCandidate(it) })
+                    yieldAll(
+                        indexProvider.getExtensionCallableSymbolsByName(unresolvedName, receiverTypes) { acceptsKotlinCallable(it) }
+                            .map { CallableImportCandidate.create(it) }
+                    )
                 }
 
                 else -> {}
@@ -102,7 +105,7 @@ internal class DelegateMethodImportCandidatesProvider(
             name = functionName,
             receiverTypes = listOf(expressionType),
         ) { acceptsKotlinCallable(it) }
-            .map { CallableImportCandidate(it) }
+            .map { CallableImportCandidate.create(it) }
             .filter { acceptsCallableCandidate(it) }
             .toList()
     }

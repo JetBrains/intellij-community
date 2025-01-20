@@ -28,7 +28,11 @@ internal abstract class AbstractImportCandidatesProvider(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    protected fun ImportCandidate.isVisible(fileSymbol: KaFileSymbol): Boolean = symbol.isVisible(fileSymbol)
+    protected fun ImportCandidate.isVisible(fileSymbol: KaFileSymbol): Boolean = 
+        when (this) {
+            is CallableImportCandidate -> symbol.isVisible(fileSymbol) && dispatcherObject?.isVisible(fileSymbol) != false
+            is ClassLikeImportCandidate -> symbol.isVisible(fileSymbol)
+        }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)

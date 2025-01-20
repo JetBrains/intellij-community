@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.withClassId
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
 
 internal sealed interface ImportCandidate {
@@ -19,7 +20,24 @@ internal sealed interface ImportCandidate {
 
 internal data class ClassLikeImportCandidate(override val symbol: KaClassLikeSymbol): ImportCandidate
 
-internal data class CallableImportCandidate(override val symbol: KaCallableSymbol): ImportCandidate
+@ConsistentCopyVisibility
+internal data class CallableImportCandidate private constructor(
+    override val symbol: KaCallableSymbol,
+    val dispatcherObject: KaClassSymbol?,
+) : ImportCandidate {
+    companion object {
+        context(KaSession)
+        fun create(
+            symbol: KaCallableSymbol,
+            dispatcherObject: KaClassSymbol? = null,
+        ): CallableImportCandidate {
+            return CallableImportCandidate(
+                symbol, 
+                dispatcherObject?.takeUnless { it == symbol.containingSymbol },
+            )
+        }
+    }
+}
 
 internal val ImportCandidate.name: Name
     get() = (symbol as KaNamedSymbol).name
@@ -41,10 +59,27 @@ internal val ClassLikeImportCandidate.classId: ClassId?
     get() = symbol.classId
 
 internal val CallableImportCandidate.callableId: CallableId?
-    get() = symbol.callableId
-        
+    get() {
+        val originalId = symbol.callableId
+
+        val dispatchObjectId = dispatcherObject?.classId
+
+        return if (dispatchObjectId != null) {
+            originalId?.withClassId(dispatchObjectId)
+        } else {
+            originalId
+        }
+    }
+
 internal val ImportCandidate.psi: PsiElement?
-    get() = symbol.psi
+    get() = when (this) {
+        is CallableImportCandidate -> {
+            // An existing PSI is really important for the auto-import candidate selection popup. 
+            // So, even if there is a dispatcher object, we still return the PSI of the original method.
+            symbol.psi
+        }
+        is ClassLikeImportCandidate -> symbol.psi
+    }
 
 context(KaSession)
 @KaExperimentalApi
@@ -57,4 +92,5 @@ internal val CallableImportCandidate.receiverType: KaType?
 
 context(KaSession)
 internal val CallableImportCandidate.containingClass: KaClassSymbol?
-    get() = symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
+    get() = dispatcherObject
+        ?: symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
