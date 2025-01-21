@@ -14,33 +14,21 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 
 public final class CleanupTempDirectoryExtension implements PreloadedDataExtension {
-  private Future<Void> task;
+  private Future<?> myTask;
   
   @Override
   public void preloadData(@NotNull PreloadedData data) {
     ProjectDescriptor projectDescriptor = data.getProjectDescriptor();
     if (projectDescriptor != null) {
-      task = startTempDirectoryCleanupTask(projectDescriptor);
+      myTask = startTempDirectoryCleanupTask(projectDescriptor);
     }
-  }
-
-  public static @Nullable CleanupTempDirectoryExtension getInstance() {
-    for (PreloadedDataExtension extension : JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class)) {
-      if (extension instanceof CleanupTempDirectoryExtension) {
-        return (CleanupTempDirectoryExtension)extension;
-      }
-    }
-    return null;
-  }
-  
-  public @Nullable Future<Void> getCleanupTask() {
-    return task;
   }
 
   @Override
@@ -51,15 +39,39 @@ public final class CleanupTempDirectoryExtension implements PreloadedDataExtensi
   public void discardPreloadedData(PreloadedData data) {
   }
 
-  static @Nullable Future<Void> startTempDirectoryCleanupTask(@NotNull ProjectDescriptor projectDescriptor) {
+  public static @Nullable CleanupTempDirectoryExtension getInstance() {
+    for (PreloadedDataExtension extension : JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class)) {
+      if (extension instanceof CleanupTempDirectoryExtension) {
+        return (CleanupTempDirectoryExtension)extension;
+      }
+    }
+    return null;
+  }
+
+  public Future<?> getCleanupTask() {
+    return myTask;
+  }
+
+  static @NotNull Collection<Future<?>> getRunningCleanupTasks() {
+    List<Future<?>> tasks = new ArrayList<>();
+    for (PreloadedDataExtension extension : JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class)) {
+      Future<?> task = extension instanceof CleanupTempDirectoryExtension? ((CleanupTempDirectoryExtension)extension).getCleanupTask() : null;
+      if (task != null) {
+        tasks.add(task);
+      }
+    }
+    return tasks;
+  }
+
+  static @Nullable Future<?> startTempDirectoryCleanupTask(@NotNull ProjectDescriptor pd) {
     String tempPath = System.getProperty("java.io.tmpdir", null);
     if (tempPath == null || tempPath.isBlank()) {
       return null;
     }
 
     Path tempDir = Path.of(tempPath).toAbsolutePath().normalize();
-    Path dataRoot = projectDescriptor.dataManager.getDataPaths().getDataStorageDir();
-    if (!tempDir.startsWith(dataRoot)) {
+    Path dataRoot = pd.dataManager.getDataPaths().getDataStorageDir();
+    if (!tempDir.startsWith(dataRoot) || tempDir.equals(dataRoot)) {
       // cleanup only 'local' temp
       return null;
     }
@@ -71,7 +83,13 @@ public final class CleanupTempDirectoryExtension implements PreloadedDataExtensi
         files.add(path);
       }
     }
-    catch (IOException ignored) {
+    catch (IOException ex) {
+      try {
+        // ensure temp dir exists
+        Files.createDirectories(tempDir);
+      }
+      catch (IOException ignored) {
+      }
       return null;
     }
 
