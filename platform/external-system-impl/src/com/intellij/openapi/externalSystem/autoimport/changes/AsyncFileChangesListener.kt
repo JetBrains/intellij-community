@@ -16,22 +16,22 @@ import java.util.concurrent.ConcurrentHashMap
  * Call sequences of [changesListener]'s functions will be skipped if change events didn't happen in watched files.
  */
 @ApiStatus.Internal
-class AsyncFilesChangesListener(
+class AsyncFileChangesListener(
   private val filesProvider: AsyncSupplier<Set<String>>,
   private val changesListener: FilesChangesListener,
-  private val parentDisposable: Disposable
-) : FilesChangesListener {
+  private val parentDisposable: Disposable,
+) {
   private val updatedFiles = ConcurrentHashMap<String, ModificationData>()
 
-  override fun init() {
+  fun init() {
     updatedFiles.clear()
   }
 
-  override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
+  fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
     updatedFiles[path] = ModificationData(modificationStamp, modificationType)
   }
 
-  override fun apply() {
+  fun apply() {
     val updatedFilesSnapshot = HashMap(updatedFiles)
     filesProvider.supply(parentDisposable) { filesToWatch ->
       val index = CanonicalPathPrefixTreeFactory.createSet(filesToWatch)
@@ -70,10 +70,9 @@ class AsyncFilesChangesListener(
       listener: FilesChangesListener,
       parentDisposable: Disposable
     ) {
-      val changesProvider = VirtualFilesChangesProvider(isIgnoreInternalChanges)
-      installAsyncVirtualFileListener(changesProvider, parentDisposable)
-      val asyncListener = AsyncFilesChangesListener(filesProvider, listener, parentDisposable)
-      changesProvider.subscribe(asyncListener, parentDisposable)
+      val fileListener = AsyncFileChangesListener(filesProvider, listener, parentDisposable)
+      val virtualFileListener = AsyncVirtualFilesChangesListener(isIgnoreInternalChanges, fileListener)
+      installAsyncVirtualFileListener(virtualFileListener, parentDisposable)
     }
 
     @JvmStatic
@@ -83,11 +82,9 @@ class AsyncFilesChangesListener(
       listener: FilesChangesListener,
       parentDisposable: Disposable
     ) {
-      val changesProvider = DocumentsChangesProvider(isIgnoreExternalChanges)
-      val eventMulticaster = EditorFactory.getInstance().eventMulticaster
-      eventMulticaster.addDocumentListener(changesProvider, parentDisposable)
-      val asyncListener = AsyncFilesChangesListener(filesProvider, listener, parentDisposable)
-      changesProvider.subscribe(asyncListener, parentDisposable)
+      val fileListener = AsyncFileChangesListener(filesProvider, listener, parentDisposable)
+      val documentListener = AsyncDocumentChangesListener(isIgnoreExternalChanges, fileListener)
+      EditorFactory.getInstance().eventMulticaster.addDocumentListener(documentListener, parentDisposable)
     }
   }
 }

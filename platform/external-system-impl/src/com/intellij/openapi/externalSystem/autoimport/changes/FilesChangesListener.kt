@@ -12,7 +12,8 @@ import java.util.*
  * but threads may be different for different call sequences.
  */
 @ApiStatus.Internal
-interface FilesChangesListener : EventListener {
+interface FilesChangesListener {
+
   fun init() {}
 
   fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {}

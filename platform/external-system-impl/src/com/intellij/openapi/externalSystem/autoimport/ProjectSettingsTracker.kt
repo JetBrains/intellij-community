@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalModify
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Revert
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Synchronize
-import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
+import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFileChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier

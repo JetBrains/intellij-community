@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.project.auto.reload
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
-import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnVirtualFilesChanges
+import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFileChangesListener.Companion.subscribeOnVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.util.io.toCanonicalPath

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport.changes
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -13,16 +12,13 @@ import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.psi.ExternalChangeAction
-import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class DocumentsChangesProvider(private val isIgnoreExternalChanges: Boolean) : FilesChangesProvider, DocumentListener {
-  private val eventDispatcher = EventDispatcher.create(FilesChangesListener::class.java)
-
-  override fun subscribe(listener: FilesChangesListener, parentDisposable: Disposable) {
-    eventDispatcher.addListener(listener, parentDisposable)
-  }
+class AsyncDocumentChangesListener(
+  private val isIgnoreExternalChanges: Boolean,
+  private val listener: AsyncFileChangesListener,
+) : DocumentListener {
 
   private val bulkUpdateOperation = AtomicOperationTrace(name = "Bulk document update operation")
 
@@ -36,12 +32,12 @@ class DocumentsChangesProvider(private val isIgnoreExternalChanges: Boolean) : F
     val file = fileDocumentManager.getFile(document) ?: return
     when (bulkUpdateOperation.isOperationInProgress()) {
       true -> {
-        eventDispatcher.multicaster.onFileChange(file.path, document.modificationStamp, INTERNAL)
+        listener.onFileChange(file.path, document.modificationStamp, INTERNAL)
       }
       else -> {
-        eventDispatcher.multicaster.init()
-        eventDispatcher.multicaster.onFileChange(file.path, document.modificationStamp, INTERNAL)
-        eventDispatcher.multicaster.apply()
+        listener.init()
+        listener.onFileChange(file.path, document.modificationStamp, INTERNAL)
+        listener.apply()
       }
     }
   }
@@ -55,7 +51,7 @@ class DocumentsChangesProvider(private val isIgnoreExternalChanges: Boolean) : F
   }
 
   init {
-    bulkUpdateOperation.whenOperationStarted { eventDispatcher.multicaster.init() }
-    bulkUpdateOperation.whenOperationFinished { eventDispatcher.multicaster.apply() }
+    bulkUpdateOperation.whenOperationStarted { listener.init() }
+    bulkUpdateOperation.whenOperationFinished { listener.apply() }
   }
 }
