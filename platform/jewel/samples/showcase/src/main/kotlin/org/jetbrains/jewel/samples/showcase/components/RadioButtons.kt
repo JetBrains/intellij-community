@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -13,7 +13,7 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 
 @Composable
-fun RadioButtons() {
+public fun RadioButtons() {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         var index by remember { mutableStateOf(0) }
         RadioButtonRow(text = "Default", selected = index == 0, onClick = { index = 0 })
