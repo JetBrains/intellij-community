@@ -57,8 +57,7 @@ interface InlineCompletionElementManipulator {
   }
 }
 
-@ApiStatus.Internal
-class InlineCompletionGrayTextElementManipulator : InlineCompletionElementManipulator {
+internal class InlineCompletionGrayTextElementManipulator : InlineCompletionElementManipulator {
   override fun isApplicable(element: InlineCompletionElement): Boolean {
     return element is InlineCompletionGrayTextElement
   }
@@ -72,8 +71,7 @@ class InlineCompletionGrayTextElementManipulator : InlineCompletionElementManipu
   }
 }
 
-@ApiStatus.Internal
-class InlineCompletionColorTextElementManipulator : InlineCompletionElementManipulator {
+internal class InlineCompletionColorTextElementManipulator : InlineCompletionElementManipulator {
   override fun isApplicable(element: InlineCompletionElement): Boolean {
     return element is InlineCompletionColorTextElement && element !is InlineCompletionGrayTextElement
   }
@@ -87,8 +85,7 @@ class InlineCompletionColorTextElementManipulator : InlineCompletionElementManip
   }
 }
 
-@ApiStatus.Internal
-class InlineCompletionTextElementManipulator : InlineCompletionElementManipulator {
+internal class InlineCompletionTextElementManipulator : InlineCompletionElementManipulator {
   override fun isApplicable(element: InlineCompletionElement): Boolean {
     return element is InlineCompletionTextElement && element !is InlineCompletionColorTextElement
   }
@@ -99,5 +96,19 @@ class InlineCompletionTextElementManipulator : InlineCompletionElementManipulato
       return null
     }
     return InlineCompletionTextElement(element.text.substring(startOffset, endOffset), element.getAttributes)
+  }
+}
+
+internal class InlineCompletionSkipTextElementManipulator : InlineCompletionElementManipulator {
+  override fun isApplicable(element: InlineCompletionElement): Boolean {
+    return element is InlineCompletionSkipTextElement
+  }
+
+  override fun substring(element: InlineCompletionElement, startOffset: Int, endOffset: Int): InlineCompletionElement? {
+    element as InlineCompletionSkipTextElement
+    if (startOffset >= endOffset) {
+      return null
+    }
+    return InlineCompletionSkipTextElement(element.text.substring(startOffset, endOffset))
   }
 }

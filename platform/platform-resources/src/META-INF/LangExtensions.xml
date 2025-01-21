@@ -1588,6 +1588,9 @@
     <inline.completion.element.manipulator
       implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionTextElementManipulator"
       order="last"/>
+    <inline.completion.element.manipulator
+      implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElementManipulator"
+      order="last"/>
     <editorFactoryMouseMotionListener
       implementation="com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionMouseMotionListener"/>
 

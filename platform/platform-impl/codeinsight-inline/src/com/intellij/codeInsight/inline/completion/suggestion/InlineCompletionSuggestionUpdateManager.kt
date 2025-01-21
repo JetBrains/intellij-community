@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.TypingEvent
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult.*
 import com.intellij.openapi.editor.Editor
@@ -237,6 +238,9 @@ interface InlineCompletionSuggestionUpdateManager {
       val newFirstElementIndex = elements.indexOfFirst { it.text.isNotEmpty() }
       check(newFirstElementIndex >= 0)
       val firstElement = elements[newFirstElementIndex]
+      if (firstElement is InlineCompletionSkipTextElement) {
+        return null
+      }
       val manipulator = InlineCompletionElementManipulator.getApplicable(firstElement) ?: return null
       val newFirstElement = manipulator.truncateFirstSymbol(firstElement)
       return listOfNotNull(newFirstElement) + elements.drop(newFirstElementIndex + 1)
