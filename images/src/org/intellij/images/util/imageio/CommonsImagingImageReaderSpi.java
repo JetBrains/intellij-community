@@ -28,15 +28,18 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
     vendorName = "JetBrains, s.r.o.";
     version = "1.0";
 
-    // todo standard GIF/BMP formats can be optionally skipped as well
     // JPEG is skipped due to Exception: cannot read or write JPEG images. (JpegImageParser.java:92)
     // tiff reader seems to be broken
     // PNG reader has bugs with well-compressed PNG images, use standard one instead
+    // GIF has OOM issues IJPL-175323
+    // Skip BMP as a precaution
     myFormats = new ArrayList<>(Arrays.asList(ImageFormats.values()));
     myFormats.removeAll(Arrays.asList(ImageFormats.UNKNOWN,
-                                         ImageFormats.JPEG,
-                                         ImageFormats.TIFF,
-                                         ImageFormats.PNG));
+                                      ImageFormats.JPEG,
+                                      ImageFormats.TIFF,
+                                      ImageFormats.GIF,
+                                      ImageFormats.BMP,
+                                      ImageFormats.PNG));
 
     names = new String[myFormats.size() * 2];
     suffixes = new String[myFormats.size()];
