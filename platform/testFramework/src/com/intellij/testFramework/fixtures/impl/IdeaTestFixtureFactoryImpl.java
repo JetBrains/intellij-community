@@ -45,7 +45,7 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
 
   @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
-                                                                         @NotNull TestFixtureProjectPathProvider projectPathProvider,
+                                                                         @NotNull HeavyIdeaTestFixturePathProvider projectPathProvider,
                                                                          boolean isDirectoryBasedProject) {
     return new HeavyTestFixtureBuilderImpl(
       new HeavyIdeaTestFixtureImpl(name, projectPathProvider, isDirectoryBasedProject),

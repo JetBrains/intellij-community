@@ -97,6 +97,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   private lateinit var myDir: Path
 
   private var myTestFixture: IdeaProjectTestFixture? = null
+  private var myJdk: Sdk? = null
 
   private var myProject: Project? = null
 
@@ -146,7 +147,8 @@ abstract class MavenTestCase : UsefulTestCase() {
     setUpFixtures()
     myProject = myTestFixture!!.project
     myPathTransformer = RemotePathTransformerFactory.createForProject(project)
-    setupWsl()
+    setupWslDistribution()
+    setupCustomJdk()
     ensureTempDirCreated()
 
     myDir = ourTempDir.resolve(getTestName(false))
@@ -182,21 +184,51 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  private fun setupWsl() {
+  private fun setupCustomJdk() {
+    var jdkPath: String? = null
+    if (myWSLDistribution != null) {
+      jdkPath = System.getProperty("wsl.jdk.path") ?: "/usr/lib/jvm/java-11-openjdk-amd64"
+      assertTrue(myWSLDistribution!!.getWindowsPath(myWSLDistribution!!.userHome!!).toNioPathOrNull()!!.isDirectory())
+      // SDK might be null; if so, jdkPath will be used to create a JDK instance
+      myJdk = findExisingJdkByPath(myWSLDistribution!!.getWindowsPath(jdkPath))
+    }
+    if (isProjectInEelEnvironment()) {
+      jdkPath = getEelFixtureEngineJavaHome()
+    }
+    if (myJdk == null && jdkPath != null) {
+      myJdk = JavaSdk.getInstance().createJdk("Maven Test JDK", jdkPath)
+      val jdkTable = ProjectJdkTable.getInstance()
+      WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(myJdk!!) }
+    }
+    if (myJdk != null) {
+      WriteAction.runAndWait<RuntimeException> { ProjectRootManagerEx.getInstanceEx(myProject).projectSdk = myJdk }
+    }
+  }
+
+  private fun tearDownJdk() {
+    if (myJdk != null) {
+      WriteAction.runAndWait<RuntimeException> {
+        val jdkTable = ProjectJdkTable.getInstance()
+        jdkTable.removeJdk(myJdk!!)
+      }
+    }
+  }
+
+  private fun setupWslDistribution() {
     val wslMsId = System.getProperty("wsl.distribution.name")
     if (wslMsId == null) return
     val distributions = WslDistributionManager.getInstance().installedDistributions
     if (distributions.isEmpty()) throw IllegalStateException("no WSL distributions configured!")
     myWSLDistribution = distributions.firstOrNull { it.msId == wslMsId }
                         ?: throw IllegalStateException("Distribution $wslMsId was not found")
-    var jdkPath = System.getProperty("wsl.jdk.path")
-    if (jdkPath == null) {
-      jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64"
-    }
+  }
 
-    val wslSdk = getWslSdk(myWSLDistribution!!.getWindowsPath(jdkPath))
-    WriteAction.runAndWait<RuntimeException> { ProjectRootManagerEx.getInstanceEx(myProject).projectSdk = wslSdk }
-    assertTrue(myWSLDistribution!!.getWindowsPath(myWSLDistribution!!.userHome!!).toNioPathOrNull()!!.isDirectory())
+  private fun isProjectInEelEnvironment(): Boolean {
+    return System.getenv("eel.fixture.engine") != null
+  }
+
+  private fun getEelFixtureEngineJavaHome(): String {
+    return System.getenv("eel.fixture.engine.java.home") ?: throw IllegalArgumentException("eel.fixture.engine.java.home is not specified")
   }
 
   protected fun waitForMavenUtilRunnablesComplete() {
@@ -221,15 +253,13 @@ abstract class MavenTestCase : UsefulTestCase() {
     }) { super.runBare(testRunnable) }
   }
 
-  private fun getWslSdk(jdkPath: String): Sdk {
+  private fun findExisingJdkByPath(jdkPath: String): Sdk? {
     val sdk = ProjectJdkTable.getInstance().allJdks.find { jdkPath == it.homePath }!!
     val jdkTable = ProjectJdkTable.getInstance()
     for (existingSdk in jdkTable.allJdks) {
       if (existingSdk === sdk) return sdk
     }
-    val newSdk = JavaSdk.getInstance().createJdk("Wsl JDK For Tests", jdkPath)
-    WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(newSdk, testRootDisposable) }
-    return newSdk
+    return null
   }
 
   override fun tearDown() {
@@ -244,6 +274,7 @@ abstract class MavenTestCase : UsefulTestCase() {
       ThrowableRunnable { tearDownEmbedders() },
       ThrowableRunnable { checkAllMavenConnectorsDisposed() },
       ThrowableRunnable { myProject = null },
+      ThrowableRunnable { tearDownJdk() },
       ThrowableRunnable {
         val defaultProject = ProjectManager.getInstance().defaultProject
         val mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager::class.java)
@@ -285,32 +316,30 @@ abstract class MavenTestCase : UsefulTestCase() {
 
 
   private fun ensureTempDirCreated() {
-    ourTempDir = if (myWSLDistribution == null) {
-      FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
+    ourTempDir = when {
+      isProjectInEelEnvironment() -> {
+        val mount = System.getenv("eel.fixture.mount") ?: throw IllegalArgumentException("eel.fixture.mount is not specified")
+        Path("$mount/mavenTests")
+      }
+      myWSLDistribution != null -> myWSLDistribution!!.getWindowsPath("/tmp").toNioPathOrNull()!!.resolve("mavenTests")
+      else -> FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
     }
-    else {
-      myWSLDistribution!!.getWindowsPath("/tmp").toNioPathOrNull()!!.resolve("mavenTests")
-    }
-
     FileUtil.delete(ourTempDir)
     ourTempDir.ensureExists()
   }
 
   protected open fun setUpFixtures() {
-    val wslMsId = System.getProperty("wsl.distribution.name")
-
-    val isDirectoryBasedProject = useDirectoryBasedProjectFormat()
-    if (wslMsId != null) {
-      val path = generateTemporaryPath(FileUtil.sanitizeFileName(name, false), Paths.get(
-        "\\\\wsl$\\$wslMsId\\tmp"))
-      myTestFixture =
-        IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, path, isDirectoryBasedProject).fixture
+    val wslDistributionName = System.getProperty("wsl.distribution.name")
+    myTestFixture = when {
+      wslDistributionName != null -> setupWsl(wslDistributionName)
+      else -> IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedProjectFormat()).fixture
     }
-    else {
-      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, isDirectoryBasedProject).fixture
-    }
-
     myTestFixture!!.setUp()
+  }
+
+  private fun setupWsl(wslDistributionName: String): IdeaProjectTestFixture {
+    val path = generateTemporaryPath(FileUtil.sanitizeFileName(name, false), Paths.get("\\\\wsl$\\${wslDistributionName}\\tmp"))
+    return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, path, useDirectoryBasedProjectFormat()).fixture
   }
 
   protected open fun useDirectoryBasedProjectFormat(): Boolean {
