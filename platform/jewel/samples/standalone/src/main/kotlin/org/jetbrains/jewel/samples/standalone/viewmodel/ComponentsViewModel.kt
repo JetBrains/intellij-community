@@ -27,7 +27,7 @@ import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.showcase.components.Tabs
 import org.jetbrains.jewel.samples.showcase.components.TextAreas
 import org.jetbrains.jewel.samples.showcase.components.TextFields
-import org.jetbrains.jewel.samples.standalone.view.component.Tooltips
+import org.jetbrains.jewel.samples.showcase.components.Tooltips
 import org.jetbrains.jewel.ui.component.SplitLayoutState
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior

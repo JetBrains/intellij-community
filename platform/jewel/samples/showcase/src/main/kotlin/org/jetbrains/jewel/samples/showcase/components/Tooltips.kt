@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -10,15 +10,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
-fun Tooltips() {
+public fun Tooltips() {
     var toggleEnabled by remember { mutableStateOf(true) }
     var enabled by remember { mutableStateOf(true) }
     LaunchedEffect(toggleEnabled) {
