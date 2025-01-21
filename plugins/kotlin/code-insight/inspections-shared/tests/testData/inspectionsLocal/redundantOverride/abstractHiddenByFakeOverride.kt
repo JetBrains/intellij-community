@@ -1,5 +1,6 @@
 // PROBLEM: none
 // ERROR: Abstract member cannot be accessed directly
+// K2_ERROR: Abstract member cannot be accessed directly.
 
 interface Foo {
     fun check(): String = "OK"
