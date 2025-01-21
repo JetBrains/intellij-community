@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.errorreport.error.InternalEAPException
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
@@ -49,6 +50,8 @@ internal object ITNProxy {
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
   internal val DEVICE_ID: String = DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
+
+  private val LOG = logger<ITNProxy>()
 
   private val TEMPLATE: Map<String, String?> by lazy {
     val template = LinkedHashMap<String, String?>()
@@ -128,7 +131,9 @@ internal object ITNProxy {
       throw InternalEAPException(responseText.substring(8))
     }
     try {
-      return responseText.trim().toInt()
+      val reportId = responseText.trim()
+      LOG.info("report ID: ${reportId}, host ID: ${DEVICE_ID}")
+      return reportId.toInt()
     }
     catch (_: NumberFormatException) {
       throw InternalEAPException(DiagnosticBundle.message("error.itn.returns.wrong.data"))
