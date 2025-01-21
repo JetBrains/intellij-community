@@ -586,4 +586,16 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     }
 
   }
+  // Android Studio b/389158350
+  @Test fun `find preview directories for Android Studio after removing Preview from EAPs`() {
+    System.setProperty("idea.platform.prefix", "AndroidStudio")
+    val vendorName = "idea.vendor.name"
+    System.setProperty(vendorName, "Google")
+    val oldAndroidStudioPreview = createConfigDir("2024.2", true, "AndroidStudioPreview")
+    val newAndroidStudioConfigDir = createConfigDir("2024.3.2", true, "AndroidStudio")
+
+    val foundConfig = findConfigDirectories(newAndroidStudioConfigDir)
+    assertThat(foundConfig).containsExactly(oldAndroidStudioPreview)
+    System.setProperty(vendorName, "JetBrains")
+  }
 }

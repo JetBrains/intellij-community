@@ -617,7 +617,7 @@ public final class ConfigImportHelper {
           if (!path.equals(newConfigDir) && Files.isDirectory(path)) {
             String name = path.getFileName().toString();
             String pathPrefix = getPrefixFromSelector(getNameWithVersion(path));
-            if (nameMatchesPrefixStrictly(name, prefix, dotted)) {
+            if (nameMatchesPrefixStrictly(name, prefix, dotted) || PlatformUtils.isAndroidStudio() && nameMatchesPrefixStrictly(name, prefix + "Preview", false)) { // Android Studio b/389158350
               if (settings == null || settings.shouldBeSeenAsImportCandidate(path, pathPrefix, otherProductPrefixes)) {
                 exactCandidates.add(path);
               }
