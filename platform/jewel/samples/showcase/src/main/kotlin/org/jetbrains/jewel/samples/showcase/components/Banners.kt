@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,7 +44,7 @@ private const val LONG_IPSUM =
 
 @ExperimentalLayoutApi
 @Composable
-internal fun Banners() {
+public fun Banners() {
     Column {
         var clickLabel by remember { mutableStateOf("") }
         Text(text = "Clicked action: $clickLabel")

@@ -18,6 +18,7 @@ dependencies {
     implementation(projects.markdown.extension.autolink)
     implementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
     implementation(compose.components.resources)
+    implementation(project(":samples:showcase"))
     implementation(libs.intellijPlatform.icons)
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
