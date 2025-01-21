@@ -15,10 +15,10 @@ private fun CoroutineScope.ensureSupervisorsReportToLogs(): CoroutineScope {
   return this
 }
 
-fun CoroutineScope.coroutineNameAppended(name: String, separator: String = " > "): CoroutineContext =
+fun CoroutineScope.coroutineNameAppended(name: String, separator: String = " > "): CoroutineName =
   coroutineContext.coroutineNameAppended(name, separator)
 
-fun CoroutineContext.coroutineNameAppended(name: String, separator: String = " > "): CoroutineContext {
+fun CoroutineContext.coroutineNameAppended(name: String, separator: String = " > "): CoroutineName {
   val parentName = this[CoroutineName]?.name
   return CoroutineName(if (parentName == null) name else parentName + separator + name)
 }

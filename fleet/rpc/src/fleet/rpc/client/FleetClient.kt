@@ -46,7 +46,6 @@ class FleetClient private constructor(
   companion object : CoroutineContext.Key<FleetClient> {
     val logger = logger<FleetClient>()
 
-    // used in IJ iirc
     @Deprecated("Please use withFleetClient instead")
     fun create(scope: CoroutineScope,
                clientId: ClientId,
@@ -96,7 +95,6 @@ suspend fun withFleetClient(clientId: ClientId,
                             requestInterceptor: RpcInterceptor = RpcInterceptor,
                             body: suspend CoroutineScope.(FleetClient) -> Unit) {
   coroutineScope {
-    @Suppress("DEPRECATION")
     val fleetClient = FleetClient.create(this,
                                          clientId = clientId,
                                          transportFactory = transportFactory,
