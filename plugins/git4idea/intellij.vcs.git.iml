@@ -15,7 +15,11 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+              <args>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.10-0.1/rpc-compiler-plugin-2.1.10-0.1.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.10-0.1/rhizomedb-compiler-plugin-2.1.10-0.1.jar</arg>
+              </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>
@@ -102,5 +106,10 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
+    <orderEntry type="module" module-name="intellij.vcs.git.shared" />
+    <orderEntry type="module" module-name="intellij.vcs.git.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.kernel.backend" />
+    <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
   </component>
 </module>

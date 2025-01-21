@@ -1092,7 +1092,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/git-modal-commit/intellij.vcs.git.commit.modal.iml" filepath="$PROJECT_DIR$/plugins/git-modal-commit/intellij.vcs.git.commit.modal.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/intellij.vcs.git.coverage/intellij.vcs.git.coverage.iml" filepath="$PROJECT_DIR$/plugins/git4idea/intellij.vcs.git.coverage/intellij.vcs.git.coverage.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git-features-trainer/intellij.vcs.git.featuresTrainer.iml" filepath="$PROJECT_DIR$/plugins/git-features-trainer/intellij.vcs.git.featuresTrainer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/frontend/intellij.vcs.git.frontend.iml" filepath="$PROJECT_DIR$/plugins/git4idea/frontend/intellij.vcs.git.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/rt/intellij.vcs.git.rt.iml" filepath="$PROJECT_DIR$/plugins/git4idea/rt/intellij.vcs.git.rt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/shared/intellij.vcs.git.shared.iml" filepath="$PROJECT_DIR$/plugins/git4idea/shared/intellij.vcs.git.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-core/intellij.vcs.github.iml" filepath="$PROJECT_DIR$/plugins/github/github-core/intellij.vcs.github.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/community/intellij.vcs.github.community.iml" filepath="$PROJECT_DIR$/plugins/github/community/intellij.vcs.github.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-json/intellij.vcs.github.json.iml" filepath="$PROJECT_DIR$/plugins/github/github-json/intellij.vcs.github.json.iml" />

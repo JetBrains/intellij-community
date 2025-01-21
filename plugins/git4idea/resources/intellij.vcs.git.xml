@@ -487,11 +487,12 @@
       <separator/>
     </group>
 
-    <group id="MainToolbarVCSGroup">
-      <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction"/>
-      <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget"/>
-      <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
-    </group>
+    <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction">
+      <add-to-group group-id="MainToolbarVCSGroup"/>
+    </action>
+    <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget">
+      <add-to-group group-id="MainToolbarVCSGroup"/>
+    </action>
 
     <group id="GitMergeRebaseWidgetGroup">
       <reference ref="Git.ResolveConflicts"/>
@@ -865,6 +866,8 @@
     <vcs.diffRevisionMetadataProvider implementation="git4idea.diff.GitDiffRevisionMetadataProvider"/>
 
     <troubleInfoCollector implementation="git4idea.troubleshooting.GitTroubleInfoCollector"/>
+
+    <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
