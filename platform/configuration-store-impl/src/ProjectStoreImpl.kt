@@ -162,7 +162,13 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
 
     if (!isUnitTestMode) {
-      val productWorkspaceFile = PathManager.getOriginalConfigDir().resolve("workspace/$projectWorkspaceId.xml")
+      // IJPL-166131
+      val basePath = if (Registry.`is`("rdct.persist.project.settings", false)) {
+        PathManager.getOriginalConfigDir()
+      } else {
+        PathManager.getConfigDir()
+      }
+      val productWorkspaceFile = basePath.resolve("workspace/$projectWorkspaceId.xml")
       macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
       storageManager.setMacros(macros)
     }

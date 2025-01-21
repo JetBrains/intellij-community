@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -314,7 +315,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       fileToElement.put(file, e)
     }
 
-    if (PlatformUtils.isJetBrainsClient()) {
+    if (PlatformUtils.isJetBrainsClient() && Registry.`is`("rdct.persist.project.settings", false)) {
       // JetBrains Client doesn't have local files, so there is no need to load a history here
       return
     }
