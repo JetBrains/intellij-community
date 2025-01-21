@@ -425,6 +425,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'decimal.Decimal'");
   }
 
+  // PY-75291
   public void testTypeAliasStatement() {
     doMultiFileAutoImportTest("Import 'lib.ExampleType'");
   }
