@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -8,7 +8,7 @@ import androidx.compose.runtime.setValue
 import org.jetbrains.jewel.ui.component.Slider
 
 @Composable
-fun Sliders() {
+public fun Sliders() {
     var value1 by remember { mutableStateOf(.45f) }
     Slider(value = value1, onValueChange = { value1 = it })
 
