@@ -31,6 +31,7 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInput
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
@@ -62,6 +63,8 @@ internal class ReworkedTerminalView(
   private val sessionModel: TerminalSessionModel
   private val encodingManager: TerminalKeyEncodingManager
   private val controller: TerminalSessionController
+
+  private val terminalInput: TerminalInput
 
   private val outputModel: TerminalOutputModel
   private val alternateBufferModel: TerminalOutputModel
@@ -95,13 +98,15 @@ internal class ReworkedTerminalView(
     sessionModel = TerminalSessionModelImpl(settings)
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
+    terminalInput = TerminalInput(terminalSessionFuture)
+
     outputModel = createOutputModel(
       editor = createOutputEditor(settings, parentDisposable = this),
       maxOutputLength = AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024,
       settings,
       sessionModel,
       encodingManager,
-      terminalSessionFuture,
+      terminalInput,
       coroutineScope.childScope("TerminalOutputModel"),
       withVerticalScroll = true,
       withTopAndBottomInsets = true
@@ -113,7 +118,7 @@ internal class ReworkedTerminalView(
       settings,
       sessionModel,
       encodingManager,
-      terminalSessionFuture,
+      terminalInput,
       coroutineScope.childScope("TerminalAlternateBufferModel"),
       withVerticalScroll = false,
       withTopAndBottomInsets = false
@@ -206,7 +211,7 @@ internal class ReworkedTerminalView(
     settings: JBTerminalSystemSettingsProviderBase,
     sessionModel: TerminalSessionModel,
     encodingManager: TerminalKeyEncodingManager,
-    terminalSessionFuture: CompletableFuture<TerminalSession>,
+    terminalInput: TerminalInput,
     coroutineScope: CoroutineScope,
     withVerticalScroll: Boolean,
     withTopAndBottomInsets: Boolean,
@@ -224,7 +229,7 @@ internal class ReworkedTerminalView(
       addTopAndBottomInsets(model.editor)
     }
 
-    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, model, encodingManager, terminalSessionFuture, settings, scrollingModel)
+    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, model, encodingManager, terminalInput, settings, scrollingModel)
     val parentDisposable = coroutineScope.asDisposable()
     setupKeyEventDispatcher(model.editor, eventsHandler, parentDisposable)
     setupMouseListener(model.editor, sessionModel, settings, eventsHandler, parentDisposable)
