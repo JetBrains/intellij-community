@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -42,6 +43,7 @@ import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
@@ -150,6 +152,7 @@ public open class DefaultMarkdownBlockRenderer(
                     .clickable(interactionSource = interactionSource, indication = null, onClick = onTextClick),
             text = renderedContent,
             style = mergedStyle,
+            inlineContent = renderedImages(block),
         )
     }
 
@@ -524,6 +527,17 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
+    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
+        return rendererExtensions
+            .firstNotNullOfOrNull { it.imageRendererExtension }
+            ?.let { imagesRenderer ->
+                getImages(blockInlineContent).associate { image ->
+                    image.source to imagesRenderer.renderImagesContent(image)
+                }
+            } ?: emptyMap()
+    }
+
+    @Composable
     protected fun MaybeScrollingContainer(
         isScrollable: Boolean,
         modifier: Modifier = Modifier,
@@ -550,4 +564,22 @@ public open class DefaultMarkdownBlockRenderer(
     @ExperimentalJewelApi
     override operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer =
         DefaultMarkdownBlockRenderer(rootStyling, rendererExtensions = rendererExtensions + extension, inlineRenderer)
+}
+
+private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = buildList {
+    fun collectImagesRecursively(items: List<InlineMarkdown>) {
+        for (item in items) {
+            when (item) {
+                is InlineMarkdown.Image -> {
+                    if (item.source.isNotBlank()) add(item)
+                }
+                is WithInlineMarkdown -> {
+                    collectImagesRecursively(item.inlineContent)
+                }
+
+                else -> {}
+            }
+        }
+    }
+    collectImagesRecursively(input.inlineContent)
 }

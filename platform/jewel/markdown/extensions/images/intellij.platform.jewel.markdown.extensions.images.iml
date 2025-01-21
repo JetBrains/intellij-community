@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-receivers -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -Xexplicit-api=strict" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="apiVersion" arg="2.2" />
+            <stringArg name="languageVersion" arg="2.2" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0/kotlin-compose-compiler-plugin-2.2.0.jar</args>
+            </arrayArg>
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/kotlin" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
+    <orderEntry type="module-library">
+      <library name="io.coil.kt.coil3.core.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.coil-kt.coil3:coil-core-jvm:3.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.1.0/coil-core-jvm-3.1.0.jar">
+              <sha256sum>6d44a11188c53f4eea2e87ebadc6aad90069132c9b029fc1b35aeb0added5ef7</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.1.0/coil-core-jvm-3.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-core-jvm/3.1.0/coil-core-jvm-3.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.coil.kt.coil3.compose.core.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.coil-kt.coil3:coil-compose-core-jvm:3.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-core-jvm/3.1.0/coil-compose-core-jvm-3.1.0.jar">
+              <sha256sum>8aa1d7ae1d11f969e8cdcc8fee42b7ee6a036e21f70567e3c3486edd9d7dc594</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-core-jvm/3.1.0/coil-compose-core-jvm-3.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-core-jvm/3.1.0/coil-compose-core-jvm-3.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.coil.kt.coil3.compose.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.coil-kt.coil3:coil-compose-jvm:3.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-jvm/3.1.0/coil-compose-jvm-3.1.0.jar">
+              <sha256sum>d43e0ed4566d30f8ce8e023539240b494be6fa69a1b8c81b4c32f5f465a7cc06</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-jvm/3.1.0/coil-compose-jvm-3.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-compose-jvm/3.1.0/coil-compose-jvm-3.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="io.coil.kt.coil3.network.core.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.coil-kt.coil3:coil-network-core-jvm:3.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-core-jvm/3.1.0/coil-network-core-jvm-3.1.0.jar">
+              <sha256sum>8332e45cf792cd24d9814744db84b0e6d33ec6eaf0724bd07ddc1fce7c55591f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-core-jvm/3.1.0/coil-network-core-jvm-3.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-core-jvm/3.1.0/coil-network-core-jvm-3.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="io.coil.kt.coil3.network.ktor3.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.coil-kt.coil3:coil-network-ktor3-jvm:3.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-ktor3-jvm/3.1.0/coil-network-ktor3-jvm-3.1.0.jar">
+              <sha256sum>cc4f9f8d6d447e7559cb9717c3a45dfbd351ddd06a34724001322512160b0215</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-ktor3-jvm/3.1.0/coil-network-ktor3-jvm-3.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-network-ktor3-jvm/3.1.0/coil-network-ktor3-jvm-3.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="io.coil.kt.coil3.svg.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.coil-kt.coil3:coil-svg-jvm:3.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-svg-jvm/3.1.0/coil-svg-jvm-3.1.0.jar">
+              <sha256sum>413a53b4b6e0a40b851d1a99a01a4cd91ac0dc68facefddd7adfdb2d5456588f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-svg-jvm/3.1.0/coil-svg-jvm-3.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-svg-jvm/3.1.0/coil-svg-jvm-3.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
+  </component>
+</module>

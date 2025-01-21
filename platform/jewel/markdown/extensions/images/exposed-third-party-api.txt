@@ -1,0 +1,2 @@
+androidx/compose/**
+coil3/ImageLoader

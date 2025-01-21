@@ -24,4 +24,10 @@ public interface MarkdownRendererExtension {
      */
     public val delimitedInlineRenderer: MarkdownDelimitedInlineRendererExtension?
         get() = null
+
+    /**
+     * An extension for handling the rendering of image elements. Can be null if no custom image rendering is provided.
+     */
+    public val imageRendererExtension: ImageRendererExtension?
+        get() = null
 }

@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.images` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ]
+)
+
+jvm_resources(
+  name = "images_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "images",
+  module_name = "intellij.platform.jewel.markdown.extensions.images",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/markdown/core",
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "//libraries/compose-foundation-desktop",
+    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-core-jvm",
+    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-core-jvm",
+    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-jvm",
+    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-network-core-jvm",
+    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-network-ktor3-jvm",
+    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-svg-jvm",
+  ],
+  exports = [
+    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-core-jvm",
+    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-jvm",
+    "@lib//:platform-jewel-markdown-extensions-images-io-coil-kt-coil3-svg-jvm",
+  ],
+  runtime_deps = [":images_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.markdown.extensions.images` end

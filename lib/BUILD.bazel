@@ -8209,6 +8209,48 @@ jvm_import(
 )
 
 jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-core-jvm",
+  jar = "@coil-compose-core-jvm-3_1_0_http//file",
+  source_jar = "@coil-compose-core-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-compose-jvm",
+  jar = "@coil-compose-jvm-3_1_0_http//file",
+  source_jar = "@coil-compose-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-core-jvm",
+  jar = "@coil-core-jvm-3_1_0_http//file",
+  source_jar = "@coil-core-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-network-core-jvm",
+  jar = "@coil-network-core-jvm-3_1_0_http//file",
+  source_jar = "@coil-network-core-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-network-ktor3-jvm",
+  jar = "@coil-network-ktor3-jvm-3_1_0_http//file",
+  source_jar = "@coil-network-ktor3-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "platform-jewel-markdown-extensions-images-io-coil-kt-coil3-svg-jvm",
+  jar = "@coil-svg-jvm-3_1_0_http//file",
+  source_jar = "@coil-svg-jvm-3_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "platform-jewel-samples-standalone-com-darkrockstudios-mpfilepicker",
   jar = "@mpfilepicker-3_1_0_http//file",
   source_jar = "@mpfilepicker-3_1_0-sources_http//file",
