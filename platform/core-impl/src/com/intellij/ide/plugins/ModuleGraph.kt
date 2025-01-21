@@ -112,6 +112,12 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
       if (doesDependOnPluginAlias(module, PROVISIONER_ALIAS_ID)) {
         moduleMap.get("intellij.platform.ide.provisioner")?.let { result.add(it) }
       }
+      if (doesDependOnPluginAlias(module, PluginId.getId("org.jetbrains.completion.full.line"))) {
+        moduleMap.get("intellij.fullLine.core")?.let { result.add(it) }
+        moduleMap.get("intellij.fullLine.local")?.let { result.add(it) }
+        moduleMap.get("intellij.fullLine.core.impl")?.let { result.add(it) }
+        moduleMap.get("intellij.ml.inline.completion")?.let { result.add(it) }
+      }
     }
 
     if (module.moduleName != null && module.pluginId != PluginManagerCore.CORE_ID) {
