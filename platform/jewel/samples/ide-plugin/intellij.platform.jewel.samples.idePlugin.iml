@@ -48,5 +48,6 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.ideLafBridgeStyling" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
   </component>
 </module>

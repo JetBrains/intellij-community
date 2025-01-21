@@ -1,0 +1,12 @@
+f:org.jetbrains.jewel.samples.standalone.markdown.ComposableSingletons$MarkdownEditorKt
+- sf:INSTANCE:org.jetbrains.jewel.samples.standalone.markdown.ComposableSingletons$MarkdownEditorKt
+- <init>():V
+- f:getLambda-1$intellij_platform_jewel_samples_standalone():kotlin.jvm.functions.Function2
+- f:getLambda-2$intellij_platform_jewel_samples_standalone():kotlin.jvm.functions.Function2
+- f:getLambda-3$intellij_platform_jewel_samples_standalone():kotlin.jvm.functions.Function5
+f:org.jetbrains.jewel.samples.standalone.markdown.JewelReadmeKt
+- sf:getJewelReadme():java.lang.String
+f:org.jetbrains.jewel.samples.standalone.markdown.MarkdownEditorKt
+- sf:MarkdownEditor(androidx.compose.foundation.text.input.TextFieldState,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.samples.standalone.markdown.MarkdownPreviewKt
+- sf:MarkdownPreview(androidx.compose.ui.Modifier,java.lang.CharSequence,androidx.compose.runtime.Composer,I,I):V

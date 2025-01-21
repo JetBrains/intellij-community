@@ -11,9 +11,9 @@ import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.WithMarkdownMode
-import org.jetbrains.jewel.samples.standalone.view.markdown.JewelReadme
-import org.jetbrains.jewel.samples.standalone.view.markdown.MarkdownEditor
-import org.jetbrains.jewel.samples.standalone.view.markdown.MarkdownPreview
+import org.jetbrains.jewel.samples.standalone.markdown.JewelReadme
+import org.jetbrains.jewel.samples.standalone.markdown.MarkdownEditor
+import org.jetbrains.jewel.samples.standalone.markdown.MarkdownPreview
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 

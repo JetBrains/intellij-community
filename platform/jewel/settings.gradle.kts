@@ -43,6 +43,7 @@ include(
     ":markdown:int-ui-standalone-styling",
     ":markdown:ide-laf-bridge-styling",
     ":samples:ide-plugin",
+    ":samples:showcase",
     ":samples:standalone",
     ":ui",
     ":ui-test",

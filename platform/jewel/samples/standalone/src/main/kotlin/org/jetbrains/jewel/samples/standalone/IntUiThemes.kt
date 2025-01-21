@@ -3,17 +3,17 @@ package org.jetbrains.jewel.samples.standalone
 import org.jetbrains.skiko.SystemTheme
 import org.jetbrains.skiko.currentSystemTheme
 
-internal enum class IntUiThemes {
+public enum class IntUiThemes {
     Light,
     LightWithLightHeader,
     Dark,
     System;
 
-    fun isDark() = (if (this == System) fromSystemTheme(currentSystemTheme) else this) == Dark
+    public fun isDark(): Boolean = (if (this == System) fromSystemTheme(currentSystemTheme) else this) == Dark
 
-    fun isLightHeader() = this == LightWithLightHeader
+    public fun isLightHeader(): Boolean = this == LightWithLightHeader
 
-    companion object {
-        fun fromSystemTheme(systemTheme: SystemTheme) = if (systemTheme == SystemTheme.LIGHT) Light else Dark
+    public companion object {
+        public fun fromSystemTheme(systemTheme: SystemTheme): IntUiThemes = if (systemTheme == SystemTheme.LIGHT) Light else Dark
     }
 }
