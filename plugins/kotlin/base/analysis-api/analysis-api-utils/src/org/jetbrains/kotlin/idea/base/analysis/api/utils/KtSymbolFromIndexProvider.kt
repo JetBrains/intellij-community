@@ -38,10 +38,18 @@ class KtSymbolFromIndexProvider(
         if (!psiFilter(this)) return false
 
         if (kotlinFqName?.isExcludedFromAutoImport(project, file) == true) return false
+        
+        if (this !is KtDeclaration) {
+            // no more checks for non-kotlin elements
+            return true
+        }
 
-        return this !is KtDeclaration
-                || !isExpectDeclaration()
-                || useSiteModule.targetPlatform.isCommon()
+        if (isExpectDeclaration() && !useSiteModule.targetPlatform.isCommon()) {
+            // filter out expect declarations outside of common modules
+            return false
+        }
+
+        return true
     }
 
     context(KaSession)
