@@ -44,5 +44,6 @@ public final class org/jetbrains/jewel/markdown/extensions/github/strikethrough/
 	public static final field INSTANCE Lorg/jetbrains/jewel/markdown/extensions/github/strikethrough/GitHubStrikethroughRendererExtension;
 	public fun getBlockRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension;
 	public fun getDelimitedInlineRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineRendererExtension;
+	public fun getImageRendererExtension ()Lorg/jetbrains/jewel/markdown/extensions/ImageRendererExtension;
 }
 

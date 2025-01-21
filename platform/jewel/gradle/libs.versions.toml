@@ -1,4 +1,5 @@
 [versions]
+coil = "3.1.0"
 commonmark = "0.24.0"
 composeDesktop = "1.8.1"
 detekt = "1.23.6"
@@ -17,6 +18,11 @@ kotlinxBinaryCompat = "0.17.0"
 ktfmtGradlePlugin = "0.22.0"
 
 [libraries]
+coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
+# network is only needed in a standalone non-ide version
+coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
+
 commonmark-core = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 commonmark-ext-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
 commonmark-ext-gfm-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
@@ -27,6 +33,7 @@ filePicker = { module = "com.darkrockstudios:mpfilepicker", version.ref = "filep
 kotlinSarif = { module = "io.github.detekt.sarif4k:sarif4k", version.ref = "kotlinSarif" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+ktor-client-java = { module = "io.ktor:ktor-client-java", version = "3.0.3" }
 
 jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 

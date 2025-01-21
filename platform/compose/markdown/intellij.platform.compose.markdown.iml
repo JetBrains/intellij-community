@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.images" exported="" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.ideLafBridgeStyling" exported="" />
   </component>
 </module>
