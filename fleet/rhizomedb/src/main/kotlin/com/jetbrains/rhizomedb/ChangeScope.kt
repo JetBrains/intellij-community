@@ -113,6 +113,9 @@ interface ChangeScope {
       }
     }
 
+  fun register(vararg entityTypes: EntityType<*>) {
+    entityTypes.forEach { register(it) }
+  }
 
   /**
    * Sets a value to the attribute of a given entity.
