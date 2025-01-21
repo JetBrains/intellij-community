@@ -22,10 +22,9 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
-import io.ktor.util.read
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.use
-import io.ktor.utils.io.jvm.nio.copyTo
+import io.ktor.utils.io.jvm.nio.writeSuspendSession
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span

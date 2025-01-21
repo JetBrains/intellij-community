@@ -9,12 +9,12 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.sha256Hex
-import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.OutgoingContent
+import io.ktor.server.engine.ApplicationEngine
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
 import org.jetbrains.idea.maven.aether.Retry
 import org.jetbrains.idea.maven.aether.RetryProvider
 import org.junit.jupiter.api.AfterEach
@@ -37,9 +37,9 @@ class JarHttpDownloaderFileTest {
   @JvmField
   @RegisterExtension
   internal val serverExtension = TestHttpServerExtension { server ->
-    server.createContext("/demo.data", HttpStatusCode.OK, response = "Hello, world!")
+    server.application.createContext("/demo.data", HttpStatusCode.OK, response = "Hello, world!")
   }
-  private val server: ApplicationEngine get() = serverExtension.server
+  private val server: ApplicationEngine get() = serverExtension.server.engine
 
   @JvmField
   @RegisterExtension
@@ -74,7 +74,7 @@ class JarHttpDownloaderFileTest {
 
     for (code in listOf(HttpStatusCode.Unauthorized, HttpStatusCode.NotFound, HttpStatusCode.InternalServerError)) {
       val url = server.url + "/code-${code.value}"
-      server.createContext("/${url.substringAfterLast('/')}", code, response = "Hello, world!", log = {
+      serverExtension.server.application.createContext("/${url.substringAfterLast('/')}", code, response = "Hello, world!", log = {
         log.appendLine("reply with $code")
       })
 
@@ -102,7 +102,7 @@ class JarHttpDownloaderFileTest {
 
     val url = server.url + "/x"
     val countOfInternalServerErrors = AtomicInteger(2)
-    server.application.routing {
+    serverExtension.server.application.routing {
       get("/${url.substringAfterLast('/')}") {
         val code = if (countOfInternalServerErrors.decrementAndGet() >= 0) HttpStatusCode.InternalServerError else HttpStatusCode.OK
         call.respond(code, "Hello, world!")
@@ -149,7 +149,7 @@ class JarHttpDownloaderFileTest {
 
   @Test
   fun downloadFile_fail_on_missing_content_length() {
-    server.application.routing {
+    serverExtension.server.application.routing {
       get("/unknown-content-length.data") {
         call.respond(object : OutgoingContent.ByteArrayContent() {
           override fun bytes(): ByteArray = "Hello, world!".toByteArray()

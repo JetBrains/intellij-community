@@ -10,6 +10,7 @@ import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.HttpRequests
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.Application
 import io.ktor.server.engine.ApplicationEngine
 import org.jetbrains.idea.maven.aether.RetryProvider
 import org.junit.jupiter.api.AfterEach
@@ -29,7 +30,8 @@ class JarHttpDownloaderArtifactTest {
   @JvmField
   @RegisterExtension
   internal val serverExtension = JarHttpDownloaderTestUtil.TestHttpServerExtension()
-  private val server: ApplicationEngine get() = serverExtension.server
+  private val server: Application get() = serverExtension.server.application
+  private val engine: ApplicationEngine get() = serverExtension.server.engine
 
   @JvmField
   @RegisterExtension
@@ -41,9 +43,9 @@ class JarHttpDownloaderArtifactTest {
 
   private val remoteRepositories by lazy {
     listOf(
-      RemoteRepository(server.url + "/a", null),
-      RemoteRepository(server.url + "/b", AuthenticationData("u", "pass")),
-      RemoteRepository(server.url + "/c", null),
+      RemoteRepository(engine.url + "/a", null),
+      RemoteRepository(engine.url + "/b", AuthenticationData("u", "pass")),
+      RemoteRepository(engine.url + "/c", null),
     )
   }
 
@@ -106,10 +108,10 @@ class JarHttpDownloaderArtifactTest {
       )
     }
 
-    assertEquals("Artifact 'c/file.data' was not found in remote repositories, some of them returned 401 Unauthorized: [${server.url}/b/c/file.data]", e.message)
+    assertEquals("Artifact 'c/file.data' was not found in remote repositories, some of them returned 401 Unauthorized: [${engine.url}/b/c/file.data]", e.message)
     val suppressed = e.suppressedExceptions.single() as HttpRequests.HttpStatusException
     assertEquals("Request failed with status code 401", suppressed.message)
-    assertEquals("${server.url}/b/c/file.data", suppressed.url)
+    assertEquals("${engine.url}/b/c/file.data", suppressed.url)
   }
 
   @Test
@@ -156,7 +158,7 @@ class JarHttpDownloaderArtifactTest {
     }
 
     assertEquals("Request failed with status code 500", e.message)
-    assertEquals("${server.url}/b/c/file.data", e.url)
+    assertEquals("${engine.url}/b/c/file.data", e.url)
 
     assertEquals("""
       /a/c/file.data: 404
@@ -180,9 +182,9 @@ class JarHttpDownloaderArtifactTest {
         artifactPath = JarHttpDownloader.RelativePathToDownload(Path.of("c/file.data"), null),
         localRepository = localRepository,
         remoteRepositories = listOf(
-          RemoteRepository(server.url + "/a", null),
+          RemoteRepository(engine.url + "/a", null),
           RemoteRepository("http://127.0.0.1:${unusedLocalPort}/root", null),
-          RemoteRepository(server.url + "/c", null),
+          RemoteRepository(engine.url + "/c", null),
         ),
         retry = RetryProvider.disabled(),
       )
@@ -213,7 +215,7 @@ class JarHttpDownloaderArtifactTest {
       )
     }
 
-    assertTrue(e.message!!.startsWith("Wrong file checksum after downloading '${server.url}/b/c/file.data'"), e.message)
+    assertTrue(e.message!!.startsWith("Wrong file checksum after downloading '${engine.url}/b/c/file.data'"), e.message)
     assertTrue(e.message!!.contains(expectedSha256), e.message)
     assertTrue(e.message!!.contains(actualSha256), e.message)
     assertTrue(e.message!!.contains("(fileSize: 13)"), e.message)
@@ -235,7 +237,7 @@ class JarHttpDownloaderArtifactTest {
       )
     }
 
-    assertEquals("Artifact 'c/file.data' was not found in remote repositories: [${server.url}/a/c/file.data, ${server.url}/b/c/file.data, ${server.url}/c/c/file.data]", e.message)
+    assertEquals("Artifact 'c/file.data' was not found in remote repositories: [${engine.url}/a/c/file.data, ${engine.url}/b/c/file.data, ${engine.url}/c/c/file.data]", e.message)
 
     assertEquals("""
       /a/c/file.data: 404
