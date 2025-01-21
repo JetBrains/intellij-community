@@ -110,7 +110,7 @@ public fun Dropdown(
                         skipNextClick = false
                     },
                     enabled = enabled,
-                    role = Role.Button,
+                    role = Role.DropdownList,
                     interactionSource = interactionSource,
                     indication = null,
                 )

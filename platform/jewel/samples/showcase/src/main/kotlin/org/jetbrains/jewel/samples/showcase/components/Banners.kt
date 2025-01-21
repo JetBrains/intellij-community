@@ -122,7 +122,7 @@ public fun Banners() {
                     text = LONG_IPSUM,
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Info inline no icon Action Icon clicked" }) {
-                            Icon(AllIconsKeys.General.Close, null)
+                            Icon(AllIconsKeys.General.Close, "Close button")
                         }
                     },
                 )
@@ -143,7 +143,7 @@ public fun Banners() {
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Info inline no icon Action Icon clicked" }) {
-                            Icon(AllIconsKeys.General.Close, null)
+                            Icon(AllIconsKeys.General.Close, "Close button")
                         }
                     },
                     actions = {
@@ -161,7 +161,7 @@ public fun Banners() {
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Error Inline Action Icon clicked" }) {
-                            Icon(AllIconsKeys.General.Close, null)
+                            Icon(AllIconsKeys.General.Close, "Close button")
                         }
                     },
                 )
@@ -182,10 +182,10 @@ public fun Banners() {
                     },
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Error Close Icon clicked" }) {
-                            Icon(AllIconsKeys.General.Close, null)
+                            Icon(AllIconsKeys.General.Close, "Close button")
                         }
                         IconButton(onClick = { clickLabel = "Error Gear Icon clicked" }) {
-                            Icon(AllIconsKeys.General.Gear, null)
+                            Icon(AllIconsKeys.General.Gear, "Settings button")
                         }
                     },
                 )
@@ -195,10 +195,10 @@ public fun Banners() {
                     actions = { Link("Action A", onClick = { clickLabel = "Warning Inline Action A clicked" }) },
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Error Close Icon clicked" }) {
-                            Icon(AllIconsKeys.General.Close, null)
+                            Icon(AllIconsKeys.General.Close, "Close button")
                         }
                         IconButton(onClick = { clickLabel = "Error Gear Icon clicked" }) {
-                            Icon(AllIconsKeys.General.Gear, null)
+                            Icon(AllIconsKeys.General.Gear, "Settings button")
                         }
                     },
                 )

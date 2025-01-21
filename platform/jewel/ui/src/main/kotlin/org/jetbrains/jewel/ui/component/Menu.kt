@@ -381,7 +381,6 @@ internal fun MenuItem(
                         menuManager.closeAll(localInputModeManager.inputMode, true)
                     },
                     enabled = enabled,
-                    role = Role.Button,
                     interactionSource = interactionSource,
                     indication = null,
                 )
@@ -417,7 +416,7 @@ internal fun MenuItem(
                 if (canShowIcon) {
                     val iconModifier = Modifier.size(style.metrics.itemMetrics.iconSize)
                     if (iconKey != null) {
-                        Icon(key = iconKey, contentDescription = null, modifier = iconModifier)
+                        Icon(key = iconKey, contentDescription = "Menu icon", modifier = iconModifier)
                     } else {
                         Box(modifier = iconModifier)
                     }
@@ -519,7 +518,6 @@ public fun MenuSubmenuItem(
                 .clickable(
                     onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
                     enabled = enabled,
-                    role = Role.Button,
                     interactionSource = interactionSource,
                     indication = null,
                 )
@@ -540,7 +538,7 @@ public fun MenuSubmenuItem(
             ) {
                 if (canShowIcon) {
                     if (iconKey != null) {
-                        Icon(key = iconKey, contentDescription = null)
+                        Icon(key = iconKey, contentDescription = "Menu icon")
                     } else {
                         Box(Modifier.size(style.metrics.itemMetrics.iconSize))
                     }

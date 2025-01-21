@@ -233,6 +233,6 @@ private fun Chevron(style: ComboBoxStyle, isEnabled: Boolean) {
         modifier = Modifier.testTag("Jewel.ComboBox.ChevronContainer").size(style.metrics.arrowAreaSize),
     ) {
         val iconColor = if (isEnabled) Color.Unspecified else style.colors.borderDisabled
-        Icon(key = style.icons.chevronDown, tint = iconColor, contentDescription = null)
+        Icon(key = style.icons.chevronDown, tint = iconColor, contentDescription = "Chevron icon")
     }
 }
