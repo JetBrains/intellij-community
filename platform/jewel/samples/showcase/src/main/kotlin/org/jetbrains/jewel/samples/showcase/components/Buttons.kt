@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,7 +43,7 @@ import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.hints.Stroke
 
 @Composable
-fun Buttons() {
+public fun Buttons() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         NormalButtons()
 
