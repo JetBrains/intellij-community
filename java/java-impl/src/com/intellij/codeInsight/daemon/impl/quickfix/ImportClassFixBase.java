@@ -36,6 +36,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +64,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private boolean myInContent;
   private ThreeState extensionsAllowToChangeFileSilently;
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   protected ImportClassFixBase(@NotNull T referenceElement, @NotNull R reference) {
     super(referenceElement.getProject());
     myReferenceElement = referenceElement;

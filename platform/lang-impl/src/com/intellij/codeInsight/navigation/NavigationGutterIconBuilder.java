@@ -177,9 +177,10 @@ public class NavigationGutterIconBuilder<T> {
   @Deprecated
   public @Nullable Annotation install(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
     if (!myLazy && myTargets.getValue().isEmpty() || element == null) return null;
-    return holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
       .gutterIconRenderer(createGutterIconRenderer(element.getProject(), null))
-      .needsUpdateOnTyping(false).createAnnotation();
+      .needsUpdateOnTyping(false).create();
+    return null;
   }
 
   public void createGutterIcon(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
