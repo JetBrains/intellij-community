@@ -14,8 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.samples.showcase.components.ShowcaseIcons
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
-import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Icon
@@ -34,7 +34,7 @@ internal fun WelcomeView() {
             Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Icon(key = StandaloneSampleIcons.jewelLogo, contentDescription = null, modifier = Modifier.size(200.dp))
+        Icon(key = ShowcaseIcons.jewelLogo, contentDescription = null, modifier = Modifier.size(200.dp))
 
         Text("Meet Jewel", style = Typography.h1TextStyle())
 
@@ -45,17 +45,17 @@ internal fun WelcomeView() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ThemeSelectionChip(IntUiThemes.Dark, "Dark", StandaloneSampleIcons.themeDark)
+                ThemeSelectionChip(IntUiThemes.Dark, "Dark", ShowcaseIcons.themeDark)
 
-                ThemeSelectionChip(IntUiThemes.Light, "Light", StandaloneSampleIcons.themeLight)
+                ThemeSelectionChip(IntUiThemes.Light, "Light", ShowcaseIcons.themeLight)
 
                 ThemeSelectionChip(
                     IntUiThemes.LightWithLightHeader,
                     "Light with Light Header",
-                    StandaloneSampleIcons.themeLightWithLightHeader,
+                    ShowcaseIcons.themeLightWithLightHeader,
                 )
 
-                ThemeSelectionChip(IntUiThemes.System, "System", StandaloneSampleIcons.themeSystem)
+                ThemeSelectionChip(IntUiThemes.System, "System", ShowcaseIcons.themeSystem)
             }
         }
 
@@ -72,6 +72,7 @@ internal fun WelcomeView() {
     }
 }
 
+@ExperimentalLayoutApi
 @Composable
 internal fun ThemeSelectionChip(theme: IntUiThemes, name: String, iconKey: IconKey) {
     RadioButtonChip(

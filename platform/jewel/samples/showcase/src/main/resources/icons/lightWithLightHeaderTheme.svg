@@ -1,0 +1,12 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="8" cy="1.75" r="0.75" fill="#6C707E"/>
+    <circle cx="8" cy="14.25" r="0.75" fill="#6C707E"/>
+    <circle cx="14.25" cy="8" r="0.75" transform="rotate(90 14.25 8)" fill="#6C707E"/>
+    <circle cx="1.75" cy="8" r="0.75" transform="rotate(90 1.75 8)" fill="#6C707E"/>
+    <circle cx="12.4189" cy="3.58056" r="0.75" transform="rotate(45 12.4189 3.58056)" fill="#6C707E"/>
+    <circle cx="3.58105" cy="12.4194" r="0.75" transform="rotate(45 3.58105 12.4194)" fill="#6C707E"/>
+    <circle cx="12.4198" cy="12.4194" r="0.75" transform="rotate(135 12.4198 12.4194)" fill="#6C707E"/>
+    <circle cx="3.58094" cy="3.58057" r="0.75" transform="rotate(135 3.58094 3.58057)" fill="#6C707E"/>
+    <circle cx="8" cy="8" r="4" stroke="#6C707E"/>
+</svg>

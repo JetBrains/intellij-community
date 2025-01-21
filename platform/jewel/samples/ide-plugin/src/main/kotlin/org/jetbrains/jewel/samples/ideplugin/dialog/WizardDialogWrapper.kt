@@ -3,7 +3,9 @@ package org.jetbrains.jewel.samples.ideplugin.dialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -46,6 +48,9 @@ internal class WizardDialogWrapper(
 
     init {
         require(pages.isNotEmpty()) { "Wizard must have at least one page" }
+        ApplicationManager.getApplication()
+            .invokeLater({ initializeComposeMainDispatcherChecker() }, ModalityState.any())
+
         init()
 
         this.title = title
