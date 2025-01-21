@@ -6,6 +6,7 @@ import com.intellij.debugger.actions.JvmDropFrameActionHandler;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
 import com.intellij.debugger.engine.dfaassist.DfaAssist;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -110,6 +111,22 @@ public class JavaDebugProcess extends XDebugProcess {
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
       public void changeEvent(final @NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
+        if (event == DebuggerSession.Event.CONTEXT) {
+          DebuggerSession debuggerSession = newContext.getDebuggerSession();
+          ThreadReferenceProxyImpl steppingThreadProxy = newContext.getThreadProxy();
+          if (debuggerSession != null && steppingThreadProxy != null && debuggerSession.getState() == DebuggerSession.State.IN_STEPPING) {
+            DebugProcessImpl debugProcess = debuggerSession.getProcess();
+            debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+              @Override
+              protected void action() {
+                JavaExecutionStack stack = new JavaExecutionStack(steppingThreadProxy, debugProcess, true);
+                getSession().positionReached(new JavaSteppingSuspendContext(debugProcess, stack));
+              }
+            });
+            return;
+          }
+        }
+
         if (event == DebuggerSession.Event.PAUSE
             || event == DebuggerSession.Event.CONTEXT
             || event == DebuggerSession.Event.REFRESH
@@ -131,13 +148,11 @@ public class JavaDebugProcess extends XDebugProcess {
                   if (xBreakpoint != null && second instanceof LocatableEvent &&
                       threadProxy != null && ((LocatableEvent)second).thread() == threadProxy.getThreadReference()) {
                     ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, newSuspendContext);
-                    unsetPausedIfNeeded(newContext);
                     SourceCodeChecker.checkSource(newContext);
                     return;
                   }
                 }
                 getSession().positionReached(newSuspendContext);
-                unsetPausedIfNeeded(newContext);
                 SourceCodeChecker.checkSource(newContext);
               }
             });
@@ -201,13 +216,6 @@ public class JavaDebugProcess extends XDebugProcess {
 
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
     myDropFrameActionActionHandler = new JvmDropFrameActionHandler(javaSession);
-  }
-
-  private void unsetPausedIfNeeded(DebuggerContextImpl context) {
-    SuspendContextImpl suspendContext = context.getSuspendContext();
-    if (suspendContext != null && !suspendContext.suspends(context.getThreadProxy())) {
-      ((XDebugSessionImpl)getSession()).unsetPaused();
-    }
   }
 
   private boolean shouldApplyContext(DebuggerContextImpl context) {

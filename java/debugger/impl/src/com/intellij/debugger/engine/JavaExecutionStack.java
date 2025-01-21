@@ -180,7 +180,6 @@ public class JavaExecutionStack extends XExecutionStack {
 
   @Override
   public @Nullable XStackFrame getTopFrame() {
-    assert myTopFramesReady : "Top frame must be already calculated here";
     return ContainerUtil.getFirstItem(myTopFrames);
   }
 

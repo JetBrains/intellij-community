@@ -42,6 +42,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
+import com.intellij.xdebugger.impl.XSteppingSuspendContext;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList.ItemWithSeparatorAbove;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -532,6 +533,11 @@ public final class XFramesView extends XDebugView {
       myListenersEnabled = false;
       boolean selected = builder.initModel(myFramesList.getModel());
       myListenersEnabled = !builder.start() || selected;
+    }
+
+    XDebugSessionImpl debugSession = getSession();
+    if (debugSession != null && debugSession.getSuspendContext() instanceof XSteppingSuspendContext) {
+      myListenersEnabled = true;
     }
   }
 

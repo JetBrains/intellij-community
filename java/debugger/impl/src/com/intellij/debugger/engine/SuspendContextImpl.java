@@ -530,6 +530,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
       setThread(activeThread);
     }
     if (activeThread != null) {
+      if (mySuspendPolicy == EventRequest.SUSPEND_EVENT_THREAD && activeThread != myThread) {
+        logError("Thread " + activeThread + " was set as active into " + this);
+      }
       myActiveExecutionStack = new JavaExecutionStack(activeThread, myDebugProcess, myThread == activeThread);
       myActiveExecutionStack.initTopFrame();
     }

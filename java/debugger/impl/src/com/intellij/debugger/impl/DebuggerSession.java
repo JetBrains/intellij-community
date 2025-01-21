@@ -69,7 +69,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   private static final Logger LOG = Logger.getInstance(DebuggerSession.class);
   private final MyDebuggerStateManager myContextManager;
 
-  public enum State {STOPPED, RUNNING, WAITING_ATTACH, PAUSED, WAIT_EVALUATION, DISPOSED}
+  public enum State {STOPPED, RUNNING, WAITING_ATTACH, PAUSED, IN_STEPPING, WAIT_EVALUATION, DISPOSED}
 
   public enum Event {ATTACHED, DETACHED, RESUME, STEP, PAUSE, REFRESH, CONTEXT, START_WAIT_ATTACH, DISPOSE, REFRESH_WITH_STACK, THREADS_REFRESH}
 
@@ -274,6 +274,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return switch (myState.myState) {
       case STOPPED, DISPOSED -> JavaDebuggerBundle.message("status.debug.stopped");
       case RUNNING -> JavaDebuggerBundle.message("status.app.running");
+      case IN_STEPPING -> JavaDebuggerBundle.message("status.app.stepping");
       case WAITING_ATTACH -> {
         RemoteConnection connection = getProcess().getConnection();
         yield DebuggerUtilsImpl.getConnectionWaitStatus(connection);
@@ -669,7 +670,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     @Override
     public void resumed(SuspendContextImpl suspendContext) {
       SuspendContextImpl context = getProcess().getSuspendManager().getPausedContext();
-      ThreadReferenceProxyImpl steppingThread = null;
+      ThreadReferenceProxyImpl steppingThread;
       // single thread stepping
       if (context != null
           && suspendContext != null
@@ -677,16 +678,17 @@ public final class DebuggerSession implements AbstractDebuggerSession {
           && isSteppingThrough(suspendContext.getThread())) {
         steppingThread = suspendContext.getThread();
       }
-      final DebuggerContextImpl debuggerContext =
-        context != null ?
-        DebuggerContextImpl.createDebuggerContext(DebuggerSession.this,
-                                                  context,
-                                                  steppingThread != null ? steppingThread : context.getThread(),
-                                                  null)
-                        : null;
+      else {
+        steppingThread = null;
+      }
 
       DebuggerInvocationUtil.invokeLater(getProject(), () -> {
-        if (debuggerContext != null) {
+        if (steppingThread != null) {
+          DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, null, steppingThread, null);
+          getContextManager().setState(debuggerContext, State.IN_STEPPING, Event.CONTEXT, getDescription(debuggerContext));
+        }
+        else if (context != null) {
+          DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, context, context.getThread(), null);
           getContextManager().setState(debuggerContext, State.PAUSED, Event.CONTEXT, getDescription(debuggerContext));
         }
         else {

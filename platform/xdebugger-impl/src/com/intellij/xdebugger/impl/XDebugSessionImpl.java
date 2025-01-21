@@ -935,11 +935,15 @@ public final class XDebugSessionImpl implements XDebugSession {
     myTopStackFrame = newCurrentStackFrame;
     XSourcePosition topFramePosition = getTopFramePosition();
 
-    myPaused.set(true);
+    boolean isSteppingSuspendContext = suspendContext instanceof XSteppingSuspendContext;
 
-    boolean isAlternative = myAlternativeSourceHandler != null &&
-                            myAlternativeSourceHandler.isAlternativeSourceKindPreferred(suspendContext);
-    updateExecutionPosition(isAlternative ? XSourceKind.ALTERNATIVE : XSourceKind.MAIN);
+    myPaused.set(!isSteppingSuspendContext);
+
+    if (!isSteppingSuspendContext) {
+      boolean isAlternative = myAlternativeSourceHandler != null &&
+                              myAlternativeSourceHandler.isAlternativeSourceKindPreferred(suspendContext);
+      updateExecutionPosition(isAlternative ? XSourceKind.ALTERNATIVE : XSourceKind.MAIN);
+    }
 
     logPositionReached(topFramePosition);
 
