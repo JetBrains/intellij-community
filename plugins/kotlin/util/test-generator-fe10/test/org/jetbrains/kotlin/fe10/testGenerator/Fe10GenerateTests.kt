@@ -438,6 +438,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kts?$"),
                 excludedDirectories = listOf(
                     "addAnnotationUseSiteTargetForConstructorParameter",
+                    "simplifyExpression",
                 )
             )
         }

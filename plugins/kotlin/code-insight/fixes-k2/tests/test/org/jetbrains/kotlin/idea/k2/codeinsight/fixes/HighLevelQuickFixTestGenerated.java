@@ -12053,6 +12053,100 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/simplifyExpression")
+    public static class SimplifyExpression extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constantFalse.kt")
+        public void testConstantFalse() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantFalse.kt");
+        }
+
+        @TestMetadata("constantFalseIfElseIf.kt")
+        public void testConstantFalseIfElseIf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantFalseIfElseIf.kt");
+        }
+
+        @TestMetadata("constantFalseIfElseIfElse.kt")
+        public void testConstantFalseIfElseIfElse() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantFalseIfElseIfElse.kt");
+        }
+
+        @TestMetadata("constantFalseIfElseIfElseIfFirstBranch.kt")
+        public void testConstantFalseIfElseIfElseIfFirstBranch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantFalseIfElseIfElseIfFirstBranch.kt");
+        }
+
+        @TestMetadata("constantFalseIfElseIfElseIfSecondBranch.kt")
+        public void testConstantFalseIfElseIfElseIfSecondBranch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantFalseIfElseIfElseIfSecondBranch.kt");
+        }
+
+        @TestMetadata("constantNull.kt")
+        public void testConstantNull() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantNull.kt");
+        }
+
+        @TestMetadata("constantTrue.kt")
+        public void testConstantTrue() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantTrue.kt");
+        }
+
+        @TestMetadata("constantTrueIfElseIf.kt")
+        public void testConstantTrueIfElseIf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantTrueIfElseIf.kt");
+        }
+
+        @TestMetadata("constantTrueIfElseIfElseIfFirstCondition.kt")
+        public void testConstantTrueIfElseIfElseIfFirstCondition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantTrueIfElseIfElseIfFirstCondition.kt");
+        }
+
+        @TestMetadata("constantTrueIfElseIfElseIfSecondCondition.kt")
+        public void testConstantTrueIfElseIfElseIfSecondCondition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantTrueIfElseIfElseIfSecondCondition.kt");
+        }
+
+        @TestMetadata("constantTrueIfElseIfFirstCondition.kt")
+        public void testConstantTrueIfElseIfFirstCondition() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantTrueIfElseIfFirstCondition.kt");
+        }
+
+        @TestMetadata("constantTrueIfElseIfFirstConditionCommentsMultipleStatements.kt")
+        public void testConstantTrueIfElseIfFirstConditionCommentsMultipleStatements() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantTrueIfElseIfFirstConditionCommentsMultipleStatements.kt");
+        }
+
+        @TestMetadata("constantTrueIfElseIfFirstConditionCommentsSingleStatement.kt")
+        public void testConstantTrueIfElseIfFirstConditionCommentsSingleStatement() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantTrueIfElseIfFirstConditionCommentsSingleStatement.kt");
+        }
+
+        @TestMetadata("constantZeroListIsEmpty.kt")
+        public void testConstantZeroListIsEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantZeroListIsEmpty.kt");
+        }
+
+        @TestMetadata("constantZeroListOf.kt")
+        public void testConstantZeroListOf() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/constantZeroListOf.kt");
+        }
+
+        @TestMetadata("notNullSideEffect.kt")
+        public void testNotNullSideEffect() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyExpression/notNullSideEffect.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/smartCastImpossibleInIfThen")
     public static class SmartCastImpossibleInIfThen extends AbstractHighLevelQuickFixTest {
         @java.lang.Override

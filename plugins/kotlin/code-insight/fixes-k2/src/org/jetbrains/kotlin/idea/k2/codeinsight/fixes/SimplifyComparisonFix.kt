@@ -2,19 +2,20 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.SenselessComparison
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyComparisonFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConstantExpressionValue
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyExpressionFix
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 object SimplifyComparisonFixFactory {
+    val simplifyComparisonFixFactory: KotlinQuickFixFactory.ModCommandBased<SenselessComparison> =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: SenselessComparison ->
+            val expression = diagnostic.psi.takeIf { it.getStrictParentOfType<KtDeclarationWithBody>() != null }
+                ?: return@ModCommandBased emptyList()
+            val constantExpressionValue = ConstantExpressionValue.of(diagnostic.compareResult)
 
-    val simplifyComparisonFixFactory: KotlinQuickFixFactory.ModCommandBased<SenselessComparison> = KotlinQuickFixFactory.ModCommandBased { diagnostic: SenselessComparison ->
-        val expression = diagnostic.psi.takeIf { it.getStrictParentOfType<KtDeclarationWithBody>() != null }
-            ?: return@ModCommandBased emptyList()
-        val compareResult = diagnostic.compareResult
-
-        listOf(SimplifyComparisonFix(expression, compareResult))
-    }
-    
+            listOf(SimplifyExpressionFix(expression, constantExpressionValue, KotlinBundle.message("simplify.comparison")))
+        }
 }

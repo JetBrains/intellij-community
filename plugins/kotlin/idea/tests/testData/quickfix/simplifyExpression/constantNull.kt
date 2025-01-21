@@ -1,0 +1,13 @@
+// "Simplify expression" "true"
+// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection
+
+fun alwaysNull(i: Int) {
+    val zeroOrNull = if (i > 500) 0 else null
+    val notNull = if (zeroOrNull == 0) {
+        println("Zero")
+    } else {
+        println(zeroOrNull<caret>)
+    }
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyExpressionFix

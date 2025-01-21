@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
 import com.intellij.codeInsight.PsiEquivalenceUtil
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult
@@ -44,6 +45,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConstantExpressionValue
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyExpressionFix
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
@@ -203,7 +206,21 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                                 if (shouldReportAsValue(cv, expr)) ProblemHighlightType.WEAK_WARNING
                                 else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
                             if (warnOnConstantRefs || highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
-                                holder.registerProblem(expr, KotlinBundle.message(key, expr.text), highlightType)
+                                val simplifyExpressionFixIfAvailable = when (cv) {
+                                    ConstantValue.TRUE -> ConstantExpressionValue.of(true)
+                                    ConstantValue.FALSE -> ConstantExpressionValue.of(false)
+                                    ConstantValue.ZERO -> ConstantExpressionValue.of(0)
+                                    ConstantValue.NULL -> ConstantExpressionValue.of(null)
+                                    else -> null
+                                }?.let { constantExpressionValue ->
+                                    LocalQuickFix.from(SimplifyExpressionFix(expr, constantExpressionValue))
+                                }
+                                val fixes = if (simplifyExpressionFixIfAvailable != null)
+                                    arrayOf(simplifyExpressionFixIfAvailable)
+                                else emptyArray()
+                                holder.registerProblem(
+                                    expr, KotlinBundle.message(key, expr.text), highlightType, *fixes
+                                )
                             }
                         }
                     }
