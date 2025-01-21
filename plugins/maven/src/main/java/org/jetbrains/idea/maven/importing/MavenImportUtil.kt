@@ -395,24 +395,23 @@ object MavenImportUtil {
 
   private val MavenProject.testSourceLevel: String?
     get() {
-      return getCompilerLevel(true, "source")
+      return getCompilerLevel(true, "testSource")
     }
 
   private val MavenProject.testTargetLevel: String?
     get() {
-      return getCompilerLevel(true, "target")
+      return getCompilerLevel(true, "testTarget")
     }
 
   private val MavenProject.testReleaseLevel: String?
     get() {
-      return getCompilerLevel(true, "release")
+      return getCompilerLevel(true, "testRelease")
     }
 
   private fun MavenProject.getCompilerLevel(forTests: Boolean, level: String): String? {
     val configs = if (forTests) testCompilerConfigs else compilerConfigs
-    val finalLevel = if (forTests) "test${level.replaceFirstChar { it.titlecase() }}" else level
-    val fallbackProperty = "maven.compiler.$finalLevel"
-    val levels = configs.mapNotNull { LanguageLevel.parse(findChildValueByPath(it, finalLevel)) }
+    val fallbackProperty = "maven.compiler.$level"
+    val levels = configs.mapNotNull { LanguageLevel.parse(findChildValueByPath(it, level)) }
     val maxLevel = levels.maxWithOrNull(Comparator.naturalOrder())?.toJavaVersion()?.toFeatureString()
     return maxLevel ?: properties.getProperty(fallbackProperty)
   }
