@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate.regex
 
-import org.jetbrains.plugins.textmate.regex.RegexUtil.byteOffsetByCharOffset
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 abstract class RegexFacadeTest {

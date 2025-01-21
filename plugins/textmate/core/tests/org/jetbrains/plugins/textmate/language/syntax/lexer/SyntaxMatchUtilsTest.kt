@@ -4,7 +4,7 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.rep
 import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateString.Companion.fromString
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class SyntaxMatchUtilsTest {

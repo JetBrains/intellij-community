@@ -8,37 +8,37 @@ import org.jetbrains.plugins.textmate.plist.PListValue.Companion.integer
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.real
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.string
 import org.jetbrains.plugins.textmate.plist.Plist.Companion.dateFormatter
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.util.*
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class XmlPlistReaderTest {
   @Test
   fun getStringMethod() {
     val plist = read("<dict><key>someKey</key><string>someValue</string></dict>")
-    Assert.assertEquals("someValue", plist.getPlistValue("someKey")!!.string)
-    Assert.assertEquals("default", plist.getPlistValue("unknown", "default").string)
+    assertEquals("someValue", plist.getPlistValue("someKey")!!.string)
+    assertEquals("default", plist.getPlistValue("unknown", "default").string)
   }
 
   @Test
   fun parseString() {
     val plist = read("<dict><key>someKey</key><string>someValue</string><key>escape</key><string>&gt;</string></dict>")
-    Assert.assertEquals(2, plist.entries().size.toLong())
+    assertEquals(2, plist.entries().size.toLong())
     assertEquals(string("someValue"), plist.getPlistValue("someKey"))
     assertEquals(string(">"), plist.getPlistValue("escape"))
     assertEquals(string("default"), plist.getPlistValue("unknown", "default"))
-    Assert.assertNull(plist.getPlistValue("unknown"))
+    assertNull(plist.getPlistValue("unknown"))
   }
 
   @Test
   fun parseBoolean() {
     val plist = read("<dict><key>true</key><true/><key>false</key><false/></dict>")
-    Assert.assertEquals(2, plist.entries().size.toLong())
+    assertEquals(2, plist.entries().size.toLong())
     assertEquals(bool(true), plist.getPlistValue("true"))
     assertEquals(bool(false), plist.getPlistValue("false"))
-    Assert.assertNull(plist.getPlistValue("unknown"))
+    assertNull(plist.getPlistValue("unknown"))
     assertEquals(bool(true), plist.getPlistValue("unknown", true))
     assertEquals(bool(false), plist.getPlistValue("unknown", false))
   }
@@ -46,19 +46,19 @@ class XmlPlistReaderTest {
   @Test
   fun parseInteger() {
     val plist = read("<dict><key>int</key><integer>124</integer></dict>")
-    Assert.assertEquals(1, plist.entries().size.toLong())
+    assertEquals(1, plist.entries().size.toLong())
     assertEquals(integer(124), plist.getPlistValue("int"))
-    Assert.assertNull(plist.getPlistValue("unknown"))
+    assertNull(plist.getPlistValue("unknown"))
     assertEquals(integer(124), plist.getPlistValue("unknown", 124))
   }
 
   @Test
   fun parseReal() {
     val plist = read("<dict><key>real</key><real>145.3</real></dict>")
-    Assert.assertEquals(1, plist.entries().size.toLong())
+    assertEquals(1, plist.entries().size.toLong())
     assertEquals(real(145.3), plist.getPlistValue("real"))
     assertEquals(real(120.0), plist.getPlistValue("unknown", 120.0))
-    Assert.assertNull(plist.getPlistValue("unknown"))
+    assertNull(plist.getPlistValue("unknown"))
   }
 
   @Test
@@ -68,9 +68,9 @@ class XmlPlistReaderTest {
     val date = calendar.getTime()
 
     val plist = read("<dict><key>date</key><date>" + dateFormatter().format(date) + "</date></dict>")
-    Assert.assertEquals(1, plist.entries().size.toLong())
+    assertEquals(1, plist.entries().size.toLong())
     assertEquals(date(date), plist.getPlistValue("date"))
-    Assert.assertNull(plist.getPlistValue("unknown"))
+    assertNull(plist.getPlistValue("unknown"))
   }
 
   @Test
@@ -98,7 +98,7 @@ class XmlPlistReaderTest {
   @Test
   fun plistWithoutDictRoot() {
     val plist = read("<key>someKey</key><string>someValue</string>")
-    Assert.assertEquals(Plist.EMPTY_PLIST, plist)
+    assertEquals(Plist.EMPTY_PLIST, plist)
   }
 
   @Test
