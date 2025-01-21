@@ -53,6 +53,7 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.copyTo
@@ -381,10 +382,20 @@ internal class PinentryShellScriptLauncherGenerator(override val executable: Git
 internal data class GpgAgentPaths(
   val gpgAgentHome: Path,
   val gpgPinentryAppLauncherConfigPath: String,
+  val gpgAgentConf: Path,
+  val gpgAgentConfBackup: Path,
+  val gpgPinentryAppLauncher: Path,
 ) {
-  val gpgAgentConf = gpgAgentHome.resolve(GPG_AGENT_CONF_FILE_NAME)
-  val gpgAgentConfBackup = gpgAgentHome.resolve(GPG_AGENT_CONF_BACKUP_FILE_NAME)
-  val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
+  companion object {
+    @Throws(InvalidPathException::class)
+    fun create(gpgAgentHome: Path, gpgPinentryAppLauncherConfigPath: String) = GpgAgentPaths(
+      gpgAgentHome = gpgAgentHome,
+      gpgPinentryAppLauncherConfigPath = gpgPinentryAppLauncherConfigPath,
+      gpgAgentConf = gpgAgentHome.resolve(GPG_AGENT_CONF_FILE_NAME),
+      gpgAgentConfBackup = gpgAgentHome.resolve(GPG_AGENT_CONF_BACKUP_FILE_NAME),
+      gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME),
+    )
+  }
 }
 
 private class GpgAgentConfiguratorStartupActivity : ProjectActivity {

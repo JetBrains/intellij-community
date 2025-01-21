@@ -247,7 +247,7 @@ internal class GpgAgentPathsLocatorTestFactory: GpgAgentPathsLocatorFactory {
     override fun resolvePaths(): GpgAgentPaths? {
       val gpgAgentHome = project.stateStore.getProjectBasePath().resolve(GPG_HOME_DIR).createDirectories()
       val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
-      return GpgAgentPaths(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())
+      return GpgAgentPaths.create(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())
     }
   }
 }

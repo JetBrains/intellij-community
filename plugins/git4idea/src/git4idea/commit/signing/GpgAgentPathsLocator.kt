@@ -42,7 +42,7 @@ private class MacAndUnixGpgAgentPathsLocator : GpgAgentPathsLocator {
       val gpgAgentHome = Paths.get(SystemProperties.getUserHome(), GPG_HOME_DIR)
       val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
 
-      return GpgAgentPaths(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())
+      return GpgAgentPaths.create(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())
     }
     catch (e: InvalidPathException) {
       LOG.warn("Cannot resolve path", e)
@@ -57,7 +57,7 @@ private class WslGpgAgentPathsLocator(private val executable: GitExecutable.Wsl)
       val gpgAgentHome = getWindowsAccessibleGpgHome(executable) ?: return null
       val wslUserHome = getPathInWslUserHome(executable) ?: return null
       val pathToPinentryAppInWsl = "$wslUserHome/$GPG_HOME_DIR/$PINENTRY_LAUNCHER_FILE_NAME"
-      return GpgAgentPaths(gpgAgentHome, pathToPinentryAppInWsl)
+      return GpgAgentPaths.create(gpgAgentHome, pathToPinentryAppInWsl)
     }
     catch (e: InvalidPathException) {
       LOG.warn("Cannot resolve path", e)
