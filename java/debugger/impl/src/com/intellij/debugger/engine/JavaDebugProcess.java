@@ -4,6 +4,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.JvmDropFrameActionHandler;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
+import com.intellij.debugger.actions.ResumeAllJavaThreadsActionHandler;
 import com.intellij.debugger.engine.dfaassist.DfaAssist;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -51,8 +52,10 @@ import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.impl.ThreadsActionsProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
@@ -84,7 +87,7 @@ public class JavaDebugProcess extends XDebugProcess {
   };
 
   public static JavaDebugProcess create(final @NotNull XDebugSession session, final @NotNull DebuggerSession javaSession) {
-    JavaDebugProcess res = new JavaDebugProcess(session, javaSession);
+    JavaDebugProcess res = new JavaDebugProcessWithThreadsActions(session, javaSession);
     javaSession.getProcess().setXDebugProcess(res);
     return res;
   }
@@ -544,5 +547,19 @@ public class JavaDebugProcess extends XDebugProcess {
   @Override
   public @Nullable XDropFrameHandler getDropFrameHandler() {
     return myDropFrameActionActionHandler;
+  }
+
+  private static final class JavaDebugProcessWithThreadsActions extends JavaDebugProcess implements ThreadsActionsProvider {
+    private JavaDebugProcessWithThreadsActions(@NotNull XDebugSession session, @NotNull DebuggerSession javaSession) {
+      super(session, javaSession);
+      myResumeAllJavaThreadsActionHandler = new ResumeAllJavaThreadsActionHandler(getDebuggerSession().getProcess());
+    }
+
+    private final ResumeAllJavaThreadsActionHandler myResumeAllJavaThreadsActionHandler;
+
+    @Override
+    public @Nullable DebuggerActionHandler getThawAllThreadsHandler() {
+      return myResumeAllJavaThreadsActionHandler;
+    }
   }
 }
