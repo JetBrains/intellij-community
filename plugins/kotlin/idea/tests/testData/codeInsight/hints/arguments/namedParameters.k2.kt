@@ -5,7 +5,7 @@ fun simpleFun2(name: String, value: Int){}
 
 val f = foo(/*<# [namedParameters.kt:8]index| = #>*/0, lastName = "Johnson")
 val f2 = foo(/*<# [namedParameters.kt:8]index| = #>*/0, firstName = "Joe", /*<# [namedParameters.kt:48]lastName| = #>*/"Johnson")
-fun fVararg(vararg v: String) = fVararg(/*<# …|[namedParameters.kt:280]v| = #>*/*v)
+fun fVararg(vararg v: String) = fVararg(/*<# …|[namedParameters.kt:287]v| = #>*/*v)
 fun m() {
     val myName = "name"
     val name = "name"

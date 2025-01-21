@@ -2,13 +2,14 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
-import com.intellij.psi.util.startOffset
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -24,14 +25,16 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
 
-        customToStringProvider = { element ->
-            val virtualFile = element.containingFile.virtualFile
+        customToStringProvider = provider@{ element ->
+            val navigatable = PsiNavigateUtil.getNavigatable(element)
+            val openFileDescriptor = navigatable as? OpenFileDescriptor ?: return@provider ""
+            val virtualFile = openFileDescriptor.file
             val jarFileSystem = virtualFile.fileSystem as? JarFileSystem
             val path = jarFileSystem?.let {
                 val root = VfsUtilCore.getRootFile(virtualFile)
                 "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
             } ?: virtualFile.name
-            "[$path:${if (jarFileSystem != null) "*" else element.startOffset.toString()}]"
+            "[$path:${if (jarFileSystem != null) "*" else openFileDescriptor.offset.toString()}]"
         }
     }
 

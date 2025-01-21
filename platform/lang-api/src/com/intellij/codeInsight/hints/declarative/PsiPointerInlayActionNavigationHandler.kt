@@ -11,8 +11,6 @@ class PsiPointerInlayActionNavigationHandler : InlayActionHandler {
 
   override fun handleClick(editor: Editor, payload: InlayActionPayload) {
     payload as PsiPointerInlayActionPayload
-    val element = payload.pointer.element
-    val navElement = if (payload.useNavigationElement) element?.navigationElement else element
-    PsiNavigateUtil.navigate(navElement)
+    PsiNavigateUtil.navigate(payload.pointer.element)
   }
 }

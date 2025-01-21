@@ -1083,10 +1083,8 @@ f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHand
 f:com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 - com.intellij.codeInsight.hints.declarative.InlayActionPayload
 - <init>(com.intellij.psi.SmartPsiElementPointer):V
-- <init>(com.intellij.psi.SmartPsiElementPointer,Z):V
 - equals(java.lang.Object):Z
 - f:getPointer():com.intellij.psi.SmartPsiElementPointer
-- f:getUseNavigationElement():Z
 - hashCode():I
 com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 - com.intellij.codeInsight.hints.declarative.InlayHintsCollector
@@ -5941,6 +5939,7 @@ com.intellij.util.ActionRunner$InterruptibleRunnableWithResult
 - a:run():java.lang.Object
 f:com.intellij.util.PsiNavigateUtil
 - <init>():V
+- s:getNavigatable(com.intellij.psi.PsiElement):com.intellij.pom.Navigatable
 - s:navigate(com.intellij.psi.PsiElement):V
 - s:navigate(com.intellij.psi.PsiElement,Z):V
 f:com.intellij.util.indexing.LightDirectoryIndex
