@@ -22,7 +22,7 @@ import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedGroupIdArtefactIdInspection
+import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedGroupIdArtifactIdInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
@@ -487,7 +487,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
-    fixture.enableInspections(MavenParentMissedGroupIdArtefactIdInspection::class.java)
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
     checkHighlighting()
   }
 
@@ -504,7 +504,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
-    fixture.enableInspections(MavenParentMissedGroupIdArtefactIdInspection::class.java)
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
     checkHighlighting()
   }
 
@@ -516,7 +516,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <artifactId>project</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    // In Maven 3, <groupId> and <artefactId> in <parent> are required even if the parent's POM could be found by relativePath.
+    // In Maven 3, <groupId> and <artifactId> in <parent> are required even if the parent's POM could be found by relativePath.
     val subprojectPom = createModulePom("subdirectory", """
                       <<error descr="'artifactId' child tag should be defined">parent</error>>
                          <groupId>test</groupId> 
@@ -525,7 +525,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       </parent>
                       <artifactId>subproject1</artifactId>
                       """.trimIndent())
-    fixture.enableInspections(MavenParentMissedGroupIdArtefactIdInspection::class.java)
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
     checkHighlighting(subprojectPom)
   }
 
@@ -537,7 +537,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <artifactId>project</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    // In Maven 3, <groupId> and <artefactId> in <parent> are required even if the parent's POM could be found by relativePath.
+    // In Maven 3, <groupId> and <artifactId> in <parent> are required even if the parent's POM could be found by relativePath.
     val subprojectPom = createModulePom("subdirectory", """
                       <<error descr="'groupId' child tag should be defined">parent</error>>
                          <artifactId>project</artifactId>
@@ -546,7 +546,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                       <artifactId>subproject1</artifactId>
                       """.trimIndent())
-    fixture.enableInspections(MavenParentMissedGroupIdArtefactIdInspection::class.java)
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
     checkHighlighting(subprojectPom)
   }
 
@@ -558,14 +558,14 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <artifactId>project</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    // In Maven 4, it's possible to omit <groupId> and <artefactId> in <parent> if the parent's POM could be found by relativePath.
+    // In Maven 4, it's possible to omit <groupId> and <artifactId> in <parent> if the parent's POM could be found by relativePath.
     val subprojectPom = createModulePom("sub/subdirectory", """
                       <parent>
                           <relativePath>../../pom.xml</relativePath>
                       </parent>
                       <artifactId>subproject1</artifactId>
                       """.trimIndent())
-    fixture.enableInspections(MavenParentMissedGroupIdArtefactIdInspection::class.java)
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
     checkHighlighting(subprojectPom)
   }
 
@@ -577,13 +577,13 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                       <artifactId>project</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    // In Maven 4, it's possible to omit <groupId> and <artefactId> in <parent> if the parent's POM could be found by relativePath.
+    // In Maven 4, it's possible to omit <groupId> and <artifactId> in <parent> if the parent's POM could be found by relativePath.
     // If <relativePath> is not specified, the default value is used (../pom.xml)
     val subprojectPom = createModulePom("subdirectory", """
                       <parent/>
                       <artifactId>subproject1</artifactId>
                       """.trimIndent())
-    fixture.enableInspections(MavenParentMissedGroupIdArtefactIdInspection::class.java)
+    fixture.enableInspections(MavenParentMissedGroupIdArtifactIdInspection::class.java)
     checkHighlighting(subprojectPom)
   }
 

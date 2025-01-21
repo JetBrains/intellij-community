@@ -5,7 +5,7 @@ import com.intellij.util.xml.DomFileElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 
-class MavenParentMissedGroupIdArtefactIdInspection : MavenParentMissedCoordinatesInspection() {
+class MavenParentMissedGroupIdArtifactIdInspection : MavenParentMissedCoordinatesInspection() {
   override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel?>,
                                 holder: DomElementAnnotationHolder) {
     val parent = getParentIfExists(domFileElement) ?: return
@@ -19,6 +19,6 @@ class MavenParentMissedGroupIdArtefactIdInspection : MavenParentMissedCoordinate
   }
 
   override fun getShortName(): String {
-    return "MavenParentMissedGroupIdArtefactIdInspection"
+    return "MavenParentMissedGroupIdArtifactIdInspection"
   }
 }
