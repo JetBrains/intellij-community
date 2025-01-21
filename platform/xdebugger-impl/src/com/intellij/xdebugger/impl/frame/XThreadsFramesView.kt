@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListSpeedSearch
@@ -27,6 +28,8 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab3
 import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Component
@@ -34,10 +37,14 @@ import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.Collections
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.JScrollPane
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 
 @Internal
 class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
@@ -61,6 +68,9 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private val myFramesPresentationCache = mutableMapOf<Any, String>()
 
   private val mainPanel = JPanel(BorderLayout())
+
+  private var stackInfoDescriptionRequester: StackInfoDescriptionRequester?
+
   override fun getMainComponent(): JComponent {
     return mainPanel
   }
@@ -134,18 +144,9 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       debugTab, debugTab.project), OccurenceNavigator by myFramesList {}
 
     val minimumDimension = Dimension(JBUI.scale(26), 0)
-    splitter.firstComponent = myThreadsList.withSpeedSearch().toScrollPane().apply {
+    val threadsScrollPane = myThreadsList.withSpeedSearch().toScrollPane()
+    splitter.firstComponent = threadsScrollPane.apply {
       minimumSize = minimumDimension
-      if (supportsDescription) {
-        val session = debugTab.session ?: return@apply
-        val infoDescriptionRequester = StackInfoDescriptionRequester(myThreadsList, session)
-        this.viewport.addChangeListener(infoDescriptionRequester)
-        session.addSessionListener(object : XDebugSessionListener {
-          override fun sessionStopped() {
-            this@apply.viewport.removeChangeListener(infoDescriptionRequester)
-          }
-        })
-      }
     }
 
     val frameListWrapper = JPanel(BorderLayout(0, 0))
@@ -154,6 +155,25 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     frameListWrapper.minimumSize = minimumDimension
 
     splitter.secondComponent = frameListWrapper
+
+    stackInfoDescriptionRequester = debugTab.session?.let { session ->
+      if (supportsDescription) {
+        val requester = StackInfoDescriptionRequester(myThreadsList, session, mainPanel)
+        threadsScrollPane.viewport.addChangeListener(requester)
+        myThreadsList.model.addListDataListener(requester)
+        session.addSessionListener(object : XDebugSessionListener {
+          override fun sessionStopped() {
+            myThreadsList.model.removeListDataListener(requester)
+            threadsScrollPane.viewport.removeChangeListener(requester)
+            stackInfoDescriptionRequester = null
+          }
+        })
+        requester
+      }
+      else {
+        null
+      }
+    }
 
     mySplitter = splitter
 
@@ -308,6 +328,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myFramesList.clear()
     myThreadsContainer.clear()
     myFramesPresentationCache.clear()
+    stackInfoDescriptionRequester?.clear()
   }
 
   override fun dispose() {}
@@ -453,7 +474,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private class ThreadsContainer(
     private val myThreadsList: XDebuggerThreadsList,
-    private var myActiveStack: XExecutionStack?,
+    private var myInitialActiveThread: XExecutionStack?,
     private val myDisposable: Disposable
   ) : XSuspendContext.XExecutionStackContainer {
     private var isProcessed = false
@@ -467,10 +488,11 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       UIUtil.invokeLaterIfNeeded {
         if (isStarted) return@invokeLaterIfNeeded
 
-        val activeStack = myActiveStack
+        val activeStack = myInitialActiveThread
         if (activeStack != null) {
           myThreadsList.model.replaceAll(listOf(StackInfo.from(activeStack), StackInfo.LOADING))
-        } else {
+        }
+        else {
           myThreadsList.model.replaceAll(loading)
         }
 
@@ -511,13 +533,13 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     }
 
     fun clear() {
-      myActiveStack = null
+      myInitialActiveThread = null
     }
 
     private fun getThreadsList(executionStacks: List<XExecutionStack>): List<StackInfo> {
       var sequence = executionStacks.asSequence()
-      if (myActiveStack != null) {
-        sequence = sequence.filter { it != myActiveStack }
+      if (myInitialActiveThread != null) {
+        sequence = sequence.filter { it != myInitialActiveThread }
       }
       return sequence.map { StackInfo.from(it) }.toList()
     }
@@ -536,15 +558,74 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
 internal class StackInfoDescriptionRequester(
   private val threadsList: XDebuggerThreadsList,
-  private val session: XDebugSessionImpl) : javax.swing.event.ChangeListener {
-    override fun stateChanged(e: javax.swing.event.ChangeEvent) {
+  val session: XDebugSessionImpl,
+  val viewComponent: JComponent
+) : javax.swing.event.ChangeListener, ListDataListener {
 
-      val firstIndex = threadsList.firstVisibleIndex
-      val lastIndex = threadsList.lastVisibleIndex
+  companion object {
+    private val logger = Logger.getInstance(StackInfoDescriptionRequester::class.java)
+  }
 
-      if (firstIndex < 0 || lastIndex < 0) return
-      for (stackInfo in threadsList.model.items.subList(firstIndex, lastIndex + 1)) {
-        stackInfo.requestDescription(session)
+  private val descriptionCalculationMap = Collections.synchronizedMap(mutableMapOf<XExecutionStack, CompletableFuture<XDebuggerExecutionStackDescription>>())
+
+  override fun stateChanged(e: javax.swing.event.ChangeEvent) {
+    triggerDescriptionCalculationForVisiblePart()
+    return
+  }
+
+  internal fun clear() {
+    descriptionCalculationMap.forEach { (_, future) -> future.cancel(true) }
+    descriptionCalculationMap.clear()
+  }
+
+  internal fun triggerDescriptionCalculationForVisiblePart() {
+    val firstIndex = threadsList.firstVisibleIndex
+    var lastIndex = threadsList.lastVisibleIndex
+
+    if (firstIndex < 0) return
+    lastIndex = if (lastIndex < 0) threadsList.model.size - 1 else lastIndex
+    for (stackInfo in threadsList.model.items.subList(firstIndex, lastIndex + 1)) {
+      requestDescription(stackInfo)
+    }
+  }
+
+  internal fun requestDescription(executionStack: XExecutionStack, onFinished: (XDebuggerExecutionStackDescription?, Throwable?) -> Unit) {
+    val descriptionService = session.project.service<XDebuggerExecutionStackDescriptionService>()
+    if (!(descriptionService.isAvailable())) return
+
+    descriptionCalculationMap.getOrPut(executionStack) {
+      descriptionService.getExecutionStackDescription(executionStack, session).asCompletableFuture()
+    }.whenCompleteAsync { result: XDebuggerExecutionStackDescription?, exception: Throwable? ->
+      onFinished(result, exception)
+      viewComponent.repaint()
+    }
+  }
+
+  internal fun requestDescription(stackInfo: StackInfo) {
+    val executionStack = stackInfo.stack ?: return
+
+    requestDescription(executionStack) { result, exception ->
+      if (exception is CancellationException) {
+        return@requestDescription
+      }
+      if (exception != null) {
+        logger.error(exception)
+      }
+      if (result != null) {
+        stackInfo.description = result.shortDescription
       }
     }
+  }
+
+  override fun intervalAdded(e: ListDataEvent?) {
+    triggerDescriptionCalculationForVisiblePart()
+  }
+
+  override fun intervalRemoved(e: ListDataEvent?) {
+    triggerDescriptionCalculationForVisiblePart()
+  }
+
+  override fun contentsChanged(e: ListDataEvent?) {
+    triggerDescriptionCalculationForVisiblePart()
+  }
 }

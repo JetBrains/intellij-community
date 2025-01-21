@@ -175,32 +175,7 @@ data class StackInfo internal constructor(
 
   @Volatile
   @Nls
-  private var description: String = if (stack == null) "" else IdeBundle.message("progress.text.loading")
+  internal var description: String = if (stack == null) "" else IdeBundle.message("progress.text.loading")
 
   override fun toString(): String = displayText
-
-  @Nls
-  fun getDescription(): String {
-    return description
-  }
-
-  internal fun requestDescription(session: XDebugSession) {
-    val descriptionService = session.project.service<XDebuggerExecutionStackDescriptionService>()
-    if (!(descriptionService.isAvailable())) return
-
-    val stack = this.stack ?: return
-
-    descriptionService.getExecutionStackDescription(stack, session).asCompletableFuture().whenCompleteAsync { result: XDebuggerExecutionStackDescription?, exception: Throwable? ->
-      if (exception is CancellationException) {
-        return@whenCompleteAsync
-      }
-      if (exception != null) {
-        logger.error(exception)
-      }
-      if (result != null) {
-        @Suppress("HardCodedStringLiteral")
-        description = result.shortDescription
-      }
-    }
-  }
 }

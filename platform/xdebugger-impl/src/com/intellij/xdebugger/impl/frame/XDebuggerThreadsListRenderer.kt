@@ -110,7 +110,7 @@ internal class ThreadDescriptionComponent : JPanel(VerticalLayout(4)) {
     }
     threadNameLabel.icon = value.icon
 
-    threadDescriptionLabel.append(value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES, JBUI.scale(16), SwingConstants.LEFT)
+    threadDescriptionLabel.append(value.description, SimpleTextAttributes.GRAYED_ATTRIBUTES, JBUI.scale(16), SwingConstants.LEFT)
 
     //TODO [chernyaev] tooltip for thread panel
     //this.toolTipText = item.additionalDisplayText?.tooltip
