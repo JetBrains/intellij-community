@@ -11,7 +11,7 @@ interface RegexFacade {
 }
 
 interface RegexFactory {
-  fun regex(regexString: String): RegexFacade
+  fun regex(pattern: CharSequence): RegexFacade
 
   fun string(string: CharSequence): TextMateString
 }

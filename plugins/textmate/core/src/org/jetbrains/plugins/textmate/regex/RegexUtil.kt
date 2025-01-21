@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.textmate.regex
 
-import java.nio.ByteBuffer
 import kotlin.Char.Companion.MIN_HIGH_SURROGATE
 import kotlin.Char.Companion.MIN_LOW_SURROGATE
 
-fun byteOffsetByCharOffset(
+internal fun byteOffsetByCharOffset(
   charSequence: CharSequence,
   startOffset: Int,
   targetOffset: Int,
@@ -26,19 +25,6 @@ fun byteOffsetByCharOffset(
     i++
   }
   return result
-}
-
-fun charRangeByByteRange(bytes: ByteArray, byteRange: TextMateRange): TextMateRange {
-  val startOffset = charOffsetByByteOffset(bytes, 0, byteRange.start)
-  val endOffset = startOffset + charOffsetByByteOffset(bytes, byteRange.start, byteRange.end)
-  return TextMateRange(startOffset, endOffset)
-}
-
-private fun charOffsetByByteOffset(stringBytes: ByteArray, startByteOffset: Int, targetByteOffset: Int): Int {
-  if (targetByteOffset <= 0) {
-    return 0
-  }
-  return Charsets.UTF_8.decode(ByteBuffer.wrap(stringBytes, startByteOffset, targetByteOffset - startByteOffset)).remaining()
 }
 
 private fun utf8Size(codePoint: Int): Int {

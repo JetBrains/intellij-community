@@ -56,6 +56,10 @@ class TextMateCachingSyntaxMatcher(private val delegate: TextMateSyntaxMatcher) 
     return delegate.matchStringRegex(keyName, string, byteOffset, matchBeginPosition, matchBeginString, lexerState, checkCancelledCallback)
   }
 
+  override fun createStringToMatch(s: CharSequence): TextMateString {
+    return delegate.createStringToMatch(s)
+  }
+
   private data class MatchKey(
     val syntaxNodeDescriptor: SyntaxNodeDescriptor,
     val string: TextMateString,

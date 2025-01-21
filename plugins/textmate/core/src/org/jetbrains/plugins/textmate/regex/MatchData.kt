@@ -10,9 +10,8 @@ data class MatchData(val matched: Boolean, private val offsets: IntArray) {
     return TextMateRange(offsets[endIndex - 1], offsets[endIndex])
   }
 
-  fun charRange(stringBytes: ByteArray, group: Int = 0): TextMateRange {
-    val range = charRangeByByteRange(stringBytes, byteOffset(group))
-    return TextMateRange(range.start, range.end)
+  fun charRange(textMateString: TextMateString, group: Int = 0): TextMateRange {
+    return textMateString.charRangeByByteRange(byteOffset(group))
   }
 
   override fun equals(other: Any?): Boolean {

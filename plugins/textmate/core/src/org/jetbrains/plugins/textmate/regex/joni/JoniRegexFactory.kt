@@ -17,13 +17,13 @@ class JoniRegexFactory : RegexFactory {
     private val LOGGER: Logger = LoggerFactory.getLogger(JoniRegexFactory::class.java)
   }
 
-  override fun regex(regexString: String): RegexFacade {
-    val bytes = regexString.toByteArray(Charsets.UTF_8)
+  override fun regex(pattern: CharSequence): RegexFacade {
+    val bytes = pattern.toString().toByteArray(Charsets.UTF_8)
     val regex = try {
       Regex(bytes, 0, bytes.size, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE, WarnCallback.NONE)
     }
     catch (e: JOniException) {
-      LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", regexString, e::class.java.getName(), e.message)
+      LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", pattern, e::class.java.getName(), e.message)
       FAILED_REGEX
     }
     return JoniRegexFacade(regex)
