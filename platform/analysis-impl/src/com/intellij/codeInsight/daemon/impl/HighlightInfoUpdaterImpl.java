@@ -474,46 +474,50 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     Map<Object, ToolHighlights> data = getData(psiFile, hostDocument);
     ToolHighlights toolHighlights = data.get(toolId);
     List<? extends HighlightInfo> oldInfos = ContainerUtil.notNullize(toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsiElement));
-    if (!oldInfos.isEmpty() || !newInfos.isEmpty()) {
-      assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
-      // execute in non-cancelable block. It should not throw PCE anyway, but just in case
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup before psiElementVisited ");
+    if (oldInfos.isEmpty() && newInfos.isEmpty()) {
+      return;
+    }
+    for (HighlightInfo newInfo : newInfos) {
+      assert newInfo.getHighlighter() == null : newInfo;
+    }
+    assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
+    // execute in non-cancelable block. It should not throw PCE anyway, but just in case
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup before psiElementVisited ");
 
-        if (LOG.isDebugEnabled()) {
-          //noinspection removal
-          LOG.debug("psiElementVisited: " + visitedPsiElement + " in " + visitedPsiElement.getTextRange() +
-                    (psiFile.getViewProvider() instanceof InjectedFileViewProvider ? " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
-                    "; tool:" + toolId + "; infos:" + newInfos + "; oldInfos:" + oldInfos + currentProgressInfo());
+      if (LOG.isDebugEnabled()) {
+        //noinspection removal
+        LOG.debug("psiElementVisited: " + visitedPsiElement + " in " + visitedPsiElement.getTextRange() +
+                  (psiFile.getViewProvider() instanceof InjectedFileViewProvider ? " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
+                  "; tool:" + toolId + "; infos:" + newInfos + "; oldInfos:" + oldInfos + currentProgressInfo());
+      }
+
+      ManagedHighlighterRecycler.runWithRecycler(session, recycler -> {
+        for (HighlightInfo oldInfo : oldInfos) {
+          RangeHighlighterEx highlighter = oldInfo.getHighlighter();
+          if (highlighter != null) {
+            recycler.recycleHighlighter(visitedPsiElement, oldInfo);
+          }
+        }
+        List<? extends HighlightInfo> newInfosToStore = assignRangeHighlighters(toolId, newInfos, session, psiFile, hostDocument, invalidElementRecycler, recycler);
+        ToolHighlights notNullToolHighlights = toolHighlights == null ? data.computeIfAbsent(toolId, __ -> new ToolHighlights()) : toolHighlights;
+        if (newInfosToStore.isEmpty()) {
+          notNullToolHighlights.elementHighlights.remove(visitedPsiElement);
+        }
+        else {
+          notNullToolHighlights.elementHighlights.put(visitedPsiElement, newInfosToStore);
         }
 
-        ManagedHighlighterRecycler.runWithRecycler(session, recycler -> {
-          for (HighlightInfo oldInfo : oldInfos) {
-            RangeHighlighterEx highlighter = oldInfo.getHighlighter();
-            if (highlighter != null) {
-              recycler.recycleHighlighter(visitedPsiElement, oldInfo);
-            }
-          }
-          List<? extends HighlightInfo> newInfosToStore = assignRangeHighlighters(toolId, newInfos, session, psiFile, hostDocument, invalidElementRecycler, recycler);
-          ToolHighlights notNullToolHighlights = toolHighlights == null ? data.computeIfAbsent(toolId, __ -> new ToolHighlights()) : toolHighlights;
-          if (newInfosToStore.isEmpty()) {
-            notNullToolHighlights.elementHighlights.remove(visitedPsiElement);
-          }
-          else {
-            notNullToolHighlights.elementHighlights.put(visitedPsiElement, newInfosToStore);
-          }
+        //recycler.incinerateAndClear(); // do not remove from data because we just calculated new infos manually and removed the old ones, so we don't want to remove them again
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("remap: newInfos:" + newInfosToStore + "; oldInfos: " + oldInfos+currentProgressInfo());
+        }
 
-          //recycler.incinerateAndClear(); // do not remove from data because we just calculated new infos manually and removed the old ones, so we don't want to remove them again
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("remap: newInfos:" + newInfosToStore + "; oldInfos: " + oldInfos+currentProgressInfo());
-          }
-
-          assertNoDuplicates(psiFile, newInfosToStore, "psiElementVisited ");
-        });
+        assertNoDuplicates(psiFile, newInfosToStore, "psiElementVisited ");
       });
-      //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup after psiElementVisited ");
-      assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
-    }
+    });
+    //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup after psiElementVisited ");
+    assertMarkupDataConsistent(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
   }
 
   private synchronized void assertNoDuplicates(@NotNull PsiFile psiFile, @NotNull Collection<? extends HighlightInfo> infos, @NotNull String cause) {
@@ -1245,7 +1249,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       else {
         markup.changeAttributesInBatch(highlighter, changeAttributes);
       }
-      assert info.getGroup() == HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP: info;
+      assert info.getGroup() == MANAGED_HIGHLIGHT_INFO_GROUP: info;
     }
     newInfo.setHighlighter(highlighter);
     range2markerCache.put(finalInfoRange, highlighter);
