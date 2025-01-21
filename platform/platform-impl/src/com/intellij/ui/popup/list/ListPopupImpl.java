@@ -75,6 +75,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private boolean myShowSubmenuOnHover;
   private boolean myExecuteExpandedItemOnClick;
   private boolean myRepackWhenEmptyStateChanges;
+  private @Nullable Dimension myNonEmptySize;
 
   /**
    * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)}
@@ -952,7 +953,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
     if (myRepackWhenEmptyStateChanges && wasEmpty != nowEmpty) {
-      pack(false, true);
+      if (nowEmpty) {
+        myNonEmptySize = getSize();
+        pack(false, true);
+      }
+      else if (myNonEmptySize != null) {
+        setSize(myNonEmptySize);
+      }
     }
   }
 
