@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.markdown.rendering
 
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedString.Builder
@@ -80,7 +81,7 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
                 }
 
                 is InlineMarkdown.Image -> {
-                    // TODO not supported yet — see JEWEL-746
+                    appendInlineContent(child.source, "![${child.title}](${child.source})")
                 }
 
                 is InlineMarkdown.CustomDelimitedNode -> {
