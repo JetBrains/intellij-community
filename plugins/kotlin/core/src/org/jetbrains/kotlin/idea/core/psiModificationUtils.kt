@@ -448,26 +448,6 @@ private fun mapModalityToken(modalityToken: IElementType): Modality = when (moda
     else -> error("Unexpected modality keyword $modalityToken")
 }
 
-private fun KtDeclaration.predictImplicitModality(): KtModifierKeywordToken {
-    if (this is KtClassOrObject) {
-        if (this is KtClass && this.isInterface()) return KtTokens.ABSTRACT_KEYWORD
-        return KtTokens.FINAL_KEYWORD
-    }
-    val klass = containingClassOrObject ?: return KtTokens.FINAL_KEYWORD
-    if (hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-        if (klass.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
-            klass.hasModifier(KtTokens.OPEN_KEYWORD) ||
-            klass.hasModifier(KtTokens.SEALED_KEYWORD)
-        ) {
-            return KtTokens.OPEN_KEYWORD
-        }
-    }
-    if (klass is KtClass && klass.isInterface() && !hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-        return if (hasBody()) KtTokens.OPEN_KEYWORD else KtTokens.ABSTRACT_KEYWORD
-    }
-    return KtTokens.FINAL_KEYWORD
-}
-
 fun KtParameter.dropDefaultValue() {
     val from = equalsToken ?: return
     val to = defaultValue ?: from
