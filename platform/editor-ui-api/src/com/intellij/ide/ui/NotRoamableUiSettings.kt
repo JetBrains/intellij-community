@@ -7,7 +7,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Font
 
@@ -77,8 +76,8 @@ class NotRoamableUiSettings @Internal constructor(): SerializablePersistentState
       updateState { it.copy(experimentalSingleStripe = value) }
     }
 
-  @get:ApiStatus.Internal
-  @set:ApiStatus.Internal
+  @get:Internal
+  @set:Internal
   var xNextStripe: Boolean
     get() = state.xNextStripe
     set(value) {
