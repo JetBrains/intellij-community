@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalModify
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Revert
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Synchronize
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFileChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
@@ -30,7 +31,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivityBlocking
-import com.intellij.util.LocalTimeCounter.currentTime
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -144,7 +144,7 @@ class ProjectSettingsTracker(
   fun getState() = State(projectStatus.isDirty(), settingsFilesStatus.get().oldCRC.toMap())
 
   fun loadState(state: State) {
-    val operationStamp = currentTime()
+    val operationStamp = Stamp.nextStamp()
     settingsFilesStatus.set(SettingsFilesStatus(state.settingsFiles.toMap()))
     when (state.isDirty) {
       true -> projectStatus.markDirty(operationStamp, EXTERNAL)
@@ -213,7 +213,7 @@ class ProjectSettingsTracker(
     context: SettingsFilesStatusUpdateContext,
   ) {
     submitSettingsFilesCollection(context.isRefreshVfs, context.isInvalidateCache) { settingsPaths ->
-      val operationStamp = currentTime()
+      val operationStamp = Stamp.nextStamp()
       submitSettingsFilesCRCCalculation(operationName, settingsPaths, context.isMergeSameCalls) { newSettingsFilesCRC ->
         val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.reloadStatus)
         updateProjectStatus(operationStamp, context.syncEvent, context.changeEvent, settingsFilesStatus)
@@ -223,9 +223,9 @@ class ProjectSettingsTracker(
   }
 
   private fun updateProjectStatus(
-    operationStamp: Long,
-    syncEvent: ((Long) -> ProjectStatus.ProjectEvent)?,
-    changeEvent: ((Long) -> ProjectStatus.ProjectEvent)?,
+    operationStamp: Stamp,
+    syncEvent: ((Stamp) -> ProjectStatus.ProjectEvent)?,
+    changeEvent: ((Stamp) -> ProjectStatus.ProjectEvent)?,
     settingsFilesStatus: SettingsFilesStatus,
   ) {
     val event = when (settingsFilesStatus.hasChanges()) {
@@ -264,8 +264,8 @@ class ProjectSettingsTracker(
     var isMergeSameCalls: Boolean = false,
     var isRefreshVfs: Boolean = false,
     var isInvalidateCache: Boolean = false,
-    var syncEvent: ((Long) -> ProjectStatus.ProjectEvent)? = null,
-    var changeEvent: ((Long) -> ProjectStatus.ProjectEvent)? = null,
+    var syncEvent: ((Stamp) -> ProjectStatus.ProjectEvent)? = null,
+    var changeEvent: ((Stamp) -> ProjectStatus.ProjectEvent)? = null,
     var callback: (() -> Unit)? = null,
   )
 
@@ -339,7 +339,7 @@ class ProjectSettingsTracker(
   private inner class ProjectSettingsListener : FilesChangesListener {
 
     override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
-      val operationStamp = currentTime()
+      val operationStamp = Stamp.nextStamp()
       val adjustedModificationType = projectAware.adjustModificationType(path, modificationType)
       logModificationAsDebug(path, modificationStamp, modificationType, adjustedModificationType)
       projectStatus.markModified(operationStamp, adjustedModificationType)

@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
@@ -29,7 +30,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.trackActivityBlocking
-import com.intellij.util.LocalTimeCounter.currentTime
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -84,12 +84,14 @@ class AutoImportProjectTracker(
 
       override fun onProjectReloadStart() {
         projectReloadOperation.traceStart()
-        projectData.status.markSynchronized(currentTime())
+        projectData.status.markSynchronized(Stamp.nextStamp())
         projectData.isActivated = true
       }
 
       override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
-        if (status != SUCCESS) projectData.status.markBroken(currentTime())
+        if (status != SUCCESS) {
+          projectData.status.markBroken(Stamp.nextStamp())
+        }
         projectReloadOperation.traceFinish()
       }
     }
@@ -250,12 +252,14 @@ class AutoImportProjectTracker(
 
   override fun markDirty(id: ExternalSystemProjectId) {
     val projectData = projectDataMap(id) { get(it) } ?: return
-    projectData.status.markDirty(currentTime())
+    projectData.status.markDirty(Stamp.nextStamp())
   }
 
   override fun markDirtyAllProjects() {
-    val modificationTimeStamp = currentTime()
-    projectDataMap.forEach { it.value.status.markDirty(modificationTimeStamp) }
+    val modificationTimeStamp = Stamp.nextStamp()
+    for (projectData in projectDataMap.values) {
+      projectData.status.markDirty(modificationTimeStamp)
+    }
   }
 
   private fun projectDataMap(
@@ -296,7 +300,7 @@ class AutoImportProjectTracker(
     val projectState = projectDataStates.remove(projectId)
     val settingsTrackerState = projectState?.settingsTracker
     if (settingsTrackerState == null || projectState.isDirty) {
-      projectData.status.markDirty(currentTime(), EXTERNAL)
+      projectData.status.markDirty(Stamp.nextStamp(), EXTERNAL)
       scheduleChangeProcessing()
       return
     }
