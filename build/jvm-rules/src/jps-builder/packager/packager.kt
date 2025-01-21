@@ -16,11 +16,14 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
-data class SourceDescriptor(
+val emptyStringArray: Array<String> = emptyArray()
+
+data class SourceDescriptor constructor(
   // absolute and normalized
   @JvmField var sourceFile: Path,
-  @JvmField var digest: ByteArray? = null,
-  @JvmField var outputs: List<String>? = null,
+  @JvmField var digest: ByteArray,
+  @JvmField var outputs: Array<String>,
+  @JvmField var isChanged: Boolean,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -28,15 +31,15 @@ data class SourceDescriptor(
 
     if (sourceFile != other.sourceFile) return false
     if (!digest.contentEquals(other.digest)) return false
-    if (outputs != other.outputs) return false
+    if (!outputs.contentEquals(other.outputs)) return false
 
     return true
   }
 
   override fun hashCode(): Int {
     var result = sourceFile.hashCode()
-    result = 31 * result + (digest?.contentHashCode() ?: 0)
-    result = 31 * result + (outputs?.hashCode() ?: 0)
+    result = 31 * result + (digest.contentHashCode())
+    result = 31 * result + outputs.contentHashCode()
     return result
   }
 }
@@ -95,7 +98,7 @@ private suspend fun createJar(
     val uniqueGuard = hashSet<String>(sourceDescriptors.size + 10)
 
     for (sourceDescriptor in sourceDescriptors) {
-      for (path in sourceDescriptor.outputs ?: continue) {
+      for (path in sourceDescriptor.outputs) {
         // duplicated - ignore it
         if (!uniqueGuard.add(path)) {
           continue

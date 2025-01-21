@@ -64,6 +64,7 @@ internal object TestJpsBuildWorker {
             tracingContext = Context.current(),
             parentSpan = span,
             tracer = tracer,
+            cachePrefix = "test-builder-",
           )
         }
       }

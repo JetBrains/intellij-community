@@ -49,7 +49,8 @@ class WorkRequestHandlerTest {
 
     val request = WorkRequest(
       arguments = arrayOf("--sources", "A.java"),
-      inputs = emptyArray(),
+      inputPaths = emptyArray(),
+      inputDigests = emptyArray(),
       requestId = 0,
       cancel = false,
       verbosity = 0,
@@ -387,7 +388,15 @@ class WorkRequestHandlerTest {
 }
 
 private fun newWorkRequest(args: List<String>, requestId: Int = 42): WorkRequest {
-  return WorkRequest(arguments = args.toTypedArray(), requestId = requestId, inputs = emptyArray(), cancel = false, verbosity = 0, sandboxDir = null)
+  return WorkRequest(
+    arguments = args.toTypedArray(),
+    requestId = requestId,
+    inputPaths = emptyArray(),
+    inputDigests = emptyArray(),
+    cancel = false,
+    verbosity = 0,
+    sandboxDir = null
+  )
 }
 
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)

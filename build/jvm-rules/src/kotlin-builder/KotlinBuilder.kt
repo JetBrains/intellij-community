@@ -17,9 +17,9 @@ object KotlinBuildWorker : WorkRequestExecutor {
   }
 
   override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracingContext: Context, tracer: Tracer): Int {
-    val sources = request.inputs.asSequence()
-      .filter { it.path.endsWith(".kt") || it.path.endsWith(".java") }
-      .map { baseDir.resolve(it.path).normalize() }
+    val sources = request.inputPaths.asSequence()
+      .filter { it.endsWith(".kt") || it.endsWith(".java") }
+      .map { baseDir.resolve(it).normalize() }
       .toList()
     return buildKotlin(workingDir = baseDir, args = parseArgs(request.arguments), out = writer, sources = sources)
   }

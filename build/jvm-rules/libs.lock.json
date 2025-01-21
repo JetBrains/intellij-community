@@ -11,9 +11,9 @@
     "08edf341dfa4dd0a9e15b83a2a74850baad3a4a3ca2f93aed05ca6a481b1f394",
     "02f7ac954f3a9574b37a54d7bdc79190325b9ee38a3244256a84d6d760eb6f1f"
   ],
-  "io.opentelemetry:opentelemetry-exporter-logging-otlp:1.45.0": [
-    "7dcadc98f7f5bafa48d95c5d650d8247ad094812543072387ddee0adaafeff65",
-    "3fe5a2864d093cbb91a00661457493cc9bdef99b6e1d68f67e7c84f273b97c1d"
+  "io.opentelemetry:opentelemetry-exporter-logging-otlp:1.46.0": [
+    "afbed5afecd48ebc66ffe16c438cd92da31759af56bdcbde0f260b131e43042a",
+    "10c69d372df6c0e80486edb3cbd4191b75a99325e5faba10406242b3e609311e"
   ],
   "org.apache.arrow:arrow-algorithm:18.1.0": [
     "8627d00c1fa3341ff49d894fb88f003e9a7ca4a3846527e31d881c162cf146ff",

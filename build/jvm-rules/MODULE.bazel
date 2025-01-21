@@ -315,15 +315,15 @@ http_file(
 
 http_file(
     name = "opentelemetry-exporter-logging-otlp",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.45.0/opentelemetry-exporter-logging-otlp-1.45.0.jar",
-    sha256 = "7dcadc98f7f5bafa48d95c5d650d8247ad094812543072387ddee0adaafeff65",
-    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.45.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.46.0/opentelemetry-exporter-logging-otlp-1.46.0.jar",
+    sha256 = "afbed5afecd48ebc66ffe16c438cd92da31759af56bdcbde0f260b131e43042a",
+    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.46.0.jar",
 )
 http_file(
     name = "opentelemetry-exporter-logging-otlp-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.45.0/opentelemetry-exporter-logging-otlp-1.45.0-sources.jar",
-    sha256 = "3fe5a2864d093cbb91a00661457493cc9bdef99b6e1d68f67e7c84f273b97c1d",
-    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.45.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.46.0/opentelemetry-exporter-logging-otlp-1.46.0-sources.jar",
+    sha256 = "10c69d372df6c0e80486edb3cbd4191b75a99325e5faba10406242b3e609311e",
+    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.46.0-sources.jar",
 )
 
 ### auto-generated section `libraries` end

@@ -23,10 +23,12 @@ kt_jvm_library(
         "//:arrow-memory-netty",
         "//:arrow-memory-core",
         "//:arrow-algorithm",
+        "@lib//:jps-javac-extension",
     ],
     runtime_deps = [
         # arrow wants slf4j
         "@lib//:slf4j-api",
+        "@lib//:slf4j-jdk14",
         # use IJ logger as backend for slf4j
         "@lib//:log4_j",
         # ByteBufferBackedInputStream is used by arrow
@@ -37,7 +39,6 @@ kt_jvm_library(
         "@lib//:aalto-xml",
         "@lib//:caffeine",
         "@lib//:platform-jps-build-qdox-java-parser",
-        "@lib//:jps-javac-extension",
         # JPS plugin to compile Kotlin requires it
         "@lib//:kotlin-reflect",
         "//:kotlin-build-tools-api",

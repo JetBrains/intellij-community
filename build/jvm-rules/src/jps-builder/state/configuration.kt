@@ -1,6 +1,7 @@
 package org.jetbrains.bazel.jvm.jps.state
 
 internal enum class TargetConfigurationDigestProperty(@JvmField val description: String) {
+  TOOL_VERSION("bazel builder version or storage version"),
   COMPILER("kotlinc/javac configuration"),
   DEPENDENCY_PATH_LIST("dependency path list"),
   DEPENDENCY_DIGEST_LIST("dependency digest list");
@@ -20,9 +21,5 @@ internal value class TargetConfigurationDigestContainer(
     list[kind.ordinal] = hash
   }
 
-  fun asString(): List<String> {
-    return TargetConfigurationDigestProperty.entries.map { kind ->
-      java.lang.Long.toUnsignedString(list[kind.ordinal], Character.MAX_RADIX)
-    }
-  }
+  fun asString(): Array<String> = Array(list.size) { java.lang.Long.toUnsignedString(list[it], Character.MAX_RADIX) }
 }

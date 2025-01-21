@@ -41,7 +41,7 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
   context: CompileContext,
   target: BazelModuleBuildTarget,
   dataManager: BazelBuildDataProvider,
-  span: Span,
+  parentSpan: Span,
 ) {
   val dirsToDelete = HashSet<Path>()
   val deletedOutputFiles = ArrayList<Path>()
@@ -65,7 +65,7 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
             }
           }
           catch (e: IOException) {
-            span.recordException(e, Attributes.of(
+            parentSpan.recordException(e, Attributes.of(
               AttributeKey.stringKey("message"), "cannot delete output file",
               AttributeKey.stringKey("sourceFile"), sourceFile.toString(),
             ))
@@ -75,7 +75,7 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
       finally {
         if (outputs.isNotEmpty()) {
           sourceToOutputMapping.setOutputs(sourceFile, outputs)
-          span.addEvent("some outputs were not removed", Attributes.of(
+          parentSpan.addEvent("some outputs were not removed", Attributes.of(
             AttributeKey.stringKey("sourceFile"), sourceFile.toString(),
             AttributeKey.stringArrayKey("outputs"), outputs.map { it.toString() },
           ))
@@ -86,8 +86,8 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
   })
 
   if (!deletedOutputFiles.isEmpty()) {
-    if (JavaBuilderUtil.isCompileJavaIncrementally(context) && span.isRecording) {
-      span.addEvent("allDeletedOutputPaths", Attributes.of(
+    if (JavaBuilderUtil.isCompileJavaIncrementally(context) && parentSpan.isRecording) {
+      parentSpan.addEvent("allDeletedOutputPaths", Attributes.of(
         AttributeKey.stringArrayKey("deletedOutputFiles"), deletedOutputFiles.map { it.toString() },
       ))
     }

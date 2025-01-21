@@ -1,18 +1,15 @@
 package org.jetbrains.bazel.jvm
 
 import com.google.protobuf.CodedInputStream
+import jdk.internal.util.xml.impl.Input
 import java.io.FilterInputStream
 import java.io.InputStream
 import kotlin.math.min
 
-class Input(
-  @JvmField val path: String,
-  @JvmField val digest: ByteArray,
-)
-
 class WorkRequest(
   @JvmField val arguments: Array<String>,
-  @JvmField val inputs: Array<Input>,
+  @JvmField val inputPaths: Array<String>,
+  @JvmField val inputDigests: Array<ByteArray>,
   @JvmField val requestId: Int,
   @JvmField val cancel: Boolean,
   @JvmField val verbosity: Int,
@@ -21,7 +18,8 @@ class WorkRequest(
 
 internal fun readWorkRequestFromStream(
   input: InputStream,
-  inputListToReuse: MutableList<Input>,
+  inputPathsToReuse: MutableList<String>,
+  inputDigestsToReuse: MutableList<ByteArray>,
   argListToReuse: MutableList<String>
 ): WorkRequest? {
   // read the length-prefixed WorkRequest
@@ -39,7 +37,8 @@ internal fun readWorkRequestFromStream(
 
   val codedInputStream = CodedInputStream.newInstance(LimitedInputStream(input, size))
   argListToReuse.clear()
-  inputListToReuse.clear()
+  inputPathsToReuse.clear()
+  inputDigestsToReuse.clear()
   while (true) {
     val tag = codedInputStream.readTag()
     if (tag == 0) {
@@ -48,7 +47,27 @@ internal fun readWorkRequestFromStream(
 
     when (tag.shr(3)) {
       1 -> argListToReuse.add(codedInputStream.readString())
-      2 -> inputListToReuse.add(readInput(codedInputStream))
+      2 -> {
+        var path = ""
+        var digest: ByteArray? = null
+        val messageSize = codedInputStream.readRawVarint32()
+        val limit = codedInputStream.pushLimit(messageSize)
+        while (true) {
+          val tag = codedInputStream.readTag()
+          if (tag == 0) {
+            break
+          }
+
+          when (tag.shr(3)) {
+            1 -> path = codedInputStream.readString()
+            2 -> digest = codedInputStream.readByteArray()
+            else -> codedInputStream.skipField(tag)
+          }
+        }
+        codedInputStream.popLimit(limit)
+        inputPathsToReuse.add(path)
+        inputDigestsToReuse.add(digest!!)
+      }
       3 -> requestId = codedInputStream.readInt32()
       4 -> cancel = codedInputStream.readBool()
       5 -> verbosity = codedInputStream.readInt32()
@@ -59,39 +78,13 @@ internal fun readWorkRequestFromStream(
 
   return WorkRequest(
     arguments = argListToReuse.toTypedArray(),
-    inputs = inputListToReuse.toTypedArray(),
+    inputPaths = inputPathsToReuse.toTypedArray(),
+    inputDigests = inputDigestsToReuse.toTypedArray(),
     requestId = requestId,
     cancel = cancel,
     verbosity = verbosity,
     sandboxDir = sandboxDir
   )
-}
-
-private fun readInput(codedInputStream: CodedInputStream): Input {
-  var path = ""
-  var digest: ByteArray? = null
-
-  val messageSize = codedInputStream.readRawVarint32()
-  val limit = codedInputStream.pushLimit(messageSize)
-  while (!codedInputStream.isAtEnd) {
-    val tag = codedInputStream.readTag()
-    when (tag.shr(3)) {
-      1 -> {
-        path = codedInputStream.readString()
-      }
-
-      2 -> {
-        digest = codedInputStream.readByteArray()
-      }
-
-      else -> {
-        codedInputStream.skipField(tag)
-      }
-    }
-  }
-  codedInputStream.popLimit(limit)
-
-  return Input(path = path, digest = digest!!)
 }
 
 private class LimitedInputStream(input: InputStream, private var limit: Int) : FilterInputStream(input) {

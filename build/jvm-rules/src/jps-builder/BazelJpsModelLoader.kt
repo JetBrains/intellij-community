@@ -51,10 +51,7 @@ internal fun loadJpsModel(
   val model = jpsElementFactory.createModel()
 
   val digests = TargetConfigurationDigestContainer()
-
-  val configHash = Hashing.xxh3_64().hashStream()
-  // version
-  configHash.putInt(1)
+  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 1)
 
   // properties not needed for us (not implemented for java)
   // extension.loadModuleOptions not needed for us (not implemented for java)
@@ -70,15 +67,19 @@ internal fun loadJpsModel(
   val langLevel = LanguageLevel.valueOf(languageLevelEnumName)
   jpsJavaModuleExtension.languageLevel = langLevel
 
-  configHash.putInt(langLevel.ordinal)
-
   for (source in sources) {
     // used as a key - immutable instance cannot be used
     val properties = JavaSourceRootProperties("", false)
     module.addSourceRoot(JpsModuleSourceRootImpl(source.toUri().toString(), JavaSourceRootType.SOURCE, properties))
   }
 
+  val configHash = Hashing.xxh3_64().hashStream()
+  // version
+  configHash.putInt(1)
+  configHash.putInt(langLevel.ordinal)
   configureKotlinCompiler(module = module, args = args, classPathRootDir = classPathRootDir, configHash = configHash)
+  configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
+  digests.set(TargetConfigurationDigestProperty.COMPILER, configHash.asLong)
 
   val dependencyList = module.dependenciesList
   dependencyList.clear()
@@ -97,9 +98,7 @@ internal fun loadJpsModel(
   val project = model.project
   project.addModule(module)
 
-  configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
   configureJavac(project, args)
-  digests.set(TargetConfigurationDigestProperty.COMPILER, configHash.asLong)
 
   return model to digests
 }

@@ -38,7 +38,10 @@ internal fun testSerialization() {
     SourceDescriptor(
       sourceFile = Path.of("a/b/c/${java.lang.Long.toUnsignedString(random.nextLong(), 36)}.kt"),
       digest = random.nextBytes(32),
-      outputs = Array(random.nextInt(0, 20)) { "a/b/${java.lang.Long.toUnsignedString(random.nextLong(), 36)}.class" }.asList()
+      outputs = Array(random.nextInt(0, 20)) {
+        "a/b/${java.lang.Long.toUnsignedString(random.nextLong(), 36)}.class"
+      },
+      isChanged = true,
     )
   }
   sourceDescriptors.sortBy { it.sourceFile }
@@ -58,7 +61,7 @@ internal fun testSerialization() {
         buildStateFile = file,
         relativizer = relativizer,
         allocator = allocator,
-        actualDigestMap = sourceDescriptors.associate { it.sourceFile to it.digest!! },
+        sourceFileToDigest = sourceDescriptors.associate { it.sourceFile to it.digest },
       )!!.map
       if (result.keys.sorted() != sourceDescriptors.map { it.sourceFile }) {
         throw AssertionError("Expected: $sourceDescriptors, actual: $result")

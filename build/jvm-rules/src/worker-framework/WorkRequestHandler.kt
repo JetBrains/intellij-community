@@ -12,6 +12,7 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.exporter.logging.otlp.internal.traces.OtlpStdoutSpanExporter
 import io.opentelemetry.sdk.OpenTelemetrySdk
+import io.opentelemetry.sdk.common.export.MemoryMode
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
@@ -36,10 +37,9 @@ fun interface WorkRequestExecutor {
 }
 
 fun configureOpenTelemetry(out: OutputStream, serviceName: String): OpenTelemetrySdk {
-  // Set up a tracer provider with the desired configuration
   val spanExporter = OtlpStdoutSpanExporter.builder()
     .setOutput(out)
-    //.setMemoryMode(MemoryMode.REUSABLE_DATA)
+    .setMemoryMode(MemoryMode.REUSABLE_DATA)
     .build()
 
   val batchSpanProcessor = BatchSpanProcessor.builder(spanExporter)
@@ -154,24 +154,27 @@ internal class WorkRequestHandler internal constructor(
 
         //logger?.log("Unprocessed requests: ${activeRequests.keys.joinToString(", ")}")
 
-        for (item in requestChannel) {
-          cancelRequestOnShutdown(item)
+        tracer.spanBuilder("cancelRequests on shutdown").setParent(tracingContext).use { span ->
+          for (item in requestChannel) {
+            cancelRequestOnShutdown(item, span)
+          }
+          for (item in activeRequests.values) {
+            cancelRequestOnShutdown(item, span)
+          }
+          activeRequests.clear()
         }
-        for (item in activeRequests.values) {
-          cancelRequestOnShutdown(item)
-        }
-        activeRequests.clear()
       }
     }
   }
 
   private suspend fun readRequests(requestChannel: Channel<RequestState>, span: Span) {
-    val inputListToReuse = ArrayList<Input>()
+    val inputPathsToReuse = ArrayList<String>()
+    val inputDigestsToReuse = ArrayList<ByteArray>()
     val argListToReuse = ArrayList<String>()
     while (coroutineContext.isActive) {
       val request = try {
         runInterruptible(Dispatchers.IO) {
-          readWorkRequestFromStream(input, inputListToReuse, argListToReuse)
+          readWorkRequestFromStream(input, inputPathsToReuse, inputDigestsToReuse, argListToReuse)
         }
       }
       catch (e: InterruptedIOException) {
@@ -236,7 +239,7 @@ internal class WorkRequestHandler internal constructor(
                 tracer.spanBuilder("execute request")
                   .setAllAttributes(Attributes.of(
                     AttributeKey.stringArrayKey("arguments"), request.arguments.toList(),
-                    AttributeKey.stringArrayKey("inputs"), request.inputs.map { it.path },
+                    //AttributeKey.stringArrayKey("inputs"), request.inputs.map { it.path },
                     AttributeKey.longKey("id"), request.requestId.toLong(),
                     AttributeKey.stringKey("sandboxDir"), request.sandboxDir?.toString() ?: "",
                   ))
@@ -314,11 +317,14 @@ internal class WorkRequestHandler internal constructor(
     }
   }
 
-  private suspend fun cancelRequestOnShutdown(item: RequestState) {
+  private suspend fun cancelRequestOnShutdown(item: RequestState, span: Span) {
     val stateRef = item.state
     val requestId = item.request.requestId
     if (stateRef.compareAndSet(NOT_STARTED, FINISHED) || stateRef.compareAndSet(STARTED, FINISHED)) {
-      //logger?.log("request(id=$requestId}) failed because it was not handled due to worker being forced to exit")
+      span.addEvent(
+        "request failed because it was not handled due to worker being forced to exit",
+        Attributes.of(AttributeKey.longKey("request"), requestId.toLong()),
+      )
       writeAndRemoveRequest(requestId = requestId, exitCode = 2)
     }
     else {

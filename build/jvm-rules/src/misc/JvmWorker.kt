@@ -34,8 +34,8 @@ object JvmWorker : WorkRequestExecutor {
     when (taskKind) {
       "jar" -> {
         var stripPrefix = command[3]
-        if (stripPrefix == "" && request.inputs.isNotEmpty()) {
-          val p = request.inputs.first().path
+        if (stripPrefix == "" && request.inputPaths.isNotEmpty()) {
+          val p = request.inputPaths.first()
           stripPrefix = command[4]
           val index = p.indexOf(stripPrefix)
           require(index != -1)
@@ -43,7 +43,7 @@ object JvmWorker : WorkRequestExecutor {
         }
         createZip(
           outJar = Path.of(output),
-          inputs = request.inputs,
+          inputs = request.inputPaths,
           baseDir = baseDir,
           stripPrefix = stripPrefix,
         )
@@ -52,9 +52,9 @@ object JvmWorker : WorkRequestExecutor {
       }
 
       "jdeps" -> {
-        val inputs = request.inputs.asSequence()
-          .filter { it.path.endsWith(".jdeps") }
-          .map { baseDir.resolve(it.path) }
+        val inputs = request.inputPaths.asSequence()
+          .filter { it.endsWith(".jdeps") }
+          .map { baseDir.resolve(it) }
         //Files.writeString(Path.of("${System.getProperty("user.home")}/f.txt"), inputs.joinToString("\n") { it.toString() })
         mergeJdeps(
           consoleOutput = writer,
@@ -74,13 +74,13 @@ object JvmWorker : WorkRequestExecutor {
   }
 }
 
-private suspend fun createZip(outJar: Path, inputs: Array<Input>, baseDir: Path, stripPrefix: String) {
+private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path, stripPrefix: String) {
   //Files.writeString(Path.of("${System.getProperty("user.home")}/f.txt"), stripPrefix + "\n" + inputs.joinToString("\n") { it.toString() })
 
   val stripPrefixWithSlash = stripPrefix.let { if (it.isEmpty()) "" else "$it/" }
   val files = ArrayList<String>(inputs.size)
   for (input in inputs) {
-    val p = input.path
+    val p = input
     if (!p.startsWith(stripPrefixWithSlash)) {
       // input can contain jdeps/our jar in the end
       continue
