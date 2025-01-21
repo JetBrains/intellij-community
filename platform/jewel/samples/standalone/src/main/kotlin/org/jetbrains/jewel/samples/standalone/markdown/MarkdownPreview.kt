@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.markdown
+package org.jetbrains.jewel.samples.standalone.markdown
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,7 +39,7 @@ import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 
 @Composable
-internal fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSequence) {
+fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSequence) {
     val isDark = JewelTheme.isDark
 
     val markdownStyling = remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
@@ -64,13 +64,15 @@ internal fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeq
         remember(markdownStyling, extensions) {
             if (isDark) {
                 MarkdownBlockRenderer.dark(
-                    styling = markdownStyling,
-                    rendererExtensions = listOf(GitHubAlertRendererExtension(AlertStyling.dark(), markdownStyling)),
+                    styling = MarkdownStyling.dark(),
+                    rendererExtensions =
+                        listOf(GitHubAlertRendererExtension(AlertStyling.dark(), MarkdownStyling.dark())),
                 )
             } else {
                 MarkdownBlockRenderer.light(
-                    styling = markdownStyling,
-                    rendererExtensions = listOf(GitHubAlertRendererExtension(AlertStyling.light(), markdownStyling)),
+                    styling = MarkdownStyling.light(),
+                    rendererExtensions =
+                        listOf(GitHubAlertRendererExtension(AlertStyling.light(), MarkdownStyling.light())),
                 )
             }
         }

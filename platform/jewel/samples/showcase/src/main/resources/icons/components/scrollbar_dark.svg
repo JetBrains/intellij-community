@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <svg fill="none" viewBox="0 0 16 16" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
     <polyline points="0 2 1 0.4 2 2 0 2" fill="#CED0D6" transform="translate(14, 1)"/>
     <rect x="14" y="4" width="2" height="7" rx="1" ry="1" fill="#CED0D6"/>

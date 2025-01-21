@@ -32,7 +32,6 @@ import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
-import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.textFieldStyle
@@ -103,7 +102,7 @@ private fun TextFieldsRows(readOnly: Boolean) {
                     Icon(
                         key = AllIconsKeys.Actions.Find,
                         contentDescription = "SearchIcon",
-                        iconClass = StandaloneSampleIcons::class.java,
+                        iconClass = ShowcaseIcons::class.java,
                         modifier = Modifier.size(16.dp),
                     )
                 },
@@ -145,10 +144,3 @@ private fun CloseIconButton(isVisible: Boolean, onClick: () -> Unit) {
         }
     }
 }
-
-@Composable
-private fun noBackgroundIconButtonColors(
-    isDark: Boolean,
-    iconColorsDark: IconButtonColors,
-    iconColorsLight: IconButtonColors,
-) = if (isDark) iconColorsDark else iconColorsLight

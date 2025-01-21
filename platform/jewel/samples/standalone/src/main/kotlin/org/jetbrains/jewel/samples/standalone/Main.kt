@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.samples.standalone
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -30,6 +31,7 @@ import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.window.DecoratedWindow
 import org.jetbrains.jewel.window.styling.TitleBarStyle
 
+@ExperimentalLayoutApi
 fun main() {
     JewelLogger.getInstance("StandaloneSample").info("Starting Jewel Standalone sample")
 

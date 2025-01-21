@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.markdown
+package org.jetbrains.jewel.samples.standalone.markdown
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -32,7 +32,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 
 @Composable
-internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
+fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
     Column(modifier) {
         ControlsRow(
             modifier = Modifier.fillMaxWidth().background(JewelTheme.globalColors.panelBackground).padding(8.dp),

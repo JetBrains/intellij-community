@@ -3,7 +3,7 @@ package org.jetbrains.jewel.samples.standalone
 import org.jetbrains.skiko.SystemTheme
 import org.jetbrains.skiko.currentSystemTheme
 
-internal enum class IntUiThemes {
+enum class IntUiThemes {
     Light,
     LightWithLightHeader,
     Dark,

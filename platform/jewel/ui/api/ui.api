@@ -2899,10 +2899,11 @@ public final class org/jetbrains/jewel/ui/component/styling/TextFieldMetrics$Com
 public final class org/jetbrains/jewel/ui/component/styling/TextFieldStyle : org/jetbrains/jewel/ui/component/styling/InputFieldStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public synthetic fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldColors;
 	public fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;
+	public final fun getIconButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;
 	public synthetic fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldMetrics;
 	public fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;
 	public fun hashCode ()I

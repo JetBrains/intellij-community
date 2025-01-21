@@ -44,6 +44,7 @@ dependencies {
         exclude(group = "org.jetbrains.compose.material")
         exclude(group = "org.jetbrains.kotlinx")
     }
+    implementation(project(":samples:showcase")) { exclude(group = "org.jetbrains.kotlinx") }
 }
 
 intellijPlatform {

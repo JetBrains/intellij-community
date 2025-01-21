@@ -1,9 +1,9 @@
-package org.jetbrains.jewel.samples.standalone.view.markdown
+package org.jetbrains.jewel.samples.standalone.markdown
 
 import org.intellij.lang.annotations.Language
 
 @Language("Markdown")
-internal val JewelReadme =
+public val JewelReadme: String =
     """
 # Jewel: a Compose for Desktop theme
 
@@ -110,7 +110,7 @@ dependencies {
 <br/>
 
 > [!TIP]
-> It's easier to use version catalogs — you can use the Jewel 
+> It's easier to use version catalogs — you can use the Jewel
 > [version catalog](https://github.com/JetBrains/jewel/blob/main/gradle/libs.versions.toml) as reference.
 
 ## Using ProGuard/obfuscation/minification
@@ -359,13 +359,13 @@ Jewel load the appropriate icon automatically:
 
 ```kotlin
 // myState implements SelectableComponentState and has a ToggleableState property
-val indeterminateHint = 
+val indeterminateHint =
     if (myState.toggleableState == ToggleableState.Indeterminate) {
         IndeterminateHint
     } else {
         PainterHint.None
     }
-    
+
 Icon(
     key = myKey,
     contentDescription = "My icon",

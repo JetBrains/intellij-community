@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.background
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -43,22 +45,18 @@ import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
+import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
-import java.util.Locale
 
 @Composable
 public fun Scrollbars(
-    dark: ScrollbarStyle,
-    light: ScrollbarStyle,
     alwaysVisibleScrollbarVisibility: ScrollbarVisibility,
-    whenScrollingScrollbarVisibility: ScrollbarVisibility
+    whenScrollingScrollbarVisibility: ScrollbarVisibility,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        val isDark = JewelTheme.isDark
-        val baseStyle = remember(isDark) { if (isDark) dark else light }
-
+        val baseStyle = JewelTheme.scrollbarStyle
         var alwaysVisible by remember { mutableStateOf(hostOs != OS.MacOS) }
         var clickBehavior by remember { mutableStateOf(baseStyle.trackClickBehavior) }
         SettingsRow(alwaysVisible, clickBehavior, { alwaysVisible = it }, { clickBehavior = it })

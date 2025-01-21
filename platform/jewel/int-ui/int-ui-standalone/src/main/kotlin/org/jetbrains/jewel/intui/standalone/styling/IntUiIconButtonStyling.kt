@@ -25,7 +25,6 @@ public fun IconButtonStyle.Companion.dark(
     metrics: IconButtonMetrics = IconButtonMetrics.defaults(),
 ): IconButtonStyle = IconButtonStyle(colors, metrics)
 
-@Composable
 public fun IconButtonColors.Companion.light(
     foregroundSelectedActivated: Color = IntUiLightTheme.colors.gray(14),
     background: Color = Color.Unspecified,
@@ -61,7 +60,6 @@ public fun IconButtonColors.Companion.light(
         borderHovered = borderHovered,
     )
 
-@Composable
 public fun IconButtonColors.Companion.dark(
     foregroundSelectedActivated: Color = IntUiDarkTheme.colors.gray(14),
     background: Color = Color.Unspecified,

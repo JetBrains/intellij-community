@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <svg fill="none" viewBox="0 0 16 16" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
     <path d="M2 8L6 5V11L2 8Z" transform="translate(-1, 0)" fill="#CED0D6"/>
     <path d="M14 8L10 11V5L14 8Z" transform="translate(1, 0)" fill="#CED0D6"/>
