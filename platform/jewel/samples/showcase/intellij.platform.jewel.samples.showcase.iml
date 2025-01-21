@@ -35,19 +35,9 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.ideLafBridge" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.libraries.skiko" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.ideLafBridgeStyling" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
-    <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
   </component>
 </module>
