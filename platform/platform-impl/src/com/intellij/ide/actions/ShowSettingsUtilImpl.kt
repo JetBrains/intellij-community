@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -60,7 +61,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     private fun showInternal(project: Project?, settingsDialogInitializer: () -> SettingsDialog) {
       if (AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window")) {
         val currentOrDefaultProject = currentOrDefaultProject(project)
-        runWithModalProgressBlocking(currentOrDefaultProject, "Opening settings") {
+        runWithModalProgressBlocking(currentOrDefaultProject, IdeBundle.message("settings.modal.opening.message")) {
           val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(settingsDialogInitializer);
           val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
           val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true)

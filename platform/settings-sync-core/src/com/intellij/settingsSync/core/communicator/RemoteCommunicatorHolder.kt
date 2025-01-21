@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
+import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEventListener
 import com.intellij.settingsSync.core.SettingsSyncLocalSettings
 import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
@@ -113,11 +114,11 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
     override suspend fun login(parentComponent: Component?): SettingsSyncUserData? {
       return withContext(Dispatchers.EDT) {
         if (parentComponent != null) {
-          Messages.showInfoMessage(parentComponent, "Please download Jetbrains \"Backup and Sync\" plugin from plugins page",
-                                   "Plugin download required")
+          Messages.showInfoMessage(parentComponent, SettingsSyncBundle.message("settings.jba.plugin.required.text"),
+                                   SettingsSyncBundle.message("settings.jba.plugin.required.title"))
         } else {
-          Messages.showInfoMessage("Please download Jetbrains \"Backup and Sync\" plugin from plugins page",
-                                   "Plugin download required")
+          Messages.showInfoMessage(SettingsSyncBundle.message("settings.jba.plugin.required.text"),
+                                   SettingsSyncBundle.message("settings.jba.plugin.required.title"))
         }
         null
       }
