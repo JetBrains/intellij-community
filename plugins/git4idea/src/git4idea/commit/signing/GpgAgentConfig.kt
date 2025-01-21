@@ -48,17 +48,17 @@ internal data class GpgAgentConfig(val path: Path, val content: Map<String, Stri
         LOG.debug("Cannot find $gpgAgentConf")
         return null
       }
-      val config = mutableMapOf<String, String>()
-      return try {
-        for (line in gpgAgentConf.readLines()) {
-          val keyValue = line.split(' ')
-          if (keyValue.size > 2) continue
+
+      try {
+        val config = gpgAgentConf.readLines().filterNot { it.startsWith("#") }.associate { line ->
+          val keyValue = line.split(' ', limit = 2)
           val key = keyValue[0]
-          val value = keyValue.getOrNull(1) ?: ""
-          config[key] = value
+          val value = keyValue.getOrElse(1) { "" }
+          key to value
         }
-        GpgAgentConfig(gpgAgentConf, config)
-      } catch (e: IOException) {
+        return GpgAgentConfig(gpgAgentConf, config)
+      }
+      catch (e: IOException) {
         LOG.warn("Failed to read $gpgAgentConf", e)
         throw ReadGpgAgentConfigException(e)
       }
