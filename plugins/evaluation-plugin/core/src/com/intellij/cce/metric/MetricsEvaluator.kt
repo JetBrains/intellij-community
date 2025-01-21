@@ -2,8 +2,6 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
-import com.intellij.openapi.diagnostic.Logger
-
 
 class MetricsEvaluator private constructor(private val evaluationType: String) {
   companion object {
@@ -37,25 +35,18 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   private fun registerMetrics(metrics: Collection<Metric>) = this.metrics.addAll(metrics)
 
   fun evaluate(sessions: List<Session>): List<MetricInfo> {
-    return metrics.map { metric ->
-      val (overallScore, individualScores) = if (metric.supportsIndividualScores) {
-        val evaluationResult = metric.evaluateWithIndividualScores(sessions)
-        evaluationResult.overallScore.toDouble() to evaluationResult.sessionIndividualScores
-      } else {
-        metric.evaluate(sessions).toDouble() to null
-      }
-
+    val result = metrics.map {
       MetricInfo(
-        name = metric.name,
-        description = metric.description,
-        value = overallScore,
-        confidenceInterval = metric.confidenceInterval(),
+        name = it.name,
+        description = it.description,
+        value = it.evaluate(sessions).toDouble(),
+        confidenceInterval = null,
         evaluationType = evaluationType,
-        valueType = metric.valueType,
-        showByDefault = metric.showByDefault,
-        individualScores = individualScores
+        valueType = it.valueType,
+        showByDefault = it.showByDefault
       )
     }
+    return result
   }
 
   fun result(): List<MetricInfo> {
@@ -67,8 +58,7 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
         confidenceInterval = if (it.shouldComputeIntervals) it.confidenceInterval() else null,
         evaluationType = evaluationType,
         valueType = it.valueType,
-        showByDefault = it.showByDefault,
-        individualScores = emptyMap()
+        showByDefault = it.showByDefault
       )
     }
   }
