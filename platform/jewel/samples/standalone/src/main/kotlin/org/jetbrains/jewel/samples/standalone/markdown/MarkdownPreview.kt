@@ -38,6 +38,7 @@ import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrike
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
+import org.jetbrains.jewel.markdown.extensions.images.Coil3ImagesRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
@@ -65,6 +66,7 @@ public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeque
             )
         )
     }
+    val coil3ImagesRendererExtension = Coil3ImagesRendererExtension.withDefaultLoader()
 
     LaunchedEffect(rawMarkdown) {
         // TODO you may want to debounce or drop on backpressure, in real usages. You should also
@@ -81,6 +83,7 @@ public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeque
                     styling = markdownStyling,
                     rendererExtensions =
                         listOf(
+                            coil3ImagesRendererExtension,
                             GitHubAlertRendererExtension(AlertStyling.dark(), markdownStyling),
                             GitHubStrikethroughRendererExtension,
                             GitHubTableRendererExtension(GfmTableStyling.dark(), markdownStyling),
@@ -91,6 +94,7 @@ public fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeque
                     styling = markdownStyling,
                     rendererExtensions =
                         listOf(
+                            coil3ImagesRendererExtension,
                             GitHubAlertRendererExtension(AlertStyling.light(), markdownStyling),
                             GitHubStrikethroughRendererExtension,
                             GitHubTableRendererExtension(GfmTableStyling.light(), markdownStyling),
