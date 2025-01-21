@@ -42,6 +42,7 @@ import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
@@ -387,7 +388,10 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
         }
 
         val psiElement = preparePsi(selected, searchText)
-        val file = PsiUtilCore.getVirtualFile(psiElement)
+        val file =
+          if (selected is PsiFile) selected.virtualFile
+          else PsiUtilCore.getVirtualFile(psiElement)
+
         val extendedNavigatable = if (file == null) {
           null
         }
