@@ -149,7 +149,6 @@ public class SegmentedControlButtonData(
 @Immutable
 @JvmInline
 public value class SegmentedControlState(public val state: ULong) : FocusableComponentState {
-
     override val isActive: Boolean
         get() = state and CommonStateBitMask.Active != 0UL
 
@@ -179,7 +178,6 @@ public value class SegmentedControlState(public val state: ULong) : FocusableCom
             "isPressed=$isPressed, isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             enabled: Boolean = true,
             focused: Boolean = false,
