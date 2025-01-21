@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,7 +34,7 @@ private const val LOREM_IPSUM =
         "Sed nec sapien nec dui rhoncus bibendum. Sed blandit bibendum libero."
 
 @Composable
-fun TextAreas() {
+public fun TextAreas() {
     VerticallyScrollableContainer(Modifier.fillMaxSize()) {
         Column(Modifier.padding(vertical = 4.dp)) {
             Row(
