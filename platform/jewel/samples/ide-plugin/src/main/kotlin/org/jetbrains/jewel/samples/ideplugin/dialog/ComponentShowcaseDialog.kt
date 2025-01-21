@@ -1,6 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the
+// Apache 2.0 license.
 package org.jetbrains.jewel.samples.ideplugin.dialog
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
@@ -21,6 +23,7 @@ internal class ComponentShowcaseDialog : DialogWrapper(true) {
         init()
     }
 
+    @OptIn(ExperimentalLayoutApi::class)
     override fun createCenterPanel(): JComponent {
         val dialogPanel = JewelComposePanel {
             val viewModel =

@@ -71,6 +71,7 @@ internal fun WelcomeView() {
         }
     }
 }
+
 @ExperimentalLayoutApi
 @Composable
 internal fun ThemeSelectionChip(theme: IntUiThemes, name: String, iconKey: IconKey) {

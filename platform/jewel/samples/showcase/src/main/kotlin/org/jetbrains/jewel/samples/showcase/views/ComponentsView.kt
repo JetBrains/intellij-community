@@ -1,4 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the
+// Apache 2.0 license.
 package org.jetbrains.jewel.samples.showcase.views
 
 import androidx.compose.foundation.TooltipPlacement
@@ -39,6 +40,7 @@ public fun ComponentsView(viewModel: ComponentsViewModel, railNavigationModifier
         ComponentView(viewModel.getCurrentView())
     }
 }
+
 @ExperimentalLayoutApi
 @Composable
 public fun ComponentsToolBar(viewModel: ComponentsViewModel, railNavigationModifier: Modifier) {
