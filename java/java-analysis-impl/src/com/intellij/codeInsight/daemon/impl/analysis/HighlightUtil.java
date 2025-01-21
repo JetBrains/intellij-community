@@ -594,7 +594,7 @@ public final class HighlightUtil {
               IntentionAction action = getFixFactory().createMethodReturnFix(method, valueType, true);
               errorResult.registerFix(action, null, null, null, null);
             }
-            HighlightFixUtil.registerChangeParameterClassFix(returnType, valueType, errorResult);
+            HighlightFixUtil.registerChangeParameterClassFix(returnType, valueType, asConsumer(errorResult));
           }
         }
       }
@@ -1275,7 +1275,7 @@ public final class HighlightUtil {
         String description = JavaErrorBundle.message("unqualified.super.disallowed");
         HighlightInfo.Builder builder =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description);
-        QualifySuperArgumentFix.registerQuickFixAction(superExpression, builder);
+        QualifySuperArgumentFix.registerQuickFixAction(superExpression, asConsumer(builder));
         return builder;
       }
     }
@@ -2172,7 +2172,7 @@ public final class HighlightUtil {
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
         if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
-          HighlightFixUtil.registerAccessQuickFixAction(info, refName.getTextRange(), (PsiJvmMember)resolved, ref, result.getCurrentFileResolveScope(), null);
+          HighlightFixUtil.registerAccessQuickFixAction(asConsumer(info), (PsiJvmMember)resolved, ref, result.getCurrentFileResolveScope());
           if (ref instanceof PsiReferenceExpression expression) {
             IntentionAction action = getFixFactory().createRenameWrongRefFix(expression);
             info.registerFix(action, null, null, null, null);

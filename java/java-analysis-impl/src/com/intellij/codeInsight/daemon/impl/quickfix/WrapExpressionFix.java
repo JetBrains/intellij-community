@@ -2,13 +2,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> {
   private static final Logger LOG = Logger.getInstance(WrapExpressionFix.class);
@@ -139,8 +139,7 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
 
   public static void registerWrapAction(JavaResolveResult[] candidates,
                                         PsiExpression[] expressions,
-                                        @NotNull HighlightInfo.Builder highlightInfo,
-                                        TextRange fixRange) {
+                                        @NotNull Consumer<? super CommonIntentionAction> info) {
     PsiType expectedType = null;
     PsiExpression expr = null;
 
@@ -179,8 +178,7 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
     }
 
     if (expectedType != null) {
-      var action = new WrapExpressionFix(expectedType, expr, null);
-      highlightInfo.registerFix(action, null, null, fixRange, null);
+      info.accept(new WrapExpressionFix(expectedType, expr, null));
     }
   }
 }

@@ -11,7 +11,7 @@ class Test {
     }
 
     switch (o) {
-      case Integer i when <error descr="Incompatible types. Found: 'int', required: 'boolean'">isInt()</error>:
+      case Integer i when <error descr="Incompatible types. Found: 'int', required: 'boolean'">isInt</error>():
         break;
       default:
         break;

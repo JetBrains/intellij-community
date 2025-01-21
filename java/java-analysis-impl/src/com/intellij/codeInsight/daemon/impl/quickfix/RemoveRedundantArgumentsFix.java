@@ -2,14 +2,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction<PsiExpressionList> {
   private final PsiMethod myTargetMethod;
@@ -79,24 +79,21 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
 
   public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
                                         @NotNull PsiExpressionList arguments,
-                                        @NotNull HighlightInfo.Builder highlightInfo,
-                                        TextRange fixRange) {
+                                        @NotNull Consumer<? super CommonIntentionAction> info) {
     for (JavaResolveResult candidate : candidates) {
-      registerIntention(arguments, highlightInfo, fixRange, candidate);
+      registerIntention(arguments, info, candidate);
     }
   }
 
   public static void registerIntentions(@NotNull PsiExpressionList arguments,
-                                        @NotNull HighlightInfo.Builder highlightInfo,
-                                        TextRange fixRange) {
+                                        @NotNull Consumer<? super CommonIntentionAction> info) {
     if (!arguments.isEmpty()) {
-      highlightInfo.registerFix(new ForImplicitConstructorAction(arguments), null, null, fixRange, null);
+      info.accept(new ForImplicitConstructorAction(arguments));
     }
   }
 
   private static void registerIntention(@NotNull PsiExpressionList arguments,
-                                        @NotNull HighlightInfo.Builder builder,
-                                        TextRange fixRange,
+                                        @NotNull Consumer<? super CommonIntentionAction> info,
                                         @NotNull JavaResolveResult candidate) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
@@ -108,8 +105,7 @@ public final class RemoveRedundantArgumentsFix extends PsiUpdateModCommandAction
       // Avoid creating recursive constructor call
       return;
     }
-    var action = new RemoveRedundantArgumentsFix(method, arguments, substitutor);
-    builder.registerFix(action, null, null, fixRange, null);
+    info.accept(new RemoveRedundantArgumentsFix(method, arguments, substitutor));
   }
 
   private static class ForImplicitConstructorAction extends PsiUpdateModCommandAction<PsiExpressionList> {

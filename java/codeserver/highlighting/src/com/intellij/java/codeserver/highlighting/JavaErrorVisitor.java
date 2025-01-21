@@ -42,7 +42,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull AnnotationChecker myAnnotationChecker = new AnnotationChecker(this);
   final @NotNull ClassChecker myClassChecker = new ClassChecker(this);
   private final @NotNull RecordChecker myRecordChecker = new RecordChecker(this);
-  private final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
+  final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
   private final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);

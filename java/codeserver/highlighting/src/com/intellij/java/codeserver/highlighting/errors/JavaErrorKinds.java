@@ -381,6 +381,10 @@ public final class JavaErrorKinds {
   public static final Simple<PsiTypeParameter> TYPE_PARAMETER_DUPLICATE = 
     error(PsiTypeParameter.class, "type.parameter.on.annotation.member")
       .withRawDescription(typeParameter -> message("type.parameter.duplicate", typeParameter.getName()));
+  public static final Parameterized<PsiMethodCallExpression, IncompatibleIntersectionContext> TYPE_PARAMETER_INCOMPATIBLE_UPPER_BOUNDS =
+    parameterized(PsiMethodCallExpression.class, IncompatibleIntersectionContext.class, "type.parameter.incompatible.upper.bounds")
+      .withRange((call, ctx) -> getRange(call))
+      .withRawDescription((call, ctx) -> message("type.parameter.incompatible.upper.bounds", ctx.parameter().getName(), ctx.message()));
 
   public static final Simple<PsiMethod> METHOD_DUPLICATE =
     error(PsiMethod.class, "method.duplicate")
@@ -525,6 +529,7 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> TYPE_INCOMPATIBLE =
     parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "type.incompatible")
+      .withRange((psi, context) -> getRange(psi))
       .withDescription((psi, context) -> context.createDescription())
       .withTooltip((psi, context) -> context.createTooltip());
   public static final Simple<PsiKeyword> TYPE_VOID_ILLEGAL = error("type.void.illegal");
@@ -634,7 +639,18 @@ public final class JavaErrorKinds {
     parameterized(PsiExpression.class, PsiClass.class, "call.super.qualifier.not.inner.class")
       .withRawDescription((psi, cls) -> message("call.super.qualifier.not.inner.class", formatClass(cls)));
   public static final Simple<PsiMethodCallExpression> CALL_EXPECTED = error("call.expected");
-
+  public static final Simple<PsiReferenceExpression> CALL_STATIC_INTERFACE_METHOD_QUALIFIER = 
+    error(PsiReferenceExpression.class, "call.static.interface.method.qualifier")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRange(JavaErrorFormatUtil::getRange);
+  public static final Parameterized<PsiCall, PsiClass> CALL_FORMAL_VARARGS_ELEMENT_TYPE_INACCESSIBLE_HERE =
+    parameterized(PsiCall.class, PsiClass.class, "call.formal.varargs.element.type.inaccessible.here")
+      .withAnchor((call, cls) -> requireNonNullElse(call.getArgumentList(), call))
+      .withRawDescription((call, cls) -> message("call.formal.varargs.element.type.inaccessible.here", formatClass(cls)));
+  public static final Parameterized<PsiCall, String> CALL_TYPE_INFERENCE_ERROR =
+    parameterized(PsiCall.class, String.class, "call.type.inference.error")
+      .withRange((psi, context) -> getRange(psi))
+      .withRawDescription((psi, context) -> message("call.type.inference.error", context));
   public static final Simple<PsiExpression> STRING_TEMPLATE_VOID_NOT_ALLOWED_IN_EMBEDDED =
     error("string.template.void.not.allowed.in.embedded");
   public static final Simple<PsiTemplateExpression> STRING_TEMPLATE_PROCESSOR_MISSING =
@@ -739,5 +755,6 @@ public final class JavaErrorKinds {
 
   public record InvalidDisjointTypeContext(@NotNull PsiClass superClass, @NotNull PsiClass subClass) {
   }
-  
+
+  public record IncompatibleIntersectionContext(@NotNull PsiTypeParameter parameter, @NotNull @Nls String message) {}
 }

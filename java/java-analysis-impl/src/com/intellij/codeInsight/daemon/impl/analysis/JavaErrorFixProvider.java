@@ -286,7 +286,7 @@ final class JavaErrorFixProvider {
     multi(TYPE_INCOMPATIBLE, error -> {
       JavaIncompatibleTypeErrorContext context = error.context();
       PsiElement anchor = error.psi();
-      PsiElement parent = anchor.getParent();
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
       PsiType lType = context.lType();
       PsiType rType = context.rType();
       if (anchor instanceof PsiJavaCodeReferenceElement && parent instanceof PsiReferenceList &&
@@ -312,9 +312,20 @@ final class JavaErrorFixProvider {
             assignment.getOperationTokenType() == JavaTokenType.EQ) {
           registrar.add(myFactory.createAssignmentToComparisonFix(assignment));
         }
-        if (expression.getParent() instanceof PsiArrayInitializerExpression initializerList) {
+        if (parent instanceof PsiArrayInitializerExpression initializerList) {
           PsiType sameType = JavaHighlightUtil.sameType(initializerList.getInitializers());
           ContainerUtil.addIfNotNull(registrar, sameType == null ? null : VariableArrayTypeFix.createFix(initializerList, sameType));
+        }
+        else if (parent instanceof PsiReturnStatement && rType != null) {
+          if (PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiMethod containingMethod) {
+            registrar.add(myFactory.createMethodReturnFix(containingMethod, rType, true, true));
+          }
+        }
+        else if (parent instanceof PsiLocalVariable var && rType != null) {
+          HighlightFixUtil.registerChangeVariableTypeFixes(var, rType, var.getInitializer(), registrar::add);
+        }
+        if (expression instanceof PsiMethodCallExpression callExpression) {
+          HighlightFixUtil.registerCallInferenceFixes(callExpression, registrar::add);
         }
         return registrar;
       }
@@ -325,7 +336,15 @@ final class JavaErrorFixProvider {
       }
       return List.of();
     });
-
+    multi(CALL_TYPE_INFERENCE_ERROR, error -> {
+      PsiCall methodCall = error.psi();
+      if (methodCall instanceof PsiMethodCallExpression callExpression) {
+        List<CommonIntentionAction> registrar = new ArrayList<>();
+        HighlightFixUtil.registerCallInferenceFixes(callExpression, registrar::add);
+        return registrar;
+      }
+      return List.of();
+    });
   }
 
   private void createGenericFixes() {
@@ -337,6 +356,8 @@ final class JavaErrorFixProvider {
       PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.psi());
       return myFactory.createExtendsListFix(error.context(), type, false);
     });
+    fix(CALL_STATIC_INTERFACE_METHOD_QUALIFIER, error -> myFactory.createAccessStaticViaInstanceFix(
+      error.psi(), error.psi().advancedResolve(true)));
   }
 
   private void createClassFixes() {

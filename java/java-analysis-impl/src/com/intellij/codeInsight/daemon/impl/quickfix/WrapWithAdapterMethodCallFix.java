@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -13,7 +13,6 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Predicates;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static com.intellij.pom.java.LanguageLevel.JDK_11;
@@ -346,10 +346,9 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
 
   public static void registerCastActions(CandidateInfo @NotNull [] candidates,
                                          @NotNull PsiCall call,
-                                         @NotNull HighlightInfo.Builder highlightInfo,
-                                         final TextRange fixRange) {
+                                         @NotNull Consumer<? super CommonIntentionAction> info) {
     for (AbstractWrapper wrapper : WRAPPERS) {
-      wrapper.registerCastActions(candidates, call, highlightInfo, fixRange);
+      wrapper.registerCastActions(candidates, call, info);
     }
   }
 }

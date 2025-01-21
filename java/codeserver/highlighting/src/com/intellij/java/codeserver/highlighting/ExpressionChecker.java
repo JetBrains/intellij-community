@@ -2,20 +2,25 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -316,7 +321,20 @@ final class ExpressionChecker {
     if (resolved instanceof PsiMethod psiMethod && resolveResult.isValidResult()) {
       checkUnhandledExceptions(methodCall);
       if (myVisitor.hasErrorResults()) return;
-      
+      if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = psiMethod.getContainingClass();
+        if (containingClass != null && containingClass.isInterface()) {
+          PsiElement element = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
+          myVisitor.checkFeature(element, JavaFeature.STATIC_INTERFACE_CALLS);
+          if (myVisitor.hasErrorResults()) return;
+          checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, containingClass);
+        }
+      }
+      myVisitor.myGenericsChecker.checkInferredIntersections(substitutor, methodCall);
+      if (myVisitor.hasErrorResults()) return;
+      checkVarargParameterErasureToBeAccessible((MethodCandidateInfo)resolveResult, methodCall);
+      if (myVisitor.hasErrorResults()) return;
+      checkIncompatibleType(methodCall, (MethodCandidateInfo)resolveResult, methodCall);
     }
     else {
       MethodCandidateInfo candidateInfo = resolveResult instanceof MethodCandidateInfo ? (MethodCandidateInfo)resolveResult : null;
@@ -369,6 +387,97 @@ final class ExpressionChecker {
         return;
       }
     }
+  }
+
+  private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
+    // Parent resolve failed as well, and it's likely more informative.
+    // Suppress this error to allow reporting from parent
+    return (errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument")) ||
+            errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.declaration.for.the.method.reference.not.found"))) &&
+           hasSurroundingInferenceError(methodCall);
+  }
+
+  static boolean hasSurroundingInferenceError(@NotNull PsiElement context) {
+    PsiCall topCall = LambdaUtil.treeWalkUp(context);
+    if (topCall == null) return false;
+    while (context != topCall) {
+      context = context.getParent();
+      if (context instanceof PsiMethodCallExpression call &&
+          call.resolveMethodGenerics() instanceof MethodCandidateInfo info &&
+          info.getInferenceErrorMessage() != null) {
+        // Possibly inapplicable method reference due to the surrounding call inference failure:
+        // suppress method reference error in order to display more relevant inference error.
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void checkIncompatibleType(@NotNull PsiCall methodCall,
+                                     @NotNull MethodCandidateInfo resolveResult,
+                                     @NotNull PsiElement elementToHighlight) {
+    String errorMessage = resolveResult.getInferenceErrorMessage();
+    if (errorMessage == null) return;
+    if (favorParentReport(methodCall, errorMessage)) return;
+    PsiMethod method = resolveResult.getElement();
+    PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
+    PsiType actualType =
+      methodCall instanceof PsiExpression ? ((PsiExpression)methodCall.copy()).getType() :
+      resolveResult.getSubstitutor(false).substitute(method.getReturnType());
+    if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
+      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
+        elementToHighlight, new JavaIncompatibleTypeErrorContext(expectedTypeByParent, actualType, errorMessage)));
+    }
+    else {
+      myVisitor.report(JavaErrorKinds.CALL_TYPE_INFERENCE_ERROR.create(methodCall, errorMessage));
+    }
+  }
+
+  /**
+   * If the compile-time declaration is applicable by variable arity invocation,
+   * then where the last formal parameter type of the invocation type of the method is Fn[],
+   * it is a compile-time error if the type which is the erasure of Fn is not accessible at the point of invocation.
+   */
+  private void checkVarargParameterErasureToBeAccessible(@NotNull MethodCandidateInfo info, @NotNull PsiCall place) {
+    PsiMethod method = info.getElement();
+    if (info.isVarargs() || method.isVarArgs() && !PsiUtil.isLanguageLevel8OrHigher(place)) {
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      PsiType componentType = ((PsiEllipsisType)parameters[parameters.length - 1].getType()).getComponentType();
+      PsiType substitutedTypeErasure = TypeConversionUtil.erasure(info.getSubstitutor().substitute(componentType));
+      PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(substitutedTypeErasure);
+      if (targetClass != null && !PsiUtil.isAccessible(targetClass, place, null)) {
+        myVisitor.report(JavaErrorKinds.CALL_FORMAL_VARARGS_ELEMENT_TYPE_INACCESSIBLE_HERE.create(place, targetClass));
+      }
+    }
+  }
+
+  private void checkStaticInterfaceCallQualifier(@NotNull PsiReferenceExpression referenceToMethod,
+                                                 @NotNull JavaResolveResult resolveResult,
+                                                 @NotNull PsiClass containingClass) {
+    PsiElement scope = resolveResult.getCurrentFileResolveScope();
+    PsiElement qualifierExpression = referenceToMethod.getQualifier();
+    if (qualifierExpression == null && PsiTreeUtil.isAncestor(containingClass, referenceToMethod, true)) return;
+    PsiElement resolve = null;
+    if (qualifierExpression == null && scope instanceof PsiImportStaticStatement statement) {
+      resolve = statement.resolveTargetClass();
+    }
+    else if (qualifierExpression instanceof PsiJavaCodeReferenceElement element) {
+      resolve = element.resolve();
+    }
+    if (containingClass.getManager().areElementsEquivalent(resolve, containingClass)) return;
+    if (resolve instanceof PsiTypeParameter typeParameter) {
+      Set<PsiClass> classes = new HashSet<>();
+      for (PsiClassType type : typeParameter.getExtendsListTypes()) {
+        PsiClass aClass = type.resolve();
+        if (aClass != null) {
+          classes.add(aClass);
+        }
+      }
+
+      if (classes.size() == 1 && classes.contains(containingClass)) return;
+    }
+
+    myVisitor.report(JavaErrorKinds.CALL_STATIC_INTERFACE_METHOD_QUALIFIER.create(referenceToMethod));
   }
 
   private static boolean shouldHighlightUnhandledException(@NotNull PsiElement element) {

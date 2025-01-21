@@ -1112,23 +1112,6 @@ public final class GenericsHighlightUtil {
     }
   }
 
-  static HighlightInfo.Builder checkInferredIntersections(@NotNull PsiSubstitutor substitutor, @NotNull PsiMethodCallExpression call) {
-    for (Map.Entry<PsiTypeParameter, PsiType> typeEntry : substitutor.getSubstitutionMap().entrySet()) {
-      String parameterName = typeEntry.getKey().getName();
-      PsiType type = typeEntry.getValue();
-      if (type instanceof PsiIntersectionType intersectionType) {
-        String conflictingConjunctsMessage = intersectionType.getConflictingConjunctsMessage();
-        if (conflictingConjunctsMessage != null) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .descriptionAndTooltip(
-              JavaErrorBundle.message("type.parameter.has.incompatible.upper.bounds", parameterName, conflictingConjunctsMessage))
-            .range(HighlightMethodUtil.getFixRange(call));
-        }
-      }
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkMemberSignatureTypesAccessibility(@NotNull PsiReferenceExpression ref) {
     String message = null;
 

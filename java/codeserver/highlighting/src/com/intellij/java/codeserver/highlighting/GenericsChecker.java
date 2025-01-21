@@ -238,4 +238,16 @@ final class GenericsChecker {
       }
     }
   }
+
+  void checkInferredIntersections(@NotNull PsiSubstitutor substitutor, @NotNull PsiMethodCallExpression call) {
+    for (Map.Entry<PsiTypeParameter, PsiType> typeEntry : substitutor.getSubstitutionMap().entrySet()) {
+      if (typeEntry.getValue() instanceof PsiIntersectionType intersectionType) {
+        String conflictingConjunctsMessage = intersectionType.getConflictingConjunctsMessage();
+        if (conflictingConjunctsMessage != null) {
+          myVisitor.report(JavaErrorKinds.TYPE_PARAMETER_INCOMPATIBLE_UPPER_BOUNDS.create(
+            call, new JavaErrorKinds.IncompatibleIntersectionContext(typeEntry.getKey(), conflictingConjunctsMessage)));
+        }
+      }
+    }
+  }
 }

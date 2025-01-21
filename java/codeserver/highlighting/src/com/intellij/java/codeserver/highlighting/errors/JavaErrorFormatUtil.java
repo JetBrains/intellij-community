@@ -68,6 +68,12 @@ final class JavaErrorFormatUtil {
         return nameElement.getTextRangeInParent();
       }
     }
+    if (element instanceof PsiReferenceExpression refExpression) {
+      PsiElement nameElement = refExpression.getReferenceNameElement();
+      if (nameElement != null) {
+        return nameElement.getTextRangeInParent();
+      }
+    }
     PsiElement nextSibling = element.getNextSibling();
     if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
       return TextRange.create(0, element.getTextLength() + 1);

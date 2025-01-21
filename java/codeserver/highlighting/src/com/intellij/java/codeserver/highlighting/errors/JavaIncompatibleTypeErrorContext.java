@@ -9,12 +9,18 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable PsiType rType) {
+public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable PsiType rType, 
+                                               @Nullable @Nls String reasonForIncompatibleTypes) {
   private static final @NlsSafe String ANONYMOUS = "anonymous ";
+
+  public JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable PsiType rType) {
+    this(lType, rType, null);
+  }
 
   private @Nls @NotNull String getReasonForIncompatibleTypes() {
     if (rType instanceof PsiMethodReferenceType referenceType) {
@@ -33,10 +39,11 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
   }
 
   @NotNull HtmlChunk createTooltip() {
-    return createTooltip(getReasonForIncompatibleTypes());
+    return createTooltip(
+      reasonForIncompatibleTypes == null ? getReasonForIncompatibleTypes() : XmlStringUtil.escapeString(reasonForIncompatibleTypes));
   }
 
-  @NotNull HtmlChunk createTooltip(@NotNull @Nls String reason) {
+  private @NotNull HtmlChunk createTooltip(@NotNull @Nls String reason) {
     String styledReason = reason.isEmpty() ? "" :
                           String.format("<table><tr><td style=''padding-top: 10px; padding-left: 4px;''>%s</td></tr></table>", reason);
     IncompatibleTypesTooltipComposer tooltipComposer = (lTypeString, lTypeArguments, rTypeString, rTypeArguments) ->

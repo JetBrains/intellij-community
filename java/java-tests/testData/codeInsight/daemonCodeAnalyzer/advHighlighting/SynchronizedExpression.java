@@ -11,7 +11,7 @@ class a {
         }
         synchronized (<error descr="Incompatible types. Found: 'boolean', required: 'java.lang.Object'">true</error>) {
         }
-        synchronized (<error descr="Incompatible types. Found: 'void', required: 'java.lang.Object'">System.out.println()</error> ) {
+        synchronized (System.out.<error descr="Incompatible types. Found: 'void', required: 'java.lang.Object'">println</error>() ) {
         }
 
 

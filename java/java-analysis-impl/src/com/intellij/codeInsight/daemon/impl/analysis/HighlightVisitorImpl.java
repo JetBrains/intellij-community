@@ -105,6 +105,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiElement, PsiMethod> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
+  @Contract(pure = true)
   private @NotNull PsiResolveHelper getResolveHelper() {
     return PsiResolveHelper.getInstance(getProject());
   }
@@ -380,7 +381,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (parentInferenceErrorMessage != null && (returnErrors == null || !returnErrors.containsValue(parentInferenceErrorMessage))) {
         if (returnErrors == null) return;
         HighlightInfo.Builder info =
-          HighlightMethodUtil.createIncompatibleTypeHighlightInfo(callExpression, getResolveHelper(),
+          HighlightMethodUtil.createIncompatibleTypeHighlightInfo(callExpression,
                                                                   parentCallResolveResult, expression);
         if (info != null) {
           for (PsiElement errorElement : returnErrors.keySet()) {
@@ -578,16 +579,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (results == null) return;
       JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
 
-      PsiResolveHelper resolveHelper;
       if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
-          !HighlightMethodUtil.isDummyConstructorCall(expression, resolveHelper = getResolveHelper(), list, referenceExpression) &&
+          !HighlightMethodUtil.isDummyConstructorCall(expression, getResolveHelper(), list, referenceExpression) &&
           // this check is for fake expression from JspMethodCallImpl
           referenceExpression.getParent() == expression) {
         try {
           if (PsiTreeUtil.findChildrenOfType(expression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
             PsiElement resolved = result.getElement();
             add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(referenceExpression, results, list, resolved, result, expression,
-                                                                      resolveHelper, list));
+                                                                      list));
           }
         }
         catch (IndexNotReadyException ignored) {
@@ -788,7 +788,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     visitElement(expression);
     if (!hasErrorResults()) {
       try {
-        HighlightMethodUtil.checkMethodCall(expression, getResolveHelper(), myLanguageLevel, myJavaSdkVersion, myFile,
+        HighlightMethodUtil.checkMethodCall(expression, getResolveHelper(), myJavaSdkVersion,
                                             myErrorSink);
       }
       catch (IndexNotReadyException ignored) {
@@ -1076,13 +1076,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!HighlightMethodUtil.isDummyConstructorCall(methodCallExpression, resolveHelper, list, expression)) {
         try {
           add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(
-            expression, results, list, resolved, result, methodCallExpression, resolveHelper, myLanguageLevel, myFile));
+            expression, results, list, resolved, result, methodCallExpression, myLanguageLevel, myFile));
 
           if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
             PsiElement nameElement = expression.getReferenceNameElement();
             if (nameElement != null) {
               add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(
-                expression, results, list, resolved, result, methodCallExpression, resolveHelper, nameElement));
+                expression, results, list, resolved, result, methodCallExpression, nameElement));
             }
           }
         }
@@ -1125,8 +1125,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       String accessProblem = HighlightUtil.accessProblemDescription(expression, method, result);
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem);
-      HighlightFixUtil.registerAccessQuickFixAction(info, expression.getTextRange(), (PsiJvmMember)method, expression,
-                                                    result.getCurrentFileResolveScope(), null);
+      HighlightFixUtil.registerAccessQuickFixAction(HighlightUtil.asConsumer(info), (PsiJvmMember)method, expression, result.getCurrentFileResolveScope());
       add(info);
     }
 
