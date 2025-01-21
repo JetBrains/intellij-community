@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.xdebugger.XMixedModeProcessHandler
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.evaluation.XMixedModeDebuggersEditorProvider
@@ -27,6 +28,7 @@ class XDebugSessionMixedModeExtension(
   private val stateMachine = MixedModeProcessTransitionStateMachine(low, high, coroutineScope)
   private val session = (high.asXDebugProcess.session as XDebugSessionImpl)
   private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
+  private var processHandler: XMixedModeProcessHandler? = null
 
   fun pause() {
     coroutineScope.launch {
@@ -113,5 +115,12 @@ class XDebugSessionMixedModeExtension(
     return editorsProvider ?: XMixedModeDebuggersEditorProvider(session,
                                                                 session.getDebugProcess(true).getEditorsProvider(),
                                                                 session.getDebugProcess(false).getEditorsProvider()).also { editorsProvider = it }
+  }
+
+  fun getProcessHandler() : XMixedModeProcessHandler {
+    return processHandler ?: XMixedModeProcessHandler(
+      high.asXDebugProcess.processHandler,
+      low.asXDebugProcess.processHandler,
+      checkNotNull(session.mixedModeConfig)).also { processHandler = it }
   }
 }

@@ -4,7 +4,7 @@ package com.intellij.xdebugger.mixedMode
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 
-data class XMixedModeProcessesConfiguration(val useLowDebugProcessConsole: Boolean)
+data class XMixedModeProcessesConfiguration(val useLowDebugProcessConsole: Boolean, val useHighLevelDebuggerDetachBehavior : Boolean)
 
 data class XMixedModeDebugProcesses(val lowDebugProcess : XDebugProcess, val highDebugProcess : XDebugProcess, val config : XMixedModeProcessesConfiguration)
 

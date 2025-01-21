@@ -4,7 +4,7 @@ import com.intellij.openapi.util.Key
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicInteger
 
-class CompositeProcessHandler(val handlers: List<ProcessHandler>) : ProcessHandler() {
+open class CompositeProcessHandler(val handlers: List<ProcessHandler>) : ProcessHandler() {
   private val terminatedCount = AtomicInteger()
 
   private inner class EachListener : ProcessAdapter() {
@@ -27,7 +27,11 @@ class CompositeProcessHandler(val handlers: List<ProcessHandler>) : ProcessHandl
 
   override fun startNotify() {
     super.startNotify()
-    handlers.forEach { it.startNotify() }
+    handlers.forEach { startNotifyHandler(it) }
+  }
+
+  protected open fun startNotifyHandler(handler: ProcessHandler) {
+    handler.startNotify()
   }
 
   override fun destroyProcessImpl() {

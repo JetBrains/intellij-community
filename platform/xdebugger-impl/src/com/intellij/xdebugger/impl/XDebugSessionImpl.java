@@ -1373,21 +1373,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  private ProcessHandler myCompositeProcessHandler;
-
   public ProcessHandler getProcessHandler() {
-    if (myMixedModeLowLevelDebugProcess == null) {
-      return myDebugProcess.getProcessHandler();
-    }
-    if (myCompositeProcessHandler != null) {
-      return myCompositeProcessHandler;
-    }
-
-    var handlersList = new ArrayList<ProcessHandler>();
-    handlersList.add(myDebugProcess.getProcessHandler());
-    handlersList.add(myMixedModeLowLevelDebugProcess.getProcessHandler());
-    myCompositeProcessHandler = new CompositeProcessHandler(handlersList);
-    return myCompositeProcessHandler;
+    if (!isMixedMode()) return myDebugProcess.getProcessHandler();
+    return myMixedModeExtension.getProcessHandler();
   }
 
   @Override
