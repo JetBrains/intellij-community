@@ -61,7 +61,8 @@ internal data class SdkRootsDescription(val sdk: SdkEntity,
 
   fun createIterator(storage: EntityStorage): IndexableFilesIterator? {
     val sdk = storage.sdkMap.getDataByEntity(sdk) ?: return null
-    return SdkIndexableFilesIteratorImpl.createIterator(sdk)
+    val rootHolder = roots.toRootHolder()
+    return SdkIndexableFilesIteratorImpl.createIterator(sdk, rootHolder.roots)
   }
 }
 

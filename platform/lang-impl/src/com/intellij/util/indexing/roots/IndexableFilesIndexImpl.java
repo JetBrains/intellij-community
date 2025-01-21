@@ -95,31 +95,12 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
     WorkspaceIndexingRootsBuilder builder =
       WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings);
-    WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots = builder.getIteratorsFromRoots(libraryOrigins, sdkOrigins, entityStorage, project);
+    WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots =
+      builder.getIteratorsFromRoots(libraryOrigins, sdkOrigins, entityStorage, project);
     iterators.addAll(iteratorsFromRoots.getContentIterators());
     iterators.addAll(iteratorsFromRoots.getExternalIterators());
 
-    List<Sdk> sdks = new ArrayList<>();
     ModuleDependencyIndex moduleDependencyIndex = ModuleDependencyIndex.getInstance(project);
-    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (moduleDependencyIndex.hasDependencyOn(sdk)) {
-        sdks.add(sdk);
-      }
-    }
-    if (sdks.isEmpty()) {
-      Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (projectSdk != null) {
-        sdks.add(projectSdk);
-      }
-    }
-    for (Sdk sdk : sdks) {
-      ProgressManager.checkCanceled();
-      for (IndexableFilesIterator iterator : IndexableEntityProviderMethods.INSTANCE.createIterators(sdk)) {
-        if (sdkOrigins.add(iterator.getOrigin())) {
-          iterators.add(iterator);
-        }
-      }
-    }
 
     LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
     Sequence<LibraryTable> libs = SequencesKt.asSequence(tablesRegistrar.getCustomLibraryTables().iterator());

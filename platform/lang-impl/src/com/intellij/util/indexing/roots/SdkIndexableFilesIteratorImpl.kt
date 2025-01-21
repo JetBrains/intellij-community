@@ -46,8 +46,12 @@ class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
   }
 
   companion object {
+    fun createIterator(sdk: Sdk, rootsToIndex: Collection<VirtualFile>): IndexableFilesIterator {
+      return SdkIndexableFilesIteratorImpl(sdk, rootsToIndex)
+    }
+
     fun createIterator(sdk: Sdk): IndexableFilesIterator {
-      return SdkIndexableFilesIteratorImpl(sdk, getRootsToIndex(sdk))
+      return createIterator(sdk, getRootsToIndex(sdk))
     }
 
     private fun getRootsToIndex(sdk: Sdk): Collection<VirtualFile> {
