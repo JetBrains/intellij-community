@@ -746,7 +746,7 @@ c:com.intellij.xdebugger.impl.frame.XStandaloneVariablesView
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.xdebugger.frame.XStackFrame):V
 - processSessionEvent(com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent,com.intellij.xdebugger.XDebugSession):V
 - rebuildView():V
-f:com.intellij.xdebugger.impl.frame.XValueMarkers
+Fc:com.intellij.xdebugger.impl.frame.XValueMarkers
 - canMarkValue(com.intellij.xdebugger.frame.XValue):Z
 - clear():V
 - s:createValueMarkers(com.intellij.xdebugger.frame.XValueMarkerProvider):com.intellij.xdebugger.impl.frame.XValueMarkers
