@@ -36,6 +36,8 @@ c:com.intellij.openapi.util.registry.RegistryValue
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.openapi.util.registry.RegistryValueSource
 - s:values():com.intellij.openapi.util.registry.RegistryValueSource[]
+a:com.intellij.openapi.util.text.HtmlChunk
+- *:applyStyles(java.util.Map):com.intellij.openapi.util.text.HtmlChunk
 f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - *sf:buildChildren(com.intellij.openapi.util.text.HtmlChunk$Element,kotlin.jvm.functions.Function1):com.intellij.openapi.util.text.HtmlChunk$Element
 - *sf:buildHtml(kotlin.jvm.functions.Function1):java.lang.String

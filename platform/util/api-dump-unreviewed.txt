@@ -1565,6 +1565,7 @@ c:com.intellij.openapi.util.text.HtmlChunk$Element
 - addRaw(java.lang.String):com.intellij.openapi.util.text.HtmlChunk$Element
 - addText(java.lang.String):com.intellij.openapi.util.text.HtmlChunk$Element
 - appendTo(java.lang.StringBuilder):V
+- applyStyles(java.util.Map):com.intellij.openapi.util.text.HtmlChunk
 - attr(java.lang.String):com.intellij.openapi.util.text.HtmlChunk$Element
 - attr(java.lang.String,I):com.intellij.openapi.util.text.HtmlChunk$Element
 - attr(java.lang.String,java.lang.String):com.intellij.openapi.util.text.HtmlChunk$Element

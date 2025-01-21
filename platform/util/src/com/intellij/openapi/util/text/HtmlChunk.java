@@ -7,6 +7,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,10 +56,29 @@ public abstract class HtmlChunk {
   }
   
   private static final class Raw extends HtmlChunk {
+    private static final Pattern CLASS = Pattern.compile("class=([\"'])([A-Za-z\\-_0-9]+)\\1");
     private final String myContent;
 
     private Raw(String content) {
       myContent = content;
+    }
+
+    // Caution: works poorly
+    @Override
+    public @NotNull HtmlChunk applyStyles(@NotNull Map<@NotNull @NonNls String, @NotNull String> styles) {
+      Matcher matcher = CLASS.matcher(myContent);
+      StringBuffer result = new StringBuffer();
+      while (matcher.find()) {
+        String style = styles.get(matcher.group(2));
+        if (style != null) {
+          matcher.appendReplacement(result, "style=\"" + style + "\"");
+        } else {
+          matcher.appendReplacement(result, matcher.group());
+        }
+      }
+      if (result.length() == 0) return this;
+      matcher.appendTail(result);
+      return new Raw(result.toString());
     }
 
     @Override
@@ -81,6 +102,24 @@ public abstract class HtmlChunk {
 
     Fragment(List<? extends HtmlChunk> content) {
       myContent = content;
+    }
+
+    @Override
+    public @NotNull HtmlChunk applyStyles(@NotNull Map<@NotNull @NonNls String, @NotNull String> styles) {
+      List<HtmlChunk> newChildren = null;
+      for (HtmlChunk child : myContent) {
+        HtmlChunk updated = child.applyStyles(styles);
+        if (updated != child) {
+          if (newChildren == null) {
+            newChildren = new ArrayList<>(myContent);
+          }
+          newChildren.set(newChildren.indexOf(child), updated);
+        }
+      }
+      if (newChildren != null) {
+        return new Fragment(newChildren);
+      }
+      return this;
     }
 
     @Override
@@ -158,6 +197,38 @@ public abstract class HtmlChunk {
       myTagName = name;
       myAttributes = attributes;
       myChildren = children;
+    }
+
+    @Override
+    public @NotNull HtmlChunk applyStyles(@NotNull Map<@NotNull @NonNls String, @NotNull String> styles) {
+      String myClass = myAttributes.get("class");
+      UnmodifiableHashMap<String, String> newAttributes = myAttributes;
+      if (myClass != null) {
+        String style = styles.get(myClass);
+        if (style != null) {
+          newAttributes = newAttributes.without("class");
+          String existingStyle = newAttributes.get("style");
+          if (existingStyle != null) {
+            style = existingStyle.endsWith(";") ? existingStyle + " " + style 
+                                                : existingStyle + "; " + style;
+          }
+          newAttributes = newAttributes.with("style", style);
+        }
+      }
+      List<HtmlChunk> newChildren = null;
+      for (HtmlChunk child : myChildren) {
+        HtmlChunk updated = child.applyStyles(styles);
+        if (updated != child) {
+          if (newChildren == null) {
+            newChildren = new ArrayList<>(myChildren);
+          }
+          newChildren.set(newChildren.indexOf(child), updated);
+        }
+      }
+      if (newChildren != null) {
+        return new Element(myTagName, newAttributes, newChildren);
+      }
+      return newAttributes == myAttributes ? this : new Element(myTagName, newAttributes, myChildren);
     }
 
     @Override
@@ -367,6 +438,22 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public @Nullable Icon findIcon(@NotNull @NonNls String id) {
     return null;
+  }
+
+  /**
+   * Rewrites the HTML classes with the corresponding CSS styles.
+   * Warning: this is a poor man replacement.
+   * May not work as expected, especially if you are using raw elements. 
+   * Use only if you control the HTML generation.
+   * 
+   * @param styles map where keys are class names and values are CSS definitions
+   * @return a new {@link HtmlChunk} where known classes from the supplied Map 
+   * are replaced with supplied styles; unknown classes are left intact.
+   */
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  public @NotNull HtmlChunk applyStyles(@NotNull Map<@NotNull @NonNls String, @NotNull String> styles) {
+    return this;
   }
 
   /**
