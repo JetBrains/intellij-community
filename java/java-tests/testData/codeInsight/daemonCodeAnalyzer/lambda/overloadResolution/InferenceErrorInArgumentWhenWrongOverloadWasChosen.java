@@ -9,6 +9,6 @@ class MyTest {
   }
 
   {
-    new MyTest("", <error descr="Incompatible types. Found: 'java.util.List<java.lang.Object>', required: 'int'">Collections.emptyList()</error>);
+    new MyTest("", Collections.<error descr="Incompatible types. Found: 'java.util.List<java.lang.Object>', required: 'int'">emptyList</error>());
   }
 }

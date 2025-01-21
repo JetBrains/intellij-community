@@ -88,10 +88,12 @@ public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
                                                          PsiExpression[] expressions) {
     HtmlBuilder table = new HtmlBuilder();
     HtmlChunk.Element td = HtmlChunk.tag("td");
-    HtmlChunk requiredHeader = td.setClass(JavaCompilationError.JAVA_DISPLAY_GRAYED).style("padding-left: 16px; padding-right: 24px;")
-      .addText(JavaCompilationErrorBundle.message("call.type.mismatch.tooltip.required.type"));
-    HtmlChunk providedHeader = td.setClass(JavaCompilationError.JAVA_DISPLAY_GRAYED).style("padding-right: 28px;")
-      .addText(JavaCompilationErrorBundle.message("call.type.mismatch.tooltip.provided.type"));
+    HtmlChunk requiredHeader = td.style("padding-left: 16px; padding-right: 24px;").child(
+      HtmlChunk.span().setClass(JavaCompilationError.JAVA_DISPLAY_GRAYED)
+        .addText(JavaCompilationErrorBundle.message("call.type.mismatch.tooltip.required.type")));
+    HtmlChunk providedHeader = td.style("padding-right: 28px;").child(
+      HtmlChunk.span().setClass(JavaCompilationError.JAVA_DISPLAY_GRAYED)
+        .addText(JavaCompilationErrorBundle.message("call.type.mismatch.tooltip.provided.type")));
     table.append(HtmlChunk.tag("tr").children(td, requiredHeader, providedHeader));
 
     String parameterNameStyle = "padding:1px 4px 1px 4px;";
@@ -139,7 +141,7 @@ public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
                                      @NotNull @NlsSafe String lTypeArguments,
                                      @NotNull @NlsSafe String rRawType,
                                      @NotNull @NlsSafe String rTypeArguments) {
-        return new HtmlBuilder().append(rRawType).append(rTypeArguments).toFragment();
+        return new HtmlBuilder().appendRaw(rRawType).appendRaw(rTypeArguments).toFragment();
       }
 
       @Override

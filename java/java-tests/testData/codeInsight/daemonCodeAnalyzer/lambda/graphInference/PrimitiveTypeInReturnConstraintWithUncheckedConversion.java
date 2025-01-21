@@ -6,7 +6,7 @@ class Test {
   }
 
   void m(List l){
-    boolean foo = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'boolean'">foo(l);</error>
-    String s = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">foo(l);</error>
+    boolean foo = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'boolean'">foo</error>(l);
+    String s = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">foo</error>(l);
   }
 }

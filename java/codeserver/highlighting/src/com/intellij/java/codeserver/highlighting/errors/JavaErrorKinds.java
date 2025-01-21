@@ -644,7 +644,6 @@ public final class JavaErrorKinds {
   public static final Simple<PsiMethodCallExpression> CALL_EXPECTED = error("call.expected");
   public static final Simple<PsiReferenceExpression> CALL_STATIC_INTERFACE_METHOD_QUALIFIER = 
     error(PsiReferenceExpression.class, "call.static.interface.method.qualifier")
-      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRange(JavaErrorFormatUtil::getRange);
   public static final Parameterized<PsiCall, PsiClass> CALL_FORMAL_VARARGS_ELEMENT_TYPE_INACCESSIBLE_HERE =
     parameterized(PsiCall.class, PsiClass.class, "call.formal.varargs.element.type.inaccessible.here")

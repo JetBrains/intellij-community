@@ -4,8 +4,8 @@ import java.util.stream.Collectors;
 
 class Test {
   Map<String, String> testMethodRef(Map<String, Integer> list) {
-    return <caret>list.entrySet().stream()
+    return list.entrySet().stream()
       .filter(e -> !e.getKey().isEmpty())
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      .<caret>collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 }

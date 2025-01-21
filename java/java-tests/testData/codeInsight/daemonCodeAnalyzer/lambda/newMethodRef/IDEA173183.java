@@ -8,6 +8,6 @@ class Either<E>{
 }
 class TestClass {
   Map<Boolean, Either<String>> test(final Stream<Either<String>> eitherStream) {
-    return <error descr="Incompatible types. Found: 'java.util.Map<java.lang.Boolean,java.util.List<Either<java.lang.String>>>', required: 'java.util.Map<java.lang.Boolean,Either<java.lang.String>>'">eitherStream.collect(Collectors.groupingBy(Either::isRight));</error>
+    return eitherStream.<error descr="Incompatible types. Found: 'java.util.Map<java.lang.Boolean,java.util.List<Either<java.lang.String>>>', required: 'java.util.Map<java.lang.Boolean,Either<java.lang.String>>'">collect</error>(Collectors.groupingBy(Either::isRight));
   }
 }

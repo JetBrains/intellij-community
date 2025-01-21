@@ -142,7 +142,7 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
     else {
       typeText = type.getCanonicalText();
     }
-    return HtmlChunk.tag("span")
+    return HtmlChunk.span()
       .setClass(matches ? JavaCompilationError.JAVA_DISPLAY_INFORMATION : JavaCompilationError.JAVA_DISPLAY_ERROR).addText(typeText);
   }
 
