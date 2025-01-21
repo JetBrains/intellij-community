@@ -524,6 +524,9 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
 
     debug!("Loading self-contained libraries");
 
+    let full_set = parse_bool_env_var("REMOTE_DEV_SERVER_FULL_SELF_CONTAINED_LIBS", false)?;
+    debug!("Using full set of libraries: {full_set}");
+
     let self_contained_dir = &ide_home_dir.join("plugins/remote-dev-server/selfcontained/");
     if !self_contained_dir.is_dir() {
         error!("Self-contained dir not found at {self_contained_dir:?}. Only OS-provided libraries will be used.");
@@ -535,7 +538,7 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
         bail!("Self-contained dir is present at {self_contained_dir:?}, but lib dir is missing at {libs_dir:?}")
     }
 
-    let lib_load_order_file = &self_contained_dir.join("lib-load-order");
+    let lib_load_order_file = &self_contained_dir.join(if full_set { "lib-load-order" } else { "lib-load-order-limited" });
     if !lib_load_order_file.is_file() {
         bail!("Self-contained dir is present at {self_contained_dir:?}, but load order file is missing at {lib_load_order_file:?}")
     }
@@ -600,19 +603,21 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
         }
     }
 
-    if !provided_libs.is_empty() {
-        let error: Vec<String> = provided_libs
-            .iter()
-            .map(|os| os.to_string_lossy().to_string())
-            .collect();
-        let joined = error.join(", ");
-        bail!("Libs were provided but not loaded: {joined}")
-    }
+    if full_set {
+        if !provided_libs.is_empty() {
+            let error: Vec<String> = provided_libs
+                .iter()
+                .map(|os| os.to_string_lossy().to_string())
+                .collect();
+            let joined = error.join(", ");
+            bail!("Libs were provided but not loaded: {joined}")
+        }
 
-    // we should have more detailed logs in this count,
-    // but just to be safe we'll do this simple assertion
-    if ordered_libs_to_load.len() != provided_libs_initial_len {
-        bail!("Library count mismatch");
+        // we should have more detailed logs in this count,
+        // but just to be safe we'll do this simple assertion
+        if ordered_libs_to_load.len() != provided_libs_initial_len {
+            bail!("Library count mismatch");
+        }
     }
 
     debug!("All self-contained libraries ({}) were loaded", ordered_libs_to_load.len());
