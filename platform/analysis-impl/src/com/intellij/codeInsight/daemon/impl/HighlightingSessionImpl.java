@@ -244,13 +244,6 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return myEditorColorsScheme;
   }
 
-  // return true if added
-  @Deprecated
-  void addInfoIncrementally(@NotNull HighlightInfo info, @NotNull TextRange restrictedRange, int groupId) {
-    BackgroundUpdateHighlightersUtil.addHighlighterToEditorIncrementally(this, getPsiFile(), getDocument(), restrictedRange,
-                                                                         info, getColorsScheme(), groupId, myRange2markerCache);
-  }
-
   void applyFileLevelHighlightsRequests() {
     ThreadingAssertions.assertEventDispatchThread();
     List<RunnableFuture<?>> requests = new ArrayList<>(pendingFileLevelHighlightRequests);

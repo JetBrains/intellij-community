@@ -45,49 +45,6 @@ import java.util.*;
 @ApiStatus.Experimental
 public final class BackgroundUpdateHighlightersUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundUpdateHighlightersUtil.class);
-  // return true if added
-  @Deprecated
-  static void addHighlighterToEditorIncrementally(@NotNull HighlightingSession session,
-                                                  @NotNull PsiFile file,
-                                                  @NotNull Document document,
-                                                  @NotNull TextRange restrictRange,
-                                                  @NotNull HighlightInfo info,
-                                                  @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
-                                                  int group,
-                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    Project project = file.getProject();
-    if (!UpdateHighlightersUtil.HighlightInfoPostFilters.accept(project, info)) {
-      return;
-    }
-
-    if (UpdateHighlightersUtil.isFileLevelOrGutterAnnotation(info)) return;
-    if (!restrictRange.intersects(info)) return;
-
-    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
-    boolean myInfoIsError = UpdateHighlightersUtil.isSevere(info, severityRegistrar);
-    HighlighterRecycler.runWithRecycler(session, recycler -> {
-      Processor<HighlightInfo> otherHighlightInTheWayProcessor = oldInfo -> {
-        if (!myInfoIsError && UpdateHighlightersUtil.isCovered(info, severityRegistrar, oldInfo)) {
-          return false;
-        }
-        RangeHighlighterEx oldHighlighter = oldInfo.getHighlighter();
-        if (oldHighlighter != null && oldInfo.equals(info)) {
-          recycler.recycleHighlighter(info);
-        }
-        return !(Objects.equals(oldInfo.toolId, info.toolId) && oldInfo.equalsByActualOffset(info));
-      };
-      boolean allIsClear = DaemonCodeAnalyzerEx.processHighlights(document, project,
-                                                                  null, info.getActualStartOffset(), info.getActualEndOffset(),
-                                                                  otherHighlightInTheWayProcessor);
-      if (allIsClear) {
-        createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, recycler, range2markerCache, severityRegistrar, session);
-        UpdateHighlightersUtil.clearWhiteSpaceOptimizationFlag(document);
-      }
-    });
-  }
 
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull PsiFile psiFile,
