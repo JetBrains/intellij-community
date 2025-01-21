@@ -113,7 +113,7 @@ public class ChangesViewManager implements ChangesViewEx,
     if (myChangesPanel == null) {
       Activity activity = StartUpMeasurer.startActivity("ChangesViewPanel initialization");
       ChangesListView tree = new LocalChangesListView(myProject);
-      myChangesPanel = new ChangesViewPanel(tree);
+      myChangesPanel = new ChangesViewPanel(tree, this);
       activity.end();
     }
     return myChangesPanel;

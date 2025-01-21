@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
@@ -169,8 +169,12 @@ open class InlineBanner private constructor(
   }
 
   private fun addActionImpl(name: @Nls String, action: Runnable): LinkLabel<Runnable> {
+    return addAction(name, null, action)
+  }
+
+  fun addAction(name: @Nls String, icon: Icon?, action: Runnable): LinkLabel<Runnable> {
     myActionPanel.isVisible = true
-    val label = object : LinkLabel<Runnable>(name, null, { _, action -> action.run() }, action) {
+    val label = object : LinkLabel<Runnable>(name, icon, { _, action -> action.run() }, action) {
       override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
     myActionPanel.add(label, myActionPanel.componentCount - 1)

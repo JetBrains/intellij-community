@@ -205,6 +205,8 @@
 
     <vcs.changes.changesViewModifier implementation="com.intellij.vcs.commit.EditedCommitChangesViewModifier"/>
 
+    <vcs.changes.changesViewConflictsBannerCustomizer implementation="com.intellij.openapi.vcs.merge.DefaultChangesViewConflictsBannerCustomizer"/>
+
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.MultipleChangeListsCheckFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckFactory"/>
 

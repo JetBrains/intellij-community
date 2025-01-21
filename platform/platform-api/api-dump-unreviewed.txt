@@ -6253,6 +6253,7 @@ c:com.intellij.ui.InlineBanner
 - <init>(java.lang.String,com.intellij.ui.EditorNotificationPanel$Status):V
 - b:<init>(java.lang.String,com.intellij.ui.EditorNotificationPanel$Status,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:addAction(java.lang.String,java.lang.Runnable):com.intellij.ui.InlineBanner
+- f:addAction(java.lang.String,javax.swing.Icon,java.lang.Runnable):com.intellij.ui.components.labels.LinkLabel
 - f:close():V
 - p:getStatus():com.intellij.ui.EditorNotificationPanel$Status
 - removeFromParent():V

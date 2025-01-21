@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_TOOLBAR
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.merge.ChangesViewConflictsBanner
+import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
@@ -19,7 +23,7 @@ import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
 
 @ApiStatus.Internal
-class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
+class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Disposable) : BorderLayoutPanel() {
   val toolbarActionGroup = DefaultActionGroup()
 
   var isToolbarHorizontal: Boolean by observable(false) { _, oldValue, newValue ->
@@ -42,8 +46,15 @@ class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
 
   private val changesScrollPane = createScrollPane(changesView, true)
   private val centerPanel = simplePanel(changesScrollPane).andTransparent()
+  private val conflictsBanner =
+    ChangesViewConflictsBanner(
+      VcsBundle.message("changes.view.conflicts.banner.title"),
+      changesView
+    ).showCloseButton(false)
 
   init {
+    ChangeListManager.getInstance(changesView.project)
+      .addChangeListListener(MyMergeConflictBannerListener(), parentDisposable)
     addToCenter(centerPanel)
     addToolbar(isToolbarHorizontal)
   }
@@ -64,6 +75,18 @@ class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
       toolbar.setOrientation(SwingConstants.VERTICAL)
       ScrollableContentBorder.setup(changesScrollPane, Side.LEFT, centerPanel)
       addToLeft(toolbar.component)
+    }
+  }
+
+  private inner class MyMergeConflictBannerListener: ChangeListListener {
+    override fun changeListUpdateDone() {
+      val project = changesView.project
+      if (MergeConflictManager.getInstance(project).isMergeConflict() && MergeConflictManager.isNonModalMergeEnabled(project)) {
+        centerPanel.addToTop(conflictsBanner)
+      }
+      else {
+        conflictsBanner.close()
+      }
     }
   }
 }

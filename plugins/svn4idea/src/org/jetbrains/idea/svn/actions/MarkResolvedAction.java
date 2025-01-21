@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +49,7 @@ public class MarkResolvedAction extends BasicAction {
 
     return file.isDirectory()
            ? SvnStatusUtil.isUnderControl(vcs, file)
-           : FileStatus.MERGED_WITH_CONFLICTS.equals(status) ||
-             FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(status) ||
-             FileStatus.MERGED_WITH_PROPERTY_CONFLICTS.equals(status);
+           : MergeConflictManager.isMergeConflict(status);
   }
 
   @Override

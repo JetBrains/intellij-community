@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.merge.MergeConflictManager
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import org.jetbrains.annotations.ApiStatus
@@ -15,8 +16,10 @@ class ChangesBrowserConflictsNode(val project: Project) : ChangesBrowserNode<Uni
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
     renderer.append(FontUtil.spaceAndThinSpace(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-    renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"), SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
-                    Runnable { showResolveConflictsDialog() })
+    if (!MergeConflictManager.isNonModalMergeEnabled(project)) {
+      renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"), SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
+                      Runnable { showResolveConflictsDialog() })
+    }
   }
 
   private fun showResolveConflictsDialog() {
