@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
@@ -27,7 +26,7 @@ import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
-internal fun Icons() {
+public fun Icons() {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),

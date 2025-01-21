@@ -29,7 +29,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.styling.dark
 import org.jetbrains.jewel.intui.standalone.styling.defaults
 import org.jetbrains.jewel.intui.standalone.styling.light
-import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
+import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.Icon

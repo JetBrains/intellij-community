@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import java.awt.Desktop
 import java.net.URI
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
-import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
+import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel
 import org.jetbrains.jewel.samples.standalone.viewmodel.forCurrentOs
 import org.jetbrains.jewel.ui.component.Dropdown

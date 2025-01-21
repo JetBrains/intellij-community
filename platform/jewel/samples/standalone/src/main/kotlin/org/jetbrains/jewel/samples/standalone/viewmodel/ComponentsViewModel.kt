@@ -7,13 +7,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.jetbrains.jewel.samples.showcase.components.Banners
-import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.showcase.components.Borders
 import org.jetbrains.jewel.samples.showcase.components.Buttons
 import org.jetbrains.jewel.samples.showcase.components.Checkboxes
 import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
 import org.jetbrains.jewel.samples.showcase.components.Dropdowns
-import org.jetbrains.jewel.samples.standalone.view.component.Icons
+import org.jetbrains.jewel.samples.showcase.components.Icons
+import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.view.component.Links
 import org.jetbrains.jewel.samples.standalone.view.component.ProgressBar
 import org.jetbrains.jewel.samples.standalone.view.component.RadioButtons

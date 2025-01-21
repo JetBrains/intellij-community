@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
+import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.SimpleTabContent

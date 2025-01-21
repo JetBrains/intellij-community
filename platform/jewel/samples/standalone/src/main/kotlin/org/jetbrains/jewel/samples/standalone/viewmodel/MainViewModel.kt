@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
-import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
+import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.view.ComponentsView
 import org.jetbrains.jewel.samples.standalone.view.MarkdownDemo
 import org.jetbrains.jewel.samples.standalone.view.WelcomeView
