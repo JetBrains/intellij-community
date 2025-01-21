@@ -14,8 +14,6 @@ import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.options.newEditor.settings.SettingsEditorAdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -182,8 +180,6 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @Override
   protected Action @NotNull [] createActions() {
-    if (SettingsEditorAdvancedSettings.INSTANCE.getInstantSettingsApply())
-      return new Action[0];
     ArrayList<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     actions.add(getCancelAction());

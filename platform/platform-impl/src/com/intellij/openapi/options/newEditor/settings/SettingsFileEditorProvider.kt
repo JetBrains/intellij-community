@@ -9,9 +9,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class SettingsFileEditorProvider : FileEditorProvider, DumbAware {
   companion object{
     const val ID = "SettingsFileEditor"

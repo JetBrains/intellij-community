@@ -15,7 +15,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.Messages;

@@ -1659,7 +1659,6 @@
     <advancedSetting id="search.everywhere.contributors.wait.timeout" default="2000" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.recent.at.top" default="true" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="ide.ui.non.modal.settings.window" default="false" groupKey="group.advanced.settings.ui"/>
-    <advancedSetting id="ide.ui.non.modal.settings.window.instant.apply" default="false" groupKey="group.advanced.settings.ui"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
     <projectService serviceInterface="com.intellij.presentation.FilePresentationService"
@@ -1911,9 +1910,6 @@
 
     <listener topic="com.intellij.ide.RegionSettings$RegionSettingsListener"
               class="com.intellij.internal.statistic.StatisticsRegionSettingsListener"/>
-    <listener class="com.intellij.openapi.options.newEditor.settings.SettingsEditorAdvancedSettings"
-              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
-
   </applicationListeners>
 
   <projectListeners>
