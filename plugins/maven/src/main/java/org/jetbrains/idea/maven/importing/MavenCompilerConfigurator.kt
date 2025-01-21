@@ -17,6 +17,8 @@ import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.MavenDisposable
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getCompileExecutionConfigurations
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestCompileExecutionConfigurations
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
@@ -160,10 +162,10 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
 
     val executionConfig =
       if (forTests) {
-        mavenProject.findPlugin(GROUP_ID, ARTIFACT_ID)?.testCompileExecutionConfigurations
+        mavenProject.findPlugin(GROUP_ID, ARTIFACT_ID)?.getTestCompileExecutionConfigurations()
       }
       else {
-        mavenProject.findPlugin(GROUP_ID, ARTIFACT_ID)?.compileExecutionConfigurations
+        mavenProject.findPlugin(GROUP_ID, ARTIFACT_ID)?.getCompileExecutionConfigurations()
       }?.firstOrNull()
     return MavenCompilerConfigurationRawData(forTests, propertyConfig?.toString(), pluginConfig, executionConfig)
   }

@@ -68,7 +68,7 @@ object MavenImportUtil {
   private const val PHASE_TEST_COMPILE = "test-compile"
 
   private const val GOAL_COMPILE = "compile"
-  private const val GOAL_TEST_COMPILE = "test-compile"
+  private const val GOAL_TEST_COMPILE = "testCompile"
 
   private const val EXECUTION_COMPILE = "default-compile"
   private const val EXECUTION_TEST_COMPILE = "default-testCompile"
@@ -152,13 +152,13 @@ object MavenImportUtil {
     val executions = plugin.executions
     if (executions == null || executions.isEmpty()) return false
     val compileExec = executions.find { isCompileExecution(it) }
-    val testExec = executions.find { isTestExecution(it) }
+    val testExec = executions.find { isTestCompileExecution(it) }
     if (compileExec == null) return testExec != null
     if (testExec == null) return true
     return !JDOMUtil.areElementsEqual(compileExec.configurationElement, testExec.configurationElement)
   }
 
-  private fun isTestExecution(e: MavenPlugin.Execution): Boolean {
+  private fun isTestCompileExecution(e: MavenPlugin.Execution): Boolean {
     return checkExecution(e, PHASE_TEST_COMPILE, GOAL_TEST_COMPILE, EXECUTION_TEST_COMPILE)
   }
 
@@ -393,17 +393,39 @@ object MavenImportUtil {
 
   private val MavenProject.compileExecutionConfigurations: List<Element>
     get() {
-      val plugin: MavenPlugin? = findCompilerPlugin()
+      val plugin = findCompilerPlugin()
       if (plugin == null) return emptyList()
-      return plugin.compileExecutionConfigurations
+      return plugin.getCompileExecutionConfigurations()
     }
 
   private val MavenProject.testCompilerConfigs: List<Element>
     get() {
-      val plugin: MavenPlugin? = findCompilerPlugin()
+      val plugin = findCompilerPlugin()
       if (plugin == null) return emptyList()
-      return plugin.testCompileExecutionConfigurations
+      return plugin.getTestCompileExecutionConfigurations()
     }
+
+  internal fun MavenPlugin.getCompileExecutionConfigurations(): List<Element> {
+    val result = ArrayList<Element>()
+    for (execution in executions) {
+      val config = execution.configurationElement
+      if (isCompileExecution(execution) && config != null) {
+        result.add(config)
+      }
+    }
+    return result
+  }
+
+  internal fun MavenPlugin.getTestCompileExecutionConfigurations(): List<Element> {
+    val result = ArrayList<Element>()
+    for (execution in executions) {
+      val config = execution.configurationElement
+      if (isTestCompileExecution(execution) && config != null) {
+        result.add(config)
+      }
+    }
+    return result
+  }
 
   private fun MavenProject.getDeclaredAnnotationProcessors(compilerConfig: Element): MutableList<String> {
     val result: MutableList<String> = ArrayList()
@@ -458,7 +480,7 @@ object MavenImportUtil {
       return emptyMap()
     }
 
-  private fun MavenProject.getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig: Element): Map<String, String> {
+  private fun getAnnotationProcessorOptionsFromCompilerConfig(compilerConfig: Element): Map<String, String> {
     val res: MutableMap<String, String> = LinkedHashMap()
 
     val compilerArgument: String? = compilerConfig.getChildText("compilerArgument")
@@ -487,7 +509,7 @@ object MavenImportUtil {
     return res
   }
 
-  private fun MavenProject.getAnnotationProcessorOptionsFromProcessorPlugin(bscMavenPlugin: MavenPlugin): Map<String, String> {
+  private fun getAnnotationProcessorOptionsFromProcessorPlugin(bscMavenPlugin: MavenPlugin): Map<String, String> {
     var cfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
     if (cfg == null) {
       cfg = bscMavenPlugin.configurationElement
@@ -507,7 +529,7 @@ object MavenImportUtil {
     return res
   }
 
-  private fun MavenProject.addAnnotationProcessorOptionFromParameterString(compilerArguments: String?, res: MutableMap<String, String>) {
+  private fun addAnnotationProcessorOptionFromParameterString(compilerArguments: String?, res: MutableMap<String, String>) {
     if (!compilerArguments.isNullOrBlank()) {
       val parametersList = ParametersList()
       parametersList.addParametersString(compilerArguments)
