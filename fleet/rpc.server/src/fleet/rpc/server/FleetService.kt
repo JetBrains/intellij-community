@@ -6,7 +6,6 @@ import fleet.rpc.core.connectionLoop
 import fleet.util.UID
 import fleet.util.async.use
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
 
 class FleetService private constructor(
   val serviceId: UID,
@@ -22,22 +21,21 @@ class FleetService private constructor(
     ) {
       coroutineScope {
         launch {
-          val status = MutableStateFlow(false)
-          val (_, _) = connectionLoop("RpcExecutor for service provider ${providerId}") {
+          connectionLoop(debugName = "RpcExecutor for service provider ${providerId}") { cc ->
             transportFactory.connect(transportStats = null) { transport ->
-              status.value = true
-              try {
-                RpcExecutor.serve(services = services,
-                                  sendChannel = transport.outgoing,
-                                  receiveChannel = transport.incoming,
-                                  rpcInterceptor = rpcInterceptor,
-                                  rpcCallDispatcher = rpcCallDispatcher,
-                                  route = providerId)
-              }
-              finally {
-                status.value = false
-              }
+              cc(
+                RpcExecutor.serve(
+                  services = services,
+                  sendChannel = transport.outgoing,
+                  receiveChannel = transport.incoming,
+                  rpcInterceptor = rpcInterceptor,
+                  rpcCallDispatcher = rpcCallDispatcher,
+                  route = providerId,
+                )
+              )
             }
+          }.use {
+            awaitCancellation()
           }
         }.use {
           body(FleetService(serviceId = providerId))
