@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @ApiStatus.NonExtendable
 interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
@@ -107,6 +108,21 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
       return when (gradleDsl) {
         GradleDsl.GROOVY -> GroovyDslGradleBuildScriptBuilder.Impl(gradleVersion)
         GradleDsl.KOTLIN -> KotlinDslGradleBuildScriptBuilder.Impl(gradleVersion)
+      }
+    }
+
+    @JvmStatic
+    fun buildScript(gradleVersion: GradleVersion, gradleDsl: GradleDsl, configure: GradleBuildScriptBuilder<*>.() -> Unit): String {
+      return create(gradleVersion, gradleDsl)
+        .apply(configure)
+        .generate()
+    }
+
+    @JvmStatic
+    fun getBuildScriptName(gradleDsl: GradleDsl): String {
+      return when (gradleDsl) {
+        GradleDsl.GROOVY -> GradleConstants.DEFAULT_SCRIPT_NAME
+        GradleDsl.KOTLIN -> GradleConstants.KOTLIN_DSL_SCRIPT_NAME
       }
     }
   }

@@ -6,11 +6,13 @@ import com.intellij.ide.starters.local.GeneratorFile
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.project.Project
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.getBuildScriptName
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.getSettingsScriptName
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import java.nio.file.Path
 import kotlin.io.path.readText
 
@@ -92,34 +94,5 @@ abstract class GradleAssetsNewProjectWizardStep<ParentStep>(
     val relativePath = Path.of(parent.contentEntryPath).relativize(path)
     addAssets(GeneratorFile(relativePath.toString(), content))
     return true
-  }
-
-  companion object {
-
-    private fun buildScript(gradleVersion: GradleVersion, gradleDsl: GradleDsl, configure: GradleBuildScriptBuilder<*>.() -> Unit): String {
-      return GradleBuildScriptBuilder.create(gradleVersion, gradleDsl)
-        .apply(configure)
-        .generate()
-    }
-
-    private fun settingsScript(gradleVersion: GradleVersion, gradleDsl: GradleDsl, configure: GradleSettingScriptBuilder<*>.() -> Unit): String {
-      return GradleSettingScriptBuilder.create(gradleVersion, gradleDsl)
-        .apply(configure)
-        .generate()
-    }
-
-    private fun getBuildScriptName(gradleDsl: GradleDsl): String {
-      return when (gradleDsl) {
-        GradleDsl.GROOVY -> GradleConstants.DEFAULT_SCRIPT_NAME
-        GradleDsl.KOTLIN -> GradleConstants.KOTLIN_DSL_SCRIPT_NAME
-      }
-    }
-
-    private fun getSettingsScriptName(gradleDsl: GradleDsl): String {
-      return when (gradleDsl) {
-        GradleDsl.GROOVY -> GradleConstants.SETTINGS_FILE_NAME
-        GradleDsl.KOTLIN -> GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
-      }
-    }
   }
 }
