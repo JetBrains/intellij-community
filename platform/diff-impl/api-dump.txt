@@ -1982,6 +1982,7 @@ f:com.intellij.diff.util.DiffUtil
 - s:createTextDiffProvider(com.intellij.openapi.project.Project,com.intellij.diff.requests.ContentDiffRequest,com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings,java.lang.Runnable,com.intellij.openapi.Disposable):com.intellij.diff.tools.util.text.TwosideTextDiffProvider
 - s:createTextTitles(com.intellij.diff.FrameDiffTool$DiffViewer,com.intellij.diff.requests.ContentDiffRequest,java.util.List):java.util.List
 - s:createTitle(java.lang.String):javax.swing.JComponent
+- s:createTitle(java.lang.String,com.intellij.diff.DiffEditorTitleCustomizer):javax.swing.JComponent
 - s:createTooltipText(java.lang.String,java.lang.String):java.lang.String
 - s:createUserDataHolder(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.openapi.util.UserDataHolderBase
 - s:disableBlitting(com.intellij.openapi.editor.ex.EditorEx):V

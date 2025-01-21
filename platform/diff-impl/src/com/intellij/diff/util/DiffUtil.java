@@ -715,6 +715,10 @@ public final class DiffUtil {
     return createTitle(null, title, null, null, null, false, null);
   }
 
+  public static @NotNull JComponent createTitle(@Nullable @NlsContexts.Label String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
+    return createTitle(null, title, null, null, null, false, titleCustomizer);
+  }
+
   private static @NotNull JComponent createTitle(@NotNull DiffViewer viewer,
                                                  @Nullable @NlsContexts.Label String title,
                                                  boolean readOnly,
