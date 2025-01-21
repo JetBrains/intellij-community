@@ -130,7 +130,7 @@ public fun SimpleListItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(style.metrics.iconTextGap),
     ) {
-        if (icon != null) {
+        if (icon != null && iconContentDescription != null) {
             Icon(modifier = iconModifier.size(16.dp), key = icon, contentDescription = iconContentDescription)
         }
         content()

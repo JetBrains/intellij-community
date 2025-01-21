@@ -65,7 +65,7 @@ import org.jetbrains.jewel.ui.theme.defaultBannerStyle
 public fun InformationDefaultBanner(
     text: String,
     modifier: Modifier = Modifier,
-    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, "Information icon") },
     actions: (@Composable RowScope.() -> Unit)? = null,
     style: DefaultBannerStyle = JewelTheme.defaultBannerStyle.information,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
@@ -120,7 +120,7 @@ public fun InformationDefaultBanner(
 public fun SuccessDefaultBanner(
     text: String,
     modifier: Modifier = Modifier,
-    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Debugger.ThreadStates.Idle, null) },
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Debugger.ThreadStates.Idle, "Success icon") },
     actions: (@Composable RowScope.() -> Unit)? = null,
     style: DefaultBannerStyle = JewelTheme.defaultBannerStyle.success,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
@@ -174,7 +174,7 @@ public fun SuccessDefaultBanner(
 public fun WarningDefaultBanner(
     text: String,
     modifier: Modifier = Modifier,
-    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, "Warning icon") },
     actions: (@Composable RowScope.() -> Unit)? = null,
     style: DefaultBannerStyle = JewelTheme.defaultBannerStyle.warning,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
@@ -227,7 +227,7 @@ public fun WarningDefaultBanner(
 public fun ErrorDefaultBanner(
     text: String,
     modifier: Modifier = Modifier,
-    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, "Error icon") },
     actions: (@Composable RowScope.() -> Unit)? = null,
     style: DefaultBannerStyle = JewelTheme.defaultBannerStyle.error,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,

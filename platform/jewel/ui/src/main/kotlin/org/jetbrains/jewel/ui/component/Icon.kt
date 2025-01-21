@@ -138,7 +138,7 @@ public fun Icon(
 @Composable
 public fun Icon(
     key: IconKey,
-    contentDescription: String?,
+    contentDescription: String,
     modifier: Modifier = Modifier,
     iconClass: Class<*> = key.iconClass,
     tint: Color = Color.Unspecified,

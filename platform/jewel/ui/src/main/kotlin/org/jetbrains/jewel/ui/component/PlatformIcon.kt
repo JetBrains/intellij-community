@@ -21,7 +21,7 @@ public fun PlatformIcon(
     hint: PainterHint,
 ) {
     @Suppress("DEPRECATION") // Everything is deprecated here anyway
-    PlatformIcon(key, contentDescription, modifier, tint, *arrayOf(hint))
+    PlatformIcon(key, contentDescription!!, modifier, tint, *arrayOf(hint))
 }
 
 @Deprecated(
@@ -32,7 +32,7 @@ public fun PlatformIcon(
 @Composable
 public fun PlatformIcon(
     key: IntelliJIconKey,
-    contentDescription: String?,
+    contentDescription: String,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
     vararg hints: PainterHint,

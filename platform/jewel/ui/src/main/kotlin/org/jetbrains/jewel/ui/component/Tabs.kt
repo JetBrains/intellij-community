@@ -76,14 +76,14 @@ public fun TabContentScope.SimpleTabContent(
 public fun TabContentScope.SimpleTabContent(
     label: String,
     state: TabState,
+    vararg painterHints: PainterHint,
     modifier: Modifier = Modifier,
     iconKey: IconKey? = null,
-    vararg painterHints: PainterHint,
 ) {
     SimpleTabContent(
         state = state,
         modifier = modifier,
-        icon = iconKey?.let { { Icon(key = iconKey, contentDescription = null, hints = painterHints) } },
+        icon = iconKey?.let { { Icon(key = iconKey, contentDescription = "Tab icon", hints = painterHints) } },
         label = { Text(label) },
     )
 }
