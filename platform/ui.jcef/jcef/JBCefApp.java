@@ -102,7 +102,7 @@ public final class JBCefApp {
       CefLog.init(null, CefSettings.LogSeverity.LOGSEVERITY_VERBOSE);
 
       // Init VERBOSE native cef_server logging to stderr
-      System.setProperty("CEF_SERVER_LOG_LEVEL", "VERBOSE");
+      System.setProperty("CEF_SERVER_LOG_LEVEL", "5");
     }
 
     if (RegistryManager.getInstance().is(REGISTRY_REMOTE_KEY)) {
