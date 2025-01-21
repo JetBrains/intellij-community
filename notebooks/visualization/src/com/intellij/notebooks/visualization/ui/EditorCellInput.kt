@@ -34,7 +34,7 @@ class EditorCellInput(
   val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this)
 
   val cellActionsToolbar: EditorCellActionsToolbarManager? =
-    if (Registry.`is`("jupyter.per.cell.management.actions.toolbar")) EditorCellActionsToolbarManager(editor, cell)
+    if (Registry.`is`("jupyter.per.cell.management.actions.toolbar") && editor.isOrdinaryNotebookEditor()) EditorCellActionsToolbarManager(editor, cell)
     else null
 
   var folded: Boolean = false
