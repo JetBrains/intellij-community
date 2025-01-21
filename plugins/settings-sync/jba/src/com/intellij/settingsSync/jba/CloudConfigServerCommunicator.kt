@@ -8,7 +8,6 @@ import com.intellij.settingsSync.core.SettingsSyncEventListener
 import com.intellij.settingsSync.core.SettingsSyncEvents
 import com.intellij.settingsSync.core.SettingsSyncSettings
 import com.intellij.settingsSync.jba.auth.JBAAuthService
-import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.cloudconfig.CloudConfigFileClientV2
 import com.jetbrains.cloudconfig.Configuration
@@ -26,18 +25,26 @@ import java.util.concurrent.atomic.AtomicReference
 private const val CONNECTION_TIMEOUT_MS = 10000
 private const val READ_TIMEOUT_MS = 50000
 
-internal open class CloudConfigServerCommunicator(serverUrl: String? = null,
+internal open class CloudConfigServerCommunicator(private val serverUrl: String? = null,
   private val jbaAuthService: JBAAuthService
 ) : AbstractServerCommunicator() {
 
-  protected val clientVersionContext = CloudConfigVersionContext()
+  private val clientVersionContext = CloudConfigVersionContext()
 
   @VisibleForTesting
   @Volatile
   internal var _currentIdTokenVar: String? = null
 
-  private var _client = SynchronizedClearableLazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
-  internal open val client get() = _client.value
+  private val clientRef = AtomicReference<CloudConfigFileClientV2>()
+
+  internal open val client: CloudConfigFileClientV2
+    get() {
+      if (clientRef.get() == null) {
+        // can potentially create more than one instance, but it's okay
+        clientRef.set(createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext))
+      }
+      return clientRef.get() ?: throw IOException("Communicator is not ready yet")
+    }
 
   private val lastRemoteErrorRef = AtomicReference<Throwable>()
 
@@ -45,15 +52,10 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null,
     SettingsSyncEvents.getInstance().addListener(
       object : SettingsSyncEventListener {
         override fun loginStateChanged() {
-          _client.drop()
+          clientRef.set(null)
         }
       }
     )
-  }
-
-  private fun getCurrentIdToken(): String? {
-    _client.value // init lazy, if necessary
-    return _currentIdTokenVar
   }
 
   @Throws(IOException::class)
@@ -93,9 +95,9 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null,
     else if (e is UnauthorizedException) {
       _currentIdTokenVar?.also {
         jbaAuthService.invalidateJBA(it)
+        LOG.warn("Got \"Unauthorized\" from Settings Sync server. Settings Sync will be disabled. Please login to JBA again")
+        SettingsSyncSettings.getInstance().syncEnabled = false
       }
-      SettingsSyncSettings.getInstance().syncEnabled = false
-      LOG.warn("Got \"Unauthorized\" from Settings Sync server. Settings Sync will be disabled. Please login to JBA again")
     }
     else {
       LOG.error(e)
@@ -145,17 +147,18 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null,
   }
 
   @VisibleForTesting
-  internal open fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
-    val conf = createConfiguration()
+  internal open fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2? {
+    val conf = createConfiguration() ?: return null
     return CloudConfigFileClientV2(url, conf, DUMMY_ETAG_STORAGE, versionContext)
   }
 
-  private fun createConfiguration(): Configuration {
+  private fun createConfiguration(): Configuration? {
     val configuration = Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS)
     val idToken = jbaAuthService.idToken
     _currentIdTokenVar = idToken
     if (idToken == null) {
-      LOG.warn("No idToken provided! Setting Sync will be disabled")
+      LOG.warn("No idToken provided! Setting Sync is not ready yet")
+      return null
     } else {
       configuration.auth(JbaJwtTokenAuthProvider(idToken))
     }
