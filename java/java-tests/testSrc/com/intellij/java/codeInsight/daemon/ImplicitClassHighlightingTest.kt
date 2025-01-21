@@ -164,6 +164,14 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     })
   }
 
+  fun testImplicitClassConstructorNoParam() {
+    doTest()
+  }
+
+  fun testImplicitClassConstructorParam() {
+    doTest()
+  }
+
   private fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.checkHighlighting()

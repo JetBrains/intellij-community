@@ -2341,6 +2341,22 @@ public final class HighlightMethodUtil {
     return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
   }
 
+  static HighlightInfo.@Nullable Builder checkConstructorInImplicitClass(@NotNull PsiMethod method) {
+    if (!method.isConstructor()) {
+      return null;
+    }
+    if (!(method.getContainingClass() instanceof PsiImplicitClass)) {
+      return null;
+    }
+    String description = JavaErrorBundle.message("implicit.class.with.explicit.constructor");
+    TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
+    HighlightInfo.Builder builder =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
+    IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(method);
+    builder.registerFix(action, null, null, null, null);
+    return builder;
+  }
+
   private static final class ReturnModel {
     final PsiReturnStatement myStatement;
     final PsiType myType;
