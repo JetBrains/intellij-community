@@ -133,9 +133,6 @@ open class MavenServerCMDState(
     params.classPath.addAllFiles(
       extension.collectClassPathAndLibsFolder(myDistribution).map { it: Path? -> it!!.toFile() })
 
-    params.vmParametersList.addAll(extension.additionalVmParameters)
-
-
     val classPath = collectRTLibraries(myDistribution.version)
     for (s in classPath) {
       params.classPath.add(s)

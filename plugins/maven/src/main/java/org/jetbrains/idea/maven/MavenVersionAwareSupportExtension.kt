@@ -1,39 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven;
+package org.jetbrains.idea.maven
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType;
-import org.jetbrains.idea.maven.server.MavenDistribution;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
+import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType
+import org.jetbrains.idea.maven.server.MavenDistribution
+import java.io.File
+import java.nio.file.Path
 
 @ApiStatus.Internal
-public interface MavenVersionAwareSupportExtension {
-  @NonNls String DEFAULT_MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
+interface MavenVersionAwareSupportExtension {
+  fun isSupportedByExtension(mavenHome: File): Boolean
 
-  ExtensionPointName<MavenVersionAwareSupportExtension> MAVEN_VERSION_SUPPORT
-    = new ExtensionPointName<>("org.jetbrains.idea.maven.versionAwareMavenSupport");
+  fun getMavenHomeFile(mavenHomeType: StaticResolvedMavenHomeType): Path?
 
-  boolean isSupportedByExtension(@Nullable File mavenHome);
+  fun collectClassPathAndLibsFolder(distribution: MavenDistribution): List<Path>
 
-  @Nullable
-  Path getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType);
-
-  @NotNull
-  List<Path> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution);
-
-  default @NotNull List<@NonNls String> getAdditionalVmParameters() {
-    return Collections.emptyList();
+  fun getMainClass(distribution: MavenDistribution): String {
+    return DEFAULT_MAIN_CLASS
   }
 
-  default String getMainClass(MavenDistribution distribution) {
-    return DEFAULT_MAIN_CLASS;
+  companion object {
+    const val DEFAULT_MAIN_CLASS: @NonNls String = "org.jetbrains.idea.maven.server.RemoteMavenServer"
+
+    val MAVEN_VERSION_SUPPORT: ExtensionPointName<MavenVersionAwareSupportExtension> = ExtensionPointName<MavenVersionAwareSupportExtension>("org.jetbrains.idea.maven.versionAwareMavenSupport")
   }
 }
