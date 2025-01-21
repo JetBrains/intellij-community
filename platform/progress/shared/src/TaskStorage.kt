@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
@@ -11,7 +12,6 @@ import com.jetbrains.rhizomedb.exists
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Provides the ability to control how tasks are stored in Rhizome DB
@@ -34,13 +34,16 @@ abstract class TaskStorage {
     title: String,
     cancellation: TaskCancellation,
     suspendable: TaskSuspension,
-  ): TaskInfoEntity {
+  ): TaskInfoEntity? {
     var taskInfoEntity: TaskInfoEntity? = null
     try {
       return withKernel {
         val projectEntity = if (!project.isDefault) project.asEntity() else null
         taskInfoEntity = createTaskInfoEntity {
-          if (projectEntity?.exists() == false) throw CancellationException("Project entity doesn't exist anymore for $project")
+          if (projectEntity?.exists() == false) {
+            LOG.warn("The task info entity for \"${title}\" wasn't created, because $project does not exist anymore")
+            return@createTaskInfoEntity null
+          }
 
           TaskInfoEntity.new {
             it[TaskInfoEntity.ProjectEntityType] = projectEntity
@@ -73,7 +76,7 @@ abstract class TaskStorage {
    * @param provider The provider used to create the [TaskInfoEntity].
    * @return The created [TaskInfoEntity].
    */
-  protected abstract suspend fun createTaskInfoEntity(provider: ChangeScope.() -> TaskInfoEntity): TaskInfoEntity
+  protected abstract suspend fun createTaskInfoEntity(provider: ChangeScope.() -> TaskInfoEntity?): TaskInfoEntity?
 
   /**
    * Removes a task from Rhizome DB.
@@ -130,5 +133,7 @@ abstract class TaskStorage {
   companion object {
     @JvmStatic
     fun getInstance(): TaskStorage = service()
+
+    private val LOG = logger<TaskStorage>()
   }
 }

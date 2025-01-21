@@ -137,7 +137,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   ): Job = launch {
     val taskStorage = TaskStorage.getInstance()
 
-    val taskInfoEntity = taskStorage.addTask(project, title, cancellation, suspender.getSuspendableInfo())
+    val taskInfoEntity = taskStorage.addTask(project, title, cancellation, suspender.getSuspendableInfo()) ?: return@launch
     val entityId = taskInfoEntity.eid
     LOG.trace { "Task added to storage: entityId=$entityId, title=$title" }
 
