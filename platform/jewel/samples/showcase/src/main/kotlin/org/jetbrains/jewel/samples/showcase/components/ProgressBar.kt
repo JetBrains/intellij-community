@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -25,7 +25,7 @@ import org.jetbrains.jewel.ui.component.IndeterminateHorizontalProgressBar
 import org.jetbrains.jewel.ui.component.Text
 
 @Composable
-fun ProgressBar() {
+public fun ProgressBar() {
     val transition = rememberInfiniteTransition()
     val currentOffset by
         transition.animateFloat(

@@ -17,7 +17,7 @@ import org.jetbrains.jewel.samples.showcase.components.Dropdowns
 import org.jetbrains.jewel.samples.showcase.components.Icons
 import org.jetbrains.jewel.samples.showcase.components.Links
 import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
-import org.jetbrains.jewel.samples.standalone.view.component.ProgressBar
+import org.jetbrains.jewel.samples.showcase.components.ProgressBar
 import org.jetbrains.jewel.samples.standalone.view.component.RadioButtons
 import org.jetbrains.jewel.samples.standalone.view.component.Scrollbars
 import org.jetbrains.jewel.samples.standalone.view.component.SegmentedControls
