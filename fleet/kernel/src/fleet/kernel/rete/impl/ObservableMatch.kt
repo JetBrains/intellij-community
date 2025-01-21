@@ -50,7 +50,6 @@ internal suspend fun <U> withObservableMatches(
               }
             }
             select {
-              def.onAwait { res -> res }
               for (m in matches) {
                 m.validity.onJoin {
                   val reason = CancellationReason("match terminated by rete", m)
@@ -58,6 +57,7 @@ internal suspend fun <U> withObservableMatches(
                   WithMatchResult.Failure(reason)
                 }
               }
+              def.onAwait { res -> res }
             }
           }
         }
