@@ -356,23 +356,6 @@ public final class HighlightUtil {
     return highlightInfo;
   }
 
-  static boolean isCastIntentionApplicable(@NotNull PsiExpression expression, @Nullable PsiType toType) {
-    while (expression instanceof PsiTypeCastExpression || expression instanceof PsiParenthesizedExpression) {
-      if (expression instanceof PsiTypeCastExpression castExpression) {
-        expression = castExpression.getOperand();
-      }
-      if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
-        expression = parenthesizedExpression.getExpression();
-      }
-    }
-    if (expression == null) return false;
-    PsiType rType = expression.getType();
-    PsiType castType = GenericsUtil.getVariableTypeByExpressionType(toType);
-    if (rType == null || toType == null) return false;
-    boolean convertible = expression instanceof PsiNewExpression ? toType.isAssignableFrom(rType) : toType.isConvertibleFrom(rType);
-    return convertible && toType.isAssignableFrom(castType);
-  }
-
 
   static HighlightInfo.Builder checkVariableInitializerType(@NotNull PsiVariable variable) {
     PsiExpression initializer = variable.getInitializer();
@@ -510,10 +493,6 @@ public final class HighlightUtil {
     }
     HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift);
     AddTypeArgumentsConditionalFix.register(asConsumer(highlightInfo), expression, lType);
-    if (rType != null && expression != null && isCastIntentionApplicable(expression, lType)) {
-      IntentionAction action = getFixFactory().createAddTypeCastFix(lType, expression);
-      highlightInfo.registerFix(action, null, null, null, null);
-    }
     if (expression != null) {
       AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(asConsumer(highlightInfo), expression, lType, rType);
       if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(lType))) {

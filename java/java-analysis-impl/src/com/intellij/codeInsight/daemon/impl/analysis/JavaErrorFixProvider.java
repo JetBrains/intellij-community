@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.isCastIntentionApplicable;
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
@@ -303,9 +302,6 @@ final class JavaErrorFixProvider {
       if (anchor instanceof PsiExpression expression) {
         List<CommonIntentionAction> registrar = new ArrayList<>();
         AddTypeArgumentsConditionalFix.register(registrar::add, expression, lType);
-        if (rType != null && isCastIntentionApplicable(expression, lType)) {
-          ContainerUtil.addIfNotNull(registrar, myFactory.createAddTypeCastFix(lType, expression));
-        }
         AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(registrar::add, expression, lType, rType);
         if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(lType))) {
           ContainerUtil.addIfNotNull(registrar, HighlightFixUtil.createChangeReturnTypeFix(expression, lType));

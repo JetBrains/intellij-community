@@ -419,8 +419,19 @@ final class AdaptExpressionTypeFixUtil {
 
   static @Nullable PsiType suggestCastTo(@NotNull PsiExpression expression,
                                          @Nullable PsiType expectedTypeByParent, @Nullable PsiType actualType) {
-    if (expectedTypeByParent == null || actualType == null) return null;
-    if (TypeConversionUtil.isAssignable(expectedTypeByParent, actualType)) return null;
+    PsiExpression origExpression = expression;
+    while (expression instanceof PsiTypeCastExpression || expression instanceof PsiParenthesizedExpression) {
+      if (expression instanceof PsiTypeCastExpression castExpression) {
+        expression = castExpression.getOperand();
+        if (expression == null) return null;
+        actualType = expression.getType();
+      }
+      if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
+        expression = parenthesizedExpression.getExpression();
+      }
+    }
+    if (expression == null || expectedTypeByParent == null || actualType == null) return null;
+    if (origExpression == expression && TypeConversionUtil.isAssignable(expectedTypeByParent, actualType)) return null;
     boolean convertible = expression instanceof PsiNewExpression ? expectedTypeByParent.isAssignableFrom(actualType) : 
                           TypeConversionUtil.areTypesConvertible(actualType, expectedTypeByParent);
     if (convertible) return expectedTypeByParent;
