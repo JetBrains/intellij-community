@@ -35,7 +35,7 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
 
   suspend fun okClicked(addEnvironment: PythonAddEnvironment) {
     val sdk = addEnvironment.getOrCreateSdk(moduleOrProject).getOrElse {
-        errorSink.emit(it.localizedMessage)
+        errorSink.emit(it.localizedMessage.ifBlank { it.toString() })
       return
     }
     moduleOrProject.project.pySdkService.persistSdk(sdk)
