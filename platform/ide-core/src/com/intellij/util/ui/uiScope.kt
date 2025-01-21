@@ -11,7 +11,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.selects.whileSelect
+import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -54,19 +54,15 @@ fun <C : Component> C.launchOnceOnShow(
     showingAsChannel(component) { channel ->
       while (!channel.receive()) Unit // await showing
       val uiCoroutine = launchUiCoroutine(component, context, block)
-      @OptIn(ExperimentalCoroutinesApi::class)
-      whileSelect {
+      val waitingForHidden = launch {
+        while (channel.receive()) Unit // await hidden
+      }
+      select {
         uiCoroutine.onJoin {
-          false // exit
+          waitingForHidden.cancel()
         }
-        channel.onReceive { showing ->
-          if (showing) {
-            true // loop again
-          }
-          else {
-            uiCoroutine.cancel()
-            false // exit
-          }
+        waitingForHidden.onJoin {
+          uiCoroutine.cancel()
         }
       }
     }
