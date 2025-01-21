@@ -56,6 +56,7 @@ jvm_library(
     "//platform/core-api:core",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
   ],
   runtime_deps = [":kotlin-code-insight-inspections-shared_resources"]
 )
