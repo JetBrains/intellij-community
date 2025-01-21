@@ -30,6 +30,6 @@ class JoniRegexFactory : RegexFactory {
   }
 
   override fun string(string: CharSequence): TextMateString {
-    return TextMateString.fromCharSequence(string)
+    return TextMateString.Companion.fromCharSequence(string)
   }
 }
