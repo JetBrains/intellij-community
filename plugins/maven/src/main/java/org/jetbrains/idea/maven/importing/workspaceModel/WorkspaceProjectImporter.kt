@@ -629,7 +629,7 @@ internal open class WorkspaceProjectImporter(
               updated = true
             }
             else {
-              updated = workspaceModel.replaceProjectModel(snapshot.getStorageReplacement())
+              updated = workspaceModel.replaceWorkspaceModel(snapshot.getStorageReplacement())
               durationOfWorkspaceUpdate = System.nanoTime() - beforeWA
             }
             if (updated) afterApplyInWriteAction(workspaceModel.currentSnapshot)

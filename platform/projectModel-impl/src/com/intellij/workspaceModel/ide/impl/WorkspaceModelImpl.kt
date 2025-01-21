@@ -354,7 +354,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   }
 
   @Synchronized
-  final override fun replaceProjectModel(replacement: StorageReplacement): Boolean {
+  final override fun replaceWorkspaceModel(replacement: StorageReplacement): Boolean {
     ThreadingAssertions.assertWriteAccess()
 
     if (entityStorage.version != replacement.version) return false
