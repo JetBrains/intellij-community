@@ -13,7 +13,6 @@ import org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder
 import org.jetbrains.jps.incremental.instrumentation.RmiStubsGenerator;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
-import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ public final class JavaBuilderService extends BuilderService {
   @Override
   public @NotNull List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
     return List.of(
-      new JavaBuilder(SharedThreadPool.getInstance()),
+      new JavaBuilder(),
       new NotNullInstrumentingBuilder(),
       new RmiStubsGenerator(),
       new DependencyResolvingBuilder(),
