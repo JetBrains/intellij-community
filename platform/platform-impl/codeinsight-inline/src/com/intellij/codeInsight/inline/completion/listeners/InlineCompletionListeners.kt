@@ -43,45 +43,6 @@ internal class InlineCompletionDocumentListener(private val editor: Editor) : Bu
   }
 }
 
-@ApiStatus.Internal
-open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter() {
-
-  override fun keyReleased(event: KeyEvent) {
-    if (!isValuableKeyReleased(event)) {
-      return
-    }
-    LOG.trace("Valuable key released event $event")
-    hideInlineCompletion()
-  }
-
-  private fun isValuableKeyReleased(event: KeyEvent): Boolean {
-    if (event.keyCode in MINOR_KEYS) {
-      return false
-    }
-    if (LookupManager.getActiveLookup(editor) != null && event.keyCode in MINOR_WHEN_LOOKUP_KEYS) {
-      return false
-    }
-    return true
-  }
-
-  protected open fun hideInlineCompletion() = hideInlineCompletion(editor, FinishType.KEY_PRESSED)
-
-  companion object {
-    private val LOG = thisLogger()
-    private val MINOR_KEYS = listOf(
-      KeyEvent.VK_ALT,
-      KeyEvent.VK_OPEN_BRACKET,
-      KeyEvent.VK_CLOSE_BRACKET,
-      KeyEvent.VK_TAB,
-      KeyEvent.VK_SHIFT,
-    )
-    private val MINOR_WHEN_LOOKUP_KEYS = listOf(
-      KeyEvent.VK_UP,
-      KeyEvent.VK_DOWN,
-    )
-  }
-}
-
 // ML-1086
 internal class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
