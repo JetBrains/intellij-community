@@ -4,16 +4,23 @@ package com.intellij.xdebugger.impl.actions.handlers
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.Project
+import com.intellij.platform.kernel.withKernel
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler
 import com.intellij.xdebugger.impl.frame.XValueMarkers
+import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
+import com.intellij.xdebugger.impl.rhizome.XValueEntity
+import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialog
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
-import org.jetbrains.annotations.ApiStatus
+import com.jetbrains.rhizomedb.entities
+import com.jetbrains.rhizomedb.entity
+import fleet.kernel.change
+import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.Promise
 import java.awt.Component
 import java.util.function.Consumer
@@ -56,6 +63,7 @@ internal class XMarkObjectActionHandler : MarkObjectActionHandler() {
       }
     }
     markPromise.onSuccess(Consumer { _: Any? ->
+      updateXValuesInDb(markers, session)
       UIUtil.invokeLaterIfNeeded(Runnable {
         if (detachedView) {
           node.tree.rebuildAndRestore(treeState)
@@ -84,6 +92,40 @@ internal class XMarkObjectActionHandler : MarkObjectActionHandler() {
 
   override fun isHidden(project: Project, event: AnActionEvent): Boolean {
     return getValueMarkers(event) == null
+  }
+
+  /**
+   * Set [XValueEntity.Marker] for all session's [XValueEntity]s.
+   */
+  private fun updateXValuesInDb(markers: XValueMarkers<*, *>, session: XDebugSessionImpl) {
+    // TODO[IJPL-160146]: There is a race when action called twice
+    session.coroutineScope.launch {
+      withKernel {
+        val sessionEntity = entity(XDebugSessionEntity.Session, session) ?: return@withKernel
+        val sessionXValues = entities(XValueEntity.SessionEntity, sessionEntity)
+        // TODO[IJPL-160146]: Don't update all the xValues, since some markers may not be changed
+        for (xValue in sessionXValues) {
+          val currentMarker = xValue.marker
+          val marker = markers.getMarkup(xValue.xValue)
+
+          if (marker != null) {
+            change {
+              xValue.update {
+                it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
+              }
+            }
+          }
+          else if (currentMarker != null) {
+            // marker for xValue is removed
+            change {
+              xValue.update {
+                it[XValueEntity.Marker] = null
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   companion object {

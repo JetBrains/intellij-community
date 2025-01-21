@@ -11,10 +11,12 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
+import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
 import fleet.util.UID
@@ -97,7 +99,15 @@ data class XValueId(val uid: UID)
 
 @ApiStatus.Internal
 @Serializable
-data class XValueDto(val id: XValueId, @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>)
+data class XValueDto(
+  val id: XValueId,
+  @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,
+  val valueMark: RpcFlow<XValueMarkerDto?>,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XValueMarkerId(val id: UID)
 
 
 @ApiStatus.Internal

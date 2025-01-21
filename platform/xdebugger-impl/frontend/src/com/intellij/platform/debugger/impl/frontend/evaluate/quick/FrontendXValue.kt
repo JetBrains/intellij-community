@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ConcurrencyUtil
@@ -20,6 +19,7 @@ import com.intellij.xdebugger.frame.XValueNode
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.evaluate.quick.HintXValue
+import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
 import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
@@ -27,19 +27,28 @@ import com.intellij.xdebugger.impl.rpc.XValueDto
 import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
 
-internal class FrontendXValue(private val project: Project, private val xValueDto: XValueDto) : XValue(), HintXValue {
+internal class FrontendXValue(private val project: Project, val xValueDto: XValueDto) : XValue(), HintXValue {
   // TODO[IJPL-160146]: For evaluation in toolwindow this CoroutineScope won't be cancelled
   private val cs = project.service<FrontendXValueDisposer>().cs.childScope("FrontendXValue")
 
   @Volatile
   private var modifier: XValueModifier? = null
 
+  var markerDto: XValueMarkerDto? = null
+
   init {
     cs.launch {
       val canBeModified = xValueDto.canBeModified.await()
       if (canBeModified) {
         modifier = FrontendXValueModifier(project, xValueDto)
+      }
+    }
+
+    cs.launch {
+      xValueDto.valueMark.toFlow().collectLatest {
+        markerDto = it
       }
     }
   }

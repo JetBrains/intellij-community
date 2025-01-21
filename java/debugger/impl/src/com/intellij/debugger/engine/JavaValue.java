@@ -519,6 +519,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor.canSetValueAsync().thenApply((canSetValue) -> canSetValue ? myValueDescriptor.getModifier(this) : null);
   }
 
+  @Override
+  public @NotNull CompletableFuture<Void> isReady() {
+    return myValueDescriptor.getInitFuture();
+  }
+
   private volatile XExpression evaluationExpression = null;
 
   @Override

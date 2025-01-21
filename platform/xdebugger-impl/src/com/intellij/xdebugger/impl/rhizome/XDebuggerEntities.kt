@@ -10,6 +10,9 @@ import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.jetbrains.rhizomedb.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import java.awt.Color
 
 private class XDebuggerEntityTypesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
@@ -48,7 +51,7 @@ data class XDebugSessionEntity(override val eid: EID) : Entity {
     ::XDebugSessionEntity
   ) {
     val SessionId: Required<XDebugSessionId> = requiredTransient("sessionId", Indexing.UNIQUE)
-    val Session: Required<XDebugSession> = requiredTransient("session")
+    val Session: Required<XDebugSession> = requiredTransient("session", Indexing.UNIQUE)
     val ProjectEntity: Required<ProjectEntity> = requiredRef("project", RefFlags.CASCADE_DELETE_BY)
 
     val Evaluator: Optional<XDebuggerEvaluatorEntity> = optionalRef("evaluator")
@@ -106,6 +109,8 @@ data class XValueEntity(override val eid: EID) : Entity {
    */
   val parentXValueEntity: XValueEntity? by ParentXValue
 
+  val marker: XValueMarkerDto? by Marker
+
   companion object : EntityType<XValueEntity>(
     XValueEntity::class.java.name,
     "com.intellij.xdebugger.impl.rhizome",
@@ -115,5 +120,10 @@ data class XValueEntity(override val eid: EID) : Entity {
     val XValueAttribute: Required<XValue> = requiredTransient("xValue")
     val SessionEntity: Required<XDebugSessionEntity> = requiredRef("sessionEntity", RefFlags.CASCADE_DELETE_BY)
     val ParentXValue: Optional<XValueEntity> = optionalRef<XValueEntity>("parentXValue", RefFlags.CASCADE_DELETE_BY)
+    val Marker: Optional<XValueMarkerDto> = optionalTransient("marker")
   }
 }
+
+// TODO[IJPL-160146]: Implement implement Color serialization
+@Serializable
+data class XValueMarkerDto(val text: String, @Transient val color: Color? = null, val tooltipText: String?)

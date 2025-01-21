@@ -22,16 +22,22 @@ import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEvaluatorEntity
 import com.intellij.xdebugger.impl.rhizome.XValueEntity
+import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
 import com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
+import fleet.kernel.rete.collect
+import fleet.kernel.rete.query
+import fleet.kernel.tryWithEntities
+import fleet.rpc.core.toRpc
 import fleet.util.UID
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -40,6 +46,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.NonNls
 import java.awt.Font
 import javax.swing.Icon
@@ -146,8 +153,10 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
       val xValueEntity = newXValueEntity(xValue, evaluatorEntity)
-      val xValueId = withKernel { xValueEntity.xValueId }
-      XEvaluationResult.Evaluated(XValueDto(xValueId, canBeModified = xValue.modifierAsync.thenApply { it != null }.asDeferred()))
+      val xValueDto = withKernel {
+        xValueEntity.toXValueDto()
+      }
+      XEvaluationResult.Evaluated(xValueDto)
     }
   }
 
@@ -388,10 +397,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
         val childrenXValueDtos = withKernel {
           childrenXValueEntities.map { childXValueEntity ->
-            XValueDto(
-              childXValueEntity.xValueId,
-              canBeModified = childXValueEntity.xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred()
-            )
+            childXValueEntity.toXValueDto()
           }
         }
         return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last)
@@ -427,17 +433,40 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 }
 
+private suspend fun XValueEntity.toXValueDto(): XValueDto {
+  val xValueEntity = this
+  val xValue = this.xValue
+  val valueMarkupFlow = channelFlow<XValueMarkerDto?> {
+    withKernel {
+      tryWithEntities(xValueEntity) {
+        query { xValueEntity.marker }.collect {
+          send(it)
+        }
+      }
+    }
+  }.toRpc()
+
+  return XValueDto(
+    xValueId,
+    canBeModified = xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred(),
+    valueMarkupFlow
+  )
+}
+
 private suspend fun newXValueEntity(
   xValue: XValue,
   evaluatorEntity: XDebuggerEvaluatorEntity,
 ): XValueEntity {
   return withKernel {
-    change {
+    val xValueEntity = change {
       XValueEntity.new {
         it[XValueEntity.XValueId] = XValueId(UID.random())
         it[XValueEntity.XValueAttribute] = xValue
         it[XValueEntity.SessionEntity] = evaluatorEntity.sessionEntity
       }
+    }
+    xValueEntity.apply {
+      setInitialMarker()
     }
   }
 }
@@ -447,12 +476,32 @@ private suspend fun newChildXValueEntity(
   parentXValue: XValueEntity,
 ): XValueEntity {
   return withKernel {
-    change {
+    val xValueEntity = change {
       XValueEntity.new {
         it[XValueEntity.XValueId] = XValueId(UID.random())
         it[XValueEntity.XValueAttribute] = xValue
         it[XValueEntity.SessionEntity] = parentXValue.sessionEntity
         it[XValueEntity.ParentXValue] = parentXValue
+      }
+    }
+    xValueEntity.apply {
+      setInitialMarker()
+    }
+  }
+}
+
+private fun XValueEntity.setInitialMarker() {
+  val xValueEntity = this
+  val session = sessionEntity.session
+  (session as XDebugSessionImpl).coroutineScope.launch {
+    withKernel {
+      xValue.isReady.await()
+      val markers = session.valueMarkers
+      val marker = markers?.getMarkup(xValue) ?: return@withKernel
+      change {
+        xValueEntity.update {
+          it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
+        }
       }
     }
   }

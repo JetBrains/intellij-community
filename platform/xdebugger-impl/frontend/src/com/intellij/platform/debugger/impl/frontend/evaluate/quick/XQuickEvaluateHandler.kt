@@ -65,9 +65,10 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
       if (Registry.`is`("debugger.valueLookupFrontendBackend") || (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported)) {
         val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession.value ?: return@async null
         val frontendEvaluator = currentSession.evaluator.value ?: return@async null
+        val valueMarkers = currentSession.valueMarkers
         val editorsProvider = currentSession.editorsProvider
-        // TODO[IJPL-160146]: support passing session: basically valueMarkers and currentPosition
-        XValueHint(project, editorsProvider, editor, point, type, offset, expressionInfo, frontendEvaluator, false)
+        // TODO[IJPL-160146]: support passing currentPosition
+        XValueHint(project, editorsProvider, editor, point, type, offset, expressionInfo, frontendEvaluator, valueMarkers, null, false)
       }
       else if (frontendType is FrontendType.RemoteDev) {
         RemoteValueHint(project, projectId, editor, point, type, offset, expressionInfo, fromPlugins = false)
