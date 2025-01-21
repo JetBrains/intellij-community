@@ -12,10 +12,10 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils.rep
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateLexerState.Companion.notMatched
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh
 import org.jetbrains.plugins.textmate.regex.MatchData
-import org.jetbrains.plugins.textmate.regex.RegexUtil.byteOffsetByCharOffset
 import org.jetbrains.plugins.textmate.regex.TextMateRange
 import org.jetbrains.plugins.textmate.regex.TextMateString
 import org.jetbrains.plugins.textmate.regex.TextMateString.Companion.fromCharSequence
+import org.jetbrains.plugins.textmate.regex.byteOffsetByCharOffset
 import kotlin.math.min
 
 class TextMateLexerCore(
@@ -157,7 +157,7 @@ class TextMateLexerCore(
         }
         states = states.removeAt(states.size - 1)
 
-        val endRange = endMatch.charRange(line, string.bytes)
+        val endRange = endMatch.charRange(string.bytes)
         endPosition = endRange.start
         val startPosition = endPosition
         closeScopeSelector(output, startPosition + lineStartOffset) // closing content scope
@@ -178,7 +178,7 @@ class TextMateLexerCore(
       else if (currentMatch.matched) {
         anchorByteOffset = currentMatch.byteOffset().end
 
-        val currentRange = currentMatch.charRange(line, string.bytes)
+        val currentRange = currentMatch.charRange(string.bytes)
         val startPosition = currentRange.start
         endPosition = currentRange.end
 
@@ -267,7 +267,7 @@ class TextMateLexerCore(
         continue
       }
 
-      val captureRange = matchData.charRange(line, string.bytes, group)
+      val captureRange = matchData.charRange(string.bytes, group)
 
       while (!activeCaptureRanges.isEmpty() && activeCaptureRanges.last().end <= captureRange.start) {
         closeScopeSelector(output, startLineOffset + activeCaptureRanges.removeLast().end)
