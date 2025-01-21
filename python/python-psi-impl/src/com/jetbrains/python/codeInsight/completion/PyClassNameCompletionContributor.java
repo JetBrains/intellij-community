@@ -205,7 +205,11 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
                                                         @NotNull TypeEvalContext context) {
     if (PyTypingTypeProvider.isInsideTypeHint(position, context)) {
       // Not all names from typing.py are defined as classes
-      return definition instanceof PyClass || ArrayUtil.contains(fqn.getFirstComponent(), "typing", "typing_extensions");
+      return (
+        definition instanceof PyClass ||
+        definition instanceof PyTypeAliasStatement ||
+        ArrayUtil.contains(fqn.getFirstComponent(), "typing", "typing_extensions")
+      );
     }
     if (PsiTreeUtil.getParentOfType(position, PyPattern.class, false) != null) {
       return definition instanceof PyClass;

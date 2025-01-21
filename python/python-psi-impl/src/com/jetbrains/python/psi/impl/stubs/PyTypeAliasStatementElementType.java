@@ -42,6 +42,7 @@ public class PyTypeAliasStatementElementType extends PyStubElementType<PyTypeAli
     String name = stub.getName();
     if (name != null && PyUtil.getInitialUnderscores(name) == 0 && stub.getParentStub() instanceof PyFileStub) {
       sink.occurrence(PyTypeAliasNameIndex.KEY, name);
+      sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
     }
   }
 

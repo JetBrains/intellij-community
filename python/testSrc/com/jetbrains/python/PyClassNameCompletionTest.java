@@ -83,6 +83,11 @@ public class PyClassNameCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-78475
+  public void testTypeAlias() {
+    doTest();
+  }
+
   // PY-22422
   public void testReformatUpdatedFromImport() {
     getPythonCodeStyleSettings().FROM_IMPORT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
