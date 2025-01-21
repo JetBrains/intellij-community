@@ -3,14 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.NoQuickFixKotlinModCommandQuickFix
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -35,17 +33,7 @@ class KotlinUnreachableCodeInspection : KotlinDiagnosticBasedInspectionBase<KtEl
         element: KtElement,
         context: Unit
     ): KotlinModCommandQuickFix<KtElement> =
-        object : KotlinModCommandQuickFix<KtElement>() {
-            override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("unreachable.code.family")
-
-            override fun applyFix(
-                project: Project,
-                element: KtElement,
-                updater: ModPsiUpdater
-            ) {
-                // nothing
-            }
-        }
+        NoQuickFixKotlinModCommandQuickFix<KtElement> { KotlinBundle.message("unreachable.code.family") }
 
     override fun buildVisitor(
         holder: ProblemsHolder,
