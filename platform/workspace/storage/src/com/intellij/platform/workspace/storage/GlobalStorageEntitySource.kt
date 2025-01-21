@@ -5,6 +5,8 @@ package com.intellij.platform.workspace.storage
  * A specialized version of [EntitySource] used for entities that need to be synchronized
  * by the platform between GlobalWorkspaceModel and WorkspaceModel.
  *
+ * This may be needed if you create a [WorkspaceEntity] in GlobalWorkspaceModel and want it to be copied to WorkspaceModel of a project.
+ *
  * For example [com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource] uses this type of [EntitySource].
  */
 public interface GlobalStorageEntitySource : EntitySource
