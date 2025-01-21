@@ -93,7 +93,7 @@ internal fun SegmentedControlButton(
                     interactionSource = interactionSource,
                     enabled = enabled,
                     indication = null,
-                    role = Role.Button,
+                    role = Role.RadioButton,
                     onClick = segmentedControlButtonData.onSelect,
                 )
                 .background(backgroundColor, shape)

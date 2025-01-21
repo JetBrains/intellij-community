@@ -288,19 +288,6 @@ private fun CheckboxImpl(
         }
     }
 
-    val wrapperModifier =
-        modifier.triStateToggleable(
-            state = state,
-            onClick = {
-                onClick()
-                state
-            },
-            enabled = enabled,
-            role = Role.Checkbox,
-            interactionSource = interactionSource,
-            indication = null,
-        )
-
     val outlineModifier =
         Modifier.size(metrics.outlineSizeFor(checkboxState).value)
             .outline(
@@ -324,14 +311,23 @@ private fun CheckboxImpl(
 
     val checkboxBoxModifier = Modifier.size(metrics.checkboxSize)
 
+    val toggleableModifier =
+        modifier.triStateToggleable(
+            state = state,
+            onClick = { onClick() },
+            enabled = enabled,
+            role = Role.Checkbox,
+            interactionSource = interactionSource,
+            indication = null,
+        )
     if (content == null) {
-        Box(wrapperModifier.then(checkboxBoxModifier), contentAlignment = Alignment.TopStart) {
+        Box(modifier = toggleableModifier.then(checkboxBoxModifier), contentAlignment = Alignment.TopStart) {
             CheckBoxImage(checkboxPainter)
             Box(outlineModifier.align(Alignment.Center))
         }
     } else {
         Row(
-            wrapperModifier,
+            modifier = toggleableModifier,
             horizontalArrangement = Arrangement.spacedBy(metrics.iconContentGap),
             verticalAlignment = verticalAlignment,
         ) {

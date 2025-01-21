@@ -206,7 +206,7 @@ private fun RowScope.ColumnOne() {
             Tooltip(
                 tooltip = {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(key = AllIconsKeys.General.ShowInfos, contentDescription = null)
+                        Icon(key = AllIconsKeys.General.ShowInfos, contentDescription = "Show Info icon")
                         Text("This is a tooltip")
                     }
                 }
@@ -237,7 +237,7 @@ private fun RowScope.ColumnOne() {
                             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
                         actionIcons = {
                             IconButton(onClick = { clickLabel = "Error Inline Action Icon clicked" }) {
-                                Icon(AllIconsKeys.General.Close, null)
+                                Icon(AllIconsKeys.General.Close, "Close icon")
                             }
                         },
                     )
@@ -260,10 +260,10 @@ private fun RowScope.ColumnOne() {
                         },
                         actionIcons = {
                             IconButton(onClick = { clickLabel = "Error Close Icon clicked" }) {
-                                Icon(AllIconsKeys.General.Close, null)
+                                Icon(AllIconsKeys.General.Close, "Close button")
                             }
                             IconButton(onClick = { clickLabel = "Error Gear Icon clicked" }) {
-                                Icon(AllIconsKeys.General.Gear, null)
+                                Icon(AllIconsKeys.General.Gear, "Settings button")
                             }
                         },
                     )
