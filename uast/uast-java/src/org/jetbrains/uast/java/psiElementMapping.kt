@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.java
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordField
 import com.intellij.psi.impl.source.PsiExtensibleClass
@@ -14,12 +13,7 @@ import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.classSetOf
 import org.jetbrains.uast.util.emptyClassSet
 
-
-private val checkCanConvert = Registry.`is`("uast.java.use.psi.type.precheck")
-
 internal fun canConvert(psiCls: Class<out PsiElement>, targets: Array<out Class<out UElement>>): Boolean {
-  if (!checkCanConvert) return true
-
   if (targets.size == 1) {
     val target = targets.single()
     return canConvert(psiCls, target)

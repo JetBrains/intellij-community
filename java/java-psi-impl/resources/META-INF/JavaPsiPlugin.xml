@@ -163,6 +163,9 @@
                  description="Maximal allowed iteration count for loop evaluation in the UAST TreeBasedEvaluator visitor"/>
     <registryKey key="uast.references.by.usage" defaultValue="true"
                  description="Enables UAST reference contributors that search for usages of variables in the opened file"/>
+    <registryKey key="java.folding.icons.for.control.flow"
+                 defaultValue="true"
+                 description="Add folding icons to the gutter for control flow statements"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

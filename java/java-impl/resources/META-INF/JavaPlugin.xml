@@ -869,6 +869,10 @@
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector"
                               order="first"/>
 
+    <registryKey key="testDiscovery.enabled"
+                 defaultValue="false"
+                 description="Enable instrumentation during tests to be able to start 'tests which pass this code' later"/>
+
     <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
     <runConfigurationExtension implementation="com.intellij.execution.impl.JavaDebuggerAutoAttach"/>
 
@@ -1523,7 +1527,6 @@
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.DeleteCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.CopyFQNCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GoToImplementationCompletionCommand" />
-
 
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 
@@ -2795,6 +2798,9 @@
                  description="Show separate constructors when completing constructor call, instead of a single class name"/>
     <registryKey key="java.javadoc.use.templates" defaultValue="true"
                  description="Use code templates to generate JavaDoc stubs"/>
+    <registryKey key="java.completion.methods.use.tags"
+                 defaultValue="true"
+                 description="Use additional tags for methods for completion"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

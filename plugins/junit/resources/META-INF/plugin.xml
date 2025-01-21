@@ -146,6 +146,13 @@
     <naming.convention.class implementation="com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention" id="JUnitTestClassNamingConvention" order="after TestSuiteNamingConvention"/>
     <naming.convention.method implementation="com.intellij.execution.junit.codeInspection.naming.JUnit3MethodNamingConvention" id="JUnit3MethodNamingConvention" order="first"/>
     <naming.convention.method implementation="com.intellij.execution.junit.codeInspection.naming.JUnit4MethodNamingConvention" id="JUnit4MethodNamingConvention" order="after JUnit3MethodNamingConvention"/>
+
+    <registryKey key="junit4.search.4.tests.all.in.scope"
+                 defaultValue="true"
+                 description="Check each class in scope if its test, then include as test"/>
+    <registryKey key="junit4.accept.inner.classes"
+                 defaultValue="true"
+                 description="If false, inner classes won't be included in search for tests in package"/>
   </extensions>
 
   <extensionPoints>
