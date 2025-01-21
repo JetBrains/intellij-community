@@ -471,6 +471,7 @@ platform/jewel/markdown/extensions/autolink
 platform/jewel/markdown/extensions/gfm-alerts
 platform/jewel/markdown/extensions/gfm-strikethrough
 platform/jewel/markdown/extensions/gfm-tables
+platform/jewel/markdown/extensions/images
 platform/jewel/markdown/ide-laf-bridge-styling
 platform/jewel/markdown/int-ui-standalone-styling
 platform/jewel/samples/ide-plugin

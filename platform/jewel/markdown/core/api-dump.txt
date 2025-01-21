@@ -2,6 +2,10 @@ f:org.jetbrains.jewel.markdown.MarkdownBlock$ListItem
 - <init>(java.util.List,I):V
 - <init>(org.jetbrains.jewel.markdown.MarkdownBlock[],I):V
 - f:getLevel():I
+org.jetbrains.jewel.markdown.extensions.ImageRendererExtension
+- a:renderImagesContent(org.jetbrains.jewel.markdown.InlineMarkdown$Image,androidx.compose.runtime.Composer,I):androidx.compose.foundation.text.InlineTextContent
+org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
+- getImageRendererExtension():org.jetbrains.jewel.markdown.extensions.ImageRendererExtension
 f:org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 - sf:$stable:I
 - <init>():V

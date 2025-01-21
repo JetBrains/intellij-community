@@ -25,6 +25,7 @@ internal object JewelMavenArtifacts {
     "intellij.platform.jewel.markdown.extensions.gfmStrikethrough" to "jewel-markdown-extensions-gfm-strikethrough",
     "intellij.platform.jewel.markdown.extensions.autolink" to "jewel-markdown-extensions-autolink",
     "intellij.platform.jewel.markdown.extensions.gfmAlerts" to "jewel-markdown-extensions-gfm-alerts",
+    "intellij.platform.jewel.markdown.extensions.images" to "jewel-markdown-extensions-images",
   )
   internal val STANDALONE: Map<String, String> = mapOf(
     "intellij.platform.jewel.markdown.intUiStandaloneStyling" to "jewel-markdown-int-ui-standalone-styling",
@@ -46,6 +47,7 @@ internal object JewelMavenArtifacts {
     "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-extensions-gfm-strikethrough" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-markdown-extensions-gfm-tables" to setOf("jewel-foundation", "jewel-ui"),
+    "jewel-markdown-extensions-images" to setOf("jewel-foundation", "jewel-ui"),
     "jewel-int-ui-standalone" to setOf("jewel-foundation"),
     "jewel-int-ui-decorated-window" to setOf("jewel-foundation", "jewel-ui", "jewel-int-ui-standalone"),
     "jewel-markdown-int-ui-standalone-styling" to setOf("jewel-foundation", "jewel-ui"),

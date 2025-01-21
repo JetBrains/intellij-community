@@ -18,6 +18,7 @@ java_library(
     "//platform/jewel/markdown/extensions/gfm-alerts",
     "//platform/jewel/markdown/extensions/gfm-strikethrough",
     "//platform/jewel/markdown/extensions/gfm-tables",
+    "//platform/jewel/markdown/extensions/images",
     "//platform/jewel/markdown/ide-laf-bridge-styling",
   ],
   runtime_deps = [
@@ -28,6 +29,7 @@ java_library(
     "//platform/jewel/markdown/extensions/gfm-alerts",
     "//platform/jewel/markdown/extensions/gfm-strikethrough",
     "//platform/jewel/markdown/extensions/gfm-tables",
+    "//platform/jewel/markdown/extensions/images",
     "//platform/jewel/markdown/ide-laf-bridge-styling",
   ]
 )

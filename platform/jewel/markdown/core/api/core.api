@@ -260,6 +260,10 @@ public abstract interface class org/jetbrains/jewel/markdown/WithTextContent {
 	public abstract fun getContent ()Ljava/lang/String;
 }
 
+public abstract interface class org/jetbrains/jewel/markdown/extensions/ImageRendererExtension {
+	public abstract fun renderImagesContent (Lorg/jetbrains/jewel/markdown/InlineMarkdown$Image;Landroidx/compose/runtime/Composer;I)Landroidx/compose/foundation/text/InlineTextContent;
+}
+
 public abstract interface class org/jetbrains/jewel/markdown/extensions/MarkdownBlockProcessorExtension {
 	public abstract fun canProcess (Lorg/commonmark/node/CustomBlock;)Z
 	public abstract fun processMarkdownBlock (Lorg/commonmark/node/CustomBlock;Lorg/jetbrains/jewel/markdown/processing/MarkdownProcessor;)Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;
@@ -308,11 +312,13 @@ public final class org/jetbrains/jewel/markdown/extensions/MarkdownProcessorExte
 public abstract interface class org/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension {
 	public abstract fun getBlockRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension;
 	public abstract fun getDelimitedInlineRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineRendererExtension;
+	public abstract fun getImageRendererExtension ()Lorg/jetbrains/jewel/markdown/extensions/ImageRendererExtension;
 }
 
 public final class org/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension$DefaultImpls {
 	public static fun getBlockRenderer (Lorg/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension;)Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension;
 	public static fun getDelimitedInlineRenderer (Lorg/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension;)Lorg/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineRendererExtension;
+	public static fun getImageRendererExtension (Lorg/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension;)Lorg/jetbrains/jewel/markdown/extensions/ImageRendererExtension;
 }
 
 public final class org/jetbrains/jewel/markdown/processing/MarkdownParserFactory {

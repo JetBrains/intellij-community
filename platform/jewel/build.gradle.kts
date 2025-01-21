@@ -17,6 +17,7 @@ dependencies {
     sarif(projects.markdown.extensions.gfmAlerts)
     sarif(projects.markdown.extensions.gfmStrikethrough)
     sarif(projects.markdown.extensions.gfmTables)
+    sarif(projects.markdown.extensions.images)
     sarif(projects.markdown.ideLafBridgeStyling)
     sarif(projects.markdown.intUiStandaloneStyling)
     sarif(projects.samples.idePlugin)
