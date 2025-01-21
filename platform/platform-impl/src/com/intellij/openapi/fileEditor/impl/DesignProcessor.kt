@@ -41,6 +41,11 @@ open class DesignProcessor {
 
   open fun createEditorTabPainterAdapter(): TabPainterAdapter = EditorTabPainterAdapter()
 
+  /**
+   * TODO
+   * in the case of singleStripe, it is necessary to remove or recycle all actions related to the statusbar.
+   * in the menu - appearance too
+   */
   open fun isSingleStripe(): Boolean = false
 
   internal val internalCustomizer: StripesUxCustomizer = if(isSingleStripe())
