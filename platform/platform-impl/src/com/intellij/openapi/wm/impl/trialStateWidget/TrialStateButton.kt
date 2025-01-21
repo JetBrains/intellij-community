@@ -35,7 +35,7 @@ class TrialStateButton : JComponent() {
   }
 
   companion object {
-    private val TEXT_GAPS = UnscaledGaps(top = 4, left = 16, bottom = 7, right = 16)
+    private val TEXT_GAPS = UnscaledGaps(top = 4, left = 16, bottom = 3, right = 16)
     private const val DEFAULT_FONT_SIZE = 13
     private const val BORDER_SIZE = 1.5f
   }
@@ -43,6 +43,14 @@ class TrialStateButton : JComponent() {
   var borderColor: Color? = null
   var hoverBackground: Color? = null
   var text: @NlsContexts.Button String? = null
+    set(value) {
+      if (field != value) {
+        field = value
+        revalidate()
+        repaint()
+      }
+    }
+
   private var hovered = false
 
   /**
@@ -53,6 +61,8 @@ class TrialStateButton : JComponent() {
     background = colorState.background
     borderColor = colorState.borderColor
     hoverBackground = colorState.hoverBackground
+
+    repaint()
   }
 
   init {
@@ -101,9 +111,12 @@ class TrialStateButton : JComponent() {
       }
 
       text?.let {
+        val fontMetrics = getFontMetrics(font)
+        val offset = (rect.height - TEXT_GAPS.height - getFontMetrics(font).height) / 2
+
         g2.color = foreground
         g2.font = font
-        g2.drawString(it, TEXT_GAPS.left, TEXT_GAPS.top + getFontMetrics(font).ascent)
+        g2.drawString(it, TEXT_GAPS.left, TEXT_GAPS.top + offset + fontMetrics.ascent)
       }
     }
     finally {
@@ -127,6 +140,6 @@ class TrialStateButton : JComponent() {
     val fontMetrics = getFontMetrics(font)
     val width = if (text == null) 0 else fontMetrics.stringWidth(text)
 
-    return Dimension(width, font.size)
+    return Dimension(width, fontMetrics.height)
   }
 }
