@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isCommitToolWindowShown
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI.emptySize
@@ -50,4 +52,8 @@ class PreviewDiffSplitterComponent(
     validate()
     repaint()
   }
+}
+
+fun shouldHaveSplitterDiffPreview(project: Project, isContentVertical: Boolean): Boolean {
+  return !isContentVertical || !isCommitToolWindowShown(project)
 }

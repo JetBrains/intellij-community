@@ -25,6 +25,7 @@
 24(25,28) element: PyCallExpression: checkit
 25(26) element: PyStatementList. Condition: checkit(x):true
 26(27) element: PyPrintStatement
-27(29) READ ACCESS: x
+27(30) READ ACCESS: x
 28(29) element: PyStatementList. Condition: checkit(x):false
-29() element: null
+29(30) element: PyPassStatement
+30() element: null

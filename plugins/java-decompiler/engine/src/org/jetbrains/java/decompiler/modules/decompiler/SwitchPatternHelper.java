@@ -1265,7 +1265,6 @@ public final class SwitchPatternHelper {
               statementWithFirstAssignment.getExprents().get(0) instanceof AssignmentExprent assignmentExprent &&
               assignmentExprent.getRight() != null &&
               assignmentExprent.getLeft() instanceof VarExprent newVarExprent &&
-              assignmentExprent.getLeft().getExprType() != null &&
               assignmentExprent.getRight().equals(newSwitch) &&
               assignmentExprent.getLeft().getExprType().equals(newSwitch.getExprType())) {
             statementWithFirstAssignment.getExprents().remove(0);

@@ -1,3 +1,4 @@
+// IGNORE_K2
 // NO_CONVERSION_EXPECTED
 import java.io.*;
 import java.util.Collections;

@@ -1,4 +1,7 @@
-def g(x) -> object:
+from typing import Any
+
+
+def g(x) -> Any:
     return x
 
 

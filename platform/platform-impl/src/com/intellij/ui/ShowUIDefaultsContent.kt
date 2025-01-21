@@ -8,6 +8,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
@@ -97,16 +98,18 @@ internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
       return
     }
     val matcher = NameUtil.buildMatcher("*" + searchField.getText(), NameUtil.MatchingCaseSensitivity.NONE)
-    model.setFilter { pair ->
-      val obj = (pair as Pair<*, *>).second
-      var value = when (obj) {
-        null -> "null"
-        is Color -> ColorUtil.toHtmlColor(obj)
-        else -> obj.toString()
+    model.setFilter(object : Condition<Any> {
+      override fun value(pair: Any?): Boolean {
+        val obj = (pair as Pair<*, *>).second
+        var value = when (obj) {
+          null -> "null"
+          is Color -> ColorUtil.toHtmlColor(obj)
+          else -> obj.toString()
+        }
+        value = pair.first.toString() + " " + value
+        return (!colorsOnly.isSelected || obj is Color) && matcher.matches(value)
       }
-      value = pair.first.toString() + " " + value
-      (!colorsOnly.isSelected || obj is Color) && matcher.matches(value)
-    }
+    })
   }
 
   private fun restoreLastSelected() {

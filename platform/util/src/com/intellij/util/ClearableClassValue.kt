@@ -10,17 +10,17 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 abstract class ClearableClassValue<T> : ClassValue<T>() {
-  private val typeCache = ContainerUtil.createWeakSet<Class<*>>()
+  private val typeCache = ContainerUtil.createConcurrentWeakMap<Class<*>, Unit>()
 
   fun clear() {
-    for (clazz in typeCache) {
+    for (clazz in typeCache.keys) {
       remove(clazz)
     }
     typeCache.clear()
   }
 
   protected override fun computeValue(aClass: Class<*>): T? {
-    typeCache.add(aClass)
+    typeCache.put(aClass, Unit)
     return computeValueImpl(aClass)
   }
 

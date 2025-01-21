@@ -630,20 +630,11 @@ def array_to_meta_xml(array, name, format):
         # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
         # explanation: http://stackoverflow.com/questions/15165170/how-do-i-maintain-row-column-orientation-of-vectors-in-numpy?rq=1
         # we use kind of a hack - get information about memory from C_CONTIGUOUS
-        is_row = array.flags['C_CONTIGUOUS']
-
-        if is_row:
-            rows = 1
-            cols = len(array)
-            if cols < len(array):
-                reslice = '[0:%s]' % (cols)
-            array = array[0:cols]
-        else:
-            cols = 1
-            rows = len(array)
-            if rows < len(array):
-                reslice = '[0:%s]' % (rows)
-            array = array[0:rows]
+        cols = 1
+        rows = len(array)
+        if rows < len(array):
+            reslice = '[0:%s]' % (rows)
+        array = array[0:rows]
     elif l == 2:
         rows = array.shape[-2]
         cols = array.shape[-1]
@@ -675,10 +666,13 @@ def get_formatted_row_elements(row, iat, dim, cols, format, dtypes):
     for c in range(cols):
         val = iat[row, c] if dim > 1 else iat[row]
         col_formatter = get_column_formatter_by_type(format, dtypes[c])
-        try:
-            yield ("%" + col_formatter) % (val,)
-        except TypeError:
-            yield ("%" + DEFAULT_DF_FORMAT) % (val,)
+        if val != val:
+            yield "nan"
+        else:
+            try:
+                yield ("%" + col_formatter) % (val,)
+            except TypeError:
+                yield ("%" + DEFAULT_DF_FORMAT) % (val,)
 
 
 def array_default_format(type):

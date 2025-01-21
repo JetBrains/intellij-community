@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -62,6 +63,8 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
     override fun actionPerformed(e: AnActionEvent) {
       executorEventDispatcher.multicaster.executorCalled(null)
     }
+  }.apply {
+    registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), this@CommitChunkPanel, this@CommitChunkPanel)
   }
 
   private val amendCommitToggle = object : ToggleAction(VcsBundle.message("checkbox.amend") , null, PlatformVcsImplIcons.AmendInline) {
@@ -100,7 +103,11 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
       .addToBottom(BorderLayoutPanel().addToRight(bottomWrapper).andTransparent())
 
     // ui adjustment
-    centerPanel.andTransparent().withBackground(Spec.INPUT_BACKGROUND)
+    centerPanel
+      .andTransparent()
+      .withBackground(Spec.INPUT_BACKGROUND)
+
+    withBorder(JBUI.Borders.emptyLeft(Spec.PANEL_LEFT_GAP))
     resetPreferredHeight()
     andTransparent()
 
@@ -291,8 +298,6 @@ private class CommitChunkWorkFlowHandler(
   }
 
   fun setPopup(popupDisposable: Disposable) {
-    ui.resetSize()
-
     workflow.addListener(object : CommitWorkflowListener {
       override fun executionStarted() {
         Disposer.dispose(popupDisposable)
@@ -304,6 +309,9 @@ private class CommitChunkWorkFlowHandler(
     })
 
     commitMessagePolicy.init()
+    if (ui.commitMessageUi.text.isBlank()) {
+      ui.resetSize()
+    }
   }
 }
 
@@ -329,9 +337,12 @@ private fun adjustEditorSettings(editor: EditorEx) {
   editor.scrollPane.border = JBUI.Borders.empty()
   editor.backgroundColor = Spec.INPUT_BACKGROUND
   editor.settings.isShowIntentionBulb = false
+  editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
 }
 
 private object Spec {
+  const val PANEL_LEFT_GAP: Int = 12
+
   val DEFAULT_WIDTH: Int
     get() = JBUI.scale(255)
 
@@ -350,8 +361,8 @@ private object Spec {
   val MINIMUM_BUTTON_SIZE: Dimension = Dimension(22, 22)
 
   object Animation {
-    const val FRAMES = 30
-    const val DURATION = 200
+    const val FRAMES = 20
+    const val DURATION = 150
   }
 }
 

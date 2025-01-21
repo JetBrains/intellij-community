@@ -10,6 +10,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class EvaluationContextImpl implements EvaluationContext {
+public final class EvaluationContextImpl extends UserDataHolderBase implements EvaluationContext {
   private final DebuggerComputableValue myThisObject;
   private final @NotNull SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
@@ -27,6 +28,8 @@ public final class EvaluationContextImpl implements EvaluationContext {
   private @Nullable ThreadReferenceProxyImpl myThreadForEvaluation = null;
 
   private @Nullable ThreadReferenceProxyImpl myPreferableThread = null;
+
+  private boolean myMayRetryEvaluation = false;
 
   private EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext,
                                 @Nullable StackFrameProxyImpl frameProxy,
@@ -176,5 +179,15 @@ public final class EvaluationContextImpl implements EvaluationContext {
     else {
       return "Evaluating requested on " + myPreferableThread + ", started on " + myThreadForEvaluation + " for " + mySuspendContext;
     }
+  }
+
+  @ApiStatus.Internal
+  public boolean isMayRetryEvaluation() {
+    return myMayRetryEvaluation;
+  }
+
+  @ApiStatus.Internal
+  public void setMayRetryEvaluation(boolean mayRetryEvaluation) {
+    myMayRetryEvaluation = mayRetryEvaluation;
   }
 }

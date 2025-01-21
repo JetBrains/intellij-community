@@ -159,9 +159,17 @@ public class InvocationExprent extends Exprent {
     genericArgs = expr.genericArgs;
   }
 
+  @NotNull
   @Override
   public VarType getExprType() {
-    return inferredType == null ? descriptor.ret : inferredType;
+    if (inferredType == null) {
+      VarType ret = descriptor.ret;
+      if (ret == null) {
+        return VarType.VARTYPE_UNKNOWN;
+      }
+      return ret;
+    }
+    return inferredType;
   }
 
 

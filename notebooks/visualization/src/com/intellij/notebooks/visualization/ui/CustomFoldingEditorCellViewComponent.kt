@@ -50,7 +50,7 @@ class CustomFoldingEditorCellViewComponent(
   }
 
   private fun updateGutterIcons(gutterAction: AnAction?) {
-    cell.manager.update { ctx ->
+    editor.updateManager.update { ctx ->
       gutterActionRenderer = gutterAction?.let { ActionToGutterRendererAdapter(it) }
       ctx.addFoldingOperation { modelEx ->
         foldingRegion?.update()
@@ -65,15 +65,15 @@ class CustomFoldingEditorCellViewComponent(
     updateGutterIcons(cell.gutterAction.get())
   }
 
-  override fun dispose() = cell.manager.update { ctx ->
+  override fun dispose() = editor.updateManager.update { ctx ->
     disposeFolding(ctx)
   }
 
   private fun disposeFolding(ctx: UpdateContext) {
-    ctx.addFoldingOperation {
+    ctx.addFoldingOperation { foldingModel ->
       foldingRegion?.let { region ->
         if (region.isValid == true) {
-          editor.foldingModel.removeFoldRegion(region)
+          foldingModel.removeFoldRegion(region)
         }
       }
       foldingRegion = null
@@ -88,9 +88,9 @@ class CustomFoldingEditorCellViewComponent(
   }
 
   override fun updateCellFolding(updateContext: UpdateContext) {
-    updateContext.addFoldingOperation {
-      foldingRegion?.dispose()
-      val fr = editor.foldingModel.addCustomLinesFolding(
+    updateContext.addFoldingOperation { foldingModel ->
+      foldingRegion?.let { foldingModel.removeFoldRegion(it) }
+      val fr = foldingModel.addCustomLinesFolding(
         cell.interval.lines.first, cell.interval.lines.last, object : CustomFoldRegionRenderer {
         override fun calcWidthInPixels(region: CustomFoldRegion) = mainComponent.width
         override fun calcHeightInPixels(region: CustomFoldRegion) = mainComponent.height

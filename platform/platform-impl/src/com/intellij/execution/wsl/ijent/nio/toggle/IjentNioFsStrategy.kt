@@ -15,9 +15,7 @@ import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSyste
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
@@ -44,13 +42,11 @@ class IjentWslNioFsToggleStrategy(
     }
   }
 
-  suspend fun enableForAllWslDistributions() {
+  fun enableForAllWslDistributions() {
     val listener = BiConsumer<Set<WSLDistribution>, Set<WSLDistribution>> { old, new ->
       // TODO The code is race prone. Frequent creations and deletions of WSL containers may break the state.
       for (distro in new - old) {
-        coroutineScope.launch {
-          handleWslDistributionAddition(distro)
-        }
+        handleWslDistributionAddition(distro)
       }
       for (distro in old - new) {
         handleWslDistributionDeletion(distro)
@@ -63,16 +59,12 @@ class IjentWslNioFsToggleStrategy(
       wslDistributionManager.removeWslDistributionsChangeListener(listener)
     }
 
-    coroutineScope {
-      for (distro in wslDistributionManager.installedDistributions) {
-        launch {
-          handleWslDistributionAddition(distro)
-        }
-      }
+    for (distro in wslDistributionManager.installedDistributions) {
+      handleWslDistributionAddition(distro)
     }
   }
 
-  private suspend fun handleWslDistributionAddition(distro: WSLDistribution) {
+  private fun handleWslDistributionAddition(distro: WSLDistribution) {
     enabledInDistros += distro
     switchToIjentFs(distro)
   }
@@ -88,7 +80,7 @@ class IjentWslNioFsToggleStrategy(
     }
   }
 
-  suspend fun switchToIjentFs(distro: WSLDistribution) {
+  fun switchToIjentFs(distro: WSLDistribution) {
     val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
     try {
       val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope) {

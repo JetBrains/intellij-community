@@ -18,9 +18,9 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.CaretStop;
 import com.intellij.openapi.editor.actions.CaretStopPolicy;
@@ -161,16 +161,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     if (editor.isDisposed()) return;
-
-    sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
-
     if (editor.isRendererMode()) return;
 
     sink.set(CommonDataKeys.EDITOR, editor);
     sink.set(CommonDataKeys.CARET, editor.getCaretModel().getCurrentCaret());
-    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, editor.getDeleteProvider());
-    sink.set(PlatformDataKeys.CUT_PROVIDER, editor.getCutProvider());
-    sink.set(PlatformDataKeys.PASTE_PROVIDER, editor.getPasteProvider());
 
     LogicalPosition location = editor.myLastMousePressedLocation;
     if (location == null) {
@@ -650,7 +644,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public int getCaretPosition() {
-    return editor.getCaretModel().getOffset();
+    return ReadAction.compute(() -> editor.getCaretModel().getOffset());
   }
 
   @DirtyUI
@@ -1078,12 +1072,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getDot() {
-      return editor.getCaretModel().getOffset();
+      return ReadAction.compute(() -> editor.getCaretModel().getOffset());
     }
 
     @Override
     public int getMark() {
-      return editor.getSelectionModel().getSelectionStart();
+      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionStart());
     }
 
     @Override
@@ -1394,12 +1388,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public int getSelectionStart() {
-      return editor.getSelectionModel().getSelectionStart();
+      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionStart());
     }
 
     @Override
     public int getSelectionEnd() {
-      return editor.getSelectionModel().getSelectionEnd();
+      return ReadAction.compute(() -> editor.getSelectionModel().getSelectionEnd());
     }
 
     @Override

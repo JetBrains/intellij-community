@@ -168,6 +168,9 @@ internal open class WebSymbolMatchImpl private constructor(
 
   override fun hashCode(): Int = name.hashCode()
 
+  internal fun withSegments(segments: List<WebSymbolNameSegment>): WebSymbolMatch =
+    create(matchedName, segments, namespace, kind, origin, explicitPriority, explicitProximity)
+
   class ReverseListIterator<T>(list: List<T>) : Iterator<T> {
 
     private val iterator = list.listIterator(list.size)
@@ -191,7 +194,7 @@ internal open class WebSymbolMatchImpl private constructor(
                origin: WebSymbolOrigin,
                explicitPriority: Priority?,
                explicitProximity: Int?): WebSymbolMatch =
-      if (nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.all { symbol -> symbol is PsiSourcedWebSymbol }) })
+      if (nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedWebSymbol }) })
         PsiSourcedWebSymbolMatch(matchedName, nameSegments, namespace, kind, origin,
                                  explicitPriority, explicitProximity)
       else WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin,

@@ -4,17 +4,18 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.psi.PyCallSiteExpression;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.intellij.util.containers.ContainerUtil.map;
 
 
 public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExpression {
@@ -56,7 +57,19 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression body = getBody();
-    return body != null ? context.getType(body) : null;
+    if (body == null) return null;
+    
+    final PyFunctionImpl.YieldCollector visitor = new PyFunctionImpl.YieldCollector();
+    body.accept(visitor);
+    
+    final List<PyType> yieldTypes = map(visitor.getYieldExpressions(), it -> it.getYieldType(context));
+    final List<PyType> sendTypes = map(visitor.getYieldExpressions(), it -> it.getSendType(context));
+    
+    if (!yieldTypes.isEmpty()) {
+      return PyTypingTypeProvider.wrapInGeneratorType(
+        PyUnionType.union(yieldTypes), PyUnionType.union(sendTypes), context.getType(body), this);
+    }
+    return context.getType(body);
   }
 
   @Nullable

@@ -3,6 +3,6 @@ class MyClass:
 
 def f(x):
     """
-    @param x:
-    @type x: MyClass
+    :param x:
+    :type x: MyClass
     """

@@ -1,0 +1,79 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.notebooks.visualization.ui
+
+import com.intellij.notebooks.visualization.EditorNotebookExtension
+import com.intellij.notebooks.visualization.NotebookIntervalPointer
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellCreated
+import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellRemoved
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Disposer.register
+import com.intellij.util.EventDispatcher
+import kotlin.reflect.KClass
+
+class EditorNotebook(private val editor: EditorImpl): Disposable {
+
+  private var _cells = mutableListOf<EditorCell>()
+
+  val cells: List<EditorCell> get() = _cells.toList()
+
+  private val cellEventListeners = EventDispatcher.create(EditorCellEventListener::class.java)
+
+  private val extensions = mutableMapOf<KClass<*>, EditorNotebookExtension>()
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T : EditorNotebookExtension> getExtension(cls: KClass<T>): T? {
+    return extensions[cls] as? T
+  }
+
+  private fun forEachExtension(action: (EditorNotebookExtension) -> Unit) {
+    extensions.values.forEach { action(it) }
+  }
+
+  fun addCellEventsListener(disposable: Disposable, listener: EditorCellEventListener) {
+    cellEventListeners.addListener(listener, disposable)
+  }
+
+  fun addCell(interval: NotebookIntervalPointer) {
+    val editorCell = EditorCell(this, interval, editor).also {
+      forEachExtension { extension ->
+        extension.onCellCreated(it)
+      }
+      register(this, it)
+    }
+    _cells.add(interval.get()!!.ordinal, editorCell)
+    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellCreated(editorCell)))
+  }
+
+  override fun dispose() {
+    extensions.values.forEach {
+      if (it is Disposable) {
+        Disposer.dispose(it)
+      }
+    }
+  }
+
+  fun clear() {
+    _cells.forEach { cell ->
+      Disposer.dispose(cell)
+    }
+    _cells.clear()
+  }
+
+  fun removeCell(index: Int) {
+    val cell = _cells[index]
+    cell.onBeforeRemove()
+    val removed = _cells.removeAt(index)
+    Disposer.dispose(removed)
+    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed)))
+  }
+
+  fun <T: EditorNotebookExtension> addExtension(type: KClass<T>, extension: T) {
+    extensions[type] = extension
+  }
+}
+
+inline fun <reified T : EditorNotebookExtension> EditorNotebook.getExtension(): T? {
+  return getExtension(T::class)
+}

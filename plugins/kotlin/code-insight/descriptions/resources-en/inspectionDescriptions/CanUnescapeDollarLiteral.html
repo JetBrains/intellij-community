@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports that escaped dollar characters in a string can be replaced with regular literals.
+<p>
+    Escaping is only necessary when string content after dollar can be misinterpreted as a string interpolation entry.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun example() {
+    "The price today is \$10. The price tomorrow will be ${'$'}20."
+  }
+</code></pre>
+The quick fix converts all safely replaceable escaped dollar characters to regular dollar characters:
+<pre><code>
+  fun example() {
+    "The price today is $10. The price tomorrow will be $20."
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

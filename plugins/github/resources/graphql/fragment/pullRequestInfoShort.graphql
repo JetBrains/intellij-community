@@ -8,7 +8,7 @@ fragment pullRequestInfoShort on PullRequest {
   isDraft
 
   author {
-    ...actorInfo
+    ...actor
   }
   createdAt
   updatedAt
@@ -29,7 +29,7 @@ fragment pullRequestInfoShort on PullRequest {
     nodes {
       ... on ReviewRequest {
         requestedReviewer {
-          ...pullRequestReviewerInfo
+          ...pullRequestReviewer
         }
       }
     }

@@ -6,6 +6,7 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -544,6 +545,13 @@ class IdeaPluginDescriptorImpl(
       return result
     }
 
+    if (isCommunity()) {
+      CE_PLUGIN_CARDS[id.idString]?.let {
+        description = it.description
+        return it.description
+      }
+    }
+
     result = fromPluginBundle("plugin.$id.description", descriptionChildText)
 
     description = result
@@ -565,7 +573,15 @@ class IdeaPluginDescriptorImpl(
 
   override fun getChangeNotes(): String? = changeNotes
 
-  override fun getName(): String = name!!
+  override fun getName(): String {
+    if (isCommunity()) {
+      CE_PLUGIN_CARDS[id.idString]?.let {
+        return it.title
+      }
+    }
+
+    return name!!
+  }
 
   override fun getProductCode(): String? = productCode
 
@@ -694,3 +710,17 @@ private val extensionPointNameComparator = Comparator<String> { o1, o2 ->
   }
   o1.compareTo(o2)
 }
+
+private fun isCommunity(): Boolean {
+  val ideCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+  return ideCode == "IC" || ideCode == "PC"
+}
+
+private data class PluginCardInfo(val title: String, val description: String)
+
+private val CE_PLUGIN_CARDS = mapOf<String, PluginCardInfo>(
+  "org.jetbrains.completion.full.line" to PluginCardInfo(
+    "AI Promo",
+    "Provides an easy way to install AI assistant to your IDE"
+  )
+)

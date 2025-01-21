@@ -14,8 +14,8 @@ import org.jetbrains.annotations.ApiStatus;
  * Register in {@code plugin.xml}:<p>
  * {@code <stacktrace.fold substring="at com.intellij.ide.IdeEventQueue"/>}
  */
-@ApiStatus.Internal
 public final class CustomizableConsoleFoldingBean {
+  @ApiStatus.Internal
   public static final ExtensionPointName<CustomizableConsoleFoldingBean> EP_NAME = new ExtensionPointName<>("com.intellij.stacktrace.fold");
 
   /**
@@ -30,4 +30,8 @@ public final class CustomizableConsoleFoldingBean {
    */
   @Attribute("negate")
   public boolean negate = false;
+
+  @ApiStatus.Internal
+  public CustomizableConsoleFoldingBean() {
+  }
 }

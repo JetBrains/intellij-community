@@ -50,6 +50,13 @@ abstract class ThrownFromEvalExceptionBase(cause: Throwable) : RuntimeException(
     override fun toString(): String = "Thrown by evaluator: ${cause}"
 }
 
+class Eval4JIllegalArgumentException : IllegalArgumentException {
+    constructor(message: String, cause: Throwable) : super(message, cause)
+    constructor(message: String) : super(message)
+}
+
+class Eval4JIllegalStateException(message: String, cause: Throwable) : IllegalStateException(message, cause)
+
 class BrokenCode(cause: Throwable) : ThrownFromEvalExceptionBase(cause)
 
 // Interpreting exceptions should not be sent to EA
@@ -238,7 +245,7 @@ fun interpreterLoop(
 }
 
 private fun <T : Value> Frame<T>.getStackTop(i: Int = 0) = this.getStack(this.stackSize - 1 - i) ?: throwBrokenCodeException(
-    IllegalArgumentException("Couldn't get value with index = $i from top of stack")
+    Eval4JIllegalArgumentException("Couldn't get value with index = $i from top of stack")
 )
 
 // Copied from org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer.analyze()

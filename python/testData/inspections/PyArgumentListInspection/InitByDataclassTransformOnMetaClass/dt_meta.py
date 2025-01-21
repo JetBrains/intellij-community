@@ -1,7 +1,9 @@
 from typing import dataclass_transform
 
+import dt_field
 
-@dataclass_transform()
+
+@dataclass_transform(field_specifiers=(dt_field.DataclassField,))
 class DataclassMeta(type):
     def __new__(
             cls,

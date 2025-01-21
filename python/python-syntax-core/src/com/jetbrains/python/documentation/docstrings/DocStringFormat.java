@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,11 +24,7 @@ import java.util.List;
 
 
 public enum DocStringFormat {
-  /**
-   * @see DocStringUtil#ensureNotPlainDocstringFormat(PsiElement)
-   */
   PLAIN("Plain", ""),
-  EPYTEXT("Epytext", "epytext"),
   REST("reStructuredText", "rest"),
   NUMPY("NumPy", "numpy"),
   GOOGLE("Google", "google");

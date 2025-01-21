@@ -52,7 +52,7 @@ public final class InitializerProcessor {
 
         int index = 0;
         List<Exprent> lstExprents = firstData.getExprents();
-
+        if (lstExprents == null) return;
         for (Exprent exprent : lstExprents) {
           int action = 0;
 
@@ -138,7 +138,7 @@ public final class InitializerProcessor {
           VarType type = md.params[md.params.length - 1];
           if (type.getType() == CodeConstants.TYPE_OBJECT) {
             ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.getValue());
-            if (node != null && (node.type == ClassNode.CLASS_ANONYMOUS) || (node.access & CodeConstants.ACC_SYNTHETIC) != 0) {
+            if (node != null && ((node.type == ClassNode.CLASS_ANONYMOUS) ||  (node.access & CodeConstants.ACC_SYNTHETIC) != 0)) {
               //TODO: Verify that the body is JUST a this([args]) call?
               wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(name, desc));
             }
@@ -155,7 +155,7 @@ public final class InitializerProcessor {
     if (firstData != null) {
       boolean inlineInitializers = cl.hasModifier(CodeConstants.ACC_INTERFACE) || cl.hasModifier(CodeConstants.ACC_ENUM);
 
-      while (!firstData.getExprents().isEmpty()) {
+      while (firstData.getExprents() != null && !firstData.getExprents().isEmpty()) {
         Exprent exprent = firstData.getExprents().get(0);
 
         boolean found = false;
@@ -198,7 +198,7 @@ public final class InitializerProcessor {
     for (MethodWrapper method : wrapper.getMethods()) {
       if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) { // successfully decompiled constructor
         Statement firstData = Statements.findFirstData(method.root);
-        if (firstData == null || firstData.getExprents().isEmpty()) {
+        if (firstData == null || firstData.getExprents() == null || firstData.getExprents().isEmpty()) {
           return;
         }
         lstFirst.add(firstData.getExprents());

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl
 import com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -31,11 +32,23 @@ suspend fun Path.getEelApi(): EelApi {
   return eels.firstOrNull() ?: if (SystemInfo.isWindows) LocalWindowsEelApiImpl() else LocalPosixEelApiImpl()
 }
 
+object EelInitialization {
+  suspend fun runEelInitialization(project: Project) {
+    val eels = EP_NAME.extensionList
+    eels.forEachConcurrent { eelProvider ->
+      eelProvider.tryInitialize(project)
+    }
+  }
+}
+
+
 fun Path.getEelApiBlocking() = runBlockingMaybeCancellable { getEelApi() }
 
 @ApiStatus.Internal
 interface EelProvider {
   suspend fun getEelApi(path: Path): EelApi?
+
+  suspend fun tryInitialize(project: Project)
 }
 
 private val EP_NAME = ExtensionPointName<EelProvider>("com.intellij.eelProvider")

@@ -75,7 +75,7 @@ internal const val SPECIAL_MATCHED_CONTRIB = "\$special$"
 
 internal fun getPatternCompletablePrefix(pattern: String?): String {
   if (pattern == null || pattern.contains('|')) return ""
-  for (i in 0..pattern.length) {
+  for (i in 0 until pattern.length) {
     val char = pattern[i]
     if (SPECIAL_CHARS.contains(char)) {
       return pattern.substring(0 until i)

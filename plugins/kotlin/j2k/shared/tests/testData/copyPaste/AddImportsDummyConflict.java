@@ -1,3 +1,4 @@
+// IGNORE_K2
 import ppp.*
 
 class C {

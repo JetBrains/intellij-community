@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
@@ -69,12 +70,18 @@ public class NewExprent extends Exprent {
     return lstDims;
   }
 
+  @NotNull
   @Override
   public VarType getExprType() {
     if (inferredType != null) {
       return inferredType;
     }
-    return anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue()).anonymousClassType : newType;
+    VarType currentType =
+      anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue()).anonymousClassType : newType;
+    if (currentType == null) {
+      return VarType.VARTYPE_NULL;
+    }
+    return currentType;
   }
 
   @Override

@@ -44,5 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="kotlin.project-configuration" />
+    <orderEntry type="module" module-name="kotlin.preferences" />
+    <orderEntry type="module" module-name="kotlin.base.statistics" />
   </component>
 </module>

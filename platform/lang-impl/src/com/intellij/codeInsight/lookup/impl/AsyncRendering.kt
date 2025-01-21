@@ -6,6 +6,7 @@ package com.intellij.codeInsight.lookup.impl
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
+import com.intellij.codeInsight.lookup.SuspendingLookupElementRenderer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Key
 import com.intellij.util.indexing.DumbModeAccessType
@@ -42,11 +43,14 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
 
       val job = lookup.coroutineScope.launch(limitedDispatcher) {
         val job = coroutineContext.job
-        readAction {
-          if (element.isValid) {
-            renderInBackground(element, renderer)
+        if (renderer is SuspendingLookupElementRenderer<LookupElement>) {
+          renderInBackgroundSuspending(element, renderer)
+        } else
+          readAction {
+            if (element.isValid) {
+              renderInBackground(element, renderer)
+            }
           }
-        }
         synchronized(LAST_COMPUTATION) {
           element.replace(LAST_COMPUTATION, job, null)
         }
@@ -65,4 +69,15 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
     rememberPresentation(element, presentation)
     lookup.cellRenderer.scheduleUpdateLookupWidthFromVisibleItems()
   }
+
+  private suspend fun renderInBackgroundSuspending(element: LookupElement, renderer: SuspendingLookupElementRenderer<LookupElement>) {
+    val presentation = LookupElementPresentation()
+    renderer.renderElementSuspending(element, presentation)
+
+    presentation.freeze()
+    rememberPresentation(element, presentation)
+    lookup.cellRenderer.scheduleUpdateLookupWidthFromVisibleItems()
+  }
+
+
 }

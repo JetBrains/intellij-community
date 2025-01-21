@@ -14,13 +14,18 @@ import java.awt.Rectangle
  */
 class NotebookCodeCellBackgroundLineMarkerRenderer(
   private val highlighter: RangeHighlighter,
+  private val boundsProvider: (Editor) -> Pair<Int, Int> = { editor ->
+    val lines = IntRange(editor.document.getLineNumber(highlighter.startOffset), editor.document.getLineNumber(highlighter.endOffset))
+    val top = editor.offsetToXY(editor.document.getLineStartOffset(lines.first)).y
+    val height = editor.offsetToXY(editor.document.getLineEndOffset(lines.last)).y + editor.lineHeight - top
+    top to height
+  },
   private val presentationModeMasking: Boolean = false,
 ) : NotebookLineMarkerRenderer() {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     editor as EditorImpl
     val lines = IntRange(editor.document.getLineNumber(highlighter.startOffset), editor.document.getLineNumber(highlighter.endOffset))
-    val top = editor.offsetToXY(editor.document.getLineStartOffset(lines.first)).y
-    val height = editor.offsetToXY(editor.document.getLineEndOffset(lines.last)).y + editor.lineHeight - top
+    val (top, height) = boundsProvider(editor)
 
     paintNotebookCellBackgroundGutter(editor, g, r, lines, top, height, presentationModeMasking) {
       paintCaretRow(editor, g, lines)

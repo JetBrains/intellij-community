@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.PlatformUtils
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -199,7 +200,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   }
 
   private suspend fun createLogInternal(forceInit: Boolean): VcsLogManager? {
-    if (isDisposing) return null
+    if (isDisposing || PlatformUtils.isQodana()) return null
 
     val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
     val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)

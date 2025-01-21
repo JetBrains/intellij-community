@@ -7,6 +7,8 @@ import com.jetbrains.jsonSchema.extension.JsonErrorPriority;
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
 import com.jetbrains.jsonSchema.extension.JsonValidationHost;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,6 +142,7 @@ public final class NumericValidation implements JsonSchemaValidation {
                           @Nullable JsonSchemaType schemaType,
                           @NotNull JsonValidationHost consumer,
                           @NotNull JsonComplianceCheckerOptions options) {
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.NumberValidation);
     return checkNumber(propValue.getDelegate(), schema, schemaType, consumer, options);
   }
 }

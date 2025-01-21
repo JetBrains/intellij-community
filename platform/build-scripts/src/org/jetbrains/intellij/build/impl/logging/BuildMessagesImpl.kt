@@ -187,6 +187,9 @@ private class DebugLogger {
   }
 }
 
+/**
+ * Used unconditionally by both [TeamCityBuildMessageLogger] and [ConsoleBuildMessageLogger]
+ */
 private class PrintWriterBuildMessageLogger(
   private val output: StringBuilder,
   private val disposer: Consumer<PrintWriterBuildMessageLogger>,

@@ -778,7 +778,7 @@ public final class ArtifactRepositoryManager {
   }
 
   // Force certain activation kinds to be always active in order to include such dependencies in dependency resolution process
-  // Currently OS and JDK activations are always enabled for the purpose of transitive artifact discovery
+  // Currently JDK activations are always enabled for the purpose of transitive artifact discovery
   private static class ProfileActivatorProxy implements ProfileActivator {
 
     private final ProfileActivator[] myDelegates;
@@ -789,7 +789,7 @@ public final class ArtifactRepositoryManager {
 
     private static boolean isForceActivation(Profile profile) {
       Activation activation = profile.getActivation();
-      return activation != null && (activation.getJdk() != null || activation.getOs() != null);
+      return activation != null && activation.getJdk() != null;
     }
 
     @Override

@@ -5,10 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureVisitorBase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +39,12 @@ public final class PreviewFeatureInspection extends LocalInspectionTool {
     protected void registerProblem(PsiElement element, String description, JavaFeature feature, PsiAnnotation annotation) {
       // Do not report warnings in imports, because they cannot be suppressed and javac doesn't report them
       if (element.getParent() instanceof PsiImportStatementBase) return;
+      if (element instanceof PsiReferenceExpression ref) {
+        PsiElement nameElement = ref.getReferenceNameElement();
+        if (nameElement != null) {
+          element = nameElement;
+        }
+      }
       myHolder.registerProblem(element, description);
     }
   }

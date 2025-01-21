@@ -29,8 +29,14 @@ internal class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: 
     out.append(')')
   }
 
-  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
-    beginReadCall("ObjectArray", subtyping, out)
+  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, allowSingleValue: Boolean, out: TextOutput) {
+    val readPostfix = if (allowSingleValue) {
+      "ObjectArrayOrSingleObject"
+    }
+    else {
+      "ObjectArray"
+    }
+    beginReadCall(readPostfix, subtyping, out)
     writeFactoryArgument(scope, out)
     out.append(')')
   }

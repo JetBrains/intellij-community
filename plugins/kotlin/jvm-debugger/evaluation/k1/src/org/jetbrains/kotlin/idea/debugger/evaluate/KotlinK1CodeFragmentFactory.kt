@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.idea.j2k.convertToKotlin
 import org.jetbrains.kotlin.idea.j2k.j2kText
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.j2k.AfterConversionPass
+import org.jetbrains.kotlin.j2k.J2KPostProcessingRunner
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.types.KotlinType
@@ -234,13 +234,7 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
                                 kotlinCodeFragment.context
                             )
 
-                            AfterConversionPass(project, OldJ2kPostProcessor(formatCode = false))
-                                .run(
-                                    convertedFragment!!,
-                                    conversionContext,
-                                    range = null,
-                                    onPhaseChanged = null
-                                )
+                            J2KPostProcessingRunner.run(OldJ2kPostProcessor(formatCode = false), convertedFragment, conversionContext)
                         }
                     } catch (e: Throwable) {
                         // ignored because text can be invalid

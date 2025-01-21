@@ -501,7 +501,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
   }
 
   public static boolean canInlineParameterOrThisVariable(PsiLocalVariable variable) {
-    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable);
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferencesNoCache(variable);
     boolean isAccessedForWriting = false;
     for (PsiReferenceExpression refElement : refs) {
       if (PsiUtil.isAccessedForWriting(refElement)) {
@@ -737,7 +737,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
    * @param strictlyFinal whether the variable is referenced in the places where final variable is required
    */
   public static void tryInlineGeneratedLocal(PsiLocalVariable variable, boolean strictlyFinal) throws IncorrectOperationException {
-    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable);
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferencesNoCache(variable);
     PsiReferenceExpression firstRef = ContainerUtil.getFirstItem(refs);
 
     PsiExpression initializer = variable.getInitializer();
@@ -806,7 +806,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     throws IncorrectOperationException {
     PsiElement context = PsiUtil.getVariableCodeBlock(resultVar, null);
     if (context == null) return;
-    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(resultVar);
+    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferencesNoCache(resultVar);
     if (resultVar.getInitializer() == null) {
       PsiAssignmentExpression assignment = null;
       for (PsiReferenceExpression ref : references) {

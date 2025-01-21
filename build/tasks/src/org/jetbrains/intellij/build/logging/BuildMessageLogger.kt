@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.logging
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.BuildScriptsLoggedError
 
 abstract class BuildMessageLogger {
   abstract fun processMessage(message: LogMessage)
@@ -35,9 +36,18 @@ class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
   }
 
   override fun processMessage(message: LogMessage) {
-    // reported by trace exporter
-    if (message.kind != LogMessage.Kind.BLOCK_STARTED && message.kind != LogMessage.Kind.BLOCK_FINISHED) {
-      super.processMessage(message)
+    when (message.kind) {
+      // reported by trace exporter
+      LogMessage.Kind.BLOCK_STARTED, LogMessage.Kind.BLOCK_FINISHED -> {}
+      // failing-fast upon a build problem
+      LogMessage.Kind.BUILD_PROBLEM -> throw BuildScriptsLoggedError(message.text)
+      LogMessage.Kind.COMPILATION_ERRORS -> {
+        check(message is CompilationErrorsLogMessage) {
+          "Unexpected compilation errors message type: ${message::class.java.canonicalName}"
+        }
+        throw BuildScriptsLoggedError(message.errorMessages.joinToString(prefix = "${message.text}:\n", separator = "\n"))
+      }
+      else -> super.processMessage(message)
     }
   }
 

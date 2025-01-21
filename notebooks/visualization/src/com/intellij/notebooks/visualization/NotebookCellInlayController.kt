@@ -73,6 +73,11 @@ interface NotebookCellInlayController {
     fun createComponent(editor: EditorImpl, cell: EditorCell): EditorCellViewComponent
 
     fun supports(editor: EditorImpl, cell: EditorCell): Boolean
+
+    companion object {
+      @JvmField
+      val EP_NAME = ExtensionPointName.create<InputFactory>("org.jetbrains.plugins.notebooks.inputFactory")
+    }
   }
 
   val inlay: Inlay<*>

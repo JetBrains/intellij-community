@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.imports;
 
@@ -35,6 +35,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
         @TestMetadata("DefaultJsImports.kt")
         public void testDefaultJsImports() throws Exception {
             runTest("testData/editor/optimizeImports/js/DefaultJsImports.kt");
+        }
+
+        @TestMetadata("DynamicMembersNotImported.kt")
+        public void testDynamicMembersNotImported() throws Exception {
+            runTest("testData/editor/optimizeImports/js/DynamicMembersNotImported.kt");
         }
     }
 
@@ -311,9 +316,14 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/DefaultObjectReference.kt");
             }
 
-            @TestMetadata("EnumEntryUsedInsideEnum.kt")
-            public void testEnumEntryUsedInsideEnum() throws Exception {
-                runTest("testData/editor/optimizeImports/common/EnumEntryUsedInsideEnum.kt");
+            @TestMetadata("EnumStaticMembersUsedInsideEnum.kt")
+            public void testEnumStaticMembersUsedInsideEnum() throws Exception {
+                runTest("testData/editor/optimizeImports/common/EnumStaticMembersUsedInsideEnum.kt");
+            }
+
+            @TestMetadata("EnumStaticMembersUsedInsideUnrelatedClass.kt")
+            public void testEnumStaticMembersUsedInsideUnrelatedClass() throws Exception {
+                runTest("testData/editor/optimizeImports/common/EnumStaticMembersUsedInsideUnrelatedClass.kt");
             }
 
             @TestMetadata("Enums.kt")
@@ -329,6 +339,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
             @TestMetadata("ExtensionFunWithThisReference.kt")
             public void testExtensionFunWithThisReference() throws Exception {
                 runTest("testData/editor/optimizeImports/common/ExtensionFunWithThisReference.kt");
+            }
+
+            @TestMetadata("ExtensionFunWithThisReference_unusedImport.kt")
+            public void testExtensionFunWithThisReference_unusedImport() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ExtensionFunWithThisReference_unusedImport.kt");
             }
 
             @TestMetadata("ExtensionFunctionalTypeVal.kt")
@@ -441,6 +456,16 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/IteratorFunction2.kt");
             }
 
+            @TestMetadata("IteratorFunction_fromObject.kt")
+            public void testIteratorFunction_fromObject() throws Exception {
+                runTest("testData/editor/optimizeImports/common/IteratorFunction_fromObject.kt");
+            }
+
+            @TestMetadata("IteratorFunction_fromObject_unused.kt")
+            public void testIteratorFunction_fromObject_unused() throws Exception {
+                runTest("testData/editor/optimizeImports/common/IteratorFunction_fromObject_unused.kt");
+            }
+
             @TestMetadata("KT11640.kt")
             public void testKT11640() throws Exception {
                 runTest("testData/editor/optimizeImports/common/KT11640.kt");
@@ -526,6 +551,46 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/Overloads.kt");
             }
 
+            @TestMetadata("Overloads_invoke.kt")
+            public void testOverloads_invoke() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Overloads_invoke.kt");
+            }
+
+            @TestMetadata("Overloads_invoke_noConflict.kt")
+            public void testOverloads_invoke_noConflict() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Overloads_invoke_noConflict.kt");
+            }
+
+            @TestMetadata("Overloads_noConflict.kt")
+            public void testOverloads_noConflict() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Overloads_noConflict.kt");
+            }
+
+            @TestMetadata("Overloads_sameFile.kt")
+            public void testOverloads_sameFile() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Overloads_sameFile.kt");
+            }
+
+            @TestMetadata("Overloads_sameFile_2.kt")
+            public void testOverloads_sameFile_2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Overloads_sameFile_2.kt");
+            }
+
+            @TestMetadata("Overloads_sameFile_2_noConflict.kt")
+            public void testOverloads_sameFile_2_noConflict() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Overloads_sameFile_2_noConflict.kt");
+            }
+
+            @TestMetadata("Overloads_sameFile_nestedCall.kt")
+            public void testOverloads_sameFile_nestedCall() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Overloads_sameFile_nestedCall.kt");
+            }
+
+            @TestMetadata("Overloads_sameSignature.kt")
+            public void testOverloads_sameSignature() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Overloads_sameSignature.kt");
+            }
+
             @TestMetadata("ProvideDelegate.kt")
             public void testProvideDelegate() throws Exception {
                 runTest("testData/editor/optimizeImports/common/ProvideDelegate.kt");
@@ -534,6 +599,16 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
             @TestMetadata("ProvideDelegate2.kt")
             public void testProvideDelegate2() throws Exception {
                 runTest("testData/editor/optimizeImports/common/ProvideDelegate2.kt");
+            }
+
+            @TestMetadata("ProvideDelegate_fromObject.kt")
+            public void testProvideDelegate_fromObject() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ProvideDelegate_fromObject.kt");
+            }
+
+            @TestMetadata("ProvideDelegate_fromObject_unused.kt")
+            public void testProvideDelegate_fromObject_unused() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ProvideDelegate_fromObject_unused.kt");
             }
 
             @TestMetadata("ResolvedImportAndUnresolvedReference.kt")

@@ -2,15 +2,33 @@
 package com.intellij.ide.ui
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.SwingConstants
+
+@ApiStatus.Internal
+interface UISettingsStateDefaultsProvider {
+  companion object {
+    @JvmStatic
+    fun getInstance(): UISettingsStateDefaultsProvider = ApplicationManager.getApplication().service<UISettingsStateDefaultsProvider>()
+  }
+
+  val searchEverywherePreviewDefault: Boolean
+}
+
+@ApiStatus.Internal
+open class UISettingsStateDefaultsProviderImpl : UISettingsStateDefaultsProvider {
+  override val searchEverywherePreviewDefault: Boolean = false
+}
 
 class UISettingsState : BaseState() {
   @get:OptionTag("FONT_FACE")
@@ -229,7 +247,7 @@ class UISettingsState : BaseState() {
   var showBreakpointsOverLineNumbers: Boolean by property(true)
 
   @get:OptionTag("SHOW_PREVIEW_IN_SEARCH_EVERYWHERE")
-  var showPreviewInSearchEverywhere: Boolean by property(false)
+  var showPreviewInSearchEverywhere: Boolean by property(UISettingsStateDefaultsProvider.getInstance().searchEverywherePreviewDefault)
 
   @Suppress("FunctionName")
   fun _incrementModificationCount(): Unit = incrementModificationCount()

@@ -2,22 +2,31 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
+import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.intellij.platform.workspace.jps.entities.ExtensionsKt.collectTransitivelyDependentModules;
 
 public class ModuleUtilCore {
   public static final Key<Module> KEY_MODULE = new Key<>("Module");
@@ -169,33 +178,30 @@ public class ModuleUtilCore {
   }
 
   /**
-   * collect transitive module dependants
+   * <h3>Obsolescence notice</h3>
+   * This method uses
+   * {@link com.intellij.platform.workspace.jps.entities.ExtensionsKt#collectTransitivelyDependentModules(ModuleEntity, EntityStorage)},
+   * and remains for compatibility. 
+   * <p>
+   *   
+   * Collect transitive dependent modules.
    *
    * @param module to find dependencies on
    * @param result resulted set
    */
+  @ApiStatus.Obsolete(since = "2025.1")
   public static void collectModulesDependsOn(@NotNull Module module, @NotNull Set<? super Module> result) {
-    if (!result.add(module)) {
-      return;
-    }
+    var project = module.getProject();
+    var legacyBridge = project.getService(WorkspaceModelLegacyBridge.class);
+    var moduleEntity = legacyBridge.findModuleEntity(module);
+    if (moduleEntity == null) return; // error?
 
-    ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
-    List<Module> dependentModules = moduleManager.getModuleDependentModules(module);
-    for (Module dependentModule : dependentModules) {
-      OrderEntry[] orderEntries = ModuleRootManager.getInstance(dependentModule).getOrderEntries();
-      for (OrderEntry o : orderEntries) {
-        if (o instanceof ModuleOrderEntry orderEntry) {
-          if (orderEntry.getModule() == module) {
-            if (orderEntry.isExported()) {
-              collectModulesDependsOn(dependentModule, result);
-            }
-            else {
-              result.add(dependentModule);
-            }
-            break;
-          }
-        }
-      }
+    var tmpSet = collectTransitivelyDependentModules(moduleEntity, WorkspaceModel.getInstance(project).getCurrentSnapshot());
+    ProgressManager.checkCanceled();
+    for (var dependentModule : tmpSet) {
+      var legacyModule = legacyBridge.findLegacyModule(dependentModule);
+      if (legacyModule != null)
+        result.add(legacyModule);
     }
   }
 

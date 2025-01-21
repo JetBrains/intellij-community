@@ -52,7 +52,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
       registerJsonSchema(myFixture, schemaText, "json", it -> true);
       myFixture.configureByFile("/azure-file.json");
       myFixture.checkHighlighting(true, false, true);
-    }).start();
+    }).attempts(5).start();
   }
 
   public void testSwaggerHighlighting() {

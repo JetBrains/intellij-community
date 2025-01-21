@@ -50,5 +50,7 @@
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.shared" scope="TEST" />
   </component>
 </module>

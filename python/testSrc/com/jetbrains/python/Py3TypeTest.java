@@ -17,6 +17,66 @@ import java.util.Map;
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
 
+  // PY-20710
+  public void testLambdaGenerator() {
+    doTest("Generator[int, Any, Any]", """
+              expr = (lambda: (yield 1))()
+             """);
+  }
+
+  // PY-20710
+  public void testGeneratorDelegatingToLambdaGenerator() {
+    doTest("Generator[int, Any, str]", """
+              def g():
+                  yield from (lambda: (yield 1))()
+                  return "foo"
+              expr = g()
+             """);
+  }
+
+  // PY-20710
+  public void testYieldExpressionTypeFromGeneratorSendTypeHint() {
+    doTest("int", """
+      from typing import Generator
+      
+      def g() -> Generator[str, int, None]:
+          expr = yield "foo"
+      """);
+  }
+
+  // PY-20710
+  public void testYieldFromExpressionTypeFromGeneratorReturnTypeHint() {
+    doTest("int", """
+      from typing import Generator, Any
+      
+      def delegate() -> Generator[None, Any, int]:
+          yield
+          return 42
+
+      def g():
+          expr = yield from delegate()
+      """);
+  }
+
+  // PY-20710
+  public void testYieldFromLambda() {
+    doTest("Generator[int | str, str | Any, bool]",
+           """
+           from typing import Generator
+           
+           def gen1() -> Generator[int, str, bool]:
+               yield 42
+               return True
+           
+           def gen2():
+               yield "str"
+               return True
+     
+           l = lambda: (yield from gen1()) or (yield from gen2())
+           expr = l()
+           """);
+  }
+
   // PY-6702
   public void testYieldFromType() {
     doTest("str | int | float",
@@ -568,7 +628,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int",
            """
              class AIter(object):
-                 def __anext__(self):
+                 async def __anext__(self):
                      return 5
              class A(object):
                  def __aiter__(self):
@@ -576,6 +636,21 @@ public class Py3TypeTest extends PyTestCase {
              a = A()
              async for expr in a:
                  print(expr)""");
+  }
+  
+  // PY-60714
+  public void testAsyncIteratorUnwrapsCoroutineFromAnext() {
+    doTest("bytes", """
+             class AIterator:
+                 def __aiter__(self):
+                     return self
+
+                 async def __anext__(self) -> bytes:
+                     return b"a"
+             
+             async for expr in AIterator():
+                 print(expt)
+             """);
   }
 
   // PY-21655

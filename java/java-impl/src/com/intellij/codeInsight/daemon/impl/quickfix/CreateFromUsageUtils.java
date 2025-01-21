@@ -10,8 +10,8 @@ import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
-import com.intellij.codeInsight.template.ExpressionUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.ExpressionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -304,7 +304,8 @@ public final class CreateFromUsageUtils {
       argType = getParameterTypeByArgumentType(argType, psiManager, resolveScope);
       PsiParameter parameter = parameterList.getParameter(i);
       if (parameter == null) {
-        PsiParameter param = factory.createParameter(names[0], argType);
+        // Remove top-level annotations. They will be added by setupTypeElement again
+        PsiParameter param = factory.createParameter(names[0], argType.annotate(TypeAnnotationProvider.EMPTY));
         if (isInterface) {
           PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
         }

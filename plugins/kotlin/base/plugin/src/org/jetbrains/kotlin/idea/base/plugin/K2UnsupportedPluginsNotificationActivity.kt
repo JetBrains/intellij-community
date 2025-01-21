@@ -45,7 +45,7 @@ internal class K2UnsupportedPluginsNotificationActivity : ApplicationActivity {
                     NotificationType.WARNING
                 )
                 .addAction(NotificationAction.create(KotlinBasePluginBundle.message("action.about.k2.mode.text")) {
-                    BrowserUtil.browse("https://blog.jetbrains.com/idea/2024/08/meet-the-renovated-kotlin-support-k2-mode/")
+                    BrowserUtil.browse("https://kotl.in/k2-mode-blog-post/")
                 })
                 .addAction(NotificationAction.create(KotlinBasePluginBundle.message("action.show.incompatible.plugins.text")) {
                     PluginManagerConfigurable.showPluginConfigurable(/* project = */ null, incompatiblePlugins.map { it.pluginId })

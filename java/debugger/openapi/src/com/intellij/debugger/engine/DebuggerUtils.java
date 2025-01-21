@@ -39,7 +39,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
 import java.util.function.Function;
 
 public abstract class DebuggerUtils {
@@ -143,7 +146,7 @@ public abstract class DebuggerUtils {
   }
 
   @ApiStatus.Internal
-  public abstract <R, T extends Value> R processCollectibleValue(
+  public abstract <R, T> R processCollectibleValue(
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
     @NotNull Function<? super T, ? extends R> processor,
     @NotNull EvaluationContext evaluationContext) throws EvaluateException;
@@ -589,6 +592,20 @@ public abstract class DebuggerUtils {
 
   protected record ArrayClass(String className, int dims) {
   }
+
+  @ApiStatus.Internal
+  public static @Nullable String tryExtractExceptionMessage(@NotNull ObjectReference exception) {
+    final ReferenceType type = exception.referenceType();
+    final Field messageField = type.fieldByName("detailMessage");
+    if (messageField == null) return null;
+    final Value message = exception.getValue(messageField);
+    if (message instanceof StringReference) {
+      return ((StringReference)message).value();
+    }
+
+    return null;
+  }
+
 
   public static DebuggerUtils getInstance() {
     return ApplicationManager.getApplication().getService(DebuggerUtils.class);

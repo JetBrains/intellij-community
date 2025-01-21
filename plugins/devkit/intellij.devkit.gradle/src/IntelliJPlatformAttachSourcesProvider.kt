@@ -57,14 +57,17 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
                   ?: IntelliJPlatformProduct.fromCdnCoordinates(coordinates.groupId, coordinates.artifactId)
 
     return when {
-      // IntelliJ Platform dependency, such as `com.jetbrains.intellij.idea:ideaIC:2023.2.7` or `idea:ideaIC:2023.2.7`
+      // IntelliJ Platform dependency, such as `com.jetbrains.intellij.idea:ideaIC:2023.2.7`, `idea:ideaIC:aarch64:2024.3`, or `idea:ideaIC:2023.2.7`
       product != null -> resolveIntelliJPlatformAction(psiFile, coordinates.version)
 
       // IntelliJ Platform bundled plugin, such as `localIde:IC:2023.2.7+445`
       coordinates.groupId == "localIde" -> createAttachLocalPlatformSourcesAction(psiFile, coordinates)
 
-      // IntelliJ Platform bundled plugin, such as `bundledPlugin:Git4Idea:2023.2.7+445`
+      // IntelliJ Platform bundled plugin, such as `bundledPlugin:org.intellij.groovy:IC-243.21565.193`, `bundledPlugin:Git4Idea:2023.2.7+445`
       coordinates.groupId == "bundledPlugin" -> createAttachBundledPluginSourcesAction(psiFile, coordinates)
+
+      // IntelliJ Platform bundled module, such as `bundledModule:intellij.platform.coverage:IC-243.21565.193`
+      coordinates.groupId == "bundledModule" -> createAttachBundledModuleSourcesAction(psiFile, coordinates)
 
       else -> null
     }
@@ -108,7 +111,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * @param coordinates The Maven coordinates of the IntelliJ Platform whose sources need to be attached.
    */
   private fun createAttachLocalPlatformSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
-    resolveIntelliJPlatformAction(psiFile, coordinates.version.substringBefore('+'))
+    resolveIntelliJPlatformAction(psiFile, coordinates.version.substringAfter('-').substringBefore('+'))
 
   /**
    * Creates an action to attach sources of bundled plugins for the IntelliJ Platform.
@@ -118,7 +121,16 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    */
   private fun createAttachBundledPluginSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
     createAttachSourcesArchiveAction(psiFile, ApiSourceArchive.entries.firstOrNull { it.id == coordinates.artifactId })
-    ?: resolveIntelliJPlatformAction(psiFile, coordinates.version.substringBefore('+'))
+    ?: resolveIntelliJPlatformAction(psiFile, coordinates.version.substringAfter('-').substringBefore('+'))
+
+  /**
+   * Creates an action to attach sources of bundled modules for the IntelliJ Platform.
+   *
+   * @param psiFile The PSI file that represents the currently handled class.
+   * @param coordinates The Maven coordinates of the bundled module whose sources need to be attached.
+   */
+  private fun createAttachBundledModuleSourcesAction(psiFile: PsiFile, coordinates: MavenCoordinates) =
+    createAttachBundledPluginSourcesAction(psiFile, coordinates)
 
   /**
    * Attach the provided sources archive.

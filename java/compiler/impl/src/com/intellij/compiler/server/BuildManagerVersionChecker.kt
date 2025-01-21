@@ -39,7 +39,11 @@ internal class BuildManagerVersionChecker(val project: Project, val scope: Corou
       if (jdkArch != CpuArch.CURRENT) {
         NotificationGroupManager.getInstance()
           .getNotificationGroup("JDK Arch Check")
-          .createNotification(JavaBundle.message("arch.checker.notification.title"), JavaBundle.message("arch.checker.notification.content"), NotificationType.WARNING)
+          .createNotification(
+            JavaBundle.message("arch.checker.notification.title"),
+            JavaBundle.message("arch.checker.notification.content", versionInfo.displayVersionString(), jdkArch.name, CpuArch.CURRENT.name),
+            NotificationType.WARNING
+          )
           .apply {
             addAction(NotificationAction.createSimpleExpiring(JavaBundle.message("arch.checker.notification.project.structure")) {
               ProjectSettingsService.getInstance(project).openProjectSettings()

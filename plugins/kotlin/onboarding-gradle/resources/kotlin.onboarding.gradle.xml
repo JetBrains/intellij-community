@@ -2,6 +2,8 @@
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
     <module name="kotlin.onboarding"/>
+    <module name="kotlin.gradle.gradle-java"/>
+    <module name="kotlin.gradle.gradle-tooling"/>
   </dependencies>
 
   <resource-bundle>messages.GradleFeedbackBundle</resource-bundle>

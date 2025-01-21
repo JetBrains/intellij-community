@@ -68,14 +68,15 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_UNDO;
+import static com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponentKt.shouldHaveSplitterDiffPreview;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
@@ -750,7 +751,7 @@ public class ShelvedChangesViewManager implements Disposable {
     private void updatePanelLayout() {
       boolean isVertical = ChangesViewContentManager.isToolWindowTabVertical(myProject, SHELF);
 
-      boolean hasSplitterPreview = !isVertical;
+      boolean hasSplitterPreview = shouldHaveSplitterDiffPreview(myProject, isVertical);
       //noinspection DoubleNegation
       boolean needUpdatePreview = hasSplitterPreview != (mySplitterDiffPreview != null);
       if (!needUpdatePreview) return;

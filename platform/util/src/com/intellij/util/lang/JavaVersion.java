@@ -205,7 +205,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
     }
   }
 
-  private static final int MAX_ACCEPTED_VERSION = 25;  // sanity check
+  private static final int MAX_ACCEPTED_VERSION = 50;  // sanity check
 
   /**
    * <p>Parses a Java version string.</p>

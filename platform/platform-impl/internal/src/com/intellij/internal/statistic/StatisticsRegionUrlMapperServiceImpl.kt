@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
 import com.intellij.internal.statistic.eventLog.StatisticsRegionUrlMapperService
 import com.intellij.openapi.components.serviceIfCreated
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.minutes
 
@@ -21,17 +22,15 @@ private class StatisticsRegionUrlMapperServiceImpl(val scope: CoroutineScope) : 
   private var url: String? = null
 
   /**
-   * To respect @RequiresBackgroundThread @RequiresReadLockAbsence annotations in [com.intellij.ide.RegionUrlMapper] and simplify usages of
-   * [com.intellij.ide.StatisticsRegionUrlMapperServiceImpl.getRegionUrl] in statistics code region specific url is updated and cached in coroutine.
+   * To simplify usages of [StatisticsRegionUrlMapperServiceImpl.getRegionUrl] in statistics code,
+   * region-specific url is updated and cached in coroutine.
    *
    * Cached value is periodically updated to ensure it is in sync with updated values in [com.intellij.ide.RegionUrlMapper]
   */
   init {
     scope.launch {
       while (isActive) {
-        withContext(Dispatchers.IO) {
-          url = RegionUrlMapper.mapUrl(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE)
-        }
+        url = RegionUrlMapper.tryMapUrl(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE).await()
         delay(10.minutes)
       }
     }
@@ -41,9 +40,7 @@ private class StatisticsRegionUrlMapperServiceImpl(val scope: CoroutineScope) : 
 
   fun updateUrl() {
     scope.launch {
-      withContext(Dispatchers.IO) {
-        url = RegionUrlMapper.mapUrl(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE)
-      }
+      url = RegionUrlMapper.tryMapUrl(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE).await()
     }
   }
 

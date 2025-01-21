@@ -38,6 +38,7 @@ import com.intellij.openapi.project.ReadmeShownUsageCollector.README_OPENED_ON_S
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -419,18 +420,26 @@ internal interface ProjectFrameProducer {
   fun create(): IdeFrameImpl
 }
 
-internal fun applyBoundsOrDefault(frame: JFrame, bounds: Rectangle?) {
+internal fun applyBoundsOrDefault(frame: JFrame, bounds: Rectangle?, restoreOnlyLocation: Boolean = false) {
   if (bounds == null) {
     setDefaultSize(frame)
     frame.setLocationRelativeTo(null)
   }
   else {
-    frame.bounds = bounds
+    if (restoreOnlyLocation) {
+      frame.location = bounds.location
+      // We need to guarantee that the size is smaller than this screen,
+      // to be able to maximize the frame after this.
+      setDefaultSize(frame, ScreenUtil.getScreenRectangle(bounds.location))
+    }
+    else {
+      frame.bounds = bounds
+    }
   }
 }
 
-private fun setDefaultSize(frame: JFrame) {
-  val size = ScreenUtil.getMainScreenBounds().size
+private fun setDefaultSize(frame: JFrame, screen: Rectangle = ScreenUtil.getMainScreenBounds()) {
+  val size = screen.size
   size.width = min(1400, size.width - 20)
   size.height = min(1000, size.height - 40)
   frame.size = size
@@ -462,16 +471,23 @@ internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameP
 
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
-        if (isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null) {
+        val restoreNormalBounds = isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null
+
+        // On macOS, setExtendedState(maximized) may UN-maximize the frame if the restored bounds are too large
+        // (so the OS will "autodetect" it as already maximized).
+        // Therefore, we only restore the location and use the default size (which is always computed to be less than the screen).
+        applyBoundsOrDefault(frame, boundsAndDevice?.first, restoreOnlyLocation = isMaximized && SystemInfo.isMac)
+        frame.extendedState = state
+        frame.minimumSize = Dimension(340, frame.minimumSize.height)
+
+        // This has to be done after restoring the actual state, as otherwise setExtendedState() may overwrite the normal bounds.
+        if (restoreNormalBounds) {
           frame.normalBounds = boundsAndDevice.first
           frame.screenBounds = ScreenUtil.getScreenDevice(boundsAndDevice.first)?.defaultConfiguration?.bounds
           if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
             IDE_FRAME_EVENT_LOG.debug("Loaded saved normal bounds ${frame.normalBounds} for the screen ${frame.screenBounds}")
           }
         }
-        applyBoundsOrDefault(frame, boundsAndDevice?.first)
-        frame.extendedState = state
-        frame.minimumSize = Dimension(340, frame.minimumSize.height)
         return frame
       }
     }

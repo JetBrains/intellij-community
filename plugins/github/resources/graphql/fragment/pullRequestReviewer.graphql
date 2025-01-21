@@ -1,0 +1,14 @@
+fragment pullRequestReviewer on RequestedReviewer {
+  ... on User {
+    ...userInfo
+  }
+  ... on Team {
+    ...teamInfo
+  }
+  ... on Mannequin {
+    ...mannequinInfo
+  }
+  ... on Bot {
+    ...botInfo
+  }
+}

@@ -1,28 +1,3 @@
-// ERROR: Unresolved reference: PsiElement
-// ERROR: Unresolved reference: UsageInfo
-// ERROR: 'getDimensionServiceKey' overrides nothing
-// ERROR: Unresolved reference: PsiElement
-// ERROR: Unresolved reference: JetPsiUtil
-// ERROR: Unresolved reference: JetNamedFunction
-// ERROR: Unresolved reference: JetProperty
-// ERROR: Unresolved reference: BindingContext
-// ERROR: Unresolved reference: AnalyzerFacadeWithCache
-// ERROR: Unresolved reference: DeclarationDescriptor
-// ERROR: Unresolved reference: BindingContext
-// ERROR: Unresolved reference: CallableMemberDescriptor
-// ERROR: Unresolved reference: DeclarationDescriptor
-// ERROR: Unresolved reference: ClassDescriptor
-// ERROR: Unresolved reference: JetBundle
-// ERROR: Unresolved reference: DescriptorRenderer
-// ERROR: Unresolved reference: IdeDescriptorRenderers
-// ERROR: Unresolved reference: PsiMethod
-// ERROR: Unresolved reference: JetRefactoringUtil
-// ERROR: Unresolved reference: PsiMethod
-// ERROR: Unresolved reference: UsageInfo
-// ERROR: Unresolved reference: UsageInfo
-// ERROR: Unresolved reference: myChecked
-// ERROR: Unresolved reference: myChecked
-// ERROR: Unresolved reference: myOverridingMethods
 class A {
     fun someOther() = false
 

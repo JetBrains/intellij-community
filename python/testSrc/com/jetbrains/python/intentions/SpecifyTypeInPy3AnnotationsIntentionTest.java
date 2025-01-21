@@ -22,6 +22,16 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
     doTestParam();
   }
 
+  // PY-55548
+  public void testUnwrapsTypesInAsyncFunctions() {
+    doTestReturnType();
+  }
+
+  // PY-55548
+  public void testAddsImportsWhenNeeded() {
+    doTestReturnType();
+  }
+
   // PY-31369
   public void testAnnotatedParameterNoIntention() {
     doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation"));

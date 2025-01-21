@@ -531,7 +531,7 @@ private suspend fun reportCrashesIfAny() {
       if (crashInfo.extraJvmLog != null) {
         // Detect crashes caused by OOME
         if (crashInfo.extraJvmLog.contains("java.lang.OutOfMemoryError: Java heap space")) {
-          LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true)
+          LowMemoryNotifier.showNotificationFromCrashAnalysis()
         }
         attachments += Attachment("jbr_err.txt", crashInfo.extraJvmLog).also { it.isIncluded = true }
       }

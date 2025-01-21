@@ -51,10 +51,10 @@ def get_column_types(arr):
 
 def get_data(arr, use_csv_serialization, start_index=None, end_index=None, format=None):
     # type: (Union[np.ndarray, dict], int, int) -> str
-    def convert_data_to_html(data):
+    def convert_data_to_html(data, format):
         return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True))
 
-    def convert_data_to_csv(data):
+    def convert_data_to_csv(data, format):
         return repr(_create_table(data, start_index, end_index, format).to_csv(na_rep = "None", float_format=format, sep=CSV_FORMAT_SEPARATOR))
 
     if use_csv_serialization:
@@ -66,7 +66,7 @@ def get_data(arr, use_csv_serialization, start_index=None, end_index=None, forma
 
 def display_data_html(arr, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
-    def ipython_display(data):
+    def ipython_display(data, format):
         from IPython.display import display, HTML
         display(HTML(_create_table(data, start_index, end_index).to_html(notebook=True)))
 
@@ -75,8 +75,8 @@ def display_data_html(arr, start_index=None, end_index=None):
 
 def display_data_csv(arr, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
-    def ipython_display(data):
-        print(_create_table(data, start_index, end_index).to_csv(na_rep = "None", sep=CSV_FORMAT_SEPARATOR))
+    def ipython_display(data, format):
+        print(_create_table(data, start_index, end_index).to_csv(na_rep = "None", sep=CSV_FORMAT_SEPARATOR, float_format=format))
 
     _compute_data(arr, ipython_display)
 
@@ -315,7 +315,7 @@ def _compute_data(arr, fun, format=None):
         arr['data'] = data
         data = arr
 
-    data = fun(data)
+    data = fun(data, pd.get_option('display.float_format'))
 
     if is_pd:
         _reset_pd_options(jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options)

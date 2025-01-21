@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.FactoryMap;
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.*;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -138,6 +140,7 @@ public final class JsonSchemaObjectReadingUtils {
       if (info != null) {
         RemoteFileState state = info.getState();
         if (state == RemoteFileState.DOWNLOADING_NOT_STARTED) {
+          JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.ExecutedHttpVirtualFileDownloadRequest);
           JsonFileResolver.startFetchingHttpFileIfNeeded(refFile, service.getProject());
           return NULL_OBJ;
         }

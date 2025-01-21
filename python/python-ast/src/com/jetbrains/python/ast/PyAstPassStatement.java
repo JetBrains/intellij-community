@@ -6,4 +6,8 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 public interface PyAstPassStatement extends PyAstStatement {
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyPassStatement(this);
+  }
 }

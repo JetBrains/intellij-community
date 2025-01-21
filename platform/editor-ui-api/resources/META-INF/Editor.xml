@@ -8,6 +8,8 @@
     </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettingsStateDefaultsProviderImpl"
+                        serviceInterface="com.intellij.ide.ui.UISettingsStateDefaultsProvider" />
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
     <applicationSettings service="com.intellij.ide.ui.UISettings"/>
 

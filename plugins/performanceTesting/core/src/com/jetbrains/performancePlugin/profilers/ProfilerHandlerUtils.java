@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.profilers;
 
-import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.notification.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -15,20 +14,19 @@ public final class ProfilerHandlerUtils {
   private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("PerformancePlugin");
 
   public static void notify(@Nullable Project project, File snapshot) {
+    var availableSnapshotProcessors =
+      SnapshotOpener.EP_NAME.getExtensionList().stream().filter(it -> it.canOpen(snapshot, project)).toList();
     Notification notification =
       GROUP.createNotification(PerformanceTestingBundle.message("profiling.capture.snapshot.success", snapshot.getName()),
                                NotificationType.INFORMATION);
-    notification.addAction(NotificationAction.createSimpleExpiring(
-      PerformanceTestingBundle.message("profiling.capture.snapshot.action.showInFolder", RevealFileAction.getFileManagerName()),
-      () -> RevealFileAction.openFile(snapshot)
-    ));
-    SnapshotOpener opener = SnapshotOpener.findSnapshotOpener(snapshot);
-    if (opener != null && project != null) {
+
+    for (SnapshotOpener opener : availableSnapshotProcessors) {
       notification.addAction(NotificationAction.createSimpleExpiring(
-        PerformanceTestingBundle.message("profiling.capture.snapshot.action.open"),
+        opener.getPresentableName(),
         () -> opener.open(snapshot, project)
       ));
     }
+
     notification.notify(project);
   }
 

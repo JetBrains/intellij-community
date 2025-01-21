@@ -153,7 +153,8 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       else {
         anchor = referenceElements[position - 1];
       }
-      PsiJavaCodeReferenceElement classReferenceElement = JavaPsiFacade.getElementFactory(project).createReferenceElementByType(myTypeToExtendFrom);
+      PsiJavaCodeReferenceElement classReferenceElement = JavaPsiFacade.getElementFactory(project)
+        .createReferenceElementByType(myTypeToExtendFrom.annotate(TypeAnnotationProvider.EMPTY));
       PsiElement element;
       if (anchor == null) {
         if (referenceElements.length == 0) {

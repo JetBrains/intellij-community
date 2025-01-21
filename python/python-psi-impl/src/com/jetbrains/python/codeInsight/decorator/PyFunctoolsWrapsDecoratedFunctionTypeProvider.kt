@@ -43,12 +43,7 @@ class PyFunctoolsWrapsDecoratedFunctionTypeProvider : PyTypeProviderBase() {
         if (it == null) return@overStub emptyList<PsiElement>()
         var scopeOwner = ScopeUtil.getScopeOwner(decorator)
         val wrappedQName = QualifiedName.fromDottedString(it.wrapped)
-        val resolved = mutableListOf<PsiElement>()
-        while (scopeOwner != null) {
-          resolved.addAll(PyResolveUtil.resolveQualifiedNameInScope(wrappedQName, scopeOwner, context))
-          scopeOwner = ScopeUtil.getScopeOwner(scopeOwner)
-        }
-        resolved
+        PyResolveUtil.resolveQualifiedNameInScope(wrappedQName, scopeOwner!!, context)
       }
       .overAst {
         val wrappedExpr = it.argumentList?.getValueExpressionForParam(PyKnownDecoratorUtil.FunctoolsWrapsParameters.WRAPPED)

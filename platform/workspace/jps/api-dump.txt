@@ -684,6 +684,7 @@ f:com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Companion
 - f:create(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder
 - bs:create$default(com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Companion,com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.ExtensionsKt
+- sf:collectTransitivelyDependentModules(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):java.util.Set
 - sf:getModuleLibraries(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):kotlin.sequences.Sequence
 - sf:getProjectLibraries(com.intellij.platform.workspace.storage.EntityStorage):kotlin.sequences.Sequence
 - sf:getSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntity):java.util.List

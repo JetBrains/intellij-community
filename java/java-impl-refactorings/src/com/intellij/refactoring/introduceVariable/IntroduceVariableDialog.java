@@ -234,7 +234,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
         @Override
         public void itemStateChanged(ItemEvent e) {
           if (e.getStateChange() == ItemEvent.SELECTED) {
-            myCbVarType.setEnabled(Comparing.equal(myTypeSelector.getSelectedType(), CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(myExpression)));
+            updateVarType();
           }
         }
       });
@@ -246,8 +246,15 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     panel.add(myCbVarType, gbConstraints);
 
     updateControls();
+    updateVarType();
 
     return panel;
+  }
+
+  public void updateVarType() {
+    if (myCbVarType != null) {
+      myCbVarType.setEnabled(Comparing.equal(myTypeSelector.getSelectedType(), CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(myExpression)));
+    }
   }
 
   private void updateControls() {
@@ -275,10 +282,6 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     else {
       myCbFinal.setEnabled(true);
       myCbFinal.setSelected(myCbFinalState);
-    }
-
-    if (myCbVarType != null) {
-      myCbVarType.setEnabled(Comparing.equal(myTypeSelector.getSelectedType(), myExpression.getType()));
     }
   }
 

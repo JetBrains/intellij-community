@@ -84,6 +84,13 @@ class PluginLayout private constructor(
   var retainProductDescriptorForBundledPlugin: Boolean = false
   var enableSymlinksAndExecutableResources: Boolean = false
 
+  /**
+   * Should be `true` if the semantic versioning is enabled for the plugin in plugins.jetbrains.com.
+   * Then the plugin version will be checked against [org.jetbrains.intellij.build.impl.SemanticVersioningScheme].
+   */
+  var semanticVersioning: Boolean = false
+    private set
+
   @JvmField
   internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
 
@@ -264,6 +271,14 @@ class PluginLayout private constructor(
     val mainModule
       get() = layout.mainModule
 
+    /**
+     * @see [PluginLayout.semanticVersioning]
+     */
+    var semanticVersioning: Boolean = false
+      set(value) {
+        layout.semanticVersioning = value
+      }
+
     var mainJarName: String
       get() = layout.mainJarName
       /**
@@ -408,12 +423,14 @@ class PluginLayout private constructor(
      * Multiple invocations of this method will add corresponding plugin names to a list of name to be added to scramble classpath
      *
      * @param pluginMainModuleName - a name of the dependent plugin's directory, whose jars should be added to scramble classpath
-     * @param relativePath - a directory where jars should be searched (relative to plugin home directory, "lib" by default)
      */
     fun scrambleClasspathPlugin(pluginMainModuleName: String) {
       layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(ScrambleClasspathPluginEntry(pluginMainModuleName = pluginMainModuleName, relativePath = null))
     }
 
+    /**
+     * @param relativePath - a directory where jars should be searched (relative to plugin home directory, "lib" by default)
+     */
     fun scrambleClasspathPlugin(pluginId: String, relativePath: String) {
       layout.scrambleClasspathPlugins = layout.scrambleClasspathPlugins.add(ScrambleClasspathPluginEntry(pluginMainModuleName = pluginId, relativePath = relativePath))
     }

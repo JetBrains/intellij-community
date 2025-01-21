@@ -1,3 +1,3 @@
 def foo(x, y):
-    # type: (object, object) -> object
+    # type: (object, object) -> None
     pass

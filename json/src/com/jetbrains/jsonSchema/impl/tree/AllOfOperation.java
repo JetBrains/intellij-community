@@ -2,6 +2,8 @@
 package com.jetbrains.jsonSchema.impl.tree;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.SchemaResolveState;
@@ -24,6 +26,7 @@ public final class AllOfOperation extends Operation {
 
   @Override
   public void map(final @NotNull Set<JsonSchemaObject> visited) {
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.AllOfExpanded);
     var allOf = mySourceNode.getAllOf();
     assert allOf != null;
     myChildOperations.addAll(ContainerUtil.map(allOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService, myExpansionRequest)));

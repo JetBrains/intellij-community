@@ -10,7 +10,12 @@ import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 
 abstract class AbstractJavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterSingleFileTest() {
-    override fun fileToKotlin(text: String, settings: ConverterSettings, preprocessorExtensions: List<J2kPreprocessorExtension>, postprocessorExtensions: List<J2kPostprocessorExtension>): String {
+    override fun fileToKotlin(
+        text: String,
+        settings: ConverterSettings,
+        preprocessorExtensions: List<J2kPreprocessorExtension>,
+        postprocessorExtensions: List<J2kPostprocessorExtension>
+    ): String {
         val file = createJavaFile(text)
         val element = myFixture.elementAtCaret
 

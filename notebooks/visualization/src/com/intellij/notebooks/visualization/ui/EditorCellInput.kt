@@ -50,7 +50,7 @@ class EditorCellInput(
     return bounds.y + delimiterPanelSize to bounds.height - delimiterPanelSize
   }
 
-  private fun toggleFolding() = cell.manager.update { ctx ->
+  private fun toggleFolding() = editor.updateManager.update { ctx ->
     folded = !folded
     (component as? InputComponent)?.updateFolding(ctx, folded)
   }
@@ -78,7 +78,7 @@ class EditorCellInput(
     return bounds
   }
 
-  fun updateInput() = cell.manager.update { ctx ->
+  fun updateInput() = editor.updateManager.update { ctx ->
     (component as? InputComponent)?.updateInput(ctx)
   }
 

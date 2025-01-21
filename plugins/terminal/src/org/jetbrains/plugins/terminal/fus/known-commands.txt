@@ -5,10 +5,6 @@ aapt
 ab
 abduco
 abigen
-abrt-cli
-abrt-harvest-vmcore
-abrt-retrace-client
-abrt-watch-log
 abrt-action-analyze-backtrace
 abrt-action-analyze-c
 abrt-action-analyze-ccpp
@@ -23,6 +19,7 @@ abrt-action-trim-files
 abrt-applet
 abrt-cli
 abrt-harvest-vmcore
+abrt-retrace-client
 abrt-server
 abrt-watch-log
 abrt-xorg
@@ -31,8 +28,8 @@ ack
 act
 adb
 add-apt-repository
-adduser
 addr2line
+adduser
 adr
 afplay
 aftman
@@ -55,7 +52,7 @@ akonadictl
 alacritty
 alias
 aliases
-aliyun-cli
+aliyun
 alpine
 amass
 amazon-efs-utils
@@ -67,7 +64,6 @@ android
 android-tools
 angband
 angular
-angular-cli
 ansible
 ansible-config
 ansible-doc
@@ -78,9 +74,8 @@ ansible-playbook
 ansible-pull
 ansible-vault
 ant
-appwrite
-antlr
 antibody
+antlr
 anyenv
 apachectl
 apk
@@ -95,6 +90,7 @@ apport-cli
 apport-unpack
 appscale
 appstreamcli
+appwrite
 apt
 apt-add-repository
 apt-cache
@@ -109,12 +105,10 @@ arangosh
 arc
 arch
 arduino
-arduino-cli
 argo
-asr
-argocd
 argo-rollouts
 argo-workflows
+argocd
 argoproj
 argus
 aria2c
@@ -129,20 +123,20 @@ arp-scan
 artillery
 as
 asar
-asciinema
 asciidoctor
+asciinema
 asdf
-asr
 asm2wasm
 asmc
 aspell
+asr
 assimp
 assoc
-astronomer
 astro
+astronomer
 astyle
-asyncapi
 asymptote
+asyncapi
 at
 atc
 atlantis
@@ -182,6 +176,7 @@ backupninja
 badblocks
 bake
 balena
+bamboo
 banner
 base32
 base64
@@ -195,13 +190,8 @@ bashrc
 bat
 batctl
 bazel
-bcd
 bc
 bcd
-black
-br
-build-storybook
-bun
 bce
 bce-command
 bch
@@ -216,11 +206,10 @@ berks
 berkshelf
 bettercap
 bfg
-bfgminer
 bg
-bicep
 bibtex
 bibtool
+bicep
 bikeshed
 binwalk
 bison
@@ -228,13 +217,14 @@ bit
 bitrise
 bitwarden
 bjarne
+black
 blade
 blade-cli
 bless
 blitz
 blkid
-blockdev
 bloaty
+blockdev
 bmon
 bochs
 bokeh
@@ -242,16 +232,26 @@ bolt
 bosh
 bower
 box
+bpftrace
 bpytop
 br
-brew
-brew cask
-brew services
+brew commands
+brew config
+brew create
+brew doctor
+brew edit
+brew info
+brew install
+brew list
+brew search
+brew uninstall
+brew update
+brew upgrade
 bridgecrew
 brigade
 brightnessctl
-brotli
 broot
+brotli
 browser-sync
 browserify
 browsertime
@@ -262,18 +262,18 @@ bt
 bt-monitor
 btop
 build-storybook
-bun
+buildah
 buildctl
 buildkite-agent
 buildozer
-buildah
 bulk-extractor
+bun
 bundle
 bundler
 bunyan
 bup
-bwa
 bw
+bwa
 byobu
 bzip2
 c++
@@ -337,11 +337,11 @@ catalina
 catimg
 cavif
 cbconsole
-ccls
 cc
 ccache
 ccal
 ccat
+ccls
 ccrypt
 ccze
 cd
@@ -355,38 +355,42 @@ cdktf
 celery
 celestia-node
 certbot
-cipher
-clilol
 cf
-cfssl
-cftp
+cf-cli
+cfn
 cfn-lint
 cfn-nag
 cfn-tail
 cfn-validate
 cfn_nag
 cfngin
+cfssl
+cftp
 chage
+chalice
+chaos-mesh
+chaoskube
 charm
 chartmuseum
 check
 checkinstall
 checkov
 cheerio
-chezmoi
 chef
 chef-client
 chef-run
+chezmoi
 chisel
 chkdsk
 chmod
-choosenim
 choco
+choosenim
 chown
 chruby
 chsh
 ci
 cicada
+cilium
 cipher
 circleci
 circuitbreaker
@@ -408,8 +412,8 @@ clear
 clerk
 clif
 cliff-jumper
-clinfo
 clilol
+clinfo
 clion
 clj
 cloc
@@ -418,13 +422,14 @@ clojure
 clojurescript
 cloud-nuke
 cloudctl
-cloudflared
 cloudflare
+cloudflared
 cloudfoundry
 cloudmonkey
 cloudsql-proxy
 clp
 cls
+clusterctl
 cmake
 cmatrix
 cmd
@@ -432,26 +437,27 @@ cmdtest
 cmocka
 cmus
 cni
-coda
 cobalt
 cobaltstrike
 cocoapods
+coda
 code
 code-insiders
 codeceptjs
 codesign
+codium
 coffee
 coffeescript
 cog
 col
+colima
 collectd
 colordiff
 column
 combinepdf
 command
-coda
-compact
 comms
+compact
 composer
 composer audit
 composer bump
@@ -484,9 +490,10 @@ composer suggests
 composer update
 composer validate
 conan
-concurrency
 concourse
+concurrency
 conda
+conftest
 connect
 connect-proxy
 consul
@@ -495,11 +502,11 @@ containerd
 containerd-shim
 convert
 cookiecutter
-coq
 copilot
 copy
 copyfile
 copypath
+coq
 cordova
 corepack
 coreutils
@@ -529,10 +536,12 @@ create-web3-frontend
 credo
 crictl
 cripple
+critest
 critical
-cron
 croc
+cron
 crontab
+crossplane
 crow
 crush
 cry
@@ -542,21 +551,24 @@ crypttool
 cscope
 csdx
 csh
-csso
-cssnano
 cssmin
+cssnano
+csso
 csvkit
 csvsql
 ctags
 ctop
+ctr
 ctrlp
 ctrun
 cucumber
 curl
-curl ifconfig.me
-curl -I
-curl -sL | grep
 curl --data
+curl -I
+curl -sL
+curl ifconfig.me
+cursor
+custodian
 cut
 cv
 cvm
@@ -575,24 +587,24 @@ dagit
 dapr
 darkstat
 dart
-date
-dart pub get
+dart pub
 dart run
 dart test
 dash
 dash-cli
-datafusion
 datadog
 datadog-agent
+datafusion
 datamash
 dataplane
+date
 dateseq
 datree
 dbt
 dc
-dcli
 dcat
 dcd
+dcli
 dconf
 dctl
 dd
@@ -600,18 +612,18 @@ ddclient
 ddd
 ddev
 ddosify
+debootstrap
 debug
 debugfs
 decipher
-debootstrap
 defaultbrowser
 defaults
+degit
 dehydrated
 deja-dup
-degit
 del
-deltacopy
 delta
+deltacopy
 deno
 deno bundle
 deno cache
@@ -628,6 +640,7 @@ deployctl
 depstar
 derek
 deta
+devcontainer-cli
 devd
 devspace
 dex
@@ -643,9 +656,9 @@ diff-so-fancy
 diff3
 diffpdf
 dig
-dig mx
-dig any
 dig +short
+dig any
+dig mx
 digiKam
 dir
 dirb
@@ -676,9 +689,6 @@ do-release-upgrade
 docker
 docker build
 docker compose
-docker-compose
-docker-compose down
-docker-compose up
 docker exec
 docker images
 docker info
@@ -691,9 +701,13 @@ docker push
 docker run
 docker stop
 docker swarm
+docker-compose
+docker-compose down
+docker-compose up
 dockerd
 dockerd-rootless
 dockle
+dockviz
 doctl
 dog
 dolphin
@@ -709,23 +723,19 @@ dotenv-vault
 dotnet
 dotnet build
 dotnet clean
-dotnet ef database update
-dotnet ef migrations add
-dotnet new blazorserver
-dotnet new console
-dotnet new mvc
-dotnet new webapi
+dotnet ef
+dotnet new
 dotnet publish
 dotnet restore
 dotnet run
 dotnet test
-dotnet tool install
-dotnet tool update
-dotnet watch run
+dotnet tool
+dotnet watch
 dotslash
 doxygen
 dprint
 dracut
+draft
 drag
 drain
 drawio
@@ -755,6 +765,7 @@ eclim
 ecryptfs
 ecryptfs-migrate-home
 ecryptfs-recover-private
+ecs-cli
 ecspresso
 ed
 edb
@@ -762,41 +773,37 @@ edge
 editcap
 editorconfig
 egrep
+eiffel
+eject
+eksctl
+elastic-agent
+elastic-apm
+elasticsearch
 electron
 eleventy
 elif
-eiffel
-eject
-elasticsearch
 elixir
-elixir iex -S mix
+elixir iex
 elixir mix
-elixir mix deps.get
-elixir mix dialyzer
-elixir mix ecto.migrate
-elixir mix phx.new
-elixir mix phx.server
-elixir mix test
 elm
-elm-format
-elm-json
 elm make
 elm reactor
-elm-review
 elm test
+elm-format
+elm-json
+elm-review
 else
 emacs
-encore
 emcc
 emctl
 emerge
-emulator
 emoji
 emojify
 emulator
 enable
 encfs
 encode
+encore
 encrypt
 encscript
 enlighter
@@ -815,17 +822,19 @@ esbuild build
 esbuild bundle
 esbuild serve
 esbuild watch
+esc
 eslint
 eslint --cache
 eslint --debug
-eslint --ext .js,.jsx,.ts,.tsx
+eslint --ext
 eslint --fix
 eslint --ignore-path
-espeak
 espanso
 espctl
+espeak
 esptool
 etcd
+etcdctl
 ethtool
 ettercap
 eval
@@ -834,14 +843,14 @@ ex
 exa
 exabgp
 exec
-exiftool
 exercism
+exiftool
 exit
+exo
 expand
 expect
 explorer
 expo
-expo-cli
 expo build:android
 expo build:ios
 expo eject
@@ -854,29 +863,30 @@ expo run:ios
 expo start
 expo update
 expo upgrade
+expo-cli
 export
 expr
 exuberant-ctags
-fabric
 faas-cli
 faas-cli deploy
 faas-cli invoke
 faas-cli remove
 faas-cli up
 faas-idler
-factor
+fabric
 facter
+factor
 fail2ban
 fakeroot
+fasd
 fast
 fastapi
 fastboot
 fastlane
+fastly
 fastqc
 fasttext
 fastx-toolkit
-fastly
-fasd
 fbi
 fbset
 fd
@@ -894,7 +904,6 @@ filezilla
 fin
 find
 findmnt
-firecracker
 firebase
 firebase database:get
 firebase deploy
@@ -906,15 +915,18 @@ firebase init
 firebase login
 firebase logout
 firebase serve
+firecracker
+firectl
 firefox
 firewall-cmd
 fish
 fish_config
 fisher
 flac
+flagger
 flake8
-flatpak
 flatcar-installer
+flatpak
 fleet
 flex
 flickity
@@ -924,6 +936,8 @@ flips
 float
 floor
 flow
+fluent-bit
+fluentd
 flutter
 flutter analyze
 flutter build
@@ -939,17 +953,13 @@ flux
 flux bootstrap
 flux create source
 flux export
-flux get hr
-flux get ks
-flux get sources
-flux get sources git
+flux get
 flux install
 flux logs
 flux reconcile
 flux suspend
 fly
 flyctl
-flyctl apps list
 flyctl deploy
 flyctl launch
 flyctl logs
@@ -983,10 +993,10 @@ fsharp dotnet new
 fsharp dotnet run
 fsharp fsi
 fswatch
-ftrace
 ftp
-fuser
+ftrace
 fuse
+fuser
 fuzz
 fvm
 fzf
@@ -1002,9 +1012,9 @@ ganglia
 gap
 garden
 gatling
+gatsby
 gauge
 gawk
-gatsby
 gcc
 gcloud
 gcloud-sdk
@@ -1028,62 +1038,40 @@ geoiplookup
 geoserver
 gh
 gh actions
+gh issue
+gh pr
+gh repo
 ghc
 ghci
 ghcup
-gh issue close
-gh issue create
-gh issue list
-gh issue status
 ghk
-gh pr create
-gh pr list
-gh pr merge
-gh pr status
-ghq
 ghost
 ghostscript
-gh pr status
-gh repo clone
-gh repo create
-gh repo fork
-gh repo view
+ghq
 ghz
 gibo
 gifsicle
 git
 git add
-git apply
-git add -p
-git add .
-git add -A
 git am
 git annotate
+git apply
 git archive
 git bisect
 git blame
 git branch
-git branch -a
-git branch -d
-git branch --merged
 git bundle
 git checkout
-git checkout -b
 git cherry
 git cherry-pick
 git clean
 git clone
 git commit
-git commit -m
-git commit --amend
 git config
-git config --global
 git describe
 git diff
-git diff --staged
 git difftool
 git fetch
-git fetch --all
 git filter-branch
 git format-patch
 git fsck
@@ -1092,11 +1080,8 @@ git grep
 git gui
 git help
 git init
-gitk
-git log
-git log --oneline
-git log --graph
 git lfs
+git log
 git ls-files
 git ls-remote
 git ls-tree
@@ -1105,25 +1090,14 @@ git mergetool
 git mv
 git prune
 git pull
-git pull --rebase
 git push
-git push --force
-git push --tags
 git rebase
-git rebase -i
 git reflog
 git remote
-git remote -v
-git remote add
-git remote remove
-git remote rename
-git remote show
 git repack
 git replace
 git request-pull
 git reset
-git reset --hard
-git reset HEAD~1
 git restore
 git revert
 git rm
@@ -1131,57 +1105,46 @@ git shortlog
 git show
 git show-ref
 git stash
-git stash list
-git stash apply
-git stash pop
-git stash drop
 git status
 git submodule
-git submodule add
-git submodule init
-git submodule update
-git submodule sync
-git submodule foreach
 git svn
 git switch
 git tag
-git tag -a
-git tag -d
-git tag -l
 git version
 git whatchanged
 git worktree
 git-annex
+git-cliff
 git-crypt
 git-extras
-git-cliff
-git-profile
 git-flow
-git-profile
 git-lfs
+git-profile
 git-secret
 git-subrepo
-git-tfs
 git-svn
+git-tfs
 gitea
 github
-gitk
-glow
-gltfjsx
 github-cli
 github-desktop
-gitleaks
+gitk
 gitlab-runner
+gitleaks
+gitpod
 gjs
 gkrellm
+glTF-SDK
+glab
 glances
 gleam
 glib-compile-schemas
 glib-genmarshal
 global
 globus
+glow
 glslangValidator
-glTF-SDK
+gltfjsx
 glusterfs
 gmailctl
 gmic
@@ -1196,38 +1159,38 @@ go fix
 go fmt
 go generate
 go get
-goctl
-googler
-goimports
-golangci-lint
-goleft
-golint
-gomobile
-gometalinter
-gometalinter.v2
-gomplate
-gopherjs
-gopls
-goproxy
-goreleaser
 go run
 go sum
 go test
 go tool
-go vet
 go version
-goto
+go vet
+goctl
 goimports
+golangci-lint
+goleft
+golint
+gometalinter
+gometalinter.v2
+gomobile
+gomplate
+googler
+gopherjs
+gopls
+goproxy
+goreleaser
+goto
 gource
 gparted
 gpg
 gpg-agent
-gpgconf
 gpg-connect-agent
+gpgconf
 gpgkey2ssh
 gphoto2
 gprof
 gradle
+gradle --daemon
 gradle assemble
 gradle bootRun
 gradle build
@@ -1242,23 +1205,22 @@ gradle run
 gradle tasks
 gradle test
 gradle wrapper
-gradle --daemon
 grafana
 graph
 graphcdn
 graphviz
 grep
+grep --color
 grep -i
 grep -r
-grep --color
+grex
 grip
-gron
 groff
+gron
 groot
 groovy
 growingio
 grpcui
-grex
 grunt
 grunt build
 grunt clean
@@ -1267,12 +1229,12 @@ grunt run
 grunt test
 gs
 gsettings
+gt
 gtable
 gtk-launch
 gtop
 guake
 guard
-gt
 gulp
 gulp build
 gulp clean
@@ -1283,14 +1245,16 @@ gulp lint
 gulp serve
 gulp test
 gulp watch
+gum
 gunicorn
 gvm
 gw
 gyb
 gzip
+hadolint
 hadoop
 haproxy
-gum
+harbor
 hardhat
 hardhat accounts
 hardhat compile
@@ -1305,16 +1269,17 @@ hashcat
 hashicorp-vault
 hashpump
 hasura
-hbase
 hb-service
+hbase
+hcloud
+hcp
 head
 helm
-helmfile
 helm install
-helm repo add
-helm repo update
+helm repo
 helm uninstall
 helm upgrade
+helmfile
 help
 heroku
 heroku-cli
@@ -1322,11 +1287,12 @@ hexo
 hg
 highlight
 history
+hivemind
 homebrew
 homey
 hop
-hostname
 host
+hostname
 htop
 http
 httpd
@@ -1335,6 +1301,7 @@ https
 httpstat
 httpy
 hub
+hubble
 hugo
 hwinfo
 hx
@@ -1352,9 +1319,7 @@ idevicesyslog
 iex
 if
 ifconfig
-ifconfig eth0 down
-ifconfig eth0 up
-ifconfig | grep inet
+ifconfig eth0
 iftop
 ignite-cli
 iio
@@ -1363,17 +1328,17 @@ imapfilter
 imgur-screenshot
 imgur-uploader
 import
-inotifywait
-info
-inflect
-ingress-nginx
 index
+inflect
+info
+ingress-nginx
+inotifywait
 install
 install-name-tool
 install-sh
 intellij
-ionice
 ionic
+ionice
 ip
 ip6tables
 ipadm
@@ -1412,7 +1377,10 @@ javap
 jcmd
 jconsole
 jdb
+jenkins-cli
 jenv
+jest
+jf
 jflex
 jfsck
 jhat
@@ -1421,7 +1389,6 @@ jjs
 jlink
 jmap
 jmc
-jest
 jmeter
 jobs
 join
@@ -1431,14 +1398,14 @@ jruby
 js
 js-beautify
 jsdoc
+jshell
 jshint
 json-server
 json_pp
 jsonlint
+jsp
 jspm
 jsrun
-jshell
-jsp
 jstack
 jstat
 jstatd
@@ -1447,8 +1414,10 @@ julia
 jupyter
 jupyter notebook
 just
+k0s
 k3d
 k3s
+k3sup
 k6
 k9s
 kafkacat
@@ -1461,13 +1430,13 @@ kcadm
 kcadm.sh
 kclean
 kctl
-kustomize
 kdoctor
 keda
+kex
 keybase
 keycloak
 keytool
-kex
+kibana
 kill
 killall
 kind
@@ -1478,25 +1447,32 @@ kitten
 kitty
 klist
 km
-knife
 kn
 knative
+knex
+knife
 knot-resolver
 knox
 kns
+kool
 kops
 kotlin
+kpack
 kpt
 krb5
+krew
 kris
+ks
 ksh
 kswitch
 ksync
-ks
+kube-score
+kubebench
 kubebuilder
-knex
-kool
+kubecfg
 kubecolor
+kubeconform
+kubecost
 kubectl
 kubectl apply
 kubectl create
@@ -1504,17 +1480,17 @@ kubectl delete
 kubectl describe
 kubectl exec
 kubectl get
-kubectl get pods
 kubectl logs
 kubectl port-forward
 kubectl scale
 kubectl top
 kubectl version
 kubectx
+kubefwd
 kubens
 kubescape
-kubesec
 kubeseal
+kubesec
 kubeshark
 kubetail
 kubevela
@@ -1523,7 +1499,6 @@ kubevirt
 kudo
 kustomize
 kwok
-l
 lame
 languagetool
 laravel
@@ -1535,10 +1510,10 @@ lazygit
 lbzip2
 lcc
 lctl
+lctl help
 lctl list_param
 lctl set_param
 lctl set_trace
-lctl help
 ldapadd
 ldapdelete
 ldapmodify
@@ -1572,29 +1547,30 @@ linode-cli
 linuxbrew
 linuxdeploy
 linuxdeployqt
-liquidctl
 liquibase
+liquidctl
 litecli
+ll
 llvm-ar
 llvm-nm
 llvm-objdump
 llvm-strings
-ll
 ln
+localstack
 locate
 locust
 log
 logcat
-logrotate
-logstash
 login
 logoff
 logout
+logrotate
+logstash
 loki
 lolcat
 lp
-lpass
 lparstat
+lpass
 lpstat
 lrun
 ls
@@ -1603,24 +1579,25 @@ lscpu
 lsd
 lsof
 lstat
-ltsp
 ltrace
+ltsp
 lttng
-lualatex
 lua
+lualatex
 luz
 lvm
+lxc
+lxd
 lynx
 lz4
-m
 macchanger
 mackup
 macpass
 magento
 maigret
 mail
-mailx
 mailsy
+mailx
 make
 makecert
 mamba
@@ -1634,20 +1611,20 @@ mask
 masscan
 matplotlib
 maven
-mavproxy
 mavintegration
+mavproxy
 mblaze
 mbuffer
 mc
 mcedit
+md
 md5sum
 mdadm
 mdbook
-md
 mdfind
 mdls
-mdocml
 mdoclint
+mdocml
 mdp
 mdspell
 mdv
@@ -1660,22 +1637,23 @@ mercurial
 mergemachine
 mergerfs
 mermaid
+meroxa
+meshery
 meson
 mesosphere
-meroxa
-meteor
 metasploit
+meteor
 mftrace
 mftutil
 mg
 mgnl
 micro
 microk8s
-microk8s enable
 microk8s disable
-microk8s status
+microk8s enable
 microk8s kubectl
 microk8s start
+microk8s status
 microk8s stop
 microstack
 midnight-commander
@@ -1683,12 +1661,11 @@ midori
 migrate
 mikro-orm
 milpa
-minicom
 minectl
 minetest
 minicom
 minikube
-minikube addons enable
+minikube addons
 minikube dashboard
 minikube delete
 minikube service
@@ -1696,6 +1673,7 @@ minio
 mint
 mintty
 minu
+mirrord
 mix
 mkdir
 mkdocs
@@ -1712,19 +1690,19 @@ mmc
 mmls
 mmv
 mob
-mock
 mocha
-modprobe
+mock
 mode
+modprobe
 mojo
 molecule
-monit
 mongo
 mongocli
 mongoexport
 mongoimport
 mongorestore
 mongosh
+monit
 more
 mosh
 mosquitto_pub
@@ -1742,9 +1720,9 @@ msfconsole
 msgfmt
 msmtp
 mt
+multipass
 multitail
 multivault
-multipass
 munin
 mv
 mvn
@@ -1753,35 +1731,37 @@ mysqladmin
 mysqlimport
 mysqlpump
 n
-nano
 nala
+nano
 nativefier
+nativescript
 nats
 nats-server
 nats-streaming-server
+nc
+ncal
 ncat
+nccopy
 ncdu
+nces
 ncl
 ncm
 ncmatrix
-nativescript
-nc
-nccopy
-nces
 nco
+ncp
 ncpdp
 ncrack
+ncu
 ncurses
 ndisasm
 ndk-build
 ne
 near
 neat
-ncal
-ncu
 neofetch
 neon
 neovim
+nerdctl
 nest
 net
 netcat
@@ -1803,25 +1783,27 @@ networkQuality
 networkctl
 networkmanager
 newman
+newrelic
 next
 nextflow
 ng
 nginx
 nginx-debug
 ngrok
+nhost
+ni
 nickle
+nifi
 ninja
 nix
 nix-env
 nix-shell
-nixos-rebuild
 nixops
+nixos-rebuild
+nl
 nmap
 nmcli
 nmon
-nhost
-ni
-nl
 nocorrect
 node
 nodejs
@@ -1830,20 +1812,20 @@ noglob
 nohup
 nomad
 nopaste
+northflank
 notepad
 nova
 now
-northflank
 np
 npm
 npm install
 npm run
 npm test
 npx
-nsenter
 nr
 nrm
 ns
+nsenter
 nslookup
 nslookup set
 nssm
@@ -1852,17 +1834,17 @@ nu
 nuget
 nuke
 numfmt
+nuxi
+nuxt
 nvcc
 nvidia-docker
 nvidia-smi
-nuxi
-nuxt
 nvim
 nvm
 nx
 nyc
-nym
 nylas
+nym
 oath-toolkit
 obfsproxy
 obs
@@ -1872,6 +1854,7 @@ oc
 ocaml
 ocamlc
 ocamlopt
+oci-cli
 oclock
 ocrmypdf
 octave
@@ -1892,10 +1875,11 @@ opa
 opa-envoy
 open
 open-vm-tools
-openapi-generator-cli
 openapi
-opencpu
+openapi-generator-cli
 openconnect
+opencpu
+openebs
 openfaas-cli
 openfortivpn
 openhab-cli
@@ -1910,12 +1894,13 @@ openscad
 openshift
 openshift-install
 openssl
-ops
+openstack
 opkg
 opkg-cl
 opkg-install
 opkg-key
 opkg-update
+ops
 ops-manager
 ora2pg
 orbit
@@ -1927,18 +1912,21 @@ osc
 osc-cli
 osqueryi
 osslsigncode
+otel
 otool
+overmind
+ovftool
 ovs-dpctl
 ovs-vsctl
-ovftool
 p10k
 pacaur
-pacman
+pachctl
 packer
 packer build
-packer validate
 packer fix
 packer inspect
+packer validate
+pacman
 pacman-key
 pagekite
 pageres
@@ -1946,6 +1934,7 @@ palera1n
 pandoc
 paper
 parallel
+parca
 parquet-tools
 parted
 pass
@@ -1953,17 +1942,17 @@ passwd
 paste
 pathchk
 pathping
+pause
 pax
-pbench
 pbcopy
+pbench
 pbpaste
 pdb
 pdfgrep
 pdfinfo
 pdfjam
-pause
-pdfunite
 pdftk
+pdfunite
 peg
 perl
 perlbrew
@@ -1997,6 +1986,7 @@ pkill
 plantuml
 platformio
 play
+playwright
 plenv
 plex
 plink
@@ -2004,7 +1994,6 @@ plop
 plug
 pluto
 ply
-playwright
 pm2
 pmset
 pngcrush
@@ -2020,6 +2009,7 @@ podman-compose
 podman-remote
 poetry
 polarion
+polaris
 popd
 port
 portainer
@@ -2029,8 +2019,8 @@ postgres
 postman
 postman-cli
 pow
-poweroff
 powerman
+poweroff
 powershell
 powertop
 pp
@@ -2046,8 +2036,8 @@ procs
 proj
 projj
 prometheus
-promtool
 prompt
+promtool
 proof-general
 prop-types
 protoc
@@ -2080,6 +2070,7 @@ qodana
 qrcode
 qri
 qtcreator
+quarkus
 quasar
 quick
 quickmail
@@ -2089,10 +2080,10 @@ r
 rack
 rackspace-cli
 rails
-rails new
-rails s
 rails c
 rails db:migrate
+rails new
+rails s
 railway
 rain
 rake
@@ -2112,8 +2103,8 @@ redis
 redis-cli
 redis-server
 redshift
-reflex
 redwood
+reflex
 reg
 regex
 regtest
@@ -2130,6 +2121,7 @@ rgrep
 riak
 rich
 rick
+rke
 rkt
 rlwrap
 rm
@@ -2150,12 +2142,12 @@ route
 rpm
 rpmbuild
 rs
+rscript
 rsnapshot
 rspec
-rscript
 rsync
-rsync -avz
 rsync --delete
+rsync -avz
 rsync -e ssh
 rtorrent
 ruby
@@ -2171,9 +2163,9 @@ rustup
 rvm
 s3cmd
 s4cmd
+s6-supervise
 s6-svscan
 s6-svstat
-s6-supervise
 s6-tcpserver
 sam
 samtools
@@ -2186,13 +2178,14 @@ savelogs
 saw
 sbcl
 sc
-scala
 scaffold
+scala
 scan
 scantailor
-scdl
 scc
+scdl
 sceptre
+scontrol
 scp
 scp -P
 scp -r
@@ -2213,6 +2206,7 @@ sed -i
 seesaw
 selecta
 selenium
+semgrep
 semver
 sencha
 sendmail
@@ -2224,9 +2218,10 @@ service
 service --status-all
 service restart
 service start
-service stop
 service status
+service stop
 set
+sf
 sfdx
 sftp
 sg
@@ -2234,8 +2229,8 @@ sh
 sha1sum
 sha256sum
 sha512sum
-shasum
 sharp
+shasum
 shellcheck
 shellenv
 shellexpand
@@ -2264,6 +2259,7 @@ slapd
 sleep
 slim
 sln
+sls
 slurm
 slush
 smbclient
@@ -2274,9 +2270,7 @@ smtpd
 snakemake
 snap
 snapcraft
-sls
 snaplet
-socat
 soap
 socat
 sockit
@@ -2288,6 +2282,7 @@ solidity
 solr
 sonar-scanner
 sonobuoy
+sops
 sort
 source
 space
@@ -2299,32 +2294,34 @@ spectrum
 speedtest
 speedtest-cli
 sphinx
-splunk
+spinnaker
 splash
 split
+splunk
 spotify
 spring
 spring-boot
 sqlfluff
 sqlite3
 src
+ss
 ssh
-ssh-add
-ssh-agent
 ssh -i
-ssh-keygen
-ssh-keyscan
 ssh -p
 ssh -t
+ssh-add
+ssh-agent
+ssh-keygen
+ssh-keyscan
 sshd
 sshfs
-ss
+sst
 sstp-client
 st2
+sta
 stack
 staff
 stardog
-sta
 start
 start-storybook
 stat
@@ -2353,11 +2350,12 @@ subst
 sudo
 suexec
 suitecloud
+sumocli
+supabase
 supervisorctl
 supervisord
-supabase
-svc
 surreal
+svc
 svn
 svn checkout
 svn commit
@@ -2383,6 +2381,7 @@ sysbench
 sysctl
 sysctl -a
 sysctl -w
+sysdig-cli-scanner
 systemctl
 systemctl enable
 systemctl restart
@@ -2390,12 +2389,13 @@ systemctl start
 systemctl status
 systemd
 systeminfo
-t
 tac
 tail
 tailscale
 tailwindcss
 tangram
+tanka
+tanzu
 taplo
 tar
 tar -cvf
@@ -2408,32 +2408,39 @@ tasklist
 taskmgr
 tazpkg
 tb
+tccli
 tccutil
 tee
+telepresence
 telnet
 template
+tempo-cli
 terraform
 terraform apply
 terraform destroy
 terraform fmt
 terraform graph
 terraform init
-terraform-lsp
 terraform plan
 terraform providers
 terraform state
 terraform validate
+terraform-docs
+terraform-lsp
 terragrunt
 terragrunt-infra
 terramate
+terrascan
+tesseract
 test
 tetragon
-tesseract
 tfenv
 tflint
 tfmigrate
 tfnotify
 tfsec
+tfswitch
+thanos
 theia
 then
 thin
@@ -2441,9 +2448,11 @@ think
 three
 ticktick
 tig
+tilt
 time
 timeout
 timidity
+tinkerbell
 title
 tizonia
 tkn
@@ -2451,18 +2460,19 @@ tldr
 tmutil
 tmux
 tmuxinator
-tmutil
 tns
+tofu
 toilet
 tokei
 top
+tor
 torch
 tornado
-tor
 torsocks
 touch
 tp
 tr
+tracee
 tracepath
 traceroute
 tracert
@@ -2470,6 +2480,7 @@ trackball
 trap
 trash
 trash-cli
+travis
 tree
 trellis
 trex
@@ -2516,10 +2527,10 @@ uniq
 unison
 unison-fsmonitor
 unittest
-unrar
-unshare
 unix2dos
+unrar
 unset
+unshare
 until
 unzip
 update-alternatives
@@ -2529,7 +2540,6 @@ urxvt
 usermod
 users
 uuidgen
-v
 vagrant
 vagrant_cloud
 vale
@@ -2539,7 +2549,9 @@ vampire
 vapor
 vault
 vcpkg
+vectr
 vela
+velero
 venv
 ver
 vercel
@@ -2548,20 +2560,21 @@ vi
 vim
 vimdiff
 vimr
-virtualbox
-virtctl
-virt-manager
 virsh
+virt-manager
+virtctl
+virtualbox
 visudo
 vite
 vitest
+vmctl
 vmstat
 vmware
 volta
 vpnc
 vpnkit
-vroom
 vr
+vroom
 vsce
 vscode
 vtex
@@ -2569,19 +2582,20 @@ vue
 vue-cli
 vultr-cli
 w
-wakeonlan
 waf
 wait
+wakeonlan
 wall
-watch
 wasm-bindgen
 wasm-pack
+watch
 watchman
 watson
 wc
 wd
 weave
 webpack
+werf
 wezterm
 wget
 what
@@ -2594,9 +2608,9 @@ while
 who
 whoami
 whois
-wifi-password
-wifi-menu
 wifi
+wifi-menu
+wifi-password
 wing
 winlogbeat
 winrm
@@ -2605,8 +2619,8 @@ wmctrl
 wp
 wrangler
 wrk
-wsdd
 wscat
+wsdd
 wt
 wt.exe
 wuzz
@@ -2648,6 +2662,7 @@ xxd
 xz
 yadm
 yalc
+yamllint
 yank
 yapf
 yard
@@ -2657,14 +2672,17 @@ yarn run
 yarn test
 yarnpkg
 yat
+yc
 yed
 ykman
 yo
 yolo
 yomo
+yq
 yum
-z
+zabbix-cli
 zapier
+zappa
 zed
 zellij
 zenity

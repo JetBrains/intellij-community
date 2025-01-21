@@ -94,6 +94,7 @@
   <technology name="http4k" class="org.http4k.core.Uri"/>
   <technology name="http4s" class="org.http4s.Http"/>
   <technology name="hystrix" class="com.netflix.hystrix.HystrixCommand"/>
+  <technology name="intellij-api" class="com.intellij.openapi.actionSystem.AnAction"/>
   <technology name="jackson" class="com.fasterxml.jackson.core.JsonParser"/>
   <technology name="jaeger" class="io.jaegertracing.Configuration"/>
   <technology name="jakarta-batch" class="jakarta.batch.api.BatchProperty"/>

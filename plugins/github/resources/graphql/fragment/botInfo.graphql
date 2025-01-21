@@ -1,0 +1,3 @@
+fragment botInfo on Bot {
+  ...actorInfo
+}

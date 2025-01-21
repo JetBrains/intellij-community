@@ -319,6 +319,11 @@ f:com.intellij.notification.impl.NotificationGroupEP
 - getDisplayName(com.intellij.openapi.extensions.PluginDescriptor):java.lang.String
 - getDisplayType():com.intellij.notification.NotificationDisplayType
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+f:com.intellij.notification.impl.NotificationParentGroupBean
+- id:java.lang.String
+- parentId:java.lang.String
+- title:java.lang.String
+- titlePrefix:java.lang.String
 f:com.intellij.openapi.actionSystem.impl.SimpleDataContext
 - com.intellij.openapi.actionSystem.CustomizedDataContext
 - s:builder():com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder

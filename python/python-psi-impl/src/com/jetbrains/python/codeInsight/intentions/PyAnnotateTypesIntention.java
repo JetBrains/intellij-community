@@ -114,7 +114,7 @@ public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
     replacementTextBuilder.append(") -> ");
 
-    String returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function);
+    String returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function).getAnnotationText();
     templates.add(Pair.create(replacementTextBuilder.length(), returnType));
 
     replacementTextBuilder.append(returnType);

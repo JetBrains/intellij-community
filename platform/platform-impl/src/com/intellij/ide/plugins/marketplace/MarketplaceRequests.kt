@@ -10,6 +10,8 @@ import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.newui.Tags
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -18,17 +20,27 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TimeoutCachedValue
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import com.intellij.util.io.*
+import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.RequestBuilder
+import com.intellij.util.io.computeDetached
+import com.intellij.util.io.write
 import com.intellij.util.ui.IoErrorText
-import kotlinx.coroutines.*
+import com.intellij.util.withQuery
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
@@ -39,7 +51,9 @@ import org.xml.sax.SAXException
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URLConnection
+import java.net.URLEncoder
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -110,7 +124,37 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     @JvmStatic
     @JvmOverloads
     fun getLastCompatiblePluginUpdate(
-      ids: Set<PluginId>,
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false
+    ): List<IdeCompatibleUpdate> {
+      val chunks = mutableListOf<MutableList<PluginId>>()
+      chunks.add(mutableListOf())
+
+      val maxLength = 7000 // 8k minus safety gap
+      var currentLength = 0
+      val pluginXmlIdsLength = "&pluginXmlId=".length
+
+      for (id in allIds) {
+        val adder = id.idString.length + pluginXmlIdsLength
+        val newLength = currentLength + adder
+        if (newLength > maxLength) {
+          chunks.add(mutableListOf(id))
+          currentLength = adder
+        }
+        else {
+          currentLength = newLength
+          chunks.last().add(id)
+        }
+      }
+
+      return chunks.flatMap {
+        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions)
+      }
+    }
+
+    private fun loadLastCompatiblePluginsUpdate(
+      ids: Collection<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false
     ): List<IdeCompatibleUpdate> {
@@ -119,16 +163,32 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
           return emptyList()
         }
 
-        val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
-        return HttpRequests.post(MarketplaceUrls.getSearchCompatibleUpdatesUrl(), HttpRequests.JSON_CONTENT_TYPE).run {
-          productNameAsUserAgent()
-          throwStatusCodeException(throwExceptions)
-          connect {
-            it.write(data)
-            objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
+        var url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
+        val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
+        val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
+          .takeIf { PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
+
+        val query = buildString {
+          append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
+          append("&os=$os")
+          if (machineId != null) {
+            append("&mid=$machineId")
+          }
+          for (id in ids) {
+            append("&pluginXmlId=${URLEncoder.encode(id.idString, CharsetToolkit.UTF8)}")
           }
         }
 
+        val urlString = url.withQuery(query).toString()
+
+        return HttpRequests.request(urlString)
+          .accept(HttpRequests.JSON_CONTENT_TYPE)
+          .setHeadersViaTuner()
+          .productNameAsUserAgent()
+          .throwStatusCodeException(throwExceptions)
+          .connect {
+            objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
+          }
       }
       catch (e: Exception) {
         LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
@@ -336,7 +396,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         return Files.newInputStream(pluginXmlIdsFile).use(::parseXmlIds)
       }
     }
-    catch (ignore: IOException) {
+    catch (_: IOException) {
     }
     return null
   }
@@ -625,7 +685,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     } catch (_: IOException) { }
 
-    // can't find/read jb plugins xml ids cache file, schedule reload
+    // can't find/read jb plugins XML ids cache file, schedule reload
     schedulePluginIdsUpdate()
     return null
   }
@@ -718,7 +778,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 }
 
 /**
- * NB!: any previous tuners set by {@link RequestBuilder#tuner} will be overwritten by this call
+ * NB!: this call will overwrite any previous tuners set by {@link RequestBuilder#tuner}
  */
 fun RequestBuilder.setHeadersViaTuner(): RequestBuilder {
   return if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
@@ -742,7 +802,7 @@ private fun loadETagForFile(file: Path): String {
     LOG.warn("Can't load ETag from '" + eTagFile + "'. Unexpected number of lines: " + lines.size)
     Files.deleteIfExists(eTagFile)
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
   }
   catch (e: IOException) {
     LOG.warn("Can't load ETag from '$eTagFile'", e)

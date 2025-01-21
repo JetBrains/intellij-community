@@ -22,7 +22,14 @@ import org.jetbrains.annotations.ApiStatus
 annotation class JsonField(
   val allowAnyPrimitiveValue: Boolean = false, // read any primitive value as String (true as true, number as string - don't try to parse)
   val allowAnyPrimitiveValueAndMap: Boolean = false,
-  val primitiveValue: String = "")
+  val primitiveValue: String = "",
+)
+
+@ApiStatus.Internal
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
+annotation class JsonArray(
+  val allowSingleObject: Boolean = false, // when schema changes from {...} to [{...}] we need to handle both cases
+)
 
 @ApiStatus.Internal
 @Target(AnnotationTarget.CLASS)

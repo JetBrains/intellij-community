@@ -37,8 +37,8 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
       val repositoryUrl = it.repository?.repositoryUrl ?: PyPIPackageRepository.repositoryUrl!!
       val result = runCatching {
 
-        val packageUrl = repositoryUrl.replace("simple", "pypi/${it.name}/json")
-        HttpRequests.request(packageUrl)
+        val packageDetailsUrl = PyPIPackageUtil.buildDetailsUrl(repositoryUrl, it.name)
+        HttpRequests.request(packageDetailsUrl)
           .withBasicAuthorization(it.repository)
           .readTimeout(3000)
           .readString()
@@ -101,10 +101,10 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
   }
 
   private fun tryParsingVersionsFromPage(name: String, repositoryUrl: String?): List<String>? {
-    val actualUrl = repositoryUrl ?: PyPIPackageRepository.repositoryUrl!!
+    val actualRepositoryUrl = repositoryUrl ?: PyPIPackageRepository.repositoryUrl
+                              ?: error("Can't resolve repository url for $name")
     val versions = runCatching {
-      val url = StringUtil.trimEnd(actualUrl, "/") + "/" + name
-      PyPIPackageUtil.parsePackageVersionsFromArchives(url, name)
+      PyPIPackageUtil.parsePackageVersionsFromRepository(actualRepositoryUrl, name)
     }
     return versions.getOrNull()
   }

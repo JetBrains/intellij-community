@@ -1,0 +1,4 @@
+fragment organizationInfo on Organization {
+  ...actorInfo
+  name
+}

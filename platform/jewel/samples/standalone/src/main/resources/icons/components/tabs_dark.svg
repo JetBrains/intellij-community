@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <line x1="5" y1="3.5" x2="14" y2="3.5" stroke="#CED0D6" stroke-linecap="round"/>
+    <line x1="1" y1="4" x2="1" y2="14" stroke="#CED0D6" stroke-linecap="round"/>
+    <line x1="1" y1="14" x2="14" y2="14" stroke="#CED0D6" stroke-linecap="round"/>
+    <line x1="14" y1="3.5" x2="14" y2="14" stroke="#CED0D6" stroke-linecap="round"/>
+    <clipPath id="tabClip">
+        <rect x="0" y="0" width="16" height="4"/>
+    </clipPath>
+    <rect x="1" y="1.5" width="4" height="4" stroke="#CED0D6" stroke-linecap="round" rx="1" clip-path="url(#tabClip)"/>
+    <rect x="5" y="1.5" width="4" height="4" stroke="#CED0D6" stroke-linecap="round" rx="1" clip-path="url(#tabClip)"/>
+</svg>

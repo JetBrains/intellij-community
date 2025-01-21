@@ -10,11 +10,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
-    <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="library" name="jps-javac-extension" level="project" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
-    <orderEntry type="library" name="netty-codec-protobuf" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />
   </component>
 </module>

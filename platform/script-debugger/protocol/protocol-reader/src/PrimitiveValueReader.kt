@@ -32,7 +32,7 @@ internal open class PrimitiveValueReader(val className: String, val defaultValue
     out.append(className)
   }
 
-  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, allowSingleValue: Boolean, out: TextOutput) {
     if (readPostfix == "String") {
       out.append("nextList")
     }

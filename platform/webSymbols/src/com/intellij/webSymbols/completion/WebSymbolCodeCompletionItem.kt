@@ -12,6 +12,7 @@ import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
 import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import javax.swing.Icon
 
@@ -41,9 +42,11 @@ interface WebSymbolCodeCompletionItem {
 
   fun withPrefix(prefix: String): WebSymbolCodeCompletionItem
 
-  fun addToResult(parameters: CompletionParameters,
-                  result: CompletionResultSet,
-                  baselinePriorityValue: Double = WebSymbol.Priority.NORMAL.value)
+  fun addToResult(
+    parameters: CompletionParameters,
+    result: CompletionResultSet,
+    baselinePriorityValue: Double = WebSymbol.Priority.NORMAL.value,
+  )
 
   fun withName(name: String): WebSymbolCodeCompletionItem
 
@@ -71,6 +74,8 @@ interface WebSymbolCodeCompletionItem {
 
   fun withTypeText(typeText: String?): WebSymbolCodeCompletionItem
 
+  fun withTypeText(typeTextProvider: () -> String?): WebSymbolCodeCompletionItem
+
   fun withTailText(tailText: String?): WebSymbolCodeCompletionItem
 
   fun withCompleteAfterChar(char: Char): WebSymbolCodeCompletionItem
@@ -79,47 +84,71 @@ interface WebSymbolCodeCompletionItem {
 
   fun withInsertHandlerReplaced(insertHandler: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItem
 
-  fun withInsertHandlerAdded(insertHandler: InsertHandler<LookupElement>,
-                             priority: WebSymbol.Priority = WebSymbol.Priority.NORMAL): WebSymbolCodeCompletionItem
+  fun withInsertHandlerAdded(
+    insertHandler: InsertHandler<LookupElement>,
+    priority: WebSymbol.Priority = WebSymbol.Priority.NORMAL,
+  ): WebSymbolCodeCompletionItem
 
   fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): WebSymbolCodeCompletionItem
 
-  fun with(name: String = this.name,
-           offset: Int = this.offset,
-           completeAfterInsert: Boolean = this.completeAfterInsert,
-           completeAfterChars: Set<Char> = this.completeAfterChars,
-           displayName: String? = this.displayName,
-           symbol: WebSymbol? = this.symbol,
-           priority: WebSymbol.Priority? = this.priority,
-           proximity: Int? = this.proximity,
-           apiStatus: WebSymbolApiStatus = this.apiStatus,
-           icon: Icon? = this.icon,
-           typeText: String? = this.typeText,
-           tailText: String? = this.tailText): WebSymbolCodeCompletionItem
+  fun with(
+    name: String = this.name,
+    offset: Int = this.offset,
+    completeAfterInsert: Boolean = this.completeAfterInsert,
+    completeAfterChars: Set<Char> = this.completeAfterChars,
+    displayName: String? = this.displayName,
+    symbol: WebSymbol? = this.symbol,
+    priority: WebSymbol.Priority? = this.priority,
+    proximity: Int? = this.proximity,
+    apiStatus: WebSymbolApiStatus = this.apiStatus,
+    icon: Icon? = this.icon,
+    typeText: String? = null,
+    tailText: String? = this.tailText,
+  ): WebSymbolCodeCompletionItem
 
   companion object {
+
+    @ApiStatus.Internal
+    fun create(
+      name: String,
+      offset: Int = 0,
+      completeAfterInsert: Boolean = false,
+      completeAfterChars: Set<Char>? = null,
+      displayName: String? = null,
+      symbol: WebSymbol? = null,
+      priority: WebSymbol.Priority? = null,
+      proximity: Int? = null,
+      apiStatus: WebSymbolApiStatus? = null,
+      aliases: Set<String>? = null,
+      icon: Icon? = null,
+      typeText: String? = null,
+      tailText: String? = null,
+      insertHandler: WebSymbolCodeCompletionItemInsertHandler? = null,
+    ): WebSymbolCodeCompletionItem =
+      create(name, offset, symbol) {
+        completeAfterInsert(completeAfterInsert)
+        completeAfterChars?.let { completeAfterChars(it) }
+        displayName(displayName)
+        priority?.let { priority(it) }
+        proximity?.let { proximity(it) }
+        apiStatus?.let { apiStatus(it) }
+        aliases?.let { aliases(it) }
+        icon?.let { icon(it) }
+        typeText?.let { typeText(it) }
+        tailText?.let { tailText(it) }
+        insertHandler?.let { insertHandler(it) }
+      }
+
     @JvmStatic
-    fun create(name: String,
-               offset: Int = 0,
-               completeAfterInsert: Boolean = false,
-               completeAfterChars: Set<Char> = emptySet(),
-               displayName: String? = null,
-               symbol: WebSymbol? = null,
-               priority: WebSymbol.Priority? = symbol?.priority,
-               proximity: Int? = symbol?.proximity,
-               apiStatus: WebSymbolApiStatus = symbol?.apiStatus ?: WebSymbolApiStatus.Stable,
-               aliases: Set<String> = emptySet(),
-               icon: Icon? = symbol?.let {
-                 it.icon
-                 ?: it.origin.defaultIcon
-                 ?: WebSymbolDefaultIconProvider.get(it.namespace, it.kind)
-               },
-               typeText: String? = null,
-               tailText: String? = null,
-               insertHandler: WebSymbolCodeCompletionItemInsertHandler? = null): WebSymbolCodeCompletionItem =
-      WebSymbolCodeCompletionItemImpl(name, offset, completeAfterInsert, if (!completeAfterInsert) completeAfterChars else emptySet(),
-                                      displayName, symbol, priority, proximity,
-                                      apiStatus, aliases, icon, typeText, tailText, insertHandler)
+    fun create(
+      name: String,
+      offset: Int = 0,
+      symbol: WebSymbol? = null,
+      builder: (WebSymbolCodeCompletionItemBuilder.() -> Unit)? = null,
+    ): WebSymbolCodeCompletionItem =
+      WebSymbolCodeCompletionItemImpl.BuilderImpl(name, offset, symbol)
+        .also { builder?.invoke(it) }
+        .build()
 
     @JvmStatic
     fun getPsiElement(lookupElement: LookupElement): PsiElement? =

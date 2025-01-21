@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -198,7 +198,7 @@ public class RequestHint {
           }
         }
 
-        if (settings.SKIP_CLASSLOADERS && DebuggerUtilsEx.isAssignableFrom("java.lang.ClassLoader", location.declaringType())) {
+        if (settings.SKIP_CLASSLOADERS && DebuggerUtils.instanceOf(location.declaringType(), "java.lang.ClassLoader")) {
           return StepRequest.STEP_OUT;
         }
       }

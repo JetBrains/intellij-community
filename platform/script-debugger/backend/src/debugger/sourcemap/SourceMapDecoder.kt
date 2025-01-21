@@ -190,6 +190,7 @@ private fun parseMap(reader: JsonReaderEx): SourceMapDataImpl? {
     return null
   }
 
+  // https://stackoverflow.com/questions/36228177/jspm-system-js-debugging-with-typescript
   if (Registry.`is`("js.debugger.fix.jspm.source.maps", false) && encodedMappings.startsWith(";") && file != null && file.endsWith(".ts!transpiled")) {
     encodedMappings = encodedMappings.substring(1)
   }

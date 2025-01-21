@@ -628,7 +628,7 @@ public final class PyStringFormatInspection extends PyInspection {
                     allForSure = allForSure && elementsCount != -1;
                     maxNumber = Math.max(maxNumber, elementsCount);
                   }
-                  else {
+                  else if (!(member instanceof PyNoneType)) {
                     allForSure = false;
                   }
                 }

@@ -664,7 +664,7 @@ fun tryUltimate(
   val eventSource = fusEventSource ?: FUSEventSource.EDITOR
   if (Registry.`is`("ide.try.ultimate.automatic.installation") && project != null) {
     eventSource.logTryUltimate(project, pluginId)
-    project.service<UltimateInstallationService>().install(pluginId, suggestedIde)
+    project.service<UltimateInstallationService>().install(pluginId, suggestedIde, eventSource)
   }
   else {
     fallback?.invoke() ?: eventSource.openDownloadPageAndLog(project = project,

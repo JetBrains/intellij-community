@@ -2,12 +2,19 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
+import org.jetbrains.kotlin.j2k.copyPaste.K1J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.copyPaste.TargetData
+import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
+import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
+import org.jetbrains.kotlin.j2k.copyPaste.K1PlainTextPasteImportResolver
+import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -34,4 +41,20 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
 
     override fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
         getNewJ2KConversions(context)
+
+    override fun createPlainTextPasteImportResolver(
+        conversionData: ConversionData,
+        targetKotlinFile: KtFile
+    ): PlainTextPasteImportResolver {
+        return K1PlainTextPasteImportResolver(conversionData, targetKotlinFile)
+    }
+
+    override fun createCopyPasteConverter(
+        project: Project,
+        editor: Editor,
+        conversionData: ConversionData,
+        targetData: TargetData,
+    ): J2KCopyPasteConverter {
+        return K1J2KCopyPasteConverter(project, editor, conversionData, targetData, kind)
+    }
 }

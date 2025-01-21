@@ -81,11 +81,11 @@ public class PyRenameTest extends PyTestCase {
     doTest("bar");
   }
 
-  public void testEpydocRenameParameter() {
+  public void testRestRenameParameter() {
     doTest("bar");
   }
 
-  public void testEpydocRenameType() {
+  public void testRestRenameType() {
     doTest("Shazam");
   }
 

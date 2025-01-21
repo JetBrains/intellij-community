@@ -95,7 +95,6 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
 
             1 -> {
                 val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
-                if (className.isBlank()) return UndefinedIntentionAction(candidateFiles[0].name)
                 val newInstance = Class.forName(className).getDeclaredConstructor().newInstance()
                 return (newInstance as? ModCommandAction)?.asIntention() ?: newInstance as? IntentionAction ?: error("Class `$className` has to be IntentionAction or ModCommandAction")
             }

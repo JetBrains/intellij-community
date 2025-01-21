@@ -1,0 +1,7 @@
+package test
+
+import dependency.Foo
+
+fun Foo.bar() {
+    this
+}

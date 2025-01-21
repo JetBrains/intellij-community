@@ -4,16 +4,19 @@ package org.jetbrains.plugins.github.api.data
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 
 @GraphQLFragment("/graphql/fragment/repositoryOwnerName.graphql")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false,
+              defaultImpl = GHRepositoryOwnerName::class)
 @JsonSubTypes(
   JsonSubTypes.Type(name = "User", value = GHRepositoryOwnerName.User::class),
   JsonSubTypes.Type(name = "Organization", value = GHRepositoryOwnerName.Organization::class)
 )
-interface GHRepositoryOwnerName {
-  val login: String
-
-  class User(override val login: String) : GHRepositoryOwnerName
-  class Organization(override val login: String) : GHRepositoryOwnerName
+@NonExtendable
+open class GHRepositoryOwnerName(
+  val login: String,
+) {
+  class User(login: String) : GHRepositoryOwnerName(login)
+  class Organization(login: String) : GHRepositoryOwnerName(login)
 }

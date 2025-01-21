@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -125,6 +126,7 @@ public class ConstExprent extends Exprent {
     DOUBLE_CONSTANTS.put((double)Long.MIN_VALUE, "(double)Long.MIN_VALUE");
   }
 
+  @NotNull
   private VarType constType;
   private final Object value;
   private final boolean boolPermitted;
@@ -144,7 +146,7 @@ public class ConstExprent extends Exprent {
 
   private ConstExprent(VarType constType, Object value, boolean boolPermitted, BitSet bytecodeOffsets) {
     super(EXPRENT_CONST);
-    this.constType = constType;
+    this.constType = constType == null ? VarType.VARTYPE_UNKNOWN : constType;
     this.value = value;
     this.boolPermitted = boolPermitted;
     addBytecodeOffsets(bytecodeOffsets);
@@ -183,6 +185,7 @@ public class ConstExprent extends Exprent {
     return new ConstExprent(constType, value, bytecode);
   }
 
+  @NotNull
   @Override
   public VarType getExprType() {
     return constType;
@@ -574,7 +577,7 @@ public class ConstExprent extends Exprent {
 
   @Override
   public int hashCode() {
-    int result = constType != null ? constType.hashCode() : 0;
+    int result = constType.hashCode();
     result = 31 * result + (value != null ? value.hashCode() : 0);
     return result;
   }
@@ -613,11 +616,14 @@ public class ConstExprent extends Exprent {
     };
   }
 
-  public VarType getConstType() {
+  public @NotNull VarType getConstType() {
     return constType;
   }
 
-  public void setConstType(VarType constType) {
+  public void setConstType(@Nullable VarType constType) {
+    if (constType == null) {
+      constType = VarType.VARTYPE_UNKNOWN;
+    }
     this.constType = constType;
   }
 

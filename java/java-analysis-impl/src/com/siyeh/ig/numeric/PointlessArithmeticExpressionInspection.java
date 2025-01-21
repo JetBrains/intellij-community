@@ -17,9 +17,10 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -216,7 +217,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
         return areExpressionsIdenticalWithoutSideEffects(expressions[0], expressions[1]);
       }
       if (type.equals(JavaTokenType.DIV) || type.equals(JavaTokenType.PERC)) {
-        return areExpressionsIdenticalWithoutSideEffects(expressions[0], expressions[1]) && !isZero(expressions[0]) ||
+        return areExpressionsIdenticalWithoutSideEffects(expressions[0], expressions[1]) && !isZeroWithDataflow(expressions[0]) ||
                (type.equals(JavaTokenType.DIV) && isOne(expressions[1]));
       }
       if (type.equals(JavaTokenType.ASTERISK)) {
@@ -263,7 +264,8 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isOne(expression) || i == 1 && areExpressionsIdenticalWithoutSideEffects(previousExpression, expression) && !isZero(expression))) {
+            (isOne(expression) || 
+             i == 1 && areExpressionsIdenticalWithoutSideEffects(previousExpression, expression) && !isZeroWithDataflow(expression))) {
           return true;
         }
         previousExpression = expression;
@@ -275,6 +277,10 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
       return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, expression2) &&
              !SideEffectChecker.mayHaveSideEffects(expression1);
     }
+  }
+  
+  boolean isZeroWithDataflow(@NotNull PsiExpression expression) {
+    return isZero(expression) || (CommonDataflow.computeValue(expression) instanceof Number number && number.doubleValue() == 0.0d);
   }
 
   boolean isZero(PsiExpression expression) {

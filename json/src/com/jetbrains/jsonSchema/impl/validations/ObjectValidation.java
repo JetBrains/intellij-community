@@ -17,6 +17,8 @@ import com.jetbrains.jsonSchema.extension.JsonValidationHost;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.impl.*;
 import kotlin.collections.CollectionsKt;
 import one.util.streamex.StreamEx;
@@ -38,6 +40,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
                           @Nullable JsonSchemaType schemaType,
                           @NotNull JsonValidationHost consumer,
                           @NotNull JsonComplianceCheckerOptions options) {
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.ObjectValidation);
     return checkObject(propValue, schema, consumer, options);
   }
 

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg fill="none" viewBox="0 0 16 16" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 8L6 5V11L2 8Z" transform="translate(-1, 0)" fill="#CED0D6"/>
+    <path d="M14 8L10 11V5L14 8Z" transform="translate(1, 0)" fill="#CED0D6"/>
+    <line x1="2" y1="8" x2="14" y2="8" stroke="#CED0D6" stroke-width="1"/>
+    <line x1="8" y1="2" x2="8" y2="14" stroke="#CED0D6" stroke-width="2"/>
+</svg>

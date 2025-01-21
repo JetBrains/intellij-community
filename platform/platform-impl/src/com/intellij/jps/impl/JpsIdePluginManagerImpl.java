@@ -3,10 +3,7 @@ package com.intellij.jps.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -20,6 +17,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistryImpl;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +43,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public final class JpsIdePluginManagerImpl extends JpsPluginManager {
+  public static final ExtensionPointName<JpsPluginBean> EP_NAME = new ExtensionPointName<>("com.intellij.jps.plugin");
   private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
   private final AtomicInteger myModificationStamp = new AtomicInteger(0);
   private final boolean myFullyLoaded;
@@ -61,9 +61,9 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
 
     ExtensionsArea rootArea = application.getExtensionArea();
     //todo get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
-    if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
+    if (rootArea.hasExtensionPoint(EP_NAME)) {
       final Ref<Boolean> initial = new Ref<>(Boolean.TRUE);
-      JpsPluginBean.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
+      EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull JpsPluginBean extension, @NotNull PluginDescriptor pluginDescriptor) {
           if (initial.get()) {

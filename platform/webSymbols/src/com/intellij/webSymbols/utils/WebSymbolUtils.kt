@@ -20,11 +20,13 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.impl.WebSymbolNameSegmentImpl
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
 import com.intellij.webSymbols.impl.withOffset
 import com.intellij.webSymbols.impl.withRange
 import com.intellij.webSymbols.patterns.impl.applyIcons
 import com.intellij.webSymbols.query.*
+import com.intellij.webSymbols.query.impl.WebSymbolMatchImpl
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import java.util.*
 import javax.swing.Icon
@@ -117,6 +119,12 @@ fun WebSymbol.unwrapMatchedSymbols(): Sequence<WebSymbol> =
         next!!.also { advance() }
     }
   }
+
+fun WebSymbolNameSegment.withSymbols(symbols: List<WebSymbol>): WebSymbolNameSegment =
+  (this as WebSymbolNameSegmentImpl).withSymbols(symbols)
+
+fun WebSymbolMatch.withSegments(segments: List<WebSymbolNameSegment>): WebSymbolMatch =
+  (this as WebSymbolMatchImpl).withSegments(segments)
 
 fun WebSymbol.match(nameToMatch: String,
                     params: WebSymbolsNameMatchQueryParams,
