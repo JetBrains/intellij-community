@@ -1,0 +1,16 @@
+public final class org/jetbrains/jewel/markdown/extensions/images/Coil3ImagesRendererExtension : org/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getBlockRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension;
+	public fun getDelimitedInlineRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineRendererExtension;
+	public fun getImageRendererExtension ()Lorg/jetbrains/jewel/markdown/extensions/ImageRendererExtension;
+}
+
+public final class org/jetbrains/jewel/markdown/extensions/images/Coil3ImagesRendererExtensionImpl : org/jetbrains/jewel/markdown/extensions/ImageRendererExtension {
+	public static final field $stable I
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public fun imageContent (Lorg/jetbrains/jewel/markdown/InlineMarkdown$Image;Landroidx/compose/runtime/Composer;I)Landroidx/compose/foundation/text/InlineTextContent;
+}
+

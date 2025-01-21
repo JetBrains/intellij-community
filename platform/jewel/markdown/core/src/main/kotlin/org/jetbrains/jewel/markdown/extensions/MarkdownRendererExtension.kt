@@ -24,4 +24,14 @@ public interface MarkdownRendererExtension {
      */
     public val delimitedInlineRenderer: MarkdownDelimitedInlineRendererExtension?
         get() = null
+
+    /**
+     * An extension for [`InlineMarkdownRenderer`][org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer] that
+     * will render supported [org.jetbrains.jewel.markdown.InlineMarkdown.CustomDelimitedNode]s into an annotated
+     * string.
+     *
+     * Can be null if this extension doesn't support rendering delimited inline nodes.
+     */
+    public val imageRendererExtension: ImageRendererExtension?
+        get() = null
 }
