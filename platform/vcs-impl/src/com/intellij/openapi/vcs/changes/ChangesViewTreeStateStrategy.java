@@ -1,15 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeListNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.tree.DefaultMutableTreeNode;
+
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserConflictsNodeKt.CONFLICTS_NODE_TAG;
 
 @ApiStatus.Internal
 public class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrategy<ChangesViewTreeStateStrategy.MyState> {
@@ -35,6 +37,11 @@ public class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrate
   private static void initTreeStateIfNeeded(@NotNull ChangesListView view,
                                             @NotNull ChangesBrowserNode<?> newRoot,
                                             int oldFileCount) {
+    DefaultMutableTreeNode firstConflictNode = getFirstConflictNode(view);
+    if (firstConflictNode != null) {
+      TreeUtil.selectNode(view, firstConflictNode);
+    }
+
     ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
     if (defaultListNode == null) return;
 
@@ -54,6 +61,14 @@ public class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrate
       .find(node -> {
         ChangeList list = node.getUserObject();
         return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
+      });
+  }
+
+  private static @Nullable ChangesBrowserNode<?> getFirstConflictNode(@NotNull ChangesListView view) {
+    return VcsTreeModelData.allUnderTag(view, CONFLICTS_NODE_TAG).iterateRawNodes()
+      .filter(ChangesBrowserChangeNode.class)
+      .find(node -> {
+        return MergeConflictManager.isMergeConflict(node.getUserObject().getFileStatus());
       });
   }
 }
