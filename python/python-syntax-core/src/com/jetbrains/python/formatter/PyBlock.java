@@ -3,6 +3,7 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -308,6 +309,13 @@ public class PyBlock implements ASTBlock {
     }
     else if (parentType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
       if (PyTokenTypes.STRING_NODES.contains(childType) || childType == PyElementTypes.FSTRING_NODE) {
+        if (childType == PyTokenTypes.TRIPLE_QUOTED_STRING &&
+            myContext.getPySettings().FORMAT_INJECTED_FRAGMENTS &&
+            isInsideInjection(child)) {
+          return createInjectedBlock(child, myContext.getPySettings().ADD_INDENT_INSIDE_INJECTIONS
+                                            ? Indent.getNormalIndent()
+                                            : Indent.getNoneIndent());
+        }
         childAlignment = getAlignmentForChildren();
       }
     }
@@ -1282,6 +1290,18 @@ public class PyBlock implements ASTBlock {
   @Override
   public boolean isLeaf() {
     return myNode.getFirstChildNode() == null;
+  }
+
+  private @NotNull PyFormattableInjectedBlock createInjectedBlock(@NotNull ASTNode child, @NotNull Indent indent) {
+    return new PyFormattableInjectedBlock(this, child, getAlignmentForChildren(),
+                                          Wrap.createWrap(WrapType.NONE, false),
+                                          indent, myContext.getSettings().getRootSettings(),
+                                          myContext);
+  }
+
+  private static boolean isInsideInjection(@NotNull ASTNode node) {
+    ASTNode parent = node.getTreeParent();
+    return parent != null && InjectedLanguageManager.getInstance(node.getPsi().getProject()).hasInjections(parent.getPsi());
   }
 
   private static final TokenSet stopAtTokens = TokenSet.orSet(TokenSet.create(PyElementTypes.FSTRING_NODE),

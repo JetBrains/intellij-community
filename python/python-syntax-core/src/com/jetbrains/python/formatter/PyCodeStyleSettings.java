@@ -118,6 +118,9 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    */
   public boolean HANG_CLOSING_BRACKETS = false;
 
+  public boolean FORMAT_INJECTED_FRAGMENTS = true;
+  public boolean ADD_INDENT_INSIDE_INJECTIONS = false;
+
   public PyCodeStyleSettings(@NotNull CodeStyleSettings container) {
     super("Python", container);
   }
