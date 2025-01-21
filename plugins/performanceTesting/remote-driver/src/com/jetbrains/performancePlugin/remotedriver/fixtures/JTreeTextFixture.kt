@@ -10,6 +10,7 @@ import org.assertj.swing.core.Robot
 import org.assertj.swing.driver.BasicJTreeCellReader
 import org.assertj.swing.driver.CellRendererReader
 import org.assertj.swing.fixture.JTreeFixture
+import java.awt.Component
 import java.awt.Point
 import javax.swing.JTree
 
@@ -67,6 +68,19 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
   fun expandAll(timeoutMs: Int) {
     computeOnEdt {
       TreeUtil.promiseExpandAll(component).blockingGet(timeoutMs)
+    }
+  }
+
+  fun getComponentAtRow(row: Int): Component {
+    return computeOnEdt {
+      val tree = target()
+      tree.cellRenderer.getTreeCellRendererComponent(tree,
+                                                     tree.getPathForRow(row).lastPathComponent,
+                                                     tree.isRowSelected(row),
+                                                     tree.isExpanded(row),
+                                                     false,
+                                                     row,
+                                                     tree.hasFocus() && tree.isRowSelected(row))
     }
   }
 }

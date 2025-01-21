@@ -3,12 +3,9 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.invokeAction
-import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
-import com.intellij.driver.sdk.ui.CellRendererReader
-import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.QueryBuilder
+import com.intellij.driver.sdk.ui.*
+import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
-import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
@@ -105,6 +102,8 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
   fun getCellBounds(index: Int): Rectangle =
     driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
 
+  fun getComponentAt(index: Int): Component = fixture.getComponentAtIndex(index)
+
   protected fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
     fixture.collectItems().indexOfFirst {
       if (fullMatch) it == itemText
@@ -123,6 +122,7 @@ interface JListFixtureRef {
   fun collectSelectedItems(): List<String>
   fun clickItemAtIndex(index: Int)
   fun collectIconsAtIndex(index: Int): List<String>
+  fun getComponentAtIndex(index: Int): Component
 }
 
 @Remote("javax.swing.JList")

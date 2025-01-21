@@ -154,6 +154,8 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     click(fixture.getRowPoint(row).apply { translate(shift.x, shift.y) })
   }
 
+  fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)
+
   class PathNotFoundException(message: String? = null) : Exception(message) {
     constructor(path: List<String>) : this("$path not found")
   }
@@ -181,6 +183,7 @@ interface JTreeFixtureRef : Component {
   fun expandAll(timeoutMs: Int)
   fun getRowPoint(row: Int): Point
   fun replaceCellRendererReader(reader: CellRendererReader)
+  fun getComponentAtRow(row: Int): Component
 }
 
 @Remote("javax.swing.JTree")
