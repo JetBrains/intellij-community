@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 public abstract class SingleClassesTestBase {
   protected DecompilerTestFixture fixture;
 
-  protected Map<String, String> getDecompilerOptions() {
+  protected Map<String, Object> getDecompilerOptions() {
     return Map.of();
   }
 

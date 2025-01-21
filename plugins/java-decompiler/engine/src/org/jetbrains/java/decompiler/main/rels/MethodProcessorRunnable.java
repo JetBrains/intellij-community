@@ -82,6 +82,7 @@ public class MethodProcessorRunnable implements Runnable {
     mt.expandData(cl);
     InstructionSequence seq = mt.getInstructionSequence();
     ControlFlowGraph graph = new ControlFlowGraph(seq);
+    DecompilerContext.getLimitContainer().incrementAndCheckDirectNodeCount(graph);
 
     DeadCodeHelper.removeDeadBlocks(graph);
 

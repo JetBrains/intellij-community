@@ -216,7 +216,12 @@ public class ClassWriter {
             IFernflowerLogger.Severity.WARN,
             ex);
           methodWrapper.decompiledWithErrors = true;
-          buffer.append(" // $FF: Couldn't be decompiled");
+          if (methodWrapper.decompiledWithErrorsMessage != null) {
+            buffer.append("// $FF: " + methodWrapper.decompiledWithErrorsMessage);
+          }
+          else {
+            buffer.append("// $FF: Couldn't be decompiled");
+          }
         }
         finally {
           tracer.addMapping(root.getDummyExit().bytecode);
@@ -972,7 +977,12 @@ public class ClassWriter {
 
         if (methodWrapper.decompiledWithErrors) {
           buffer.appendIndent(indent + 1);
-          buffer.append("// $FF: Couldn't be decompiled");
+          if (methodWrapper.decompiledWithErrorsMessage != null) {
+            buffer.append("// $FF: " + methodWrapper.decompiledWithErrorsMessage);
+          }
+          else {
+            buffer.append("// $FF: Couldn't be decompiled");
+          }
           buffer.appendLineSeparator();
           tracer.incrementCurrentSourceLine();
         }
@@ -1211,7 +1221,12 @@ public class ClassWriter {
 
       if (methodWrapper.decompiledWithErrors) {
         buffer.appendIndent(indent);
-        buffer.append("// $FF: Couldn't be decompiled");
+        if (methodWrapper.decompiledWithErrorsMessage != null) {
+          buffer.append("// $FF: " + methodWrapper.decompiledWithErrorsMessage);
+        }
+        else {
+          buffer.append("// $FF: Couldn't be decompiled");
+        }
         buffer.appendLineSeparator();
       }
 

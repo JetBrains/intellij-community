@@ -16,6 +16,21 @@
     <editorFactoryListener implementation="org.jetbrains.java.decompiler.DecompilerInEditorListener"/>
     <applicationService serviceImplementation="org.jetbrains.java.decompiler.IdeaDecompilerSettings"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.java.decompiler.DecompilerPresetChangedCollector"/>
+
+    <!--approximately - 50_000 lines of code -->
+    <advancedSetting
+      id="decompiler.max.direct.nodes.count"
+      default="20000"
+      groupKey="advanced.setting.group.decompiler"
+    />
+
+    <!--probably, obfuscated -->
+    <advancedSetting
+      id="decompiler.max.variable.nodes.count"
+      default="30000"
+      groupKey="advanced.setting.group.decompiler"
+    />
+
   </extensions>
 
   <applicationListeners>

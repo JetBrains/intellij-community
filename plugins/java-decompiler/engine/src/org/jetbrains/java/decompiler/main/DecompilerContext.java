@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
+import org.jetbrains.java.decompiler.main.collectors.LimitContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
@@ -36,6 +37,7 @@ public class DecompilerContext {
   private VarProcessor varProcessor;
   private CounterContainer counterContainer;
   private BytecodeSourceMapper bytecodeSourceMapper;
+  private final @NotNull LimitContainer limitsContainer;
 
   public DecompilerContext(@NotNull Map<String, Object> properties,
                            @NotNull IFernflowerLogger logger,
@@ -62,6 +64,7 @@ public class DecompilerContext {
     this.renamerFactory = renamerFactory;
     this.counterContainer = new CounterContainer();
     this.cancellationManager = cancellationManager;
+    this.limitsContainer = new LimitContainer(this.properties);
   }
 
   // *****************************************************************************
@@ -114,6 +117,10 @@ public class DecompilerContext {
 
   public static IFernflowerLogger getLogger() {
     return getCurrentContext().logger;
+  }
+
+  public static LimitContainer getLimitContainer() {
+    return getCurrentContext().limitsContainer;
   }
 
   public static StructContext getStructContext() {

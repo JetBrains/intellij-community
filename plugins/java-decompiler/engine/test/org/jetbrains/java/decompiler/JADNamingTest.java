@@ -9,7 +9,7 @@ import java.util.Map;
 public class JADNamingTest extends SingleClassesTestBase {
 
     @Override
-    protected Map<String, String> getDecompilerOptions() {
+    protected Map<String, Object> getDecompilerOptions() {
       return Map.of(
         IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
         IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
