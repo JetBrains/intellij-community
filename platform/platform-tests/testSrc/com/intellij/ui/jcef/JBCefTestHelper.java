@@ -17,7 +17,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
 public final class JBCefTestHelper {
-  private static int WAIT_BROWSER_SECONDS = Utils.getInteger("JCEF_WAIT_BROWSER_SECONDS", 15);
+  // NOTE: TeamCity runs tests in parallel with downloading (and other processes), and because of that
+  // first CEF initialization takes a long time (more than 15 sec in 1% of test runs). So use a large constant here.
+  //
+  private static int WAIT_BROWSER_SECONDS = Utils.getInteger("JCEF_WAIT_BROWSER_SECONDS", 60);
   /**
    * Shows the browser in a frame in waits for a load completion.
    */
