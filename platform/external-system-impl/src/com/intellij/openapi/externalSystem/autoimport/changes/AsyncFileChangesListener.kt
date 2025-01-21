@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.autoimport.changes
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
@@ -11,9 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Filters and delegates files and documents events into subscribed listeners.
- * Allows to use heavy paths filer, that is defined by [filesProvider].
- * Call sequences of [changesListener]'s functions will be skipped if change events didn't happen in watched files.
+ * Filters and delegates file and document events into subscribed listeners.
+ * Allows using heavy paths filter, that is defined by [filesProvider].
+ * The [changesListener]'s execution will be skipped if change events didn't happen in watched files.
  */
 @ApiStatus.Internal
 class AsyncFileChangesListener(
@@ -21,6 +22,7 @@ class AsyncFileChangesListener(
   private val changesListener: FilesChangesListener,
   private val parentDisposable: Disposable,
 ) {
+
   private val updatedFiles = ConcurrentHashMap<String, ModificationData>()
 
   fun init() {
@@ -32,6 +34,7 @@ class AsyncFileChangesListener(
   }
 
   fun apply() {
+    val stamp = Stamp.nextStamp()
     val updatedFilesSnapshot = HashMap(updatedFiles)
     filesProvider.supply(parentDisposable) { filesToWatch ->
       val index = CanonicalPathPrefixTreeFactory.createSet(filesToWatch)
@@ -43,14 +46,17 @@ class AsyncFileChangesListener(
         changesListener.init()
         for ((path, modificationData) in updatedWatchedFiles) {
           val (modificationStamp, modificationType) = modificationData
-          changesListener.onFileChange(path, modificationStamp, modificationType)
+          changesListener.onFileChange(stamp, path, modificationStamp, modificationType)
         }
         changesListener.apply()
       }
     }
   }
 
-  private data class ModificationData(val modificationStamp: Long, val modificationType: ExternalSystemModificationType)
+  private data class ModificationData(
+    val modificationStamp: Long,
+    val modificationType: ExternalSystemModificationType,
+  )
 
   companion object {
     @JvmStatic

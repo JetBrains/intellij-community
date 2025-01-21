@@ -213,6 +213,9 @@ class ProjectSettingsTracker(
     context: SettingsFilesStatusUpdateContext,
   ) {
     submitSettingsFilesCollection(context.isRefreshVfs, context.isInvalidateCache) { settingsPaths ->
+      // This operation is used for ordering between an update operation and file changes listener.
+      // Therefore, the operation stamp cannot be taken earlier than VFS refresh for the settings files.
+      // @see the AsyncFileChangesListener#apply function for details
       val operationStamp = Stamp.nextStamp()
       submitSettingsFilesCRCCalculation(operationName, settingsPaths, context.isMergeSameCalls) { newSettingsFilesCRC ->
         val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.reloadStatus)
@@ -338,11 +341,10 @@ class ProjectSettingsTracker(
 
   private inner class ProjectSettingsListener : FilesChangesListener {
 
-    override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
-      val operationStamp = Stamp.nextStamp()
+    override fun onFileChange(stamp: Stamp, path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
       val adjustedModificationType = projectAware.adjustModificationType(path, modificationType)
       logModificationAsDebug(path, modificationStamp, modificationType, adjustedModificationType)
-      projectStatus.markModified(operationStamp, adjustedModificationType)
+      projectStatus.markModified(stamp, adjustedModificationType)
     }
 
     override fun apply() {

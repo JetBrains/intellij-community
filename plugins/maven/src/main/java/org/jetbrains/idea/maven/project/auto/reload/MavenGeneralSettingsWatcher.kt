@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project.auto.reload
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFileChangesListener.Companion.subscribeOnVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
@@ -52,7 +53,7 @@ class MavenGeneralSettingsWatcher(
       .coalesceBy(this)
       .build(backgroundExecutor)
     subscribeOnVirtualFilesChanges(false, filesProvider, object : FilesChangesListener {
-      override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
+      override fun onFileChange(stamp: Stamp, path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
         val fileChangeMessage = "File change: $path, $modificationStamp, $modificationType"
         MavenLog.LOG.debug(fileChangeMessage)
       }
