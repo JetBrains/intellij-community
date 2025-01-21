@@ -61,7 +61,7 @@ internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionPromoter,
     }
     for (action in TerminalEventDispatcher.getActionsToSkip()) {
       if (action.shortcutSet.shortcuts.contains(shortcut)) {
-        if (isEnabled(action, e)) {
+        if (e.updateSession.presentation(action).isEnabled) {
           e.presentation.isEnabledAndVisible = false
           return
         }
@@ -81,26 +81,6 @@ internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionPromoter,
     val event = e.inputEvent as? KeyEvent ?: return
     dispatcher.handleKeyEvent(event)
   }
-}
-
-private fun isEnabled(action: AnAction, event: AnActionEvent): Boolean {
-  val fakeEvent = AnActionEvent.createEvent(
-    action,
-    event.dataContext,
-    null,
-    ActionPlaces.KEYBOARD_SHORTCUT,
-    ActionUiKind.NONE,
-    event.inputEvent
-  )
-  if (action.actionUpdateThread == ActionUpdateThread.BGT) {
-    action.update(fakeEvent)
-  }
-  else {
-    event.updateSession.compute(action, "isEnabled", ActionUpdateThread.EDT) {
-      action.update(fakeEvent)
-    }
-  }
-  return fakeEvent.presentation.isEnabled
 }
 
 private val AnActionEvent.shortcut: Shortcut?
