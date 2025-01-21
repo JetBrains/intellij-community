@@ -40,16 +40,11 @@ public final class JavaSdkUtil {
     }
   }
 
-  /// Returns the path for JUnit 4 jar, or the expected path to JUnit 4.13.2 location inside `.m2`.
+  /// Returns the expected path to JUnit 4.13.2 location inside `.m2`.
   /// @deprecated JUnit 4 is not included in the IDEA distribution anymore
   @Deprecated
   public static @NotNull String getJunit4JarPath() {
-    try {
-      return PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.Test"));
-    }
-    catch (Exception e) {
-      return Path.of(SystemProperties.getUserHome(), ".m2/repository/junit/junit/4.13.2/junit-4.13.2.jar").toAbsolutePath().toString();
-    }
+    return Path.of(SystemProperties.getUserHome(), ".m2/repository/junit/junit/4.13.2/junit-4.13.2.jar").toAbsolutePath().toString();
   }
 
   /// Returns the path for JUnit 3 jar, or the expected path to JUnit 3.8.2 location inside `.m2`.
