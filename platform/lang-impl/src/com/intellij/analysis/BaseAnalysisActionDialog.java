@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -106,8 +107,11 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     preselectButton();
     RadioUpDownListener.installOn(radioButtons.toArray(new JRadioButton[0]));
 
-    panel.setPreferredSize(panel.getMinimumSize());
-    return panel;
+    final var scrollPane = new JBScrollPane(panel);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setBorder(null);
+    scrollPane.setPreferredSize(panel.getMinimumSize());
+    return scrollPane;
   }
 
   public void setShowInspectInjectedCode(boolean showInspectInjectedCode) {
