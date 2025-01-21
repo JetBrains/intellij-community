@@ -63,7 +63,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myLogAllCommands = false; // reset for every test
+    myLogAllCommands = logAllCommands(); // reset for every test
   }
 
   private static class InvokeRatherLaterRequest {
@@ -75,6 +75,14 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myDebuggerCommand = debuggerCommand;
       myDebugProcess = debugProcess;
     }
+  }
+
+  /**
+   * Determines whether all commands executed within the debugger test case are logged in the output.
+   * You can override it changing {@link #myLogAllCommands} right in the test.
+   */
+  protected boolean logAllCommands() {
+    return true;
   }
 
   public final List<InvokeRatherLaterRequest> myRatherLaterRequests = new ArrayList<>();
