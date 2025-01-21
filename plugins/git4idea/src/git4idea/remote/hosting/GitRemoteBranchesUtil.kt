@@ -223,7 +223,7 @@ object GitRemoteBranchesUtil {
       askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater)
     } else {
       GitBranchCheckoutOperation(project, repositories)
-        .perform(remoteBranchName, GitNewBranchOptions(suggestedLocalName, true, true), callInAwtLater)
+        .perform(remoteBranchName, GitNewBranchOptions(suggestedLocalName, true, true, false, repositories), callInAwtLater)
     }
   }
 

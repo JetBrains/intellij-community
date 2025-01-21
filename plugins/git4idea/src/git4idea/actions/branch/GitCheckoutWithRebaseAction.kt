@@ -45,7 +45,7 @@ class GitCheckoutWithRebaseAction : GitSingleBranchAction(GitBundle.messagePoint
   private fun checkoutAndRebaseRemote(project: Project, repositories: List<GitRepository>, branch: GitRemoteBranch) {
     val suggestedLocalName = branch.nameForRemoteOperations
 
-    var newBranchOptions: GitNewBranchOptions? = GitNewBranchOptions(suggestedLocalName, false, true, false)
+    var newBranchOptions: GitNewBranchOptions? = GitNewBranchOptions(suggestedLocalName, false, true, false, repositories)
     // can have remote conflict if git-svn is used  - suggested local name will be equal to selected remote
     if (GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(branch.name, suggestedLocalName)) {
       newBranchOptions = askBranchName(project, repositories, branch, suggestedLocalName)
