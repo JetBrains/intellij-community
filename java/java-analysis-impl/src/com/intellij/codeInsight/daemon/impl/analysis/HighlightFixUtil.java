@@ -714,7 +714,8 @@ public final class HighlightFixUtil {
   }
 
   static void registerCallInferenceFixes(@NotNull PsiMethodCallExpression callExpression, @NotNull Consumer<CommonIntentionAction> info) {
-    MethodCandidateInfo resolveResult = (MethodCandidateInfo)callExpression.getMethodExpression().advancedResolve(true);
+    JavaResolveResult result = callExpression.getMethodExpression().advancedResolve(true);
+    if (!(result instanceof MethodCandidateInfo resolveResult)) return;
     PsiMethod method = resolveResult.getElement();
     registerMethodCallIntentions(info, callExpression, callExpression.getArgumentList());
     PsiType actualType = ((PsiExpression)callExpression.copy()).getType();
