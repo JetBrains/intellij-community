@@ -22,6 +22,7 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
                                                                     Context context) {
   static final String JAVA_DISPLAY_INFORMATION = "--java-display-information";
   static final String JAVA_DISPLAY_GRAYED = "--java-display-grayed";
+  static final String JAVA_DISPLAY_PARAMETER = "--java-display-parameter";
   static final String JAVA_DISPLAY_ERROR = "--java-display-error";
   
   public JavaCompilationError {

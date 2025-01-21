@@ -24,7 +24,9 @@ import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -60,7 +62,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -72,11 +73,13 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
-  private final Map<String, Color> myTooltipColors = Map.of(
-    "information", NewUI.isEnabled() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground(),
-    "grayed", UIUtil.getContextHelpForeground(),
-    "error", NamedColorUtil.getErrorForeground()
-  );
+  private final Map<String, String> myTooltipStyles = Map.of(
+    "information", "color: " + ColorUtil.toHtmlColor(NewUI.isEnabled() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground()),
+    "grayed", "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()),
+    "parameter", "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())+"; background-color: " + ColorUtil.toHtmlColor(
+      EditorColorsUtil.getGlobalOrDefaultColorScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).getBackgroundColor()),
+    "error", "color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()
+    ));
   private static final Pattern COLOR_CLASS = Pattern.compile("class=\"--java-display-(\\w+)\"");
   private @NotNull HighlightInfoHolder myHolder;
   private @NotNull LanguageLevel myLanguageLevel;
@@ -270,9 +273,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     Matcher matcher = COLOR_CLASS.matcher(html);
     @NlsSafe StringBuilder result = new StringBuilder();
     while (matcher.find()) {
-      Color color = myTooltipColors.get(matcher.group(1));
-      if (color != null) {
-        matcher.appendReplacement(result, "style=\"color:" + ColorUtil.toHtmlColor(color) + ";\"");
+      String style = myTooltipStyles.get(matcher.group(1));
+      if (style != null) {
+        matcher.appendReplacement(result, "style=\"" + style + "\"");
       } else {
         matcher.appendReplacement(result, matcher.group());
       }

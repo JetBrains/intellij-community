@@ -15,6 +15,7 @@ import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
+import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
@@ -25,6 +26,8 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightRecordMethod;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.JavaPsiModifierUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -344,6 +347,26 @@ final class JavaErrorFixProvider {
         return registrar;
       }
       return List.of();
+    });
+    multi(CALL_WRONG_ARGUMENTS, error -> {
+      JavaMismatchedCallContext context = error.context();
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      if (context.list().getParent() instanceof PsiMethodCallExpression methodCall) {
+        PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
+        PsiType actualType = ((PsiExpression)methodCall.copy()).getType();
+        if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
+          AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(registrar::add, methodCall, expectedTypeByParent, actualType);
+        }
+        PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(error.project());
+        HighlightFixUtil.registerQualifyMethodCallFix(
+          resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall, context.list(), registrar::add);
+        HighlightFixUtil.registerMethodCallIntentions(registrar::add, methodCall, context.list());
+        MethodCandidateInfo candidate = context.candidate();
+        HighlightFixUtil.registerMethodReturnFixAction(registrar::add, candidate, methodCall);
+        HighlightFixUtil.registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidate, candidate.getElement(), registrar::add);
+        HighlightFixUtil.registerImplementsExtendsFix(registrar::add, methodCall, candidate.getElement());
+      }
+      return registrar;
     });
   }
 

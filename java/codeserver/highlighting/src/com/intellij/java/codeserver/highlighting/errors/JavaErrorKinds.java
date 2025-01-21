@@ -534,6 +534,9 @@ public final class JavaErrorKinds {
       .withTooltip((psi, context) -> context.createTooltip());
   public static final Simple<PsiKeyword> TYPE_VOID_ILLEGAL = error("type.void.illegal");
   public static final Simple<PsiExpression> TYPE_VOID_NOT_ALLOWED = error("type.void.not.allowed");
+  public static final Parameterized<PsiElement, PsiClass> TYPE_INACCESSIBLE =
+    parameterized(PsiElement.class, PsiClass.class, "type.inaccessible")
+      .withRawDescription((psi, cls) -> message("type.inaccessible", formatClass(cls)));
 
   public static final Simple<PsiLabeledStatement> LABEL_WITHOUT_STATEMENT = error(PsiLabeledStatement.class, "label.without.statement")
     .withAnchor(label -> label.getLabelIdentifier());
@@ -651,6 +654,11 @@ public final class JavaErrorKinds {
     parameterized(PsiCall.class, String.class, "call.type.inference.error")
       .withRange((psi, context) -> getRange(psi))
       .withRawDescription((psi, context) -> message("call.type.inference.error", context));
+  public static final Parameterized<PsiElement, JavaMismatchedCallContext> CALL_WRONG_ARGUMENTS =
+    parameterized(PsiElement.class, JavaMismatchedCallContext.class, "call.wrong.arguments")
+      .withTooltip((psi, ctx) -> ctx.createTooltip())
+      .withDescription((psi, ctx) -> ctx.createDescription());
+
   public static final Simple<PsiExpression> STRING_TEMPLATE_VOID_NOT_ALLOWED_IN_EMBEDDED =
     error("string.template.void.not.allowed.in.embedded");
   public static final Simple<PsiTemplateExpression> STRING_TEMPLATE_PROCESSOR_MISSING =

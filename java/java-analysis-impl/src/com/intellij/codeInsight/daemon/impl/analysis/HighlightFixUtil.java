@@ -15,7 +15,6 @@ import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.lang.jvm.util.JvmUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -23,6 +22,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -466,18 +466,14 @@ public final class HighlightFixUtil {
   static void registerQualifyMethodCallFix(CandidateInfo @NotNull [] methodCandidates,
                                            @NotNull PsiMethodCallExpression methodCall,
                                            @NotNull PsiExpressionList exprList,
-                                           @Nullable HighlightInfo.Builder highlightInfo) {
+                                           @NotNull Consumer<? super CommonIntentionAction> info) {
     if (methodCall.getMethodExpression().getQualifierExpression() != null) return;
     for (CandidateInfo methodCandidate : methodCandidates) {
       PsiMethod method = (PsiMethod)methodCandidate.getElement();
       if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodCall.getMethodExpression(), method);
         if (qualifier == null) continue;
-        var fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
-        TextRange fixRange = HighlightMethodUtil.getFixRange(methodCall);
-        if (highlightInfo != null) {
-          highlightInfo.registerFix(fix, null, null, fixRange, null);
-        }
+        info.accept(new QualifyMethodCallFix(methodCall, qualifier.getText()));
       }
     }
   }
@@ -726,5 +722,30 @@ public final class HighlightFixUtil {
       registerMethodReturnFixAction(info, resolveResult, callExpression);
     }
     registerTargetTypeFixesBasedOnApplicabilityInference(callExpression, resolveResult, method, info);
+  }
+
+  static void registerImplementsExtendsFix(@NotNull Consumer<? super CommonIntentionAction> info,
+                                           @NotNull PsiMethodCallExpression methodCall,
+                                           @NotNull PsiMethod resolvedMethod) {
+    if (!JavaPsiConstructorUtil.isSuperConstructorCall(methodCall)) return;
+    if (!resolvedMethod.isConstructor() || !resolvedMethod.getParameterList().isEmpty()) return;
+    PsiClass psiClass = resolvedMethod.getContainingClass();
+    if (psiClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return;
+    PsiClass containingClass = PsiUtil.getContainingClass(methodCall);
+    if (containingClass == null) return;
+    PsiReferenceList extendsList = containingClass.getExtendsList();
+    if (extendsList != null && extendsList.getReferenceElements().length > 0) return;
+    PsiReferenceList implementsList = containingClass.getImplementsList();
+    if (implementsList == null) return;
+    for (PsiClassType type : implementsList.getReferencedTypes()) {
+      PsiClass superInterface = type.resolve();
+      if (superInterface != null && !superInterface.isInterface()) {
+        for (PsiMethod constructor : superInterface.getConstructors()) {
+          if (!constructor.getParameterList().isEmpty()) {
+            info.accept(QuickFixFactory.getInstance().createChangeExtendsToImplementsFix(containingClass, type));
+          }
+        }
+      }
+    }
   }
 }

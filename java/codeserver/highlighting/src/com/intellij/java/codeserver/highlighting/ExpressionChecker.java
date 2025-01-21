@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
+import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
@@ -330,11 +331,14 @@ final class ExpressionChecker {
           checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, containingClass);
         }
       }
+      MethodCandidateInfo methodInfo = (MethodCandidateInfo)resolveResult;
       myVisitor.myGenericsChecker.checkInferredIntersections(substitutor, methodCall);
       if (myVisitor.hasErrorResults()) return;
-      checkVarargParameterErasureToBeAccessible((MethodCandidateInfo)resolveResult, methodCall);
+      checkVarargParameterErasureToBeAccessible(methodInfo, methodCall);
       if (myVisitor.hasErrorResults()) return;
-      checkIncompatibleType(methodCall, (MethodCandidateInfo)resolveResult, methodCall);
+      checkIncompatibleType(methodCall, methodInfo, methodCall);
+      if (myVisitor.hasErrorResults()) return;
+      checkInferredReturnTypeAccessible(methodInfo, methodCall);
     }
     else {
       MethodCandidateInfo candidateInfo = resolveResult instanceof MethodCandidateInfo ? (MethodCandidateInfo)resolveResult : null;
@@ -343,10 +347,40 @@ final class ExpressionChecker {
       if (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect()) {
       }
       else if (candidateInfo != null && !candidateInfo.isApplicable()) {
-
+        if (candidateInfo.isTypeArgumentsApplicable()) {
+          checkIncompatibleCall(list, candidateInfo);
+        }
       }
       else {
         myVisitor.report(JavaErrorKinds.CALL_EXPECTED.create(methodCall));
+      }
+    }
+  }
+
+  private void checkIncompatibleCall(@NotNull PsiExpressionList list, @NotNull MethodCandidateInfo candidateInfo) {
+    if (PsiTreeUtil.hasErrorElements(list)) return;
+    JavaMismatchedCallContext context = JavaMismatchedCallContext.create(list, candidateInfo);
+    List<PsiExpression> mismatchedExpressions = context.mismatchedExpressions();
+    if (mismatchedExpressions.isEmpty() && IncompleteModelUtil.isIncompleteModel(list)) return;
+
+    if (mismatchedExpressions.size() == list.getExpressions().length || mismatchedExpressions.isEmpty()) {
+      PsiElement anchor = list.getTextRange().isEmpty() ? ObjectUtils.notNull(list.getPrevSibling(), list) : list;
+      myVisitor.report(JavaErrorKinds.CALL_WRONG_ARGUMENTS.create(anchor, context));
+    }
+    else {
+      for (PsiExpression wrongArg : mismatchedExpressions) {
+        myVisitor.report(JavaErrorKinds.CALL_WRONG_ARGUMENTS.create(wrongArg, context));
+      }
+    }
+  }
+
+  private void checkInferredReturnTypeAccessible(@NotNull MethodCandidateInfo info, @NotNull PsiMethodCallExpression methodCall) {
+    PsiMethod method = info.getElement();
+    PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
+    if (targetClass instanceof PsiTypeParameter typeParameter && typeParameter.getOwner() == method) {
+      PsiClass inferred = PsiUtil.resolveClassInClassTypeOnly(info.getSubstitutor().substitute(typeParameter));
+      if (inferred != null && !PsiUtil.isAccessible(inferred, methodCall, null)) {
+        myVisitor.report(JavaErrorKinds.TYPE_INACCESSIBLE.create(methodCall.getArgumentList(), inferred));
       }
     }
   }

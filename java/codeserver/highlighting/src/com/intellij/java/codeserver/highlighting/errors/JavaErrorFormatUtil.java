@@ -52,6 +52,19 @@ final class JavaErrorFormatUtil {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
 
+  static @NotNull String formatArgumentTypes(@NotNull PsiExpressionList list, boolean shortNames) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("(");
+    PsiExpression[] args = list.getExpressions();
+    for (int i = 0; i < args.length; i++) {
+      if (i > 0) builder.append(", ");
+      PsiType argType = args[i].getType();
+      builder.append(argType != null ? (shortNames ? argType.getPresentableText() : formatType(argType)) : "?");
+    }
+    builder.append(")");
+    return builder.toString();
+  }
+  
   static @Nullable TextRange getRange(@NotNull PsiElement element) {
     if (element instanceof PsiMember member) {
       return getMemberDeclarationTextRange(member);
