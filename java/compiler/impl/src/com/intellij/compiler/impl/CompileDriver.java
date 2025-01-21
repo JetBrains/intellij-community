@@ -81,6 +81,11 @@ public final class CompileDriver {
   @ApiStatus.Experimental
   public static final Key<Boolean> SKIP_SAVE = Key.create("SKIP_SAVE");
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @TestOnly
+  public static final Key<Long> TIMEOUT = Key.create("TIMEOUT");
+
   private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
@@ -478,9 +483,16 @@ public final class CompileDriver {
 
         TaskFuture<?> future = compileInExternalProcess(compileContext, false);
         Tracer.Span compileInExternalProcessSpan = Tracer.start("compile in external process");
+        long currentTimeMillis = System.currentTimeMillis();
+        @SuppressWarnings("TestOnlyProblems") Long timeout = myProject.getUserData(TIMEOUT);
         while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
           if (indicator.isCanceled()) {
             future.cancel(false);
+          }
+
+          if (isUnitTestMode && timeout != null && System.currentTimeMillis() > currentTimeMillis + timeout) {
+            LOG.error("CANCELLED BY TIMEOUT IN TESTS");
+            future.cancel(true);
           }
         }
         compileInExternalProcessSpan.complete();
