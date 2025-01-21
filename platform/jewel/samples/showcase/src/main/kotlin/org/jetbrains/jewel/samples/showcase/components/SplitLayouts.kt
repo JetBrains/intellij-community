@@ -29,7 +29,7 @@ import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.VerticalSplitLayout
 
 @Composable
-fun SplitLayouts(
+public fun SplitLayouts(
     outerSplitState: SplitLayoutState,
     verticalSplitState: SplitLayoutState,
     innerSplitState: SplitLayoutState,
