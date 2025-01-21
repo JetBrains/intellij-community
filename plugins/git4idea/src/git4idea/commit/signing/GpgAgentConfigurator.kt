@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -55,7 +56,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.copyTo
 import kotlin.io.path.exists
 
@@ -145,17 +145,8 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
         withContext(Dispatchers.IO) { doConfigure(executable, gpgAgentPaths, existingConfig, defaultPinentry) }
       }
     }
-    catch (e: Exception) {
-      if (e is CancellationException) throw e
-
-      val message = if (e is GpgAgentConfigException) {
-        e.message
-      }
-      else {
-        LOG.warn("Cannot configure GPG Agent", e)
-        GitBundle.message("gpg.pinentry.agent.configuration.exception", e.message)
-      }
-      project.service<GpgAgentConfigurationNotificator>().notifyConfigurationFailed(message)
+    catch (e: VcsException) {
+      project.service<GpgAgentConfigurationNotificator>().notifyConfigurationFailed(GitBundle.message("gpg.pinentry.agent.configuration.exception", e.message))
     }
   }
 
