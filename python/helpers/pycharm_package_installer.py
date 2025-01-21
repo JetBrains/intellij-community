@@ -409,6 +409,7 @@ class Installer:
             new_path = "{current_path};{new_path}".format(current_path=current_path, new_path=self.bin_dir)
             os.environ['PATH'] = new_path
             subprocess.run("setx PATH {new_path}".format(new_path=new_path), shell=True)
+            subprocess.run('$env:Path = "{package_path};$env:Path"'.format(package_path=self.bin_dir), shell=True)
 
         self._write(
             POST_MESSAGE.format(
