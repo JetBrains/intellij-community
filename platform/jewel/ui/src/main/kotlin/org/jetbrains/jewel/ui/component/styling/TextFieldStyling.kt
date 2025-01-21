@@ -13,8 +13,11 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 @Stable
 @GenerateDataFunctions
-public class TextFieldStyle(override val colors: TextFieldColors, override val metrics: TextFieldMetrics) :
-    InputFieldStyle {
+public class TextFieldStyle(
+    override val colors: TextFieldColors,
+    override val metrics: TextFieldMetrics,
+    public val iconButtonStyle: IconButtonStyle,
+) : InputFieldStyle {
     public companion object
 }
 

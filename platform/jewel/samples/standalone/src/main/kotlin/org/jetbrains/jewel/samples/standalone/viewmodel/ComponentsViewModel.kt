@@ -21,12 +21,12 @@ import org.jetbrains.jewel.samples.showcase.components.ProgressBar
 import org.jetbrains.jewel.samples.showcase.components.RadioButtons
 import org.jetbrains.jewel.samples.showcase.components.Scrollbars
 import org.jetbrains.jewel.samples.showcase.components.SegmentedControls
-import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.showcase.components.Sliders
-import org.jetbrains.jewel.samples.standalone.view.component.SplitLayouts
+import org.jetbrains.jewel.samples.showcase.components.SplitLayouts
+import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.showcase.components.Tabs
 import org.jetbrains.jewel.samples.showcase.components.TextAreas
-import org.jetbrains.jewel.samples.standalone.view.component.TextFields
+import org.jetbrains.jewel.samples.showcase.components.TextFields
 import org.jetbrains.jewel.samples.standalone.view.component.Tooltips
 import org.jetbrains.jewel.ui.component.SplitLayoutState
 import org.jetbrains.jewel.ui.component.styling.LinkStyle

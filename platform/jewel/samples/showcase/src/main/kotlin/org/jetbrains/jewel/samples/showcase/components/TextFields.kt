@@ -1,4 +1,5 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -18,18 +19,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.intui.standalone.styling.dark
-import org.jetbrains.jewel.intui.standalone.styling.defaults
-import org.jetbrains.jewel.intui.standalone.styling.light
-import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.Icon
@@ -38,13 +33,12 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.styling.IconButtonColors
-import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
-import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
+import org.jetbrains.jewel.ui.theme.textFieldStyle
 
 @Composable
-fun TextFields() {
+public fun TextFields() {
     VerticallyScrollableContainer(Modifier.fillMaxSize()) {
         Column {
             TextFieldsRows(readOnly = false)
@@ -141,13 +135,11 @@ private fun CloseIconButton(isVisible: Boolean, onClick: () -> Unit) {
             enter = fadeIn() + slideInHorizontally { it / 2 },
             exit = fadeOut() + slideOutHorizontally { it / 2 },
         ) {
-            // TODO replace when IconButton supports no-background style
-            val isDark = JewelTheme.isDark
-
-            val colors = noBackgroundIconButtonColors(isDark)
-            val style = remember(isDark, colors) { IconButtonStyle(colors, IconButtonMetrics.defaults()) }
-
-            IconButton(onClick, style = style, modifier = Modifier.pointerHoverIcon(PointerIcon.Default)) { state ->
+            IconButton(
+                onClick,
+                style = JewelTheme.textFieldStyle.iconButtonStyle,
+                modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+            ) { state ->
                 Icon(AllIconsKeys.General.Close, contentDescription = "Clear", hint = Stateful(state))
             }
         }
@@ -155,25 +147,8 @@ private fun CloseIconButton(isVisible: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun noBackgroundIconButtonColors(isDark: Boolean) =
-    if (isDark) {
-        IconButtonColors.dark(
-            background = Color.Unspecified,
-            backgroundDisabled = Color.Unspecified,
-            backgroundSelected = Color.Unspecified,
-            backgroundSelectedActivated = Color.Unspecified,
-            backgroundFocused = Color.Unspecified,
-            backgroundPressed = Color.Unspecified,
-            backgroundHovered = Color.Unspecified,
-        )
-    } else {
-        IconButtonColors.light(
-            background = Color.Unspecified,
-            backgroundDisabled = Color.Unspecified,
-            backgroundSelected = Color.Unspecified,
-            backgroundSelectedActivated = Color.Unspecified,
-            backgroundFocused = Color.Unspecified,
-            backgroundPressed = Color.Unspecified,
-            backgroundHovered = Color.Unspecified,
-        )
-    }
+private fun noBackgroundIconButtonColors(
+    isDark: Boolean,
+    iconColorsDark: IconButtonColors,
+    iconColorsLight: IconButtonColors,
+) = if (isDark) iconColorsDark else iconColorsLight
