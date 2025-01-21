@@ -48,6 +48,10 @@ class KtSymbolFromIndexProvider(
             // filter out expect declarations outside of common modules
             return false
         }
+        
+        if (isFromKotlinMetadataOrBuiltins()) {
+            return false
+        }
 
         return true
     }
@@ -165,7 +169,6 @@ class KtSymbolFromIndexProvider(
         ) { declaration ->
             declaration.isAcceptable(psiFilter)
                     && !declaration.isExtensionDeclaration()
-                    && !declaration.isKotlinBuiltins()
         }
     }.map { it.symbol }
         .filterIsInstance<KaCallableSymbol>() +
@@ -184,7 +187,6 @@ class KtSymbolFromIndexProvider(
         val processor = CancelableCollectFilterProcessor { declaration: KtNamedDeclaration ->
             declaration is KtCallableDeclaration
                     && declaration.isAcceptable(psiFilter)
-                    && !declaration.isKotlinBuiltins()
         }
 
         helper.processElements(
@@ -252,7 +254,6 @@ class KtSymbolFromIndexProvider(
     ).flatMap { helper ->
         val processor = CancelableCollectFilterProcessor { declaration: KtCallableDeclaration ->
             declaration.isAcceptable(psiFilter)
-                    && !declaration.isKotlinBuiltins()
                     && declaration.receiverTypeReference == null
         }
 
@@ -295,7 +296,6 @@ class KtSymbolFromIndexProvider(
 
                     indexHelper.getAllElements(key.key, project, scope) { declaration ->
                                 declaration.isAcceptable(psiFilter)
-                                && !declaration.isKotlinBuiltins()
                     }
                 }
             }.map { it.symbol }
@@ -335,7 +335,6 @@ class KtSymbolFromIndexProvider(
         ).flatMap { index ->
             index.getAllElements(project, scope, keyFilter) { declaration: KtCallableDeclaration ->
                 declaration.isAcceptable(psiFilter)
-                        && !declaration.isKotlinBuiltins()
             }
         }.map { it.symbol }
             .filterIsInstance<KaCallableSymbol>()
@@ -437,7 +436,7 @@ private val KotlinBuiltins = setOf(
     "kotlin/internal/ProgressionUtilKt",
 )
 
-private fun KtCallableDeclaration.isKotlinBuiltins(): Boolean {
+private fun KtDeclaration.isFromKotlinMetadataOrBuiltins(): Boolean {
     val file = containingKtFile
     val virtualFile = file.virtualFile
     if (virtualFile.extension == METADATA_FILE_EXTENSION) return true
