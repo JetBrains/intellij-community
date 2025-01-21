@@ -859,7 +859,7 @@
       id="EditorDeleteLine.checkHandler"
     />
 
-    <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypedHandlerDelegate"/>
+    <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypedHandlerDelegate"/>
 
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
                  description="Allows to restore the legacy behavior of Up/Down w.r.t. selection boundaries.\n\
@@ -1898,7 +1898,7 @@
     <listener class="com.intellij.ide.ui.laf.LafAndEditorColorSchemeDynamicPluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
 
-    <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypingListener"
+    <listener class="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
@@ -1924,7 +1924,7 @@
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.formatting.EditorFormatterListener"
               topic="com.intellij.psi.codeStyle.CodeStyleManager$Listener"/>
-    <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTemplateListener"
+    <listener class="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTemplateListener"
               topic="com.intellij.codeInsight.template.TemplateManagerListener"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener"
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
