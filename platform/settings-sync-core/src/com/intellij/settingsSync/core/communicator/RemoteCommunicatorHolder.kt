@@ -1,11 +1,18 @@
 package com.intellij.settingsSync.core.communicator
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.ui.Messages
 import com.intellij.settingsSync.core.SettingsSyncEventListener
 import com.intellij.settingsSync.core.SettingsSyncLocalSettings
 import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
+import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.util.resettableLazy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 
 @ApiStatus.Internal
 object RemoteCommunicatorHolder : SettingsSyncEventListener {
@@ -69,8 +76,16 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
   }
 
   fun getAvailableProviders(): List<SettingsSyncCommunicatorProvider> {
-    val extensionList = SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList
+    val extensionList = arrayListOf<SettingsSyncCommunicatorProvider>()
+    extensionList.addAll(SettingsSyncCommunicatorProvider.PROVIDER_EP.extensionList)
+    if (extensionList.find { it.providerCode == DEFAULT_PROVIDER_CODE } == null) {
+      extensionList.add(DummyDefaultCommunicatorProvider)
+    }
     return extensionList
+  }
+
+  fun getExternalProviders(): List<SettingsSyncCommunicatorProvider> {
+    return getAvailableProviders().filter { it.providerCode != DEFAULT_PROVIDER_CODE }
   }
 
   fun getDefaultProvider(): SettingsSyncCommunicatorProvider? {
@@ -88,5 +103,38 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
   private fun getCurrentProvider(): SettingsSyncCommunicatorProvider? {
     val providerCode = SettingsSyncLocalSettings.getInstance().providerCode ?: return null
     return getProvider(providerCode)
+  }
+
+  private object DummyAuthService: SettingsSyncAuthService {
+    override val providerCode = DEFAULT_PROVIDER_CODE
+    override val providerName = "JetBrains"
+    override val icon = AllIcons.Ultimate.IdeaUltimatePromo
+
+    override suspend fun login(parentComponent: Component?): SettingsSyncUserData? {
+      return withContext(Dispatchers.EDT) {
+        if (parentComponent != null) {
+          Messages.showInfoMessage(parentComponent, "Please download Jetbrains \"Backup and Sync\" plugin from plugins page",
+                                   "Plugin download required")
+        } else {
+          Messages.showInfoMessage("Please download Jetbrains \"Backup and Sync\" plugin from plugins page",
+                                   "Plugin download required")
+        }
+        null
+      }
+    }
+
+    override fun getUserData(userId: String): SettingsSyncUserData? = null
+    override fun getAvailableUserAccounts(): List<SettingsSyncUserData> = emptyList()
+  }
+
+  private object DummyDefaultCommunicatorProvider : SettingsSyncCommunicatorProvider {
+    override val providerCode: String
+      get() = DEFAULT_PROVIDER_CODE
+    override val authService = DummyAuthService
+
+    override fun createCommunicator(userId: String): SettingsSyncRemoteCommunicator? {
+      return null
+    }
+
   }
 }
