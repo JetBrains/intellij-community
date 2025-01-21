@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -38,6 +38,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -49,6 +50,7 @@ import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
+import javax.swing.plaf.UIResource
 import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
@@ -175,28 +177,22 @@ class InternalDecoratorImpl internal constructor(
       return preventRecoloring == true
     }
 
-    internal fun setBackgroundRecursively(component: Component, bg: Color) {
-      val action: (Component) -> Unit = { c ->
-        if (c !is ActionButton &&
-            c !is Divider &&
-            c !is JTextComponent &&
-            c !is JComboBox<*> &&
-            c !is EditorTextField) {
-          c.background = bg
-        }
+    internal fun setBackgroundFor(component: Component, bg: Color) {
+      if (component is ActionButton ||
+          component is Divider ||
+          component is JTextComponent ||
+          component is JComboBox<*> ||
+          component is EditorTextField) return
+      if (component.isBackgroundSet && component.background !is UIResource) {
+        return
       }
-      setBackgroundRecursively(action, component)
+      component.background = bg
     }
 
-    private fun setBackgroundRecursively(action: (Component) -> Unit, component: Component) {
-      if (isRecursiveBackgroundUpdateDisabled(component)) return
-
-      action(component)
-      if (component is Container) {
-        for (c in component.components) {
-          setBackgroundRecursively(action, c)
-        }
-      }
+    internal fun setBackgroundRecursively(component: Component, bg: Color) {
+      UIUtil.uiTraverser(component)
+        .expandAndFilter { !isRecursiveBackgroundUpdateDisabled(component) }
+        .forEach { setBackgroundFor(it, bg) }
     }
 
     private fun installDefaultFocusTraversalKeys(container: Container, id: Int) {
