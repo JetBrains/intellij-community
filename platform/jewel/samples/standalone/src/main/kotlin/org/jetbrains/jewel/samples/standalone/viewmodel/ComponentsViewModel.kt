@@ -20,8 +20,8 @@ import org.jetbrains.jewel.samples.showcase.components.Links
 import org.jetbrains.jewel.samples.showcase.components.ProgressBar
 import org.jetbrains.jewel.samples.showcase.components.RadioButtons
 import org.jetbrains.jewel.samples.showcase.components.Scrollbars
+import org.jetbrains.jewel.samples.showcase.components.SegmentedControls
 import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
-import org.jetbrains.jewel.samples.standalone.view.component.SegmentedControls
 import org.jetbrains.jewel.samples.standalone.view.component.Sliders
 import org.jetbrains.jewel.samples.standalone.view.component.SplitLayouts
 import org.jetbrains.jewel.samples.standalone.view.component.Tabs

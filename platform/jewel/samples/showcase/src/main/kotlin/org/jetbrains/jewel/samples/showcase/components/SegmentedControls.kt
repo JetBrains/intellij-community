@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +13,7 @@ import org.jetbrains.jewel.ui.component.SegmentedControlButtonData
 import org.jetbrains.jewel.ui.component.Text
 
 @Composable
-fun SegmentedControls() {
+public fun SegmentedControls() {
     var selectedButtonIndex by remember { mutableStateOf(0) }
     val buttonIds = listOf(0, 1, 2, 3)
     val buttons =
