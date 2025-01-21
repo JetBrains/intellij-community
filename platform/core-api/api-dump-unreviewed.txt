@@ -5447,6 +5447,8 @@ f:com.intellij.util.AstLoadingFilter
 - s:forceAllowTreeLoading(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.ThrowableRunnable):V
 - s:forceAllowTreeLoading(com.intellij.psi.PsiFile,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:forceAllowTreeLoading(com.intellij.psi.PsiFile,com.intellij.util.ThrowableRunnable):V
+@:com.intellij.util.AwaitCancellationAndInvoke
+- java.lang.annotation.Annotation
 com.intellij.util.CharTable
 - sf:CHAR_TABLE_KEY:com.intellij.openapi.util.Key
 - a:intern(java.lang.CharSequence):java.lang.CharSequence
