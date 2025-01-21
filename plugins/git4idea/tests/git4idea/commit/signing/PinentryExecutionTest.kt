@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit.signing
 
+import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
 import com.intellij.openapi.components.service
@@ -13,12 +14,15 @@ import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.project.stateStore
 import com.intellij.util.application
 import com.intellij.util.io.createDirectories
+import git4idea.commit.signing.GpgAgentConfig.Companion.PINENTRY_PROGRAM
+import git4idea.commit.signing.GpgAgentConfig.Companion.readConfig
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_HOME_DIR
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.PINENTRY_LAUNCHER_FILE_NAME
 import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableManager
 import git4idea.repo.GitProjectConfigurationCache
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assume.assumeTrue
@@ -105,10 +109,10 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val paths = createPathLocator().resolvePaths()!!
     val pinentryFallback = "/usr/bin/pinentry-old"
     configureGpgAgent(paths, pinentryFallback)
-    val config = GpgAgentConfig.readConfig(paths.gpgAgentConf).getOrThrow()
+    val config = GpgAgentConfig.readConfig(paths.gpgAgentConf)
     checkNotNull(config)
     assertTrue(config.isIntellijPinentryConfigured(paths))
-    assertEquals(pinentryFallback, config.pinentryProgramFallback)
+    assertPinentryFallback(paths, pinentryFallback)
   }
 
   fun `test pinentry shouldn't be configured twice`() {
@@ -126,17 +130,30 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val paths = pathLocator.resolvePaths()!!
 
     val pinetryFallback = "/non-existing-path/with space/pinentry"
+    GpgAgentConfig(paths.gpgAgentConf, mapOf(PINENTRY_PROGRAM to pinetryFallback)).writeToFile()
     configureGpgAgent(paths, pinetryFallback)
 
-    val scriptContent = FileUtil.loadFile(paths.gpgPinentryAppLauncher.toFile())
-    assertThat(scriptContent, CoreMatchers.containsString("""exec '${pinetryFallback}' "$@""""))
+    assertPinentryFallback(paths, pinetryFallback)
     FileUtil.writeToFile(paths.gpgPinentryAppLauncher.toFile(), "irrelevant content")
-    project.service<GpgAgentConfigurator>().updateExistingPinentryLauncher()
-    assertThat(scriptContent, CoreMatchers.containsString("""exec '${pinetryFallback}' "$@""""))
+    runBlocking {
+      project.service<GpgAgentConfigurator>().updateExistingPinentryLauncher()
+    }
+    assertPinentryFallback(paths, pinetryFallback)
+  }
+
+  private fun assertPinentryFallback(paths: GpgAgentPaths, pinetryFallback: String) {
+    val scriptContent = FileUtil.loadFile(paths.gpgPinentryAppLauncher.toFile())
+    assertThat(scriptContent, CoreMatchers.containsString("""exec ${CommandLineUtil.posixQuote(pinetryFallback)} "$@""""))
   }
 
   private fun configureGpgAgent(gpgAgentPaths: GpgAgentPaths, pinetryFallback: String = "pinentry") {
-    project.service<GpgAgentConfigurator>().doConfigure(GitExecutableManager.getInstance().getExecutable(project), gpgAgentPaths, pinetryFallback)
+    val config = readConfig(gpgAgentPaths.gpgAgentConf)
+    project.service<GpgAgentConfigurator>().doConfigure(
+      GitExecutableManager.getInstance().getExecutable(project),
+      gpgAgentPaths,
+      config,
+      pinetryFallback
+    )
   }
 
   private fun assertScriptContentStructure(scriptContent: String) {

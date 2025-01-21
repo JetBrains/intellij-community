@@ -8,12 +8,14 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -116,14 +118,17 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
       if (!isEnabled(project, executable)) return@launch
       try {
         val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: throw ReadGpgAgentConfigException(null)
-        val defaultPinentry = readDefaultPinentryPathFromGpgConf(executable)
+        val existingConfig = withContext(Dispatchers.IO) {
+          readConfig(gpgAgentPaths.gpgAgentConf)
+        }
+        val defaultPinentry = existingConfig?.pinentryProgram ?: readDefaultPinentryPathFromGpgConf(executable)
         if (defaultPinentry == gpgAgentPaths.gpgPinentryAppLauncherConfigPath) {
-          LOG.info("GPG Agent config already has pinentry launcher configured. Skipping")
+          LOG.warn("GPG Agent config already has pinentry launcher configured. Skipping")
           return@launch
         }
         checkCanceled()
         if (showConfirmationDialog(defaultPinentry)) {
-          withContext(Dispatchers.IO) { doConfigure(executable, gpgAgentPaths, defaultPinentry) }
+          withContext(Dispatchers.IO) { doConfigure(executable, gpgAgentPaths, existingConfig,defaultPinentry) }
         }
       } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -148,14 +153,18 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   }
 
   @VisibleForTesting
-  internal fun doConfigure(gitExecutable: GitExecutable, gpgAgentPaths: GpgAgentPaths, pinentryFallback: String) {
+  internal fun doConfigure(
+    gitExecutable: GitExecutable,
+    gpgAgentPaths: GpgAgentPaths,
+    existingConfig: GpgAgentConfig?,
+    pinentryFallback: String,
+  ) {
     val gpgAgentConfPath = gpgAgentPaths.gpgAgentConf
-    val existingConfig = readConfig(gpgAgentConfPath)
     generatePinentryLauncher(gitExecutable, gpgAgentPaths, pinentryFallback)
     var backupCreated = false
     if (existingConfig == null) {
       LOG.info("Cannot locate $gpgAgentConfPath, creating new")
-      writeAgentConfig(GpgAgentConfig(gpgAgentPaths, pinentryFallback))
+      writeAgentConfig(GpgAgentConfig(gpgAgentPaths))
       restartAgent(gitExecutable)
     }
     else {
@@ -167,7 +176,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
       else {
         backupExistingConfig(gpgAgentPaths)
         backupCreated = true
-        writeAgentConfig(GpgAgentConfig(gpgAgentPaths, pinentryFallback, existingConfig))
+        writeAgentConfig(GpgAgentConfig(gpgAgentPaths, existingConfig))
         restartAgent(gitExecutable)
       }
     }
@@ -176,21 +185,26 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
 
   private fun emitUpdateLauncherEvent() {
     updateLauncherQueue.queue(Update.create("pinentry") {
-      updateExistingPinentryLauncher()
+      runBlockingCancellable {
+        updateExistingPinentryLauncher()
+      }
     })
   }
 
   @VisibleForTesting
-  internal fun updateExistingPinentryLauncher() {
+  internal suspend fun updateExistingPinentryLauncher() {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
     if (isEnabled(project, executable)) {
       val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: return
-      val config = readConfig(gpgAgentPaths.gpgAgentConf) ?: return
+      val config = withContext(Dispatchers.IO) {
+        readConfig(gpgAgentPaths.gpgAgentConf)
+      } ?: return
       if (isPinentryConfigured(gpgAgentPaths, config)) {
-        // There might be some previously created configurations before pinentry-program-fallback was introduced.
-        // In this case, let's try to get explicitly defined pinentry program from the backup config.
-        val pinentryFallback = config.pinentryProgramFallback ?:
-          readConfig(gpgAgentPaths.gpgAgentConfBackup)?.pinentryProgram
+        val pinentryFallback =
+          withContext(Dispatchers.IO) {
+            readConfig(gpgAgentPaths.gpgAgentConfBackup)?.pinentryProgram
+          }
+          ?: readDefaultPinentryPathFromGpgConf(executable)
 
         //always regenerate the launcher to be up to date (e.g., java.home could be changed between versions)
         generatePinentryLauncher(executable, gpgAgentPaths, pinentryFallback)
@@ -260,6 +274,10 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
 
   @NlsSafe
   private suspend fun readDefaultPinentryPathFromGpgConf(executable: GitExecutable): String = try {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw AssertionError("Should not be called in testing code, as returned value is system-configuration dependent")
+    }
+
     val output = withContext(Dispatchers.IO) {
       createGpgAgentExecutor(executable).execute("gpgconf", "--list-components")
     }

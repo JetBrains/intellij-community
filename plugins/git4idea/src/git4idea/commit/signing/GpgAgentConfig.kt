@@ -10,16 +10,14 @@ import kotlin.io.path.readLines
 
 internal data class GpgAgentConfig(val path: Path, val content: Map<String, String>) {
   val pinentryProgram: String? get() = content[PINENTRY_PROGRAM]
-  val pinentryProgramFallback: String? get() = content[PINENTRY_PROGRAM_FALLBACK]
 
-  constructor(gpgAgentPaths: GpgAgentPaths, pinentryFallback: String, existingConfig: GpgAgentConfig? = null) :
+  constructor(gpgAgentPaths: GpgAgentPaths, existingConfig: GpgAgentConfig? = null) :
     this(gpgAgentPaths.gpgAgentConf, buildMap {
       putAll(existingConfig?.content.orEmpty())
 
       this[DEFAULT_CACHE_TTL] = DEFAULT_CACHE_TTL_CONF_VALUE
       this[MAX_CACHE_TTL] = MAX_CACHE_TTL_CONF_VALUE
       this[PINENTRY_PROGRAM] = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
-      this[PINENTRY_PROGRAM_FALLBACK] = pinentryFallback
     })
 
   fun isIntellijPinentryConfigured(paths: GpgAgentPaths): Boolean =
@@ -34,7 +32,6 @@ internal data class GpgAgentConfig(val path: Path, val content: Map<String, Stri
 
   companion object {
     const val PINENTRY_PROGRAM = "pinentry-program"
-    const val PINENTRY_PROGRAM_FALLBACK = "pinentry-program-fallback"
     const val DEFAULT_CACHE_TTL = "default-cache-ttl"
     const val MAX_CACHE_TTL = "max-cache-ttl"
 
