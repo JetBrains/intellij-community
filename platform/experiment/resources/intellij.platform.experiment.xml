@@ -18,6 +18,8 @@
 
     <applicationService serviceInterface="com.intellij.platform.experiment.ab.impl.experiment.ABExperiment"
                         serviceImplementation="com.intellij.platform.experiment.ab.impl.experiment.ABExperimentImpl"/>
+
+    <experiment.abExperimentOption implementation="com.intellij.platform.experiment.ab.temporary.ShowTrialSurveyOption"/>
   </extensions>
 
   <actions>
