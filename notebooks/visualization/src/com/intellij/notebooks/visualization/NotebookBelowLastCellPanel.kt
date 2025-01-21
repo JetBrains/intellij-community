@@ -3,26 +3,58 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
+import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightableCellPanel
 import com.intellij.notebooks.visualization.ui.jupyterToolbar.JupyterAddNewCellToolbar
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.ui.JBColor
+import java.awt.Graphics2D
 import org.intellij.lang.annotations.Language
 import java.awt.FlowLayout
 import javax.swing.JPanel
+import java.awt.Graphics
 
 /**
- * Basically, this panel consists only on a single "add new cell" toolbar.
+ * Basically, this panel consists only of
+ * * an "add new cell" toolbar
+ * * a highlightable border to show drop destination
  */
-class NotebookBelowLastCellPanel(val editor: EditorImpl) : JPanel(FlowLayout(FlowLayout.CENTER)) {
+class NotebookBelowLastCellPanel(
+  val editor: EditorImpl
+) : JPanel(FlowLayout(FlowLayout.CENTER)), DropHighlightableCellPanel {
+
+  private var isHighlighted = false
 
   init {
     if (editor.isOrdinaryNotebookEditor()) {
       isOpaque = false
-      border = JBUI.Borders.empty(editor.notebookAppearance.cellBorderHeight)
+      border = HighlightableTopBorder(editor.notebookAppearance.cellBorderHeight)
       val actionGroup = ActionManager.getInstance().getAction(ACTION_GROUP_ID) as ActionGroup
       add(JupyterAddNewCellToolbar(actionGroup, toolbarTargetComponent = this))
+    }
+  }
+
+  override fun addDropHighlight() {
+    isHighlighted = true
+    repaint()
+  }
+
+  override fun removeDropHighlight() {
+    isHighlighted = false
+    repaint()
+  }
+
+  private inner class HighlightableTopBorder(private val borderHeight: Int) : JBEmptyBorder(borderHeight, 0, 0, 0) {
+    override fun paintBorder(c: java.awt.Component?, g: Graphics?, x: Int, y: Int, width: Int, height: Int) {
+      super.paintBorder(c, g, x, y, width, height)
+      if (isHighlighted) {
+        val g2d = g as Graphics2D
+        g2d.color = JBColor.BLUE
+        val lineY = y + borderHeight / 2
+        g2d.fillRect(x, lineY - 1, width, 2)
+      }
     }
   }
 

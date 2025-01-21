@@ -34,6 +34,8 @@ class EditorCellDraggableBar(
 
   private val dragIcon = AllIcons.General.Drag
 
+  private val inlayManager = NotebookCellInlayManager.get(editor)
+
   init {
     if (Registry.`is`("jupyter.editor.dnd.cells")) createAndAddDraggableBar()
   }
@@ -163,13 +165,21 @@ class EditorCellDraggableBar(
 
       when (targetCell) {
         is CellDropTarget.TargetCell -> targetCell.cell.view?.highlightAbovePanel()
+        CellDropTarget.BelowLastCell -> addHighlightAfterLastCell()
         else -> { }
       }
     }
 
-    private fun deleteDropIndicator() {
-      (currentlyHighlightedCell as? CellDropTarget.TargetCell)?.cell?.view?.removeHighlightAbovePanel()
+    private fun deleteDropIndicator() = when(currentlyHighlightedCell) {
+      is CellDropTarget.TargetCell -> (currentlyHighlightedCell as CellDropTarget.TargetCell).cell.view?.removeHighlightAbovePanel()
+      CellDropTarget.BelowLastCell -> removeHighlightAfterLastCell()
+      else -> { }
     }
+
+    private fun addHighlightAfterLastCell() = inlayManager?.belowLastCellPanel?.addDropHighlight()
+
+    private fun removeHighlightAfterLastCell() = inlayManager?.belowLastCellPanel?.removeDropHighlight()
+
   }
 
 }

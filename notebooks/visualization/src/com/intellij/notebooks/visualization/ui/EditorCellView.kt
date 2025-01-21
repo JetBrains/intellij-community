@@ -10,6 +10,7 @@ import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCodeCellB
 import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import com.intellij.notebooks.visualization.context.NotebookDataContext
+import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightableCellPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys

@@ -2,6 +2,7 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.notebooks.ui.bind
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.context.NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL
 import com.intellij.notebooks.visualization.ui.*
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
@@ -48,6 +49,7 @@ class NotebookCellInlayManager private constructor(
 
   internal val views: MutableMap<EditorCell, EditorCellView> = mutableMapOf<EditorCell, EditorCellView>()
 
+  val belowLastCellPanel: NotebookBelowLastCellPanel = NotebookBelowLastCellPanel(editor)
   private var belowLastCellInlay: Inlay<*>? = null
 
   private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
@@ -223,12 +225,12 @@ class NotebookCellInlayManager private constructor(
 
   private fun addBelowLastCellInlay() {  // PY-77218
     belowLastCellInlay = editor.addComponentInlay(
-      UiDataProvider.wrapComponent(NotebookBelowLastCellPanel(editor)) { sink ->
+      UiDataProvider.wrapComponent(belowLastCellPanel) { sink ->
         sink[NOTEBOOK_CELL_LINES_INTERVAL] = editor.notebook?.cells?.last()?.interval
       },
       isRelatedToPrecedingText = true,
       showAbove = false,
-      priority = 0,
+      priority = editor.notebookAppearance.jupyterBelowLastCellInlayPriority,
       offset = editor.document.getLineEndOffset((editor.document.lineCount - 1).coerceAtLeast(0))
     )
   }

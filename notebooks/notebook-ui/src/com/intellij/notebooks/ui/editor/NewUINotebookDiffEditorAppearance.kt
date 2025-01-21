@@ -29,6 +29,7 @@ class NewUINotebookDiffEditorAppearance(editor: Editor): DefaultNotebookEditorAp
 
   override val JUPYTER_CELL_SPACERS_INLAY_PRIORITY: Int = 10
   override val JUPYTER_BELOW_OUTPUT_CELL_SPACERS_INLAY_PRIORITY: Int = -10
+  override val jupyterBelowLastCellInlayPriority: Int = -20
   override val JUPYTER_CELL_TOOLBAR_INLAY_PRIORITY: Int = JUPYTER_CELL_SPACERS_INLAY_PRIORITY + 10
   override val NOTEBOOK_OUTPUT_INLAY_PRIORITY: Int = 5
 
