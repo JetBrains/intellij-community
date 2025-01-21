@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import org.jetbrains.jewel.intui.standalone.styling.dark
+import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.samples.showcase.components.Banners
 import org.jetbrains.jewel.samples.showcase.components.Borders
 import org.jetbrains.jewel.samples.showcase.components.Buttons
@@ -13,8 +15,8 @@ import org.jetbrains.jewel.samples.showcase.components.Checkboxes
 import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
 import org.jetbrains.jewel.samples.showcase.components.Dropdowns
 import org.jetbrains.jewel.samples.showcase.components.Icons
+import org.jetbrains.jewel.samples.showcase.components.Links
 import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
-import org.jetbrains.jewel.samples.standalone.view.component.Links
 import org.jetbrains.jewel.samples.standalone.view.component.ProgressBar
 import org.jetbrains.jewel.samples.standalone.view.component.RadioButtons
 import org.jetbrains.jewel.samples.standalone.view.component.Scrollbars
@@ -26,6 +28,8 @@ import org.jetbrains.jewel.samples.standalone.view.component.TextAreas
 import org.jetbrains.jewel.samples.standalone.view.component.TextFields
 import org.jetbrains.jewel.samples.standalone.view.component.Tooltips
 import org.jetbrains.jewel.ui.component.SplitLayoutState
+import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior
 
 internal object ComponentsViewModel {
     private var outerSplitState by mutableStateOf(SplitLayoutState(0.5f))
@@ -62,7 +66,15 @@ internal object ComponentsViewModel {
                 content = { ProgressBar() },
             ),
             ViewInfo(title = "Icons", iconKey = StandaloneSampleIcons.Components.toolbar, content = { Icons() }),
-            ViewInfo(title = "Links", iconKey = StandaloneSampleIcons.Components.links, content = { Links() }),
+            ViewInfo(
+                title = "Links",
+                iconKey = StandaloneSampleIcons.Components.links,
+                content = {
+                    val dark = LinkStyle.dark(underlineBehavior = LinkUnderlineBehavior.ShowAlways)
+                    val light = LinkStyle.light(underlineBehavior = LinkUnderlineBehavior.ShowAlways)
+                    Links(dark, light)
+                },
+            ),
             ViewInfo(title = "Borders", iconKey = StandaloneSampleIcons.Components.borders, content = { Borders() }),
             ViewInfo(
                 title = "Segmented Controls",

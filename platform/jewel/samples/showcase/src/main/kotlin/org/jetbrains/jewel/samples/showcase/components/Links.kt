@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -10,27 +10,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.intui.standalone.styling.dark
-import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.ui.component.DropdownLink
 import org.jetbrains.jewel.ui.component.ExternalLink
 import org.jetbrains.jewel.ui.component.Link
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
-import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior
 
 @Composable
-fun Links() {
+public fun Links(dark: LinkStyle, light: LinkStyle) {
     val isDark = JewelTheme.isDark
-    val alwaysUnderlinedStyle =
-        remember(isDark) {
-            if (isDark) {
-                LinkStyle.dark(underlineBehavior = LinkUnderlineBehavior.ShowAlways)
-            } else {
-                LinkStyle.light(underlineBehavior = LinkUnderlineBehavior.ShowAlways)
-            }
-        }
+    val alwaysUnderlinedStyle = remember(isDark) { if (isDark) dark else light }
 
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         Link("Link", {})
