@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,7 +37,7 @@ import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.skiko.Cursor
 
 @Composable
-internal fun Borders() {
+public fun Borders() {
     GroupHeader("Group header")
     Text("This is a group header example")
 

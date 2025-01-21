@@ -8,7 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.jetbrains.jewel.samples.showcase.components.Banners
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
-import org.jetbrains.jewel.samples.standalone.view.component.Borders
+import org.jetbrains.jewel.samples.showcase.components.Borders
 import org.jetbrains.jewel.samples.standalone.view.component.Buttons
 import org.jetbrains.jewel.samples.standalone.view.component.Checkboxes
 import org.jetbrains.jewel.samples.standalone.view.component.ChipsAndTrees
