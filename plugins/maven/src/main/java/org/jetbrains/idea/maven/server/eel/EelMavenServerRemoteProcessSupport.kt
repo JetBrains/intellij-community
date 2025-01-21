@@ -152,7 +152,7 @@ private class EelMavenCmdState(
       val builder = EelExecApi.ExecuteProcessOptions.Builder(exe.toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)
-        .workingDirectory(EelPath.parse(workingDirectory, eel.descriptor))
+        .workingDirectory(EelPath.parse(getWorkingDirectory(), eel.descriptor))
 
       eel.exec.execute(builder.build()).getOrThrow()
     }
