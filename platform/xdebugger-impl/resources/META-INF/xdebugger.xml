@@ -147,6 +147,8 @@
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
     <platform.entityTypes implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupEntityTypesProvider"/>
 
+    <platform.entityTypes implementation="com.intellij.xdebugger.impl.rhizome.XDebuggerEntityTypesProvider"/>
+
     <intentionAction>
       <language>UAST</language>
       <className>com.intellij.xdebugger.impl.codeinsight.ControlExceptionBreakpointIntentionAction</className>

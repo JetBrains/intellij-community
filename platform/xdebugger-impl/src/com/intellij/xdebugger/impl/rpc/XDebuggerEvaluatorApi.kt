@@ -17,6 +17,7 @@ import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
+import fleet.util.UID
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
@@ -92,7 +93,7 @@ sealed interface XEvaluationResult {
 
 @ApiStatus.Internal
 @Serializable
-data class XValueId(val eid: EID)
+data class XValueId(val uid: UID)
 
 @ApiStatus.Internal
 @Serializable
@@ -101,7 +102,7 @@ data class XValueDto(val id: XValueId, @Serializable(with = DeferredSerializer::
 
 @ApiStatus.Internal
 @Serializable
-data class XDebuggerEvaluatorId(val eid: EID)
+data class XDebuggerEvaluatorId(val id: UID)
 
 @ApiStatus.Internal
 @Serializable

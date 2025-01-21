@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.kernel.backend.*
+import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.Obsolescent
@@ -23,10 +24,15 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+import com.intellij.xdebugger.impl.rhizome.XDebuggerEvaluatorEntity
+import com.intellij.xdebugger.impl.rhizome.XValueEntity
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
 import com.intellij.xdebugger.impl.ui.CustomComponentEvaluator
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
+import com.jetbrains.rhizomedb.entity
+import fleet.kernel.change
+import fleet.util.UID
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -99,16 +105,23 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 
   override suspend fun disposeXValue(xValueId: XValueId) {
-    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return
-    xValueEntity.delete()
+    withKernel {
+      val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return@withKernel
+      withContext(NonCancellable) {
+        change {
+          xValueEntity.delete()
+        }
+      }
+    }
   }
 
   private suspend fun evaluate(
     evaluatorId: XDebuggerEvaluatorId,
     evaluateFun: suspend (XDebuggerEvaluator, XEvaluationCallback) -> Unit,
   ): Deferred<XEvaluationResult> {
-    val evaluator = evaluatorId.eid.findValueEntity<XDebuggerEvaluator>()?.value
+    val evaluatorEntity = withKernel { entity(XDebuggerEvaluatorEntity.EvaluatorId, evaluatorId) }
                     ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
+    val evaluator = withKernel { evaluatorEntity.evaluator }
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
@@ -132,17 +145,18 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       catch (e: EvaluationException) {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
-      val xValueEntity = newValueEntity(xValue)
-      XEvaluationResult.Evaluated(XValueDto(XValueId(xValueEntity.id), canBeModified = xValue.modifierAsync.thenApply { it != null }.asDeferred()))
+      val xValueEntity = newXValueEntity(xValue, evaluatorEntity)
+      val xValueId = withKernel { xValueEntity.xValueId }
+      XEvaluationResult.Evaluated(XValueDto(xValueId, canBeModified = xValue.modifierAsync.thenApply { it != null }.asDeferred()))
     }
   }
 
   private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
 
   override suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>? {
-    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return emptyFlow()
+    val xValueEntity = withKernel { entity(XValueEntity.XValueId, xValueId) } ?: return emptyFlow()
+    val xValue = withKernel { xValueEntity.xValue }
     val presentations = Channel<XValuePresentationEvent>(capacity = Int.MAX_VALUE)
-    val xValue = xValueEntity.value
     return channelFlow {
       val channelCs = this@channelFlow as CoroutineScope
       var isObsolete = false
@@ -174,9 +188,8 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           }
 
           channelCs.launch {
-            val fullValueEvaluatorEntity = newValueEntity(fullValueEvaluator).apply {
-              cascadeDeleteBy(xValueEntity)
-            }
+            // TODO[IJPL-160146]: dispose full value evaluator
+            val fullValueEvaluatorEntity = newValueEntity(fullValueEvaluator)
 
             presentations.trySend(
               XValuePresentationEvent.SetFullValueEvaluator(
@@ -220,9 +233,9 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 
   override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>? {
-    val xValueEntity = xValueId.eid.findValueEntity<XValue>() ?: return emptyFlow()
+    val xValueEntity = withKernel { entity(XValueEntity.XValueId, xValueId) } ?: return emptyFlow()
+    val xValue = withKernel { xValueEntity.xValue }
     val rawEvents = Channel<RawComputeChildrenEvent>(capacity = Int.MAX_VALUE)
-    val xValue = xValueEntity.value
 
     return channelFlow {
       val addNextChildrenCallbackHandler = AddNextChildrenCallbackHandler(this@channelFlow)
@@ -364,42 +377,42 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 
   private sealed interface RawComputeChildrenEvent {
-    suspend fun convertToRpcEvent(parentXValueEntity: BackendValueEntity<XValue>): XValueComputeChildrenEvent
+    suspend fun convertToRpcEvent(parentXValueEntity: XValueEntity): XValueComputeChildrenEvent
 
     data class AddChildren(val children: XValueChildrenList, val last: Boolean) : RawComputeChildrenEvent {
-      override suspend fun convertToRpcEvent(parentXValueEntity: BackendValueEntity<XValue>): XValueComputeChildrenEvent {
+      override suspend fun convertToRpcEvent(parentXValueEntity: XValueEntity): XValueComputeChildrenEvent {
         val names = (0 until children.size()).map { children.getName(it) }
         val childrenXValues = (0 until children.size()).map { children.getValue(it) }
         val childrenXValueEntities = childrenXValues.map { childXValue ->
-          newValueEntity(childXValue).apply {
-            cascadeDeleteBy(parentXValueEntity)
-          }
+          newChildXValueEntity(childXValue, parentXValueEntity)
         }
-        val childrenXValueDtos = childrenXValueEntities.map {
-          XValueDto(
-            XValueId(it.id),
-            canBeModified = it.value.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred()
-          )
+        val childrenXValueDtos = withKernel {
+          childrenXValueEntities.map { childXValueEntity ->
+            XValueDto(
+              childXValueEntity.xValueId,
+              canBeModified = childXValueEntity.xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred()
+            )
+          }
         }
         return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last)
       }
     }
 
     data class SetAlreadySorted(val value: Boolean) : RawComputeChildrenEvent {
-      override suspend fun convertToRpcEvent(parentXValueEntity: BackendValueEntity<XValue>): XValueComputeChildrenEvent {
+      override suspend fun convertToRpcEvent(parentXValueEntity: XValueEntity): XValueComputeChildrenEvent {
         return XValueComputeChildrenEvent.SetAlreadySorted(value)
       }
     }
 
     data class SetErrorMessage(val message: String, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
-      override suspend fun convertToRpcEvent(parentXValueEntity: BackendValueEntity<XValue>): XValueComputeChildrenEvent {
+      override suspend fun convertToRpcEvent(parentXValueEntity: XValueEntity): XValueComputeChildrenEvent {
         // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
         return XValueComputeChildrenEvent.SetErrorMessage(message, link)
       }
     }
 
     data class SetMessage(val message: String, val icon: Icon?, val attributes: SimpleTextAttributes?, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
-      override suspend fun convertToRpcEvent(parentXValueEntity: BackendValueEntity<XValue>): XValueComputeChildrenEvent {
+      override suspend fun convertToRpcEvent(parentXValueEntity: XValueEntity): XValueComputeChildrenEvent {
         // TODO[IJPL-160146]: support SimpleTextAttributes serialization
         // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
         return XValueComputeChildrenEvent.SetMessage(message, icon?.rpcId(), attributes, link)
@@ -407,8 +420,39 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     }
 
     data class TooManyChildren(val remaining: Int, val addNextChildren: Runnable?, val addNextChildrenCallbackHandler: AddNextChildrenCallbackHandler) : RawComputeChildrenEvent {
-      override suspend fun convertToRpcEvent(parentXValueEntity: BackendValueEntity<XValue>): XValueComputeChildrenEvent {
+      override suspend fun convertToRpcEvent(parentXValueEntity: XValueEntity): XValueComputeChildrenEvent {
         return XValueComputeChildrenEvent.TooManyChildren(remaining, addNextChildrenCallbackHandler.setAddNextChildrenCallback(addNextChildren))
+      }
+    }
+  }
+}
+
+private suspend fun newXValueEntity(
+  xValue: XValue,
+  evaluatorEntity: XDebuggerEvaluatorEntity,
+): XValueEntity {
+  return withKernel {
+    change {
+      XValueEntity.new {
+        it[XValueEntity.XValueId] = XValueId(UID.random())
+        it[XValueEntity.XValueAttribute] = xValue
+        it[XValueEntity.SessionEntity] = evaluatorEntity.sessionEntity
+      }
+    }
+  }
+}
+
+private suspend fun newChildXValueEntity(
+  xValue: XValue,
+  parentXValue: XValueEntity,
+): XValueEntity {
+  return withKernel {
+    change {
+      XValueEntity.new {
+        it[XValueEntity.XValueId] = XValueId(UID.random())
+        it[XValueEntity.XValueAttribute] = xValue
+        it[XValueEntity.SessionEntity] = parentXValue.sessionEntity
+        it[XValueEntity.ParentXValue] = parentXValue
       }
     }
   }
