@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
@@ -44,9 +43,10 @@ import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.ToggleableChip
 import org.jetbrains.jewel.ui.theme.colorPalette
+import kotlin.random.Random
 
 @Composable
-fun ChipsAndTrees() {
+public fun ChipsAndTrees() {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             GroupHeader(text = "Chips", modifier = Modifier.fillMaxWidth())
@@ -66,7 +66,7 @@ fun ChipsAndTrees() {
 }
 
 @Composable
-fun SelectableLazyColumnSample() {
+public fun SelectableLazyColumnSample() {
     var listOfItems by remember { mutableStateOf(emptyList<String>()) }
 
     LaunchedEffect(Unit) {
@@ -112,7 +112,7 @@ fun SelectableLazyColumnSample() {
 }
 
 @Composable
-fun ChipsSample(modifier: Modifier = Modifier) {
+public fun ChipsSample(modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             var selectedIndex by remember { mutableStateOf(-1) }
@@ -144,7 +144,7 @@ fun ChipsSample(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun TreeSample(modifier: Modifier = Modifier) {
+public fun TreeSample(modifier: Modifier = Modifier) {
     var tree by remember {
         mutableStateOf(
             buildTree {

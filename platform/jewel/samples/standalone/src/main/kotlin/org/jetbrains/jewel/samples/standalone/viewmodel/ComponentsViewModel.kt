@@ -11,7 +11,7 @@ import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.showcase.components.Borders
 import org.jetbrains.jewel.samples.showcase.components.Buttons
 import org.jetbrains.jewel.samples.showcase.components.Checkboxes
-import org.jetbrains.jewel.samples.standalone.view.component.ChipsAndTrees
+import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
 import org.jetbrains.jewel.samples.standalone.view.component.Dropdowns
 import org.jetbrains.jewel.samples.standalone.view.component.Icons
 import org.jetbrains.jewel.samples.standalone.view.component.Links
