@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
@@ -49,6 +48,7 @@ import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
@@ -63,6 +63,8 @@ private val LOG = logger<GpgAgentConfigurator>()
 
 @Service(Service.Level.PROJECT)
 internal class GpgAgentConfigurator(private val project: Project, private val cs: CoroutineScope): Disposable {
+  private val configurationLock = Mutex()
+
   companion object {
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean =
@@ -115,34 +117,45 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
 
   fun configure() {
     cs.launch {
-      val executable = GitExecutableManager.getInstance().getExecutable(project)
-      if (!isEnabled(project, executable)) return@launch
+      val locked = configurationLock.tryLock()
+      if (locked) return@launch
       try {
-        val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: throw ReadGpgAgentConfigException(null)
-        val existingConfig = withContext(Dispatchers.IO) {
-          readConfig(gpgAgentPaths.gpgAgentConf)
-        }
-        val defaultPinentry = existingConfig?.pinentryProgram ?: readDefaultPinentryPathFromGpgConf(executable)
-        if (defaultPinentry == gpgAgentPaths.gpgPinentryAppLauncherConfigPath) {
-          LOG.warn("GPG Agent config already has pinentry launcher configured. Skipping")
-          return@launch
-        }
-        checkCanceled()
-        if (showConfirmationDialog(defaultPinentry)) {
-          withContext(Dispatchers.IO) { doConfigure(executable, gpgAgentPaths, existingConfig,defaultPinentry) }
-        }
-      } catch (e: Exception) {
-        if (e is CancellationException) throw e
-
-        val message = if (e is GpgAgentConfigException) {
-          e.message
-        }
-        else {
-          LOG.warn("Cannot configure GPG Agent", e)
-          GitBundle.message("gpg.pinentry.agent.configuration.exception", e.message)
-        }
-        project.service<GpgAgentConfigurationNotificator>().notifyConfigurationFailed(message)
+        configureUnderLock()
+      } finally {
+        configurationLock.unlock()
       }
+    }
+  }
+
+  private suspend fun configureUnderLock() {
+    val executable = GitExecutableManager.getInstance().getExecutable(project)
+    if (!isEnabled(project, executable)) return
+    try {
+      val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: throw ReadGpgAgentConfigException(null)
+      val existingConfig = withContext(Dispatchers.IO) {
+        readConfig(gpgAgentPaths.gpgAgentConf)
+      }
+      val defaultPinentry = existingConfig?.pinentryProgram ?: readDefaultPinentryPathFromGpgConf(executable)
+      if (defaultPinentry == gpgAgentPaths.gpgPinentryAppLauncherConfigPath) {
+        LOG.warn("GPG Agent config already has pinentry launcher configured. Skipping")
+        return
+      }
+      checkCanceled()
+      if (showConfirmationDialog(defaultPinentry)) {
+        withContext(Dispatchers.IO) { doConfigure(executable, gpgAgentPaths, existingConfig, defaultPinentry) }
+      }
+    }
+    catch (e: Exception) {
+      if (e is CancellationException) throw e
+
+      val message = if (e is GpgAgentConfigException) {
+        e.message
+      }
+      else {
+        LOG.warn("Cannot configure GPG Agent", e)
+        GitBundle.message("gpg.pinentry.agent.configuration.exception", e.message)
+      }
+      project.service<GpgAgentConfigurationNotificator>().notifyConfigurationFailed(message)
     }
   }
 
@@ -169,17 +182,10 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
       restartAgent(gitExecutable)
     }
     else {
-      val launcherConfigured = existingConfig.isIntellijPinentryConfigured(gpgAgentPaths)
-      if (launcherConfigured) {
-        LOG.info("Existing GPG config already has pinentry launcher configured")
-        return
-      }
-      else {
-        backupExistingConfig(gpgAgentPaths)
-        backupCreated = true
-        writeAgentConfig(GpgAgentConfig(gpgAgentPaths, existingConfig))
-        restartAgent(gitExecutable)
-      }
+      backupExistingConfig(gpgAgentPaths)
+      backupCreated = true
+      writeAgentConfig(GpgAgentConfig(gpgAgentPaths, existingConfig))
+      restartAgent(gitExecutable)
     }
     project.service<GpgAgentConfigurationNotificator>().notifyConfigurationSuccessful(gpgAgentPaths, backupCreated)
   }
