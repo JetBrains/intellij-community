@@ -203,11 +203,9 @@ internal object ITNProxy {
       append(builder, "error.redacted", java.lang.Boolean.toString(true))
     }
 
-    if (eventData is AbstractMessage) {
-      for (attachment in eventData.includedAttachments) {
-        append(builder, "attachment.name", attachment.name)
-        append(builder, "attachment.value", attachment.encodedBytes)
-      }
+    for (attachment in error.event.includedAttachments) {
+      append(builder, "attachment.name", attachment.name)
+      append(builder, "attachment.value", attachment.encodedBytes)
     }
     return builder
   }

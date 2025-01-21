@@ -1927,6 +1927,7 @@ c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 - <init>(java.lang.String,java.lang.Throwable):V
 - <init>(java.lang.String,java.lang.Throwable,java.lang.Object):V
 - getData():java.lang.Object
+- getIncludedAttachments():java.util.List
 - getMessage():java.lang.String
 - getThrowable():java.lang.Throwable
 - getThrowableText():java.lang.String
