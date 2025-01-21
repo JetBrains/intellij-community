@@ -48,7 +48,6 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import org.jetbrains.jewel.markdown.Markdown
-import org.jetbrains.jewel.samples.ideplugin.dialog.ComponentShowcaseDialog
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.CheckboxRow
@@ -115,7 +114,6 @@ private fun RowScope.ColumnOne() {
             Modifier.onActivated { activated = it },
             style = Typography.h3TextStyle(),
         )
-        DefaultButton(onClick = { ComponentShowcaseDialog().show() }) { Text("Open Component Showcase") }
 
         var selectedItem by remember { mutableIntStateOf(-1) }
         Dropdown(

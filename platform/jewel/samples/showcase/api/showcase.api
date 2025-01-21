@@ -303,8 +303,8 @@ public final class org/jetbrains/jewel/samples/showcase/components/TooltipsKt {
 }
 
 public final class org/jetbrains/jewel/samples/showcase/views/ComponentsViewKt {
-	public static final fun ComponentsToolBar (Lorg/jetbrains/jewel/samples/showcase/views/ComponentsViewModel;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
-	public static final fun ComponentsView (Lorg/jetbrains/jewel/samples/showcase/views/ComponentsViewModel;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ComponentsToolBar (Lorg/jetbrains/jewel/samples/showcase/views/ComponentsViewModel;Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics;Landroidx/compose/runtime/Composer;I)V
+	public static final fun ComponentsView (Lorg/jetbrains/jewel/samples/showcase/views/ComponentsViewModel;Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics;Landroidx/compose/runtime/Composer;I)V
 }
 
 public final class org/jetbrains/jewel/samples/showcase/views/ComponentsViewModel {

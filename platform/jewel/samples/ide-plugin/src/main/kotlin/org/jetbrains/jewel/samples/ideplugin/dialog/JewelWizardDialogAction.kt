@@ -13,13 +13,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,9 +29,12 @@ import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Typography
 
-@Service(Service.Level.PROJECT) private class ProjectScopeProviderService(val scope: CoroutineScope)
+internal class JewelWizardDialogAction : DumbAwareAction() {
+    init {
+        ApplicationManager.getApplication()
+            .invokeLater({ initializeComposeMainDispatcherChecker() }, ModalityState.any())
+    }
 
-internal class JewelDemoAction : DumbAwareAction() {
     override fun actionPerformed(event: AnActionEvent) {
         val project = checkNotNull(event.project) { "Project not available" }
         val scope = project.service<ProjectScopeProviderService>().scope

@@ -11,10 +11,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -26,16 +26,19 @@ import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.SelectableIconActionButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Typography
+import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
+import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.painter.hints.Size
+import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 
 @ExperimentalLayoutApi
 @Composable
-public fun ComponentsView(viewModel: ComponentsViewModel, railNavigationModifier: Modifier) {
+public fun ComponentsView(viewModel: ComponentsViewModel, toolbarButtonMetrics: IconButtonMetrics) {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
-        ComponentsToolBar(viewModel, railNavigationModifier)
+        ComponentsToolBar(viewModel, toolbarButtonMetrics)
         Divider(Orientation.Vertical, Modifier.fillMaxHeight())
         ComponentView(viewModel.getCurrentView())
     }
@@ -43,15 +46,17 @@ public fun ComponentsView(viewModel: ComponentsViewModel, railNavigationModifier
 
 @ExperimentalLayoutApi
 @Composable
-public fun ComponentsToolBar(viewModel: ComponentsViewModel, railNavigationModifier: Modifier) {
-    Column(Modifier.fillMaxHeight().width(40.dp).verticalScroll(rememberScrollState())) {
+public fun ComponentsToolBar(viewModel: ComponentsViewModel, buttonMetrics: IconButtonMetrics) {
+    Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
+        val iconButtonStyle = JewelTheme.iconButtonStyle
+        val style = remember(iconButtonStyle) { IconButtonStyle(iconButtonStyle.colors, buttonMetrics) }
         viewModel.getViews().forEach {
             SelectableIconActionButton(
                 key = it.iconKey,
                 contentDescription = "Show ${it.title}",
                 selected = viewModel.getCurrentView() == it,
                 onClick = { viewModel.setCurrentView(it) },
-                modifier = railNavigationModifier,
+                style = style,
                 tooltip = { Text(it.title) },
                 tooltipStyle =
                     TooltipStyle(JewelTheme.tooltipStyle.colors, TooltipMetrics.defaults(showDelay = 150.milliseconds)),
