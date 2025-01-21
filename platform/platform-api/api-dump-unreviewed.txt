@@ -11141,9 +11141,9 @@ a:com.intellij.util.ui.StatusText
 - f:setShowAboveCenter(Z):com.intellij.util.ui.StatusText
 - setText(java.lang.String):com.intellij.util.ui.StatusText
 - setText(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.util.ui.StatusText
+- withUnscaledGapAfter(I):com.intellij.util.ui.StatusText
 pf:com.intellij.util.ui.StatusText$Column
 pf:com.intellij.util.ui.StatusText$Fragment
-- <init>(com.intellij.util.ui.StatusText):V
 a:com.intellij.util.ui.TableViewModel
 - javax.swing.table.AbstractTableModel
 - com.intellij.util.ui.SortableColumnModel

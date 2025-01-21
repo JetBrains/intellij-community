@@ -25,7 +25,7 @@ import java.util.List;
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
 
-  private static final int Y_GAP = 2;
+  private static final int DEFAULT_Y_GAP = 2;
 
   private @Nullable Component myOwner;
   private @Nullable Component myMouseTarget;
@@ -37,6 +37,7 @@ public abstract class StatusText {
   private boolean myInLoadingPanel;
 
   private String myText = "";
+  private int yGap = DEFAULT_Y_GAP;
 
   // Hardcoded layout manages two columns (primary and secondary) with vertically aligned components inside
   protected final class Column {
@@ -65,8 +66,10 @@ public abstract class StatusText {
 
     private final Rectangle boundsInColumn = new Rectangle();
     private final List<ActionListener> myClickListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+    private final int gapAfter;
 
-    public Fragment() {
+    Fragment(int gapAfter) {
+      this.gapAfter = gapAfter;
       myComponent.setOpaque(false);
       myComponent.setFont(StartupUiUtil.getLabelFont());
     }
@@ -323,7 +326,7 @@ public abstract class StatusText {
       Dimension d = fragment.myComponent.getPreferredSize();
       fragment.boundsInColumn.setBounds(0, size.height, d.width, d.height);
       size.height += d.height;
-      if (i != column.fragments.size() - 1) size.height += JBUIScale.scale(Y_GAP);
+      if (i != column.fragments.size() - 1) size.height += JBUIScale.scale(fragment.gapAfter);
       size.width = Math.max(size.width, d.width);
     }
     if (myCenterAlignText) {
@@ -358,7 +361,7 @@ public abstract class StatusText {
     }
     Fragment fragment;
     if (column.fragments.size() == row) {
-      fragment = new Fragment();
+      fragment = new Fragment(yGap);
       if (myFont != null) {
         fragment.myComponent.setFont(myFont);
       }
@@ -395,6 +398,33 @@ public abstract class StatusText {
       myIsDefaultText = false;
     }
     return appendText(true, myPrimaryColumn.fragments.size(), icon, text, attrs, listener);
+  }
+
+  /**
+   * Sets the gap between the lines of text.
+   * <p>
+   * Affects all lines added <em>after</em> invocation of this method.
+   * Supposed to be used like this:
+   * <pre>{@code
+   * emptyText.withUnscaledGapAfter(5).appendLine("Some text");
+   * }</pre>
+   * Note that the value set persists until changed, so if the gap is needed for just one line,
+   * it has to be updated again after appending that line.
+   * For example:
+   * <pre>{@code
+   * emptyText.withUnscaledGapAfter(5).appendLine("Some text").withUnscaledGapAfter(2);
+   * }</pre>
+   * </p>
+   * <p>
+   * If this method is never called, the gap between lines will be 2 px.
+   * </p>
+   *
+   * @param gap the gap between lines, specified in pixels before applying any scaling factors
+   * @return {@code this} instance
+   */
+  public @NotNull StatusText withUnscaledGapAfter(int gap) {
+    this.yGap = gap;
+    return this;
   }
 
   public void paint(Component owner, Graphics g) {
