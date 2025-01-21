@@ -694,7 +694,7 @@ public final class DiffUtil {
   }
 
   private static @Nullable JComponent createTitle(@NotNull DiffViewer viewer,
-                                        @Nullable @NlsContexts.Label String title,
+                                                  @Nullable @NlsContexts.Label String title,
                                                   @NotNull DiffContent content,
                                                   boolean equalCharsets,
                                                   boolean equalSeparators,
@@ -716,20 +716,20 @@ public final class DiffUtil {
   }
 
   private static @NotNull JComponent createTitle(@NotNull DiffViewer viewer,
-                                        @Nullable @NlsContexts.Label String title,
-                                        boolean readOnly,
-                                        @Nullable DiffEditorTitleCustomizer titleCustomizer) {
+                                                 @Nullable @NlsContexts.Label String title,
+                                                 boolean readOnly,
+                                                 @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     return createTitle(viewer, title, null, null, null, readOnly, titleCustomizer);
   }
 
 
   private static @NotNull JComponent createTitle(@Nullable DiffViewer viewer,
-                                        @Nullable @NlsContexts.Label String title,
-                                        @Nullable LineSeparator separator,
-                                        @Nullable Charset charset,
-                                        @Nullable Boolean bom,
-                                        boolean readOnly,
-                                        @Nullable DiffEditorTitleCustomizer titleCustomizer) {
+                                                 @Nullable @NlsContexts.Label String title,
+                                                 @Nullable LineSeparator separator,
+                                                 @Nullable Charset charset,
+                                                 @Nullable Boolean bom,
+                                                 boolean readOnly,
+                                                 @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
     BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
