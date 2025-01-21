@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.util.LocalTimeCounter.currentTime
 import kotlinx.serialization.Serializable
@@ -162,32 +161,6 @@ class ProjectSettingsTracker(
     }
   }
 
-  private fun submitSettingsFilesCollection(
-    isInvalidateCache: Boolean,
-    callback: (Set<String>) -> Unit,
-  ) {
-    if (isInvalidateCache) {
-      settingsAsyncSupplier.invalidate()
-    }
-    settingsAsyncSupplier.supply(parentDisposable, callback)
-  }
-
-  private fun submitSettingsFilesRefresh(
-    callback: (Set<String>) -> Unit,
-  ) {
-    submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
-      val settingsFiles = settingsPaths.mapNotNull { Path.of(it).refreshAndFindVirtualFileOrDirectory() }
-      if (settingsFiles.isEmpty()) {
-        callback(settingsPaths)
-      }
-      else {
-        LocalFileSystem.getInstance().refreshFiles(settingsFiles, isAsyncChangesProcessing, false) {
-          callback(settingsPaths)
-        }
-      }
-    }
-  }
-
   private fun submitSettingsFilesCRCCalculation(
     operationName: String,
     settingsPaths: Set<String>,
@@ -208,11 +181,17 @@ class ProjectSettingsTracker(
     isInvalidateCache: Boolean,
     callback: (Set<String>) -> Unit,
   ) {
-    if (isRefreshVfs) {
-      submitSettingsFilesRefresh(callback)
+    if (isInvalidateCache || isRefreshVfs) {
+      settingsAsyncSupplier.invalidate()
     }
-    else {
-      submitSettingsFilesCollection(isInvalidateCache, callback)
+    settingsAsyncSupplier.supply(parentDisposable) { settingsPaths ->
+      if (isRefreshVfs) {
+        val settingsFiles = settingsPaths.mapNotNull { Path.of(it) }
+        if (settingsFiles.isNotEmpty()) {
+          LocalFileSystem.getInstance().refreshNioFiles(settingsFiles)
+        }
+      }
+      callback(settingsPaths)
     }
   }
 
@@ -381,7 +360,7 @@ class ProjectSettingsTracker(
       if (LOG.isDebugEnabled) {
         val projectPath = projectAware.projectId.externalProjectPath
         val relativePath = FileUtil.getRelativePath(projectPath, path, '/') ?: path
-        LOG.debug("File $relativePath is modified at ${modificationStamp} as $type (adjusted to $adjustedType)")
+        LOG.debug("File $relativePath is modified at $modificationStamp as $type (adjusted to $adjustedType)")
       }
     }
   }
