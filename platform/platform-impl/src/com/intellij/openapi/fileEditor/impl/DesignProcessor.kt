@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.toolWindow.EnableStripeGroup
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
 import com.intellij.ui.JBColor
@@ -27,9 +26,6 @@ open class DesignProcessor {
     fun getInstance(): DesignProcessor = ApplicationManager.getApplication().getService(DesignProcessor::class.java)
     @JvmStatic
     protected val AI_COMPONENT: Key<Boolean> = Key.create("AI_COMPONENT")
-  }
-  init {
-    EnableStripeGroup.Companion.setSingleStripeEnabled(true)
   }
 
   open fun isAIComponent(c: JComponent): Boolean = false
