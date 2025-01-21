@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,13 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.Locale
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.intui.standalone.styling.dark
-import org.jetbrains.jewel.intui.standalone.styling.default
-import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Divider
@@ -50,12 +46,18 @@ import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
+import java.util.Locale
 
 @Composable
-fun Scrollbars() {
+public fun Scrollbars(
+    dark: ScrollbarStyle,
+    light: ScrollbarStyle,
+    alwaysVisibleScrollbarVisibility: ScrollbarVisibility,
+    whenScrollingScrollbarVisibility: ScrollbarVisibility
+) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         val isDark = JewelTheme.isDark
-        val baseStyle = remember(isDark) { if (isDark) ScrollbarStyle.dark() else ScrollbarStyle.light() }
+        val baseStyle = remember(isDark) { if (isDark) dark else light }
 
         var alwaysVisible by remember { mutableStateOf(hostOs != OS.MacOS) }
         var clickBehavior by remember { mutableStateOf(baseStyle.trackClickBehavior) }
@@ -69,14 +71,14 @@ fun Scrollbars() {
                             colors = baseStyle.colors,
                             metrics = baseStyle.metrics,
                             trackClickBehavior = clickBehavior,
-                            scrollbarVisibility = ScrollbarVisibility.AlwaysVisible.default(),
+                            scrollbarVisibility = alwaysVisibleScrollbarVisibility,
                         )
                     } else {
                         ScrollbarStyle(
                             colors = baseStyle.colors,
                             metrics = baseStyle.metrics,
                             trackClickBehavior = clickBehavior,
-                            scrollbarVisibility = ScrollbarVisibility.WhenScrolling.default(),
+                            scrollbarVisibility = whenScrollingScrollbarVisibility,
                         )
                     }
                 )

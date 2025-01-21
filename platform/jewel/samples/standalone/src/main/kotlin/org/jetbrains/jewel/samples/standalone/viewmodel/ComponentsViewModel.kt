@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.jetbrains.jewel.intui.standalone.styling.dark
+import org.jetbrains.jewel.intui.standalone.styling.default
 import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.samples.showcase.components.Banners
 import org.jetbrains.jewel.samples.showcase.components.Borders
@@ -16,10 +17,10 @@ import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
 import org.jetbrains.jewel.samples.showcase.components.Dropdowns
 import org.jetbrains.jewel.samples.showcase.components.Icons
 import org.jetbrains.jewel.samples.showcase.components.Links
-import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.showcase.components.ProgressBar
 import org.jetbrains.jewel.samples.showcase.components.RadioButtons
-import org.jetbrains.jewel.samples.standalone.view.component.Scrollbars
+import org.jetbrains.jewel.samples.showcase.components.Scrollbars
+import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.view.component.SegmentedControls
 import org.jetbrains.jewel.samples.standalone.view.component.Sliders
 import org.jetbrains.jewel.samples.standalone.view.component.SplitLayouts
@@ -30,6 +31,8 @@ import org.jetbrains.jewel.samples.standalone.view.component.Tooltips
 import org.jetbrains.jewel.ui.component.SplitLayoutState
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior
+import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
+import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 
 internal object ComponentsViewModel {
     private var outerSplitState by mutableStateOf(SplitLayoutState(0.5f))
@@ -97,7 +100,18 @@ internal object ComponentsViewModel {
             ViewInfo(
                 title = "Scrollbars",
                 iconKey = StandaloneSampleIcons.Components.scrollbar,
-                content = { Scrollbars() },
+                content = {
+                    val dark = ScrollbarStyle.dark()
+                    val light = ScrollbarStyle.light()
+                    val alwaysVisibleScrollbarVisibility = ScrollbarVisibility.AlwaysVisible.default()
+                    val whenScrollingScrollbarVisibility = ScrollbarVisibility.WhenScrolling.default()
+                    Scrollbars(
+                        dark = dark,
+                        light = light,
+                        alwaysVisibleScrollbarVisibility = alwaysVisibleScrollbarVisibility,
+                        whenScrollingScrollbarVisibility = whenScrollingScrollbarVisibility,
+                    )
+                },
             ),
             ViewInfo(
                 title = "SplitLayout",
