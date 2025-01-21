@@ -257,7 +257,7 @@ open class MavenModuleBuilderHelper(
     }
 
     @JvmStatic
-    protected fun showError(project: Project?, e: Throwable?) {
+    protected fun showError(project: Project, e: Throwable) {
       MavenUtil.showError(project, MavenProjectBundle.message("notification.title.failed.to.create.maven.project"), e)
     }
   }

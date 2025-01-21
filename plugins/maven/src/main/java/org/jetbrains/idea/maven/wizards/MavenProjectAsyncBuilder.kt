@@ -130,7 +130,7 @@ class MavenProjectAsyncBuilder {
     val projectsNavigator = MavenProjectsNavigator.getInstance(project)
     if (projectsNavigator != null) projectsNavigator.groupModules = true
 
-    val files: List<VirtualFile?> = withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), true) {
+    val files: List<VirtualFile> = withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), true) {
       coroutineToIndicator {
         val indicator = ProgressManager.getGlobalProgressIndicator()
         if (importProjectFile != null) {

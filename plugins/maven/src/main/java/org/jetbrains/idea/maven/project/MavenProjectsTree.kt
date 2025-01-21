@@ -43,6 +43,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Consumer
 import java.util.regex.Pattern
 import java.util.zip.CRC32
+import kotlin.Throws
 
 class MavenProjectsTree(val project: Project) {
   private val myStructureLock = ReentrantReadWriteLock()
@@ -140,11 +141,11 @@ class MavenProjectsTree(val project: Project) {
   }
 
   @TestOnly
-  fun resetManagedFilesAndProfiles(files: List<VirtualFile?>?, profiles: MavenExplicitProfiles) {
+  fun resetManagedFilesAndProfiles(files: List<VirtualFile>, profiles: MavenExplicitProfiles) {
     resetManagedFilesPathsAndProfiles(MavenUtil.collectPaths(files), profiles)
   }
 
-  fun addManagedFilesWithProfiles(files: List<VirtualFile?>?, profiles: MavenExplicitProfiles) {
+  fun addManagedFilesWithProfiles(files: List<VirtualFile>, profiles: MavenExplicitProfiles) {
     val (newFiles, newProfiles) = withReadLock {
       val newFiles = ArrayList(myManagedFilesPaths)
       newFiles.addAll(MavenUtil.collectPaths(files))

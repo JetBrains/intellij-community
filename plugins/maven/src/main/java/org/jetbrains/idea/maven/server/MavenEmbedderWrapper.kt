@@ -266,7 +266,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       progressReporter, eventHandler)
   }
 
-  fun resolveRepositories(repositories: Collection<MavenRemoteRepository?>): Set<MavenRemoteRepository> {
+  fun resolveRepositories(repositories: Collection<MavenRemoteRepository>): Set<MavenRemoteRepository> {
     return runBlockingMaybeCancellable {
       getOrCreateWrappee().resolveRepositories(ArrayList(repositories), ourToken)
     }

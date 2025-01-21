@@ -17,7 +17,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomGoal;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.HashMap;
 import java.util.List;
@@ -138,9 +137,9 @@ public final class MavenPluginDescriptor implements PluginAware {
       for (MavenPluginDescriptor pluginDescriptor : EP_NAME.getExtensions()) {
         Pair<String, String> pluginId = parsePluginId(pluginDescriptor.mavenId);
 
-        Map<String, Map<String, List<MavenPluginDescriptor>>> groupMap = MavenUtil.getOrCreate(res, pluginId.second);// pluginId.second is artifactId
+        Map<String, Map<String, List<MavenPluginDescriptor>>> groupMap = getOrCreate(res, pluginId.second);// pluginId.second is artifactId
 
-        Map<String, List<MavenPluginDescriptor>> goalsMap = MavenUtil.getOrCreate(groupMap, pluginId.first);// pluginId.first is groupId
+        Map<String, List<MavenPluginDescriptor>> goalsMap = getOrCreate(groupMap, pluginId.first);// pluginId.first is groupId
 
         List<MavenPluginDescriptor> descriptorList = goalsMap.get(pluginDescriptor.goal);
         if (descriptorList == null) {
@@ -152,6 +151,17 @@ public final class MavenPluginDescriptor implements PluginAware {
       }
 
       ourDescriptorsMap = res;
+    }
+
+    return res;
+  }
+
+  private static @NotNull <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
+    V res = map.get(key);
+    if (res == null) {
+      //noinspection unchecked
+      res = (V)new HashMap<>();
+      map.put(key, res);
     }
 
     return res;

@@ -201,7 +201,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun waitForMavenUtilRunnablesComplete() {
     PlatformTestUtil.waitWithEventsDispatching(
-      { "Waiting for MavenUtils runnables completed" + MavenUtil.getUncompletedRunnables() },
+      { "Waiting for MavenUtils runnables completed" + MavenUtil.uncompletedRunnables },
       { MavenUtil.noUncompletedRunnables() }, 15)
   }
 

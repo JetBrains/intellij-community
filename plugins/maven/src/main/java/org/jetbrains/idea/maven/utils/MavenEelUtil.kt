@@ -48,10 +48,25 @@ import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.utils.MavenUtil.CONF_DIR
+import org.jetbrains.idea.maven.utils.MavenUtil.DOT_M2_DIR
+import org.jetbrains.idea.maven.utils.MavenUtil.ENV_M2_HOME
+import org.jetbrains.idea.maven.utils.MavenUtil.MAVEN_NOTIFICATION_GROUP
+import org.jetbrains.idea.maven.utils.MavenUtil.MAVEN_REPO_LOCAL
+import org.jetbrains.idea.maven.utils.MavenUtil.PROP_FORCED_M2_HOME
+import org.jetbrains.idea.maven.utils.MavenUtil.REPOSITORY_DIR
+import org.jetbrains.idea.maven.utils.MavenUtil.SETTINGS_XML
+import org.jetbrains.idea.maven.utils.MavenUtil.doResolveLocalRepository
+import org.jetbrains.idea.maven.utils.MavenUtil.getMavenHomePath
+import org.jetbrains.idea.maven.utils.MavenUtil.isEmptyOrSpaces
+import org.jetbrains.idea.maven.utils.MavenUtil.isMavenUnitTestModeEnabled
+import org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome
+import org.jetbrains.idea.maven.utils.MavenUtil.resolveGlobalSettingsFile
+import org.jetbrains.idea.maven.utils.MavenUtil.resolveUserSettingsPath
 import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
-object MavenEelUtil : MavenUtil() {
+object MavenEelUtil  {
   @JvmStatic
   fun EelApi?.resolveM2Dir(): Path {
     val localUserHome = Path.of(SystemProperties.getUserHome())

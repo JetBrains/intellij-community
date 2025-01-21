@@ -1,1228 +1,1345 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.utils;
+package org.jetbrains.idea.maven.utils
 
-import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.execution.configurations.CompositeParameterTargetedValue;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.openapi.externalSystem.service.execution.InvalidJavaHomeException;
-import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.platform.eel.EelApi;
-import com.intellij.platform.eel.EelPlatform;
-import com.intellij.platform.eel.LocalEelApi;
-import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
-import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.*;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.VersionComparatorUtil;
-import com.intellij.util.xml.NanoXmlBuilder;
-import com.intellij.util.xml.NanoXmlUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
-import org.jetbrains.annotations.*;
-import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
-import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.*;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.DefaultHandler;
+import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.impl.TemplateImpl
+import com.intellij.execution.configurations.CompositeParameterTargetedValue
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager.Companion.getInstance
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
+import com.intellij.openapi.externalSystem.service.execution.InvalidJavaHomeException
+import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbService.Companion.isDumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.*
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
+import com.intellij.psi.PsiManager
+import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.util.*
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.xml.NanoXmlBuilder
+import com.intellij.util.xml.NanoXmlUtil
+import icons.ExternalSystemIcons
+import org.apache.commons.lang3.StringUtils
+import org.jdom.Element
+import org.jdom.JDOMException
+import org.jdom.Namespace
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.dom.MavenDomUtil
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings
+import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenProjectProblem
+import org.jetbrains.idea.maven.model.MavenRemoteRepository
+import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenServerConnector
+import org.jetbrains.idea.maven.server.MavenServerEmbedder
+import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
+import org.jetbrains.idea.maven.server.MavenServerUtil
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil.readPluginInfo
+import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveLocalRepositoryBlocking
+import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveM2Dir
+import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveUserSettingsPathBlocking
+import org.xml.sax.SAXException
+import org.xml.sax.SAXParseException
+import org.xml.sax.helpers.DefaultHandler
+import java.io.*
+import java.net.URI
+import java.net.URL
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.*
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Predicate
+import java.util.function.Supplier
+import java.util.jar.Attributes
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
+import java.util.stream.Stream
+import java.util.zip.CRC32
+import javax.xml.parsers.ParserConfigurationException
+import javax.xml.parsers.SAXParserFactory
+import kotlin.Throws
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import java.io.*;
-import java.net.URI;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-import java.util.stream.Stream;
-import java.util.zip.CRC32;
+object MavenUtil {
+  interface MavenTaskHandler {
+    fun waitFor()
+  }
 
-import static com.intellij.openapi.util.text.StringUtil.*;
-import static com.intellij.platform.eel.fs.EelFileSystemApiKt.getPath;
-import static com.intellij.platform.eel.provider.utils.EelUtilsKt.fetchLoginShellEnvVariablesBlocking;
-import static com.intellij.util.xml.NanoXmlBuilder.stop;
-import static icons.ExternalSystemIcons.Task;
-import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
-import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
-
-public class MavenUtil {
-
-  private static final List<String> settingsListNamespaces = List.of(
+  private val settingsListNamespaces = mutableListOf<String?>(
     "http://maven.apache.org/SETTINGS/1.0.0",
     "http://maven.apache.org/SETTINGS/1.1.0",
     "http://maven.apache.org/SETTINGS/1.2.0"
-  );
+  )
 
-  private static final List<String> extensionListNamespaces = List.of(
+  private val extensionListNamespaces = mutableListOf<String?>(
     "http://maven.apache.org/EXTENSIONS/1.0.0",
     "http://maven.apache.org/EXTENSIONS/1.1.0",
     "http://maven.apache.org/EXTENSIONS/1.2.0"
-  );
-  private static final Set<Runnable> runnables = Collections.newSetFromMap(new IdentityHashMap<>());
-  public static final String INTELLIJ_PLUGIN_ID = "org.jetbrains.idea.maven";
+  )
+  private val runnables: MutableSet<Runnable?> = Collections.newSetFromMap<Runnable?>(IdentityHashMap<Runnable?, Boolean?>())
+  const val INTELLIJ_PLUGIN_ID: String = "org.jetbrains.idea.maven"
+
   @ApiStatus.Experimental
-  public static final @NlsSafe String MAVEN_NAME = "Maven";
-  public static final @NonNls String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
-  public static final @NotNull ProjectSystemId SYSTEM_ID = new ProjectSystemId(MAVEN_NAME_UPCASE);
-  public static final String MAVEN_NOTIFICATION_GROUP = MAVEN_NAME;
-  public static final String SETTINGS_XML = "settings.xml";
-  public static final String DOT_M2_DIR = ".m2";
-  public static final String ENV_M2_HOME = "M2_HOME";
-  public static final String M2_DIR = "m2";
-  public static final String BIN_DIR = "bin";
-  public static final String CONF_DIR = "conf";
-  public static final String M2_CONF_FILE = "m2.conf";
-  public static final String MVN_FILE = "mvn";
-  public static final String REPOSITORY_DIR = "repository";
-  public static final String LIB_DIR = "lib";
-  public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
-  public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
-  @Deprecated
-  protected static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
-  public static final String MAVEN_REPO_LOCAL = "maven.repo.local";
+  const val MAVEN_NAME: @NlsSafe String = "Maven"
+  @JvmField
+  val MAVEN_NAME_UPCASE: @NonNls String = MAVEN_NAME.uppercase(Locale.getDefault())
+  @JvmField
+  val SYSTEM_ID: ProjectSystemId = ProjectSystemId(MAVEN_NAME_UPCASE)
+  const val MAVEN_NOTIFICATION_GROUP: String = MAVEN_NAME
+  const val SETTINGS_XML: String = "settings.xml"
+  const val DOT_M2_DIR: String = ".m2"
+  const val ENV_M2_HOME: String = "M2_HOME"
+  const val M2_DIR: String = "m2"
+  const val BIN_DIR: String = "bin"
+  const val CONF_DIR: String = "conf"
+  const val M2_CONF_FILE: String = "m2.conf"
+  const val MVN_FILE: String = "mvn"
+  const val REPOSITORY_DIR: String = "repository"
+  const val LIB_DIR: String = "lib"
+  const val CLIENT_ARTIFACT_SUFFIX: String = "-client"
+  const val CLIENT_EXPLODED_ARTIFACT_SUFFIX: String = CLIENT_ARTIFACT_SUFFIX + " exploded"
+
+  @Deprecated("")
+  internal const val PROP_FORCED_M2_HOME: String = "idea.force.m2.home"
+  const val MAVEN_REPO_LOCAL: String = "maven.repo.local"
 
 
-  @SuppressWarnings("unchecked")
-  private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
-    Pair.create(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"), "org/apache/maven/project/" + MavenConstants.SUPER_POM_4_0_XML),
-    Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"),
-                "org/apache/maven/model/" + MavenConstants.SUPER_POM_4_0_XML)
-  };
+  private val SUPER_POM_PATHS: Array<Pair<Pattern, String>> = arrayOf<Pair<Pattern, String>>(
+    Pair.create<Pattern, String>(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"),
+                                 "org/apache/maven/project/" + MavenConstants.SUPER_POM_4_0_XML),
+    Pair.create<Pattern, String>(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"),
+                                 "org/apache/maven/model/" + MavenConstants.SUPER_POM_4_0_XML)
+  )
 
-  private static volatile Map<String, String> ourPropertiesFromMvnOpts;
+  @Volatile
+  private var ourPropertiesFromMvnOpts: MutableMap<String, String>? = null
 
-  public static boolean enablePreimport() {
-    return Registry.is("maven.preimport.project");
+  fun enablePreimport(): Boolean {
+    return `is`("maven.preimport.project")
   }
 
-  public static boolean enablePreimportOnly() {
-    return Registry.is("maven.preimport.only");
+  fun enablePreimportOnly(): Boolean {
+    return `is`("maven.preimport.only")
   }
 
-  public static Map<String, String> getPropertiesFromMavenOpts() {
-    Map<String, String> res = ourPropertiesFromMvnOpts;
-    if (res == null) {
-      res = parseMavenProperties(System.getenv("MAVEN_OPTS"));
-      ourPropertiesFromMvnOpts = res;
+  @JvmStatic
+  val propertiesFromMavenOpts: MutableMap<String, String>
+    get() {
+      var res: MutableMap<String, String>? = ourPropertiesFromMvnOpts
+      if (res == null) {
+        res = parseMavenProperties(System.getenv("MAVEN_OPTS"))
+        ourPropertiesFromMvnOpts = res
+      }
+      return res
     }
-    return res;
-  }
 
-  public static @NotNull Map<String, String> parseMavenProperties(@Nullable String mavenOpts) {
+  @JvmStatic
+  fun parseMavenProperties(mavenOpts: String?): MutableMap<String, String> {
     if (mavenOpts != null) {
-      ParametersList mavenOptsList = new ParametersList();
-      mavenOptsList.addParametersString(mavenOpts);
-      return mavenOptsList.getProperties();
+      val mavenOptsList = ParametersList()
+      mavenOptsList.addParametersString(mavenOpts)
+      return mavenOptsList.getProperties()
     }
-    return Collections.emptyMap();
+    return mutableMapOf<String, String>()
   }
 
 
-  public static void invokeLater(Project p, Runnable r) {
-    invokeLater(p, ModalityState.defaultModalityState(), r);
+  @JvmStatic
+  fun invokeLater(p: Project, r: Runnable) {
+    invokeLater(p, ModalityState.defaultModalityState(), r)
   }
 
-  public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
-    startTestRunnable(r);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      runAndFinishTestRunnable(r);
-    }, state, p.getDisposed());
+  fun invokeLater(p: Project, state: ModalityState, r: Runnable) {
+    startTestRunnable(r)
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      runAndFinishTestRunnable(r)
+    }, state, p.getDisposed())
   }
 
 
-  private static void startTestRunnable(Runnable r) {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) return;
-    synchronized (runnables) {
-      runnables.add(r);
+  private fun startTestRunnable(r: Runnable?) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) return
+    synchronized(runnables) {
+      runnables.add(r)
     }
   }
 
-  private static void runAndFinishTestRunnable(Runnable r) {
+  private fun runAndFinishTestRunnable(r: Runnable) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      r.run();
-      return;
+      r.run()
+      return
     }
 
     try {
-      r.run();
+      r.run()
     }
     finally {
-      synchronized (runnables) {
-        runnables.remove(r);
+      synchronized(runnables) {
+        runnables.remove(r)
       }
     }
   }
 
   @TestOnly
-  public static boolean noUncompletedRunnables() {
-    synchronized (runnables) {
-      return runnables.isEmpty();
+  fun noUncompletedRunnables(): Boolean {
+    synchronized(runnables) {
+      return runnables.isEmpty()
     }
   }
 
-  public static void cleanAllRunnables() {
-    synchronized (runnables) {
-      runnables.clear();
+  fun cleanAllRunnables() {
+    synchronized(runnables) {
+      runnables.clear()
     }
   }
 
-  @TestOnly
-  public static List<Runnable> getUncompletedRunnables() {
-    List<Runnable> result;
-    synchronized (runnables) {
-      result = new ArrayList<>(runnables);
+  @get:TestOnly
+  val uncompletedRunnables: MutableList<Runnable?>
+    get() {
+      val result: MutableList<Runnable?>
+      synchronized(runnables) {
+        result = ArrayList<Runnable?>(runnables)
+      }
+      return result
     }
-    return result;
+
+  @JvmStatic
+  fun invokeAndWait(p: Project, r: Runnable) {
+    invokeAndWait(p, ModalityState.defaultModalityState(), r)
   }
 
-  public static void invokeAndWait(@NotNull Project p, @NotNull Runnable r) {
-    invokeAndWait(p, ModalityState.defaultModalityState(), r);
-  }
-
-  public static void invokeAndWait(final Project p, final ModalityState state, @NotNull Runnable r) {
-    startTestRunnable(r);
-    ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), p), state);
+  fun invokeAndWait(p: Project?, state: ModalityState, r: Runnable) {
+    startTestRunnable(r)
+    ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(Runnable { runAndFinishTestRunnable(r) }, p), state)
   }
 
 
-  public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
-    startTestRunnable(r);
+  @JvmStatic
+  fun invokeAndWaitWriteAction(p: Project, r: Runnable) {
+    startTestRunnable(r)
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      runAndFinishTestRunnable(r);
+      runAndFinishTestRunnable(r)
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().runWriteAction(r);
+      ApplicationManager.getApplication().runWriteAction(r)
     }
     else {
       ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(
-                                                          () -> ApplicationManager.getApplication().runWriteAction(() -> runAndFinishTestRunnable(r)), p),
-                                                        ModalityState.defaultModalityState());
+        Runnable { ApplicationManager.getApplication().runWriteAction(Runnable { runAndFinishTestRunnable(r) }) }, p),
+                                                        ModalityState.defaultModalityState())
     }
   }
 
-  public static void runDumbAware(@NotNull Project project, @NotNull Runnable r) {
-    startTestRunnable(r);
-    if (DumbService.isDumbAware(r)) {
-      runAndFinishTestRunnable(r);
+  fun runDumbAware(project: Project, r: Runnable) {
+    startTestRunnable(r)
+    if (isDumbAware(r)) {
+      runAndFinishTestRunnable(r)
     }
     else {
-      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), project));
+      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(Runnable { runAndFinishTestRunnable(r) }, project))
     }
   }
 
-  public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
+  @JvmStatic
+  fun runWhenInitialized(project: Project, runnable: Runnable) {
     if (project.isDisposed()) {
-      return;
+      return
     }
 
     if (project.isInitialized()) {
-      runDumbAware(project, runnable);
+      runDumbAware(project, runnable)
     }
     else {
-      startTestRunnable(runnable);
-      StartupManager.getInstance(project).runAfterOpened(() -> runAndFinishTestRunnable(runnable));
+      startTestRunnable(runnable)
+      StartupManager.getInstance(project).runAfterOpened(Runnable { runAndFinishTestRunnable(runnable) })
     }
   }
 
-  public static boolean isInModalContext() {
-    return LaterInvocator.isInModalContext();
+  @JvmStatic
+  val isInModalContext: Boolean
+    get() = LaterInvocator.isInModalContext()
+
+  @JvmStatic
+  fun showError(project: Project?, title: @NlsContexts.NotificationTitle String, e: Throwable) {
+    MavenLog.LOG.warn(title, e)
+    Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, title, e.message!!, NotificationType.ERROR), project)
   }
 
-  public static void showError(Project project, @NlsContexts.NotificationTitle String title, Throwable e) {
-    MavenLog.LOG.warn(title, e);
-    Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR), project);
+  @JvmStatic
+  fun showError(
+    project: Project?,
+    title: @NlsContexts.NotificationTitle String,
+    message: @NlsContexts.NotificationContent String,
+  ) {
+    MavenLog.LOG.warn(title)
+    Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, title, message, NotificationType.ERROR), project)
   }
 
-  public static void showError(Project project,
-                               @NlsContexts.NotificationTitle String title,
-                               @NlsContexts.NotificationContent String message) {
-    MavenLog.LOG.warn(title);
-    Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, message, NotificationType.ERROR), project);
+  @JvmStatic
+  fun getPluginSystemDir(folder: String): Path {
+    return appSystemDir.resolve("Maven").resolve(folder)
   }
 
-  public static @NotNull Path getPluginSystemDir(@NotNull String folder) {
-    return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
+  @JvmStatic
+  fun getBaseDir(file: VirtualFile): Path {
+    val virtualBaseDir: VirtualFile = getVFileBaseDir(file)
+    return virtualBaseDir.toNioPath()
   }
 
-  public static @NotNull Path getBaseDir(@NotNull VirtualFile file) {
-    VirtualFile virtualBaseDir = getVFileBaseDir(file);
-    return virtualBaseDir.toNioPath();
+  fun groupByBasedir(projects: Collection<MavenProject>, tree: MavenProjectsTree): MultiMap<String, MavenProject> {
+    return ContainerUtil.groupBy<String, MavenProject>(projects, NullableFunction { getBaseDir(tree.findRootProject(it).directoryFile).toString() })
   }
 
-  public static MultiMap<String, MavenProject> groupByBasedir(@NotNull Collection<MavenProject> projects, @NotNull MavenProjectsTree tree) {
-    return ContainerUtil.groupBy(projects, p -> getBaseDir(tree.findRootProject(p).getDirectoryFile()).toString());
-  }
-
-  public static @NotNull VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
-    VirtualFile baseDir = file.isDirectory() || file.getParent() == null ? file : file.getParent();
-    VirtualFile dir = baseDir;
+  @JvmStatic
+  fun getVFileBaseDir(file: VirtualFile): VirtualFile {
+    var baseDir = if (file.isDirectory() || file.getParent() == null) file else file.getParent()
+    var dir = baseDir
     do {
-      VirtualFile child = dir.findChild(".mvn");
+      val child = dir.findChild(".mvn")
 
       if (child != null && child.isDirectory()) {
         if (MavenLog.LOG.isTraceEnabled()) {
-          MavenLog.LOG.trace("found .mvn in " + child);
+          MavenLog.LOG.trace("found .mvn in " + child)
         }
-        baseDir = dir;
-        break;
+        baseDir = dir
+        break
       }
     }
-    while ((dir = dir.getParent()) != null);
+    while ((dir.getParent().also { dir = it }) != null)
     if (MavenLog.LOG.isTraceEnabled()) {
-      MavenLog.LOG.trace("return " + baseDir + " as baseDir");
+      MavenLog.LOG.trace("return " + baseDir + " as baseDir")
     }
-    return baseDir;
+    return baseDir
   }
 
-  public static @Nullable VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
-    if (pomFile == null) return null;
-    VirtualFile parent = pomFile.getParent();
-    if (parent == null || !parent.isValid()) return null;
-    return parent.findChild(MavenConstants.PROFILES_XML);
+  @JvmStatic
+  fun findProfilesXmlFile(pomFile: VirtualFile?): VirtualFile? {
+    if (pomFile == null) return null
+    val parent = pomFile.getParent()
+    if (parent == null || !parent.isValid()) return null
+    return parent.findChild(MavenConstants.PROFILES_XML)
   }
 
-  public static @Nullable Path getProfilesXmlNioFile(VirtualFile pomFile) {
-    if (pomFile == null) return null;
-    VirtualFile parent = pomFile.getParent();
-    if (parent == null) return null;
-    return parent.toNioPath().resolve(MavenConstants.PROFILES_XML);
+  fun getProfilesXmlNioFile(pomFile: VirtualFile?): Path? {
+    if (pomFile == null) return null
+    val parent = pomFile.getParent()
+    if (parent == null) return null
+    return parent.toNioPath().resolve(MavenConstants.PROFILES_XML)
   }
 
-  public static <T, U> List<T> collectFirsts(List<? extends Pair<T, U>> pairs) {
-    List<T> result = new ArrayList<>(pairs.size());
-    for (Pair<T, ?> each : pairs) {
-      result.add(each.first);
+  @JvmStatic
+  fun <T, U> collectFirsts(pairs: List<Pair<T, U>>): List<T> {
+    val result = ArrayList<T>(pairs.size)
+    for (each in pairs) {
+      result.add(each.first)
     }
-    return result;
+    return result
   }
 
-  public static <T, U> List<U> collectSeconds(List<? extends Pair<T, U>> pairs) {
-    List<U> result = new ArrayList<>(pairs.size());
-    for (Pair<T, U> each : pairs) {
-      result.add(each.second);
+  fun <T, U> collectSeconds(pairs: MutableList<out Pair<T?, U?>>): MutableList<U?> {
+    val result: MutableList<U?> = ArrayList<U?>(pairs.size)
+    for (each in pairs) {
+      result.add(each.second)
     }
-    return result;
+    return result
   }
 
-  public static List<String> collectPaths(List<? extends VirtualFile> files) {
-    return ContainerUtil.map(files, file -> file.getPath());
+  @JvmStatic
+  fun collectPaths(files: List<VirtualFile>): List<String> {
+    return files.map { file -> file.getPath() }
   }
 
-  public static List<VirtualFile> collectFiles(Collection<? extends MavenProject> projects) {
-    return ContainerUtil.map(projects, project -> project.getFile());
+  @JvmStatic
+  fun collectFiles(projects: Collection<MavenProject>): List<VirtualFile> {
+    return projects.map { project -> project.file }
   }
 
-  public static <T> boolean equalAsSets(final Collection<T> collection1, final Collection<T> collection2) {
-    return toSet(collection1).equals(toSet(collection2));
+  @JvmStatic
+  fun <T> equalAsSets(collection1: MutableCollection<T?>, collection2: MutableCollection<T?>): Boolean {
+    return toSet<T?>(collection1) == toSet<T?>(collection2)
   }
 
-  private static <T> Collection<T> toSet(final Collection<T> collection) {
-    return (collection instanceof Set ? collection : new HashSet<>(collection));
+  private fun <T> toSet(collection: MutableCollection<T?>): MutableCollection<T?> {
+    return (if (collection is MutableSet<*>) collection else HashSet<T?>(collection))
   }
 
-  public static @NotNull <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
-    return ContainerUtil.map(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
+  fun <T, U> mapToList(map: MutableMap<T?, U?>): MutableList<Pair<T?, U?>?> {
+    return ContainerUtil.map<MutableMap.MutableEntry<T?, U?>?, Pair<T?, U?>?>(map.entries,
+                                                                              Function { tuEntry: MutableMap.MutableEntry<T?, U?>? ->
+                                                                                Pair.create<T?, U?>(
+                                                                                  tuEntry!!.key, tuEntry.value)
+                                                                              })
   }
 
-  public static String formatHtmlImage(URL url) {
-    return "<img src=\"" + url + "\"> ";
+  @JvmStatic
+  fun formatHtmlImage(url: URL?): String {
+    return "<img src=\"" + url + "\"> "
   }
 
-  public static void runOrApplyMavenProjectFileTemplate(Project project,
-                                                        VirtualFile file,
-                                                        @NotNull MavenId projectId,
-                                                        boolean interactive) throws IOException {
-    runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, interactive);
+  @Throws(IOException::class)
+  @JvmStatic
+  fun runOrApplyMavenProjectFileTemplate(
+    project: Project,
+    file: VirtualFile,
+    projectId: MavenId,
+    interactive: Boolean,
+  ) {
+    runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, interactive)
   }
 
-  public static void runOrApplyMavenProjectFileTemplate(Project project,
-                                                        VirtualFile file,
-                                                        @NotNull MavenId projectId,
-                                                        MavenId parentId,
-                                                        @Nullable VirtualFile parentFile,
-                                                        boolean interactive) throws IOException {
-    runOrApplyMavenProjectFileTemplate(project, file, projectId, parentId, parentFile, new Properties(), new Properties(),
-                                       MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, interactive);
+  @JvmStatic
+  @Throws(IOException::class)
+  fun runOrApplyMavenProjectFileTemplate(
+    project: Project,
+    file: VirtualFile,
+    projectId: MavenId,
+    parentId: MavenId?,
+    parentFile: VirtualFile?,
+    interactive: Boolean,
+  ) {
+    runOrApplyMavenProjectFileTemplate(project, file, projectId, parentId, parentFile, Properties(), Properties(),
+                                       MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, interactive)
   }
 
-  public static void runOrApplyMavenProjectFileTemplate(Project project,
-                                                        VirtualFile file,
-                                                        @NotNull MavenId projectId,
-                                                        MavenId parentId,
-                                                        @Nullable VirtualFile parentFile,
-                                                        @NotNull Properties properties,
-                                                        @NotNull Properties conditions,
-                                                        @NonNls @NotNull String template,
-                                                        boolean interactive) throws IOException {
-    properties.setProperty("GROUP_ID", projectId.getGroupId());
-    properties.setProperty("ARTIFACT_ID", projectId.getArtifactId());
-    properties.setProperty("VERSION", projectId.getVersion());
+  @Throws(IOException::class)
+  fun runOrApplyMavenProjectFileTemplate(
+    project: Project,
+    file: VirtualFile,
+    projectId: MavenId,
+    parentId: MavenId?,
+    parentFile: VirtualFile?,
+    properties: Properties,
+    conditions: Properties,
+    template: @NonNls String,
+    interactive: Boolean,
+  ) {
+    properties.setProperty("GROUP_ID", projectId.getGroupId())
+    properties.setProperty("ARTIFACT_ID", projectId.getArtifactId())
+    properties.setProperty("VERSION", projectId.getVersion())
 
     if (parentId != null) {
-      conditions.setProperty("HAS_PARENT", "true");
-      properties.setProperty("PARENT_GROUP_ID", parentId.getGroupId());
-      properties.setProperty("PARENT_ARTIFACT_ID", parentId.getArtifactId());
-      properties.setProperty("PARENT_VERSION", parentId.getVersion());
+      conditions.setProperty("HAS_PARENT", "true")
+      properties.setProperty("PARENT_GROUP_ID", parentId.getGroupId())
+      properties.setProperty("PARENT_ARTIFACT_ID", parentId.getArtifactId())
+      properties.setProperty("PARENT_VERSION", parentId.getVersion())
 
       if (parentFile != null) {
-        VirtualFile modulePath = file.getParent();
-        VirtualFile parentModulePath = parentFile.getParent();
+        val modulePath = file.getParent()
+        val parentModulePath = parentFile.getParent()
 
-        if (!Comparing.equal(modulePath.getParent(), parentModulePath) ||
-            !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
-          String relativePath = VfsUtilCore.findRelativePath(file, parentModulePath, '/');
+        if (!Comparing.equal<VirtualFile?>(modulePath.getParent(), parentModulePath) ||
+            !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())
+        ) {
+          val relativePath = VfsUtilCore.findRelativePath(file, parentModulePath, '/')
           if (relativePath != null) {
-            conditions.setProperty("HAS_RELATIVE_PATH", "true");
-            properties.setProperty("PARENT_RELATIVE_PATH", relativePath);
+            conditions.setProperty("HAS_RELATIVE_PATH", "true")
+            properties.setProperty("PARENT_RELATIVE_PATH", relativePath)
           }
         }
       }
     }
     else {
       //set language level only for root pom
-      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (sdk != null && sdk.getSdkType() instanceof JavaSdk javaSdk) {
-        JavaSdkVersion version = javaSdk.getVersion(sdk);
-        String description = version == null ? null : version.getDescription();
-        boolean shouldSetLangLevel = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_6);
-        conditions.setProperty("SHOULD_SET_LANG_LEVEL", String.valueOf(shouldSetLangLevel));
-        properties.setProperty("COMPILER_LEVEL_SOURCE", description);
-        properties.setProperty("COMPILER_LEVEL_TARGET", description);
+      val sdk = ProjectRootManager.getInstance(project).getProjectSdk()
+      if (sdk != null && sdk.getSdkType() is JavaSdk) {
+        val javaSdk = sdk.getSdkType() as JavaSdk
+        val version: JavaSdkVersion? = javaSdk.getVersion(sdk)
+        val description = if (version == null) null else version.getDescription()
+        val shouldSetLangLevel = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_6)
+        conditions.setProperty("SHOULD_SET_LANG_LEVEL", shouldSetLangLevel.toString())
+        properties.setProperty("COMPILER_LEVEL_SOURCE", description)
+        properties.setProperty("COMPILER_LEVEL_TARGET", description)
       }
     }
-    runOrApplyFileTemplate(project, file, template, properties, conditions, interactive);
+    runOrApplyFileTemplate(project, file, template, properties, conditions, interactive)
   }
 
-  public static void runFileTemplate(Project project,
-                                     VirtualFile file,
-                                     String templateName) throws IOException {
-    runOrApplyFileTemplate(project, file, templateName, new Properties(), new Properties(), true);
+  @JvmStatic
+  @Throws(IOException::class)
+  fun runFileTemplate(
+    project: Project,
+    file: VirtualFile,
+    templateName: String,
+  ) {
+    runOrApplyFileTemplate(project, file, templateName, Properties(), Properties(), true)
   }
 
-  public static void runOrApplyFileTemplate(Project project,
-                                            VirtualFile file,
-                                            String templateName,
-                                            Properties properties,
-                                            Properties conditions,
-                                            boolean interactive) throws IOException {
-    FileTemplateManager manager = FileTemplateManager.getInstance(project);
-    FileTemplate fileTemplate = manager.getJ2eeTemplate(templateName);
-    Properties allProperties = manager.getDefaultProperties();
+  @Throws(IOException::class)
+  fun runOrApplyFileTemplate(
+    project: Project,
+    file: VirtualFile,
+    templateName: String,
+    properties: Properties,
+    conditions: Properties?,
+    interactive: Boolean,
+  ) {
+    val manager = FileTemplateManager.getInstance(project)
+    val fileTemplate = manager.getJ2eeTemplate(templateName)
+    val allProperties = manager.getDefaultProperties()
     if (!interactive) {
-      allProperties.putAll(properties);
+      allProperties.putAll(properties)
     }
-    allProperties.putAll(conditions);
-    String text = fileTemplate.getText(allProperties);
-    Pattern pattern = Pattern.compile("\\$\\{(.*)}");
-    Matcher matcher = pattern.matcher(text);
-    StringBuilder builder = new StringBuilder();
+    allProperties.putAll(conditions!!)
+    var text = fileTemplate.getText(allProperties)
+    val pattern = Pattern.compile("\\$\\{(.*)}")
+    val matcher = pattern.matcher(text)
+    val builder = StringBuilder()
     while (matcher.find()) {
-      matcher.appendReplacement(builder, "\\$" + toUpperCase(matcher.group(1)) + "\\$");
+      matcher.appendReplacement(builder, "\\$" + StringUtil.toUpperCase(matcher.group(1)) + "\\$")
     }
-    matcher.appendTail(builder);
-    text = builder.toString();
+    matcher.appendTail(builder)
+    text = builder.toString()
 
-    TemplateImpl template = (TemplateImpl)TemplateManager.getInstance(project).createTemplate("", "", text);
-    for (int i = 0; i < template.getSegmentsCount(); i++) {
-      if (i == template.getEndSegmentNumber()) continue;
-      String name = template.getSegmentName(i);
-      String value = "\"" + properties.getProperty(name, "") + "\"";
-      template.addVariable(name, value, value, true);
+    val template = TemplateManager.getInstance(project).createTemplate("", "", text) as TemplateImpl
+    for (i in 0..<template.getSegmentsCount()) {
+      if (i == template.getEndSegmentNumber()) continue
+      val name = template.getSegmentName(i)
+      val value = "\"" + properties.getProperty(name, "") + "\""
+      template.addVariable(name, value, value, true)
     }
 
     if (interactive) {
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
-      Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-      editor.getDocument().setText("");
-      TemplateManager.getInstance(project).startTemplate(editor, template);
+      val descriptor = OpenFileDescriptor(project, file)
+      val editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true)
+      editor!!.getDocument().setText("")
+      TemplateManager.getInstance(project).startTemplate(editor, template)
     }
     else {
-      VfsUtil.saveText(file, template.getTemplateText());
+      VfsUtil.saveText(file, template.getTemplateText())
 
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile != null) {
         if (project.isInitialized()) {
-          new ReformatCodeProcessor(project, psiFile, null, false).run();
+          ReformatCodeProcessor(project, psiFile, null, false).run()
         }
       }
     }
   }
 
-  public static <T extends Collection<Pattern>> T collectPattern(String text, T result) {
-    String antPattern = FileUtil.convertAntToRegexp(text.trim());
+  fun collectPattern(text: String, result: MutableList<Pattern>): List<Pattern> {
+    val antPattern = FileUtil.convertAntToRegexp(text.trim { it <= ' ' })
     try {
-      result.add(Pattern.compile(antPattern));
+      result.add(Pattern.compile(antPattern))
     }
-    catch (PatternSyntaxException ignore) {
+    catch (ignore: PatternSyntaxException) {
     }
-    return result;
+    return result
   }
 
-  public static boolean isIncluded(String relativeName, List<Pattern> includes, List<Pattern> excludes) {
-    boolean result = false;
-    for (Pattern each : includes) {
+  fun isIncluded(relativeName: String, includes: MutableList<Pattern>, excludes: MutableList<Pattern>): Boolean {
+    var result = false
+    for (each in includes) {
       if (each.matcher(relativeName).matches()) {
-        result = true;
-        break;
+        result = true
+        break
       }
     }
-    if (!result) return false;
-    for (Pattern each : excludes) {
-      if (each.matcher(relativeName).matches()) return false;
+    if (!result) return false
+    for (each in excludes) {
+      if (each.matcher(relativeName).matches()) return false
     }
-    return true;
+    return true
   }
 
-  public static void run(@NlsContexts.DialogTitle String title, final MavenTask task)
-    throws MavenProcessCanceledException {
-    final Exception[] canceledEx = new Exception[1];
-    final RuntimeException[] runtimeEx = new RuntimeException[1];
-    final Error[] errorEx = new Error[1];
+  @Throws(MavenProcessCanceledException::class)
+  fun run(title: @NlsContexts.DialogTitle String, task: MavenTask) {
+    val canceledEx = arrayOfNulls<Exception>(1)
+    val runtimeEx = arrayOfNulls<RuntimeException>(1)
+    val errorEx = arrayOfNulls<Error>(1)
 
-    ProgressManager.getInstance().run(new Task.Modal(null, title, true) {
-      @Override
-      public void run(@NotNull ProgressIndicator i) {
+    ProgressManager.getInstance().run(object : Task.Modal(null, title, true) {
+      override fun run(i: ProgressIndicator) {
         try {
-          task.run(new MavenProgressIndicator(null, i, null));
+          task.run(MavenProgressIndicator(null, i, null))
         }
-        catch (MavenProcessCanceledException | ProcessCanceledException e) {
-          canceledEx[0] = e;
+        catch (e: MavenProcessCanceledException) {
+          canceledEx[0] = e
         }
-        catch (RuntimeException e) {
-          runtimeEx[0] = e;
+        catch (e: ProcessCanceledException) {
+          canceledEx[0] = e
         }
-        catch (Error e) {
-          errorEx[0] = e;
+        catch (e: RuntimeException) {
+          runtimeEx[0] = e
+        }
+        catch (e: Error) {
+          errorEx[0] = e
         }
       }
-    });
-    if (canceledEx[0] instanceof MavenProcessCanceledException) throw (MavenProcessCanceledException)canceledEx[0];
-    if (canceledEx[0] instanceof ProcessCanceledException) throw new MavenProcessCanceledException();
+    })
+    if (canceledEx[0] is MavenProcessCanceledException) throw canceledEx[0] as MavenProcessCanceledException
+    if (canceledEx[0] is ProcessCanceledException) throw MavenProcessCanceledException()
 
-    if (runtimeEx[0] != null) throw runtimeEx[0];
-    if (errorEx[0] != null) throw errorEx[0];
+    val runtimeException = runtimeEx[0]
+    if (runtimeException != null) throw runtimeException
+    val error = errorEx[0]
+    if (error != null) throw error
   }
 
   // used in third-party plugins
-  public static @NotNull MavenTaskHandler runInBackground(@NotNull Project project,
-                                                 @NotNull @NlsContexts.Command String title,
-                                                 boolean cancellable,
-                                                 @NotNull MavenTask task) {
-    MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
-    Supplier<MavenSyncConsole> syncConsoleSupplier = manager == null ? null : () -> manager.getSyncConsole();
-    MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
+  @JvmStatic
+  fun runInBackground(
+    project: Project,
+    title: @NlsContexts.Command String,
+    cancellable: Boolean,
+    task: MavenTask,
+  ): MavenTaskHandler {
+    val manager = MavenProjectsManager.getInstanceIfCreated(project)
+    val syncConsoleSupplier: Supplier<MavenSyncConsole?>? = if (manager == null) null else Supplier { manager.getSyncConsole() }
+    val indicator = MavenProgressIndicator(project, syncConsoleSupplier)
 
-    Runnable runnable = () -> {
-      if (project.isDisposed()) return;
-
+    val runnable = Runnable {
+      if (project.isDisposed()) return@Runnable
       try {
-        task.run(indicator);
+        task.run(indicator)
       }
-      catch (MavenProcessCanceledException | ProcessCanceledException e) {
-        indicator.cancel();
+      catch (e: MavenProcessCanceledException) {
+        indicator.cancel()
       }
-    };
+      catch (e: ProcessCanceledException) {
+        indicator.cancel()
+      }
+    }
 
-    Future<?> future;
-    future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-    MavenTaskHandler handler = new MavenTaskHandler() {
-      @Override
-      public void waitFor() {
+    val future: Future<*>?
+    future = ApplicationManager.getApplication().executeOnPooledThread(runnable)
+    val handler: MavenTaskHandler = object : MavenTaskHandler {
+      override fun waitFor() {
         try {
-          future.get();
+          future.get()
         }
-        catch (InterruptedException | ExecutionException e) {
-          MavenLog.LOG.error(e);
+        catch (e: InterruptedException) {
+          MavenLog.LOG.error(e)
+        }
+        catch (e: ExecutionException) {
+          MavenLog.LOG.error(e)
         }
       }
-    };
-    invokeLater(project, () -> {
-      if (future.isDone()) return;
-      new Task.Backgroundable(project, title, cancellable) {
-        @Override
-        public void run(@NotNull ProgressIndicator i) {
-          indicator.setIndicator(i);
-          handler.waitFor();
+    }
+    invokeLater(project, Runnable {
+      if (future.isDone()) return@Runnable
+      object : Task.Backgroundable(project, title, cancellable) {
+        override fun run(i: ProgressIndicator) {
+          indicator.setIndicator(i)
+          handler.waitFor()
         }
-      }.queue();
-    });
-    return handler;
+      }.queue()
+    })
+    return handler
   }
 
-  /**
-   * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven"
-   * use {@link MavenUtil#getMavenHomePath(StaticResolvedMavenHomeType) getMavenHomePath(StaticResolvedMavenHomeType} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
+  @Deprecated(
+    """do not use this method, it mixes path to maven home and labels like "Use bundled maven"
+  use {@link MavenUtil#getMavenHomePath(StaticResolvedMavenHomeType) getMavenHomePath(StaticResolvedMavenHomeType} instead""")
+  @JvmStatic
+  fun resolveMavenHomeDirectory(overrideMavenHome: String?): File? {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
-      //noinspection HardCodedStringLiteral
-      return getMavenHomePath(staticOrBundled(resolveMavenHomeType(overrideMavenHome))).toFile();
+      return getMavenHomePath(resolveMavenHomeType(overrideMavenHome).staticOrBundled())!!.toFile()
     }
 
-    String m2home = System.getenv(ENV_M2_HOME);
+    val m2home = System.getenv(ENV_M2_HOME)
     if (!isEmptyOrSpaces(m2home)) {
-      final File homeFromEnv = new File(m2home);
+      val homeFromEnv = File(m2home)
       if (isValidMavenHome(homeFromEnv.toPath())) {
-        return homeFromEnv;
+        return homeFromEnv
       }
     }
 
-    String mavenHome = System.getenv("MAVEN_HOME");
+    val mavenHome = System.getenv("MAVEN_HOME")
     if (!isEmptyOrSpaces(mavenHome)) {
-      final File mavenHomeFile = new File(mavenHome);
+      val mavenHomeFile = File(mavenHome)
       if (isValidMavenHome(mavenHomeFile.toPath())) {
-        return mavenHomeFile;
+        return mavenHomeFile
       }
     }
 
-    String userHome = SystemProperties.getUserHome();
+    val userHome = SystemProperties.getUserHome()
     if (!isEmptyOrSpaces(userHome)) {
-      final File underUserHome = new File(userHome, M2_DIR);
+      val underUserHome = File(userHome, M2_DIR)
       if (isValidMavenHome(underUserHome.toPath())) {
-        return underUserHome;
+        return underUserHome
       }
     }
 
     if (SystemInfo.isMac) {
-      Path home = fromBrew(null);
+      var home: Path? = fromBrew(null)
       if (home != null) {
-        return home.toFile();
+        return home.toFile()
       }
 
-      if ((home = fromMacSystemJavaTools(null)) != null) {
-        return home.toFile();
+      if ((fromMacSystemJavaTools(null).also { home = it }) != null) {
+        return home!!.toFile()
       }
     }
     else if (SystemInfo.isLinux) {
-      File home = new File("/usr/share/maven");
+      var home = File("/usr/share/maven")
       if (isValidMavenHome(home.toPath())) {
-        return home;
+        return home
       }
 
-      home = new File("/usr/share/maven2");
+      home = File("/usr/share/maven2")
       if (isValidMavenHome(home.toPath())) {
-        return home;
+        return home
       }
     }
 
-    return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
+    return MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile()
   }
 
+  @JvmStatic
   @RequiresBackgroundThread
-  public static List<MavenHomeType> getSystemMavenHomeVariants(Project project) {
-    List<MavenHomeType> result = new ArrayList<>();
+  fun getSystemMavenHomeVariants(project: Project): MutableList<MavenHomeType> {
+    val result = ArrayList<MavenHomeType>()
 
-    var eel = EelProviderUtil.upgradeBlocking(EelProviderUtil.getEelDescriptor(project));
-    var envs = fetchLoginShellEnvVariablesBlocking(eel.getExec());
+    val eel = project.getEelDescriptor().upgradeBlocking()
+    val envs = eel.exec.fetchLoginShellEnvVariablesBlocking()
 
-    String m2home = envs.get(ENV_M2_HOME);
+    val m2home = envs.get(ENV_M2_HOME)
     if (!isEmptyOrSpaces(m2home)) {
-      final Path homeFromEnv = EelNioBridgeServiceKt.asNioPath(getPath(eel.getFs(), m2home));
+      val homeFromEnv = eel.fs.getPath(m2home!!).asNioPath()
       if (isValidMavenHome(homeFromEnv)) {
-        result.add(new MavenInSpecificPath(m2home));
+        result.add(MavenInSpecificPath(m2home))
       }
     }
 
-    String mavenHome = envs.get("MAVEN_HOME");
+    val mavenHome = envs.get("MAVEN_HOME")
     if (!isEmptyOrSpaces(mavenHome)) {
-      final Path mavenHomeFile = EelNioBridgeServiceKt.asNioPath(getPath(eel.getFs(), mavenHome));
+      val mavenHomeFile = eel.fs.getPath(mavenHome!!).asNioPath()
       if (isValidMavenHome(mavenHomeFile)) {
-        result.add(new MavenInSpecificPath(mavenHome));
+        result.add(MavenInSpecificPath(mavenHome))
       }
     }
 
-    var userHome = eel.getFs().getUser().getHome();
+    val userHome = eel.fs.user.home
     if (!isEmptyOrSpaces(userHome.toString())) {
-      var nioUserHome = EelNioBridgeServiceKt.asNioPath(userHome);
-      final Path underUserHome = nioUserHome.resolve(M2_DIR);
+      val nioUserHome = userHome.asNioPath()
+      val underUserHome: Path = nioUserHome.resolve(M2_DIR)
       if (isValidMavenHome(underUserHome)) {
-        result.add(new MavenInSpecificPath(userHome.toString()));
+        result.add(MavenInSpecificPath(userHome.toString()))
       }
     }
 
     // TODO: eel
-    if (eel instanceof LocalEelApi && SystemInfo.isMac) {
-      Path home = fromBrew(eel);
+    if (eel is LocalEelApi && SystemInfo.isMac) {
+      var home: Path? = fromBrew(eel)
       if (home != null) {
-        result.add(new MavenInSpecificPath(home.toAbsolutePath().toString()));
+        result.add(MavenInSpecificPath(home.toAbsolutePath().toString()))
       }
 
-      if ((home = fromMacSystemJavaTools(eel)) != null) {
-        result.add(new MavenInSpecificPath(home.toAbsolutePath().toString()));
+      if ((fromMacSystemJavaTools(eel).also { home = it }) != null) {
+        result.add(MavenInSpecificPath(home!!.toAbsolutePath().toString()))
       }
     }
-    else if (eel.getPlatform() instanceof EelPlatform.Linux) {
-      Path home = EelNioBridgeServiceKt.asNioPath(getPath(eel.getFs(), "/usr/share/maven"));
+    else if (eel.platform is EelPlatform.Linux) {
+      var home = eel.fs.getPath("/usr/share/maven").asNioPath()
       if (isValidMavenHome(home)) {
-        result.add(new MavenInSpecificPath(home.toAbsolutePath().toString()));
+        result.add(MavenInSpecificPath(home.toAbsolutePath().toString()))
       }
 
-      home = EelNioBridgeServiceKt.asNioPath(getPath(eel.getFs(), "/usr/share/maven2"));
+      home = eel.fs.getPath("/usr/share/maven2").asNioPath()
       if (isValidMavenHome(home)) {
-        result.add(new MavenInSpecificPath(home.toAbsolutePath().toString()));
+        result.add(MavenInSpecificPath(home.toAbsolutePath().toString()))
       }
     }
 
-    result.add(BundledMaven3.INSTANCE);
-    return result;
+    result.add(BundledMaven3)
+    return result
   }
 
-  public static void addEventListener(@NotNull String mavenVersion, @NotNull SimpleJavaParameters params) {
+  @JvmStatic
+  fun addEventListener(mavenVersion: String, params: SimpleJavaParameters) {
     if (VersionComparatorUtil.compare(mavenVersion, "3.0.2") < 0) {
-      MavenLog.LOG.warn("Maven version less than 3.0.2 are not correctly displayed in Build Window");
-      return;
+      MavenLog.LOG.warn("Maven version less than 3.0.2 are not correctly displayed in Build Window")
+      return
     }
-    String listenerPath = MavenServerManager.getInstance().getMavenEventListener().getAbsolutePath();
-    String userExtClassPath =
-      StringUtils.stripToEmpty(params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH));
-    String vmParameter = "-D" + MavenServerEmbedder.MAVEN_EXT_CLASS_PATH + "=";
-    String[] userListeners = userExtClassPath.split(File.pathSeparator);
-    CompositeParameterTargetedValue targetedValue = new CompositeParameterTargetedValue(vmParameter)
-      .addPathPart(listenerPath);
+    val listenerPath = getInstance().getMavenEventListener().getAbsolutePath()
+    val userExtClassPath =
+      StringUtils.stripToEmpty(params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH))
+    val vmParameter = "-D" + MavenServerEmbedder.MAVEN_EXT_CLASS_PATH + "="
+    val userListeners = userExtClassPath.split(File.pathSeparator.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    var targetedValue = CompositeParameterTargetedValue(vmParameter)
+      .addPathPart(listenerPath)
 
-    for (String path : userListeners) {
-      if (StringUtil.isEmptyOrSpaces(path)) continue;
-      targetedValue = targetedValue.addPathSeparator().addPathPart(path);
+    for (path in userListeners) {
+      if (StringUtil.isEmptyOrSpaces(path)) continue
+      targetedValue = targetedValue.addPathSeparator().addPathPart(path)
     }
-    params.getVMParametersList().add(targetedValue);
+    params.getVMParametersList().add(targetedValue)
   }
 
-  private static @Nullable Path fromMacSystemJavaTools(@Nullable EelApi eelApi) {
-    final Path symlinkDir;
+  private fun fromMacSystemJavaTools(eelApi: EelApi?): Path? {
+    val symlinkDir: Path
     if (eelApi == null) {
-      symlinkDir = Path.of("/usr/share/maven");
+      symlinkDir = Path.of("/usr/share/maven")
     }
     else {
-      symlinkDir = EelNioBridgeServiceKt.asNioPath(getPath(eelApi.getFs(), "/usr/share/maven"));
+      symlinkDir = eelApi.fs.getPath("/usr/share/maven").asNioPath()
     }
 
     if (isValidMavenHome(symlinkDir)) {
-      return symlinkDir;
+      return symlinkDir
     }
 
     // well, try to search
-    final Path dir;
+    val dir: Path
 
     if (eelApi == null) {
-      dir = Path.of("/usr/share/java");
+      dir = Path.of("/usr/share/java")
     }
     else {
-      dir = EelNioBridgeServiceKt.asNioPath(getPath(eelApi.getFs(), "/usr/share/java"));
+      dir = eelApi.fs.getPath("/usr/share/java").asNioPath()
     }
 
-    List<Path> list = new ArrayList<>();
+    val list: MutableList<Path> = ArrayList<Path>()
 
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-      for (Path path : stream) {
-        list.add(path);
+    try {
+      Files.newDirectoryStream(dir).use { stream ->
+        for (path in stream) {
+          list.add(path)
+        }
       }
     }
-    catch (IOException e) {
-      return null;
+    catch (e: IOException) {
+      return null
     }
 
     if (list.isEmpty()) {
-      return null;
+      return null
     }
 
-    Path home = null;
-    final String prefix = "maven-";
-    final int versionIndex = prefix.length();
-    for (Path path : list) {
+    var home: Path? = null
+    val prefix = "maven-"
+    val versionIndex = prefix.length
+    for (path in list) {
       if (path.startsWith(prefix) &&
-          (home == null || compareVersionNumbers(path.toString().substring(versionIndex), home.toString().substring(versionIndex)) > 0)) {
-        home = path;
+          (home == null || StringUtil.compareVersionNumbers(path.toString().substring(versionIndex),
+                                                            home.toString().substring(versionIndex)) > 0)
+      ) {
+        home = path
       }
     }
 
     if (home != null) {
-      Path file = dir.resolve(home);
+      val file = dir.resolve(home)
       if (isValidMavenHome(file)) {
-        return file;
+        return file
       }
     }
 
-    return null;
+    return null
   }
 
-  private static @Nullable Path fromBrew(EelApi eelApi) {
-    final Path brewDir = EelNioBridgeServiceKt.asNioPath(getPath(eelApi.getFs(), "/usr/local/Cellar/maven"));
+  private fun fromBrew(eelApi: EelApi?): Path? {
+    val brewDir = eelApi?.fs?.getPath("/usr/local/Cellar/maven")?.asNioPath()
 
-    List<Path> list = new ArrayList<>();
+    val list: MutableList<Path?> = ArrayList<Path?>()
 
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(brewDir)) {
-      for (Path path : stream) {
-        list.add(path);
+    try {
+      Files.newDirectoryStream(brewDir).use { stream ->
+        for (path in stream) {
+          list.add(path)
+        }
       }
     }
-    catch (IOException e) {
-      return null;
+    catch (e: IOException) {
+      return null
     }
 
     if (list.isEmpty()) {
-      return null;
+      return null
     }
 
 
-    if (list.size() > 1) {
-      list.sort(Comparator.comparing(Path::toString));
+    if (list.size > 1) {
+      list.sortWith(Comparator.comparing<Path?, String?>(java.util.function.Function { obj: Path? -> obj.toString() }))
     }
 
-    final Path file = brewDir.resolve(list.get(0).toString() + "/libexec");
-    return isValidMavenHome(file) ? file : null;
+    val file = brewDir?.resolve(list.get(0).toString() + "/libexec")
+    return if (isValidMavenHome(file)) file else null
   }
 
-  public static boolean isEmptyOrSpaces(@Nullable String str) {
-    return str == null || str.isBlank();
+  fun isEmptyOrSpaces(str: String?): Boolean {
+    return str == null || str.isBlank()
   }
 
 
-  public static boolean isValidMavenHome(@Nullable Path home) {
-    if (home == null) return false;
+  @JvmStatic
+  fun isValidMavenHome(home: Path?): Boolean {
+    if (home == null) return false
     try {
-      Path binDir = home.resolve(BIN_DIR);
-      if (!Files.isDirectory(binDir)) return false;
+      val binDir: Path = home.resolve(BIN_DIR)
+      if (!Files.isDirectory(binDir)) return false
 
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(binDir)) {
-        Set<String> set = new HashSet<>();
-        for (Path entry : stream) {
-          set.add(entry.getFileName().toString());
+      Files.newDirectoryStream(binDir).use { stream ->
+        val set: MutableSet<String?> = HashSet<String?>()
+        for (entry in stream) {
+          set.add(entry.getFileName().toString())
         }
-        return set.contains(M2_CONF_FILE) && set.contains(MVN_FILE);
+        return set.contains(M2_CONF_FILE) && set.contains(MVN_FILE)
       }
     }
-    catch (Exception ignored) {
+    catch (ignored: Exception) {
     }
-    return false;
+    return false
   }
 
-  @Deprecated
-  public static File getMavenConfFile(File mavenHome) {
-    return new File(new File(mavenHome, BIN_DIR), M2_CONF_FILE);
+  @Deprecated("")
+  @JvmStatic
+  fun getMavenConfFile(mavenHome: File?): File {
+    return File(File(mavenHome, BIN_DIR), M2_CONF_FILE)
   }
 
-  public static Path getMavenConfFilePath(Path mavenHome) {
-    return mavenHome.resolve(BIN_DIR).resolve(M2_CONF_FILE);
+  @JvmStatic
+  fun getMavenConfFilePath(mavenHome: Path): Path {
+    return mavenHome.resolve(BIN_DIR).resolve(M2_CONF_FILE)
   }
 
-  @Deprecated
-  public static @Nullable File getMavenHomeFile(@NotNull StaticResolvedMavenHomeType mavenHome) {
-    return Optional.ofNullable(getMavenHomePath(mavenHome)).map(Path::toFile).orElse(null);
+  @Deprecated("")
+  @JvmStatic
+  fun getMavenHomeFile(mavenHome: StaticResolvedMavenHomeType): File? {
+    return Optional.ofNullable<Path?>(
+      getMavenHomePath(mavenHome)).map<File?>(java.util.function.Function { obj: Path? -> obj!!.toFile() }).orElse(null)
   }
 
-  public static @Nullable Path getMavenHomePath(@NotNull StaticResolvedMavenHomeType mavenHome) {
-    if (mavenHome instanceof MavenInSpecificPath mp) {
-      Path file = Path.of(mp.getMavenHome());
-      return isValidMavenHome(file) ? file : null;
+  @JvmStatic
+  fun getMavenHomePath(mavenHome: StaticResolvedMavenHomeType): Path? {
+    if (mavenHome is MavenInSpecificPath) {
+      val file = Path.of(mavenHome.mavenHome)
+      return if (isValidMavenHome(file)) file else null
     }
-    for (MavenVersionAwareSupportExtension e : MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.getExtensionList()) {
-      Path file = e.getMavenHomeFile(mavenHome);
-      if (file != null) return file;
+    for (e in MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.extensionList) {
+      val file = e.getMavenHomeFile(mavenHome)
+      if (file != null) return file
     }
-    return null;
+    return null
   }
 
 
-  public static @Nullable String getMavenVersion(@Nullable Path mavenHome) {
-    if (mavenHome == null) return null;
-    Path libDir = mavenHome.resolve("lib");
+  @JvmStatic
+  fun getMavenVersion(mavenHome: Path?): String? {
+    if (mavenHome == null) return null
+    val libDir = mavenHome.resolve("lib")
     if (!Files.isDirectory(libDir)) {
-      MavenLog.LOG.warn("Cannot find lib directory in " + mavenHome);
-      return null;
+      MavenLog.LOG.warn("Cannot find lib directory in " + mavenHome)
+      return null
     }
 
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(libDir)) {
-      for (Path mavenLibPath : stream) {
-        String lib = mavenLibPath.getFileName().toString();
-        if (lib.equals("maven-core.jar")) {
-          MavenLog.LOG.trace("Choosing version by maven-core.jar");
-          return getMavenLibVersion(mavenLibPath);
-        }
-        if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
-          MavenLog.LOG.trace("Choosing version by maven-core.xxx.jar");
-          String version = lib.substring("maven-core-".length(), lib.length() - ".jar".length());
-          return version.contains(".x") ? getMavenLibVersion(mavenLibPath) : version;
-        }
-        if (lib.startsWith("maven-") && lib.endsWith("-uber.jar")) {
-          MavenLog.LOG.trace("Choosing version by maven-xxx-uber.jar");
-          return lib.substring("maven-".length(), lib.length() - "-uber.jar".length());
+    try {
+      Files.newDirectoryStream(libDir).use { stream ->
+        for (mavenLibPath in stream) {
+          val lib = mavenLibPath.getFileName().toString()
+          if (lib == "maven-core.jar") {
+            MavenLog.LOG.trace("Choosing version by maven-core.jar")
+            return getMavenLibVersion(mavenLibPath)
+          }
+          if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
+            MavenLog.LOG.trace("Choosing version by maven-core.xxx.jar")
+            val version = lib.substring("maven-core-".length, lib.length - ".jar".length)
+            return if (version.contains(".x")) getMavenLibVersion(mavenLibPath) else version
+          }
+          if (lib.startsWith("maven-") && lib.endsWith("-uber.jar")) {
+            MavenLog.LOG.trace("Choosing version by maven-xxx-uber.jar")
+            return lib.substring("maven-".length, lib.length - "-uber.jar".length)
+          }
         }
       }
     }
-    catch (IOException e) {
-      MavenLog.LOG.warn("Cannot read lib directory in " + mavenHome, e);
-      return null;
+    catch (e: IOException) {
+      MavenLog.LOG.warn("Cannot read lib directory in " + mavenHome, e)
+      return null
     }
 
-    MavenLog.LOG.warn("Cannot resolve maven version for " + mavenHome);
-    return null;
+    MavenLog.LOG.warn("Cannot resolve maven version for " + mavenHome)
+    return null
   }
 
-  private static String getMavenLibVersion(final Path file) {
-    Properties props = JarUtils.loadProperties(file, "META-INF/maven/org.apache.maven/maven-core/pom.properties");
-    return props != null
-           ? nullize(props.getProperty("version"))
-           : nullize(JarUtils.getJarAttribute(file, null, java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION));
+  private fun getMavenLibVersion(file: Path): String? {
+    val props = JarUtils.loadProperties(file, "META-INF/maven/org.apache.maven/maven-core/pom.properties")
+    return if (props != null)
+      StringUtil.nullize(props.getProperty("version"))
+    else
+      StringUtil.nullize(JarUtils.getJarAttribute(file, null, Attributes.Name.IMPLEMENTATION_VERSION))
   }
 
-  public static @Nullable String getMavenVersion(String mavenHome) {
-    return getMavenVersion(Path.of(mavenHome));
+  @JvmStatic
+  fun getMavenVersion(mavenHome: String): String? {
+    return getMavenVersion(Path.of(mavenHome))
   }
 
 
-  public static @Nullable String getMavenVersion(StaticResolvedMavenHomeType mavenHomeType) {
-    return getMavenVersion(getMavenHomePath(mavenHomeType));
+  @JvmStatic
+  fun getMavenVersion(mavenHomeType: StaticResolvedMavenHomeType): String? {
+    return getMavenVersion(getMavenHomePath(mavenHomeType))
   }
 
-  public static @Nullable Path resolveGlobalSettingsFile(@NotNull StaticResolvedMavenHomeType mavenHomeType) {
-    Path directory = getMavenHomePath(mavenHomeType);
-    if (directory == null) return null;
-    return directory.resolve(CONF_DIR).resolve(SETTINGS_XML);
+  @JvmStatic
+  fun resolveGlobalSettingsFile(mavenHomeType: StaticResolvedMavenHomeType): Path? {
+    val directory: Path? = getMavenHomePath(mavenHomeType)
+    if (directory == null) return null
+    return directory.resolve(CONF_DIR).resolve(SETTINGS_XML)
   }
 
-  public static @NotNull Path resolveGlobalSettingsFile(@NotNull Path mavenHome) {
-    return mavenHome.resolve(CONF_DIR).resolve(SETTINGS_XML);
+  fun resolveGlobalSettingsFile(mavenHome: Path): Path {
+    return mavenHome.resolve(CONF_DIR).resolve(SETTINGS_XML)
   }
 
-  @Deprecated
-  public static @NotNull File resolveUserSettingsFile(@Nullable String overriddenUserSettingsFile) {
-    return resolveUserSettingsPath(overriddenUserSettingsFile, null).toFile();
+  @Deprecated("")
+  @JvmStatic
+  fun resolveUserSettingsFile(overriddenUserSettingsFile: String?): File {
+    return resolveUserSettingsPath(overriddenUserSettingsFile, null).toFile()
   }
 
-  public static @NotNull Path resolveUserSettingsPath(@Nullable String overriddenUserSettingsFile, @Nullable Project project) {
-    return MavenEelUtil.resolveUserSettingsPathBlocking(overriddenUserSettingsFile, project);
+  @JvmStatic
+  fun resolveUserSettingsPath(overriddenUserSettingsFile: String?, project: Project?): Path {
+    return resolveUserSettingsPathBlocking(overriddenUserSettingsFile, project)
   }
 
-  public static @NotNull Path resolveM2Dir(@Nullable Project project) {
-    var eel = project != null ? EelProviderUtil.upgradeBlocking(EelProviderUtil.getEelDescriptor(project)) : null;
-    return MavenEelUtil.resolveM2Dir(eel);
+  fun resolveM2Dir(project: Project?): Path {
+    val eel = if (project != null) project.getEelDescriptor().upgradeBlocking() else null
+    return eel.resolveM2Dir()
   }
 
-  /**
-   * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven" in overriddenMavenHome variable
-   * use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
-   * or {@link MavenUtil#resolveDefaultLocalRepository() resolveDefaultLocalRepository()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull File resolveLocalRepository(@Nullable String overriddenLocalRepository,
-                                            @Nullable String overriddenMavenHome,
-                                            @Nullable String overriddenUserSettingsFile) {
-    return resolveLocalRepository(null, overriddenLocalRepository, overriddenMavenHome, overriddenUserSettingsFile).toFile();
+  @Deprecated(
+    """do not use this method, it mixes path to maven home and labels like "Use bundled maven" in overriddenMavenHome variable
+  use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
+  or {@link MavenUtil#resolveDefaultLocalRepository() resolveDefaultLocalRepository()} instead""")
+  @JvmStatic
+  fun resolveLocalRepository(
+    overriddenLocalRepository: String?,
+    overriddenMavenHome: String?,
+    overriddenUserSettingsFile: String?,
+  ): File {
+    return resolveLocalRepository(null, overriddenLocalRepository, overriddenMavenHome, overriddenUserSettingsFile).toFile()
   }
 
-  /**
-   * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven" in overriddenMavenHome variable
-   * use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
-   * or {@link MavenUtil#resolveDefaultLocalRepository() resolveDefaultLocalRepository()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull Path resolveLocalRepository(@Nullable Project project,
-                                            @Nullable String overriddenLocalRepository,
-                                            @Nullable String overriddenMavenHome,
-                                            @Nullable String overriddenUserSettingsFile) {
-    //noinspection HardCodedStringLiteral
-    MavenHomeType type = resolveMavenHomeType(overriddenMavenHome);
-    if (type instanceof StaticResolvedMavenHomeType st) {
-      return resolveLocalRepository(project, overriddenLocalRepository, st, overriddenUserSettingsFile);
+  @Deprecated(
+    """do not use this method, it mixes path to maven home and labels like "Use bundled maven" in overriddenMavenHome variable
+  use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
+  or {@link MavenUtil#resolveDefaultLocalRepository() resolveDefaultLocalRepository()} instead""")
+  fun resolveLocalRepository(
+    project: Project?,
+    overriddenLocalRepository: String?,
+    overriddenMavenHome: String?,
+    overriddenUserSettingsFile: String?,
+  ): Path {
+    val type = resolveMavenHomeType(overriddenMavenHome)
+    if (type is StaticResolvedMavenHomeType) {
+      return resolveLocalRepository(project, overriddenLocalRepository, type, overriddenUserSettingsFile)
     }
-    throw new IllegalArgumentException("Cannot resolve local repository for wrapped maven, this API is deprecated");
+    throw IllegalArgumentException("Cannot resolve local repository for wrapped maven, this API is deprecated")
   }
 
   /**
    * @param path any path pointing to an environment where the repository should be searched.
    */
-  public static @NotNull Path resolveDefaultLocalRepository(@Nullable Path path) {
-    String mavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL);
+  @JvmStatic
+  fun resolveDefaultLocalRepository(path: Path?): Path {
+    val mavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL)
 
     if (mavenRepoLocal != null) {
-      MavenLog.LOG.info("using " + MAVEN_REPO_LOCAL + "=" + mavenRepoLocal + " as maven home");
-      return Path.of(mavenRepoLocal);
+      MavenLog.LOG.info("using " + MAVEN_REPO_LOCAL + "=" + mavenRepoLocal + " as maven home")
+      return Path.of(mavenRepoLocal)
     }
 
-    String forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME);
+    val forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME)
     if (forcedM2Home != null) {
-      MavenLog.LOG.error(PROP_FORCED_M2_HOME + " is deprecated, use maven.repo.local property instead");
-      return Path.of(forcedM2Home);
+      MavenLog.LOG.error(PROP_FORCED_M2_HOME + " is deprecated, use maven.repo.local property instead")
+      return Path.of(forcedM2Home)
     }
 
-    EelApi api = path == null ? EelProviderUtil.getLocalEel() : MavenSuspendUtil.getEelApiBlocking(path);
-    Path result = MavenEelUtil.resolveM2Dir(api).resolve(REPOSITORY_DIR);
+    val api = if (path == null) localEel else path.getEelApiBlocking()
+    val result: Path = api.resolveM2Dir().resolve(REPOSITORY_DIR)
 
     try {
-      return result.toRealPath();
+      return result.toRealPath()
     }
-    catch (IOException e) {
-      return result;
+    catch (e: IOException) {
+      return result
     }
   }
 
-  public static @NotNull Path resolveLocalRepository(@Nullable Project project,
-                                                     @Nullable String overriddenLocalRepository,
-                                                     @NotNull StaticResolvedMavenHomeType mavenHomeType,
-                                                     @Nullable String overriddenUserSettingsFile) {
-    return MavenEelUtil.resolveLocalRepositoryBlocking(project, overriddenLocalRepository, mavenHomeType, overriddenUserSettingsFile);
+  @JvmStatic
+  fun resolveLocalRepository(
+    project: Project?,
+    overriddenLocalRepository: String?,
+    mavenHomeType: StaticResolvedMavenHomeType,
+    overriddenUserSettingsFile: String?,
+  ): Path {
+    return resolveLocalRepositoryBlocking(project, overriddenLocalRepository, mavenHomeType, overriddenUserSettingsFile)
   }
 
-  public static @Nullable Path getRepositoryFile(@NotNull Project project,
-                                                 @NotNull MavenId id,
-                                                 @NotNull String extension,
-                                                 @Nullable String classifier) {
+  @JvmStatic
+  fun getRepositoryFile(
+    project: Project,
+    id: MavenId,
+    extension: String,
+    classifier: String?,
+  ): Path? {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
-      return null;
+      return null
     }
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    return makeLocalRepositoryFile(id, projectsManager.getRepositoryPath(), extension, classifier);
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    return makeLocalRepositoryFile(id, projectsManager.getRepositoryPath(), extension, classifier)
   }
 
-  public static @NotNull Path makeLocalRepositoryFile(MavenId id,
-                                                      Path localRepository,
-                                                      @NotNull String extension,
-                                                      @Nullable String classifier) {
-    String relPath = id.getGroupId().replace(".", "/");
+  fun makeLocalRepositoryFile(
+    id: MavenId,
+    localRepository: Path,
+    extension: String,
+    classifier: String?,
+  ): Path {
+    var relPath = id.getGroupId()!!.replace(".", "/")
 
-    relPath += "/" + id.getArtifactId();
-    relPath += "/" + id.getVersion();
-    relPath += "/" + id.getArtifactId() + "-" + id.getVersion();
-    relPath = classifier == null ? relPath + "." + extension : relPath + "-" + classifier + "." + extension;
+    relPath += "/" + id.getArtifactId()
+    relPath += "/" + id.getVersion()
+    relPath += "/" + id.getArtifactId() + "-" + id.getVersion()
+    relPath = if (classifier == null) relPath + "." + extension else relPath + "-" + classifier + "." + extension
 
-    return localRepository.resolve(relPath);
+    return localRepository.resolve(relPath)
   }
 
-  public static @Nullable Path getArtifactPath(@NotNull Path localRepository,
-                                               @NotNull MavenId id,
-                                               @NotNull String extension,
-                                               @Nullable String classifier) {
+  @JvmStatic
+  fun getArtifactPath(
+    localRepository: Path,
+    id: MavenId,
+    extension: String,
+    classifier: String?,
+  ): Path? {
+    var localRepository = localRepository
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
-      return null;
+      return null
     }
-    String[] artifactPath = id.getGroupId().split("\\.");
+    val artifactPath = id.getGroupId()!!.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
     try {
-      for (String path : artifactPath) {
-        localRepository = localRepository.resolve(path);
+      for (path in artifactPath) {
+        localRepository = localRepository.resolve(path)
       }
       return localRepository
         .resolve(id.getArtifactId())
         .resolve(id.getVersion())
-        .resolve(id.getArtifactId() + "-" + id.getVersion() + (classifier == null ? "." + extension : "-" + classifier + "." + extension));
+        .resolve(
+          id.getArtifactId() + "-" + id.getVersion() + (if (classifier == null) "." + extension else "-" + classifier + "." + extension))
     }
-    catch (InvalidPathException e) {
-      return null;
+    catch (e: InvalidPathException) {
+      return null
     }
   }
 
-  public static @Nullable Path getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
+  fun getRepositoryParentFile(project: Project, id: MavenId): Path? {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
-      return null;
+      return null
     }
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    return getParentFile(id, projectsManager.getRepositoryPath());
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    return getParentFile(id, projectsManager.getRepositoryPath())
   }
 
-  private static Path getParentFile(@NotNull MavenId id, Path localRepository) {
-    assert id.getGroupId() != null;
-    String[] pathParts = id.getGroupId().split("\\.");
-    Path path = Paths.get(localRepository.toAbsolutePath().toString(), pathParts);
-    path = Paths.get(path.toString(), id.getArtifactId(), id.getVersion());
-    return path;
+  private fun getParentFile(id: MavenId, localRepository: Path): Path {
+    checkNotNull(id.getGroupId())
+    val pathParts = id.getGroupId()!!.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    var path = Paths.get(localRepository.toAbsolutePath().toString(), *pathParts)
+    path = Paths.get(path.toString(), id.getArtifactId(), id.getVersion())
+    return path
   }
 
-  protected static @Nullable Path doResolveLocalRepository(@Nullable Path userSettingsFile, @Nullable Path globalSettingsFile) {
+  internal fun doResolveLocalRepository(userSettingsFile: Path?, globalSettingsFile: Path?): Path? {
     if (userSettingsFile != null) {
-      final String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
-      if (!isEmpty(fromUserSettings)) {
-        return Path.of(fromUserSettings);
+      val fromUserSettings: String? = getRepositoryFromSettings(userSettingsFile)
+      if (!StringUtil.isEmpty(fromUserSettings)) {
+        return Path.of(fromUserSettings)
       }
     }
 
     if (globalSettingsFile != null) {
-      final String fromGlobalSettings = getRepositoryFromSettings(globalSettingsFile);
-      if (!isEmpty(fromGlobalSettings)) {
-        return Path.of(fromGlobalSettings);
+      val fromGlobalSettings: String? = getRepositoryFromSettings(globalSettingsFile)
+      if (!StringUtil.isEmpty(fromGlobalSettings)) {
+        return Path.of(fromGlobalSettings)
       }
     }
 
-    return null;
+    return null
   }
 
-  public static @Nullable String getRepositoryFromSettings(final Path file) {
+  @JvmStatic
+  fun getRepositoryFromSettings(file: Path): String? {
     try {
-      Element repository = getRepositoryElement(file);
+      val repository: Element? = getRepositoryElement(file)
 
       if (repository == null) {
-        return null;
+        return null
       }
-      String text = repository.getText();
+      val text = repository.getText()
       if (isEmptyOrSpaces(text)) {
-        return null;
+        return null
       }
-      return expandProperties(text.trim());
+      return expandProperties(text!!.trim { it <= ' ' })
     }
-    catch (Exception e) {
-      return null;
+    catch (e: Exception) {
+      return null
     }
   }
 
-  public static String getMirroredUrl(final Path settingsFile, String url, String id) {
+  fun getMirroredUrl(settingsFile: Path?, url: String, id: String?): String {
     try {
-      Element mirrorParent = getElementWithRegardToNamespace(getDomRootElement(settingsFile), "mirrors", settingsListNamespaces);
+      val mirrorParent: Element? = getElementWithRegardToNamespace(getDomRootElement(settingsFile), "mirrors", settingsListNamespaces)
       if (mirrorParent == null) {
-        return url;
+        return url
       }
-      List<Element> mirrors = getElementsWithRegardToNamespace(mirrorParent, "mirror", settingsListNamespaces);
-      for (Element el : mirrors) {
-        Element mirrorOfElement = getElementWithRegardToNamespace(el, "mirrorOf", settingsListNamespaces);
-        Element mirrorUrlElement = getElementWithRegardToNamespace(el, "url", settingsListNamespaces);
-        if (mirrorOfElement == null) continue;
-        if (mirrorUrlElement == null) continue;
+      val mirrors: MutableList<Element> = getElementsWithRegardToNamespace(mirrorParent, "mirror", settingsListNamespaces)
+      for (el in mirrors) {
+        val mirrorOfElement: Element? = getElementWithRegardToNamespace(el, "mirrorOf", settingsListNamespaces)
+        val mirrorUrlElement: Element? = getElementWithRegardToNamespace(el, "url", settingsListNamespaces)
+        if (mirrorOfElement == null) continue
+        if (mirrorUrlElement == null) continue
 
-        String mirrorOf = mirrorOfElement.getTextTrim();
-        String mirrorUrl = mirrorUrlElement.getTextTrim();
+        val mirrorOf = mirrorOfElement.getTextTrim()
+        val mirrorUrl = mirrorUrlElement.getTextTrim()
 
         if (StringUtil.isEmptyOrSpaces(mirrorOf) || StringUtil.isEmptyOrSpaces(mirrorUrl)) {
-          continue;
+          continue
         }
 
-        if (isMirrorApplicable(mirrorOf, url, id)) {
-          return mirrorUrl;
+        if (isMirrorApplicable(mirrorOf!!, url, id)) {
+          return mirrorUrl
         }
       }
     }
-    catch (Exception ignore) {
-
+    catch (ignore: Exception) {
     }
 
-    return url;
+    return url
   }
 
-  private static boolean isMirrorApplicable(String mirrorOf, String url, String id) {
-    HashSet<String> patterns = new HashSet<>(split(mirrorOf, ","));
+  private fun isMirrorApplicable(mirrorOf: String, url: String, id: String?): Boolean {
+    val patterns = HashSet<String?>(StringUtil.split(mirrorOf, ","))
 
     if (patterns.contains("!" + id)) {
-      return false;
+      return false
     }
 
     if (patterns.contains("*")) {
-      return true;
+      return true
     }
     if (patterns.contains(id)) {
-      return true;
+      return true
     }
     if (patterns.contains("external:*")) {
       try {
-        URI uri = URI.create(url);
-        if ("file".equals(uri.getScheme())) return false;
-        if ("localhost".equals(uri.getHost())) return false;
-        if ("127.0.0.1".equals(uri.getHost())) return false;
-        return true;
+        val uri = URI.create(url)
+        if ("file" == uri.getScheme()) return false
+        if ("localhost" == uri.getHost()) return false
+        if ("127.0.0.1" == uri.getHost()) return false
+        return true
       }
-      catch (IllegalArgumentException e) {
-        MavenLog.LOG.warn("cannot parse uri " + url, e);
-        return false;
+      catch (e: IllegalArgumentException) {
+        MavenLog.LOG.warn("cannot parse uri " + url, e)
+        return false
       }
     }
-    return false;
+    return false
   }
 
-  private static @Nullable Element getRepositoryElement(Path file) throws JDOMException, IOException {
-    return getElementWithRegardToNamespace(getDomRootElement(file), "localRepository", settingsListNamespaces);
+  @Throws(JDOMException::class, IOException::class)
+  private fun getRepositoryElement(file: Path): Element? {
+    return getElementWithRegardToNamespace(getDomRootElement(file), "localRepository", settingsListNamespaces)
   }
 
-  private static Element getDomRootElement(Path file) throws IOException, JDOMException {
-    InputStreamReader reader = new InputStreamReader(Files.newInputStream(file), StandardCharsets.UTF_8);
-    return JDOMUtil.load(reader);
+  @Throws(IOException::class, JDOMException::class)
+  private fun getDomRootElement(file: Path?): Element? {
+    if (file == null) return null
+    val reader = InputStreamReader(Files.newInputStream(file), StandardCharsets.UTF_8)
+    return JDOMUtil.load(reader)
   }
 
-  private static @Nullable Element getElementWithRegardToNamespace(@NotNull Element parent, String childName, List<String> namespaces) {
-    Element element = parent.getChild(childName);
-    if (element != null) return element;
-    for (String namespace : namespaces) {
-      element = parent.getChild(childName, Namespace.getNamespace(namespace));
-      if (element != null) return element;
+  private fun getElementWithRegardToNamespace(parent: Element?, childName: String?, namespaces: MutableList<String?>): Element? {
+    if (null == parent) return null
+    var element = parent.getChild(childName)
+    if (element != null) return element
+    for (namespace in namespaces) {
+      element = parent.getChild(childName, Namespace.getNamespace(namespace))
+      if (element != null) return element
     }
-    return null;
+    return null
   }
 
-  private static List<Element> getElementsWithRegardToNamespace(@NotNull Element parent, String childrenName, List<String> namespaces) {
-    List<Element> elements = parent.getChildren(childrenName);
-    if (!elements.isEmpty()) return elements;
-    for (String namespace : namespaces) {
-      elements = parent.getChildren(childrenName, Namespace.getNamespace(namespace));
-      if (!elements.isEmpty()) return elements;
+  private fun getElementsWithRegardToNamespace(
+    parent: Element,
+    childrenName: String?,
+    namespaces: MutableList<String?>,
+  ): MutableList<Element> {
+    var elements = parent.getChildren(childrenName)
+    if (!elements.isEmpty()) return elements
+    for (namespace in namespaces) {
+      elements = parent.getChildren(childrenName, Namespace.getNamespace(namespace))
+      if (!elements.isEmpty()) return elements
     }
-    return Collections.emptyList();
+    return mutableListOf<Element>()
   }
 
-  public static String expandProperties(String text, Properties props) {
-    if (StringUtil.isEmptyOrSpaces(text)) return text;
-    for (Map.Entry<Object, Object> each : props.entrySet()) {
-      Object val = each.getValue();
-      text = text.replace("${" + each.getKey() + "}", val instanceof CharSequence ? (CharSequence)val : val.toString());
+  fun expandProperties(text: String?, props: Properties): String? {
+    var text = text
+    if (text.isNullOrBlank()) return text
+    for (each in props.entries) {
+      val `val` = each.value
+      text = text?.replace("\${" + each.key + "}", `val` as? String ?: `val`.toString())
     }
-    return text;
+    return text
   }
 
-  public static String expandProperties(String text) {
-    return expandProperties(text, MavenServerUtil.collectSystemProperties());
+  fun expandProperties(text: String?): String? {
+    return expandProperties(text, MavenServerUtil.collectSystemProperties())
   }
 
   /**
@@ -1230,84 +1347,87 @@ public class MavenUtil {
    *
    * @param mavenDistribution A valid Maven distribution.
    * @param superPomName      The name of the POM file. MavenConstants#SUPER_POM_4_0_XML for Maven 3 and either MavenConstants#SUPER_POM_4_0_XML or MavenConstants#SUPER_POM_4_1_XML for Maven 4.
-   * @return A {@link VirtualFile} representing the SuperPOM located inside the jar if found, False otherwise.
+   * @return A [VirtualFile] representing the SuperPOM located inside the jar if found, False otherwise.
    */
-
-  public static @Nullable VirtualFile resolveSuperPomFile(@NotNull Path mavenHome, String superPomName) {
-    return doResolveSuperPomFile(mavenHome.resolve(LIB_DIR), superPomName);
+  fun resolveSuperPomFile(mavenHome: Path, superPomName: String?): VirtualFile? {
+    return doResolveSuperPomFile(mavenHome.resolve(LIB_DIR), superPomName)
   }
 
-  public static @Nullable VirtualFile resolveSuperPomFile(@NotNull Project project, VirtualFile projectFile) {
-    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(projectFile.getParent().getPath());
-    String superPomName = resolveMavenSchema(projectFile);
-    return resolveSuperPomFile(distribution.getMavenHome(), superPomName);
+  fun resolveSuperPomFile(project: Project, projectFile: VirtualFile): VirtualFile? {
+    val distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(projectFile.getParent().getPath())
+    val superPomName: String = resolveMavenSchema(projectFile)
+    return resolveSuperPomFile(distribution.mavenHome, superPomName)
   }
 
-  private static String resolveMavenSchema(VirtualFile file) {
-    return MavenConstants.SUPER_POM_4_0_XML; //todo
+  private fun resolveMavenSchema(file: VirtualFile?): String {
+    return MavenConstants.SUPER_POM_4_0_XML //todo
   }
 
-  private static @Nullable VirtualFile doResolveSuperPomFile(@NotNull Path libDir, String superPomName) {
-    List<Path> libraries;
+  private fun doResolveSuperPomFile(libDir: Path, superPomName: String?): VirtualFile? {
+    val libraries: MutableList<Path>?
 
-    try (Stream<Path> pathStream = Files.list(libDir)) {
-      libraries = pathStream.toList();
+    try {
+      Files.list(libDir).use { pathStream ->
+        libraries = pathStream.toList()
+      }
     }
-    catch (IOException e) {
-      return null;
+    catch (e: IOException) {
+      return null
     }
 
-    for (Path library : libraries) {
+    for (library in libraries!!) {
       if ((library.getFileName().toString().startsWith("maven-model-builder-") && library.getFileName().toString().endsWith(".jar"))) {
-        VirtualFile result = tryReadFromLib(library, "org/apache/maven/model/" + superPomName);
+        val result: VirtualFile? = tryReadFromLib(library, "org/apache/maven/model/" + superPomName)
         if (result != null) {
-          return result;
+          return result
         }
       }
       else if ((library.getFileName().toString().startsWith("maven-") &&
-                library.getFileName().getFileName().toString().endsWith("-uber.jar"))) {
+                library.getFileName().getFileName().toString().endsWith("-uber.jar"))
+      ) {
         //old maven versions
-        VirtualFile result = tryReadFromLib(library, "org/apache/maven/project/" + superPomName);
+        val result: VirtualFile? = tryReadFromLib(library, "org/apache/maven/project/" + superPomName)
         if (result != null) {
-          return result;
+          return result
         }
       }
     }
-    return null;
+    return null
   }
 
-  private static @Nullable VirtualFile tryReadFromLib(Path library, @NotNull String pathInJar) {
-    VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(library);
-    if (libraryVirtualFile == null) return null;
-    VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(libraryVirtualFile);
-    if (root == null) return null;
-    return root.findFileByRelativePath(pathInJar);
+  private fun tryReadFromLib(library: Path, pathInJar: String): VirtualFile? {
+    val libraryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(library)
+    if (libraryVirtualFile == null) return null
+    val root = JarFileSystem.getInstance().getJarRootForLocalFile(libraryVirtualFile)
+    if (root == null) return null
+    return root.findFileByRelativePath(pathInJar)
   }
 
-  public static List<LookupElement> getPhaseVariants(MavenProjectsManager manager) {
-    Set<String> goals = new HashSet<>(MavenConstants.PHASES);
+  @JvmStatic
+  fun getPhaseVariants(manager: MavenProjectsManager): MutableList<LookupElement?> {
+    val goals: MutableSet<String> = HashSet<String>(MavenConstants.PHASES)
 
-    for (MavenProject mavenProject : manager.getProjects()) {
-      for (var mavenProjectPluginInfo : mavenProject.getPluginInfos()) {
-        MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(mavenProjectPluginInfo.getArtifact());
+    for (mavenProject in manager.getProjects()) {
+      for (mavenProjectPluginInfo in mavenProject.pluginInfos) {
+        val pluginInfo = readPluginInfo(mavenProjectPluginInfo.artifact)
         if (pluginInfo != null) {
-          for (MavenPluginInfo.Mojo mojo : pluginInfo.getMojos()) {
-            goals.add(mojo.getDisplayName());
+          for (mojo in pluginInfo.getMojos()) {
+            goals.add(mojo.getDisplayName())
           }
         }
       }
     }
 
-    List<LookupElement> res = new ArrayList<>(goals.size());
-    for (String goal : goals) {
-      res.add(LookupElementBuilder.create(goal).withIcon(Task));
+    val res: MutableList<LookupElement?> = ArrayList<LookupElement?>(goals.size)
+    for (goal in goals) {
+      res.add(LookupElementBuilder.create(goal).withIcon(ExternalSystemIcons.Task))
     }
 
-    return res;
+    return res
   }
 
-  public static boolean isProjectTrustedEnoughToImport(Project project) {
-    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID);
+  fun isProjectTrustedEnoughToImport(project: Project): Boolean {
+    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID)
   }
 
   /**
@@ -1315,489 +1435,496 @@ public class MavenUtil {
    * @param wait      if true, then maven server(s) restarted synchronously
    * @param condition only connectors satisfied for this predicate will be restarted
    */
-  public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<@NotNull MavenServerConnector> condition) {
-    MavenServerManager.getInstance().restartMavenConnectors(project, wait, condition);
+  @JvmOverloads
+  @JvmStatic
+  fun restartMavenConnectors(
+    project: Project,
+    wait: Boolean,
+    condition: Predicate<MavenServerConnector> = Predicate { c: MavenServerConnector -> java.lang.Boolean.TRUE },
+  ) {
+    getInstance().restartMavenConnectors(project, wait, condition)
   }
 
-  public static void restartMavenConnectors(@NotNull Project project, boolean wait) {
-    restartMavenConnectors(project, wait, c -> Boolean.TRUE);
-  }
-
-  public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
-    if (compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
-      return true;
+  @JvmStatic
+  fun verifyMavenSdkRequirements(jdk: Sdk, mavenVersion: String?): Boolean {
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
+      return true
     }
-    SdkTypeId sdkType = jdk.getSdkType();
-    if (sdkType instanceof JavaSdk) {
-      JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(jdk);
+    val sdkType = jdk.getSdkType()
+    if (sdkType is JavaSdk) {
+      val version = sdkType.getVersion(jdk)
       if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
-        return true;
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  public interface MavenTaskHandler {
-    void waitFor();
-  }
-
-  public static int crcWithoutSpaces(@NotNull InputStream in) throws IOException {
+  @Throws(IOException::class)
+  fun crcWithoutSpaces(`in`: InputStream): Int {
     try {
-      final CRC32 crc = new CRC32();
+      val crc = CRC32()
 
-      SAXParser parser = SAXParserFactory.newDefaultInstance().newSAXParser();
-      parser.getXMLReader().setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-      parser.parse(in, new DefaultHandler() {
+      val parser = SAXParserFactory.newDefaultInstance().newSAXParser()
+      parser.getXMLReader().setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+      parser.parse(`in`, object : DefaultHandler() {
+        var textContentOccur: Boolean = false
+        var spacesCrc: Int = 0
 
-        boolean textContentOccur = false;
-        int spacesCrc;
+        fun putString(string: String?) {
+          if (string == null) return
 
-        private void putString(@Nullable String string) {
-          if (string == null) return;
-
-          for (int i = 0, end = string.length(); i < end; i++) {
-            crc.update(string.charAt(i));
+          var i = 0
+          val end = string.length
+          while (i < end) {
+            crc.update(string.get(i).code)
+            i++
           }
         }
 
-        @Override
-        public void startElement(String uri, String localName, String qName, Attributes attributes) {
-          textContentOccur = false;
+        override fun startElement(uri: String?, localName: String?, qName: String?, attributes: org.xml.sax.Attributes) {
+          textContentOccur = false
 
-          crc.update(1);
-          putString(qName);
+          crc.update(1)
+          putString(qName)
 
-          for (int i = 0; i < attributes.getLength(); i++) {
-            putString(attributes.getQName(i));
-            putString(attributes.getValue(i));
+          for (i in 0..<attributes.getLength()) {
+            putString(attributes.getQName(i))
+            putString(attributes.getValue(i))
           }
         }
 
-        @Override
-        public void endElement(String uri, String localName, String qName) {
-          textContentOccur = false;
+        override fun endElement(uri: String?, localName: String?, qName: String?) {
+          textContentOccur = false
 
-          crc.update(2);
-          putString(qName);
+          crc.update(2)
+          putString(qName)
         }
 
-        private void processTextOrSpaces(char[] ch, int start, int length) {
-          for (int i = start, end = start + length; i < end; i++) {
-            char a = ch[i];
+        fun processTextOrSpaces(ch: CharArray, start: Int, length: Int) {
+          var i = start
+          val end = start + length
+          while (i < end) {
+            val a = ch[i]
 
             if (Character.isWhitespace(a)) {
               if (textContentOccur) {
-                spacesCrc = spacesCrc * 31 + a;
+                spacesCrc = spacesCrc * 31 + a.code
               }
             }
             else {
               if (textContentOccur && spacesCrc != 0) {
-                crc.update(spacesCrc);
-                crc.update(spacesCrc >> 8);
+                crc.update(spacesCrc)
+                crc.update(spacesCrc shr 8)
               }
 
-              crc.update(a);
+              crc.update(a.code)
 
-              textContentOccur = true;
-              spacesCrc = 0;
+              textContentOccur = true
+              spacesCrc = 0
             }
+            i++
           }
         }
 
-        @Override
-        public void characters(char[] ch, int start, int length) {
-          processTextOrSpaces(ch, start, length);
+        override fun characters(ch: CharArray, start: Int, length: Int) {
+          processTextOrSpaces(ch, start, length)
         }
 
-        @Override
-        public void ignorableWhitespace(char[] ch, int start, int length) {
-          processTextOrSpaces(ch, start, length);
+        override fun ignorableWhitespace(ch: CharArray, start: Int, length: Int) {
+          processTextOrSpaces(ch, start, length)
         }
 
-        @Override
-        public void processingInstruction(String target, String data) {
-          putString(target);
-          putString(data);
+        override fun processingInstruction(target: String?, data: String?) {
+          putString(target)
+          putString(data)
         }
 
-        @Override
-        public void skippedEntity(String name) {
-          putString(name);
+        override fun skippedEntity(name: String?) {
+          putString(name)
         }
 
-        @Override
-        public void error(SAXParseException e) {
-          crc.update(100);
+        override fun error(e: SAXParseException?) {
+          crc.update(100)
         }
-      });
+      })
 
-      return (int)crc.getValue();
+      return crc.getValue().toInt()
     }
-    catch (ParserConfigurationException e) {
-      throw new RuntimeException(e);
+    catch (e: ParserConfigurationException) {
+      throw RuntimeException(e)
     }
-    catch (SAXException e) {
-      return -1;
+    catch (e: SAXException) {
+      return -1
     }
   }
 
-  public static String getSdkPath(@Nullable Sdk sdk) {
-    if (sdk == null) return null;
+  fun getSdkPath(sdk: Sdk?): String? {
+    if (sdk == null) return null
 
-    VirtualFile homeDirectory = sdk.getHomeDirectory();
-    if (homeDirectory == null) return null;
+    var homeDirectory = sdk.getHomeDirectory()
+    if (homeDirectory == null) return null
 
-    if (!"jre".equals(homeDirectory.getName())) {
-      VirtualFile jreDir = homeDirectory.findChild("jre");
+    if ("jre" != homeDirectory.getName()) {
+      val jreDir = homeDirectory.findChild("jre")
       if (jreDir != null) {
-        homeDirectory = jreDir;
+        homeDirectory = jreDir
       }
     }
 
-    return homeDirectory.getPath();
+    return homeDirectory.getPath()
   }
 
-  public static @Nullable String getModuleJreHome(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
-    return getSdkPath(getModuleJdk(mavenProjectsManager, mavenProject));
+  @JvmStatic
+  fun getModuleJreHome(mavenProjectsManager: MavenProjectsManager, mavenProject: MavenProject): String? {
+    return getSdkPath(getModuleJdk(mavenProjectsManager, mavenProject))
   }
 
-  public static @Nullable String getModuleJavaVersion(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
-    Sdk sdk = getModuleJdk(mavenProjectsManager, mavenProject);
-    if (sdk == null) return null;
+  @JvmStatic
+  fun getModuleJavaVersion(mavenProjectsManager: MavenProjectsManager, mavenProject: MavenProject): String? {
+    val sdk: Sdk? = getModuleJdk(mavenProjectsManager, mavenProject)
+    if (sdk == null) return null
 
-    return sdk.getVersionString();
+    return sdk.getVersionString()
   }
 
-  public static @Nullable Sdk getModuleJdk(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
-    Module module = mavenProjectsManager.findModule(mavenProject);
-    if (module == null) return null;
+  fun getModuleJdk(mavenProjectsManager: MavenProjectsManager, mavenProject: MavenProject): Sdk? {
+    val module = mavenProjectsManager.findModule(mavenProject)
+    if (module == null) return null
 
-    return ModuleRootManager.getInstance(module).getSdk();
+    return ModuleRootManager.getInstance(module).getSdk()
   }
 
-  public static @NotNull <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
-    V res = map.get(key);
+/*    @JvmStatic
+  fun <K, V : MutableMap<*, *>?> getOrCreate(map: MutableMap<K?, V?>, key: K?): V {
+    var res = map.get(key)
     if (res == null) {
-      //noinspection unchecked
-      res = (V)new HashMap<>();
-      map.put(key, res);
+      res = HashMap<Any?, Any?>() as V
+      map.put(key, res)
     }
 
-    return res;
+    return res
+  }*/
+
+  @JvmStatic
+  fun isMavenModule(module: Module?): Boolean {
+    return module != null && MavenProjectsManager.getInstance(module.getProject()).isMavenizedModule(module)
   }
 
-  public static boolean isMavenModule(@Nullable Module module) {
-    return module != null && MavenProjectsManager.getInstance(module.getProject()).isMavenizedModule(module);
+  fun getArtifactName(packaging: String?, moduleName: String?, exploded: Boolean): String {
+    return moduleName + ":" + packaging + (if (exploded) " exploded" else "")
   }
 
-  public static String getArtifactName(String packaging, String moduleName, boolean exploded) {
-    return moduleName + ":" + packaging + (exploded ? " exploded" : "");
+  fun getEjbClientArtifactName(moduleName: String?, exploded: Boolean): String {
+    return moduleName + ":ejb" + (if (exploded) CLIENT_EXPLODED_ARTIFACT_SUFFIX else CLIENT_ARTIFACT_SUFFIX)
   }
 
-  public static String getEjbClientArtifactName(String moduleName, boolean exploded) {
-    return moduleName + ":ejb" + (exploded ? CLIENT_EXPLODED_ARTIFACT_SUFFIX : CLIENT_ARTIFACT_SUFFIX);
-  }
+  @JvmStatic
+  fun getIdeaVersionToPassToMavenProcess(): String = ApplicationInfoImpl.getShadowInstance().getMajorVersion() + "." + ApplicationInfoImpl.getShadowInstance().getMinorVersion()
 
-  public static String getIdeaVersionToPassToMavenProcess() {
-    return ApplicationInfoImpl.getShadowInstance().getMajorVersion() + "." + ApplicationInfoImpl.getShadowInstance().getMinorVersion();
-  }
-
-  public static boolean isPomFileName(String fileName) {
-    return fileName.equals(MavenConstants.POM_XML) ||
+  @JvmStatic
+  fun isPomFileName(fileName: String): Boolean {
+    return fileName == MavenConstants.POM_XML ||
            fileName.endsWith(".pom") || fileName.startsWith("pom.") ||
-           fileName.equals(MavenConstants.SUPER_POM_4_0_XML);
+           fileName == MavenConstants.SUPER_POM_4_0_XML
   }
 
-  public static boolean isPotentialPomFile(String nameOrPath) {
-    return ArrayUtil.contains(FileUtilRt.getExtension(nameOrPath), MavenConstants.POM_EXTENSIONS);
+  @JvmStatic
+  fun isPotentialPomFile(nameOrPath: String): Boolean {
+    return ArrayUtil.contains(FileUtilRt.getExtension(nameOrPath), *MavenConstants.POM_EXTENSIONS)
   }
 
-  public static boolean isPomFile(@Nullable VirtualFile file) {
-    return isPomFile(null, file);
+  @JvmStatic
+  fun isPomFile(file: VirtualFile?): Boolean {
+    return isPomFile(null, file)
   }
 
-  public static boolean isPomFile(@Nullable Project project, @Nullable VirtualFile file) {
-    if (file == null) return false;
+  @JvmStatic
+  fun isPomFile(project: Project?, file: VirtualFile?): Boolean {
+    if (file == null) return false
 
-    String name = file.getName();
-    if (isPomFileName(name)) return true;
-    if (!isPotentialPomFile(name)) return false;
+    val name = file.getName()
+    if (isPomFileName(name)) return true
+    if (!isPotentialPomFile(name)) return false
 
-    return isPomFileIgnoringName(project, file);
+    return isPomFileIgnoringName(project, file)
   }
 
 
-  public static boolean containsDeclaredExtension(final Path extensionFile, @NotNull MavenId mavenId) {
+  @JvmStatic
+  fun containsDeclaredExtension(extensionFile: Path, mavenId: MavenId): Boolean {
     try {
-
-      Element extensions = getDomRootElement(extensionFile);
-      if (extensions == null) return false;
-      if (!extensions.getName().equals("extensions")) return false;
-      for (Element extension : getElementsWithRegardToNamespace(extensions, "extension", extensionListNamespaces)) {
-        Element groupId = getElementWithRegardToNamespace(extension, "groupId", extensionListNamespaces);
-        Element artifactId = getElementWithRegardToNamespace(extension, "artifactId", extensionListNamespaces);
-        Element version = getElementWithRegardToNamespace(extension, "version", extensionListNamespaces);
+      val extensions: Element? = getDomRootElement(extensionFile)
+      if (extensions == null) return false
+      if (extensions.getName() != "extensions") return false
+      for (extension in getElementsWithRegardToNamespace(extensions, "extension", extensionListNamespaces)) {
+        val groupId: Element? = getElementWithRegardToNamespace(extension, "groupId", extensionListNamespaces)
+        val artifactId: Element? = getElementWithRegardToNamespace(extension, "artifactId", extensionListNamespaces)
+        val version: Element? = getElementWithRegardToNamespace(extension, "version", extensionListNamespaces)
 
         if (groupId != null &&
-            groupId.getTextTrim().equals(mavenId.getGroupId()) &&
-            artifactId != null &&
-            artifactId.getTextTrim().equals(mavenId.getArtifactId()) &&
-            version != null &&
-            version.getTextTrim().equals(mavenId.getVersion())) {
-          return true;
+            groupId.getTextTrim() == mavenId.getGroupId() && artifactId != null &&
+            artifactId.getTextTrim() == mavenId.getArtifactId() && version != null &&
+            version.getTextTrim() == mavenId.getVersion()
+        ) {
+          return true
         }
       }
     }
-    catch (IOException | JDOMException e) {
-      return false;
+    catch (e: IOException) {
+      return false
     }
-    return false;
+    catch (e: JDOMException) {
+      return false
+    }
+    return false
   }
 
-  public static boolean isPomFileIgnoringName(@Nullable Project project, @NotNull VirtualFile file) {
+  @JvmStatic
+  fun isPomFileIgnoringName(project: Project?, file: VirtualFile): Boolean {
     if (project == null || !project.isInitialized()) {
-      if (!FileUtilRt.extensionEquals(file.getName(), "xml")) return false;
+      if (!FileUtilRt.extensionEquals(file.getName(), "xml")) return false
       try {
-        try (InputStream in = file.getInputStream()) {
-          Ref<Boolean> isPomFile = Ref.create(false);
-          Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-          NanoXmlUtil.parse(reader, new NanoXmlBuilder() {
-            @Override
-            public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
-              if ("project".equals(name)) {
-                isPomFile.set(nsURI.startsWith("http://maven.apache.org/POM/"));
+        file.getInputStream().use { `in` ->
+          val isPomFile = AtomicBoolean(false)
+          val reader: Reader = BufferedReader(InputStreamReader(`in`, StandardCharsets.UTF_8))
+          NanoXmlUtil.parse(reader, object : NanoXmlBuilder {
+            @Throws(Exception::class)
+            override fun startElement(name: String, nsPrefix: String?, nsURI: String?, systemID: String, lineNr: Int) {
+              if ("project" == name) {
+                isPomFile.set(nsURI?.startsWith("http://maven.apache.org/POM/") == true)
               }
-              stop();
+              NanoXmlBuilder.stop()
             }
-          });
-          return isPomFile.get();
+          })
+          return isPomFile.get()
         }
       }
-      catch (IOException ignore) {
-        return false;
+      catch (ignore: IOException) {
+        return false
       }
     }
 
-    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
-    if (mavenProjectsManager.findProject(file) != null) return true;
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+    if (mavenProjectsManager.findProject(file) != null) return true
 
-    return ReadAction.compute(() -> {
-      if (project.isDisposed()) return false;
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile == null) return false;
-      return MavenDomUtil.isProjectFile(psiFile);
-    });
+    return ReadAction.compute<Boolean?, RuntimeException?>(ThrowableComputable {
+      if (project.isDisposed()) return@ThrowableComputable false
+      val psiFile = PsiManager.getInstance(project).findFile(file)
+      if (psiFile == null) return@ThrowableComputable false
+      MavenDomUtil.isProjectFile(psiFile)
+    })
   }
 
-  public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @Nullable VirtualFile root) {
-    if (root == null) return Stream.empty();
-    return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
+  @JvmStatic
+  fun streamPomFiles(project: Project?, root: VirtualFile?): Stream<VirtualFile?> {
+    if (root == null) return Stream.empty<VirtualFile?>()
+    return Stream.of<VirtualFile?>(*root.getChildren()).filter { file: VirtualFile? -> isPomFile(project, file) }
   }
 
-  public static void restartConfigHighlighting(Collection<MavenProject> projects) {
-    VirtualFile[] configFiles = getConfigFiles(projects);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      FileContentUtilCore.reparseFiles(configFiles);
-    });
+  fun restartConfigHighlighting(projects: Collection<MavenProject>) {
+    val configFiles = getConfigFiles(projects)
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      FileContentUtilCore.reparseFiles(*configFiles)
+    })
   }
 
-  public static VirtualFile[] getConfigFiles(Collection<MavenProject> projects) {
-    List<VirtualFile> result = new SmartList<>();
-    for (MavenProject project : projects) {
-      VirtualFile file = getConfigFile(project, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+  fun getConfigFiles(projects: Collection<MavenProject>): Array<VirtualFile> {
+    val result = SmartList<VirtualFile>()
+    for (project in projects) {
+      val file = getConfigFile(project, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
       if (file != null) {
-        result.add(file);
+        result.add(file)
       }
     }
     if (result.isEmpty()) {
-      return VirtualFile.EMPTY_ARRAY;
+      return VirtualFile.EMPTY_ARRAY
     }
-    return result.toArray(VirtualFile.EMPTY_ARRAY);
+    return result.toTypedArray()
   }
 
-  public static VirtualFile getConfigFile(MavenProject mavenProject, String fileRelativePath) {
-    VirtualFile baseDir = getVFileBaseDir(mavenProject.getDirectoryFile());
-    return baseDir.findFileByRelativePath(fileRelativePath);
+  fun getConfigFile(mavenProject: MavenProject, fileRelativePath: String): VirtualFile? {
+    val baseDir: VirtualFile = getVFileBaseDir(mavenProject.directoryFile)
+    return baseDir.findFileByRelativePath(fileRelativePath)
   }
 
-  public static MavenPathWrapper toPath(@Nullable MavenProject mavenProject, String path) {
+  @JvmStatic
+  fun toPath(mavenProject: MavenProject?, path: String): MavenPathWrapper {
+    var path = path
     if (!Paths.get(path).isAbsolute()) {
-      if (mavenProject == null) {
-        throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
-      }
-      path = Path.of(mavenProject.getDirectory(), path).toString();
+      requireNotNull(mavenProject) { "Project should be not-nul for non-absolute paths" }
+      path = Path.of(mavenProject.directory, path).toString()
     }
-    return new MavenPathWrapper(path);
+    return MavenPathWrapper(path)
   }
 
-  public static @NotNull Sdk getJdk(@NotNull Project project, @NotNull String name) throws ExternalSystemJdkException {
-    if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA) || project.isDefault()) {
-      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  @Throws(ExternalSystemJdkException::class)
+  fun getJdk(project: Project, name: String): Sdk {
+    if (name == MavenRunnerSettings.USE_INTERNAL_JAVA || project.isDefault()) {
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()
     }
 
-    if (name.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
-      Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
+    if (name == MavenRunnerSettings.USE_PROJECT_JDK) {
+      val res = ProjectRootManager.getInstance(project).getProjectSdk()
 
-      if (res != null && res.getSdkType() instanceof JavaSdkType) {
-        return res;
+      if (res != null && res.getSdkType() is JavaSdkType) {
+        return res
       }
-      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()
     }
 
-    if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = ExternalSystemJdkUtil.getJavaHome();
+    if (name == MavenRunnerSettings.USE_JAVA_HOME) {
+      val javaHome = ExternalSystemJdkUtil.getJavaHome()
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
-        throw new InvalidJavaHomeException(javaHome);
+        throw InvalidJavaHomeException(javaHome)
       }
       try {
-        return JavaSdk.getInstance().createJdk("", javaHome);
+        return JavaSdk.getInstance().createJdk("", javaHome!!)
       }
-      catch (IllegalArgumentException e) {
-        throw new InvalidJavaHomeException(javaHome);
+      catch (e: IllegalArgumentException) {
+        throw InvalidJavaHomeException(javaHome)
       }
     }
 
-    Sdk projectJdk = getSdkByExactName(name);
-    if (projectJdk != null) return projectJdk;
-    throw new InvalidSdkException(name);
+    val projectJdk: Sdk? = getSdkByExactName(name)
+    if (projectJdk != null) return projectJdk
+    throw InvalidSdkException(name)
   }
 
 
-  protected static @Nullable Sdk getSdkByExactName(@NotNull String name) {
-    for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (projectJdk.getName().equals(name)) {
-        if (projectJdk.getSdkType() instanceof JavaSdkType) {
-          return projectJdk;
+  internal fun getSdkByExactName(name: String): Sdk? {
+    for (projectJdk in ProjectJdkTable.getInstance().getAllJdks()) {
+      if (projectJdk.getName() == name) {
+        if (projectJdk.getSdkType() is JavaSdkType) {
+          return projectJdk
         }
       }
     }
-    return null;
+    return null
   }
 
-  public static Path getMavenPluginParentFile() {
-    return Paths.get(PathManager.getCommunityHomePath(), "plugins", "maven");
-  }
+  @JvmStatic
+  val mavenPluginParentFile: Path
+    get() = Paths.get(PathManager.getCommunityHomePath(), "plugins", "maven")
 
+  @JvmStatic
   @ApiStatus.Internal
-  //temporary api
-  public static boolean isMavenUnitTestModeEnabled() {
+  fun isMavenUnitTestModeEnabled(): Boolean {
     if (shouldRunTasksAsynchronouslyInTests()) {
-      return false;
+      return false
     }
-    return ApplicationManager.getApplication().isUnitTestMode();
+    return ApplicationManager.getApplication().isUnitTestMode()
   }
 
-  private static boolean shouldRunTasksAsynchronouslyInTests() {
-    return Boolean.getBoolean("maven.unit.tests.remove");
+  private fun shouldRunTasksAsynchronouslyInTests(): Boolean {
+    return java.lang.Boolean.getBoolean("maven.unit.tests.remove")
   }
 
-  public static @NotNull String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
-    MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    return plugin != null ? plugin.getVersion() : "";
+  fun getCompilerPluginVersion(mavenProject: MavenProject): String {
+    val plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
+    return plugin?.version ?: ""
   }
 
-  public static boolean isWrapper(@NotNull MavenGeneralSettings settings) {
-    return settings.getMavenHomeType() instanceof MavenWrapper;
+  @JvmStatic
+  fun isWrapper(settings: MavenGeneralSettings): Boolean {
+    return settings.getMavenHomeType() is MavenWrapper
   }
 
-  public static @Nullable Sdk suggestProjectSdk(Path rootProjectPath) {
-    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    SdkType sdkType = ExternalSystemJdkUtil.getJavaSdkType();
+  fun suggestProjectSdk(rootProjectPath: Path): Sdk? {
+    val projectJdkTable = ProjectJdkTable.getInstance()
+    val sdkType = ExternalSystemJdkUtil.getJavaSdkType()
     return projectJdkTable.getSdksOfType(sdkType).stream()
-      .filter(it -> isGoodSdk(it, rootProjectPath))
+      .filter { it: Sdk? -> isGoodSdk(it!!, rootProjectPath) }
       .max(sdkType.versionComparator())
-      .orElse(null);
+      .orElse(null)
   }
 
-  private static boolean isGoodSdk(Sdk sdk, Path rootProjectPath) {
-    var sdkRoot = sdk.getHomeDirectory();
-    if (sdkRoot == null) return false;
+  private fun isGoodSdk(sdk: Sdk, rootProjectPath: Path): Boolean {
+    val sdkRoot = sdk.getHomeDirectory()
+    if (sdkRoot == null) return false
 
-    boolean isWindowsProjectRoot = !rootProjectPath.getRoot().toString().equals("/");
-    boolean isWindowsSdkRoot = !sdkRoot.toNioPath().getRoot().toString().equals("/");
-    if(isWindowsSdkRoot!= isWindowsProjectRoot) return false;
+    val isWindowsProjectRoot = rootProjectPath.getRoot().toString() != "/"
+    val isWindowsSdkRoot = sdkRoot.toNioPath().getRoot().toString() != "/"
+    if (isWindowsSdkRoot != isWindowsProjectRoot) return false
+
     //need better checking, can perform when IDEA-364602 is ready
-
-    return JdkUtil.checkForJdk(sdkRoot.toNioPath(), isWindowsProjectRoot);
+    return JdkUtil.checkForJdk(sdkRoot.toNioPath(), isWindowsProjectRoot)
   }
 
-  public static @NotNull Set<MavenRemoteRepository> getRemoteResolvedRepositories(@NotNull Project project) {
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
-    MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();
+  fun getRemoteResolvedRepositories(project: Project): Set<MavenRemoteRepository> {
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    val repositories = projectsManager.getRemoteRepositories()
+    val embeddersManager = projectsManager.getEmbeddersManager()
 
-    String baseDir = project.getBasePath();
-    List<MavenProject> projects = projectsManager.getRootProjects();
+    var baseDir = project.getBasePath()
+    val projects = projectsManager.getRootProjects()
     if (!projects.isEmpty()) {
-      baseDir = getBaseDir(projects.get(0).getDirectoryFile()).toString();
+      baseDir = getBaseDir(projects.get(0)!!.directoryFile).toString()
     }
     if (null == baseDir) {
-      baseDir = "";
+      baseDir = ""
     }
 
-    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir);
+    val embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
     try {
-      Set<MavenRemoteRepository> resolvedRepositories = embedderWrapper.resolveRepositories(repositories);
-      return resolvedRepositories.isEmpty() ? repositories : resolvedRepositories;
+      val resolvedRepositories = embedderWrapper.resolveRepositories(repositories)
+      return if (resolvedRepositories.isEmpty()) repositories else resolvedRepositories
     }
-    catch (Exception e) {
-      MavenLog.LOG.warn("resolve remote repo error", e);
+    catch (e: Exception) {
+      MavenLog.LOG.warn("resolve remote repo error", e)
     }
     finally {
-      embeddersManager.release(embedderWrapper);
+      embeddersManager.release(embedderWrapper)
     }
-    return repositories;
+    return repositories
   }
 
-  public static boolean isMavenizedModule(@NotNull Module m) {
+  @JvmStatic
+  fun isMavenizedModule(m: Module): Boolean {
     try {
-      return !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized();
+      return !m.isDisposed() && getInstance(m).isMavenized()
     }
-    catch (AlreadyDisposedException e) {
-      return false;
+    catch (e: AlreadyDisposedException) {
+      return false
     }
   }
 
   @ApiStatus.Internal
-  public static boolean shouldResetDependenciesAndFolders(Collection<MavenProjectProblem> readingProblems) {
-    if (Registry.is("maven.always.reset")) return true;
-    MavenProjectProblem unrecoverable = ContainerUtil.find(readingProblems, it -> it.isError());
-    return unrecoverable == null;
+  fun shouldResetDependenciesAndFolders(readingProblems: Collection<MavenProjectProblem>): Boolean {
+    if (`is`("maven.always.reset")) return true
+    val unrecoverable = readingProblems.find { it.isError() }
+    return unrecoverable == null
   }
 
   @ApiStatus.Internal
-  public static boolean shouldKeepPreviousResolutionResults(Collection<MavenProjectProblem> readingProblems) {
-    return !shouldResetDependenciesAndFolders(readingProblems);
+  fun shouldKeepPreviousResolutionResults(readingProblems: Collection<MavenProjectProblem>): Boolean {
+    return !shouldResetDependenciesAndFolders(readingProblems)
   }
 
-  /**
-   * @deprecated use MavenUtil.resolveSuperPomFile
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable VirtualFile getEffectiveSuperPom(Project project, @NotNull String workingDir) {
-    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDir);
-    return resolveSuperPomFile(distribution.getMavenHome(), MavenConstants.SUPER_POM_4_0_XML);
+  @Deprecated("use MavenUtil.resolveSuperPomFile")
+  fun getEffectiveSuperPom(project: Project, workingDir: String): VirtualFile? {
+    val distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDir)
+    return resolveSuperPomFile(distribution.mavenHome, MavenConstants.SUPER_POM_4_0_XML)
   }
 
 
-  /**
-   * @deprecated use MavenUtil.resolveSuperPomFile
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable VirtualFile getEffectiveSuperPomWithNoRespectToWrapper(Project project) {
-    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getSettingsDistribution();
-    return resolveSuperPomFile(distribution.getMavenHome(), MavenConstants.SUPER_POM_4_0_XML);
+  @JvmStatic
+  @Deprecated("use MavenUtil.resolveSuperPomFile")
+  fun getEffectiveSuperPomWithNoRespectToWrapper(project: Project): VirtualFile? {
+    val distribution = MavenDistributionsCache.getInstance(project).getSettingsDistribution()
+    return resolveSuperPomFile(distribution.mavenHome, MavenConstants.SUPER_POM_4_0_XML)
   }
 
-  public static MavenProjectModelReadHelper createModelReadHelper(Project project) {
-    return MavenProjectModelReadHelper.getInstance(project);
+  fun createModelReadHelper(project: Project): MavenProjectModelReadHelper {
+    return MavenProjectModelReadHelper.getInstance(project)
   }
 
-  public static Collection<Path> collectClasspath(Collection<Class<?>> classes) {
-    var result = new ArrayList<Path>();
-    for (Class<?> c : classes) {
-      result.add(Path.of(PathUtil.getJarPathForClass(c)));
+  @JvmStatic
+  fun collectClasspath(classes: MutableCollection<Class<*>>): MutableCollection<Path?> {
+    val result = ArrayList<Path?>()
+    for (c in classes) {
+      result.add(Path.of(PathUtil.getJarPathForClass(c)))
     }
-    return result;
+    return result
   }
 }

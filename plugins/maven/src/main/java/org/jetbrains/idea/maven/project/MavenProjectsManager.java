@@ -576,7 +576,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return getProjectsTree().isIgnored(project);
   }
 
-  public Set<MavenRemoteRepository> getRemoteRepositories() {
+  public Set<@NotNull MavenRemoteRepository> getRemoteRepositories() {
     Set<MavenRemoteRepository> result = new HashSet<>();
     for (MavenProject each : getProjects()) {
       result.addAll(each.getRemoteRepositories());
