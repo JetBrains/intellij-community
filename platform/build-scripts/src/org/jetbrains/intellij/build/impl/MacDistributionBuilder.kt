@@ -215,7 +215,9 @@ class MacDistributionBuilder(
     val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
     val copy = macDistDir.resolve("MacOS/$executable")
     copyFile(execPath, copy)
+    /* Android Studio (b/391426492): MachOUuid doesn't support universal binaries (and it's a no-op anyway because isMacCodeSignEnabled=false).
     MachOUuid(copy, customizer, context).patch()
+    */
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
 
     val icnsPath = Path.of((if (context.applicationInfo.isEAP) customizer.icnsPathForEAP else null) ?: customizer.icnsPath)
