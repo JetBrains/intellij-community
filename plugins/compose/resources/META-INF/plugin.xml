@@ -1,0 +1,22 @@
+<idea-plugin package="com.intellij.compose.ide.plugin">
+  <id>com.intellij.compose</id>
+  <name>Compose Multiplatform</name>
+  <vendor>JetBrains</vendor>
+  <description>
+    <![CDATA[
+      IDE support for developing <a href="https://www.jetbrains.com/compose-multiplatform/">Compose Multiplatform</a> and <a href="https://developer.android.com/compose">Jetpack Compose</a> applications.
+    ]]>
+  </description>
+
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin" />
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <supportsKotlinPluginMode supportsK2="true"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.inspectionSuppressor language="kotlin" implementationClass="com.intellij.compose.ide.plugin.ComposableNamingInspectionSuppressor"/>
+  </extensions>
+</idea-plugin>
