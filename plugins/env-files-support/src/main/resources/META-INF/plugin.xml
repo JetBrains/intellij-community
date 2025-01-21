@@ -55,10 +55,15 @@
 
         <lang.foldingBuilder language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvValuesHiding"/>
 
-        <psi.symbolReferenceProvider hostElementClass="ru.adelf.idea.dotenv.psi.DotEnvKey"
+        <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+                  implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyReferenceUsageSearcher"/>
+
+        <psi.declarationProvider implementation="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeySymbolDeclarationProvider"/>
+
+        <psi.symbolReferenceProvider hostElementClass="ru.adelf.idea.dotenv.psi.DotEnvNestedVariableKey"
                                      hostLanguage="DotEnv"
-                                     implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvSymbolReferenceProvider"
-                                     targetClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyUsageSymbol"/>
+                                     implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvNestedVariableReferenceProvider"
+                                     targetClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeySymbol"/>
 
         <localInspection language="DotEnv"
                          groupBundle="messages.DotEnvBundle"
@@ -147,10 +152,12 @@
                                  key="group.dotenv"
                                  groupId="language"
         />
+
     </extensions>
 
     <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
         <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
+        <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.DotEnvNestedVariablesProvider"/>
     </extensions>
 
     <actions>

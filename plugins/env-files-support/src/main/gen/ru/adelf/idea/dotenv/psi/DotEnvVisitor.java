@@ -1,15 +1,18 @@
 // This is a generated file. Not intended for manual editing.
 package ru.adelf.idea.dotenv.psi;
 
-import com.intellij.model.psi.PsiExternalReferenceHost;
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiElement;
 
 public class DotEnvVisitor extends PsiElementVisitor {
 
   public void visitKey(@NotNull DotEnvKey o) {
-    visitPsiExternalReferenceHost(o);
+    visitPsiElement(o);
+  }
+
+  public void visitNestedVariableKey(@NotNull DotEnvNestedVariableKey o) {
+    visitNestedVariableKeyCapabilities(o);
   }
 
   public void visitProperty(@NotNull DotEnvProperty o) {
@@ -20,11 +23,11 @@ public class DotEnvVisitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitPsiExternalReferenceHost(@NotNull PsiExternalReferenceHost o) {
-    visitElement(o);
+  public void visitNamedElement(@NotNull DotEnvNamedElement o) {
+    visitPsiElement(o);
   }
 
-  public void visitNamedElement(@NotNull DotEnvNamedElement o) {
+  public void visitNestedVariableKeyCapabilities(@NotNull DotEnvNestedVariableKeyCapabilities o) {
     visitPsiElement(o);
   }
 

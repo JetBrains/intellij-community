@@ -11,7 +11,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerfileKeyGotoHandler"/>
-    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerComposeKeyGotoHandler"/>
+      <psi.declarationProvider implementation="ru.adelf.idea.dotenv.docker.DockerfileEnvKeySymbolDeclarationProvider"/>
+      <psi.declarationProvider implementation="ru.adelf.idea.dotenv.docker.DockerComposeYamlEnvKeySymbolDeclarationProvider"/>
+      <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerfileKeyGotoHandler"/>
+      <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerComposeKeyGotoHandler"/>
   </extensions>
 </idea-plugin>

@@ -1,8 +1,15 @@
 package ru.adelf.idea.dotenv.tests.dotenv;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.DebugUtil;
+import com.jetbrains.php.lang.psi.BasicPhpPsiUtil;
 import org.junit.Test;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
+import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 import ru.adelf.idea.dotenv.tests.DotEnvLightCodeInsightFixtureTestCase;
+
+import java.util.List;
 
 public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
 
@@ -81,4 +88,12 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
         assertContainsKeyAndValue("SINGLE_QUOTE", "1");
         assertContainsKeyAndValue("SINGLE_QUOTE_WITH_COMMENT", "123#comment");
     }
+
+    @Test
+    public void nestedVariablesPreserveValueGetText() {
+        // NOTE: This test only exists to ensure compatibility with the original behavior from before nested variables were introduced.
+        // It may be modified or removed later.
+        assertContainsKeyAndValue("NESTED_VARIABLE_PROPERTY", "foo${bar}");
+    }
+
 }
