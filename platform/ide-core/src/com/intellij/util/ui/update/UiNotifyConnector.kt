@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update
 
 import com.intellij.concurrency.resetThreadContext
@@ -143,6 +143,10 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
       }
     }
 
+    /**
+     * Attention! This does not trigger [com.intellij.util.ui.launchOnShow]/[com.intellij.util.ui.launchOnceOnShow].
+     * See IJPL-175524
+     */
     @ApiStatus.Experimental
     fun forceNotifyIsShown(c: Component) {
       for (child in UIUtil.uiTraverser(c)) {
