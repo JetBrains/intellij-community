@@ -323,7 +323,7 @@ public abstract class StatusText {
       Dimension d = fragment.myComponent.getPreferredSize();
       fragment.boundsInColumn.setBounds(0, size.height, d.width, d.height);
       size.height += d.height;
-      if (i > 0) size.height += JBUIScale.scale(Y_GAP);
+      if (i != column.fragments.size() - 1) size.height += JBUIScale.scale(Y_GAP);
       size.width = Math.max(size.width, d.width);
     }
     if (myCenterAlignText) {
