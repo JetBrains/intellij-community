@@ -776,6 +776,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitMethod(@NotNull PsiMethod method) {
     super.visitMethod(method);
+    if (!hasErrorResults()) add(HighlightMethodUtil.checkConstructorInImplicitClass(method));
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(method.getBody()));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkConstructorHandleSuperClassExceptions(method));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkRecordAccessorDeclaration(method));
