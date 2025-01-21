@@ -155,7 +155,8 @@ private class GitEmptyCommitProblemDetector : GitLineEventDetector {
   }
 }
 
-private class GitGpgCommitException(cause: VcsException) : VcsException(cause), CommitExceptionWithActions {
+private class GitGpgCommitException(cause: VcsException) :
+  VcsException(GitBundle.message("gpg.error.text"), cause), CommitExceptionWithActions {
   override val actions: List<NotificationAction>
     get() = listOf(NotificationAction.createSimple(GitBundle.message("gpg.error.see.documentation.link.text")) {
       HelpManager.getInstance().invokeHelp(GitBundle.message("gpg.jb.manual.link"))
