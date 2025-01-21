@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -120,7 +121,10 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
 
   @Override
-  public void prepareRenaming(final @NotNull PsiElement element, final @NotNull String newName, final @NotNull Map<PsiElement, String> allRenames) {
+  public void prepareRenaming(@NotNull PsiElement element,
+                              @NotNull String newName,
+                              @NotNull Map<PsiElement, String> allRenames,
+                              @NotNull SearchScope scope) {
     if (element instanceof PsiRecordComponent component) {
       PsiClass containingClass = component.getContainingClass();
       if (containingClass != null) {
