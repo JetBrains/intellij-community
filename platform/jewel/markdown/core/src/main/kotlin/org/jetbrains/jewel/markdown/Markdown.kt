@@ -17,6 +17,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.memory.MemoryCache
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -44,6 +48,8 @@ public fun Markdown(
     markdownStyling: MarkdownStyling = JewelTheme.markdownStyling,
     processor: MarkdownProcessor = JewelTheme.markdownProcessor,
     blockRenderer: MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(markdownStyling),
+    // This parameter is only needed in 243 and 251; 252 and later platform releases can pass null.
+    imageLoaderFactory: ((context: PlatformContext) -> ImageLoader)? = ::createInMemoryImageLoader,
 ) {
     var markdownBlocks by remember { mutableStateOf(emptyList<MarkdownBlock>()) }
     LaunchedEffect(markdown, processor) {
@@ -60,6 +66,7 @@ public fun Markdown(
         onTextClick = onTextClick,
         markdownStyling = markdownStyling,
         blockRenderer = blockRenderer,
+        imageLoaderFactory = imageLoaderFactory,
     )
 }
 
@@ -75,7 +82,10 @@ public fun Markdown(
     onTextClick: () -> Unit = {},
     markdownStyling: MarkdownStyling = JewelTheme.markdownStyling,
     blockRenderer: MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(markdownStyling),
+    // This parameter is only needed in 243 and 251; 252 and later platform releases can pass null.
+    imageLoaderFactory: ((context: PlatformContext) -> ImageLoader)? = ::createInMemoryImageLoader,
 ) {
+    imageLoaderFactory?.let { setSingletonImageLoaderFactory(it) }
     if (selectable) {
         SelectionContainer(Modifier.semantics { rawMarkdown = markdown }) {
             Column(modifier, verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing)) {
@@ -109,7 +119,10 @@ public fun LazyMarkdown(
     onTextClick: () -> Unit = {},
     markdownStyling: MarkdownStyling = JewelTheme.markdownStyling,
     blockRenderer: MarkdownBlockRenderer = JewelTheme.markdownBlockRenderer,
+    // This parameter is only needed in 243 and 251; 252 and later platform releases can pass null.
+    imageLoaderFactory: ((context: PlatformContext) -> ImageLoader)? = ::createInMemoryImageLoader,
 ) {
+    imageLoaderFactory?.let { setSingletonImageLoaderFactory(it) }
     if (selectable) {
         SelectionContainer(modifier) {
             LazyColumn(
@@ -133,3 +146,17 @@ public fun LazyMarkdown(
         }
     }
 }
+
+private const val IMAGES_MEMORY_CACHE_SIZE = 24L * 1024 * 1024 // 24mb
+
+/**
+ * This method sets up an image loader with a memory cache but disables the disk cache. Disabling the disk cache is
+ * necessary because Coil crashes when attempting to use the file system cache with IDEA platform.
+ *
+ * Otherwise, Coil3 will throw java.lang.NoSuchMethodError: kotlinx.coroutines.CoroutineDispatcher.limitedParallelism
+ */
+private fun createInMemoryImageLoader(context: PlatformContext) =
+    ImageLoader.Builder(context)
+        .memoryCache { MemoryCache.Builder().maxSizeBytes(IMAGES_MEMORY_CACHE_SIZE).build() }
+        .diskCache(null)
+        .build()
