@@ -63,18 +63,6 @@ internal class InlineEditorMouseListener : EditorMouseListener {
   }
 }
 
-internal class InlineCompletionFocusListener : FocusChangeListener {
-  override fun focusLost(editor: Editor, event: FocusEvent) {
-    return // To not hide popup on tooltip change shortcut (and other provider buttons), click
-    LOG.trace("Losing focus with ${event}, ${event.cause}")
-    hideInlineCompletion(editor, FinishType.FOCUS_LOST)
-  }
-
-  companion object {
-    private val LOG = thisLogger()
-  }
-}
-
 /**
  * The listener has two mods:
  * * **Movement is prohibited**: cancels inline completion (via [cancel]) as soon as a caret moves to unexpected position

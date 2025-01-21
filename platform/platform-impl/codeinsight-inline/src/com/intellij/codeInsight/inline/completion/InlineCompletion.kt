@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
-import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionDocumentListener
-import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocusListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
+import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
 import com.intellij.openapi.editor.Editor
@@ -44,7 +43,6 @@ object InlineCompletion {
     editor.putUserData(KEY, handler)
 
     editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
-    editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
     editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
 
