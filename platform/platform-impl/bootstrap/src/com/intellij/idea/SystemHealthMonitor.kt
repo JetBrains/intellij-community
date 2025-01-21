@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
@@ -39,7 +39,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JdkVersionDetector
-import java.io.File
 import java.io.IOException
 import java.nio.file.FileStore
 import java.nio.file.Files
@@ -259,7 +258,7 @@ private fun checkLauncher() {
     val binName = baseName + if (SystemInfo.isWindows) "64.exe" else ""
     val scriptName = baseName + if (SystemInfo.isWindows) ".bat" else ".sh"
     if (Files.isRegularFile(Path.of(PathManager.getBinPath(), binName))) {
-      val prefix = "bin" + File.separatorChar
+      @Suppress("IO_FILE_USAGE") val prefix = "bin" + java.io.File.separatorChar
       val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) { BrowserUtil.browse("https://intellij.com/launcher") }
       showNotification("ide.script.launcher.used", suppressable = true, action, prefix + scriptName, prefix + binName)
     }
