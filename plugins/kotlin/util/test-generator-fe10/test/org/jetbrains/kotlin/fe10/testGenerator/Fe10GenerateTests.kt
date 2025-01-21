@@ -605,6 +605,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "canSimplifyDollarLiteral", // K2-only
                     "canConvertToMultiDollarString", // K2-only
                     "branched/introduceWhenSubject/whenGuards", // K2-only
+                    "removeRedundantLabel", // quick fix in K1
                 )
             )
         }

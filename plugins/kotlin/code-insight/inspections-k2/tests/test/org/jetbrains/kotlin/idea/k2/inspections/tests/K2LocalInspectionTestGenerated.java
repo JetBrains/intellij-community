@@ -11956,4 +11956,118 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/simple.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel")
+    public static class RemoveRedundantLabel extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotatedLambdaLabel.kt")
+        public void testAnnotatedLambdaLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/annotatedLambdaLabel.kt");
+        }
+
+        @TestMetadata("anonymousFunctionLabel.kt")
+        public void testAnonymousFunctionLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/anonymousFunctionLabel.kt");
+        }
+
+        @TestMetadata("anonymousObjectLiteral.kt")
+        public void testAnonymousObjectLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/anonymousObjectLiteral.kt");
+        }
+
+        @TestMetadata("commentsInDeadCode.kt")
+        public void testCommentsInDeadCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/commentsInDeadCode.kt");
+        }
+
+        @TestMetadata("contract.kt")
+        public void testContract() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/contract.kt");
+        }
+
+        @TestMetadata("doWhileLoopLabel.kt")
+        public void testDoWhileLoopLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/doWhileLoopLabel.kt");
+        }
+
+        @TestMetadata("forLoopLabel.kt")
+        public void testForLoopLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/forLoopLabel.kt");
+        }
+
+        @TestMetadata("highOrderFunctionCallLabel.kt")
+        public void testHighOrderFunctionCallLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/highOrderFunctionCallLabel.kt");
+        }
+
+        @TestMetadata("labelBoundToInvokeOperatorExpression.kt")
+        public void testLabelBoundToInvokeOperatorExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/labelBoundToInvokeOperatorExpression.kt");
+        }
+
+        @TestMetadata("labelBoundToLambda.kt")
+        public void testLabelBoundToLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/labelBoundToLambda.kt");
+        }
+
+        @TestMetadata("labeledDelegatedExpression.kt")
+        public void testLabeledDelegatedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/labeledDelegatedExpression.kt");
+        }
+
+        @TestMetadata("labeledSafeCall.kt")
+        public void testLabeledSafeCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/labeledSafeCall.kt");
+        }
+
+        @TestMetadata("lambdaLabel.kt")
+        public void testLambdaLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/lambdaLabel.kt");
+        }
+
+        @TestMetadata("notAFunctionLabel.kt")
+        public void testNotAFunctionLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/notAFunctionLabel.kt");
+        }
+
+        @TestMetadata("notAFunctionLabel2.kt")
+        public void testNotAFunctionLabel2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/notAFunctionLabel2.kt");
+        }
+
+        @TestMetadata("parenthesizedLambdaLabel.kt")
+        public void testParenthesizedLambdaLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/parenthesizedLambdaLabel.kt");
+        }
+
+        @TestMetadata("valLabel.kt")
+        public void testValLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/valLabel.kt");
+        }
+
+        @TestMetadata("valLabelNoProblemOutsideApplicableRange.kt")
+        public void testValLabelNoProblemOutsideApplicableRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/valLabelNoProblemOutsideApplicableRange.kt");
+        }
+
+        @TestMetadata("whileBodyLabel.kt")
+        public void testWhileBodyLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/whileBodyLabel.kt");
+        }
+
+        @TestMetadata("whileLoopLabel.kt")
+        public void testWhileLoopLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantLabel/whileLoopLabel.kt");
+        }
+    }
 }
