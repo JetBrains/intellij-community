@@ -1,38 +1,19 @@
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlin.random.Random
 import org.jetbrains.jewel.ui.Outline
-import org.jetbrains.jewel.ui.component.Dropdown
-import org.jetbrains.jewel.ui.component.EditableComboBox
-import org.jetbrains.jewel.ui.component.EditableListComboBox
-import org.jetbrains.jewel.ui.component.GroupHeader
-import org.jetbrains.jewel.ui.component.ListComboBox
-import org.jetbrains.jewel.ui.component.PopupContainer
-import org.jetbrains.jewel.ui.component.PopupManager
-import org.jetbrains.jewel.ui.component.SimpleListItem
-import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.separator
+import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import kotlin.random.Random
 
 @Composable
-fun Dropdowns() {
+public fun Dropdowns() {
     Column {
         OldDropdowns()
 
