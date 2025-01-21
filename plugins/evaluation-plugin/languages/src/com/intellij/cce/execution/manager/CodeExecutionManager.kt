@@ -15,10 +15,11 @@ import java.io.File
 abstract class CodeExecutionManager {
   companion object {
     val EP_NAME: ExtensionPointName<CodeExecutionManager> = ExtensionPointName.create("com.intellij.cce.codeExecutionManager")
-    fun getForLanguage(language: Language): CodeExecutionManager? = EP_NAME.findFirstSafe { it.language == language }
+    fun getForLanguage(language: Language, inDocker: Boolean = true): CodeExecutionManager? = EP_NAME.findFirstSafe { it.language == language && it.inDocker == inDocker }
   }
 
   abstract val language: Language
+  abstract val inDocker: Boolean
   private var shouldSetup: Boolean = true
 
   private val executionBasedMetrics = listOf(
@@ -31,7 +32,7 @@ abstract class CodeExecutionManager {
 
   protected abstract fun getGeneratedCodeFile(basePath: String, code: String): File
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
-  protected abstract fun setupEnvironment(basePath: String, sdk: Sdk?): ProcessExecutionLog
+  protected abstract fun setupEnvironment(project: Project): ProcessExecutionLog
   protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, testingFramework: String?): ProcessExecutionLog
 
   // Protected since there can be language-specific metrics
@@ -48,7 +49,6 @@ abstract class CodeExecutionManager {
     val basePath = project.basePath
     val sdk: Sdk? = ProjectRootManager.getInstance(project).projectSdk
 
-    if (sdk == null && language.needSdk) return ProcessExecutionLog("", "No SDK found", -1)
     basePath ?: return ProcessExecutionLog("", "No project base path found", -1)
 
     // Get the path to the temp file that the generated code should be saved in

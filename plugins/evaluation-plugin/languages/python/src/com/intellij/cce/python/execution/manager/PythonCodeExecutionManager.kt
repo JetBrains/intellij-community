@@ -9,12 +9,15 @@ import com.intellij.cce.execution.manager.CodeExecutionManager
 import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.cce.python.execution.coverage.PythonTestCoverageProcessor
 import com.intellij.cce.python.execution.output.PythonErrorLogProcessorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectRootManager
 import com.jetbrains.python.sdk.PythonSdkType
 import java.io.File
 
 class PythonCodeExecutionManager() : CodeExecutionManager() {
   override val language = Language.PYTHON
+  override val inDocker = false
 
   private val defaultTestFilePath = "/tests/eval-plugin-test.py"
 
@@ -28,7 +31,12 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return File(basePath + defaultTestFilePath)
   }
 
-  override fun setupEnvironment(basePath: String, sdk: Sdk?): ProcessExecutionLog {
+  override fun setupEnvironment(project: Project): ProcessExecutionLog {
+    val basePath = project.basePath
+    val sdk: Sdk? = ProjectRootManager.getInstance(project).projectSdk
+
+    basePath ?: return ProcessExecutionLog("", "No project base path found", -1)
+
     if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
 
     val setupFile = File("$basePath/setup_tests.sh")
