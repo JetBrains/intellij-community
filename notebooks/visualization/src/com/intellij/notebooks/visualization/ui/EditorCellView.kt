@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.JBColor
 import com.intellij.util.asSafely
 import java.awt.Rectangle
 import java.time.ZonedDateTime
@@ -394,7 +395,9 @@ class EditorCellView(
     return Rectangle(0, inputBounds.y, editor.contentSize.width, height)
   }
 
-  fun updateFrameVisibility(selected: Boolean): Unit = _controllers.forEach { it.updateFrameVisibility(selected, interval) }
+  fun updateFrameVisibility(selected: Boolean, color: JBColor): Unit = _controllers.forEach {
+    it.updateFrameVisibility(selected, interval, color)
+  }
 
   private fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
     _controllers.filterIsInstance<CellExecutionStatusView>().firstOrNull()

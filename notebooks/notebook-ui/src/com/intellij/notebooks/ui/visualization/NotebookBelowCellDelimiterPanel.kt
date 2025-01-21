@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBBox
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -46,7 +47,6 @@ class NotebookBelowCellDelimiterPanel(
   private var elapsedStartTime: ZonedDateTime? = null
   private val updateElapsedTimeDelay = 100L
   private var elapsedTimeJob: Job? = null
-  private val frameColor = editor.notebookAppearance.codeCellBackgroundColor.get()
 
   init {
     border = BorderFactory.createCompoundBorder(
@@ -60,7 +60,7 @@ class NotebookBelowCellDelimiterPanel(
     updateExecutionStatus(initTooltipText, executionCount, initStatusIcon, initExecutionDurationText)
   }
 
-  fun setFrameVisible(isVisible: Boolean) {
+  fun setFrameVisible(isVisible: Boolean, frameColor: JBColor) {
     val frameBorder = when (isVisible) {
       true -> BorderFactory.createMatteBorder(0, 0, 1, 1, frameColor)
       else -> BorderFactory.createMatteBorder(0, 0, 1, 1, background)

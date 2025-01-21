@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.ui.JBColor
 import java.awt.geom.Line2D
 
 class EditorCellFrameManager(
@@ -17,13 +18,13 @@ class EditorCellFrameManager(
 ) {  // PY-74106
   private var leftBorderHighlighter: RangeHighlighter? = null
   private var rightBorderLine: Line2D? = null
-  private val frameColor = editor.notebookAppearance.codeCellBackgroundColor.get()
+  private val frameColor = JBColor.LIGHT_GRAY
 
   fun updateMarkdownCellShow(selected: Boolean) {
     val layerController = editor.getLayerController()
 
     // draw or remove top and bottom lines with frame corners
-    view.updateFrameVisibility(selected)
+    view.updateFrameVisibility(selected, frameColor)
 
     if (selected) {
       // add left and right sides of the border
