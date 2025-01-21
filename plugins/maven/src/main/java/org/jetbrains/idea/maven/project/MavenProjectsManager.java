@@ -22,9 +22,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -39,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
@@ -155,7 +151,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Deprecated(forRemoval = true)
   public File getLocalRepository() {
-    return getRepositoryPath().toFile();
+      return getRepositoryPathUnderModalProgress().toFile();
   }
 
   public Path getRepositoryPathUnderModalProgress() {
@@ -462,24 +458,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return findProject(pomXml);
   }
 
-  private MavenProject getMavenProject(@NotNull Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-      VirtualFile f = findPomFile(module, new MavenModelsProvider() {
-        @Override
-        public Module[] getModules() {
-          throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public VirtualFile[] getContentRoots(Module module) {
-          return ModuleRootManager.getInstance(module).getContentRoots();
-        }
-      });
-      MavenProject result = f == null ? null : findProject(f);
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-    });
-  }
-
   @RequiresReadLock
   public @Nullable Module findModule(@NotNull MavenProject project) {
     if (!isInitialized()) return null;
@@ -601,7 +579,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
    * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenSyncSpec)}
    */
   @Deprecated(forRemoval = true)
-  protected abstract List<Module> updateAllMavenProjectsSync(MavenImportSpec spec);
+  protected abstract List<Module> updateAllMavenProjectsSync();
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
     getProjectsTree().removeManagedFiles(files);
@@ -653,7 +631,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @Deprecated
   public Promise<List<Module>> scheduleImportAndResolve() {
     var promise = new AsyncPromise<List<Module>>();
-    var modules = updateAllMavenProjectsSync(MavenImportSpec.IMPLICIT_IMPORT);
+    var modules = updateAllMavenProjectsSync();
     promise.setResult(modules);
     return promise;
   }

@@ -41,7 +41,6 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.buildtool.incrementalMode
 import org.jetbrains.idea.maven.importing.MavenImportStats
@@ -267,7 +266,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   @Deprecated("Use {@link #scheduleUpdateAllMavenProjects(List)}}")
-  override fun updateAllMavenProjectsSync(deprecatedSpec: MavenImportSpec): List<Module> {
+  override fun updateAllMavenProjectsSync(): List<Module> {
     MavenLog.LOG.warn("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
     val spec = MavenSyncSpec.full("MavenProjectsManagerEx.updateAllMavenProjectsSync")
     try {
