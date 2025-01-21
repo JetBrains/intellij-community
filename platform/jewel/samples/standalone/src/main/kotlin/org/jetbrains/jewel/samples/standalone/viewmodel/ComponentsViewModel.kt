@@ -24,8 +24,8 @@ import org.jetbrains.jewel.samples.showcase.components.SegmentedControls
 import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.showcase.components.Sliders
 import org.jetbrains.jewel.samples.standalone.view.component.SplitLayouts
-import org.jetbrains.jewel.samples.standalone.view.component.Tabs
-import org.jetbrains.jewel.samples.standalone.view.component.TextAreas
+import org.jetbrains.jewel.samples.showcase.components.Tabs
+import org.jetbrains.jewel.samples.showcase.components.TextAreas
 import org.jetbrains.jewel.samples.standalone.view.component.TextFields
 import org.jetbrains.jewel.samples.standalone.view.component.Tooltips
 import org.jetbrains.jewel.ui.component.SplitLayoutState

@@ -1,6 +1,6 @@
 @file:Suppress("MagicNumber")
 
-package org.jetbrains.jewel.samples.standalone.view.component
+package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import kotlin.math.max
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.samples.showcase.components.StandaloneSampleIcons
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.SimpleTabContent
@@ -36,9 +34,10 @@ import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.editorTabStyle
 import org.jetbrains.jewel.ui.util.thenIf
+import kotlin.math.max
 
 @Composable
-fun Tabs() {
+public fun Tabs() {
     Column {
         Text("Default tabs", Modifier.fillMaxWidth())
         DefaultTabShowcase()
