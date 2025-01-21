@@ -71,7 +71,7 @@ internal class MacToolbarFrameHeader(
   init {
     // color full toolbar
     isOpaque = false
-    background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
+    updateBackground(true)
 
     val windowDecorations = JBR.getWindowDecorations()
     customTitleBar = windowDecorations?.createCustomTitleBar()
@@ -113,6 +113,7 @@ internal class MacToolbarFrameHeader(
       if (isFullScreen(rootPane)) {
         MacFullScreenControlsManager.updateColors(frame)
       }
+      updateBackground()
     })
 
     frame.addWindowListener(windowListener)
@@ -125,10 +126,6 @@ internal class MacToolbarFrameHeader(
 
   override fun getComponentGraphics(graphics: Graphics?): Graphics? {
     return DesignProcessor.getInstance().transformGraphics(this, super.getComponentGraphics(graphics))
-  }
-
-  override fun getBackground(): Color? {
-    return DesignProcessor.getInstance().frameHeaderBackgroundConverter(super.getBackground())
   }
 
   private fun isCompactHeaderFast(): Boolean {
@@ -234,12 +231,18 @@ internal class MacToolbarFrameHeader(
   }
 
   private fun updateActive(isActive: Boolean) {
-    val headerBackground = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(isActive)
-    background = headerBackground
+    updateBackground(isActive)
+
+    val bkg = background
     customTitleBar?.let {
-      updateWinControlsTheme(background = headerBackground, customTitleBar = it)
+      updateWinControlsTheme(background = bkg, customTitleBar = it)
     }
     revalidate()
+  }
+
+  private fun updateBackground(isActive: Boolean = frame.isActive) {
+    val color = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(isActive)
+    background =  DesignProcessor.getInstance().frameHeaderBackgroundConverter(color) ?: color
   }
 
   override fun getAccessibleContext(): AccessibleContext {
