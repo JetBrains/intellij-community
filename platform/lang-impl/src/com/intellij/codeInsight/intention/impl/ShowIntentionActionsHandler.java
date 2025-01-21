@@ -143,7 +143,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
     ThrowableComputable<CachedIntentions, RuntimeException> prioritizedRunnable =
       () -> ProgressManager.getInstance().computePrioritized(() -> {
-        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+        DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(file, editor);
         return ReadAction.compute(() -> CachedIntentions.createAndUpdateActions(
           project, file, editor,
           ShowIntentionsPass.getActionsToShow(editor, file)));

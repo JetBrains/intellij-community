@@ -305,6 +305,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             policy.waitForHighlighting(project, editor);
           }
           IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
+          waitForLazyQuickFixesUnderCaret(psiFile, editor);
           UIUtil.dispatchAllInvocationEvents();
           Segment focusModeRange = (editor instanceof EditorImpl) ? ((EditorImpl)editor).getFocusModeRange() : null;
           int startOffset = focusModeRange != null ? focusModeRange.getStartOffset() : 0;
@@ -355,15 +356,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @TestOnly
-  public static @NotNull @Unmodifiable List<IntentionAction> getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
+  public static @NotNull @Unmodifiable List<IntentionAction> getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     IdeaTestExecutionPolicy current = IdeaTestExecutionPolicy.current();
     if (current != null) {
-      current.waitForHighlighting(file.getProject(), editor);
+      current.waitForHighlighting(psiFile.getProject(), editor);
     }
-    waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+    waitForLazyQuickFixesUnderCaret(psiFile, editor);
     List<IntentionAction> result = new ArrayList<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      IntentionListStep intentionListStep = getIntentionListStep(editor, file);
+      IntentionListStep intentionListStep = getIntentionListStep(editor, psiFile);
       for (Map.Entry<IntentionAction, List<IntentionAction>> entry : intentionListStep.getActionsWithSubActions().entrySet()) {
         result.add(entry.getKey());
         result.addAll(entry.getValue());
@@ -378,13 +379,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return new IntentionListStep(null, editor, file, file.getProject(), cachedIntentions);
   }
 
-  public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
+  public static void waitForLazyQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "must not call under write action";
 
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         if (!ReadAction.compute(() -> file.getProject().isDisposed() || editor.isDisposed())) {
-          DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+          DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(file, editor);
         }
       });
       try {
@@ -403,7 +404,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
     else {
-      DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+      DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(file, editor);
     }
   }
 
@@ -716,7 +717,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public @NotNull List<IntentionAction> getAvailableIntentions() {
+  @NotNull
+  @Unmodifiable
+  public List<IntentionAction> getAvailableIntentions() {
     doHighlighting();
     return getAvailableIntentions(ReadAction.compute(() -> getHostEditor()), ReadAction.compute(() -> getHostFileAtCaret()));
   }

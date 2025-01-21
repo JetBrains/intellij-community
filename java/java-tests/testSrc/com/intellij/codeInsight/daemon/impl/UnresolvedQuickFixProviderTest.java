@@ -75,7 +75,7 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
     ALLOW_UNRESOLVED_REFERENCE_QUICK_FIXES = true;
     DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
     errors = highlightErrors();
-    CodeInsightTestFixtureImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(getFile(), getEditor());
+    CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
     UIUtil.dispatchAllInvocationEvents();
     assertSize(N, errors);
     assertNotEmpty(regFixCalled);
@@ -101,7 +101,7 @@ public class UnresolvedQuickFixProviderTest extends LightDaemonAnalyzerTestCase 
       DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
       List<HighlightInfo> errors = highlightErrors();
       assertOneElement(errors);
-      CodeInsightTestFixtureImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(getFile(), getEditor());
+      CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
       UIUtil.dispatchAllInvocationEvents();
       assertNotEmpty(regFixCalled);
     });
