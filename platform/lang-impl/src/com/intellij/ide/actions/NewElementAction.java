@@ -225,7 +225,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       if (popup instanceof PopupFactoryImpl.ActionGroupPopup listPopup && listPopup.getList() instanceof JBList<?> list) {
         var emptyText = list.getEmptyText();
         emptyText.clear();
-        emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.1"));
+        emptyText.withUnscaledGapAfter(5).appendLine(IdeBundle.message("popup.new.element.empty.text.1"));
         ActionListener emptyTextAction = linkActionEvent -> {
           Disposer.dispose(popup);
           var component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
@@ -235,7 +235,8 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
             actionManager.tryToExecute(actionManager.getAction("NewFile"), inputEvent, component, EMPTY_TEXT_LINK_PLACE, true);
           }
         };
-        emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.2"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, emptyTextAction);
+        emptyText.withUnscaledGapAfter(0)
+          .appendLine(IdeBundle.message("popup.new.element.empty.text.2"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, emptyTextAction);
         // The capitalization is wrong here because this line continues the previous one.
         //noinspection DialogTitleCapitalization
         emptyText.appendLine(IdeBundle.message("popup.new.element.empty.text.3"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, emptyTextAction);
