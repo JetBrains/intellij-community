@@ -101,13 +101,6 @@ abstract class JBCefBrowserJsCallTest {
                                 isExpectedToSucceed: Boolean = expectedResult != null)
 
   protected fun prepareBrowser(): JBCefBrowser {
-    // enable verbose logging in tests for investigating intermittent problems
-    // see https://youtrack.jetbrains.com/issue/IDEA-312158
-    System.setProperty("ide.browser.jcef.log.level", "verbose");
-    System.setProperty("ide.browser.jcef.log.path", " ");
-    System.setProperty("jcef.trace.cefbrowser_n.lifespan", "true");
-    System.setProperty("ide.browser.jcef.debug.js", "true");
-
     val browser = JBCefApp.getInstance().createClient().also {
       it.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 24)
     }.let { jbCefClient ->

@@ -240,8 +240,12 @@ final class SettingsHelper {
     };
   }
 
-  static boolean isDebugLogging() {
-    return Utils.getBoolean("jcef_debug_log", false);
+  static boolean isDebugMode() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // Temporary code for debugging (IJPL-149228), TODO: remove later
+      return true;
+    }
+    return Utils.getBoolean("jcef_debug", false);
   }
 
   static String getLogPath() {

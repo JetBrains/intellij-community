@@ -95,9 +95,10 @@ public final class JBCefApp {
     addCefCustomSchemeHandlerFactory(new JBCefSourceSchemeHandlerFactory());
     addCefCustomSchemeHandlerFactory(new JBCefFileSchemeHandlerFactory());
 
-    if (SettingsHelper.isDebugLogging()) {
+    if (SettingsHelper.isDebugMode()) {
       // Init VERBOSE java logging
       LOG.info("Use verbose CefLog to stderr.");
+      System.err.println("Use verbose CefLog to stderr.");
       CefLog.init(null, CefSettings.LogSeverity.LOGSEVERITY_VERBOSE);
 
       // Init VERBOSE native cef_server logging to stderr
@@ -149,7 +150,7 @@ public final class JBCefApp {
 
       BoolRef trackGPUCrashes = new BoolRef(false);
       String[] args = Cancellation.forceNonCancellableSectionInClassInitializer(() -> SettingsHelper.loadArgs(config, settings, trackGPUCrashes));
-      if (SettingsHelper.isDebugLogging()) {
+      if (SettingsHelper.isDebugMode()) {
         // Decrease logging level passed into the default init mechanism
         settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_INFO;
         settings.log_file = null;
