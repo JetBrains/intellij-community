@@ -135,9 +135,12 @@ class NotebookBelowCellDelimiterPanel(
         toolTipText = tooltipText
       }
     }
-    else {
-      executionLabel?.let { remove(it) }
-      executionLabel = null
+    else {  // temporary measure to fit the drag icon, see PY-65433
+      getOrCreateExecutionLabel().apply {
+        text = ""
+        icon = AllIcons.Empty
+        toolTipText = null
+      }
     }
   }
 
