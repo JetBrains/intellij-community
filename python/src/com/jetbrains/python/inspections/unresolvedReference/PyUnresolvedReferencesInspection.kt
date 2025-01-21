@@ -66,11 +66,6 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
     inspection: PyInspection,
     context: TypeEvalContext,
   ) : PyUnresolvedReferencesVisitor(holder, ignoredIdentifiers, inspection, context) {
-    override fun visitPyFile(node: PyFile) {
-      super.visitPyFile(node)
-
-      installAllPackagesQuickFix.packageNames = myUnresolvedRefs.toList().map { it.refName }.distinct()
-    }
 
     public override fun getInstallPackageQuickFixes(
       node: PyElement,
@@ -111,7 +106,10 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       return packageCandidates.map { pkg: String -> InstallPackageQuickFix(pkg) }
     }
 
-    public override fun getInstallAllPackagesQuickFixes() = listOf(installAllPackagesQuickFix)
+    public override fun getInstallAllPackagesQuickFixes(): List<InstallAllPackagesQuickFix> {
+      installAllPackagesQuickFix.packageNames = myUnresolvedRefs.toList().map { it.refName }.distinct()
+      return listOf(installAllPackagesQuickFix)
+    }
 
     public override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): Iterable<LocalQuickFix> {
       val result: MutableList<LocalQuickFix> = ArrayList(2)
