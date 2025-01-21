@@ -46,8 +46,7 @@ The most important methods you need to implement:
     - Checks whether it is applicable to an element at caret offset.
 - `applyTo(element, editor)`
     - Performs changes over a physical PSI.
-- You will want to use `SelfTargetingIntention` and `SelfTargetingRangeIntention`
-  when the action must not be invoked inside a write action.
+- Use `SelfTargetingIntention` and `SelfTargetingRangeIntention` when the action must not be invoked inside a write action.
 
 ## Inspections
 
@@ -70,7 +69,7 @@ and `AbstractKotlinInspection`.
 
 ### `KotlinDiagnosticBasedInspectionBase`
 A subclass of `KotlinApplicableInspectionBase.Simple` that is intended
-to create inspections from [extra compiler checks](https://kotlinlang.org/docs/whatsnew-eap.html#extra-compiler-checks)
+to create inspections from [extra compiler checks](https://kotlinlang.org/docs/whatsnew21.html#kotlin-k2-compiler)
 (`KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS`), whose warnings are not highlighted by default, unlike warnings
 from regular checks (`KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS`).\
 Extending `KotlinDiagnosticBasedInspectionBase` also allows running extra compiler checks and possibly applying fixes in batch.
@@ -84,7 +83,7 @@ Extending `KotlinDiagnosticBasedInspectionBase` also allows running extra compil
 
 ## Quick Fixes
 
-Quick fixes are actions on errors and warnings provided by the compiler - they are registered in `KotlinK2QuickFixRegistrar`.
+Quick fixes are actions on errors and warnings provided by the compiler – they are registered in `KotlinK2QuickFixRegistrar`.
 
 ### Location
 - `kotlin.code-insight.fixes.k2`
