@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
@@ -71,6 +71,7 @@ import java.util.function.Supplier;
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
 import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 import static com.intellij.util.concurrency.Propagation.isContextAwareComputation;
 
@@ -120,8 +121,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   });
 
   @TestOnly
-  public ApplicationImpl(boolean isHeadless) {
-    super(GlobalScope.INSTANCE);
+  public ApplicationImpl(@NotNull CoroutineContext testCoroutineContext, boolean isHeadless) {
+    super(childScope(GlobalScope.INSTANCE, "Test Application Scope", testCoroutineContext, true));
 
     Extensions.setRootArea(getExtensionArea());
 

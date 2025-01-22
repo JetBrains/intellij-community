@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "RAW_RUN_BLOCKING")
 
 package com.intellij.testFramework.common
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
+import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
@@ -46,10 +47,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-import com.intellij.platform.ide.bootstrap.callAppInitialized
-import com.intellij.platform.ide.bootstrap.getAppInitializedListeners
-import com.intellij.platform.ide.bootstrap.initConfigurationStore
-import com.intellij.platform.ide.bootstrap.preloadCriticalServices
+import com.intellij.platform.ide.bootstrap.*
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
@@ -138,6 +136,7 @@ ${dumpCoroutines(stripDump = false)}
   loadAppInUnitTestMode(isHeadless)
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 @TestOnly
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val loadedModuleFuture = PluginManagerCore.initPluginFuture
@@ -149,7 +148,12 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     AWTAutoShutdown.getInstance().notifyThreadBusy(awtBusyThread)
   }
 
-  val app = ApplicationImpl(isHeadless)
+  val kernelStarted = runBlocking {
+    startServerKernel(GlobalScope)
+  }
+  installThreadContext(kernelStarted.coroutineContext)
+
+  val app = ApplicationImpl(kernelStarted.coroutineContext, isHeadless)
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
   }

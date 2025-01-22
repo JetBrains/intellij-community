@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.kernel.backend
 
 import com.intellij.openapi.application.ApplicationManager
@@ -52,15 +52,13 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
   init {
     LOG.info("Backend started Kernel")
     coroutineScope.launch {
-      withKernel(middleware = LeaderTransactorMiddleware(CommonInstructionSet.encoder())) {
-        change {
-          initWorkspaceClock()
-        }
-        handleEntityTypes(transactor(), this)
-        // Create a supervisor child scope to avoid kernel coroutine getting canceled by exceptions coming under `withKernel`
-        kernelCoroutineScope.complete(this.childScope(name = "KernelCoroutineScope", supervisor = true))
-        updateDbInTheEventDispatchThread()
+      change {
+        initWorkspaceClock()
       }
+      handleEntityTypes(transactor(), this)
+      // Create a supervisor child scope to avoid kernel coroutine getting canceled by exceptions coming under `withKernel`
+      kernelCoroutineScope.complete(this.childScope(name = "KernelCoroutineScope", supervisor = true))
+      updateDbInTheEventDispatchThread()
     }
   }
 }
