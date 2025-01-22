@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
+import com.intellij.codeInsight.completion.commands.api.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.commands.core.CommandCompletionUnsupportedOperationException
@@ -42,7 +43,6 @@ import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectTypeService
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -58,17 +58,13 @@ import kotlinx.coroutines.job
 import java.util.function.Predicate
 
 class DirectIntentionCommandProvider : CommandProvider {
-  override fun getCommands(
-    project: Project,
-    editor: Editor,
-    offset: Int,
-    psiFile: PsiFile,
-    originalEditor: Editor,
-    originalOffset: Int,
-    originalFile: PsiFile,
-    isReadOnly: Boolean,
-  ): List<CompletionCommand> {
+  override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     return runBlockingCancellable {
+      val originalEditor = context.originalEditor
+      val psiFile = context.psiFile
+      val offset = context.offset
+      val editor = context.editor
+      val originalPsiFile = context.originalPsiFile
       val result: MutableList<CompletionCommand> = ArrayList()
 
       val errorCache = originalEditor.getUserData(ERROR_CACHE)
@@ -85,7 +81,7 @@ class DirectIntentionCommandProvider : CommandProvider {
       }
       val asyncInspections = if (cachedInspectionCommand == null) asyncInspectionHighlighting(psiFile, editor, offset) else null
 
-      val asyncIntentions = asyncIntentions(editor, psiFile, originalFile)
+      val asyncIntentions = asyncIntentions(editor, psiFile, originalPsiFile)
 
       val errors = asyncErrorHighlighting?.await()
       errors?.let {
@@ -144,7 +140,7 @@ class DirectIntentionCommandProvider : CommandProvider {
       val profileToUse = getInstance(psiFile.project).getCurrentProfile()
       val inspectionWrapper = InspectionProfileWrapper(profileToUse)
       val inspectionTools = getInspectionTools(inspectionWrapper, psiFile)
-      var lineRange = getLineRange(topLevelFile, topLevelOffset)
+      val lineRange = getLineRange(topLevelFile, topLevelOffset)
       val indicator = EmptyProgressIndicator()
 
       val inspectionResult = jobToIndicator(coroutineContext.job, indicator) {
@@ -185,7 +181,7 @@ class DirectIntentionCommandProvider : CommandProvider {
             if (fix != null) {
               val unwrappedAction = ModCommandService.getInstance().unwrap(fix)
               //skip, probably create extensions
-              if(unwrappedAction is CreateGetterOrSetterFix) continue
+              if (unwrappedAction is CreateGetterOrSetterFix) continue
             }
             if (!isInjected && !ShowIntentionActionsHandler.availableFor(topLevelFile, topLevelEditor, topLevelOffset, action)) continue
             if (isInjected && !ShowIntentionActionsHandler.availableFor(psiFile, editor, offset, action)) continue
@@ -215,7 +211,7 @@ class DirectIntentionCommandProvider : CommandProvider {
         val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, offset)
         val isInjected = topLevelFile != psiFile
         val indicator = DaemonProgressIndicator()
-        var errorHighlightings: List<HighlightInfo?>? = jobToIndicator(coroutineContext.job, indicator) {
+        val errorHighlightings: List<HighlightInfo?>? = jobToIndicator(coroutineContext.job, indicator) {
           HighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(topLevelFile, true, true, true)
         }
         if (errorHighlightings == null) return@readAction
@@ -271,7 +267,7 @@ class DirectIntentionCommandProvider : CommandProvider {
       }
       val dumbService = DumbService.getInstance(originalFile.project)
       val intentionsCache = CachedIntentions(originalFile.project, psiFile, editor)
-      var toRemove = mutableListOf<IntentionActionDescriptor>()
+      val toRemove = mutableListOf<IntentionActionDescriptor>()
       val filter = Predicate { action: IntentionAction? ->
         IntentionActionFilter.EXTENSION_POINT_NAME.extensionList.all { f: IntentionActionFilter -> action != null && f.accept(action, psiFile, editor.caretModel.offset) }
       }

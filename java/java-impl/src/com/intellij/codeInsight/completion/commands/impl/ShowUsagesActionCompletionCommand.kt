@@ -12,7 +12,7 @@ class ShowUsagesActionCompletionCommand : AbstractActionCompletionCommand(ShowUs
                                                                           "Show usages",
                                                                           ActionsBundle.message("action.ShowUsages.text"),
                                                                           null) {
-  override fun supportNonWrittenFiles(): Boolean  = true
+  override fun supportsReadOnly(): Boolean  = true
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     return super.isApplicable(offset, psiFile, editor) && hasToShow(getContext(offset, psiFile)) &&

@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
  * Represents a provider of completion commands used in code completion mechanisms.
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Should be DumbAware to support dumb mode
  */
-@ApiStatus.Experimental
+@Experimental
 interface CommandProvider {
   companion object {
     val EP_NAME = ExtensionPointName<CommandProvider>("com.intellij.codeInsight.completion.command.provider")
@@ -27,20 +27,9 @@ interface CommandProvider {
    * It should be applicable to this context
    * It should process injected elements
    *
-   * @param project the project in which the code completion is invoked
-   * @param editor the editor instance where the code completion is triggered
-   * @param offset the position within the document where the completion is invoked
-   * @param psiFile the PSI file representing the file being edited
-   * @param originalEditor the original editor instance, may differ in specific use cases (e.g., injected editors)
-   * @param originalOffset the position within the document in the original editor
-   * @param originalFile the PSI file in the context of the original editor
-   * @param isReadOnly it is not allowed to write in this PSI file. For example, a command can navigate to another file
    * @return a list of completion commands to be executed or displayed during the code completion process
    */
-  fun getCommands(
-    project: Project, editor: Editor, offset: Int, psiFile: PsiFile,
-    originalEditor: Editor, originalOffset: Int, originalFile: PsiFile, isReadOnly: Boolean,
-  ): List<CompletionCommand>
+  fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand>
 
   fun getId(): String
 
@@ -50,5 +39,32 @@ interface CommandProvider {
    *
    * @return true if non-written files are supported; false otherwise.
    */
-  fun supportsNonWrittenFiles() : Boolean = false
+  fun supportsReadOnly(): Boolean = false
 }
+
+/**
+ * Represents the context required for providing command-based completions in the editor.
+ * This context includes both the original and copied states of the PSI files and editors,
+ * enabling accurate suggestions during code completion operations.
+
+ * @property project the project in which the code completion is invoked
+ * @property editor the editor instance where the code completion is triggered
+ * @property offset the position within the document where the completion is invoked
+ * @property psiFile the PSI file representing the file being edited
+ * @property originalEditor the original editor instance, may differ in specific use cases (e.g., injected editors)
+ * @property originalOffset the position within the document in the original editor
+ * @property originalPsiFile the PSI file in the context of the original editor
+ * @property isReadOnly it is not allowed to write in this PSI file. For example, a command can navigate to another file
+ *                        (e.g., an imaginary file or preview state).
+ */
+@Experimental
+data class CommandCompletionProviderContext(
+  val project: Project,
+  val editor: Editor,
+  val offset: Int,
+  val psiFile: PsiFile,
+  val originalEditor: Editor,
+  val originalOffset: Int,
+  val originalPsiFile: PsiFile,
+  val isReadOnly: Boolean,
+)

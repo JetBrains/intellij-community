@@ -1,36 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.CommandProvider
-import com.intellij.codeInsight.completion.commands.api.CompletionCommand
-import com.intellij.codeInsight.completion.commands.api.getDataContext
-import com.intellij.codeInsight.completion.commands.api.getTargetContext
+import com.intellij.codeInsight.completion.commands.api.*
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiIdentifier
 import com.intellij.util.containers.JBIterable.from
 
 
 class GenerateCommandProvider : CommandProvider, DumbAware {
-  override fun getCommands(
-    project: Project,
-    editor: Editor,
-    offset: Int,
-    psiFile: PsiFile,
-    originalEditor: Editor,
-    originalOffset: Int,
-    originalFile: PsiFile,
-    isReadOnly: Boolean,
-  ): List<CompletionCommand> {
+  override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
+    val psiFile = context.psiFile
+    val project = context.project
+    val offset = context.offset
+    val editor = context.editor
     if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
     val element = psiFile.findElementAt(if (offset - 1 >= 0) offset - 1 else offset)
     val parent = element?.parent

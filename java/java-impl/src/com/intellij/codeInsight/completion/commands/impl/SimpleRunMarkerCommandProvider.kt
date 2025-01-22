@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.CommandProvider
-import com.intellij.codeInsight.completion.commands.api.CompletionCommand
-import com.intellij.codeInsight.completion.commands.api.getDataContext
-import com.intellij.codeInsight.completion.commands.api.getTargetContext
+import com.intellij.codeInsight.completion.commands.api.*
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.GutterIntentionAction
 import com.intellij.codeInsight.daemon.impl.IntentionActionFilter
@@ -34,20 +31,15 @@ import java.util.function.Predicate
 import javax.swing.Icon
 
 class SimpleRunMarkerCommandProvider : CommandProvider {
-  override fun getCommands(
-    project: Project,
-    editor: Editor,
-    offset: Int,
-    psiFile: PsiFile,
-    originalEditor: Editor,
-    originalOffset: Int,
-    originalFile: PsiFile,
-    isReadOnly: Boolean,
-  ): List<CompletionCommand> {
+  override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     return runBlockingCancellable {
-      if (offset > 0){
+      val offset = context.offset
+      val psiFile = context.psiFile
+      val project = context.project
+      val editor = context.editor
+      if (offset > 0) {
         val c = psiFile.fileDocument.immutableCharSequence[offset - 1]
-        if(StringUtil.isJavaIdentifierPart(c) || c in "])}>"){
+        if (StringUtil.isJavaIdentifierPart(c) || c in "])}>") {
           return@runBlockingCancellable emptyList()
         }
       }

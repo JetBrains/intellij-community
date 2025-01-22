@@ -14,7 +14,7 @@ class GoToImplementationCompletionCommand: AbstractActionCompletionCommand("Goto
                                                                            "Go to Implementation",
                                                                            ActionsBundle.message("action.GotoImplementation.text"),
                                                                            null) {
-  override fun supportNonWrittenFiles(): Boolean  = true
+  override fun supportsReadOnly(): Boolean  = true
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if (!super.isApplicable(offset, psiFile, editor)) return false

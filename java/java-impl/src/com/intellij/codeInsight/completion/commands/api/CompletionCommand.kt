@@ -57,7 +57,9 @@ abstract class CompletionCommand {
    *
    * @param offset the position within the file where the operation should be performed
    * @param psiFile the PsiFile object representing the file in which the operation is executed
-   * @param editor the editor instance where the file is being edited. Can be null. Used only for compatibility with old actions
+   * @param editor the editor instance where the file is being edited.
+   * It can be a null or imaginary editor.
+   * Used only for compatibility with old actions
    */
   @RequiresEdt
   abstract fun execute(offset: Int, psiFile: PsiFile, editor: Editor?)
@@ -92,7 +94,7 @@ abstract class ApplicableCompletionCommand : CompletionCommand() {
 
   /**
    * Determines whether the command is applicable based on the given context.
-   * Can be called on non-physical classes
+   * Can be called on non-physical classes and imaginary editors
    *
    * @param offset The offset in the file where the applicability should be checked.
    * @param psiFile The PSI file where the applicability should be evaluated.
@@ -100,7 +102,14 @@ abstract class ApplicableCompletionCommand : CompletionCommand() {
    */
   @RequiresReadLock
   abstract fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean
-  open fun supportNonWrittenFiles(): Boolean = false
+
+  /**
+   * Indicates whether the implementation supports non-written files.
+   * (For example, a command can navigate to another file)
+   *
+   * @return true if non-written files are supported; false otherwise.
+   */
+  open fun supportsReadOnly(): Boolean = false
 }
 
 /**

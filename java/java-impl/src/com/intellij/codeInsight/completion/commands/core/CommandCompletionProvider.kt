@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.commands.core
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.commands.api.CommandCompletionFactory
+import com.intellij.codeInsight.completion.commands.api.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
@@ -55,17 +56,17 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     }
     val project = parameters.editor.project ?: return
     var editor = parameters.editor
-    var isNonWritten = false
+    var isReadOnly = false
     var offset = parameters.offset
     val targetEditor = editor.getUserData(ORIGINAL_EDITOR)
     var originalFile = parameters.originalFile
     if (targetEditor != null) {
-      isNonWritten = true
+      isReadOnly = true
       editor = targetEditor.first
       offset = targetEditor.second
       originalFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) ?: return
     }
-    if (offset == 0 && !isNonWritten) return // we need some context to work with
+    if (offset == 0 && !isReadOnly) return // we need some context to work with
     if (originalFile.virtualFile is LightVirtualFile) {
       val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(originalFile)
       if (topLevelFile?.virtualFile == null || topLevelFile.virtualFile is LightVirtualFile) {
@@ -89,9 +90,9 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       return
     }
 
-    val commandCompletionType = findCommandCompletionType(commandCompletionFactory, isNonWritten, offset, parameters.editor) ?: return
+    val commandCompletionType = findCommandCompletionType(commandCompletionFactory, isReadOnly, offset, parameters.editor) ?: return
     val adjustedParameters = try {
-      adjustParameters(commandCompletionType, editor, originalFile, offset, isNonWritten) ?: return
+      adjustParameters(commandCompletionType, editor, originalFile, offset, isReadOnly) ?: return
     }
     catch (_: Exception) {
       return
@@ -108,9 +109,9 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 
     withPrefixMatcher.restartCompletionOnPrefixChange(StandardPatterns.string().with(object : PatternCondition<String>("add filter for command completion") {
       override fun accepts(t: String, context: ProcessingContext?): Boolean {
-        return !isNonWritten && commandCompletionType.suffix.toString() + t ==
-          commandCompletionFactory.suffix() + commandCompletionFactory.filterSuffix().toString() ||
-               isNonWritten && commandCompletionType.suffix.toString() + t == commandCompletionFactory.filterSuffix().toString()
+        return !isReadOnly && commandCompletionType.suffix.toString() + t ==
+               commandCompletionFactory.suffix() + commandCompletionFactory.filterSuffix().toString() ||
+               isReadOnly && commandCompletionType.suffix.toString() + t == commandCompletionFactory.filterSuffix().toString()
       }
     }))
 
@@ -123,7 +124,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                               editor,
                               parameters.offset,
                               originalFile,
-                              isNonWritten) { commands ->
+                              isReadOnly) { commands ->
       withPrefixMatcher.addAllElements(commands.map { command ->
         val i18nName = command.i18nName.replace("_", "").replace("...", "").replace("…", "")
         val additionalInfo = command.additionalInfo ?: ""
@@ -200,16 +201,15 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     originalEditor: Editor,
     originalOffset: Int,
     originalFile: PsiFile,
-    isNonWritten: Boolean,
+    isReadOnly: Boolean,
     processor: Processor<in Collection<CompletionCommand>>,
   ) {
     val element = copyFile.findElementAt(offset - 1)
     if (element == null) return
     for (provider in commandCompletionFactory.commandProviders(project)) {
       try {
-        if(isNonWritten && !provider.supportsNonWrittenFiles()) continue
-        //todo delete parameters
-        val commands = provider.getCommands(project, copyEditor, offset, copyFile, originalEditor, originalOffset, originalFile, isNonWritten)
+        if(isReadOnly && !provider.supportsReadOnly()) continue
+        val commands = provider.getCommands(CommandCompletionProviderContext(project, copyEditor, offset, copyFile, originalEditor, originalOffset, originalFile, isReadOnly))
         processor.process(commands)
       }
       catch (e: Exception) {

@@ -13,7 +13,7 @@ class GoToDeclarationCompletionCommand : AbstractActionCompletionCommand("GotoDe
                                                                          "Go to Declaration",
                                                                          ActionsBundle.message("action.GotoDeclarationOnly.text"),
                                                                          null) {
-  override fun supportNonWrittenFiles(): Boolean  = true
+  override fun supportsReadOnly(): Boolean  = true
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     return super.isApplicable(offset, psiFile, editor) && hasToShow(offset, psiFile)
