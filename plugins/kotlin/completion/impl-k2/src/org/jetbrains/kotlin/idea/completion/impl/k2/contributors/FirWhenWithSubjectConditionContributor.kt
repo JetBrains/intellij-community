@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -127,26 +127,23 @@ internal class FirWhenWithSubjectConditionContributor(
         isSingleCondition: Boolean,
     ) {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
-        getAvailableClassifiersCurrentScope(
-            positionContext = positionContext,
-            originalKtFile = originalKtFile,
-            position = whenCondition,
-            scopeNameFilter = scopeNameFilter,
-            visibilityChecker = visibilityChecker
-        ).mapNotNull { classifierWithScopeKind ->
-            val classifier = classifierWithScopeKind.symbol
-            if (classifier !is KaNamedSymbol) return@mapNotNull null
-            availableFromScope += classifier
+        originalKtFile.scopeContext(whenCondition)
+            .scopes
+            .flatMap { it.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker) }
+            .mapNotNull { classifierWithScopeKind ->
+                val classifier = classifierWithScopeKind.symbol
+                if (classifier !is KaNamedSymbol) return@mapNotNull null
+                availableFromScope += classifier
 
-            createLookupElement(
-                context = context,
-                lookupString = classifier.name.asString(),
-                symbol = classifier,
-                origin = CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
-                fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
-                isSingleCondition = isSingleCondition,
-            )
-        }.forEach(sink::addElement)
+                createLookupElement(
+                    context = context,
+                    lookupString = classifier.name.asString(),
+                    symbol = classifier,
+                    origin = CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
+                    fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
+                    isSingleCondition = isSingleCondition,
+                )
+            }.forEach(sink::addElement)
 
         if (prefixMatcher.prefix.isNotEmpty()) {
             getAvailableClassifiersFromIndex(

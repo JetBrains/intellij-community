@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
@@ -77,13 +77,11 @@ internal open class FirClassifierCompletionContributor(
         context: WeighingContext,
     ): Sequence<LookupElement> {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
-        val scopeClassifiers = getAvailableClassifiersCurrentScope(
-            positionContext = positionContext,
-            originalKtFile = originalKtFile,
-            position = positionContext.nameExpression,
-            scopeNameFilter = scopeNameFilter,
-            visibilityChecker = visibilityChecker,
-        ).filter { filterClassifiers(it.symbol) }
+        val scopeClassifiers = originalKtFile.scopeContext(positionContext.nameExpression)
+            .scopes
+            .asSequence()
+            .flatMap { it.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker) }
+            .filter { filterClassifiers(it.symbol) }
             .mapNotNull { symbolWithScopeKind ->
                 val classifierSymbol = symbolWithScopeKind.symbol
                 availableFromScope += classifierSymbol
