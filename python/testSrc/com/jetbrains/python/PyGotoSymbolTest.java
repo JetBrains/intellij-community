@@ -12,14 +12,9 @@ public class PyGotoSymbolTest extends PyTestCase {
     return super.getTestDataPath() + "/gotoSymbol/";
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.configureByFile(getTestName(true) + ".py");
-  }
-
   // PY-78476
   public void testTypeAliasStatement() {
+    myFixture.configureByFile(getTestName(true) + ".py");
     List<Object> results = myFixture.getGotoSymbolResults("ExampleType", false, null);
     assertEquals(1, results.size());
     assertInstanceOf(results.get(0), PyTypeAliasStatement.class);
