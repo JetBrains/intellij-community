@@ -42,8 +42,9 @@ interface LineCompletionAllEvaluationVisitor : LineCompletionEvaluationVisitor {
       var start = lastOffset
       var offset = 0
       for (line in element.containingFile.text.lines()) {
-        if (offset < element.endOffset && element.startOffset <= offset + line.length + 1) {
-          val text = element.containingFile.text.substring(start, min(offset + line.length, element.endOffset))
+        val endOffset = min(element.endOffset, offset + line.length)
+        if (offset < element.endOffset && element.startOffset <= offset + line.length + 1 && start in offset..endOffset) {
+          val text = element.containingFile.text.substring(start, endOffset)
           if (text.isValuableString()) {
             safeCodeFragment.addChild(CodeLine(line, offset).apply { addChild(CodeToken(text, start, prop)) })
           }
