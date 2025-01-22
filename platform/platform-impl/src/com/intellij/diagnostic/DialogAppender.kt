@@ -4,7 +4,6 @@ package com.intellij.diagnostic
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
@@ -32,15 +31,8 @@ class DialogAppender : Handler() {
       return
     }
 
-    val ideaEvent: IdeaLoggingEvent
-    val parameters = event.parameters
-    if (parameters?.firstOrNull() is IdeaLoggingEvent) {
-      ideaEvent = parameters[0] as IdeaLoggingEvent
-    }
-    else {
-      val thrown = event.thrown ?: return
-      ideaEvent = extractLoggingEvent(messageObject = event.message, throwable = thrown)
-    }
+    val throwable = event.thrown ?: return
+    val ideaEvent = extractLoggingEvent(event.message, throwable)
 
     synchronized(this) {
       if (LoadingState.APP_READY.isOccurred) {
@@ -84,25 +76,15 @@ class DialogAppender : Handler() {
 
   override fun close() { }
 
-  private fun extractLoggingEvent(messageObject: Any?, throwable: Throwable): IdeaLoggingEvent {
-    var message: String? = null
+  private fun extractLoggingEvent(message: String?, throwable: Throwable): IdeaLoggingEvent {
     val withAttachments = ExceptionUtil.causeAndSuppressed(throwable, ExceptionWithAttachments::class.java).toList()
-    (withAttachments.firstOrNull() as? RuntimeExceptionWithAttachments)?.let {
-      message = it.userMessage
-    }
-    if (message == null && messageObject != null) {
-      message = messageObject.toString()
-    }
-
+    val message = withAttachments.asSequence().filterIsInstance<RuntimeExceptionWithAttachments>().firstOrNull()?.userMessage ?: message
     if (withAttachments.isEmpty()) {
       return IdeaLoggingEvent(message, throwable)
     }
     else {
-      val list = ArrayList<Attachment>()
-      for (e in withAttachments) {
-        list.addAll(e.attachments)
-      }
-      return LogMessage.eventOf(throwable, message, list)
+      val attachments = withAttachments.asSequence().flatMap { it.attachments.asSequence() }.toList()
+      return LogMessage.eventOf(throwable, message, attachments)
     }
   }
 }

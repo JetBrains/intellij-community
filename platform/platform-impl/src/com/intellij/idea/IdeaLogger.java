@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.diagnostic.DefaultIdeaErrorLogger;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.LogMessage;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -19,10 +18,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.ControlFlowException;
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.ExceptionUtil;
@@ -30,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -111,23 +106,18 @@ public final class IdeaLogger extends JulLogger {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
-  public void error(Object message) {
-    if (message instanceof IdeaLoggingEvent) {
-      logSevere(message.toString());
+  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
+    if (isTooFrequentException(t)) return;
+
+    if (attachments.length == 0) {
+      logSevere(message, t);
+    }
+    else if (t != null) {
+      logSevere(message, new RuntimeExceptionWithAttachments(t, attachments));
     }
     else {
-      super.error(message);
+      logSevere(message, new RuntimeExceptionWithAttachments(new Throwable(), attachments));
     }
-  }
-
-  @Override
-  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    if (isTooFrequentException(t)) {
-      return;
-    }
-
-    logSevere(LogMessage.eventOf(t != null ? t : new Throwable(), message, List.of(attachments)).toString(), t);
     if (t != null) {
       reportToFus(t);
     }

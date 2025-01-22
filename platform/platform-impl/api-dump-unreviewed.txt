@@ -5515,7 +5515,6 @@ f:com.intellij.idea.IdeaLogger
 - s:ourErrorsOccurred:java.lang.Exception
 - s:ourLastActionId:java.lang.String
 - s:dropFrequentExceptionsCaches():V
-- error(java.lang.Object):V
 - error(java.lang.String,java.lang.Throwable,com.intellij.openapi.diagnostic.Attachment[]):V
 - error(java.lang.String,java.lang.Throwable,java.lang.String[]):V
 - warn(java.lang.String,java.lang.Throwable):V

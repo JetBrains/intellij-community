@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailTypes;
@@ -264,7 +264,6 @@ public final class CompletionUtil {
           private RuntimeException handleCME(ConcurrentModificationException cme) {
             RuntimeExceptionWithAttachments ewa = new RuntimeExceptionWithAttachments(
               "Error while traversing lookup strings of " + element + " of " + element.getClass(),
-              (String)null,
               new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
             ewa.initCause(cme);
             return ewa;
