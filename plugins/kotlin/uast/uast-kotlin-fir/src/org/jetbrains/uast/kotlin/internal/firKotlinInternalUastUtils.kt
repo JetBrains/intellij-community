@@ -388,9 +388,9 @@ internal fun receiverType(
     source: UElement,
     context: KtElement,
 ): PsiType? {
-    val ktType = ktCall.partiallyAppliedSymbol.signature.receiverType
-        ?: ktCall.partiallyAppliedSymbol.extensionReceiver?.type
+    val ktType = ktCall.partiallyAppliedSymbol.extensionReceiver?.type
         ?: ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
+        ?: ktCall.partiallyAppliedSymbol.signature.receiverType
     if (ktType == null ||
         ktType is KaErrorType ||
         ktType.isUnitType

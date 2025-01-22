@@ -174,6 +174,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkReceiverTypeOfExtensionFunction(myFixture)
     }
 
+    fun testReceiverTypeOfExtensionFunction_superType() {
+        checkReceiverTypeOfExtensionFunction_superType(myFixture)
+    }
+
     fun testSourcePsiOfLazyPropertyAccessor() {
         checkSourcePsiOfLazyPropertyAccessor(myFixture)
     }
