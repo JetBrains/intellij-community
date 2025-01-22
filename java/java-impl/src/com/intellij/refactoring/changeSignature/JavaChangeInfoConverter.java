@@ -9,5 +9,5 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 public interface JavaChangeInfoConverter {
   @Nullable JavaChangeInfo toJavaChangeInfo(@NotNull ChangeInfo changeInfo, UsageInfo usage);
-  @Nullable ChangeInfo fromJavaChangeInfo(@NotNull JavaChangeInfo changeInfo, UsageInfo usage);
+  @Nullable ChangeInfo fromJavaChangeInfo(@NotNull JavaChangeInfo changeInfo, UsageInfo usage, Boolean beforeMethodChanged);
 }

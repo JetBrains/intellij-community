@@ -149,6 +149,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         testClass<AbstractK2MultiFileQuickFixTest> {
             val pattern = Patterns.forRegex("""^(\w+)\.((before\.Main\.\w+)|(test))$""")
             model("${idea}/quickfix/optIn", pattern = pattern, testMethodName = "doTestWithExtraFile")
+            model("${idea}/quickfix/changeSignature/jk", pattern = pattern, testMethodName = "doTestWithExtraFile")
         }
     }
 

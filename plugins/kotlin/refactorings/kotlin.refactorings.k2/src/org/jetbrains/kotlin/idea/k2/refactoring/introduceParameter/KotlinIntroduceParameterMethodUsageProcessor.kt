@@ -129,7 +129,7 @@ class KotlinIntroduceParameterMethodUsageProcessor : IntroduceParameterMethodUsa
             /* propagateParametersMethods = */ emptySet(),
             /* propagateExceptionsMethods = */ emptySet()
         )
-        return fromJavaChangeInfo(javaChangeInfo, usage)
+        return fromJavaChangeInfo(javaChangeInfo, usage, true)
     }
 
     override fun processAddSuperCall(data: IntroduceParameterData, usage: UsageInfo, usages: Array<out UsageInfo>): Boolean = true

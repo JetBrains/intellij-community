@@ -169,9 +169,9 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     }
     try {
       doChangeSignature(changeInfo, usages);
-      method = pointer.getElement();
-      LOG.assertTrue(method != null && method.isValid());
       if (elementListener != null && changeInfo.isNameChanged()) {
+        method = pointer.getElement();
+        LOG.assertTrue(method != null && method.isValid());
         elementListener.elementRenamed(method);
       }
     }

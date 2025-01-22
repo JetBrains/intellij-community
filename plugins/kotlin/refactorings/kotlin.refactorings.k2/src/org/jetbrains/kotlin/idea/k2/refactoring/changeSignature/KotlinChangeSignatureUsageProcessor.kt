@@ -73,14 +73,14 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         val ktCallableDeclaration = changeInfo.method
 
         if (ktCallableDeclaration is KtNamedFunction && !ktCallableDeclaration.hasBody()) {
-            ktCallableDeclaration.toLightMethods().forEach {
-                FunctionalExpressionSearch.search(it).forEach { functionalExpression ->
+            ktCallableDeclaration.toLightMethods().forEach { lightMethod ->
+                FunctionalExpressionSearch.search(lightMethod).forEach { functionalExpression ->
                     val provider = ChangeSignatureUsageProviders.findProvider(functionalExpression.language)
                     if (provider != null) {
                         val usageInfo = provider.createOverrideUsageInfo(
                             changeInfo,
                             functionalExpression,
-                            it,
+                            lightMethod,
                             true,
                             true,
                             true,
@@ -225,7 +225,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     ): Boolean {
         val element = usageInfo.element?.unwrapped ?: return false
         if (!element.language.`is`(KotlinLanguage.INSTANCE)) return false
-        val kotlinChangeInfo = fromJavaChangeInfo(changeInfo, usageInfo) ?: return false
+        val kotlinChangeInfo = fromJavaChangeInfo(changeInfo, usageInfo, beforeMethodChange) ?: return false
         if (!beforeMethodChange) {
             if (usageInfo is KotlinBaseChangeSignatureUsage) {
                 usageInfo.processUsage(kotlinChangeInfo, element as KtElement, usages)?.let { shortenReferences(it, ShortenOptions.ALL_ENABLED) }
@@ -270,13 +270,17 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     }
 
     override fun processPrimaryMethod(changeInfo: ChangeInfo): Boolean {
-        if (changeInfo !is KotlinChangeInfo) return false
-        val element = changeInfo.method
+        val unwrapped = changeInfo.method.unwrapped
+        val kotlinChangeInfo =
+            (if (changeInfo !is KotlinChangeInfo && unwrapped is KtNamedDeclaration) {
+                fromJavaChangeInfo(changeInfo, UsageInfo(unwrapped), true)
+            } else changeInfo) as? KotlinChangeInfoBase ?: return false
+        val element = unwrapped as? KtNamedDeclaration ?: return false
 
-        val namedDeclarations = changeInfo.getUserData(primaryElementsKey)?.reversed() ?: listOf(element)
+        val namedDeclarations = (kotlinChangeInfo as? KotlinChangeInfo)?.getUserData(primaryElementsKey)?.reversed() ?: listOf(element)
         val refactoringSupport = KotlinRenameRefactoringSupport.getInstance()
         for (declaration in namedDeclarations) {
-            updatePrimaryMethod(declaration, changeInfo)
+            updatePrimaryMethod(declaration, kotlinChangeInfo)
             refactoringSupport.dropOverrideKeywordIfNecessary(declaration)
         }
         return true
@@ -303,7 +307,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         changeReturnTypeIfNeeded(changeInfo, element)
 
         if (changeInfo.isParameterSetOrOrderChanged) {
-            processParameterListWithStructuralChanges(changeInfo, element, (element as? KtCallableDeclaration)?.getValueParameterList(), psiFactory, changeInfo.method, isInherited, isCaller)
+            processParameterListWithStructuralChanges(changeInfo, element, (element as? KtCallableDeclaration)?.valueParameterList, psiFactory, changeInfo.method, isInherited, isCaller)
         }
         else {
             val parameterList = (element as? KtCallableDeclaration)?.valueParameterList
@@ -397,7 +401,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         isCaller: Boolean
     ) {
         var parameterList = originalParameterList
-        val parametersCount = changeInfo.newParameters.filter { it != changeInfo.receiverParameterInfo }.count()
+        val parametersCount = changeInfo.newParameters.count { it != changeInfo.receiverParameterInfo }
         val isLambda = element is KtFunctionLiteral
         var canReplaceEntireList = false
 
@@ -406,12 +410,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             if (parametersCount == 0) {
                 if (parameterList != null) {
                     parameterList.delete()
-                    val arrow = (element as KtFunctionLiteral).arrow
-                    arrow?.delete()
+                    element.arrow?.delete()
                     parameterList = null
                 }
             } else {
-                newParameterList = psiFactory.createLambdaParameterList(changeInfo.getNewParametersSignatureWithoutParentheses(element as KtFunctionLiteral, baseFunction, isInherited))
+                newParameterList = psiFactory.createLambdaParameterList(changeInfo.getNewParametersSignatureWithoutParentheses(element, baseFunction, isInherited))
                 canReplaceEntireList = true
             }
         } else if (!(element is KtProperty || element is KtParameter)) {
@@ -457,7 +460,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 val oldParameterList = constructor.valueParameterList ?: error("Primary constructor has to have parameter list")
                 newParameterList = oldParameterList.replace(newParameterList) as KtParameterList
             } else if (isLambda) {
-                val functionLiteral = element as KtFunctionLiteral
+                val functionLiteral = element
                 val anchor = functionLiteral.lBrace
                 newParameterList = element.addAfter(newParameterList, anchor) as KtParameterList
                 if (functionLiteral.arrow == null) {
