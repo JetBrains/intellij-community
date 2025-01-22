@@ -115,12 +115,12 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
 
   private val sessions = ConcurrentHashMap<ClientId, T>()
 
-  fun getSessions(kind: ClientKind): List<T> {
+  fun getSessions(kind: ClientKind, includeDisposed: Boolean = false): List<T> {
     if (kind == ClientKind.ALL) {
-      return sessions.values.filter { !it.isDisposed }
+      return sessions.values.filter { !it.isDisposed || includeDisposed }
     }
     else {
-      return sessions.values.filter { !it.isDisposed && it.type.matches(kind) }
+      return sessions.values.filter { (!it.isDisposed || includeDisposed) && it.type.matches(kind) }
     }
   }
 
