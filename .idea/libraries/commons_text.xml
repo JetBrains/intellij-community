@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="commons-text" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-text:1.12.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-text:1.13.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.12.0/commons-text-1.12.0.jar">
-          <sha256sum>de023257ff166044a56bd1aa9124e843cd05dac5806cc705a9311f3556d5a15f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.13.0/commons-text-1.13.0.jar">
+          <sha256sum>1e323a501127df78ed0987f345d69d65d0ea7fa3d4fb5b3f84aaeba3a8b20f38</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.12.0/commons-text-1.12.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.13.0/commons-text-1.13.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.12.0/commons-text-1.12.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.13.0/commons-text-1.13.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
