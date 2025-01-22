@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.notebooks.visualization.ui
+package com.intellij.notebooks.visualization.ui.jupyterToolbars
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
-import com.intellij.notebooks.visualization.ui.jupyterToolbar.JupyterCellActionsToolbar
+import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -29,7 +29,7 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
   }
 
   init {
-    JupyterBoundsChangeHandler.get(editor).subscribe(this, boundsChangeListener)
+    JupyterBoundsChangeHandler.Companion.get(editor).subscribe(this, boundsChangeListener)
   }
 
   fun showToolbar(targetComponent: JComponent) {

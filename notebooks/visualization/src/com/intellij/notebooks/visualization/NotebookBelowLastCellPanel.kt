@@ -4,7 +4,7 @@ package com.intellij.notebooks.visualization
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightableCellPanel
-import com.intellij.notebooks.visualization.ui.jupyterToolbar.JupyterAddNewCellToolbar
+import com.intellij.notebooks.visualization.ui.jupyterToolbars.JupyterAddNewCellToolbar
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.impl.EditorImpl

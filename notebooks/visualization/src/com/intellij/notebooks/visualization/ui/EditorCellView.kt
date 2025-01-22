@@ -11,6 +11,7 @@ import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import com.intellij.notebooks.visualization.context.NotebookDataContext
 import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightableCellPanel
+import com.intellij.notebooks.visualization.ui.jupyterToolbars.NotebookCellActionsToolbarStateTracker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -266,6 +267,7 @@ class EditorCellView(
     updateFolding()
     updateRunButtonVisibility()
     myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
+    updateCellActionsToolbarVisibility()
   }
 
   fun mouseEntered() {
@@ -273,6 +275,7 @@ class EditorCellView(
     updateFolding()
     updateRunButtonVisibility()
     myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
+    updateCellActionsToolbarVisibility()
   }
 
   inline fun <reified T : Any> getExtension(): T? {
@@ -373,13 +376,17 @@ class EditorCellView(
   }
 
   private fun updateCellActionsToolbarVisibility() {
-    input.cellActionsToolbar ?: return
-    when (selected) {
-      true -> {
-        val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
-        input.cellActionsToolbar.showToolbar(targetComponent)
+    val toolbarManager = input.cellActionsToolbar ?: return
+    val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
+
+    when {
+      selected -> {
+        // we show the toolbar only for the last selected cell
+        NotebookCellActionsToolbarStateTracker.get(editor)?.updateLastSelectedCell(input)
+        toolbarManager.showToolbar(targetComponent)
       }
-      else -> input.cellActionsToolbar.hideToolbar()
+      mouseOver -> toolbarManager.showToolbar(targetComponent)
+      else -> toolbarManager.hideToolbar()
     }
   }
 

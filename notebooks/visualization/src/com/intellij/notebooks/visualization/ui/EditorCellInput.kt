@@ -5,6 +5,7 @@ import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDraggableBar
+import com.intellij.notebooks.visualization.ui.jupyterToolbars.EditorCellActionsToolbarManager
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer

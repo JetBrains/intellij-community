@@ -1,4 +1,4 @@
-package com.intellij.notebooks.visualization.ui.jupyterToolbar
+package com.intellij.notebooks.visualization.ui.jupyterToolbars
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
