@@ -177,7 +177,7 @@ class JdkInstaller : JdkInstallerBase() {
     val userHome = eel.fs.user.home
 
     val relativePath = when (eel.platform) {
-        is EelPlatform.Windows, is EelPlatform.Linux -> ".jdks"
+        is EelPlatform.Windows, is EelPlatform.Linux, is EelPlatform.FreeBSD -> ".jdks"
         is EelPlatform.Darwin -> "Library/Java/JavaVirtualMachines"
     }
 

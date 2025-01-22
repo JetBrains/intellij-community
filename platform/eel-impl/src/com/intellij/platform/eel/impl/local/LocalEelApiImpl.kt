@@ -10,13 +10,17 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryError
 import com.intellij.platform.eel.fs.LocalEelFileSystemPosixApi
 import com.intellij.platform.eel.fs.LocalEelFileSystemWindowsApi
-import com.intellij.platform.eel.impl.fs.*
 import com.intellij.platform.eel.impl.fs.EelFsResultImpl.Ok
-import com.intellij.platform.eel.impl.fs.EelFsResultImpl.Other
+import com.intellij.platform.eel.impl.fs.EelUserPosixInfoImpl
+import com.intellij.platform.eel.impl.fs.EelUserWindowsInfoImpl
+import com.intellij.platform.eel.impl.fs.PosixNioBasedEelFileSystemApi
+import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsPosixApi
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsWindowsApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.*
+import com.intellij.platform.eel.provider.utils.toEelArch
+import com.intellij.util.system.CpuArch
 import com.intellij.util.text.nullize
 import com.sun.security.auth.module.UnixSystem
 import org.jetbrains.annotations.VisibleForTesting
@@ -32,7 +36,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
 
   override val tunnels: EelTunnelsWindowsApi get() = EelLocalTunnelsWindowsApi
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
-  override val platform: EelPlatform.Windows get() = if (SystemInfo.isAarch64) EelPlatform.Arm64Windows else EelPlatform.X64Windows
+  override val platform: EelPlatform.Windows get() = EelPlatform.Windows(CpuArch.CURRENT.toEelArch())
   override val exec: EelExecApi = EelLocalExecApi()
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl(getLocalUserHome())
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
@@ -59,26 +63,20 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
 
   override val tunnels: EelTunnelsPosixApi get() = EelLocalTunnelsPosixApi
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
-  override val platform: EelPlatform.Posix = if (SystemInfo.isMac) {
-    if (SystemInfo.isAarch64) {
-      EelPlatform.Arm64Darwin
+  override val platform: EelPlatform.Posix
+    get() {
+      val arch = CpuArch.CURRENT.toEelArch()
+      return when {
+        SystemInfo.isMac -> EelPlatform.Darwin(arch)
+        SystemInfo.isLinux -> EelPlatform.Linux(arch)
+        SystemInfo.isFreeBSD -> EelPlatform.FreeBSD(arch)
+        else -> {
+          LOG.info("Eel is not supported on current platform")
+          EelPlatform.Linux(arch)
+        }
+      }
     }
-    else {
-      EelPlatform.X8664Darwin
-    }
-  }
-  else if (SystemInfo.isLinux) {
-    if (SystemInfo.isAarch64) {
-      EelPlatform.Aarch64Linux
-    }
-    else {
-      EelPlatform.X8664Linux
-    }
-  }
-  else {
-    LOG.info("Eel is not supported on current platform")
-    EelPlatform.X8664Linux
-  }
+
   override val exec: EelExecApi = EelLocalExecApi()
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 

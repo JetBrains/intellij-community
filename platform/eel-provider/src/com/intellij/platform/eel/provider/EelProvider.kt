@@ -116,5 +116,6 @@ fun EelApi.systemOs(): OS {
     is EelPlatform.Linux -> OS.Linux
     is EelPlatform.Darwin -> OS.macOS
     is EelPlatform.Windows -> OS.Windows
+    is EelPlatform.FreeBSD -> OS.FreeBSD
   }
 }

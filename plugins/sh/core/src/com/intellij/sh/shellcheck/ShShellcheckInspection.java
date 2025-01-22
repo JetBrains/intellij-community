@@ -7,12 +7,12 @@ import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.sh.utils.ProjectUtil;
 import com.intellij.ui.EditorNotifications;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -57,7 +57,7 @@ public final class ShShellcheckInspection extends LocalInspectionTool implements
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      Project project = ProjectUtil.guessCurrentProject(myOptionsPanel);
+      Project project = ProjectUtil.getProject(myOptionsPanel);
       EditorNotifications editorNotifications = EditorNotifications.getInstance(project);
       editorNotifications.updateAllNotifications();
     }

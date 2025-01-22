@@ -1,31 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.impl
 
-import com.intellij.platform.eel.EelArchiveApi
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.EelTunnelsWindowsApi
-import com.intellij.platform.eel.EelUserWindowsInfo
-import com.intellij.platform.eel.EelWindowsApi
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
 import com.intellij.platform.eel.impl.local.EelLocalExecApi
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.toEelArch
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.util.system.CpuArch
 
 internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelWindowsApi {
   override val userInfo: EelUserWindowsInfo = EelTestWindowsUserInfo(descriptor)
 
-  override val platform: EelPlatform.Windows
-    get() = if (CpuArch.CURRENT == CpuArch.ARM64) {
-      EelPlatform.Arm64Windows
-    }
-    else {
-      EelPlatform.X64Windows
-    }
+  override val platform: EelPlatform.Windows = EelPlatform.Windows(CpuArch.CURRENT.toEelArch())
 
   override val fs: WindowsNioBasedEelFileSystemApi = EelTestFileSystemWindowsApi(descriptor, fileSystem)
 

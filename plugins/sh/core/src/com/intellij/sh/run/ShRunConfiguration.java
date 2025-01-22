@@ -5,14 +5,10 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WSLUtil;
-import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,13 +17,13 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.sh.psi.ShFile;
-import com.intellij.util.EnvironmentUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
@@ -65,22 +61,22 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
+    final var scriptPath = Path.of(myScriptPath);
     if (myExecuteScriptFile) {
-      if (!FileUtil.exists(myScriptPath)) {
+      if (!Files.exists(scriptPath)) {
         throw new RuntimeConfigurationError(message("sh.run.script.not.found"));
       }
-      if (StringUtil.isNotEmpty(myInterpreterPath) || !new File(myScriptPath).canExecute()) {
-        // WSL can be used as an interpreter
-        if (myInterpreterPath.endsWith("sh") && getWSLDistributionIfNeeded(myInterpreterPath, myScriptPath) != null) return;
-        if (!FileUtil.exists(myInterpreterPath)) {
+      if (StringUtil.isNotEmpty(myInterpreterPath) || !Files.isExecutable(scriptPath)) {
+        final var interpreterPath = Path.of(myInterpreterPath);
+        if (!Files.exists(interpreterPath)) {
           throw new RuntimeConfigurationError(message("sh.run.interpreter.not.found"));
         }
-        if (!new File(myInterpreterPath).canExecute()) {
+        if (!Files.isExecutable(interpreterPath)) {
           throw new RuntimeConfigurationError(message("sh.run.interpreter.should.be.executable"));
         }
       }
     }
-    if (!FileUtil.exists(myScriptWorkingDirectory)) {
+    if (!Files.exists(Path.of(myScriptWorkingDirectory))) {
       throw new RuntimeConfigurationError(message("sh.run.working.dir.not.found"));
     }
   }
@@ -229,16 +225,5 @@ public final class ShRunConfiguration extends LocatableConfigurationBase impleme
 
   public void setInterpreterOptions(@NotNull String interpreterOptions) {
     myInterpreterOptions = interpreterOptions.trim();
-  }
-
-  public static WSLDistribution getWSLDistributionIfNeeded(@Nullable String interpreterPath, @Nullable @NlsSafe String scriptPath) {
-    if (!WSLUtil.isSystemCompatible()) return null;
-    if (EnvironmentUtil.getValue("SHELL") != null) return null;
-    if (scriptPath != null && (scriptPath.endsWith("cmd") || scriptPath.endsWith("bat"))) return null;
-    WslPath wslPath = interpreterPath != null ? WslPath.parseWindowsUncPath(interpreterPath) : null;
-    if (wslPath == null && scriptPath != null) {
-      wslPath = WslPath.parseWindowsUncPath(scriptPath);
-    }
-    return wslPath != null ? wslPath.getDistribution() : null;
   }
 }

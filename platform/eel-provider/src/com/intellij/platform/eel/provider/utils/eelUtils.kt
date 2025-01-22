@@ -3,22 +3,26 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.fs.EelOpenedFile
+import com.intellij.util.system.CpuArch
 import com.intellij.util.text.nullize
 import java.io.IOException
-import java.nio.file.AccessDeniedException
-import java.nio.file.DirectoryNotEmptyException
-import java.nio.file.FileAlreadyExistsException
-import java.nio.file.FileSystemException
-import java.nio.file.NoSuchFileException
-import java.nio.file.NotDirectoryException
-import java.nio.file.ReadOnlyFileSystemException
+import java.nio.file.*
 
 fun EelExecApi.fetchLoginShellEnvVariablesBlocking(): Map<String, String> {
   return runBlockingMaybeCancellable { fetchLoginShellEnvVariables() }
+}
+
+fun CpuArch.toEelArch(): EelPlatform.Arch = when (this) {
+  CpuArch.X86 -> EelPlatform.X86
+  CpuArch.X86_64 -> EelPlatform.X86_64
+  CpuArch.ARM32 -> EelPlatform.ARM_32
+  CpuArch.ARM64 -> EelPlatform.ARM_64
+  CpuArch.OTHER, CpuArch.UNKNOWN -> EelPlatform.Unknown
 }
 
 @Throws(FileSystemException::class)

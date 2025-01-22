@@ -44,11 +44,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
+import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemoteTempIfNeeded;
 import static java.util.Arrays.asList;
 
 public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellcheckExternalAnnotator.CollectedInfo, ShShellcheckExternalAnnotator.ShellcheckResponse> {
@@ -79,14 +83,17 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     Application application = ApplicationManager.getApplication();
     if (application != null && application.isReadAccessAllowed() && !application.isUnitTestMode()) return null;
 
-    String shellcheckExecutable = ShSettings.getShellcheckPath();
+    String shellcheckExecutable = ShSettings.getShellcheckPath(fileInfo.project);
     if (!ShShellcheckUtil.isExecutionValidPath(shellcheckExecutable)) return null;
     ShShellcheckUtil.checkShellCheckForUpdate(fileInfo.project);
+
+
+    final var eel = upgradeBlocking(getEelDescriptor(fileInfo.project));
 
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-        .withExePath(shellcheckExecutable)
+        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shellcheckExecutable)).toString())
         .withParameters(fileInfo.executionParams);
       if (!ApplicationManager.getApplication().isUnitTestMode()) commandLine.withWorkDirectory(fileInfo.workDirectory);
       long timestamp = fileInfo.modificationStamp;

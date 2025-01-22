@@ -104,7 +104,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
     when (this) {
       is EelPlatform.Windows -> PathManager.OS.WINDOWS
       is EelPlatform.Darwin -> PathManager.OS.MACOS
-      is EelPlatform.Linux -> PathManager.OS.LINUX
+      is EelPlatform.Linux, is EelPlatform.FreeBSD -> PathManager.OS.LINUX
     }
 }
 

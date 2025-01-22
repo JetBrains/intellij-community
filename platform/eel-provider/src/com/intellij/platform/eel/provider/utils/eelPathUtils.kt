@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -18,15 +20,16 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.URI
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.nio.file.StandardOpenOption.*
 import java.nio.file.attribute.*
-import kotlin.io.path.createDirectories
-import kotlin.io.path.fileAttributesView
-import kotlin.io.path.name
-import kotlin.io.path.relativeTo
+import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.*
 
 @ApiStatus.Internal
 object EelPathUtils {
@@ -78,6 +81,11 @@ object EelPathUtils {
   }
 
   @JvmStatic
+  fun getNioPath(path: String, descriptor: EelDescriptor): Path {
+    return EelPath.parse(path, descriptor).asNioPath()
+  }
+
+  @JvmStatic
   fun renderAsEelPath(path: Path): String {
     val eelPath = path.asEelPath()
     if (eelPath.descriptor == LocalEelDescriptor) {
@@ -114,6 +122,7 @@ object EelPathUtils {
    * @param sink the required location for the file. If it is `null`, then a temporary directory will be created.
    * @return the path which contains the transferred data. Sometimes this value can coincide with [source] if the [sink]
    */
+  @JvmStatic
   fun transferContentsIfNonLocal(eel: EelApi, source: Path, sink: Path?): Path {
     if (eel is LocalEelApi) return source
     if (source.getEelDescriptor() !is LocalEelDescriptor) {
@@ -123,16 +132,153 @@ object EelPathUtils {
       return source
     }
     // todo: intergrate checksums here so that files could be refreshed in case of changes
-    val targetPath = sink ?: runBlockingMaybeCancellable {
-      val eelTempDir = eel.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOrThrowFileSystemException()
-      eelTempDir.asNioPath()
+
+    if (sink != null) {
+      if (!Files.exists(sink)) {
+        walkingTransfer(source, sink, false, true)
+      }
+      return sink
     }
-    if (!Files.exists(targetPath)) {
-      walkingTransfer(source, targetPath, false, true)
+    else {
+      val temp = runBlockingMaybeCancellable { eel.createTempFor(source, false) }
+
+      walkingTransfer(source, temp, false, true)
+
+      return temp
     }
-    return targetPath
   }
 
+  /**
+   * Transfers a local file to a remote temporary environment if required.
+   *
+   * This function is useful for transferring files that are located on the local machine
+   * to a remote environment. It can be particularly helpful for files stored in plugin
+   * resources, such as:
+   *
+   * ```kotlin
+   * Path.of(PathManager.getPluginsPath()).resolve(pluginId)
+   * ```
+   *
+   * ### Behavior:
+   * - If the file is **not local**, an exception will be thrown.
+   * - If the `eel` is a local environment (`LocalEelApi`), the function directly returns the source as an [EelPath].
+   * - If the file needs to be transferred to a remote environment:
+   *   - A temporary directory is created on the remote environment.
+   *   - The file is transferred into the temporary directory.
+   *   - The temporary directory will be automatically deleted upon exit.
+   *
+   * ### Hash Calculation:
+   * - **Purpose**: A SHA-256 hash is calculated for the source file to ensure that the file is transferred only when its contents have changed.
+   * - **Mechanism**:
+   *   - The hash is computed by reading the file in chunks (default: 1 MB) for memory efficiency.
+   *   - A hash cache is maintained to store the relationship between the source file and its hash, reducing redundant file transfers.
+   * - **Rehashing**:
+   *   - If the file is modified (i.e., the current hash differs from the cached hash), the file is re-transferred to the remote environment, and the hash is updated.
+   *
+   * ### Parameters:
+   * @param eel the [EelApi] instance representing the target environment (local or remote).
+   * @param source the [Path] of the file to be transferred.
+   *
+   * ### Returns:
+   * An [EelPath] representing the source file's location in the target environment.
+   *
+   * ### Exceptions:
+   * - Throws [IllegalStateException] if the source file is not local.
+   *
+   * ### Example:
+   * ```kotlin
+   * val eel: EelApi = ...
+   * val sourcePath = Path.of("/path/to/local/file.txt")
+   *
+   * val eelPath = transferLocalContentToRemoteTempIfNeeded(eel, sourcePath)
+   * println("File transferred to: $eelPath")
+   * ```
+   *
+   * ### Internal Details:
+   * The function internally uses [TransferredContentHolder] to manage the caching and transfer logic:
+   * - It checks the hash of the file using `MessageDigest` with the `SHA-256` algorithm.
+   * - If the file's content is unchanged (based on the hash), the cached result is reused.
+   * - If the content differs or is not in the cache, the file is transferred, and the hash is updated.
+   *
+   * ### See Also:
+   * - [TransferredContentHolder]: For detailed caching and transfer mechanisms.
+   * - [MessageDigest]: For hash calculation.
+   */
+  @JvmStatic
+  fun transferLocalContentToRemoteTempIfNeeded(eel: EelApi, source: Path): EelPath {
+    val sourceDescriptor = source.getEelDescriptor()
+
+    check(sourceDescriptor is LocalEelDescriptor)
+
+    if (eel is LocalEelApi) {
+      return source.asEelPath()
+    }
+
+    return runBlockingMaybeCancellable {
+      service<TransferredContentHolder>().transferIfNeeded(eel, source).asEelPath()
+    }
+  }
+
+  @Service
+  private class TransferredContentHolder(private val scope: CoroutineScope) {
+    // eel descriptor -> source path string ->> source hash -> transferred file
+    private val cache = ConcurrentHashMap<Pair<EelDescriptor, String>, Deferred<Pair<String, Path>>>()
+
+    private fun calculateFileHash(path: Path): String {
+      val digest = MessageDigest.getInstance("SHA-256")
+      val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
+      val fileSize = attributes.size()
+      val lastModified = attributes.lastModifiedTime().toMillis()
+
+      digest.update(fileSize.toString().toByteArray())
+      digest.update(lastModified.toString().toByteArray())
+
+      FileChannel.open(path, StandardOpenOption.READ).use { channel ->
+        val buffer = java.nio.ByteBuffer.allocateDirect(1024 * 1024)
+        while (channel.read(buffer) > 0) {
+          buffer.flip()
+          digest.update(buffer)
+          buffer.clear()
+        }
+      }
+
+      return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun transferIfNeeded(eel: EelApi, source: Path): Path {
+      return cache.compute(eel.descriptor to source.toString()) { _, deferred ->
+        if (deferred != null) {
+          if (deferred.isCompleted) {
+            val (oldSourceHash, _) = deferred.getCompleted()
+            if (oldSourceHash == calculateFileHash(source)) {
+              return@compute deferred
+            }
+          }
+          else {
+            return@compute deferred
+          }
+        }
+
+        scope.async {
+          val temp = eel.createTempFor(source, true)
+          walkingTransfer(source, temp, false, true)
+          calculateFileHash(source) to temp
+        }
+      }!!.await().second
+    }
+  }
+
+  private suspend fun EelApi.createTempFor(source: Path, deleteOnExit: Boolean): Path {
+    return if (source.isDirectory()) {
+      fs.createTemporaryDirectory(CreateTemporaryEntryOptions.Builder().deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException().asNioPath()
+    }
+    else {
+      fs.createTemporaryFile(CreateTemporaryEntryOptions.Builder().deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException().asNioPath()
+    }
+  }
+
+  @JvmStatic
   fun getHomePath(descriptor: EelDescriptor): Path {
     // usually eel is already initialized to this moment
     @Suppress("RAW_RUN_BLOCKING")

@@ -3,10 +3,13 @@ package com.intellij.sh.shellcheck;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URI;
@@ -22,24 +25,24 @@ import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 final class ShShellcheckTestUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckTestUtil.class);
 
-  static void downloadShellcheck() throws IOException, InterruptedException {
+  static void downloadShellcheck(@NotNull Project project) throws IOException, InterruptedException {
     Path directory = getShellcheckTestDir();
     NioFiles.createDirectories(directory);
 
     Path shellcheck = directory.resolve(SHELLCHECK_BIN);
     if (Files.exists(shellcheck)) {
-      String path = ShSettings.getShellcheckPath();
+      String path = ShSettings.getShellcheckPath(project);
       String shellcheckPath = shellcheck.toString();
       if (path.equals(shellcheckPath)) {
         LOG.debug("Shellcheck already downloaded");
       }
       else {
-        ShSettings.setShellcheckPath(shellcheckPath);
+        ShSettings.setShellcheckPath(project, shellcheckPath);
       }
       return;
     }
 
-    String link = getShellcheckDistributionLink();
+    String link = getShellcheckDistributionLink(EelProviderUtil.getLocalEel().getPlatform());
     HttpRequest request = HttpRequest.newBuilder().uri(URI.create(link)).build();
     HttpResponse<Path> response = HttpClient.newBuilder()
       .followRedirects(HttpClient.Redirect.NORMAL)
@@ -51,7 +54,7 @@ final class ShShellcheckTestUtil {
     String path = decompressShellcheck(archive.toFile(), directory.toFile());
     if (!path.isEmpty()) {
       NioFiles.setExecutable(Path.of(path));
-      ShSettings.setShellcheckPath(path);
+      ShSettings.setShellcheckPath(project, path);
     }
   }
 
