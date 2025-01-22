@@ -174,10 +174,11 @@ internal class StatusBarActionManager(coroutineScope: CoroutineScope) {
   }
 
   fun getActionsFor(widgetFactories: Collection<StatusBarWidgetFactory>): List<AnAction> {
-    val actionManager = ActionManager.getInstance()
-    return widgetFactories.map { widgetFactory ->
-      actionManager.getAction(getToggleActionId(widgetFactory)) ?: ToggleWidgetAction(widgetFactory)
-    }
+    return widgetFactories.map { widgetFactory -> getActionFor(widgetFactory) }
+  }
+
+  fun getActionFor(widgetFactory: StatusBarWidgetFactory): AnAction {
+    return ActionManager.getInstance().getAction(getToggleActionId(widgetFactory)) ?: ToggleWidgetAction(widgetFactory)
   }
 }
 
