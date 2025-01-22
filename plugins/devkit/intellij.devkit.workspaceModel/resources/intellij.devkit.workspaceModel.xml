@@ -6,10 +6,20 @@
   </dependencies>
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
   <actions>
+    <group id="WorkspaceModel" popup="true">
+      <action id="WorkspaceEntitiesJsonClipboard" internal="true"
+              class="com.intellij.devkit.workspaceModel.jsonDump.DumpWorkspaceEntitiesToClipboardAction"/>
+      <action id="WorkspaceEntitiesJsonLog" internal="true"
+              class="com.intellij.devkit.workspaceModel.jsonDump.DumpWorkspaceEntitiesToLogAction"/>
+      <action id="WorkspaceEntitiesJsonLogFile" internal="true"
+              class="com.intellij.devkit.workspaceModel.jsonDump.DumpWorkspaceEntitiesToLogFileAction"/>
+    </group>
     <action id="WorkspaceModelGeneration" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerationAction">
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </action>
-    <action id="WorkspaceModelGenerateAllModulesAction" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerateAllModulesAction"/>
+    <action id="WorkspaceModelGenerateAllModulesAction" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerateAllModulesAction">
+      <add-to-group group-id="WorkspaceModel" anchor="first"/>
+    </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="kotlin"
