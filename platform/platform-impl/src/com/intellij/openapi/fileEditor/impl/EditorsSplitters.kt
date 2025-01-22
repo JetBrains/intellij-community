@@ -40,7 +40,6 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileTooBigException
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -289,6 +288,11 @@ open class EditorsSplitters internal constructor(
       removeAll()
     }
 
+    if (PlatformUtils.isJetBrainsClient()) {
+      // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
+      return
+    }
+
     UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) { add(it, BorderLayout.CENTER) }
     withContext(Dispatchers.EDT) {
       validate()
@@ -308,7 +312,7 @@ open class EditorsSplitters internal constructor(
 
   internal suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    if (PlatformUtils.isJetBrainsClient() && Registry.`is`("rdct.persist.project.settings", false)) {
+    if (PlatformUtils.isJetBrainsClient()) {
       // Don't reopen editors from local files on JetBrains Client, it is done from the backend
       return
     }
