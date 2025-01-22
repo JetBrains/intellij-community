@@ -1503,6 +1503,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/inSuperTypes/KTIJ-27931.kt");
             }
 
+            @TestMetadata("KTIJ-30149.kt")
+            public void testKTIJ_30149() throws Exception {
+                runTest("../testData/basic/common/inSuperTypes/KTIJ-30149.kt");
+            }
+
             @TestMetadata("typeParameter.kt")
             public void testTypeParameter() throws Exception {
                 runTest("../testData/basic/common/inSuperTypes/typeParameter.kt");

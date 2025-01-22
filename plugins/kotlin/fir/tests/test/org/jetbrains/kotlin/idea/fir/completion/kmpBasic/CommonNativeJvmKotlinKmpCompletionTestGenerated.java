@@ -1592,6 +1592,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/inSuperTypes/KTIJ-27931.kt");
         }
 
+        @TestMetadata("KTIJ-30149.kt")
+        public void testKTIJ_30149() throws Exception {
+            runTest("../../completion/testData/basic/common/inSuperTypes/KTIJ-30149.kt");
+        }
+
         @TestMetadata("typeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("../../completion/testData/basic/common/inSuperTypes/typeParameter.kt");
