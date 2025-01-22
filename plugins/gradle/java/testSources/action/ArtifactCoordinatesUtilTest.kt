@@ -3,49 +3,50 @@ package org.jetbrains.plugins.gradle.action
 
 import junit.framework.AssertionFailedError
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
+import org.jetbrains.plugins.gradle.service.sources.parseArtifactCoordinates
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class GradleDownloadSourceActionTest {
+class ArtifactCoordinatesUtilTest {
 
   @Test
-  fun `test sources artifact notation parsing`() {
+  fun `test artifact notation parsing`() {
     val dependencyId = DefaultExternalDependencyId("mygroup", "myartifact", "myversion")
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleDownloadSourceAction.getSourceArtifactNotation(dependencyId.presentableName) {
+    assertEquals("mygroup:myartifact:myversion",
+                 parseArtifactCoordinates(dependencyId.presentableName) {
                    true
                  })
 
     dependencyId.classifier = "myclassifier"
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleDownloadSourceAction.getSourceArtifactNotation(dependencyId.presentableName) {
+    assertEquals("mygroup:myartifact:myversion",
+                 parseArtifactCoordinates(dependencyId.presentableName) {
                    true
                  })
 
     dependencyId.packaging = "mypackaging"
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleDownloadSourceAction.getSourceArtifactNotation(dependencyId.presentableName) {
+    assertEquals("mygroup:myartifact:myversion",
+                 parseArtifactCoordinates(dependencyId.presentableName) {
                    true
                  })
 
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleDownloadSourceAction.getSourceArtifactNotation(
+    assertEquals("mygroup:myartifact:myversion",
+                 parseArtifactCoordinates(
                    DefaultExternalDependencyId("mygroup", "myartifact", "myversion").apply { packaging = "mypackaging" }.presentableName) {
                    true
                  })
 
-    assertEquals("myartifact:myversion:sources",
-                 GradleDownloadSourceAction.getSourceArtifactNotation("myartifact:myversion") {
+    assertEquals("myartifact:myversion",
+                 parseArtifactCoordinates("myartifact:myversion") {
                    throw AssertionFailedError("artifactIdChecker shouldn't be called")
                  })
 
-    assertEquals("mygroup:myartifact:sources",
-                 GradleDownloadSourceAction.getSourceArtifactNotation("mygroup:myartifact") {
+    assertEquals("mygroup:myartifact",
+                 parseArtifactCoordinates("mygroup:myartifact") {
                    throw AssertionFailedError("artifactIdChecker shouldn't be called")
                  })
 
-    assertEquals("mygroup:myartifact:myversion:sources",
-                 GradleDownloadSourceAction.getSourceArtifactNotation("mygroup:myartifact:myversion@aar") {
+    assertEquals("mygroup:myartifact:myversion",
+                 parseArtifactCoordinates("mygroup:myartifact:myversion@aar") {
                    throw AssertionFailedError("artifactIdChecker shouldn't be called")
                  })
   }
