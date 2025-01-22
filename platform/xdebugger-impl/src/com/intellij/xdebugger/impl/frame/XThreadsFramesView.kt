@@ -2,6 +2,9 @@
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.ide.OccurenceNavigator
+import com.intellij.ide.ui.text.StyledTextPane
+import com.intellij.ide.ui.text.paragraph.TextParagraph
+import com.intellij.ide.ui.text.parts.RegularTextPart
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -14,6 +17,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.TextTransferable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
@@ -31,13 +35,14 @@ import com.intellij.xdebugger.impl.util.onTermination
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.Collections
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JList
@@ -45,6 +50,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
+import javax.swing.text.StyleConstants
 
 @Internal
 class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
@@ -54,6 +60,8 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private val myThreadsList = XDebuggerThreadsList.createDefault(supportsDescription)
   private val myFramesList = XDebuggerFramesList(debugTab.project)
+
+  private val myCurrentThreadDescriptionComponent = StyledTextPane()
 
   private val mySplitter: NonProportionalOnePixelSplitter
 
@@ -150,6 +158,10 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     }
 
     val frameListWrapper = JPanel(BorderLayout(0, 0))
+
+    if (supportsDescription) {
+      frameListWrapper.add(myCurrentThreadDescriptionComponent, BorderLayout.NORTH)
+    }
     addFramesNavigationAd(frameListWrapper)
     frameListWrapper.add(myFramesList.withSpeedSearch().toScrollPane(), BorderLayout.CENTER)
     frameListWrapper.minimumSize = minimumDimension
@@ -166,6 +178,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
             myThreadsList.model.removeListDataListener(requester)
             threadsScrollPane.viewport.removeChangeListener(requester)
             stackInfoDescriptionRequester = null
+            setActiveThreadDescription("")
           }
         })
         requester
@@ -245,6 +258,15 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     })
   }
 
+  private fun setActiveThreadDescription(@Nls text: String) {
+    myCurrentThreadDescriptionComponent.paragraphs = listOf(TextParagraph(listOf(RegularTextPart(text).apply {
+      this.editAttributes {
+        StyleConstants.setForeground(this, NamedColorUtil.getInactiveTextColor())
+      }
+    })))
+    myCurrentThreadDescriptionComponent.repaint()
+  }
+
   override fun processSessionEvent(event: SessionEvent, session: XDebugSession) {
     if (event == SessionEvent.BEFORE_RESUME) {
       return
@@ -307,6 +329,11 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private fun XExecutionStack.setActive(session: XDebugSession) {
     myFramesManager.setActive(this)
+
+    stackInfoDescriptionRequester?.requestDescription(this) { description, exception ->
+      description?.let { setActiveThreadDescription(it.longDescription) }
+    }
+
     val currentFrame = myFramesManager.tryGetCurrentFrame(this) ?: return
 
     session.setCurrentStackFrame(this, currentFrame)
