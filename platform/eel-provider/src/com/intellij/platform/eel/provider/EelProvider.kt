@@ -62,6 +62,12 @@ fun Path.getEelDescriptor(): EelDescriptor {
 fun Project.getEelDescriptor(): EelDescriptor {
   val filePath = projectFilePath
   if (filePath == null) {
+    // The path to project file can be null if the project is default or used in tests.
+    // While the latter is acceptable, the former can give rise to problems:
+    // It is possible to "preconfigure" some settings for projects, such as default SDK or libraries.
+    // This preconfiguration appears to be tricky in case of non-local projects: it would require UI changes if we want to configure WSL,
+    // and in the case of Docker it is simply impossible to preconfigure a container with UI.
+    // So we shall limit this preconfiguration to local projects only, which implies that the default project will be associated with the local eel descriptor.
     return LocalEelDescriptor
   }
   return Path.of(filePath).getEelDescriptor()
