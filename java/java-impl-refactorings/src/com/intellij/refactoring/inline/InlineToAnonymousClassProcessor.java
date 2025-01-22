@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -248,12 +248,9 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         if (statement != null && !myInlineThisOnly) {
           elementsToDelete.add(statement);
         }
-        else {
-          PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
-          if (typeElement != null) {
-            replaceWithSuperType(typeElement, superType);
+        else if (element instanceof PsiJavaCodeReferenceElement ref) {
+            replaceWithSuperType(ref, superType);
           }
-        }
       }
     }
 
@@ -302,14 +299,18 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void replaceWithSuperType(final PsiTypeElement typeElement, final PsiClassType superType) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
-    PsiClassType psiType = (PsiClassType) typeElement.getType();
-    PsiClassType.ClassResolveResult classResolveResult = psiType.resolveGenerics();
-    PsiType substType = classResolveResult.getSubstitutor().substitute(superType);
-    assert myClass.isEquivalentTo(classResolveResult.getElement());
+  private void replaceWithSuperType(PsiJavaCodeReferenceElement ref, PsiClassType superType) {
+    PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(ref, PsiTypeElement.class);
+    if (typeElement == null) return;
+    PsiClassType type = (PsiClassType) typeElement.getType();
+    PsiClassType.ClassResolveResult classResolveResult = type.resolveGenerics();
+    PsiClassType substType = (PsiClassType)classResolveResult.getSubstitutor().substitute(superType);
     try {
-      PsiElement replaced = typeElement.replace(factory.createTypeElement(substType));
+      PsiJavaCodeReferenceElement replacement = JavaPsiFacade.getElementFactory(myProject).createReferenceElementByType(substType);
+      while (!myClass.isEquivalentTo(ref.resolve()) && ref.getQualifier() instanceof PsiJavaCodeReferenceElement qRef) {
+        ref = qRef;
+      }
+      PsiElement replaced = ref.replace(replacement);
       JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(replaced);
     }
     catch(IncorrectOperationException e) {

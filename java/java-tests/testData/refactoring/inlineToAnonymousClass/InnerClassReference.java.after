@@ -1,0 +1,20 @@
+import java.io.Serializable;
+
+interface Descriptor {
+  Serializable createHolder();
+}
+
+class ObjectDescriptor implements Descriptor {
+
+  @Override
+  public Holder createHolder() {
+    return new Holder();
+  }
+
+  public class Holder implements Serializable {
+  }
+}
+
+class Some {
+  private final ObjectDescriptor.Holder holder = new ObjectDescriptor().createHolder();
+}
