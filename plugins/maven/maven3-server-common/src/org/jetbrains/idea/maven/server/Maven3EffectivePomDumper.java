@@ -97,32 +97,27 @@ public final class Maven3EffectivePomDumper {
                                             @NotNull List<String> inactiveProfiles) {
     final StringWriter w = new StringWriter();
 
-    try {
-      MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
+    MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
 
-      embedder.executeWithMavenSession(request, () -> {
-        try {
-          // copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
-          ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
+    embedder.executeWithMavenSession(request, () -> {
+      try {
+        // copied from DefaultMavenProjectBuilder.buildWithDependencies
+        ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
+        ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
 
-          MavenProject project = buildingResult.getProject();
+        MavenProject project = buildingResult.getProject();
 
-          XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
-                                                      "\n", null, null);
+        XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
+                                                    "\n", null, null);
 
-          writeHeader(writer);
+        writeHeader(writer);
 
-          writeEffectivePom(project, writer);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
-    }
-    catch (Exception e) {
-      return null;
-    }
+        writeEffectivePom(project, writer);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
 
     return w.toString();
   }
