@@ -514,7 +514,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
   }
 
   private static boolean isAutoCloseableDeclaredInFinallyBlock(@NotNull PsiCodeBlock block, @NotNull PsiVariable variable) {
-    return variable instanceof PsiLocalVariable && PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true) == block;
+    return variable instanceof PsiLocalVariable && PsiTreeUtil.isAncestor(block, variable, true);
   }
 
   private static @Nullable PsiVariable findAutoCloseableVariable(@Nullable PsiStatement statement) {
@@ -616,8 +616,8 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
         used = true;
         return;
       }
-      PsiElement parent = referenceExpression.getParent();
-      if ((parent instanceof PsiMethodCallExpression && !isCloseMethodCalled(referenceExpression)) || parent instanceof PsiExpressionList) {
+      PsiElement parent = PsiTreeUtil.getParentOfType(referenceExpression, true, PsiMethodCallExpression.class, PsiExpressionList.class);
+      if (parent instanceof PsiMethodCallExpression && !isCloseMethodCalled(referenceExpression) || parent instanceof PsiExpressionList) {
         used = true;
       }
     }

@@ -360,6 +360,16 @@ class ExtraUsageOfAutoCloseableInFinally {
       }
     }
   }
+
+  public void expressionList() throws Exception {
+    MyAutoCloseable first = create();
+    try {
+      System.out.println(first.hashCode());
+    } finally {
+      first.close();
+      System.out.println(first.hashCode());
+    }
+  }
 }
 
 class NestedCatchSections {
@@ -477,6 +487,22 @@ class NestedCatchSections {
       }
       catch (B | IOException e) {
 
+      }
+    }
+  }
+
+  void variableUsedInSecondInnerTry(InputStream stream) {
+    try {
+      System.out.println(1);
+    } finally {
+      try {
+        stream.close();
+      }
+      catch (Exception e) {
+      }
+      try {
+        stream.close();
+      } catch (Exception e) {
       }
     }
   }
