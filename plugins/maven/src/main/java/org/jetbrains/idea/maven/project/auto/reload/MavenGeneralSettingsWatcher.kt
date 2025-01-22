@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModification
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFileChangesListener.Companion.subscribeOnVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
-import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
+import com.intellij.openapi.externalSystem.autoimport.settings.BackgroundAsyncSupplier
 import com.intellij.openapi.util.io.toCanonicalPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
@@ -49,8 +49,7 @@ class MavenGeneralSettingsWatcher(
   }
 
   fun subscribeOnSettingsFileChanges(parentDisposable: Disposable) {
-    val filesProvider = ReadAsyncSupplier.Builder(::collectSettingsFiles)
-      .coalesceBy(this)
+    val filesProvider = BackgroundAsyncSupplier.Builder(::collectSettingsFiles)
       .build(backgroundExecutor)
     subscribeOnVirtualFilesChanges(false, filesProvider, object : FilesChangesListener {
       override fun onFileChange(stamp: Stamp, path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
