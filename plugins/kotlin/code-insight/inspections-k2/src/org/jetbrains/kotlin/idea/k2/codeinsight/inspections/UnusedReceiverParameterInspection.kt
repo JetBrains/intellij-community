@@ -71,7 +71,8 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
             callableDeclaration.hasModifier(KtTokens.OPERATOR_KEYWORD) ||
             callableDeclaration.hasModifier(KtTokens.INFIX_KEYWORD) ||
             callableDeclaration.hasActualModifier() ||
-            callableDeclaration.isOverridable()
+            callableDeclaration.isOverridable() ||
+            (callableDeclaration is KtProperty && callableDeclaration.delegate != null)
         ) return
 
         analyze(callableDeclaration) {

@@ -11511,6 +11511,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/contextReceiverSubtype.kt");
         }
 
+        @TestMetadata("delegateReceiverExplicitGetter.kt")
+        public void testDelegateReceiverExplicitGetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/delegateReceiverExplicitGetter.kt");
+        }
+
         @TestMetadata("functionInSameClass.kt")
         public void testFunctionInSameClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedReceiverParameter/functionInSameClass.kt");

@@ -17808,6 +17808,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedReceiverParameter/contextReceiverSubtype.kt");
         }
 
+        @TestMetadata("delegateReceiverExplicitGetter.kt")
+        public void testDelegateReceiverExplicitGetter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/delegateReceiverExplicitGetter.kt");
+        }
+
         @TestMetadata("functionInSameClass.kt")
         public void testFunctionInSameClass() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/functionInSameClass.kt");
