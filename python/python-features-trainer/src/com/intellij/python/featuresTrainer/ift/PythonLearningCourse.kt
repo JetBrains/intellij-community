@@ -24,6 +24,7 @@ import com.jetbrains.python.PythonLanguage
 import training.dsl.LessonUtil
 import training.learn.CourseManager
 import training.learn.LessonsBundle
+import training.learn.course.IftModule
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
 import training.learn.course.LessonType
@@ -37,7 +38,13 @@ import training.learn.lesson.general.refactorings.ExtractMethodCocktailSortLesso
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
 
 class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
-  override fun modules() = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
+  override fun modules(): List<IftModule> {
+    val courseManager = CourseManager.instance
+    return onboardingTour() +
+           courseManager.findCommonModules("Jupyter") +
+           stableModules() +
+           courseManager.findCommonModules("Git")
+  }
 
   private val isOnboardingLessonEnabled: Boolean
     get() = PlatformUtils.isPyCharmCommunity() || PlatformUtils.isPyCharmPro()
