@@ -34,10 +34,12 @@ fun String.toJvmVendor(): JvmVendor {
   return jvmVendor
 }
 
-fun JdkProduct.toJvmVendor(): JvmVendor {
+fun JdkProduct.toJvmVendor(): JvmVendor? {
   return vendor.toJvmVendor()
+    .takeIf { it.knownVendor != JvmVendor.KnownJvmVendor.UNKNOWN }
 }
 
-fun Variant.toJvmVendor(): JvmVendor {
+fun Variant.toJvmVendor(): JvmVendor? {
   return (prefix ?: name).toJvmVendor()
+    .takeIf { it.knownVendor != JvmVendor.KnownJvmVendor.UNKNOWN }
 }
