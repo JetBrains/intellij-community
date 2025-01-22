@@ -582,7 +582,7 @@ internal open class FirCallableCompletionContributor(
                 val insertionStrategy = getInsertionStrategyForFunctionalVariables(applicabilityResult)
                     ?: return null
 
-                return createApplicableExtension(
+                createApplicableExtension(
                     signature = candidate.substitute(substitutor), // do not run before null check
                     importingStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(
                         symbol = candidate,
