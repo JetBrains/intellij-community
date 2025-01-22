@@ -22,8 +22,8 @@ final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker 
   Editor createEditor(final @NotNull DocumentWindow documentRange,
                       final @NotNull Editor editor,
                       final @NotNull PsiFile injectedFile) {
+    if (!(editor instanceof EditorImpl editorImpl)) return editor;
     var documentRangeImpl = (DocumentWindowImpl)documentRange;
-    var editorImpl = (EditorImpl)editor;
     assert documentRange.isValid();
     assert injectedFile.isValid();
     Ref<EditorWindowImpl> editorWindow = Ref.create();
