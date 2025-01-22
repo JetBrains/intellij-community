@@ -10,7 +10,13 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.PRIVATE
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.PUBLIC
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.builtins.StandardNames.EQUALS_NAME
+import org.jetbrains.kotlin.builtins.StandardNames.HASHCODE_NAME
+import org.jetbrains.kotlin.builtins.StandardNames.TO_STRING_NAME
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -18,8 +24,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.MODIFIER_KEYWORDS_ARRAY
 import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
+import org.jetbrains.kotlin.load.java.propertyNamesByAccessorName
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -50,9 +56,11 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
                 val superCallInfo = superCallElement.resolveToCall() ?: return
                 val superFunctionCallOrNull = superCallInfo.singleFunctionCallOrNull() ?: return
                 val superFunctionSymbol = superFunctionCallOrNull.symbol
+                val superFunctionIsAny = superFunctionSymbol.callableId in CALLABLE_IDS_OF_ANY
+
                 if (function.containingClassOrObject?.isData() == true) {
-                    if (superFunctionSymbol.callableId in CALLABLE_IDS_OF_ANY) return
-                    val allSuperOverriddenSymbols = superFunctionCallOrNull.symbol.allOverriddenSymbols
+                    if (superFunctionIsAny) return
+                    val allSuperOverriddenSymbols = superFunctionCallOrNull.symbol.allOverriddenSymbolsWithSelf
                     if (allSuperOverriddenSymbols.any { it.callableId in CALLABLE_IDS_OF_ANY }) return
                 }
 
@@ -66,23 +74,19 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
                         .any {
                             val functionParameterType = it.first.returnType
                             val superParameterType = it.second.returnType
-                            //val bool = !functionParameterType.isSubtypeOf(superParameterType)
-                            val bool = !functionParameterType.semanticallyEquals(superParameterType)
-                            bool
+                            val typesMatch = functionParameterType.semanticallyEquals(superParameterType)
+                            !typesMatch
                         }
                 ) return
 
                 val allFunctionOverriddenSymbols: Sequence<KaCallableSymbol> = symbol.allOverriddenSymbols
-                if (allFunctionOverriddenSymbols.any { it.modality == KaSymbolModality.ABSTRACT }) {
-                    if (superFunctionSymbol.callableId in CALLABLE_IDS_OF_ANY) {
-                        return
-                    }
+                // do nothing when the overridden function is from Any (e.g. `kotlin/Any.equals`)
+                // and super function is abstract
+                if (superFunctionIsAny && allFunctionOverriddenSymbols.any { it.modality == KaSymbolModality.ABSTRACT }) {
+                    return
                 }
-                if (allFunctionOverriddenSymbols.any {
-                        if (!it.origin.isJavaSourceOrLibrary()) return@any false
-                        val visibility = it.visibility
-                        visibility != KaSymbolVisibility.PUBLIC && visibility != KaSymbolVisibility.PRIVATE
-                    }) {
+
+                if (allFunctionOverriddenSymbols.any { it.isPackageVisibleNonJavaSymbol() }) {
                     return
                 }
 
@@ -101,6 +105,12 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
             )
             holder.registerProblem(descriptor)
         })
+
+    private fun KaCallableSymbol.isPackageVisibleNonJavaSymbol(): Boolean {
+        if (!origin.isJavaSourceOrLibrary()) return false
+        val symbolVisibility = visibility
+        return symbolVisibility != PUBLIC && symbolVisibility != PRIVATE
+    }
 
     private fun KtNamedFunction.qualifiedExpression(): KtDotQualifiedExpression? {
         val bodyExpression = bodyExpression ?: return null
@@ -146,7 +156,7 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
         if (isSetter && singleValueParameter == null || !isSetter && valueParameters.isNotEmpty()) return false
         val propertyType = if (isSetter) singleValueParameter!!.returnType else functionType
         val nonNullablePropertyType = propertyType.withNullability(KaTypeNullability.NON_NULLABLE)
-        return org.jetbrains.kotlin.load.java.propertyNamesByAccessorName(functionName).any {
+        return propertyNamesByAccessorName(functionName).any {
             val propertyName = it.asString()
             containingClassOrObject?.declarations?.find { d ->
                 d is KtProperty && d.name == propertyName && d.returnType.withNullability(KaTypeNullability.NON_NULLABLE)
@@ -158,10 +168,7 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
     context(KaSession)
     private fun KtNamedFunction.isAmbiguouslyDerived(allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>): Boolean {
         // less than 2 functions
-        val iterator = allFunctionOverriddenSymbols.iterator()
-        if (!iterator.hasNext()) return false
-        iterator.next()
-        if (!iterator.hasNext()) return false
+        if (allFunctionOverriddenSymbols.take(2).count() < 2) return false
 
         // Two+ functions
         // At least one default in interface or abstract in class, or just something from Java
@@ -180,12 +187,11 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
             return true
         }
 
+        val superTypeListEntries = containingClassOrObject?.superTypeListEntries
         val delegatedSuperTypeEntries =
-            containingClassOrObject?.superTypeListEntries?.filterIsInstance<KtDelegatedSuperTypeEntry>()?.takeIf { it.isNotEmpty() }
-            ?: return false
-        val delegatedSuperDeclarationTypes = delegatedSuperTypeEntries.mapNotNull { entry ->
-            entry.typeReference?.type
-        }
+            superTypeListEntries?.filterIsInstance<KtDelegatedSuperTypeEntry>()?.ifEmpty { return false } ?: return false
+        val delegatedSuperDeclarationTypes =
+            delegatedSuperTypeEntries.mapNotNull { it.typeReference?.type }
         return allFunctionOverriddenSymbols.any { overriddenSymbol ->
             val type = (overriddenSymbol.containingSymbol as? KaNamedClassSymbol)?.defaultType ?: return@any false
             delegatedSuperDeclarationTypes.any { type.isSubtypeOf(it) }
@@ -203,6 +209,6 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
 }
 
 private val MODIFIER_EXCLUDE_OVERRIDE: List<KtModifierKeywordToken> = MODIFIER_KEYWORDS_ARRAY.asList() - OVERRIDE_KEYWORD
-private val CALLABLE_IDS_OF_ANY: Set<CallableId> = listOf("equals", "hashCode", "toString").mapTo(hashSetOf()) {
-    CallableId(StandardClassIds.Any, Name.identifier(it))
+private val CALLABLE_IDS_OF_ANY: Set<CallableId> = listOf(EQUALS_NAME, HASHCODE_NAME, TO_STRING_NAME).mapTo(hashSetOf()) {
+    CallableId(StandardClassIds.Any, it)
 }
