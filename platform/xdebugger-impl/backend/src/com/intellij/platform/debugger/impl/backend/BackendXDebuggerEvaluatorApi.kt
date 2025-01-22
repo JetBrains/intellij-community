@@ -37,6 +37,7 @@ import fleet.kernel.change
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.query
 import fleet.kernel.tryWithEntities
+import fleet.kernel.withEntities
 import fleet.rpc.core.toRpc
 import fleet.util.UID
 import kotlinx.coroutines.*
@@ -494,13 +495,15 @@ private fun XValueEntity.setInitialMarker() {
   val xValueEntity = this
   val session = sessionEntity.session
   (session as XDebugSessionImpl).coroutineScope.launch {
-    withKernel {
-      xValue.isReady.await()
-      val markers = session.valueMarkers
-      val marker = markers?.getMarkup(xValue) ?: return@withKernel
-      change {
-        xValueEntity.update {
-          it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
+    withEntities(xValueEntity) {
+      withKernel {
+        xValue.isReady.await()
+        val markers = session.valueMarkers
+        val marker = markers?.getMarkup(xValue) ?: return@withKernel
+        change {
+          xValueEntity.update {
+            it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
+          }
         }
       }
     }

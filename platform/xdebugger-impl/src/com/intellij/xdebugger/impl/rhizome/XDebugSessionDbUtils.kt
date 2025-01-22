@@ -6,6 +6,7 @@ import com.intellij.platform.project.asEntity
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import fleet.kernel.change
+import fleet.kernel.withEntities
 import fleet.util.UID
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicReference
@@ -21,11 +22,13 @@ internal fun storeXDebugSessionInDb(sessionScope: CoroutineScope, session: XDebu
   val deferred = sessionScope.async {
     val createdSessionEntity = withKernel {
       val projectEntity = session.project.asEntity()
-      change {
-        XDebugSessionEntity.new {
-          it[XDebugSessionEntity.ProjectEntity] = projectEntity
-          it[XDebugSessionEntity.SessionId] = XDebugSessionId(UID.random())
-          it[XDebugSessionEntity.Session] = session
+      withEntities(projectEntity) {
+        change {
+          XDebugSessionEntity.new {
+            it[XDebugSessionEntity.ProjectEntity] = projectEntity
+            it[XDebugSessionEntity.SessionId] = XDebugSessionId(UID.random())
+            it[XDebugSessionEntity.Session] = session
+          }
         }
       }
     }

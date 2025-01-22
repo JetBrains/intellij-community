@@ -20,6 +20,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
+import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.Promise
 import java.awt.Component
@@ -104,22 +105,24 @@ internal class XMarkObjectActionHandler : MarkObjectActionHandler() {
         val sessionEntity = entity(XDebugSessionEntity.Session, session) ?: return@withKernel
         val sessionXValues = entities(XValueEntity.SessionEntity, sessionEntity)
         // TODO[IJPL-160146]: Don't update all the xValues, since some markers may not be changed
-        for (xValue in sessionXValues) {
-          val currentMarker = xValue.marker
-          val marker = markers.getMarkup(xValue.xValue)
+        for (sessionXValueEntity in sessionXValues) {
+          val currentMarker = sessionXValueEntity.marker
+          val marker = markers.getMarkup(sessionXValueEntity.xValue)
 
-          if (marker != null) {
-            change {
-              xValue.update {
-                it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
+          tryWithEntities(sessionXValueEntity) {
+            if (marker != null) {
+              change {
+                sessionXValueEntity.update {
+                  it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
+                }
               }
             }
-          }
-          else if (currentMarker != null) {
-            // marker for xValue is removed
-            change {
-              xValue.update {
-                it[XValueEntity.Marker] = null
+            else if (currentMarker != null) {
+              // marker for xValue is removed
+              change {
+                sessionXValueEntity.update {
+                  it[XValueEntity.Marker] = null
+                }
               }
             }
           }

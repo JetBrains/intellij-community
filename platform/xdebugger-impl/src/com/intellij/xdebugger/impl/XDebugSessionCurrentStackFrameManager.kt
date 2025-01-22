@@ -8,6 +8,7 @@ import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEvaluatorEntity
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import fleet.kernel.change
+import fleet.kernel.withEntities
 import fleet.util.UID
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,16 +33,18 @@ internal class XDebugSessionCurrentStackFrameManager(
         val sessionEntity = sessionEntityDeferred.await()
         currentStackFrame.collectLatest { stackFrame ->
           val currentEvaluator = stackFrame.get()?.evaluator
-          change {
-            sessionEntity.evaluator?.delete()
-            if (currentEvaluator != null) {
-              val evaluatorEntity = XDebuggerEvaluatorEntity.new {
-                it[XDebuggerEvaluatorEntity.EvaluatorId] = XDebuggerEvaluatorId(UID.random())
-                it[XDebuggerEvaluatorEntity.Evaluator] = currentEvaluator
-                it[XDebuggerEvaluatorEntity.Session] = sessionEntity
-              }
-              sessionEntity.update {
-                it[XDebugSessionEntity.Evaluator] = evaluatorEntity
+          withEntities(sessionEntity) {
+            change {
+              sessionEntity.evaluator?.delete()
+              if (currentEvaluator != null) {
+                val evaluatorEntity = XDebuggerEvaluatorEntity.new {
+                  it[XDebuggerEvaluatorEntity.EvaluatorId] = XDebuggerEvaluatorId(UID.random())
+                  it[XDebuggerEvaluatorEntity.Evaluator] = currentEvaluator
+                  it[XDebuggerEvaluatorEntity.Session] = sessionEntity
+                }
+                sessionEntity.update {
+                  it[XDebugSessionEntity.Evaluator] = evaluatorEntity
+                }
               }
             }
           }
