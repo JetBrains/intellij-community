@@ -49,7 +49,7 @@
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
 
     <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
-    <actionPromoter implementation="org.jetbrains.plugins.terminal.action.SendShortcutToTerminalAction"/>
+    <actionPromoter implementation="org.jetbrains.plugins.terminal.action.SendShortcutToTerminalActionPromoter"/>
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalEnterHandler"
                          id="terminalEnter" order="first"/>
     <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.block.history.TerminalCaretUpHandler"

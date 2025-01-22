@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.annotations.Unmodifiable
+import com.intellij.openapi.util.Key
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.reworked.TerminalEventDispatcher
 import java.awt.event.KeyEvent
@@ -24,7 +24,11 @@ import javax.swing.KeyStroke
  * but it only enables itself if none of the allowed actions are enabled.
  * It is also promoted, so it's considered before other platform actions.
  */
-internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionPromoter, ActionRemoteBehaviorSpecification.Frontend {
+internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+
+  init {
+    templatePresentation.putClientProperty(KEY, Unit)
+  }
 
   private val terminalShortcuts = CustomShortcutSet(
     *TerminalEventDispatcher.getActionsToSkip()
@@ -33,8 +37,6 @@ internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionPromoter,
   )
 
   private val registeredDispatchers = ConcurrentHashMap<JComponent, TerminalEventDispatcher>()
-
-  override fun promote(actions: @Unmodifiable List<AnAction?>, context: DataContext): @Unmodifiable List<AnAction?>? = listOf(this)
 
   internal fun register(component: JComponent, dispatcher: TerminalEventDispatcher) {
     registerCustomShortcutSet(terminalShortcuts, component)
@@ -80,6 +82,17 @@ internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionPromoter,
     val dispatcher = getDispatcher(e) ?: return
     val event = e.inputEvent as? KeyEvent ?: return
     dispatcher.handleKeyEvent(event)
+  }
+}
+
+private val KEY = Key.create<Unit>("SendShortcutToTerminalAction")
+
+internal class SendShortcutToTerminalActionPromoter : ActionPromoter {
+  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
+    // Promoters often use instanceof checks, but they're prone to break with action delegates / wrappers,
+    // so we use a client property instead.
+    val action = actions.find { it.templatePresentation.getClientProperty(KEY) != null }
+    return if (action != null) listOf(action) else emptyList()
   }
 }
 

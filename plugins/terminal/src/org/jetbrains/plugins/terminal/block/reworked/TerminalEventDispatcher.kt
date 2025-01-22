@@ -48,6 +48,7 @@ internal abstract class TerminalEventDispatcher(
   private val editor: EditorEx,
   private val parentDisposable: Disposable,
 ) : IdeEventQueue.EventDispatcher {
+  private val sendShortcutAction = SendShortcutToTerminalAction()
   private var myRegistered = false
   private var actionsToSkip: List<AnAction> = emptyList()
 
@@ -94,9 +95,6 @@ internal abstract class TerminalEventDispatcher(
       myRegistered = false
     }
   }
-
-  private val sendShortcutAction: SendShortcutToTerminalAction
-    get() = ActionManager.getInstance().getAction("Terminal.SendShortcut") as SendShortcutToTerminalAction
 
   private fun skipAction(e: KeyEvent): Boolean {
     val eventShortcut = KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null)

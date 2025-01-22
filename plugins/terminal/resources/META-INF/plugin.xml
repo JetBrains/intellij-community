@@ -52,7 +52,6 @@
   <xi:include href="/META-INF/terminal.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
-    <action id="Terminal.SendShortcut" class="org.jetbrains.plugins.terminal.action.SendShortcutToTerminalAction" />
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
             icon="org.jetbrains.plugins.terminal.TerminalIcons.OpenTerminal_13x13">
       <add-to-group group-id="RevealGroup" anchor="last"/>
