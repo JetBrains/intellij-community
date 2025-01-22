@@ -227,10 +227,15 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var settings = resolverContext.getSettings();
     var listener = resolverContext.getListener();
     var cancellationToken = resolverContext.getCancellationToken();
-    var buildEnvironment = resolverContext.getBuildEnvironment();
 
     return GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, connection -> {
+      BuildEnvironment buildEnvironment = null;
       try {
+        buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationToken, settings);
+        if (buildEnvironment != null) {
+          resolverContext.setBuildEnvironment(buildEnvironment);
+        }
+
         return task.apply(connection);
       }
       catch (ProcessCanceledException e) {
@@ -256,17 +261,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull GradleProjectResolverExtension projectResolverChain
   ) throws IllegalArgumentException, IllegalStateException {
-
-    final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(
-      connection,
-      resolverContext.getExternalSystemTaskId(),
-      resolverContext.getListener(),
-      resolverContext.getCancellationToken(),
-      resolverContext.getSettings()
-    );
-    if (buildEnvironment != null) {
-      resolverContext.setBuildEnvironment(buildEnvironment);
-    }
 
     var buildAction = new GradleModelFetchAction();
 
@@ -314,7 +308,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(executionSettings);
     var pathMapper = ObjectUtils.doIfNotNull(environmentConfigurationProvider, it -> it.getPathMapper());
-    var models = new GradleIdeaModelHolder(pathMapper, buildEnvironment);
+    var models = new GradleIdeaModelHolder(pathMapper, resolverContext.getBuildEnvironment());
     resolverContext.setModels(models);
 
 
