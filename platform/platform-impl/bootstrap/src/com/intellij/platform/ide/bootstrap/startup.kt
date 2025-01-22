@@ -32,6 +32,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.Java11Shim
+import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
@@ -241,8 +242,7 @@ fun CoroutineScope.startApplication(
   }
 
   val kernelStarted = async {
-    val isThinClient = args.contains("thinClient")
-    if (isThinClient) {
+    if (PlatformUtils.isJetBrainsClient()) {
       startClientKernel(mainScope)
     }
     else {
