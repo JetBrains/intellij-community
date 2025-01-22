@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.isAsyncChangesProcessing
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
@@ -18,7 +19,6 @@ import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.C
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.externalSystem.autoimport.settings.BackgroundAsyncSupplier
 import com.intellij.openapi.externalSystem.autoimport.settings.CachingAsyncSupplier
-import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -161,21 +161,6 @@ class ProjectSettingsTracker(
     }
   }
 
-  private fun submitSettingsFilesCRCCalculation(
-    operationName: String,
-    settingsPaths: Set<String>,
-    isMergeSameCalls: Boolean,
-    callback: (Map<String, Long>) -> Unit,
-  ) {
-    val builder = ReadAsyncSupplier.Builder { calculateSettingsFilesCRC(settingsPaths) }
-      .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
-    if (isMergeSameCalls) {
-      builder.coalesceBy(this, operationName)
-    }
-    builder.build(backgroundExecutor)
-      .supply(parentDisposable, callback)
-  }
-
   private fun submitSettingsFilesCollection(
     isRefreshVfs: Boolean,
     isInvalidateCache: Boolean,
@@ -217,11 +202,12 @@ class ProjectSettingsTracker(
       // Therefore, the operation stamp cannot be taken earlier than VFS refresh for the settings files.
       // @see the AsyncFileChangesListener#apply function for details
       val operationStamp = Stamp.nextStamp()
-      submitSettingsFilesCRCCalculation(operationName, settingsPaths, context.isMergeSameCalls) { newSettingsFilesCRC ->
-        val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.reloadStatus)
-        updateProjectStatus(operationStamp, context.syncEvent, context.changeEvent, settingsFilesStatus)
-        context.callback?.invoke()
+      val newSettingsFilesCRC = runReadAction {
+        calculateSettingsFilesCRC(settingsPaths)
       }
+      val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.reloadStatus)
+      updateProjectStatus(operationStamp, context.syncEvent, context.changeEvent, settingsFilesStatus)
+      context.callback?.invoke()
     }
   }
 
@@ -264,7 +250,6 @@ class ProjectSettingsTracker(
 
   private class SettingsFilesStatusUpdateContext(
     var reloadStatus: ReloadStatus,
-    var isMergeSameCalls: Boolean = false,
     var isRefreshVfs: Boolean = false,
     var isInvalidateCache: Boolean = false,
     var syncEvent: ((Stamp) -> ProjectStatus.ProjectEvent)? = null,
@@ -349,7 +334,6 @@ class ProjectSettingsTracker(
 
     override fun apply() {
       submitSettingsFilesStatusUpdate("ProjectSettingsListener.apply") {
-        isMergeSameCalls = true
         syncEvent = ::Revert
         callback = { projectTracker.scheduleChangeProcessing() }
       }
