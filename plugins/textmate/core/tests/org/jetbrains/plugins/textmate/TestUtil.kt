@@ -8,6 +8,7 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.jvm.JvmStatic
 
 object TestUtil {
   const val BAT: @NonNls String = "bat"

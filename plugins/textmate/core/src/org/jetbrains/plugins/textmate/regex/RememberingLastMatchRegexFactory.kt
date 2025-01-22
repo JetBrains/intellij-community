@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.regex
 
+import kotlinx.coroutines.Runnable
 import org.jetbrains.plugins.textmate.regex.MatchData.Companion.NOT_MATCHED
 
 class RememberingLastMatchRegexFactory(private val delegate: RegexFactory) : RegexFactory {

@@ -358,7 +358,7 @@ class TextMateLexerCore(
     if (position > myCurrentOffset) {
       var restartable = myCurrentScope.parent == null
       val wsStart = myCurrentOffset
-      while (myStripWhitespaces && position > myCurrentOffset && Character.isWhitespace(myText[myCurrentOffset])) {
+      while (myStripWhitespaces && position > myCurrentOffset && myText[myCurrentOffset].isWhitespace()) {
         myCurrentOffset++
       }
 
@@ -371,7 +371,7 @@ class TextMateLexerCore(
       }
 
       var wsEnd = position
-      while (myStripWhitespaces && wsEnd > myCurrentOffset && Character.isWhitespace(myText[wsEnd - 1])) {
+      while (myStripWhitespaces && wsEnd > myCurrentOffset && myText[wsEnd - 1].isWhitespace()) {
         wsEnd--
       }
 

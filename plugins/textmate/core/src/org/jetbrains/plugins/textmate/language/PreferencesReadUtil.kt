@@ -8,6 +8,7 @@ import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.plist.PListValue
 import org.jetbrains.plugins.textmate.plist.Plist
+import kotlin.jvm.JvmStatic
 
 object PreferencesReadUtil {
   /**

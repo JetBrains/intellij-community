@@ -16,7 +16,7 @@ data class MatchData(val matched: Boolean, private val offsets: IntArray) {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other == null || javaClass != other.javaClass) return false
+    if (other == null) return false
 
     val matchData = other as MatchData
 

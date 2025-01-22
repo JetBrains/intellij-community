@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
+import kotlin.jvm.JvmField
+
 class TextMateScope(
   val scopeName: CharSequence?,
   val parent: TextMateScope?,
@@ -37,7 +39,7 @@ class TextMateScope(
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
+    if (other == null) return false
     other as TextMateScope
     return level == other.level && hashCode == other.hashCode && scopeName == other.scopeName
   }

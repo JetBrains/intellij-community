@@ -45,7 +45,7 @@ internal object SyntaxMatchUtils {
           }
           if (hasGroupIndex && matchData.count() > groupIndex) {
             val range = matchData.byteOffset(groupIndex)
-            val replacement = String(matchingString.bytes, range.start, range.length, Charsets.UTF_8)
+            val replacement = matchingString.bytes.decodeToString(range.start, range.end)
             append(BACK_REFERENCE_REPLACEMENT_REGEX.replace(replacement, "\\\\$0"))
             charIndex = digitIndex
             continue
