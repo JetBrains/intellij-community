@@ -1517,7 +1517,8 @@
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.FormatCodeCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.RecentFilesCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.ProjectViewCompletionCommand" />
-    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.CommentCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.LineCommentCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.JavaPsiElementCommentCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.IntroduceVariableCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.ShowUsagesActionCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GenerateGetterSetterHandleCompletionCommand" />

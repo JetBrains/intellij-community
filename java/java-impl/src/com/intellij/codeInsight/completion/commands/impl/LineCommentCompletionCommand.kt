@@ -5,10 +5,10 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 
-class CommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineComment",
-                                                                 "Comment",
-                                                                 ActionsBundle.actionText("CommentByLineComment"),
-                                                                 null) {
+class LineCommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineComment",
+                                                                     "Comment line",
+                                                                     ActionsBundle.actionText("CommentByLineComment"),
+                                                                     null) {
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
     val selectionModel = editor.selectionModel
