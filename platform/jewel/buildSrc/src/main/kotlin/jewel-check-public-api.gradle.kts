@@ -15,7 +15,7 @@ apiValidation {
     nonPublicMarkers.add("org.jetbrains.jewel.InternalJewelApi")
 }
 
-kotlin { explicitApi() }
+kotlin { compilerOptions { freeCompilerArgs.add("-Xexplicit-api=strict") } }
 
 val extension = project.extensions.create("publicApiValidation", ApiValidationExtension::class.java)
 
