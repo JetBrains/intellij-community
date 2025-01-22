@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.trialStateWidget
 
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.ui.Messages
 import com.intellij.ui.LicensingFacade
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -34,6 +37,20 @@ internal object TrialStateUtils {
 
     val result = max(ChronoUnit.DAYS.between(generationDate.toInstant(), expirationDate.toInstant()), 0)
     return result.toInt()
+  }
+
+  fun showTrialEndedDialog() {
+    val answer = Messages.showYesNoDialog(IdeBundle.message("trial.state.trial.ended.dialog.text"),
+                                          IdeBundle.message("trial.state.trial.ended.dialog.title"),
+                                          IdeBundle.message("trial.state.trial.ended.dialog.add.license"),
+                                          IdeBundle.message("trial.state.trial.ended.dialog.restart"),
+                                          Messages.getInformationIcon())
+    if (answer == Messages.YES) {
+      showRegister()
+    }
+    else {
+      ApplicationManagerEx.getApplicationEx().restart(true)
+    }
   }
 
   fun openTrailStateTab() {

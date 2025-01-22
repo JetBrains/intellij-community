@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.impl.trialStateWidget.TrialStateService.TrialState
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -67,7 +68,7 @@ internal class TrialStateWidget : DumbAwareAction(), CustomComponentAction {
           updateButton(result)
 
           if (state?.trialStateChanged == true) {
-            showGotItTooltip(result, state)
+            showUpdatedStateNotification(result, state)
           }
         }
       }
@@ -88,12 +89,18 @@ internal class TrialStateWidget : DumbAwareAction(), CustomComponentAction {
     updateButton(component as TrialStateButtonWrapper)
   }
 
-  private fun showGotItTooltip(wrapper: TrialStateButtonWrapper, state: TrialStateService.State) {
+  private fun showUpdatedStateNotification(wrapper: TrialStateButtonWrapper, state: TrialStateService.State) {
     if (!wrapper.isShowing()) {
       return
     }
 
     disposeTooltip()
+
+    if (state.trialState == TrialState.GRACE_ENDED) {
+      TrialStateUtils.showTrialEndedDialog()
+
+      return
+    }
 
     tooltip = state.getGotItTooltip()
     tooltip?.show(wrapper.button) { it, _ ->

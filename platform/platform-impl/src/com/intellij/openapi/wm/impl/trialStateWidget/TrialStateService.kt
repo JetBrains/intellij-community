@@ -32,7 +32,8 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
     ACTIVE,
     ALERT,
     EXPIRING,
-    GRACE
+    GRACE,
+    GRACE_ENDED
   }
 
   data class State(
@@ -47,7 +48,9 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
         TrialState.ALERT,
           -> IdeBundle.message("trial.state.days.trial.left", remainedDays)
         TrialState.EXPIRING -> IdeBundle.message("trial.state.1.day.trial.left")
-        TrialState.GRACE -> IdeBundle.message("trial.state.grace.period")
+        TrialState.GRACE,
+        TrialState.GRACE_ENDED,
+          -> IdeBundle.message("trial.state.grace.period")
       }
     }
 
@@ -181,7 +184,7 @@ private const val LAST_STATE_KEY = "trial.state.last.state"
 private const val LAST_COLOR_CLICKED_KEY = "trial.state.last.color.state.clicked"
 private const val ALERT_REMAINED_DAYS = 7
 private const val EXPIRING_REMAINED_DAYS = 1
-private const val GRACE_DAYS = -3
+private const val GRACE_DAYS = -1
 
 private const val GOT_IT_ID = "trial.state.widget.got.it.id"
 
@@ -214,6 +217,7 @@ private fun getColorState(trialState: TrialStateService.TrialState): ColorState 
     TrialStateService.TrialState.ALERT -> ColorState.ALERT
     TrialStateService.TrialState.EXPIRING,
     TrialStateService.TrialState.GRACE,
+    TrialStateService.TrialState.GRACE_ENDED,
       -> ColorState.EXPIRING
   }
 }
@@ -225,6 +229,7 @@ private fun getTrialState(remainedDays: Int, trialLengthDays: Int): TrialStateSe
     remainedDays > EXPIRING_REMAINED_DAYS -> TrialStateService.TrialState.ALERT
     remainedDays > 0 -> TrialStateService.TrialState.EXPIRING
     remainedDays > GRACE_DAYS -> TrialStateService.TrialState.GRACE
+    remainedDays == GRACE_DAYS -> TrialStateService.TrialState.GRACE_ENDED
     else -> null
   }
 }
