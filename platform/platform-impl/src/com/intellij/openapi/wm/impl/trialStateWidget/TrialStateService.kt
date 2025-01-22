@@ -10,7 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.trialStateWidget.TrialStateButton.ColorState
-import com.intellij.ui.GotItComponentBuilder
+import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.PlatformUtils
@@ -21,8 +21,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
@@ -55,34 +53,48 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
 
     fun getGotItTooltip(): GotItTooltip? {
       val result = when (trialState) {
-        TrialState.ALERT -> GotItTooltip(GOT_IT_ID, IdeBundle.message("trial.state.got.it.days.trial.left.text", remainedDays))
-          .withHeader(IdeBundle.message("trial.state.got.it.days.trial.left.title", remainedDays))
-          .withButtonLabel(IdeBundle.message("trial.state.got.it.learn.more"))
-          .withGotItButtonAction { TrialStateUtils.openTrailStateTab() }
-          .withSecondaryButton(IdeBundle.message("trial.state.got.it.close"))
+        TrialState.TRIAL_STARTED -> GotItTooltip(GOT_IT_ID, IdeBundle.message("trial.state.got.it.trial.started.text"))
+          .withHeader(IdeBundle.message("trial.state.got.it.trial.started.title", trialLengthDays))
+          .addLearnMoreButton()
 
-        TrialState.EXPIRING -> GotItTooltip(GOT_IT_ID, IdeBundle.message("trial.state.got.it.1.day.trial.left.text", remainedDays))
-          .withHeader(IdeBundle.message("trial.state.got.it.1.day.trial.left.title", remainedDays))
-          .withButtonLabel(IdeBundle.message("trial.state.got.it.learn.more"))
-          .withGotItButtonAction { TrialStateUtils.openTrailStateTab() }
-          .withSecondaryButton(IdeBundle.message("trial.state.got.it.close"))
+        TrialState.ALERT -> GotItTooltip(GOT_IT_ID, IdeBundle.message("trial.state.got.it.days.trial.left.text"))
+          .withHeader(IdeBundle.message("trial.state.got.it.days.trial.left.title", remainedDays))
+          .addLearnMoreButton()
+
+        TrialState.EXPIRING -> GotItTooltip(GOT_IT_ID, IdeBundle.message("trial.state.got.it.1.day.trial.left.text"))
+          .withHeader(IdeBundle.message("trial.state.got.it.1.day.trial.left.title"))
+          .addLearnMoreButton()
 
         TrialState.GRACE -> {
-          val builder = GotItComponentBuilder(IdeBundle.message("trial.state.got.it.grace.period.text", remainedDays))
-          GotItTooltip(GOT_IT_ID, builder)
-            .withHeader(IdeBundle.message("trial.state.got.it.grace.period.title", remainedDays))
+          val textSupplier: GotItTextBuilder.() -> String = {
+            buildString {
+              append(IdeBundle.message("trial.state.got.it.grace.period.text.begin"))
+              append(link(IdeBundle.message("trial.state.got.it.grace.period.text.link")) {
+                TrialStateUtils.showRegister()
+              })
+              append(IdeBundle.message("trial.state.got.it.grace.period.text.end"))
+            }
+          }
+          GotItTooltip(GOT_IT_ID, textSupplier)
+            .withHeader(IdeBundle.message("trial.state.got.it.grace.period.title"))
             .withButtonLabel(IdeBundle.message("trial.state.got.it.restart.ide"))
             .withGotItButtonAction { RestartDialogImpl.restartWithConfirmation() }
-            .withSecondaryButton(IdeBundle.message("trial.state.got.it.close"))
         }
 
         else -> return null
       }
 
+      result.withSecondaryButton(IdeBundle.message("trial.state.got.it.close"))
+
       // Allow tooltips unlimited times
       PropertiesComponent.getInstance().unsetValue("${GotItTooltip.PROPERTY_PREFIX}.${result.id}")
 
       return result
+    }
+
+    private fun GotItTooltip.addLearnMoreButton(): GotItTooltip {
+      return withButtonLabel(IdeBundle.message("trial.state.got.it.learn.more"))
+        .withGotItButtonAction { TrialStateUtils.openTrailStateTab() }
     }
   }
 
@@ -134,8 +146,8 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
     testRemainingDays?.let {
       remainedDays = it
     }
-
-    val trialState = getTrialState(remainedDays) ?: return null
+    val trialLengthDays = TrialStateUtils.getTrialLengthDays()
+    val trialState = getTrialState(remainedDays, trialLengthDays) ?: return null
     val newColorState = getColorState(trialState)
     val lastColorState = lastTrialState?.let { getColorState(it) }
     val colorStateChanged = newColorState != lastColorState
@@ -151,7 +163,7 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
     val colorState = if (lastColorStateClicked && newColorState != ColorState.EXPIRING) ColorState.DEFAULT else newColorState
 
     return State(trialState = trialState, trialStateChanged = trialStateChanged, colorState = colorState,
-                 remainedDays = remainedDays, trialLengthDays = TrialStateUtils.getTrialLengthDays())
+                 remainedDays = remainedDays, trialLengthDays = trialLengthDays)
   }
 
   fun setLastShownColorStateClicked() {
@@ -206,13 +218,9 @@ private fun getColorState(trialState: TrialStateService.TrialState): ColorState 
   }
 }
 
-private fun getTrialState(remainedDays: Int): TrialStateService.TrialState? {
-  val daysAfterTrialStart = TrialStateUtils.trialStartTime?.let {
-    ChronoUnit.DAYS.between(Instant.now(), it).toInt()
-  }
-
+private fun getTrialState(remainedDays: Int, trialLengthDays: Int): TrialStateService.TrialState? {
   return when {
-    daysAfterTrialStart == 0 -> TrialStateService.TrialState.TRIAL_STARTED
+    trialLengthDays > 0 && remainedDays == trialLengthDays -> TrialStateService.TrialState.TRIAL_STARTED
     remainedDays > ALERT_REMAINED_DAYS -> TrialStateService.TrialState.ACTIVE
     remainedDays > EXPIRING_REMAINED_DAYS -> TrialStateService.TrialState.ALERT
     remainedDays > 0 -> TrialStateService.TrialState.EXPIRING
