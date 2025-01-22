@@ -10,6 +10,7 @@ internal class ToolWindowsPaneThreeSplitterHolder(vertical: Boolean = false, one
   val splitter: ThreeComponentsSplitter = ThreeComponentsSplitter(vertical, onePixelDividers)
 
   var firstComponent: JComponent? = null
+    get() = splitter.firstComponent
     set(value) {
       if (field === value) {
         return
@@ -18,6 +19,7 @@ internal class ToolWindowsPaneThreeSplitterHolder(vertical: Boolean = false, one
       splitter.firstComponent = value
     }
   var innerComponent: JComponent? = null
+    get() = splitter.innerComponent
     set(value) {
       if (field === value) {
         return
@@ -26,6 +28,7 @@ internal class ToolWindowsPaneThreeSplitterHolder(vertical: Boolean = false, one
       splitter.innerComponent = value
     }
   var lastComponent: JComponent? = null
+    get() = splitter.lastComponent
     set(value) {
       if (field === value) {
         return
