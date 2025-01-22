@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 @ApiStatus.Internal
 internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     // See org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer.renderType
@@ -85,10 +87,13 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
                 printKtType(it)
                 text(".")
             }
-            val iterator = type.parameterTypes.iterator()
+            val iterator = type.parameters.iterator()
             text("(")
             while (iterator.hasNext()) {
-                printKtType(iterator.next())
+                val valueParameter = iterator.next()
+                if (valueParameter.name != null)
+                    text("${valueParameter.name}: ")
+                printKtType(valueParameter.type)
                 if (iterator.hasNext()) {
                     text(", ")
                 }
