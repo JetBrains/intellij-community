@@ -40,19 +40,19 @@ val jdkLevel = project.property("jdk.level") as String
 kotlin {
     jvmToolchain { languageVersion = JavaLanguageVersion.of(jdkLevel) }
 
-    compilerOptions.jvmTarget.set(JvmTarget.fromTarget(jdkLevel))
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-receivers")
+        jvmTarget.set(JvmTarget.fromTarget(jdkLevel))
+    }
 
-    target {
-        compilations.all { kotlinOptions { freeCompilerArgs += "-Xcontext-receivers" } }
-        sourceSets.all {
-            languageSettings {
-                optIn("androidx.compose.foundation.ExperimentalFoundationApi")
-                optIn("androidx.compose.ui.ExperimentalComposeUiApi")
-                optIn("kotlin.experimental.ExperimentalTypeInference")
-                optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
-                optIn("org.jetbrains.jewel.foundation.ExperimentalJewelApi")
-                optIn("org.jetbrains.jewel.foundation.InternalJewelApi")
-            }
+    sourceSets.all {
+        languageSettings {
+            optIn("androidx.compose.foundation.ExperimentalFoundationApi")
+            optIn("androidx.compose.ui.ExperimentalComposeUiApi")
+            optIn("kotlin.experimental.ExperimentalTypeInference")
+            optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
+            optIn("org.jetbrains.jewel.foundation.ExperimentalJewelApi")
+            optIn("org.jetbrains.jewel.foundation.InternalJewelApi")
         }
     }
 }
