@@ -16,15 +16,15 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
+  private val sortedModulesWithDependencies: ModulesWithDependencies
   private val builder: DFSTBuilder<IdeaPluginDescriptorImpl>
   val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>
-  @JvmField val moduleGraph: ModuleGraph
 
   init {
-    val unsortedModuleGraph = createModuleGraph(unsortedPlugins)
-    builder = DFSTBuilder(unsortedModuleGraph, null, true)
+    val unsortedModulesWithDependencies = createModulesWithDependencies(unsortedPlugins)
+    builder = DFSTBuilder(ModuleGraph(unsortedModulesWithDependencies), null, true)
     topologicalComparator = toCoreAwareComparator(builder.comparator())
-    moduleGraph = unsortedModuleGraph.sorted(topologicalComparator)
+    sortedModulesWithDependencies = unsortedModulesWithDependencies.sorted(topologicalComparator)
   }
   
   private val enabledPluginIds = HashMap<PluginId, IdeaPluginDescriptorImpl>(unsortedPlugins.size)
@@ -57,7 +57,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         .sortedWith(Comparator.comparing({ it.second }, String.CASE_INSENSITIVE_ORDER))
         .forEach {
           detailedMessage.append("  ").append(it.second).append(" depends on:\n")
-          moduleGraph.getDependencies(it.first).asSequence()
+          (sortedModulesWithDependencies.directDependencies[it.first] ?: emptyList()).asSequence()
             .filter { o: IdeaPluginDescriptorImpl -> component.contains(o) }
             .map(pluginToString)
             .sortedWith(java.lang.String.CASE_INSENSITIVE_ORDER)
@@ -74,7 +74,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     val pluginToNumber = Object2IntOpenHashMap<PluginId>(unsortedPlugins.size)
     pluginToNumber.put(PluginManagerCore.CORE_ID, 0)
     var number = 0 // TODO: shouldn't it be 1?
-    for (module in moduleGraph.nodes) {
+    for (module in sortedModulesWithDependencies.modules) {
       // no content, so will be no modules, add it
       if (module.descriptorPath != null || module.content.modules.isEmpty()) {
         pluginToNumber.putIfAbsent(module.pluginId, number++)
@@ -93,7 +93,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     val enabledRequiredContentModules = HashMap<String, IdeaPluginDescriptorImpl>()
     val disabledModuleToProblematicPlugin = HashMap<String, PluginId>()
 
-    m@ for (module in moduleGraph.nodes) {
+    m@ for (module in sortedModulesWithDependencies.modules) {
       if (module.isUseIdeaClassLoader && !canExtendIdeaClassLoader) {
         module.isEnabled = false
         logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because it uses deprecated `use-idea-classloader` attribute but PathClassLoader is disabled")
@@ -192,13 +192,13 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
 
     val java11Shim = Java11Shim.INSTANCE
     return PluginSet(
-      moduleGraph = moduleGraph,
+      sortedModulesWithDependencies = sortedModulesWithDependencies, 
       allPlugins = allPlugins,
       enabledPlugins = sortedPlugins.filterTo(ArrayList<IdeaPluginDescriptorImpl>()) { it.isEnabled },
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),
       enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginIds),
       enabledModules = ArrayList<IdeaPluginDescriptorImpl>().also { result ->
-        for (module in moduleGraph.nodes) {
+        for (module in sortedModulesWithDependencies.modules) {
           if (if (module.moduleName == null) module.isEnabled else enabledModuleV2Ids.containsKey(module.moduleName)) {
             result.add(module)
           }

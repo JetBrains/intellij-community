@@ -9,36 +9,27 @@ import java.util.*
  * A graph which determines the order in which modules from the platform and the plugins are processed.
  * The graph has a node for each module, and there is an edge from a module to other modules that depend on it.
  */
-@ApiStatus.Internal
-class ModuleGraph internal constructor(
-  private val modules: Collection<IdeaPluginDescriptorImpl>,
-  private val directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-  private val directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-) : Graph<IdeaPluginDescriptorImpl> {
-  override fun getNodes(): Collection<IdeaPluginDescriptorImpl> = modules
+internal class ModuleGraph internal constructor(private val modulesWithDependencies: ModulesWithDependencies) : Graph<IdeaPluginDescriptorImpl> {
+  private val directDependents = IdentityHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>(modulesWithDependencies.modules.size)
 
-  fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> = directDependencies.getOrDefault(descriptor, Collections.emptyList())
+  init {
+    val edges = HashSet<Map.Entry<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>()
+    val directDependencies = modulesWithDependencies.directDependencies
+    for (module in modulesWithDependencies.modules) {
+      for (inNode in directDependencies.getOrDefault(module, Collections.emptyList())) {
+        if (edges.add(AbstractMap.SimpleImmutableEntry(inNode, module))) {
+          // not a duplicate edge
+          directDependents.computeIfAbsent(inNode) { ArrayList() }.add(module)
+        }
+      }
+    }
+  }
+  
+  override fun getNodes(): Collection<IdeaPluginDescriptorImpl> = modulesWithDependencies.modules
+
+  private fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> = modulesWithDependencies.directDependencies.getOrDefault(descriptor, Collections.emptyList())
 
   override fun getIn(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependencies(descriptor).iterator()
 
   override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = directDependents.getOrDefault(descriptor, Collections.emptyList()).iterator()
-
-  internal fun sorted(topologicalComparator: Comparator<IdeaPluginDescriptorImpl>): ModuleGraph {
-    return ModuleGraph(
-      modules = modules.sortedWith(topologicalComparator),
-      directDependencies = copySorted(directDependencies, topologicalComparator),
-      directDependents = copySorted(directDependents, topologicalComparator)
-    )
-  }
-}
-
-private fun copySorted(
-  map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-  comparator: Comparator<IdeaPluginDescriptorImpl>,
-): Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> {
-  val result = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(map.size)
-  for (element in map.entries) {
-    result.put(element.key, element.value.sortedWith(comparator))
-  }
-  return result
 }

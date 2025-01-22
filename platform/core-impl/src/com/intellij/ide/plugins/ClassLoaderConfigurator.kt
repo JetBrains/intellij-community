@@ -159,14 +159,14 @@ class ClassLoaderConfigurator(
   }
 
   private fun getSortedDependencies(module: IdeaPluginDescriptorImpl): Array<IdeaPluginDescriptorImpl> {
-    val dependenciesList = pluginSet.moduleGraph.getDependencies(module)
+    val dependenciesList = pluginSet.getSortedDependencies(module)
     var mutableDependenciesList: MutableList<IdeaPluginDescriptorImpl>? = null
     for (moduleItem in module.content.modules) {
       if (moduleItem.loadingRule == ModuleLoadingRule.EMBEDDED) {
         if (mutableDependenciesList == null) {
           mutableDependenciesList = dependenciesList.toMutableList()
         }
-        mutableDependenciesList.addAll(pluginSet.moduleGraph.getDependencies(moduleItem.requireDescriptor()))
+        mutableDependenciesList.addAll(pluginSet.getSortedDependencies(moduleItem.requireDescriptor()))
       }
     }
     val dependencies = (mutableDependenciesList ?: dependenciesList).toTypedArray()

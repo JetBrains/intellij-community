@@ -106,7 +106,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
 
   private suspend fun downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
     val downloadedList = mutableListOf<PluginDownloader>()
-    val enabledModules = PluginManagerCore.getPluginSet().moduleGraph.nodes.flatMap { listOf(it.pluginId) + it.pluginAliases }.toSet()
+    val enabledModules = PluginManagerCore.getPluginSet().allModulesSorted.flatMap { listOf(it.pluginId) + it.pluginAliases }.toSet()
     val downloaders = downloaders.filter { downloader ->
       val existingUpdateState = updatesState[downloader.id]
       if (PluginManagerCore.getPlugin(downloader.id) == null) {

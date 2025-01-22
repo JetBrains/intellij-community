@@ -6,7 +6,6 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import java.util.*
-import java.util.Collections.emptyList
 
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
@@ -14,7 +13,17 @@ private val COVERAGE_ALIAS_ID = PluginId.getId("com.intellij.modules.coverage")
 private val ML_INLINE_ALIAS_ID = PluginId.getId("com.intellij.ml.inline.completion")
 private val PROVISIONER_ALIAS_ID = PluginId.getId("com.intellij.platform.ide.provisioner")
 
-internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraph {
+internal class ModulesWithDependencies(val modules: List<IdeaPluginDescriptorImpl>,
+                                       val directDependencies: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>) {
+  internal fun sorted(topologicalComparator: Comparator<IdeaPluginDescriptorImpl>): ModulesWithDependencies {
+    return ModulesWithDependencies(
+      modules = modules.sortedWith(topologicalComparator),
+      directDependencies = copySorted(directDependencies, topologicalComparator),
+    )
+  }
+}
+
+internal fun createModulesWithDependencies(plugins: Collection<IdeaPluginDescriptorImpl>): ModulesWithDependencies {
   val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
   val modules = ArrayList<IdeaPluginDescriptorImpl>(moduleMap.size)
   for (module in plugins) {
@@ -106,21 +115,9 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     }
   }
 
-  val directDependents = IdentityHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>(modules.size)
-  val edges = HashSet<Map.Entry<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>()
-  for (module in modules) {
-    for (inNode in directDependencies.getOrDefault(module, emptyList())) {
-      if (edges.add(AbstractMap.SimpleImmutableEntry(inNode, module))) {
-        // not a duplicate edge
-        directDependents.computeIfAbsent(inNode) { ArrayList() }.add(module)
-      }
-    }
-  }
-
-  return ModuleGraph(
+  return ModulesWithDependencies(
     modules = modules,
     directDependencies = directDependencies,
-    directDependents = directDependents,
   )
 }
 
@@ -223,4 +220,15 @@ private fun collectDirectDependenciesInNewFormat(module: IdeaPluginDescriptorImp
       }
     }
   }
+}
+
+private fun copySorted(
+  map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+  comparator: Comparator<IdeaPluginDescriptorImpl>,
+): Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> {
+  val result = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(map.size)
+  for (element in map.entries) {
+    result.put(element.key, element.value.sortedWith(comparator))
+  }
+  return result
 }
