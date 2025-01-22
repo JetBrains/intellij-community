@@ -9,6 +9,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.execution.PyExecutionFailure
+import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.showProcessExecutionErrorDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.withContext
@@ -17,7 +20,7 @@ import kotlinx.coroutines.withContext
  * [FlowCollector.emit] user-readable errors here.
  *
  * This class should be used by the topmost classes, tightly coupled to the UI.
- * For the most business-logic and backend functions please return [Result] or error.
+ * For the most business-logic and backend functions please return [com.jetbrains.python.Result] or error.
  *
  * Please do not report *all* exceptions here: This is *not* the class for NPEs and AOOBs:
  * do not pass exceptions caught by `catch(e: Exception)` or `runCatching`: only report exceptions user interested in.
@@ -28,7 +31,7 @@ import kotlinx.coroutines.withContext
  *
  * Example:
  * ```kotlin
- *  suspend fun someLogic(): Result<@NlsSafe String> = withContext(Dispatchers.IO) {
+ *  suspend fun someLogic(): Result<@NlsSafe String, IOException> = withContext(Dispatchers.IO) {
  *   try {
  *     Result.success(Path.of("1.txt").readText())
  *   }
@@ -48,19 +51,47 @@ import kotlinx.coroutines.withContext
  * }
  * ```
  */
-typealias ErrorSink = FlowCollector<@NlsSafe String>
+typealias ErrorSink = FlowCollector<PyError>
+
+
+sealed class PyError(val message: @NlsSafe String) {
+  /**
+   * Some "business" error: just a message to be displayed to a user
+   */
+  class Message(message: @NlsSafe String) : PyError(message)
+
+  /**
+   * Some process can't be executed. To be displayed specially.
+   */
+  data class ExecException(val execFailure: PyExecutionFailure) : PyError(execFailure.toString())
+}
 
 /**
  * Displays error with a message box and writes it to a log.
  */
 internal object ShowingMessageErrorSync : ErrorSink {
-  override suspend fun emit(value: @NlsSafe String) {
+  override suspend fun emit(error: PyError) {
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      thisLogger().warn(value)
+      thisLogger().warn(error.message)
       // Platform doesn't allow dialogs without lock for now, fix later
       writeIntentReadAction {
-        Messages.showErrorDialog(value, PyBundle.message("python.error"))
+        when (val e = error) {
+          is PyError.ExecException -> {
+            showProcessExecutionErrorDialog(null, e.execFailure)
+          }
+          is PyError.Message -> {
+            Messages.showErrorDialog(error.message, PyBundle.message("python.error"))
+          }
+        }
       }
     }
   }
+}
+
+suspend fun ErrorSink.emit(@NlsSafe message: String) {
+  emit(PyError.Message(message))
+}
+
+suspend fun ErrorSink.emit(e: PyExecutionException) {
+  emit(PyError.ExecException(e))
 }

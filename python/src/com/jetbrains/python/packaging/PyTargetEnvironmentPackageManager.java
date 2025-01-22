@@ -113,8 +113,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw new PyExecutionException(e.getMessage(), "pip", makeSafeToDisplayCommand(simplifiedArgs),
-                                     e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
+      throw e.copyWith("pip", makeSafeToDisplayCommand(simplifiedArgs));
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
@@ -159,7 +158,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
       getPythonProcessResult(pythonExecution, !canModify, true, targetEnvironmentRequest);
     }
     catch (PyExecutionException e) {
-      throw new PyExecutionException(e.getMessage(), "pip", args, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
+      throw e.copyWith("pip", args);
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);

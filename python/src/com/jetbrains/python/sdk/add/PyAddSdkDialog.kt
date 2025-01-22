@@ -32,11 +32,9 @@ import com.jetbrains.python.sdk.add.v1.PyAddExistingCondaEnvPanel
 import com.jetbrains.python.sdk.add.v1.PyAddExistingVirtualEnvPanel
 import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvPanel
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
-import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.add.v1.PyAddSystemWideInterpreterPanel
 import com.jetbrains.python.sdk.add.v1.doCreateSouthPanel
-import com.jetbrains.python.sdk.add.v1.showProcessExecutionErrorDialog
+import com.jetbrains.python.showProcessExecutionErrorDialog
 import com.jetbrains.python.sdk.add.v1.swipe
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.detectVirtualEnvs

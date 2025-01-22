@@ -3,13 +3,13 @@ package com.intellij.python.junit5Tests.framework
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.newProjectWizard.PyV3UIServices
 import com.jetbrains.python.util.ErrorSink
+import com.jetbrains.python.util.PyError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 /**
@@ -17,12 +17,12 @@ import javax.swing.JComponent
  * Collect user errors from [errors], check [projectTreeExpanded] and [kotlinx.coroutines.Job.cancel] the [job] at the end
  */
 class PyV3UIServicesMock(private val coroutineScope: CoroutineScope) : PyV3UIServices {
-  private val _errors = MutableSharedFlow<@Nls String>()
+  private val _errors = MutableSharedFlow<PyError>()
 
   /**
    * [com.jetbrains.python.util.ErrorSink] errors
    */
-  val errors: Flow<@Nls String> = _errors
+  val errors: Flow<PyError> = _errors
 
   @Volatile
   var projectTreeExpanded: Boolean = false

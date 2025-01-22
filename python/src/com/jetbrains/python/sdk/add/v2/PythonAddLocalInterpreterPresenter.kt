@@ -3,11 +3,14 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.util.ErrorSink
+import com.jetbrains.python.util.PyError
+import com.jetbrains.python.util.emit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -35,7 +38,8 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
 
   suspend fun okClicked(addEnvironment: PythonAddEnvironment) {
     val sdk = addEnvironment.getOrCreateSdk(moduleOrProject).getOrElse {
-        errorSink.emit(it.localizedMessage.ifBlank { it.toString() })
+      // TODO: Migrate to python Result with PyError as error, not to check type dynamically
+      errorSink.emit(if (it is PyExecutionException) PyError.ExecException(it) else PyError.Message(it.localizedMessage))
       return
     }
     moduleOrProject.project.pySdkService.persistSdk(sdk)
