@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.internal.inspector.PropertyBean;
@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,14 +18,15 @@ import javax.swing.event.ListDataListener;
 import java.util.*;
 import java.util.function.Function;
 
-final class FileTypeWithDescriptorRenderer<T> extends SimpleListCellRenderer<T> implements UiInspectorListRendererContextProvider {
+@ApiStatus.Internal
+public final class FileTypeWithDescriptorRenderer<T> extends SimpleListCellRenderer<T> implements UiInspectorListRendererContextProvider {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private final @NotNull ListModel<? extends T> myModel;
   private final Function<? super T, ? extends FileType> myConverter;
   private @Nullable Set<String> myDuplicateDescriptions;
 
-  FileTypeWithDescriptorRenderer(@NotNull ListModel<? extends T> model, @NotNull Function<? super T, ? extends FileType> converter) {
+  public FileTypeWithDescriptorRenderer(@NotNull ListModel<? extends T> model, @NotNull Function<? super T, ? extends FileType> converter) {
     myModel = model;
     myConverter = converter;
     model.addListDataListener(new ListDataListener() {

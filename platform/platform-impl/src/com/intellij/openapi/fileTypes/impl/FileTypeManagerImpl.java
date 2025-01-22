@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -259,7 +259,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  record FileTypeWithDescriptor(@NotNull FileType fileType, @NotNull PluginDescriptor pluginDescriptor) implements Scheme {
+  @ApiStatus.Internal
+  public record FileTypeWithDescriptor(@NotNull FileType fileType, @NotNull PluginDescriptor pluginDescriptor) implements Scheme {
     private static final PluginDescriptor WILD_CARD = new DefaultPluginDescriptor("WILD_CARD");
 
     @Override
@@ -292,7 +293,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  static @NotNull IdeaPluginDescriptor coreIdeaPluginDescriptor() {
+  @ApiStatus.Internal
+  public static @NotNull IdeaPluginDescriptor coreIdeaPluginDescriptor() {
     return Objects.requireNonNull(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID), "The core plugin is amiss");
   }
 

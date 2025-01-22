@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,8 @@ public final class FoldingUtil {
     return regions;
   }
 
-  static boolean caretInsideRange(final Editor editor, final TextRange range) {
+  @ApiStatus.Internal
+  public static boolean caretInsideRange(final Editor editor, final TextRange range) {
     final int offset = editor.getCaretModel().getOffset();
     return range.contains(offset) && range.getStartOffset() != offset;
   }
