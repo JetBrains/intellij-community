@@ -3,15 +3,14 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.runAll
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectResolutionContributor
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.junit.Test
 import kotlin.io.path.isRegularFile
@@ -104,17 +103,18 @@ class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
       }
     }
 
-    class MyTestMavenImporter : MavenImporter("testPluginGroupID", "testPluginArtifactID") {
-      override fun isApplicable(mavenProject: MavenProject?) = true
-
-      override fun process(modifiableModelsProvider: IdeModifiableModelsProvider, module: Module, rootModel: MavenRootModelAdapter, mavenModel: MavenProjectsTree, mavenProject: MavenProject, changes: MavenProjectChanges, mavenProjectToModuleName: Map<MavenProject, String>, postTasks: List<MavenProjectsProcessorTask>) {
-        val value = mavenProject.getCachedValue(testCacheKey)!!
-        mavenProjectToCachedValue.put(mavenProject, value)
+    class MyTestMavenWorkspaceConfigurator : MavenWorkspaceConfigurator {
+      override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
+        context.mavenProjectsWithModules.forEach {
+          val mavenProject = it.mavenProject
+          val value = mavenProject.getCachedValue(testCacheKey) ?: return@forEach
+          mavenProjectToCachedValue.put(mavenProject, value)
+        }
       }
     }
 
     ExtensionTestUtil.addExtensions(MavenProjectResolutionContributor.EP_NAME, listOf(MyMavenProjectResolutionContributor()), testRootDisposable)
-    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyTestMavenImporter()), testRootDisposable)
+    ExtensionTestUtil.addExtensions(MavenWorkspaceConfigurator.EXTENSION_POINT_NAME, listOf(MyTestMavenWorkspaceConfigurator()), testRootDisposable)
     importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
