@@ -13,7 +13,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -64,7 +63,7 @@ abstract class AbstractActionCompletionCommand(
     internal fun isApplicableToProject(offset: Int, psiFile: PsiFile): Boolean {
       if (offset - 1 < 0) return true
       val element = psiFile.findElementAt(offset - 1)
-      if (element is PsiComment || element is PsiWhiteSpace) return true
+      if (element is PsiComment) return true
       val ch = psiFile.fileDocument.immutableCharSequence[offset - 1]
       if (!ch.isLetterOrDigit() && ch != ']' && ch != ')') return true
       return false
