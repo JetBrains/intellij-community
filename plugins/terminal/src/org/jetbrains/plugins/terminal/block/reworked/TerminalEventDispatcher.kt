@@ -136,6 +136,9 @@ internal abstract class TerminalEventDispatcher(
       "HideAllWindows",
       "NextWindow",
       "PreviousWindow",
+      "NextTab",
+      "PreviousTab",
+      "ShowContent",
       "NextProjectWindow",
       "PreviousProjectWindow",
       "ShowBookmarks",
@@ -179,6 +182,8 @@ internal abstract class TerminalEventDispatcher(
       "Terminal.SplitHorizontally",
       "Terminal.NextSplitter",
       "Terminal.PrevSplitter",
+      "Terminal.MoveToolWindowTabLeft",
+      "Terminal.MoveToolWindowTabRight",
     )
 
     fun getActionsToSkip(): List<AnAction> {
