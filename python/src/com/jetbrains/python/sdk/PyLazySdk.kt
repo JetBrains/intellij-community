@@ -19,6 +19,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.NullableComputable
 
+@java.lang.Deprecated(forRemoval = true)
+@Deprecated("Migrate to  `com.jetbrains.python.newProjectWizard`, it doesn't need this class", level = DeprecationLevel.WARNING)
 class PyLazySdk(name: String, private val create: NullableComputable<Sdk>) : ProjectJdkImpl(name, PythonSdkType.getInstance(), "", null) {
   fun create(): Sdk? = create.compute()
 }

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated See {@link com.jetbrains.python.newProjectWizard}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class PythonGenerateProjectCallback<T extends PyNewProjectSettings> extends AbstractNewProjectStep.AbstractCallback<T> {
 
   @Override
