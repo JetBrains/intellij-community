@@ -1521,32 +1521,35 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
                                                                              ? typeParameterOwner
                                                                              : typeParameter.getContainingFile())
                                        : null;
+      Ref<PyType> defaultType = null;
+      if (defaultExpression != null) {
+        final PyExpression defaultExprWithoutParens = PyPsiUtils.flattenParens(defaultExpression);
+        defaultType = defaultExprWithoutParens != null
+                      ? doPreventingRecursion(context, false, () -> getType(defaultExprWithoutParens, context))
+                      : Ref.create();
+      }
+
       PyQualifiedNameOwner declarationElement = as(element, PyQualifiedNameOwner.class);
 
       if (name != null) {
         return switch (kind) {
           case TypeVar -> {
             PyType boundType = boundExpression != null ? getTypeParameterBoundType(boundExpression, context) : null;
-            Ref<PyType> defaultType = defaultExpression != null ? Ref.create(getTypeParameterBoundType(defaultExpression, context)) : null;
             yield new PyTypeVarTypeImpl(name, boundType, defaultType)
               .withScopeOwner(scopeOwner)
               .withDeclarationElement(declarationElement);
           }
           case ParamSpec -> {
-            Ref<PyType> defaultExprType = defaultExpression != null ? getType(defaultExpression, context) : null;
-            Ref<PyCallableParameterVariadicType> defaultType =
-              Ref.deref(defaultExprType) instanceof PyCallableParameterVariadicType variadicType ? Ref.create(variadicType) : null;
             yield new PyParamSpecType(name)
               .withScopeOwner(scopeOwner)
-              .withDefaultType(defaultType)
+              .withDefaultType(
+                Ref.deref(defaultType) instanceof PyCallableParameterVariadicType variadicType ? Ref.create(variadicType) : null)
               .withDeclarationElement(declarationElement);
           }
           case TypeVarTuple -> {
-            Ref<PyPositionalVariadicType> defaultType = defaultExpression != null ? Ref.create(
-              as(getTypeParameterBoundType(defaultExpression, context), PyPositionalVariadicType.class)) : null;
             yield new PyTypeVarTupleTypeImpl(name)
               .withScopeOwner(scopeOwner)
-              .withDefaultType(defaultType)
+              .withDefaultType(Ref.deref(defaultType) instanceof PyPositionalVariadicType variadicType ? Ref.create(variadicType) : null)
               .withDeclarationElement(declarationElement);
           }
         };
