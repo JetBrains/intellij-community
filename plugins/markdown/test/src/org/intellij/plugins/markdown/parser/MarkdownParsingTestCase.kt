@@ -11,11 +11,11 @@ import com.intellij.psi.templateLanguages.TemplateDataElementType
 import com.intellij.psi.xml.StartTagEndTokenProvider
 import com.intellij.testFramework.ParsingTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition
 import org.intellij.plugins.markdown.lang.psi.MarkdownAstFactory
+import org.intellij.plugins.markdown.xml.DefaultMarkdownFileViewProviderFactory
 
 abstract class MarkdownParsingTestCase(dataPath: String): ParsingTestCase(
   dataPath,
@@ -30,7 +30,7 @@ abstract class MarkdownParsingTestCase(dataPath: String): ParsingTestCase(
     registerExtensionPoint(MarkdownFlavourProvider.extensionPoint, MarkdownFlavourProvider::class.java)
     registerExtensionPoint(EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, EmbeddedTokenTypesProvider::class.java)
     registerExtensionPoint(StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider::class.java)
-    addExplicitExtension(LanguageFileViewProviders.INSTANCE, MarkdownLanguage.INSTANCE, MarkdownFileViewProviderFactory())
+    addExplicitExtension(LanguageFileViewProviders.INSTANCE, MarkdownLanguage.INSTANCE, DefaultMarkdownFileViewProviderFactory())
     addExplicitExtension(LanguageASTFactory.INSTANCE, MarkdownLanguage.INSTANCE, MarkdownAstFactory())
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, XmlASTFactory())
     addExplicitExtension(TemplateDataElementType.TREE_PATCHER, XMLLanguage.INSTANCE, XmlTemplateTreePatcher())
