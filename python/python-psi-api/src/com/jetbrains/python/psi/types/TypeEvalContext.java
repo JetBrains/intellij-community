@@ -23,6 +23,12 @@ import java.util.Map;
 
 public final class TypeEvalContext {
 
+  /**
+   * This class ensures that only {@link TypeEvalContext} instances can directly invoke
+   * {@link PyTypedElement#getType(TypeEvalContext, Key)} and everybody else has to
+   * access its result though {@link #getType(PyTypedElement)} or {@link #getReturnType(PyCallable)}.
+   * Hence, the inferred type information cannot bypass caching in {@link TypeEvalContext}.
+   */
   public static final class Key {
     private static final Key INSTANCE = new Key();
 
