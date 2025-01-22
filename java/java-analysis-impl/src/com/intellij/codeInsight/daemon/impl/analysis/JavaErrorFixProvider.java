@@ -22,6 +22,7 @@ import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -81,7 +82,8 @@ final class JavaErrorFixProvider {
                                             CLASS_IMPLICIT_INITIALIZER, CLASS_IMPLICIT_PACKAGE,
                                             RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, ANNOTATION_PERMITS,
                                             NEW_EXPRESSION_DIAMOND_NOT_ALLOWED, REFERENCE_TYPE_ARGUMENT_STATIC_CLASS,
-                                            STATEMENT_CASE_OUTSIDE_SWITCH, NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE)) {
+                                            STATEMENT_CASE_OUTSIDE_SWITCH, NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE,
+                                            NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS)) {
       fix(kind, genericRemover);
     }
     
@@ -251,6 +253,29 @@ final class JavaErrorFixProvider {
           }
           return null;
         });
+    multi(NEW_EXPRESSION_ARGUMENTS_TO_DEFAULT_CONSTRUCTOR_CALL, error -> {
+      PsiConstructorCall constructorCall = error.psi();
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      PsiJavaCodeReferenceElement classReference =
+        constructorCall instanceof PsiNewExpression newExpression ? newExpression.getClassOrAnonymousClassReference() : null;
+      if (classReference != null) {
+        ConstructorParametersFixer.registerFixActions(constructorCall, registrar::add);
+      }
+      registrar.addAll(QuickFixFactory.getInstance().createCreateConstructorFromUsageFixes(constructorCall));
+      RemoveRedundantArgumentsFix.registerIntentions(requireNonNull(constructorCall.getArgumentList()), registrar::add);
+      return registrar;
+    });
+    multi(NEW_EXPRESSION_UNRESOLVED_CONSTRUCTOR, error -> {
+      PsiConstructorCall constructorCall = error.psi();
+      PsiExpressionList list = constructorCall.getArgumentList();
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      if (list != null) {
+        JavaResolveResult[] results = error.context().results();
+        WrapExpressionFix.registerWrapAction(results, list.getExpressions(), registrar::add);
+        HighlightFixUtil.registerFixesOnInvalidConstructorCall(registrar::add, constructorCall, error.context().psiClass(), results);
+      }
+      return registrar;
+    });
     fix(TYPE_PARAMETER_ABSENT_CLASS, error -> myFactory.createChangeClassSignatureFromUsageFix(error.context(), error.psi()));
     fix(TYPE_PARAMETER_COUNT_MISMATCH,
         error -> error.context() instanceof PsiClass cls ? myFactory.createChangeClassSignatureFromUsageFix(cls, error.psi()) : null);
@@ -323,7 +348,7 @@ final class JavaErrorFixProvider {
   private void createAccessFixes() {
     JavaFixesProvider<PsiJavaCodeReferenceElement, JavaResolveResult> accessFix = error -> {
       List<CommonIntentionAction> registrar = new ArrayList<>();
-      if (error.context().getElement() instanceof PsiJvmMember member) {
+      if (error.context().isStaticsScopeCorrect() && error.context().getElement() instanceof PsiJvmMember member) {
         HighlightFixUtil.registerAccessQuickFixAction(registrar::add, member, error.psi(), null);
       }
       return registrar;
@@ -397,20 +422,38 @@ final class JavaErrorFixProvider {
     multi(CALL_WRONG_ARGUMENTS, error -> {
       JavaMismatchedCallContext context = error.context();
       List<CommonIntentionAction> registrar = new ArrayList<>();
-      if (context.list().getParent() instanceof PsiMethodCallExpression methodCall) {
+      PsiExpressionList list = context.list();
+      Project project = error.project();
+      PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(project);
+      MethodCandidateInfo candidate = context.candidate();
+      PsiElement parent = list.getParent();
+      if (parent instanceof PsiAnonymousClass) {
+        parent = parent.getParent();
+      }
+      if (parent instanceof PsiMethodCallExpression methodCall) {
         PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
         PsiType actualType = ((PsiExpression)methodCall.copy()).getType();
         if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
           AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(registrar::add, methodCall, expectedTypeByParent, actualType);
         }
-        PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(error.project());
         HighlightFixUtil.registerQualifyMethodCallFix(
-          resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall, context.list(), registrar::add);
-        HighlightFixUtil.registerMethodCallIntentions(registrar::add, methodCall, context.list());
-        MethodCandidateInfo candidate = context.candidate();
+          resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall, list, registrar::add);
+        HighlightFixUtil.registerMethodCallIntentions(registrar::add, methodCall, list);
         HighlightFixUtil.registerMethodReturnFixAction(registrar::add, candidate, methodCall);
         HighlightFixUtil.registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidate, candidate.getElement(), registrar::add);
         HighlightFixUtil.registerImplementsExtendsFix(registrar::add, methodCall, candidate.getElement());
+      }
+      if (parent instanceof PsiConstructorCall constructorCall) {
+        JavaResolveResult[] methodCandidates = JavaResolveResult.EMPTY_ARRAY;
+        PsiClass aClass = requireNonNull(candidate.getElement().getContainingClass());
+        if (constructorCall instanceof PsiNewExpression newExpression) {
+          methodCandidates = resolveHelper.getReferencedMethodCandidates(newExpression, true);
+        } else if (constructorCall instanceof PsiEnumConstant enumConstant) {
+          PsiClassType type = JavaPsiFacade.getElementFactory(project).createType(aClass);
+          methodCandidates = resolveHelper.multiResolveConstructor(type, list, enumConstant);
+        }
+        HighlightFixUtil.registerFixesOnInvalidConstructorCall(registrar::add, constructorCall, aClass, methodCandidates);
+        HighlightFixUtil.registerMethodReturnFixAction(registrar::add, candidate, constructorCall);
       }
       return registrar;
     });

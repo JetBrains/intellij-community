@@ -181,6 +181,7 @@ final class ModifierChecker {
   void reportAccessProblem(@NotNull PsiJavaCodeReferenceElement ref,
                            @NotNull PsiModifierListOwner resolved,
                            @NotNull JavaResolveResult result) {
+    result = withElement(result, resolved);
     if (resolved.hasModifierProperty(PsiModifier.PRIVATE)) {
       myVisitor.report(JavaErrorKinds.ACCESS_PRIVATE.create(ref, result));
       return;
@@ -193,7 +194,7 @@ final class ModifierChecker {
 
     PsiClass packageLocalClass = JavaPsiModifierUtil.getPackageLocalClassInTheMiddle(ref);
     if (packageLocalClass != null) {
-      result = getDelegate(result, packageLocalClass);
+      result = withElement(result, packageLocalClass);
     }
 
     if (resolved.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
@@ -210,12 +211,12 @@ final class ModifierChecker {
     // TODO: JPMS
   }
 
-
-  private static @NotNull JavaResolveResult getDelegate(@NotNull JavaResolveResult original, @NotNull PsiClass newClass) {
-    return new PsiClassType.ClassResolveResult() {
+  private static @NotNull JavaResolveResult withElement(@NotNull JavaResolveResult original, @NotNull PsiElement newElement) {
+    if (newElement == original.getElement()) return original;
+    return new JavaResolveResult() {
       @Override
-      public PsiClass getElement() {
-        return newClass;
+      public PsiElement getElement() {
+        return newElement;
       }
 
       @Override
@@ -225,27 +226,27 @@ final class ModifierChecker {
 
       @Override
       public boolean isPackagePrefixPackageReference() {
-        return false;
+        return original.isPackagePrefixPackageReference();
       }
 
       @Override
       public boolean isAccessible() {
-        return false;
+        return original.isAccessible();
       }
 
       @Override
       public boolean isStaticsScopeCorrect() {
-        return true;
+        return original.isStaticsScopeCorrect();
       }
 
       @Override
       public PsiElement getCurrentFileResolveScope() {
-        return null;
+        return original.getCurrentFileResolveScope();
       }
 
       @Override
       public boolean isValidResult() {
-        return true;
+        return original.isValidResult();
       }
     };
   }

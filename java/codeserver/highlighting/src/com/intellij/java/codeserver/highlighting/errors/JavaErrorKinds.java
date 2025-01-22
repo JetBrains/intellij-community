@@ -418,8 +418,6 @@ public final class JavaErrorKinds {
       .withRawDescription((list, owner) -> message("type.parameter.count.mismatch", list.getTypeArgumentCount(),
                                                    owner.getTypeParameters().length));
   public static final Simple<PsiTypeElement> TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH = error("type.parameter.actual.inferred.mismatch");
-  public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE =
-    error("new.expression.diamond.not.applicable");
 
   public static final Simple<PsiMethod> METHOD_DUPLICATE =
     error(PsiMethod.class, "method.duplicate")
@@ -592,6 +590,8 @@ public final class JavaErrorKinds {
 
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
 
+  public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE =
+    error("new.expression.diamond.not.applicable");
   public static final Simple<PsiNewExpression> NEW_EXPRESSION_QUALIFIED_MALFORMED =
     error("new.expression.qualified.malformed");
   public static final Parameterized<PsiNewExpression, PsiClass> NEW_EXPRESSION_QUALIFIED_STATIC_CLASS =
@@ -604,11 +604,21 @@ public final class JavaErrorKinds {
     error("new.expression.diamond.not.allowed");
   public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_ANONYMOUS_INNER_NON_PRIVATE =
     error("new.expression.diamond.anonymous.inner.non.private");
+  public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS =
+    error("new.expression.anonymous.implements.interface.with.type.arguments");
   public static final Parameterized<PsiReferenceParameterList, PsiDiamondType.DiamondInferenceResult>
     NEW_EXPRESSION_DIAMOND_INFERENCE_FAILURE =
     parameterized(PsiReferenceParameterList.class, PsiDiamondType.DiamondInferenceResult.class, "new.expression.diamond.inference.failure")
       .withRawDescription(
         (list, inferenceResult) -> message("new.expression.diamond.inference.failure", inferenceResult.getErrorMessage()));
+  public static final Simple<PsiConstructorCall> NEW_EXPRESSION_ARGUMENTS_TO_DEFAULT_CONSTRUCTOR_CALL =
+    error(PsiConstructorCall.class, "new.expression.arguments.to.default.constructor.call")
+      .withAnchor(call -> call.getArgumentList());
+  public static final Parameterized<PsiConstructorCall, UnresolvedConstructorContext> NEW_EXPRESSION_UNRESOLVED_CONSTRUCTOR =
+    parameterized(PsiConstructorCall.class, UnresolvedConstructorContext.class, "new.expression.unresolved.constructor")
+      .withAnchor((call, ctx) -> call.getArgumentList())
+      .withRawDescription((call, ctx) -> message("new.expression.unresolved.constructor", 
+                                          ctx.psiClass().getName() + formatArgumentTypes(call.getArgumentList(), true)));
 
   public static final Parameterized<PsiReferenceParameterList, PsiClass> REFERENCE_TYPE_ARGUMENT_STATIC_CLASS =
     parameterized(PsiReferenceParameterList.class, PsiClass.class, "reference.type.argument.static.class")
@@ -831,5 +841,9 @@ public final class JavaErrorKinds {
                                                   @NotNull PsiType bound,
                                                   @NotNull PsiType actualType) {
 
+  }
+  
+  public record UnresolvedConstructorContext(@NotNull PsiClass psiClass, @NotNull JavaResolveResult @NotNull [] results) {
+    
   }
 }

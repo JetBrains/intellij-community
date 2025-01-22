@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.text.HtmlChunk.*;
+
 public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable PsiType rType, 
                                                @Nullable @Nls String reasonForIncompatibleTypes) {
   private static final @NlsSafe String ANONYMOUS = "anonymous ";
@@ -44,23 +46,48 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
   }
 
   private @NotNull HtmlChunk createTooltip(@NotNull @Nls String reason) {
-    String styledReason = reason.isEmpty() ? "" :
-                          String.format("<table><tr><td style=''padding-top: 10px; padding-left: 4px;''>%s</td></tr></table>", reason);
+    HtmlChunk styledReason = reason.isEmpty() ? empty() :
+                             tag("table").child(
+                               tag("tr").child(
+                                 tag("td").style("padding-top: 10px; padding-left: 4px;").addRaw(reason)));
     IncompatibleTypesTooltipComposer tooltipComposer = (lTypeString, lTypeArguments, rTypeString, rTypeArguments) ->
-      HtmlChunk.raw(JavaCompilationErrorBundle.message("type.incompatible.html.tooltip",
-                                         lTypeString, lTypeArguments,
-                                         rTypeString, rTypeArguments,
-                                         styledReason, JavaCompilationError.JAVA_DISPLAY_GRAYED));
+      createRequiredProvidedTypeMessage(lTypeString, lTypeArguments, rTypeString, rTypeArguments, styledReason);
     return createIncompatibleTypesTooltip(tooltipComposer);
   }
-  
+
   @NotNull HtmlChunk createDescription() {
     PsiType baseLType = PsiUtil.convertAnonymousToBaseType(lType);
     PsiType baseRType = rType == null ? null : PsiUtil.convertAnonymousToBaseType(rType);
     boolean leftAnonymous = PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass;
     String lTypeString = JavaErrorFormatUtil.formatType(leftAnonymous ? lType : baseLType);
     String rTypeString = JavaErrorFormatUtil.formatType(leftAnonymous ? rType : baseRType);
-    return HtmlChunk.raw(JavaCompilationErrorBundle.message("type.incompatible", lTypeString, rTypeString));
+    return raw(JavaCompilationErrorBundle.message("type.incompatible", lTypeString, rTypeString));
+  }
+
+  static @NotNull HtmlChunk createRequiredProvidedTypeMessage(@NotNull HtmlChunk lType,
+                                                              @Nls @NotNull String lTypeArguments,
+                                                              @NotNull HtmlChunk rType,
+                                                              @Nls @NotNull String rTypeArguments,
+                                                              @NotNull HtmlChunk styledReason) {
+    return html().child(
+      body().children(
+        tag("table").children(
+          tag("tr").children(
+            tag("td").style("padding: 0px 16px 8px 4px;").setClass(JavaCompilationError.JAVA_DISPLAY_GRAYED)
+              .addText(JavaCompilationErrorBundle.message("type.incompatible.tooltip.required.type")),
+            tag("td").style("padding: 0px 4px 8px 0px;").child(lType),
+            raw(lTypeArguments)
+          ),
+          tag("tr").children(
+            tag("td").style("padding: 0px 16px 0px 4px;").setClass(JavaCompilationError.JAVA_DISPLAY_GRAYED)
+              .addText(JavaCompilationErrorBundle.message("type.incompatible.tooltip.provided.type")),
+            tag("td").style("padding: 0px 4px 0px 0px;").child(rType),
+            raw(rTypeArguments)
+          )
+        ),
+        styledReason
+      )
+    );
   }
 
   @NotNull
@@ -109,9 +136,9 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
     PsiType rRawType = rType instanceof PsiClassType classType ? classType.rawType() : rType;
     boolean assignable = rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
     boolean shortType = showShortType(lRawType, rRawType);
-    return consumer.consume(redIfNotMatch(lRawType, true, shortType).toString(),
+    return consumer.consume(redIfNotMatch(lRawType, true, shortType),
                             requiredRow.toString(),
-                            redIfNotMatch(rRawType, assignable, shortType).toString(),
+                            redIfNotMatch(rRawType, assignable, shortType),
                             foundRow.toString());
   }
 
@@ -132,7 +159,7 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
   }
 
   static @NotNull @NlsSafe HtmlChunk redIfNotMatch(@Nullable PsiType type, boolean matches, boolean shortType) {
-    if (type == null) return HtmlChunk.empty();
+    if (type == null) return empty();
     String typeText;
     if (shortType || type instanceof PsiCapturedWildcardType) {
       typeText = PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiAnonymousClass
@@ -142,7 +169,7 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
     else {
       typeText = type.getCanonicalText();
     }
-    return HtmlChunk.span()
+    return span()
       .setClass(matches ? JavaCompilationError.JAVA_DISPLAY_INFORMATION : JavaCompilationError.JAVA_DISPLAY_ERROR).addText(typeText);
   }
 
@@ -159,9 +186,9 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
   interface IncompatibleTypesTooltipComposer {
     @NotNull
     @NlsContexts.Tooltip
-    HtmlChunk consume(@NotNull @NlsSafe String lRawType,
+    HtmlChunk consume(@NotNull HtmlChunk lRawType,
                       @NotNull @NlsSafe String lTypeArguments,
-                      @NotNull @NlsSafe String rRawType,
+                      @NotNull HtmlChunk rRawType,
                       @NotNull @NlsSafe String rTypeArguments);
 
     /**

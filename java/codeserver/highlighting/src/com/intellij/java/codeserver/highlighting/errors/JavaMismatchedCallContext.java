@@ -3,7 +3,6 @@ package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
@@ -82,6 +81,23 @@ public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
     return message.wrapWithHtmlBody();
   }
 
+  private @NotNull HtmlChunk createOneArgMismatchTooltip(PsiExpression @NotNull [] expressions, PsiParameter @NotNull [] parameters) {
+    PsiExpression wrongArg = mismatchedExpressions.get(0);
+    PsiType argType = wrongArg != null ? wrongArg.getType() : null;
+    if (argType != null) {
+      int idx = ArrayUtil.find(expressions, wrongArg);
+      if (idx > parameters.length - 1 && !parameters[parameters.length - 1].isVarArgs()) return HtmlChunk.empty();
+      PsiType paramType =
+        candidate.getSubstitutor().substitute(PsiTypesUtil.getParameterType(parameters, idx, candidate.isVarargs()));
+      String errorMessage = candidate.getInferenceErrorMessage();
+      HtmlChunk reason = getTypeMismatchErrorHtml(errorMessage);
+      return new JavaIncompatibleTypeErrorContext(paramType, argType).createIncompatibleTypesTooltip(
+        (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
+          createRequiredProvidedTypeMessage(lRawType, lTypeArguments, rRawType, rTypeArguments, reason));
+    }
+    return HtmlChunk.empty();
+  }
+
   private static @NotNull HtmlChunk getTypeMismatchTable(@Nullable MethodCandidateInfo info,
                                                          @NotNull PsiSubstitutor substitutor,
                                                          PsiParameter @NotNull [] parameters,
@@ -90,10 +106,10 @@ public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
     HtmlChunk.Element td = HtmlChunk.tag("td");
     HtmlChunk requiredHeader = td.style("padding-left: 16px; padding-right: 24px;")
       .setClass(JavaCompilationError.JAVA_DISPLAY_GRAYED)
-      .addText(JavaCompilationErrorBundle.message("call.type.mismatch.tooltip.required.type"));
+      .addText(JavaCompilationErrorBundle.message("type.incompatible.tooltip.required.type"));
     HtmlChunk providedHeader = td.style("padding-right: 28px;")
       .setClass(JavaCompilationError.JAVA_DISPLAY_GRAYED)
-      .addText(JavaCompilationErrorBundle.message("call.type.mismatch.tooltip.provided.type"));
+      .addText(JavaCompilationErrorBundle.message("type.incompatible.tooltip.provided.type"));
     table.append(HtmlChunk.tag("tr").children(td, requiredHeader, providedHeader));
 
     String parameterNameStyle = "padding:1px 4px 1px 4px;";
@@ -132,16 +148,16 @@ public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
     }
     return table.wrapWith("table");
   }
-
+  
   private static @NotNull HtmlChunk mismatchedExpressionType(PsiType parameterType, @NotNull PsiExpression expression) {
     return new JavaIncompatibleTypeErrorContext(parameterType, expression.getType()).createIncompatibleTypesTooltip(
       new IncompatibleTypesTooltipComposer() {
-      @Override
-      public @NotNull HtmlChunk consume(@NotNull @NlsSafe String lRawType,
-                                     @NotNull @NlsSafe String lTypeArguments,
-                                     @NotNull @NlsSafe String rRawType,
-                                     @NotNull @NlsSafe String rTypeArguments) {
-        return new HtmlBuilder().appendRaw(rRawType).appendRaw(rTypeArguments).toFragment();
+        @Override
+        public @NotNull HtmlChunk consume(@NotNull HtmlChunk lRawType,
+                                          @NotNull String lTypeArguments,
+                                          @NotNull HtmlChunk rRawType,
+                                          @NotNull String rTypeArguments) {
+          return new HtmlBuilder().append(rRawType).appendRaw(rTypeArguments).toFragment();
       }
 
       @Override
@@ -149,25 +165,6 @@ public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
         return true;
       }
     });
-  }
-  
-  private @NotNull HtmlChunk createOneArgMismatchTooltip(PsiExpression @NotNull [] expressions, PsiParameter @NotNull [] parameters) {
-    PsiExpression wrongArg = mismatchedExpressions.get(0);
-    PsiType argType = wrongArg != null ? wrongArg.getType() : null;
-    if (argType != null) {
-      int idx = ArrayUtil.find(expressions, wrongArg);
-      if (idx > parameters.length - 1 && !parameters[parameters.length - 1].isVarArgs()) return HtmlChunk.empty();
-      PsiType paramType =
-        candidate.getSubstitutor().substitute(PsiTypesUtil.getParameterType(parameters, idx, candidate.isVarargs()));
-      String errorMessage = candidate.getInferenceErrorMessage();
-      HtmlChunk reason = getTypeMismatchErrorHtml(errorMessage);
-      return new JavaIncompatibleTypeErrorContext(paramType, argType).createIncompatibleTypesTooltip(
-        (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
-          HtmlChunk.raw(JavaCompilationErrorBundle.message("type.incompatible.html.tooltip",
-                                                           lRawType, lTypeArguments, rRawType, rTypeArguments, reason,
-                                                           JavaCompilationError.JAVA_DISPLAY_GRAYED)));
-    }
-    return HtmlChunk.empty();
   }
 
   private static @NotNull HtmlChunk createMismatchedArgumentCountTooltip(int expected, int actual) {

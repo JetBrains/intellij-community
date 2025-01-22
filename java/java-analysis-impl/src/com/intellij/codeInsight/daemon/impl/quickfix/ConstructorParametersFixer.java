@@ -18,20 +18,28 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Consumer;
 
 public final class ConstructorParametersFixer {
-  public static void registerFixActions(@NotNull PsiJavaCodeReferenceElement ctrRef,
-                                        @NotNull PsiConstructorCall constructorCall,
+  public static void registerFixActions(@NotNull PsiConstructorCall constructorCall,
                                         @NotNull Consumer<? super CommonIntentionAction> info) {
-    JavaResolveResult resolved = ctrRef.advancedResolve(false);
-    PsiClass aClass = (PsiClass) resolved.getElement();
-    PsiSubstitutor substitutor = resolved.getSubstitutor();
-    if (aClass == null) return;
-    registerFixActions(aClass, substitutor, constructorCall, info);
+    if (constructorCall instanceof PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement ctrRef = newExpression.getClassOrAnonymousClassReference();
+      if (ctrRef == null) return;
+      JavaResolveResult resolved = ctrRef.advancedResolve(false);
+      PsiClass aClass = (PsiClass) resolved.getElement();
+      PsiSubstitutor substitutor = resolved.getSubstitutor();
+      if (aClass == null) return;
+      registerFixActions(aClass, substitutor, constructorCall, info);
+    } else if (constructorCall instanceof PsiEnumConstant enumConstant) {
+      PsiClass containingClass = enumConstant.getContainingClass();
+      if (containingClass != null) {
+        registerFixActions(containingClass, PsiSubstitutor.EMPTY, constructorCall, info);
+      }
+    }
   }
 
-  public static void registerFixActions(@NotNull PsiClass aClass,
-                                        @NotNull PsiSubstitutor substitutor,
-                                        @NotNull PsiConstructorCall constructorCall,
-                                        @NotNull Consumer<? super CommonIntentionAction> info) {
+  private static void registerFixActions(@NotNull PsiClass aClass,
+                                         @NotNull PsiSubstitutor substitutor,
+                                         @NotNull PsiConstructorCall constructorCall,
+                                         @NotNull Consumer<? super CommonIntentionAction> info) {
     PsiMethod[] methods = aClass.getConstructors();
     CandidateInfo[] candidates = new CandidateInfo[methods.length];
     for (int i = 0; i < candidates.length; i++) {

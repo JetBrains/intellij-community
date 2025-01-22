@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,27 +106,20 @@ public class ChangeTypeArgumentsFix extends PsiUpdateModCommandAction<PsiNewExpr
 
 
   public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
-                                        @NotNull PsiExpressionList list,
+                                        @NotNull PsiConstructorCall call,
                                         @NotNull Consumer<? super CommonIntentionAction> info,
                                         PsiClass psiClass) {
     if (candidates.length == 0) return;
+    if (!(call instanceof PsiNewExpression newExpression)) return;
+    PsiExpressionList list = newExpression.getArgumentList();
+    if (list == null) return;
     PsiExpression[] expressions = list.getExpressions();
     for (JavaResolveResult candidate : candidates) {
-      registerIntention(expressions, info, psiClass, candidate, list);
-    }
-  }
-
-  private static void registerIntention(PsiExpression @NotNull [] expressions,
-                                        @NotNull Consumer<? super CommonIntentionAction> info,
-                                        PsiClass psiClass,
-                                        @NotNull JavaResolveResult candidate,
-                                        @NotNull PsiElement context) {
-    if (!candidate.isStaticsScopeCorrect()) return;
-    PsiMethod method = (PsiMethod)candidate.getElement();
-    if (method != null && BaseIntentionAction.canModify(method)) {
-      PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(context, PsiNewExpression.class);
-      if (newExpression == null) return;
-      info.accept(new ChangeTypeArgumentsFix(method, psiClass, expressions, newExpression));
+      if (!candidate.isStaticsScopeCorrect()) continue;
+      PsiMethod method = (PsiMethod)candidate.getElement();
+      if (method != null && BaseIntentionAction.canModify(method)) {
+        info.accept(new ChangeTypeArgumentsFix(method, psiClass, expressions, newExpression));
+      }
     }
   }
 }

@@ -67,7 +67,8 @@ final class JavaErrorFormatUtil {
     return symbolName == null ? "?" : symbolName;
   }
   
-  static @NotNull String formatArgumentTypes(@NotNull PsiExpressionList list, boolean shortNames) {
+  static @NotNull String formatArgumentTypes(@Nullable PsiExpressionList list, boolean shortNames) {
+    if (list == null) return "";
     StringBuilder builder = new StringBuilder();
     builder.append("(");
     PsiExpression[] args = list.getExpressions();

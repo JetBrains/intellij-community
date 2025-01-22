@@ -176,7 +176,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) {
       PsiClass containingClass = Objects.requireNonNull(enumConstant.getContainingClass());
       PsiClassType type = JavaPsiFacade.getElementFactory(myProject).createType(containingClass);
-      myExpressionChecker.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null, enumConstant.getArgumentList());
+      myExpressionChecker.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null);
     }
   }
 

@@ -504,17 +504,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
-    super.visitEnumConstant(enumConstant);
-    if (!hasErrorResults()) {
-      PsiClass containingClass = Objects.requireNonNull(enumConstant.getContainingClass());
-      PsiClassType type = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass);
-      HighlightMethodUtil.checkConstructorCall(getProject(), type.resolveGenerics(), enumConstant, type, null, myJavaSdkVersion,
-                                               enumConstant.getArgumentList(), myErrorSink);
-    }
-  }
-
-  @Override
   public void visitExpression(@NotNull PsiExpression expression) {
     ProgressManager.checkCanceled(); // visitLiteralExpression is invoked very often in array initializers
     super.visitExpression(expression);
@@ -803,11 +792,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiType type = expression.getType();
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
-    try {
-      if (!hasErrorResults()) HighlightMethodUtil.checkNewExpression(getProject(), expression, type, myJavaSdkVersion, myErrorSink);
-    }
-    catch (IndexNotReadyException ignored) {
-    }
 
     if (!hasErrorResults()) visitExpression(expression);
 
@@ -864,9 +848,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiElement resolved = result.getElement();
       if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) {
         PreviewFeatureUtil.checkPreviewFeature(ref, myPreviewFeatureVisitor);
-      }
-      if (!hasErrorResults()) {
-        HighlightMethodUtil.checkAmbiguousConstructorCall(getProject(), ref, resolved, ref.getParent(), myJavaSdkVersion, myErrorSink);
       }
     }
   }

@@ -1059,10 +1059,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
     String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 8px 4px;color: " + greyed + "'>Required type:</td>" +
-                      "<td style='padding: 0px 4px 8px 0px;'><font color=\"" + toolTipForeground + "\">int</font></td></tr>" +
-                      "<tr><td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
-                      "<td style='padding: 0px 4px 0px 0px;'><font color=\"" + red + "\">String</font></td></tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: " + toolTipForeground + "\">int</span></td></tr>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: " + greyed + "\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: " + red + "\">String</span></td></tr>" +
                       "</table>" +
                       "</html>";
 
@@ -1079,11 +1079,11 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
     String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style=\"padding: 0px 16px 8px 4px;\" style=\"color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: " + greyed + "\">Required type:</td>" +
                       "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: " + toolTipForeground + "\">String</span></td>" +
                       "</tr>" +
                       "<tr>" +
-                      "<td style=\"padding: 0px 16px 0px 4px;\" style=\"color: " + greyed + "\">Provided:</td>" +
+                      "<td style=\"padding: 0px 16px 0px 4px; color: " + greyed + "\">Provided:</td>" +
                       "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: " + red + "\">int</span></td>" +
                       "</tr>" +
                       "</table></html>";
@@ -1103,8 +1103,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
                                                   .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
                                                   .getBackgroundColor());
     String expected = "<html><table>" +
-                      "<tr><td/><td style=\"padding-left: 16px; padding-right: 24px; color: " + greyed + "\">Required type</td>" +
-                      "<td style=\"padding-right: 28px; color: " + greyed + "\">Provided</td></tr>" +
+                      "<tr><td/><td style=\"padding-left: 16px; padding-right: 24px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding-right: 28px; color: " + greyed + "\">Provided:</td></tr>" +
                       "<tr><td><table><tr><td style=\"padding:1px 4px 1px 4px; color: " + greyed + "; background-color: " + paramBgColor + "\">list:</td></tr></table></td>" +
                       "<td style=\"padding-left: 16px; padding-right: 24px;\"><span style=\"color: " + toolTipForeground + "\">String...</span></td>" +
                       "<td style=\"padding-right: 28px;\"><span style=\"color: " + red + "\">int</span></td></tr>" +
@@ -1124,10 +1124,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
     String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style=\"padding: 0px 16px 8px 4px;\" style=\"color: "+greyed+"\">Required type:</td>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: "+greyed+"\">Required type:</td>" +
                       "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: "+toolTipForeground+"\">CharSequence</span></td>" +
                       "</tr>" +
-                      "<tr><td style=\"padding: 0px 16px 0px 4px;\" style=\"color: "+greyed+"\">Provided:</td>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: "+greyed+"\">Provided:</td>" +
                       "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: "+red+"\">int</span></td></tr>" +
                       "</table></html>";
 
@@ -1144,12 +1144,12 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
     String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style=\"padding: 0px 16px 8px 4px;\" style=\"color: "+greyed+"\">Required type:</td>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: "+greyed+"\">Required type:</td>" +
                       "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: "+toolTipForeground+"\">Class</span></td>" +
                       "<td style='padding: 0px 0px 8px 0px;'>&lt;<span style=\"color: "+toolTipForeground+"\">capture of ?</span>&gt;</td>" +
                       "</tr>" +
                       "<tr>" +
-                      "<td style=\"padding: 0px 16px 0px 4px;\" style=\"color: "+greyed+"\">Provided:</td>" +
+                      "<td style=\"padding: 0px 16px 0px 4px; color: "+greyed+"\">Provided:</td>" +
                       "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: "+toolTipForeground+"\">Class</span></td>" +
                       "<td style='padding: 0px 0px 0px 0px;'>&lt;<span style=\"color: "+red+"\">capture of ?</span>&gt;</td></tr>" +
                       "</table></html>";
@@ -1171,8 +1171,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     String expected = "<html><table>" +
                       "<tr>" +
                       "<td/>" +
-                      "<td style=\"padding-left: 16px; padding-right: 24px; color: " + greyed + "\">Required type</td>" +
-                      "<td style=\"padding-right: 28px; color: " + greyed + "\">Provided</td></tr>" +
+                      "<td style=\"padding-left: 16px; padding-right: 24px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding-right: 28px; color: " + greyed + "\">Provided:</td></tr>" +
                       "<tr>" +
                       "<td><table><tr><td style=\"padding:1px 4px 1px 4px; color: " + greyed + "; background-color: " + paramBgColor + "\">integerList:</td></tr></table></td>" +
                       "<td style=\"padding-left: 16px; padding-right: 24px;\"><span style=\"color: " + toolTipForeground + "\">List&lt;Integer&gt;</span></td>" +

@@ -6,6 +6,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -15,6 +16,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -466,16 +468,17 @@ final class ExpressionChecker {
     }
 
     PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-    checkConstructorCall(typeResult, expression, classType, classReference, expression.getArgumentList());
+    checkConstructorCall(typeResult, expression, classType, classReference);
   }
 
   void checkAmbiguousConstructorCall(@NotNull PsiJavaCodeReferenceElement ref, PsiElement resolved) {
     if (resolved instanceof PsiClass psiClass &&
         ref.getParent() instanceof PsiNewExpression newExpression && psiClass.getConstructors().length > 0) {
-      if (newExpression.resolveMethod() == null && !PsiTreeUtil.findChildrenOfType(newExpression.getArgumentList(), PsiFunctionalExpression.class).isEmpty()) {
+      PsiExpressionList argumentList = newExpression.getArgumentList();
+      if (newExpression.resolveMethod() == null && !PsiTreeUtil.findChildrenOfType(argumentList, PsiFunctionalExpression.class).isEmpty()) {
         PsiType type = newExpression.getType();
         if (type instanceof PsiClassType classType) {
-          checkConstructorCall(classType.resolveGenerics(), newExpression, type, newExpression.getClassReference(), ref);
+          checkConstructorCall(classType.resolveGenerics(), newExpression, type, newExpression.getClassReference());
         }
       }
     }
@@ -614,11 +617,9 @@ final class ExpressionChecker {
   }
 
   void checkConstructorCall(@NotNull PsiClassType.ClassResolveResult typeResolveResult,
-                                   @NotNull PsiConstructorCall constructorCall,
-                                   @NotNull PsiType type,
-                                   @Nullable PsiJavaCodeReferenceElement classReference,
-                                   @Nullable PsiElement elementToHighlight) {
-    if (elementToHighlight == null) return;
+                            @NotNull PsiConstructorCall constructorCall,
+                            @NotNull PsiType type,
+                            @Nullable PsiJavaCodeReferenceElement classReference) {
     PsiExpressionList list = constructorCall.getArgumentList();
     if (list == null) return;
     PsiClass aClass = typeResolveResult.getElement();
@@ -633,6 +634,102 @@ final class ExpressionChecker {
     }
     if (classReference != null && !resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
       myVisitor.myModifierChecker.reportAccessProblem(classReference, aClass, typeResolveResult);
+    }
+    PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      if (!list.isEmpty()) {
+        myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_ARGUMENTS_TO_DEFAULT_CONSTRUCTOR_CALL.create(constructorCall));
+      }
+      else if (classReference != null && aClass.hasModifierProperty(PsiModifier.PROTECTED) &&
+               callingProtectedConstructorFromDerivedClass(constructorCall, aClass)) {
+        myVisitor.myModifierChecker.reportAccessProblem(classReference, aClass, typeResolveResult);
+      }
+      else if (aClass.isInterface() && constructorCall instanceof PsiNewExpression newExpression) {
+        PsiReferenceParameterList typeArgumentList = newExpression.getTypeArgumentList();
+        if (typeArgumentList.getTypeArguments().length > 0) {
+          myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS.create(typeArgumentList));
+        }
+      }
+      return;
+    }
+    PsiElement place = list;
+    if (constructorCall instanceof PsiNewExpression newExpression) {
+      PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+      if (anonymousClass != null) place = anonymousClass;
+    }
+
+    JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, place);
+    MethodCandidateInfo result = null;
+    if (results.length == 1) result = (MethodCandidateInfo)results[0];
+
+    PsiMethod constructor = result == null ? null : result.getElement();
+
+    boolean applicable = true;
+    try {
+      PsiDiamondType diamondType =
+        constructorCall instanceof PsiNewExpression newExpression ? PsiDiamondType.getDiamondType(newExpression) : null;
+      JavaResolveResult staticFactory = diamondType != null ? diamondType.getStaticFactory() : null;
+      if (staticFactory instanceof MethodCandidateInfo info) {
+        if (info.isApplicable()) {
+          result = info;
+          if (constructor == null) {
+            constructor = info.getElement();
+          }
+        }
+        else {
+          applicable = false;
+        }
+      }
+      else {
+        applicable = result != null && result.isApplicable();
+      }
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+    if (constructor == null) {
+      if (IncompleteModelUtil.isIncompleteModel(list) &&
+          ContainerUtil.exists(results, r -> r instanceof MethodCandidateInfo info && info.isPotentiallyCompatible() == ThreeState.YES) &&
+          ContainerUtil.exists(list.getExpressions(), e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_UNRESOLVED_CONSTRUCTOR.create(
+        constructorCall, new JavaErrorKinds.UnresolvedConstructorContext(aClass, results)));
+      return;
+    }
+    if (classReference != null &&
+        (!result.isAccessible() ||
+         constructor.hasModifierProperty(PsiModifier.PROTECTED) && callingProtectedConstructorFromDerivedClass(constructorCall, aClass))) {
+      myVisitor.myModifierChecker.reportAccessProblem(classReference, constructor, result);
+      return;
+    }
+    if (!applicable) {
+      checkIncompatibleCall(list, result);
+      if (myVisitor.hasErrorResults()) return;
+    }
+    else if (constructorCall instanceof PsiNewExpression newExpression) {
+      PsiReferenceParameterList typeArgumentList = newExpression.getTypeArgumentList();
+      myVisitor.myGenericsChecker.checkReferenceTypeArgumentList(constructor, typeArgumentList, result.getSubstitutor());
+      if (myVisitor.hasErrorResults()) return;
+    }
+    checkVarargParameterErasureToBeAccessible(result, constructorCall);
+    if (myVisitor.hasErrorResults()) return;
+    checkIncompatibleType(constructorCall, result, constructorCall);
+  }
+
+  private static boolean callingProtectedConstructorFromDerivedClass(@NotNull PsiConstructorCall place,
+                                                                     @NotNull PsiClass constructorClass) {
+    // indirect instantiation via anonymous class is ok
+    if (place instanceof PsiNewExpression newExpression && newExpression.getAnonymousClass() != null) return false;
+    PsiElement curElement = place;
+    PsiClass containingClass = constructorClass.getContainingClass();
+    while (true) {
+      PsiClass aClass = PsiTreeUtil.getParentOfType(curElement, PsiClass.class);
+      if (aClass == null) return false;
+      curElement = aClass;
+      if ((aClass.isInheritor(constructorClass, true) || containingClass != null && aClass.isInheritor(containingClass, true))
+          && !JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, constructorClass)) {
+        return true;
+      }
     }
   }
 }

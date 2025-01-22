@@ -642,21 +642,16 @@ public final class HighlightFixUtil {
 
   static void registerFixesOnInvalidConstructorCall(@NotNull Consumer<? super CommonIntentionAction> info,
                                                     @NotNull PsiConstructorCall constructorCall,
-                                                    @Nullable PsiJavaCodeReferenceElement classReference,
-                                                    @NotNull PsiExpressionList list,
                                                     @NotNull PsiClass aClass,
-                                                    PsiMethod @NotNull [] constructors,
                                                     JavaResolveResult @NotNull [] results) {
-    if (classReference != null) {
-      ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info);
-      ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);
-    }
-    else if (aClass.isEnum()) {
-      ConstructorParametersFixer.registerFixActions(aClass, PsiSubstitutor.EMPTY, constructorCall, info);
-    }
+    ConstructorParametersFixer.registerFixActions(constructorCall, info);
+    ChangeTypeArgumentsFix.registerIntentions(results, constructorCall, info, aClass);
+    PsiMethod[] constructors = aClass.getConstructors();
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);
     IntentionAction action = QuickFixFactory.getInstance().createSurroundWithArrayFix(constructorCall, null);
     info.accept(action);
+    PsiExpressionList list = constructorCall.getArgumentList();
+    if (list == null) return;
     if (!PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results))) {
       registerChangeMethodSignatureFromUsageIntentions(results, list, info);
     }
