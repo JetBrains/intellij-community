@@ -788,6 +788,10 @@
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OsSpecificState"/>
+
+    <applicationService serviceInterface="com.intellij.execution.ExecutionEnvCustomizerService"
+                        serviceImplementation="com.intellij.execution.process.GeneralCommandLineEnvCustomizerService" />
+
     <applicationConfigurable
       groupId="editor"
       groupWeight="188"

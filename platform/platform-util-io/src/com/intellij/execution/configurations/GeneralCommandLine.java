@@ -6,6 +6,7 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.*;
 import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.process.ProcessNotCreatedException;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
@@ -605,6 +606,20 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     EnvironmentRestorer.restoreOverriddenVars(environment);
+    customizeEnv(environment);
+  }
+
+  /**
+   * Allow plugins/modules to define a service that can modify environment variables before process execution.
+   */
+  private void customizeEnv(@NotNull Map<String, String> environment) {
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      ExecutionEnvCustomizerService envCustomizer = application.getService(ExecutionEnvCustomizerService.class);
+      if (envCustomizer != null) {
+        envCustomizer.customizeEnv(this, environment);
+      }
+    }
   }
 
   /**

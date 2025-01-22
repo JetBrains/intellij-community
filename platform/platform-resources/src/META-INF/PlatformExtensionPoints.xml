@@ -616,5 +616,9 @@
                     interface="com.intellij.openapi.project.workspace.SubprojectInfoProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="commandLineEnvCustomizer"
+                    interface="com.intellij.execution.process.CommandLineEnvCustomizer"
+                    dynamic="true"/>
+
   </extensionPoints>
 </idea-plugin>
