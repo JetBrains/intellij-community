@@ -2,7 +2,7 @@
 
 class Foo(
     val foo: Int = 42,
-    val bar: Bar = "",
+    val bar: String = "",
 )
 
 operator fun Foo.component1(): Int = foo
