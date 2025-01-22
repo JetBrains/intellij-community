@@ -2,6 +2,7 @@
 package com.intellij.toolWindow.xNext.toolbar.actions.toolbar
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -15,11 +16,11 @@ import javax.swing.JComponent
 
 internal class XNextToolWindowButtonLook : HeaderToolbarButtonLook() {
     override fun paintBorder(g: Graphics, component: JComponent?, state: Int) {
-      val g = com.intellij.openapi.wm.impl.IdeBackgroundUtil.getOriginalGraphics(g)
+      val g = IdeBackgroundUtil.getOriginalGraphics(g)
       super.paintBorder(g, component, state)
       component ?: return
       if(state == ActionButtonComponent.PUSHED) {
-        val g2 = g?.create() as Graphics2D
+        val g2 = g.create() as Graphics2D
         try {
           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
           g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
