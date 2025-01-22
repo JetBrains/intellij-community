@@ -80,6 +80,6 @@ public final class ShowContentAction extends AnAction implements DumbAware {
       return null;
     }
 
-    return SwingUtilities.isDescendingFrom(window.getComponent(), context) ? window : null;
+    return SwingUtilities.isDescendingFrom(context, window.getComponent()) ? window : null;
   }
 }
