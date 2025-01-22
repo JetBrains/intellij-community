@@ -14,15 +14,12 @@ import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistValueType
 import java.io.InputStream
-import java.util.*
 
 private typealias VSCodeExtensionLanguageId = String
 
 fun readVSCBundle(resourceLoader: (relativePath: String) -> InputStream?): TextMateBundleReader? {
-  return resourceLoader(Constants.PACKAGE_JSON_NAME)?.let { packageJsonStream ->
-    val extension = packageJsonStream.reader(Charsets.UTF_8).useLines { lineSequence ->
-      JsonPlistReader.textmateJson.decodeFromString(VSCodeExtension.serializer(), lineSequence.removeJsonComments())
-    }
+  return resourceLoader(Constants.PACKAGE_JSON_NAME)?.use { packageJsonStream ->
+    val extension = JsonPlistReader.textmateJson.decodeFromStream(VSCodeExtension.serializer(), packageJsonStream)
 
     VSCBundleReader(extension = extension, resourceLoader = resourceLoader)
   }
@@ -53,7 +50,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   override fun readGrammars(): Sequence<TextMateGrammar> {
     return extension.contributes.grammars.asSequence().map { grammar ->
       val plist = lazy {
-        resourceLoader(grammar.path)?.let { readPlist(it.buffered(), CompositePlistReader(), grammar.path) } ?: Plist.EMPTY_PLIST
+        resourceLoader(grammar.path)?.use { readPlist(it, CompositePlistReader(), grammar.path) } ?: Plist.EMPTY_PLIST
       }
 
       val language = languages[grammar.language]
@@ -74,7 +71,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   override fun readPreferences(): Sequence<TextMatePreferences> {
     return extension.contributes.languages.asSequence().flatMap { language ->
       language.configuration?.let { path ->
-        resourceLoader(path)?.let { inputStream ->
+        resourceLoader(path)?.use { inputStream ->
           readPreferencesImpl(inputStream, scopesForLanguage(language.id))
         }
       } ?: emptySequence()
@@ -85,7 +82,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
     return extension.contributes.snippets.asSequence().filter { snippetConfiguration ->
       snippetConfiguration.path.endsWith(".json") || snippetConfiguration.path.endsWith(".code-snippets")
     }.flatMap { snippetConfiguration ->
-      resourceLoader(snippetConfiguration.path)?.buffered()?.let { inputStream ->
+      resourceLoader(snippetConfiguration.path)?.use { inputStream ->
         readPlist(inputStream, CompositePlistReader(), snippetConfiguration.path)?.entries()?.asSequence()?.flatMap { (name, value) ->
           val valuePlist = value.plist
           val bodyValue = valuePlist.getPlistValue("body", "")
@@ -120,9 +117,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
 }
 
 internal fun readPreferencesImpl(inputStream: InputStream, scopeNames: Sequence<TextMateScopeName>): Sequence<TextMatePreferences> {
-  val configuration = inputStream.reader(Charsets.UTF_8).useLines { lineSequence ->
-    JsonPlistReader.textmateJson.decodeFromString(VSCodeExtensionLanguageConfiguration.serializer(), lineSequence.removeJsonComments())
-  }
+  val configuration = JsonPlistReader.textmateJson.decodeFromStream(VSCodeExtensionLanguageConfiguration.serializer(), inputStream)
 
   val highlightingPairs = readBrackets(configuration.brackets).takeIf { it.isNotEmpty() }
   val smartTypingPairs = configuration.autoClosingPairs
@@ -332,48 +327,4 @@ internal class TextRuleDeserializer : KSerializer<TextRule> {
   override fun serialize(encoder: Encoder, value: TextRule) {
     encoder.encodeString(value.text)
   }
-}
-
-// todo: remove when comments are supported in kotlin-serialization
-private fun Sequence<String>.removeJsonComments(): String {
-  return map { line ->
-    val commentIndex = lineCommentIndex(line)
-    if (commentIndex >= 0) {
-      line.substring(0, commentIndex)
-    }
-    else {
-      line
-    }
-  }.joinToString(separator = "\n")
-}
-
-private fun lineCommentIndex(line: String): Int {
-  var i = 0
-  var quote: Char? = null
-  while (i < line.length) {
-    val c = line[i]
-    if (quote != null) {
-      when (c) {
-        '\\' -> {
-          i++
-        }
-        quote -> {
-          quote = null
-        }
-      }
-    }
-    else {
-      when (c) {
-        '\'' -> quote = c
-        '"' -> quote = c
-        '/' -> {
-          if (i + 1 < line.length && line[i + 1] == '/') {
-            return i
-          }
-        }
-      }
-    }
-    i++
-  }
-  return -1
 }
