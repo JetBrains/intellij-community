@@ -266,7 +266,6 @@ class EditorCellView(
     updateFolding()
     updateRunButtonVisibility()
     myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
-    updateCellActionsToolbarVisibility()
   }
 
   fun mouseEntered() {
@@ -274,7 +273,6 @@ class EditorCellView(
     updateFolding()
     updateRunButtonVisibility()
     myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
-    updateCellActionsToolbarVisibility()
   }
 
   inline fun <reified T : Any> getExtension(): T? {
@@ -376,7 +374,7 @@ class EditorCellView(
 
   private fun updateCellActionsToolbarVisibility() {
     input.cellActionsToolbar ?: return
-    when (selected || mouseOver) {
+    when (selected) {
       true -> {
         val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
         input.cellActionsToolbar.showToolbar(targetComponent)

@@ -34,8 +34,6 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
 
   fun showToolbar(targetComponent: JComponent) {
     val actionGroup = getActionGroup(cell.interval.type) ?: return
-    if (targetComponent.width == 0 || targetComponent.height == 0) return
-
     removeToolbar()
 
     toolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
