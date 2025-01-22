@@ -30,7 +30,6 @@ com.jetbrains.php.lang.inspections.PhpUnusedParameterInspection
 com.jetbrains.php.lang.inspections.controlFlow.PhpUnusedLocalVariableInspection
 com.jetbrains.php.lang.inspections.phpdoc.PhpMissingDocCommentInspection
 com.jetbrains.python.inspections.PyCompatibilityInspection
-com.jetbrains.python.inspections.PyPackageRequirementsInspection
 com.jetbrains.python.inspections.PyRedundantParenthesesInspection
 com.sixrr.inspectjs.bitwise.PointlessBitwiseExpressionJSInspection
 com.sixrr.inspectjs.confusing.EmptyStatementBodyJSInspection

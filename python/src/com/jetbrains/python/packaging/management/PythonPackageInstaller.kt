@@ -23,11 +23,9 @@ class PythonPackagesInstaller {
     ): ExecutionException? {
       runBlockingCancellable {
         val manager = PythonPackageManager.forSdk(project, sdk)
-        // FIXME: encapsulate into forSdk
-        manager.repositoryManager.refreshCashes()
 
         return@runBlockingCancellable if (requirements.isNullOrEmpty()) {
-          installWithoutRequirements(manager, extraArgs, indicator)
+          installWithoutRequirements(manager, indicator)
         }
         else {
           installWithRequirements(manager, requirements, extraArgs, indicator)
@@ -41,15 +39,13 @@ class PythonPackagesInstaller {
 
     private suspend fun installWithoutRequirements(
       manager: PythonPackageManager,
-      extraArgs: List<String>,
       indicator: ProgressIndicator,
     ): Result<Unit> {
       indicator.text = PyBundle.message("python.packaging.installing.packages")
       indicator.isIndeterminate = true
 
-      // LAME: extra args seems to be package names - convert them
       val emptySpecification = PythonPackageSpecificationBase("", null, null, null)
-      manager.installPackage(emptySpecification, extraArgs).getOrElse {
+      manager.installPackage(emptySpecification, emptyList()).getOrElse {
         return Result.failure(it)
       }
 
@@ -66,8 +62,7 @@ class PythonPackagesInstaller {
         indicator.text = PyBundle.message("python.packaging.progress.text.installing.specific.package", requirement.presentableText)
         updateProgress(indicator, index, requirements.size)
 
-        // FIXME: pass version???
-        val specification = PythonSimplePackageSpecification(requirement.name, null, null)
+        val specification = PythonSimplePackageSpecification(requirement.name, requirement.versionSpecs.firstOrNull()?.version, null)
         manager.installPackage(specification, extraArgs).onFailure {
           return Result.failure(it)
         }

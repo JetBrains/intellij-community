@@ -7,37 +7,40 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.getConfirmedPackages
+import com.jetbrains.python.packaging.PyPackageInstallUtils.confirmInstall
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import org.jetbrains.annotations.Nls
 
-class InstallAllPackagesQuickFix : LocalQuickFix {
-  var packageNames: List<String> = emptyList()
+internal open class InstallPackageQuickFix(val packageName: String) : LocalQuickFix {
+
+  override fun getFamilyName(): @Nls String = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName)
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val element = descriptor.psiElement ?: return
-    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
-    val sdk = PythonSdkUtil.findPythonSdk(element) ?: return
+    if (!confirmInstall(project, packageName)) return
 
-    val confirmedPackages = getConfirmedPackages(packageNames, project)
-    if (confirmedPackages.isEmpty()) return
+    descriptor.psiElement.let { element ->
+      val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
+      val sdk = PythonSdkUtil.findPythonSdk(element) ?: return
 
-    val requirements = confirmedPackages.map { pyRequirement(it) }
+      PyInstallRequirementsFix(
+        familyName, module, sdk,
+        listOf(pyRequirement(packageName)),
+        emptyList()
+      ).applyFix(module.project, descriptor)
 
-    val fix = PyInstallRequirementsFix(familyName, module, sdk,
-                                       requirements,
-                                       emptyList())
-    fix.applyFix(module.project, descriptor)
-    PyPackagesUsageCollector.installAllEvent.log(requirements.size)
+      PyPackagesUsageCollector.installSingleEvent.log()
+    }
   }
-
-  override fun getFamilyName(): @Nls String = PyBundle.message("python.unresolved.reference.inspection.install.all")
 
   override fun startInWriteAction(): Boolean = false
 
   override fun availableInBatchMode(): Boolean = false
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
+
+  companion object {
+    const val CONFIRM_PACKAGE_INSTALLATION_PROPERTY: String = "python.confirm.package.installation"
+  }
 }

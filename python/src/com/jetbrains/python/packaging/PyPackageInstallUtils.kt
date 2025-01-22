@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Version
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
+import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog

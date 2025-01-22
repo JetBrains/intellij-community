@@ -27,7 +27,7 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache.Companion.StubPackagesForSource
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.PyInstallRequirementsFix
+import com.jetbrains.python.inspections.quickfix.PyInstallRequirementsFix
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
@@ -304,7 +304,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       }
 
       val name = PyBundle.message("code.insight.stub.packages.install.requirements.fix.name", reqs.size)
-      return PyInstallRequirementsFix(name, module, sdk, reqs, args, installationListener)
+      return PyInstallRequirementsFix(name, module, sdk, reqs, args)
     }
 
     private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, packageManager: PyPackageManager): LocalQuickFix {

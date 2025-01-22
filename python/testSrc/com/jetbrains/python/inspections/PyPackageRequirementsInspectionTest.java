@@ -3,10 +3,12 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.packaging.common.PackageManagerHolder;
+import com.jetbrains.python.packaging.mocks.MockPackageManagerHolder;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvFilesUtilsKt;
@@ -26,7 +28,13 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     super.setUp();
     final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
     assertNotNull(sdk);
-    PyPackageManager.getInstance(sdk).refreshAndGetPackages(true);
+
+    ServiceContainerUtil.replaceService(
+      myFixture.getProject(),
+      PackageManagerHolder.class,
+      new MockPackageManagerHolder(),
+      myFixture.getProject()
+    );
   }
 
   public void testPartiallySatisfiedRequirementsTxt() {
@@ -91,8 +99,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
     final VirtualFile pipFileLock = myFixture.findFileInTempDir("Pipfile.lock");
     assertNotNull(pipFileLock);
-    final PyPackageManager packageManager = PyPackageManager.getInstance(getProjectDescriptor().getSdk());
-    final List<PyRequirement> requirements = PipenvFilesUtilsKt.getPipFileLockRequirementsSync(pipFileLock, packageManager);
+    final List<PyRequirement> requirements = PipenvFilesUtilsKt.getPipFileLockRequirementsSync(pipFileLock);
     final List<String> names = ContainerUtil.map(requirements, PyRequirement::getName);
     assertNotEmpty(names);
     assertContainsElements(names, "atomicwrites", "attrs", "more-itertools", "pluggy", "py", "pytest", "six");
@@ -104,7 +111,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     myFixture.configureByText("requirements.txt", "pkg[extras]");
 
     final PyPackageRequirementsInspection inspection = new PyPackageRequirementsInspection();
-    inspection.ignoredPackages.add("pkg");
+    inspection.getIgnoredPackages().add("pkg");
 
     myFixture.enableInspections(inspection);
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());

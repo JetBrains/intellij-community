@@ -3,7 +3,6 @@ package com.jetbrains.python.packaging.common
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -20,14 +19,29 @@ import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-@Service(Service.Level.PROJECT)
-class PackageManagerHolder : Disposable {
+
+interface PackageManagerHolder {
+  fun forSdk(project: Project, sdk: Sdk): PythonPackageManager
+
+  /**
+   * Provides an implementation bridge for Python package management operations
+   * specific to the given project and SDK. The bridge serves as a connection point
+   * to enable advanced management tasks, potentially extending or adapting functionalities
+   * provided by the [PythonPackageManager].
+   */
+  fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge
+
+  fun getServiceScope(): CoroutineScope
+}
+
+class PackageManagerHolderImpl(private val serviceScope: CoroutineScope) : PackageManagerHolder, Disposable {
   private val cache = ConcurrentHashMap<UUID, PythonPackageManager>()
 
   private val bridgeCache = ConcurrentHashMap<UUID, PythonPackageManagementServiceBridge>()
@@ -35,7 +49,7 @@ class PackageManagerHolder : Disposable {
   /**
    * Requires Sdk to be Python Sdk and have PythonSdkAdditionalData.
    */
-  fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
+  override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
     val cacheKey = (sdk.getOrCreateAdditionalData()).uuid
 
     return cache.computeIfAbsent(cacheKey) {
@@ -44,19 +58,22 @@ class PackageManagerHolder : Disposable {
     }
   }
 
-  fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
+  override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
     val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
     return bridgeCache.computeIfAbsent(cacheKey) {
       val bridge = PythonPackageManagementServiceBridge(project, sdk)
-      Disposer.register(this@PackageManagerHolder, bridge)
+      Disposer.register(this@PackageManagerHolderImpl, bridge)
       bridge
     }
   }
+
+  override fun getServiceScope(): CoroutineScope = serviceScope
 
   override fun dispose() {
     cache.clear()
   }
 }
+
 
 @ApiStatus.Experimental
 interface PythonPackageManagementListener {
@@ -76,7 +93,6 @@ class PythonRankingAwarePackageNameComparator : Comparator<String> {
     }
   }
 }
-
 
 suspend fun <T> runPackagingOperationOrShowErrorDialog(
   sdk: Sdk,

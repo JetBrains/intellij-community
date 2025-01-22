@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.configuration
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.ide.GeneralSettings
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -24,11 +23,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.inspections.PyInspectionExtension
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection
+import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.configurePythonSdk
-import com.jetbrains.python.ui.PyUiUtil
 
 object PyProjectSdkConfiguration {
 
@@ -160,7 +158,7 @@ private class PyInterpreterInspectionSuppressor : PyInspectionExtension() {
 
 private class PyPackageRequirementsInspectionSuppressor(module: Module): Disposable {
 
-  private val listener = PyPackageRequirementsInspection.RunningPackagingTasksListener(module)
+  private val listener = RunningPackagingTasksListener(module)
 
   init {
     listener.started()

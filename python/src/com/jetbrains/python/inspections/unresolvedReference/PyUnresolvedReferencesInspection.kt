@@ -27,12 +27,8 @@ import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallAndImportPackageQuickFix
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider
-import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix
-import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix
-import com.jetbrains.python.inspections.quickfix.InstallAllPackagesQuickFix
+import com.jetbrains.python.inspections.quickfix.*
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.normalizePackageName
@@ -50,13 +46,13 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
   @JvmField
   var ignoredIdentifiers: List<String> = ArrayList()
 
-  override fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession) =
+  override fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession): Visitor =
     Visitor(holder,
             ignoredIdentifiers,
             this,
             PyInspectionVisitor.getContext(session))
 
-  override fun getOptionsPane() = OptPane.pane(
+  override fun getOptionsPane(): OptPane = OptPane.pane(
     OptPane.stringList("ignoredIdentifiers",
                        PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label")))
 

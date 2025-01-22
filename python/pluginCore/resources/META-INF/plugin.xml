@@ -415,6 +415,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCustomMemberProvider"
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.packaging.common.PackageManagerHolder"
+                        serviceImplementation="com.jetbrains.python.packaging.common.PackageManagerHolderImpl"/>
+
     <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
     <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>

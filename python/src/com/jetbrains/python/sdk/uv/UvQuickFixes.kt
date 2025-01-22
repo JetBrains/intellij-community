@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection
+import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
@@ -40,7 +40,7 @@ class UvInstallQuickFix : LocalQuickFix {
         return
       }
 
-      val listener = PyPackageRequirementsInspection.RunningPackagingTasksListener(module)
+      val listener = RunningPackagingTasksListener(module)
       val ui = PyPackageManagerUI(project, sdk, listener)
       ui.install(null, listOf())
     }

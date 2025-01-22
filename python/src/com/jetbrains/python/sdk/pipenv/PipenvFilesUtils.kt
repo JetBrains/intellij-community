@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
@@ -34,16 +35,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
-import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.associatedModuleDir
-import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.findAmongRoots
-import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.showSdkExecutionException
+import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.sdk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -249,6 +244,18 @@ private data class PipFileLockPackage(
 )
 
 @TestOnly
-fun getPipFileLockRequirementsSync(virtualFile: VirtualFile, packageManager: PyPackageManager): List<PyRequirement>? = runBlocking {
-  getPipFileLockRequirements(virtualFile, packageManager)
+fun getPipFileLockRequirementsSync(lockRequirements: VirtualFile): List<PyRequirement>? = runBlockingMaybeCancellable {
+  @RequiresBackgroundThread
+  fun toRequirements(packages: Map<String, PipFileLockPackage>): List<PyRequirement> =
+    packages
+      .asSequence()
+      .filterNot { (_, pkg) -> pkg.editable == true }
+      .filter { (_, pkg) -> pkg.markers == null }
+      .flatMap { (name, pkg) -> PyRequirementParser.fromText("$name${pkg.version ?: ""}") }
+      .toList()
+
+  val pipFileLock = parsePipFileLock(lockRequirements).getOrNull() ?: return@runBlockingMaybeCancellable null
+  val packages = pipFileLock.packages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
+  val devPackages = pipFileLock.devPackages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
+  return@runBlockingMaybeCancellable packages + devPackages
 }
