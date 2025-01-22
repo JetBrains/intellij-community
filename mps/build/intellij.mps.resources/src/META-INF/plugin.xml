@@ -4,4 +4,9 @@
   <module value="com.intellij.modules.java-capable"/>
   <xi:include href="/META-INF/common-ide-modules.xml"/>
   <xi:include href="/META-INF/PlatformLangXmlPlugin.xml"/>
+
+  <content>
+    <module name="intellij.platform.tips"/>
+  </content>
+
 </idea-plugin>
