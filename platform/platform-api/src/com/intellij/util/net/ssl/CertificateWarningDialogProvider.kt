@@ -12,7 +12,7 @@ interface CertificateWarningDialogProvider {
   companion object {
     fun getInstance(): CertificateWarningDialogProvider? {
       if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
-        val app = ApplicationManager.getApplication();
+        val app = ApplicationManager.getApplication()
         if (app != null && !app.isDisposed()) {
           return app.getService(CertificateWarningDialogProvider::class.java)
         }
@@ -26,6 +26,25 @@ interface CertificateWarningDialogProvider {
     manager: ConfirmingTrustManager.MutableTrustManager,
     remoteHost: String? = null,
     authType: String,
-    selectedCertificates: MutableSet<X509Certificate>,
+    certificateProvider: CertificateProvider,
   ): DialogWrapper
+}
+
+@ApiStatus.Internal
+class CertificateProvider() {
+  var selectedCertificate: X509Certificate? = null
+
+  /**
+   * This property is `true` when the selected certificate is not enough
+   * to establish trust for the entire certificate chain.
+   *
+   * Example scenario:
+   * - User trust root certificate but signed certificate also has problem (e.g., expired),
+   *
+   * Typical use case:
+   * - This flag can be used to determine whether additional steps (such
+   *   as manually trusting a certificate) are required to proceed with the
+   *   connection.
+   */
+  var isChainRemainUnsafe: Boolean = false
 }

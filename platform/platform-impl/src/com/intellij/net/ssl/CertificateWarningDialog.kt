@@ -21,6 +21,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.net.ssl.CertificateManager
+import com.intellij.util.net.ssl.CertificateProvider
 import com.intellij.util.net.ssl.CertificateWrapper
 import com.intellij.util.net.ssl.CertificateWrapper.CommonField
 import com.intellij.util.ui.JBUI
@@ -38,8 +39,6 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JTextPane
 import javax.swing.JTree
-import javax.swing.event.TreeSelectionEvent
-import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreeSelectionModel
@@ -51,13 +50,13 @@ internal class CertificateWarningDialog(
   private val remoteHost: @NlsSafe String? = null,
   private val manager: X509ExtendedTrustManager,
   private val authType: String,
-  private val selectedCerts: MutableSet<X509Certificate>,
+  private val certificateProvider: CertificateProvider,
 ) : DialogWrapper(false) {
   private var expandedByButton = false
-  private var currentCertificate = CertificateWrapper(certificates.first())
+
   private val certificateErrorsMap = getCertificateErrorsMap()
   private val hasUntrusted = certificateErrorsMap.entries.any { it.value.contains(CertificateError.UNTRUSTED_AUTHORITY) }
-
+  private var currentCertificate = CertificateWrapper(certificates.reversed().first{certificateErrorsMap[it]!!.isNotEmpty() })
 
   private val tree = createCertificateTree()
   private val errorColor = JBColor.namedColor("Label.errorForeground", JBColor.red)
@@ -124,9 +123,9 @@ internal class CertificateWarningDialog(
             expandedByButton = false
           }
           if (it && !isDetailsShown) {
-            setOKButtonText(IdeBundle.message("save.as.trusted.certificate") + if (hasUntrusted && certificates.size > 1 && selectedCerts.isNotEmpty()) " (${selectedCerts.size})" else "")
+            setOKButtonText(IdeBundle.message("save.as.trusted.certificate"))
             isDetailsShown = true
-            isOKActionEnabled = selectedCerts.isNotEmpty()
+            isOKActionEnabled = true
             updateDetails()
           }
           pack()
@@ -146,8 +145,11 @@ internal class CertificateWarningDialog(
       detailsCollapsibleRow.expanded = true
     }
     else {
+      val certificate = currentCertificate.certificate
+      certificateProvider.selectedCertificate= certificate
+      certificateProvider.isChainRemainUnsafe = certificate != certificates.first() && certificates.subList(0, certificates.indexOf(certificate) - 1).any { certificateErrorsMap[it]!!.isNotEmpty() }
       super.doOKAction()
-      CertificateWarningStatisticsCollector.certificateAccepted(selectedCerts.count())
+      CertificateWarningStatisticsCollector.certificateAccepted()
     }
   }
 
@@ -162,11 +164,10 @@ internal class CertificateWarningDialog(
         val root = CheckedTreeNode("root").apply { isChecked = false }
         var lastNode = root
         certificates.reversed().forEach {
-          val node = CheckedTreeNode(it).apply { isChecked = false }
+          val node = CheckedTreeNode(it).apply { isChecked = it == currentCertificate.certificate }
           lastNode.add(node)
           lastNode = node
         }
-        lastNode.apply { isChecked = true }
 
         @Suppress("HardCodedStringLiteral")
         val renderer = object : CheckboxTreeCellRenderer() {
@@ -180,14 +181,20 @@ internal class CertificateWarningDialog(
             textRenderer.append(textAndColor.first, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, textAndColor.second))
           }
         }
-        val checkboxTree = object : CheckboxTree(renderer, root, CheckPolicy(false, false, false, false)) {
+        val checkboxTree = object : CheckboxTree(renderer, root, CheckPolicy(false, false, false, false, true)) {
           override fun onNodeStateChanged(node: CheckedTreeNode?) {
             val userObject = node?.userObject as? X509Certificate ?: return
-            if (node.isChecked) selectedCerts.add(userObject)
-            else selectedCerts.remove(userObject)
-            setOKButtonText(IdeBundle.message("save.as.trusted.certificate") + if (selectedCerts.isNotEmpty()) " (${selectedCerts.size})" else "")
+            if (node.isChecked) {
+              unselectOtherNodes(root, node)
+              currentCertificate = CertificateWrapper(userObject)
+              updateDetails()
+            }
+            else {
+              //prevent unselect a certificate
+              node.isChecked = true
+            }
             if (isDetailsShown) {
-              isOKActionEnabled = selectedCerts.isNotEmpty()
+              isOKActionEnabled = true
             }
           }
         }
@@ -225,14 +232,18 @@ internal class CertificateWarningDialog(
       RoundedLineBorder(JBColor.border(), 10),
       JBUI.Borders.empty(3)
     )
-    certificatesTree.addTreeSelectionListener(object : TreeSelectionListener {
-      override fun valueChanged(e: TreeSelectionEvent?) {
-        val lastPathComponent = e?.path?.lastPathComponent as? DefaultMutableTreeNode
-        (lastPathComponent?.userObject as? X509Certificate)?.let { currentCertificate = CertificateWrapper(it) }
-        updateDetails()
-      }
-    })
     return certificatesTree
+  }
+
+  private fun unselectOtherNodes(root: CheckedTreeNode, selectedNode: CheckedTreeNode) {
+    root.children().asSequence()
+      .filterIsInstance<CheckedTreeNode>()
+      .forEach { child ->
+        if (child != selectedNode && child.isChecked) {
+          child.isChecked = false
+        }
+        unselectOtherNodes(root = child, selectedNode = selectedNode)
+      }
   }
 
   @NlsSafe

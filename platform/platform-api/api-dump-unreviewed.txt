@@ -5582,6 +5582,7 @@ c:com.intellij.ui.CheckboxTreeBase
 - setNodeState(com.intellij.ui.CheckedTreeNode,Z):V
 c:com.intellij.ui.CheckboxTreeBase$CheckPolicy
 - <init>(Z,Z,Z,Z):V
+- <init>(Z,Z,Z,Z,Z):V
 c:com.intellij.ui.CheckboxTreeBase$CheckboxTreeCellRendererBase
 - javax.swing.JPanel
 - javax.swing.tree.TreeCellRenderer
