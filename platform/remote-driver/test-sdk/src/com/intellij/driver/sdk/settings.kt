@@ -17,11 +17,11 @@ interface AdvancedSettingsRef {
 }
 
 fun Driver.setOpenNewProjectsInSameWindow() {
-  service(GeneralSettingsRef::class, if (isRemoteIdeMode) RdTarget.BACKEND else RdTarget.FRONTEND).setConfirmOpenNewProject(1)
+  service(GeneralSettingsRef::class, rdTarget = RdTarget.BACKEND).setConfirmOpenNewProject(1)
 }
 
 fun Driver.setOpenNewProjectsInNewWindow() {
-  service(GeneralSettingsRef::class, if (isRemoteIdeMode) RdTarget.BACKEND else RdTarget.FRONTEND).setConfirmOpenNewProject(0)
+  service(GeneralSettingsRef::class, rdTarget = RdTarget.BACKEND).setConfirmOpenNewProject(0)
 }
 
 fun Driver.advancedSettings(rdTarget: RdTarget = RdTarget.DEFAULT) = service(AdvancedSettingsRef::class, rdTarget)
