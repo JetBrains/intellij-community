@@ -1,5 +1,0 @@
-// IGNORE_K1
-fun test() {
-    return
-    val foo = "a"
-}

@@ -79,20 +79,33 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalIns
         protected abstract fun createQuickFix(
             element: E,
             context: C,
-        ): KotlinModCommandQuickFix<E>
+        ): KotlinModCommandQuickFix<E>?
 
         final override fun InspectionManager.createProblemDescriptor(
             element: E,
             context: C,
             rangeInElement: TextRange?,
             onTheFly: Boolean
-        ): ProblemDescriptor = createProblemDescriptor(
-            /* psiElement = */ element,
-            /* rangeInElement = */ rangeInElement,
-            /* descriptionTemplate = */ getProblemDescription(element, context),
-            /* highlightType = */ getProblemHighlightType(element, context),
-            /* onTheFly = */ onTheFly,
-            /* ...fixes = */ createQuickFix(element, context),
-        )
+        ): ProblemDescriptor {
+            val fix = createQuickFix(element, context)
+            return if (fix != null) {
+                createProblemDescriptor(
+                    /* psiElement = */ element,
+                    /* rangeInElement = */ rangeInElement,
+                    /* descriptionTemplate = */ getProblemDescription(element, context),
+                    /* highlightType = */ getProblemHighlightType(element, context),
+                    /* onTheFly = */ onTheFly,
+                    /* ...fixes = */ fix,
+                )
+            } else {
+                createProblemDescriptor(
+                    /* psiElement = */ element,
+                    /* rangeInElement = */ rangeInElement,
+                    /* descriptionTemplate = */ getProblemDescription(element, context),
+                    /* highlightType = */ getProblemHighlightType(element, context),
+                    /* onTheFly = */ onTheFly
+                )
+            }
+        }
     }
 }

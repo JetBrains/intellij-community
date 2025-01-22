@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.NoQuickFixKotlinModCommandQuickFix
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -32,8 +31,7 @@ class KotlinUnreachableCodeInspection : KotlinDiagnosticBasedInspectionBase<KtEl
     override fun createQuickFix(
         element: KtElement,
         context: Unit
-    ): KotlinModCommandQuickFix<KtElement> =
-        NoQuickFixKotlinModCommandQuickFix<KtElement> { KotlinBundle.message("unreachable.code.family") }
+    ): KotlinModCommandQuickFix<KtElement>? = null
 
     override fun buildVisitor(
         holder: ProblemsHolder,
