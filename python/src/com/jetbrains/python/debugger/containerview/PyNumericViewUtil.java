@@ -29,10 +29,6 @@ public final class PyNumericViewUtil {
   }
 
   public static Color rangedValueToColor(double rangedValue) {
-    // Old variant of coloring.
-    // noinspection UseJBColor
-    // return  new Color((int)Math.round(255 * rangedValue), 0, (int)Math.round(255 * (1 - rangedValue)), 130);
-
     if (JBColor.isBright()) {
       return Color.getHSBColor(240 / 360f, (float)rangedValue * 0.7f, 1f);
     }
@@ -60,6 +56,7 @@ public final class PyNumericViewUtil {
   }
 
   private static Pair<Double, Double> parsePyComplex(@NotNull String pyComplexValue) {
+    if (pyComplexValue.equals("nan")) return null;
     if (pyComplexValue.startsWith("(") && pyComplexValue.endsWith(")")) {
       pyComplexValue = pyComplexValue.substring(1, pyComplexValue.length() - 1);
     }
@@ -68,7 +65,7 @@ public final class PyNumericViewUtil {
       String real = matcher.group(1);
       String imag = matcher.group(2);
       if (imag == null && real.contains("j")) {
-        return new Pair<>(new Double(0.0), Double.parseDouble(real.substring(0, real.length() - 1)));
+        return new Pair<>(Double.valueOf(0.0), Double.parseDouble(real.substring(0, real.length() - 1)));
       }
       else if (imag != null) {
         return new Pair<>(Double.parseDouble(real), Double.parseDouble(imag.substring(0, imag.length() - 1)));
