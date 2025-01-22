@@ -1,4 +1,4 @@
-package org.jetbrains.idea.devkit.fleet
+package org.jetbrains.idea.devkit.fleet.navigation
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.idea.devkit.DevKitIcons
+import org.jetbrains.idea.devkit.fleet.DevKitFleetBundle
 import org.jetbrains.idea.devkit.fleet.inspections.analyzeCallExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import javax.swing.Icon
@@ -17,7 +18,7 @@ import javax.swing.Icon
 class NavigateToDocumentationLineMarkerProvider : LineMarkerProvider {
   private val icon: Icon = DevKitIcons.Gutter.DescriptionFile
   private val CONVERTER: (PsiFile) -> Collection<PsiElement?> = { psiFile -> ContainerUtil.createMaybeSingletonList(psiFile) }
-  private val RELATED_ITEM_PROVIDER: (PsiFile) -> Collection<GotoRelatedItem?> = { psiFile: PsiFile -> GotoRelatedItem.createItems(setOf(psiFile), "DevKit") }
+  private val RELATED_ITEM_PROVIDER: (PsiFile) -> Collection<GotoRelatedItem?> = { psiFile -> GotoRelatedItem.createItems(setOf(psiFile), "DevKit") }
 
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 

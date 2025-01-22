@@ -69,22 +69,33 @@ internal fun analyzeCallExpression(element: KtCallExpression): DocumentationSear
         return visitRunTaskRegistrationCall(it, element)
       }
     }
-    val fqName = call?.symbol?.callableId?.asSingleFqName()
-                 ?: element.resolveToCall()?.successfulConstructorCallOrNull()?.symbol?.containingClassId?.asSingleFqName()
-                 ?: return null
-    if (fqName != SETTING_DECLARATION_FQ_NAME) return null
-    val property = element.parent as? KtProperty ?: return null
-    val module = property.module ?: return null
-    val search = ReferencesSearch.search(property, GlobalSearchScope.moduleWithDependentsScope(module))
-    return search.asSequence().mapNotNull {
-      val callExpr = it.element.parentsOfType<KtCallExpression>().firstOrNull() ?: return@mapNotNull null
-      val kaCall = callExpr.resolveToCall()?.successfulFunctionCallOrNull() ?: return@mapNotNull null
-      if (kaCall.isSettingRegistrationCall()) {
-        visitSettingRegistrationCall(kaCall, callExpr)
-      }
-      else null
-    }.firstOrNull()
+    return element.settingRegistrationOrNull()?.let {
+      val kaCall = it.resolveToCall()?.successfulFunctionCallOrNull()?: return@let null
+      visitSettingRegistrationCall(kaCall, it)
+    }
   }
+}
+
+context(KaSession)
+internal fun KtCallExpression.settingRegistrationOrNull(): KtCallExpression? {
+  if (!isSettingDeclaration()) return null
+  val property = parent as? KtProperty ?: return null
+  val module = property.module ?: return null
+  val search = ReferencesSearch.search(property, GlobalSearchScope.moduleWithDependentsScope(module))
+  return search.asSequence().mapNotNull {
+    val callExpr = it.element.parentsOfType<KtCallExpression>().firstOrNull() ?: return@mapNotNull null
+    val kaCall = callExpr.resolveToCall()?.successfulFunctionCallOrNull() ?: return@mapNotNull null
+    callExpr.takeIf { kaCall.isSettingRegistrationCall() }
+  }.firstOrNull()
+}
+
+context(KaSession)
+private fun KtCallExpression.isSettingDeclaration(): Boolean {
+  val fqName = resolveToCall()?.let {
+    it.successfulFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName() ?:
+    it.successfulConstructorCallOrNull()?.symbol?.containingClassId?.asSingleFqName()
+  }
+  return fqName == SETTING_DECLARATION_FQ_NAME
 }
 
 private fun KaFunctionCall<*>.isSettingRegistrationCall(): Boolean {
