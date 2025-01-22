@@ -38,8 +38,8 @@ class MixedModeProcessTransitionStateMachine(
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
   class ManagedStepStarted(val low: XSuspendContext) : State
   object HighLevelDebuggerResumedForStepOnlyLowStopped : State
-  class MixedStepIntoStartedWaitingForHighDebuggerToBeResumed(val nativeBreakpointId: Int) : State
-  class MixedStepIntoStartedHighDebuggerResumed(val nativeBreakpointId: Int) : State
+  class MixedStepIntoStartedWaitingForHighDebuggerToBeResumed() : State
+  class MixedStepIntoStartedHighDebuggerResumed() : State
   class LowLevelStepStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
   class LowLevelRunToAddressStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
   class HighLevelRunToAddressStarted(val sourcePosition: XSourcePosition, val high : XSuspendContext) : State
@@ -177,7 +177,7 @@ class MixedModeProcessTransitionStateMachine(
           is BothRunning, is MixedStepIntoStartedHighDebuggerResumed -> {
             val newState = runBlocking(stateMachineHelperScope.coroutineContext) {
               if (currentState is MixedStepIntoStartedHighDebuggerResumed) {
-                low.removeTempBreakpoint(currentState.nativeBreakpointId)
+                low.finishMixedStepInto()
               }
               else {
                 // The low-level debug process is stopped, we need to ensure that we will be able to stop the managed one at this position
@@ -195,22 +195,19 @@ class MixedModeProcessTransitionStateMachine(
 
             changeState(newState)
           }
-          is OnlyHighStopped, is OnlyHighStoppedWaitingForLowStepToComplete -> {
-            var highSuspendCtx: XSuspendContext? = null
+          is OnlyHighStopped -> {
+            changeState(BothStopped(event.suspendContext, requireNotNull(currentState.highSuspendContext)))
+          }
+          is OnlyHighStoppedWaitingForLowStepToComplete -> {
+            val highSuspendCtx: XSuspendContext? = runBlocking(stateMachineHelperScope.coroutineContext) {
+              low.handleBreakpointDuringStep()
 
-            if (currentState is OnlyHighStopped)
-              highSuspendCtx = currentState.highSuspendContext
-            else
-                runBlocking(stateMachineHelperScope.coroutineContext) {
-                  currentState as OnlyHighStoppedWaitingForLowStepToComplete
-                  low.continueHighDebuggerServiceThreads()
-                  highSuspendCtx = currentState.highSuspendContext
-
-                  // If we've set the null object instead of a real suspend context, we don't need to refresh it
-                  if (currentState.highSuspendContext != nullObjectHighLevelSuspendContext && low.lowToHighTransitionDuringLastStepHappened())
-                    highSuspendCtx = high.refreshSuspendContextOnLowLevelStepFinish(currentState.highSuspendContext)
-                                     ?: currentState.highSuspendContext
-                }
+              // If we've set the null object instead of a real suspend context, we don't need to refresh it
+              if (currentState.highSuspendContext != nullObjectHighLevelSuspendContext && low.lowToHighTransitionDuringLastStepHappened())
+                high.refreshSuspendContextOnLowLevelStepFinish(currentState.highSuspendContext) ?: currentState.highSuspendContext
+              else
+                currentState.highSuspendContext
+            }
 
             val lowSuspendCtx = event.suspendContext
             changeState(BothStopped(lowSuspendCtx, requireNotNull(highSuspendCtx)))
@@ -314,12 +311,12 @@ class MixedModeProcessTransitionStateMachine(
             when (event.stepType) {
               MixedStepType.IntoLowFromHigh -> {
                 val steppingThread = high.getStoppedThreadId(event.highSuspendContext)
-                val breakpointId = runBlocking(stateMachineHelperScope.coroutineContext) {
+                runBlocking(stateMachineHelperScope.coroutineContext) {
                   // after this call, the native breakpoint is set, but the managed thread is stopped in suspend_current method
                   suspendContextCoroutine.async { low.startMixedStepInto(steppingThread, event.highSuspendContext) }.await()
                 }
 
-                changeState(MixedStepIntoStartedWaitingForHighDebuggerToBeResumed(breakpointId))
+                changeState(MixedStepIntoStartedWaitingForHighDebuggerToBeResumed())
 
                 runBlocking(stateMachineHelperScope.coroutineContext) {
                   // at first resume high level process, note that even though its state become resumed, it's not actually run. It will run once we continue all threads
@@ -371,7 +368,7 @@ class MixedModeProcessTransitionStateMachine(
                 low.continueAllThreads(exceptThreads = emptySet(), silent = true)
               }
             }
-            changeState(MixedStepIntoStartedHighDebuggerResumed(currentState.nativeBreakpointId))
+            changeState(MixedStepIntoStartedHighDebuggerResumed())
           }
           is ResumeLowStoppedAfterRunWhileHighResuming -> {
             logger.info("We've met a native stop (breakpoint or other kind) while resuming. Now managed resume is completed, " +

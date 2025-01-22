@@ -9,11 +9,11 @@ interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
   val ready : Deferred<Unit>
 
   suspend fun continueAllThreads(exceptThreads: Set<Long>, silent : Boolean)
-  suspend fun continueHighDebuggerServiceThreads()
+  suspend fun handleBreakpointDuringStep()
 
   fun pauseMixedModeSession(stopEventThreadId: Long)
   suspend fun startMixedStepInto(steppingThreadId: Long, ctx: XSuspendContext): Int
-  suspend fun removeTempBreakpoint(brId: Int)
+  suspend fun finishMixedStepInto()
   fun lowToHighTransitionDuringLastStepHappened() : Boolean
 
   suspend fun beforeStep(mixedSuspendContext: XMixedModeSuspendContextBase)
