@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider;
@@ -32,7 +32,7 @@ public final class JavaDebuggerAutoAttach extends RunConfigurationExtension {
   protected void attachToProcess(@NotNull RunConfigurationBase<?> configuration,
                                  @NotNull ProcessHandler handler,
                                  @Nullable RunnerSettings runnerSettings) {
-    if (Registry.is("debugger.auto.attach.from.console")) {
+    if (Registry.is("debugger.auto.attach.from.console") && !Registry.is("debugger.auto.attach.from.any.console")) {
       handler.addProcessListener(new ProcessAdapter() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
