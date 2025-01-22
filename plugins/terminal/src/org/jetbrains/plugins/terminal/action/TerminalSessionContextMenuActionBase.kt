@@ -11,6 +11,7 @@ import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.ui.TerminalContainer
 
 abstract class TerminalSessionContextMenuActionBase : ToolWindowContextMenuActionBase(), ActionRemoteBehaviorSpecification.Frontend {
   final override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
@@ -44,6 +45,8 @@ abstract class TerminalSessionContextMenuActionBase : ToolWindowContextMenuActio
   abstract fun actionPerformedInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content, terminalWidget: TerminalWidget)
 
   private fun findContextTerminal(e: AnActionEvent, content: Content): TerminalWidget? {
+    val newWidget = e.dataContext.getData(TerminalContainer.TERMINAL_WIDGET_DATA_KEY)
+    if (newWidget != null) return newWidget
     val terminalWidget = e.dataContext.getData(JBTerminalWidget.TERMINAL_DATA_KEY)
     return if (terminalWidget != null && UIUtil.isAncestor(content.component, terminalWidget)) {
       terminalWidget.asNewWidget()
