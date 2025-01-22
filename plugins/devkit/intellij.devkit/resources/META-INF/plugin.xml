@@ -27,7 +27,6 @@
     <module name="intellij.devkit.uiDesigner"/>
     <module name="intellij.devkit.workspaceModel"/>
     <module name="intellij.kotlin.devkit"/>
-    <module name="intellij.fleet.devkit"/>
     <module name="intellij.devkit.debugger"/>
     <module name="intellij.devkit.stacktrace"/>
     <module name="intellij.devkit.apiDump"/>
