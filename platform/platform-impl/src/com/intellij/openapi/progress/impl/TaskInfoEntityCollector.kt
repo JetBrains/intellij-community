@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -34,9 +35,10 @@ private class TaskInfoEntityCollector(cs: CoroutineScope) {
   }
 }
 
-private class PerProjectTaskInfoEntityCollector(project: Project, cs: CoroutineScope) {
-  init {
-    LOG.trace { "PerProjectTaskInfoEntityCollector started for $project"}
+@Service(Service.Level.PROJECT)
+internal class PerProjectTaskInfoEntityCollector(private val project: Project, private val cs: CoroutineScope) {
+  fun startCollectingActiveTasks() {
+    LOG.trace { "PerProjectTaskInfoEntityCollector started for $project" }
     collectActiveTasks(cs, project)
   }
 }

@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -392,6 +393,7 @@ abstract class ProjectFrameHelper internal constructor(
     activationTimestamp?.let {
       serviceAsync<RecentProjectsManager>().setActivationTimestamp(project, it)
     }
+    project.serviceAsync<PerProjectTaskInfoEntityCollector>().startCollectingActiveTasks()
   }
 
   @RequiresEdt
