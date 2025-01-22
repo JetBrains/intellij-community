@@ -62,7 +62,9 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private val myThreadsList = XDebuggerThreadsList.createDefault(supportsDescription)
   private val myFramesList = XDebuggerFramesList(debugTab.project)
 
-  private val myCurrentThreadDescriptionComponent = StyledTextPane()
+  private val myCurrentThreadDescriptionComponent = StyledTextPane().apply {
+    Disposer.register(this@XThreadsFramesView, this)
+  }
 
   private val mySplitter: NonProportionalOnePixelSplitter
 
@@ -96,7 +98,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     private fun <T> T.withSpeedSearch(
       shouldMatchFromTheBeginning: Boolean = false,
       shouldMatchCamelCase: Boolean = true,
-      converter: ((Any?) -> String?)? = null
+      converter: ((Any?) -> String?)? = null,
     ): T where T : JList<*> {
       val search = if (converter != null) ListSpeedSearch.installOn(this, converter) else ListSpeedSearch.installOn(this)
       search.comparator = SpeedSearchComparator(shouldMatchFromTheBeginning, shouldMatchCamelCase)
@@ -106,7 +108,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private fun XDebuggerFramesList.withSpeedSearch(
     shouldMatchFromTheBeginning: Boolean = false,
-    shouldMatchCamelCase: Boolean = true
+    shouldMatchCamelCase: Boolean = true,
   ): XDebuggerFramesList {
 
     val coloredStringBuilder = TextTransferable.ColoredStringBuilder()
@@ -366,7 +368,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private class FramesContainer(
     private val myDisposable: Disposable,
     private val myFramesList: XDebuggerFramesList,
-    private val myExecutionStack: XExecutionStack
+    private val myExecutionStack: XExecutionStack,
   ) : XStackFrameContainerEx {
     private var isActive = false
 
@@ -468,7 +470,8 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private class FramesManager(
     private val myFramesList: XDebuggerFramesList,
-    private val disposable: Disposable) {
+    private val disposable: Disposable,
+  ) {
 
     private val myMap = mutableMapOf<StackInfo, FramesContainer>()
     private val myActiveStackDisposables = SequentialDisposables(disposable)
@@ -505,7 +508,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private class ThreadsContainer(
     private val myThreadsList: XDebuggerThreadsList,
     private var myInitialActiveThread: XExecutionStack?,
-    private val myDisposable: Disposable
+    private val myDisposable: Disposable,
   ) : XSuspendContext.XExecutionStackContainer {
     private var isProcessed = false
     private var isStarted = false
@@ -589,7 +592,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 internal class StackInfoDescriptionRequester(
   private val threadsList: XDebuggerThreadsList,
   val session: XDebugSessionImpl,
-  val viewComponent: JComponent
+  val viewComponent: JComponent,
 ) : javax.swing.event.ChangeListener, ListDataListener {
 
   companion object {
