@@ -172,6 +172,13 @@ internal abstract class TerminalEventDispatcher(
       "Terminal.Paste",
       "Terminal.PageUp",
       "Terminal.PageDown",
+      "Terminal.RenameSession",
+      "Terminal.NewTab",
+      "Terminal.CloseTab",
+      "Terminal.SplitVertically",
+      "Terminal.SplitHorizontally",
+      "Terminal.NextSplitter",
+      "Terminal.PrevSplitter",
     )
 
     fun getActionsToSkip(): List<AnAction> {
