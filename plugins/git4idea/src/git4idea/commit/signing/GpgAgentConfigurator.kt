@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
@@ -69,8 +70,11 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean =
       Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false)
-      && (application.isUnitTestMode || isRemDevOrWsl(executable))
+      && (isUnitTestModeOnUnix() || isRemDevOrWsl(executable))
       && signingIsEnabledInAnyRepo(project)
+
+    private fun isUnitTestModeOnUnix(): Boolean =
+      SystemInfo.isUnix && application.isUnitTestMode
 
     private fun isRemDevOrWsl(executable: GitExecutable): Boolean =
       AppMode.isRemoteDevHost() || executable is GitExecutable.Wsl

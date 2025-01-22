@@ -36,6 +36,8 @@ import kotlin.random.Random
 class PinentryExecutionTest : GitSingleRepoTest() {
 
   override fun setUp() {
+    IoTestUtil.assumeUnix()
+
     super.setUp()
     git("config commit.gpgSign true")
     git("config user.signingkey 0A46826A!")
@@ -45,8 +47,6 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   }
 
   fun `test pinentry communication without gpg agent configuration`() {
-    IoTestUtil.assumeUnix()
-
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
     configureGpgAgent(paths)
@@ -55,8 +55,6 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   }
 
   fun `test pinentry communication with existing gpg agent configuration`() {
-    IoTestUtil.assumeUnix()
-
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
     FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "${GpgAgentConfig.PINENTRY_PROGRAM} /usr/local/bin/pinentry")
@@ -69,8 +67,6 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   }
 
   fun `test existing gpg agent configuration but without pinentry program specified`() {
-    IoTestUtil.assumeUnix()
-
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
     val allowLoopbackPinentryConfig = "allow-loopback-pinentry"
@@ -104,8 +100,6 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   }
 
   fun `test config read after pinentry update`() {
-    IoTestUtil.assumeUnix()
-
     val paths = createPathLocator().resolvePaths()!!
     val pinentryFallback = "/usr/bin/pinentry-old"
     configureGpgAgent(paths, pinentryFallback)
@@ -116,16 +110,12 @@ class PinentryExecutionTest : GitSingleRepoTest() {
   }
 
   fun `test pinentry shouldn't be configured twice`() {
-    IoTestUtil.assumeUnix()
-
     assertTrue(project.service<GpgAgentConfigurator>().canBeConfigured(project))
     configureGpgAgent(createPathLocator().resolvePaths()!!)
     assertFalse(project.service<GpgAgentConfigurator>().canBeConfigured(project))
   }
 
   fun `test pinentry fallbak preserved after update`() {
-    IoTestUtil.assumeUnix()
-
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
 
