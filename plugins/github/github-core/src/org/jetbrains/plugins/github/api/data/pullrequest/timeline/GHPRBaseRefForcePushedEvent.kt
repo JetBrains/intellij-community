@@ -9,6 +9,6 @@ import java.util.*
 data class GHPRBaseRefForcePushedEvent(override val actor: GHActor?,
                                        override val createdAt: Date,
                                        val ref: GHGitRefName?,
-                                       val beforeCommit: GHCommitHash,
-                                       val afterCommit: GHCommitHash)
+                                       val beforeCommit: GHCommitHash?,
+                                       val afterCommit: GHCommitHash?)
   : GHPRTimelineEvent.Branch
