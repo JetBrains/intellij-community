@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -115,14 +115,14 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
   }
 
   public static void checkAccessibilityConflictsAfterMove(@NotNull PsiReference reference,
-                                                   @NotNull PsiMember member,
-                                                   @Nullable PsiModifierList modifierListCopy,
-                                                   @Nullable PsiClass targetClass,
-                                                   @NotNull Set<? extends PsiMember> membersToMove,
-                                                   @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
-    JavaPsiFacade manager = JavaPsiFacade.getInstance(member.getProject());
+                                                          @NotNull PsiMember member,
+                                                          @Nullable PsiModifierList modifierListCopy,
+                                                          @Nullable PsiClass targetClass,
+                                                          @NotNull Set<? extends PsiMember> membersToMove,
+                                                          @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     PsiElement ref = reference.getElement();
-    if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
+    if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, true)) {
+      JavaPsiFacade manager = JavaPsiFacade.getInstance(member.getProject());
       // check for target class accessibility
       if (targetClass != null && !manager.getResolveHelper().isAccessible(targetClass, targetClass.getModifierList(), ref, null, null)) {
         String message = JavaRefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
