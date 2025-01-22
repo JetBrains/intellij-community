@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.jetbrains.python.newProject.steps
 
 import com.intellij.ide.IdeBundle
@@ -44,8 +43,7 @@ import javax.swing.JPanel
 /**
  * @deprecated Use [com.jetbrains.python.newProjectWizard]
  */
-@java.lang.Deprecated(forRemoval = true)
-@Deprecated("use com.jetbrains.python.newProjectWizard", level = DeprecationLevel.ERROR)
+@Deprecated("use com.jetbrains.python.newProjectWizard")
 class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
   projectGenerator: DirectoryProjectGenerator<T>,
   callback: AbstractNewProjectStep.AbstractCallback<T>,

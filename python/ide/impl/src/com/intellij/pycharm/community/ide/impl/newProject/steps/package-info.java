@@ -2,5 +2,5 @@
 /**
  * @deprecated use {@link com.intellij.pycharm.community.ide.impl.newProjectWizard}
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 package com.intellij.pycharm.community.ide.impl.newProject.steps;
