@@ -88,12 +88,12 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   fun init() {
     val connection = application.messageBus.connect(this)
     connection.subscribe(GitExecutableManager.TOPIC, GitExecutableListener {
-      project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = false)
+      project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
       emitUpdateLauncherEvent()
     })
     project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, object: GitConfigListener {
       override fun notifyConfigChanged(repository: GitRepository) {
-        project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = false)
+        project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
         emitUpdateLauncherEvent()
       }
     })

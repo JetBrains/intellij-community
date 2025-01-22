@@ -38,22 +38,18 @@ internal class GpgAgentConfigurationNotificator(private val project: Project,
   private fun isEnabled() = Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry.notification.proposal", false)
 
   @RequiresBackgroundThread
-  fun proposeCustomPinentryAgentConfiguration(
-    isSuggestion: Boolean,
-    showOnce: Boolean = true,
-    type: NotificationType = NotificationType.INFORMATION,
-  ) {
+  fun proposeCustomPinentryAgentConfiguration(isSuggestion: Boolean, type: NotificationType = NotificationType.INFORMATION) {
     if (!isEnabled()) return
     if (!project.service<GpgAgentConfigurator>().canBeConfigured(project)) return
 
-    if (showOnce) {
+    if (isSuggestion) {
       coroutineScope.launch {
         runOnceForProject(project, id = "GPG_PINENTRY_CONFIGURATION_PROPOSAL") {
-          showPinentryConfigurationNotification(isSuggestion, type)
+          showPinentryConfigurationNotification(true, type)
         }
       }
     } else {
-      showPinentryConfigurationNotification(isSuggestion, type)
+      showPinentryConfigurationNotification(false, type)
     }
   }
 
