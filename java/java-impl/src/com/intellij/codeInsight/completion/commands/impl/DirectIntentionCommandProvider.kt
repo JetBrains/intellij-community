@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo.IntentionActionDescriptor
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.IntentionsInfo
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateGetterOrSetterFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ExpensivePsiIntentionAction
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
@@ -30,6 +31,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.INFORMATION
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.modcommand.ModCommandService
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -179,6 +181,12 @@ class DirectIntentionCommandProvider : CommandProvider {
           for (i in 0..fixes.size - 1) {
             val action = QuickFixWrapper.wrap(descriptor, i)
             if (action is EmptyIntentionAction || action is ExpensivePsiIntentionAction) continue
+            val fix = QuickFixWrapper.unwrap(action)
+            if (fix != null) {
+              val unwrappedAction = ModCommandService.getInstance().unwrap(fix)
+              //skip, probably create extensions
+              if(unwrappedAction is CreateGetterOrSetterFix) continue
+            }
             if (!isInjected && !ShowIntentionActionsHandler.availableFor(topLevelFile, topLevelEditor, topLevelOffset, action)) continue
             if (isInjected && !ShowIntentionActionsHandler.availableFor(psiFile, editor, offset, action)) continue
             val priority = if (level.getSeverity(null) == INFORMATION) 70 else 80

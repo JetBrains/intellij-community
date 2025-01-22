@@ -3,15 +3,13 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.commands.api.ApplicableCompletionCommand
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil
-import com.intellij.codeInsight.daemon.impl.analysis.LocalRefUseInfo
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.util.PsiTreeUtil
 import javax.swing.Icon
 
@@ -39,15 +37,8 @@ abstract class BaseGenerateGetterSetterHandleCompletionCommand(
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     val element = getContext(offset, psiFile) ?: return false
+    if (element !is PsiIdentifier) return false
     val field = PsiTreeUtil.getParentOfType(element, PsiField::class.java) ?: return false
-    val info = LocalRefUseInfo.forFile(psiFile)
-    if ((!info.isReferencedForRead(field) && generateGetter && !generateSetter ||
-         !info.isReferencedForWrite(field) && generateSetter && !generateGetter ||
-         generateSetter && generateGetter && !info.isReferenced(field)) &&
-        !UnusedSymbolUtil.isImplicitUsage(psiFile.project, field) &&
-        field.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return false
-    }
     val action = QuickFixFactory.getInstance().createCreateGetterOrSetterFix(generateGetter, generateSetter, field)
     val context = ActionContext.from(editor, psiFile).withElement(field)
     return action.asModCommandAction()?.getPresentation(context) != null
