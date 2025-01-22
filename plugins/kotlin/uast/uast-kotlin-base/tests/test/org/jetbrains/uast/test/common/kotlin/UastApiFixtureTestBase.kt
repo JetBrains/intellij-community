@@ -1551,6 +1551,25 @@ interface UastApiFixtureTestBase {
         TestCase.assertEquals("Foo", uCallExpression.receiverType?.canonicalText)
     }
 
+    fun checkReceiverTypeOfExtensionFunction_superType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                open class Foo
+
+                fun Foo.ext() {}
+
+                class Bar : Foo() {
+                  fun test(b: Bar) {
+                    b.ex<caret>t()
+                  }
+                }
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("Bar", uCallExpression.receiverType?.canonicalText)
+    }
+
     fun checkSourcePsiOfLazyPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
