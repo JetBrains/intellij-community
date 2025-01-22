@@ -455,13 +455,8 @@ public class SearchResults implements DocumentListener, CaretListener {
     updateExcluded();
     notifyChanged();
     if (myCursor == null || !myCursor.equals(oldCursorRange)) {
-      if (toChangeSelection) {
-        if (Registry.is("ide.find.auto.scroll.to.next.occurrence")) {
-          updateSelection(true, true, true);
-        }
-        else {
-          updateSelection(false, false, false);
-        }
+      if (toChangeSelection && Registry.is("ide.find.auto.scroll.to.next.occurrence")) {
+        updateSelection(true, true, true);
       }
       notifyCursorMoved();
     }
