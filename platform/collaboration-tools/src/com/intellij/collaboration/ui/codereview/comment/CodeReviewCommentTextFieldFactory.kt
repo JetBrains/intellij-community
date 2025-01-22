@@ -10,11 +10,14 @@ import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.collaboration.util.exceptionOrNull
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.ui.JBColor
 import com.intellij.util.asSafely
 import com.intellij.util.ui.UIUtil
@@ -100,7 +103,12 @@ object CodeReviewCommentTextFieldFactory {
 
     setupEditor(editor)
 
-    val inputField = CollaborationToolsUIUtil.wrapWithProgressOverlay(editor.component, busyValue).let {
+    val editorComponent = UiDataProvider.wrapComponent(editor.component) { sink ->
+      // required for undo/redo
+      sink[PlatformCoreDataKeys.FILE_EDITOR] = TextEditorProvider.getInstance().getTextEditor(editor)
+    }
+
+    val inputField = CollaborationToolsUIUtil.wrapWithProgressOverlay(editorComponent, busyValue).let {
       if (icon != null) {
         CommentTextFieldFactory.wrapWithLeftIcon(icon, it) {
           val borderInsets = editor.component.border.getBorderInsets(editor.component)
