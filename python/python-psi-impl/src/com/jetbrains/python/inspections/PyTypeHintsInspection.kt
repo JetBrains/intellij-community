@@ -72,7 +72,7 @@ class PyTypeHintsInspection : PyInspection() {
         checkTypeVarRedefinition(target)
       }
 
-      if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPING_PARAM_SPEC) in calleeQName) {
+      if (QualifiedName.fromDottedString(PyTypingTypeProvider.PARAM_SPEC) in calleeQName) {
         checkParamSpecArguments(node, getTargetFromAssignment(node))
       }
 

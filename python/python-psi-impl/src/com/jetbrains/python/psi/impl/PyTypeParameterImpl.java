@@ -97,7 +97,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
     PyClass pyClass = switch (kind) {
       case TypeVar -> facade.createClassByQName(PyTypingTypeProvider.TYPE_VAR, this);
       case TypeVarTuple -> facade.createClassByQName(PyTypingTypeProvider.TYPE_VAR_TUPLE, this);
-      case ParamSpec -> facade.createClassByQName(PyTypingTypeProvider.TYPING_PARAM_SPEC, this);
+      case ParamSpec -> facade.createClassByQName(PyTypingTypeProvider.PARAM_SPEC, this);
     };
     if (pyClass != null) {
       return new PyClassTypeImpl(pyClass, false);

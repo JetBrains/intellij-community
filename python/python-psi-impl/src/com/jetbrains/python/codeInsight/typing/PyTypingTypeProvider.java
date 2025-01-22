@@ -89,12 +89,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String TYPE_VAR_EXT = "typing_extensions.TypeVar";
   public static final String TYPE_VAR_TUPLE = "typing.TypeVarTuple";
   public static final String TYPE_VAR_TUPLE_EXT = "typing_extensions.TypeVarTuple";
-  public static final String TYPING_PARAM_SPEC = "typing.ParamSpec";
-  public static final String TYPING_EXTENSIONS_PARAM_SPEC = "typing_extensions.ParamSpec";
+  public static final String PARAM_SPEC = "typing.ParamSpec";
+  public static final String PARAM_SPEC_EXT = "typing_extensions.ParamSpec";
   private static final String CHAIN_MAP = "typing.ChainMap";
   public static final String UNION = "typing.Union";
-  public static final String TYPING_CONCATENATE = "typing.Concatenate";
-  public static final String TYPING_EXTENSIONS_CONCATENATE = "typing_extensions.Concatenate";
+  public static final String CONCATENATE = "typing.Concatenate";
+  public static final String CONCATENATE_EXT = "typing_extensions.Concatenate";
   public static final String OPTIONAL = "typing.Optional";
   public static final String NO_RETURN = "typing.NoReturn";
   public static final String NEVER = "typing.Never";
@@ -122,7 +122,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   public static final Set<String> TYPE_PARAMETER_FACTORIES = Set.of(
     TYPE_VAR, TYPE_VAR_EXT,
-    TYPING_PARAM_SPEC, TYPING_EXTENSIONS_PARAM_SPEC,
+    PARAM_SPEC, PARAM_SPEC_EXT,
     TYPE_VAR_TUPLE, TYPE_VAR_TUPLE_EXT
   );
   
@@ -190,10 +190,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(TYPE_VAR_TUPLE)
     .add(TYPE_VAR_TUPLE_EXT)
     .add(GENERIC)
-    .add(TYPING_PARAM_SPEC)
-    .add(TYPING_EXTENSIONS_PARAM_SPEC)
-    .add(TYPING_CONCATENATE)
-    .add(TYPING_EXTENSIONS_CONCATENATE)
+    .add(PARAM_SPEC)
+    .add(PARAM_SPEC_EXT)
+    .add(CONCATENATE)
+    .add(CONCATENATE_EXT)
     .add(TUPLE)
     .add(CALLABLE)
     .add(TYPE)
@@ -1453,7 +1453,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
     final var operand = subscriptionExpr.getOperand();
     final var operandNames = resolveToQualifiedNames(operand, context.myContext);
-    if (!operandNames.contains(TYPING_CONCATENATE) && !operandNames.contains(TYPING_EXTENSIONS_CONCATENATE)) return null;
+    if (!operandNames.contains(CONCATENATE) && !operandNames.contains(CONCATENATE_EXT)) return null;
 
     final var parameters = getConcatenateParametersTypes(subscriptionExpr, context.myContext);
     if (parameters == null) return null;
@@ -1672,7 +1672,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     if (callee == null) return null;
 
     final var calleeQNames = resolveToQualifiedNames(callee, context.getTypeContext());
-    if (!calleeQNames.contains(TYPING_PARAM_SPEC) && !calleeQNames.contains(TYPING_EXTENSIONS_PARAM_SPEC)) return null;
+    if (!calleeQNames.contains(PARAM_SPEC) && !calleeQNames.contains(PARAM_SPEC_EXT)) return null;
 
     final var arguments = assignedCall.getArguments();
     if (arguments.length == 0) return null;
