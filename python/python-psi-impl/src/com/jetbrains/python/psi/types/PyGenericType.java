@@ -31,20 +31,8 @@ public class PyGenericType implements PyTypeVarType {
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
   private @Nullable PyQualifiedNameOwner myScopeOwner;
 
-  public PyGenericType(@NotNull String name, @Nullable PyType bound) {
-    this(name, bound, false);
-  }
-
   public PyGenericType(@NotNull String name, @Nullable PyType bound, @Nullable Ref<PyType> defaultType) {
     this(name, bound, defaultType, false, null, null);
-  }
-
-  public PyGenericType(@NotNull String name, @Nullable PyType bound, boolean isDefinition) {
-    this(name, bound, isDefinition, null);
-  }
-
-  private PyGenericType(@NotNull String name, @Nullable PyType bound, boolean isDefinition, @Nullable PyTargetExpression target) {
-    this(name, bound, null, isDefinition, target, null);
   }
 
   private PyGenericType(@NotNull String name,
