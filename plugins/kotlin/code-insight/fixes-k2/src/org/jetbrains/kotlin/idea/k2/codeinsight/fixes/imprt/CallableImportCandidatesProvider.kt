@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
-import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
@@ -98,7 +97,7 @@ internal class InfixCallableImportCandidatesProvider(
 
 
 internal class DelegateMethodImportCandidatesProvider(
-    private val unresolvedDelegateFunction: UnresolvedDelegateFunction,
+    private val expectedDelegateFunctionSignature: String,
     positionContext: KotlinNameReferencePositionContext,
 ) : CallableImportCandidatesProvider(positionContext) {
 
@@ -107,9 +106,9 @@ internal class DelegateMethodImportCandidatesProvider(
         indexProvider: KtSymbolFromIndexProvider,
     ): List<CallableImportCandidate> {
         val functionName = OperatorNameConventions.GET_VALUE.takeIf {
-            unresolvedDelegateFunction.expectedFunctionSignature.startsWith(OperatorNameConventions.GET_VALUE.asString() + "(")
+            expectedDelegateFunctionSignature.startsWith(OperatorNameConventions.GET_VALUE.asString() + "(")
         } ?: OperatorNameConventions.SET_VALUE.takeIf {
-            unresolvedDelegateFunction.expectedFunctionSignature.startsWith(OperatorNameConventions.SET_VALUE.asString() + "(")
+            expectedDelegateFunctionSignature.startsWith(OperatorNameConventions.SET_VALUE.asString() + "(")
         } ?: return emptyList()
 
         val expressionType = positionContext.position.parentOfType<KtPropertyDelegate>()?.expression?.expressionType ?: return emptyList()

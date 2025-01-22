@@ -42,10 +42,8 @@ import org.jetbrains.kotlin.idea.base.analysis.injectionRequiresOnlyEssentialHig
 import org.jetbrains.kotlin.idea.base.analysis.isInjectedFileShouldBeAnalyzed
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind
-import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
-import org.jetbrains.kotlin.idea.highlighter.clearAllKotlinUnresolvedReferenceKinds
-import org.jetbrains.kotlin.idea.highlighter.registerKotlinUnresolvedReferenceKind
+import org.jetbrains.kotlin.idea.highlighter.clearSavedKaDiagnosticsForUnresolvedReference
+import org.jetbrains.kotlin.idea.highlighter.saveKaDiagnosticForUnresolvedReference
 import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.analyzers.ignoreIncompleteModeDiagnostics
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
@@ -122,7 +120,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         val diagnostics = analysis
             .filterOutCodeFragmentVisibilityErrors(file)
             .filterNot { isIJProject && it.diagnosticClass == KaFirDiagnostic.ContextReceiversDeprecated::class }
-            .onEach { diagnostic -> diagnostic.psi.clearAllKotlinUnresolvedReferenceKinds() }
+            .onEach { diagnostic -> diagnostic.psi.clearSavedKaDiagnosticsForUnresolvedReference() }
             .flatMap { diagnostic ->
                 val anchorElement = diagnostic.psi
                 diagnostic.textRanges.map { range -> DiagnosticInfo(anchorElement, range, diagnostic) }
@@ -257,22 +255,6 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             infoBuilder.registerFix(quickFixInfo, options, null, null, null)
         }
 
-        if (diagnostic is KaFirDiagnostic.DelegateSpecialFunctionMissing) {
-            psiElement.registerKotlinUnresolvedReferenceKind(UnresolvedDelegateFunction(diagnostic.expectedFunctionSignature))
-        }
-
-        if (diagnostic is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable) {
-            psiElement.registerKotlinUnresolvedReferenceKind(UnresolvedDelegateFunction(diagnostic.expectedFunctionSignature))
-        }
-
-        if (
-            diagnostic is KaFirDiagnostic.UnresolvedReference ||
-            diagnostic is KaFirDiagnostic.UnresolvedReferenceWrongReceiver ||
-            diagnostic is KaFirDiagnostic.UnresolvedImport
-        ) {
-            psiElement.registerKotlinUnresolvedReferenceKind(KotlinUnresolvedReferenceKind.Regular)
-        }
-
         if (
             diagnostic is KaFirDiagnostic.UnresolvedImport ||
             diagnostic is KaFirDiagnostic.UnresolvedReference ||
@@ -280,6 +262,8 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             diagnostic is KaFirDiagnostic.DelegateSpecialFunctionMissing ||
             diagnostic is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable
         ) {
+            psiElement.saveKaDiagnosticForUnresolvedReference(diagnostic)
+            
             psiElement.reference?.let { ref ->
                 UnresolvedReferenceQuickFixUpdater.getInstance(file.project).registerQuickFixesLater(ref, infoBuilder)
             }

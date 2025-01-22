@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 
 object ImportQuickFixFactories {
     val invisibleReferenceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.InvisibleReference ->
-        ImportQuickFixProvider.getFixes(diagnostic.psi)
+        ImportQuickFixProvider.getFixes(diagnostic)
     }
 
     /**
@@ -14,13 +14,13 @@ object ImportQuickFixFactories {
      * by [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinFirUnresolvedReferenceQuickFixProvider]
      */
     val unresolvedReferenceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedReference ->
-        ImportQuickFixProvider.getFixes(diagnostic.psi)
+        ImportQuickFixProvider.getFixes(diagnostic)
     }
 
     /**
      * See KDoc for [unresolvedReferenceFactory].
      */
     val unresolvedReferenceWrongReceiverFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedReferenceWrongReceiver ->
-        ImportQuickFixProvider.getFixes(diagnostic.psi)
+        ImportQuickFixProvider.getFixes(diagnostic)
     }
 }

@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
@@ -18,9 +20,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImports
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.isImported
 import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
-import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind
-import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
-import org.jetbrains.kotlin.idea.highlighter.kotlinUnresolvedReferenceKinds
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
 import org.jetbrains.kotlin.idea.util.positionContext.*
@@ -30,24 +29,34 @@ import org.jetbrains.kotlin.resolve.ImportPath
 import javax.swing.Icon
 
 object ImportQuickFixProvider {
+    context(KaSession)
+    fun getFixes(diagnostic: KaDiagnosticWithPsi<*>): List<ImportQuickFix> {
+        return getFixes(diagnostic.psi, setOf(diagnostic))
+    }
 
     context(KaSession)
-    fun getFixes(diagnosticPsi: PsiElement): List<ImportQuickFix> {
+    fun getFixes(diagnosticPsi: PsiElement, diagnostic: KaDiagnosticWithPsi<*>): List<ImportQuickFix> {
+        return getFixes(diagnosticPsi, setOf(diagnostic))
+    }
+
+    context(KaSession)
+    fun getFixes(diagnosticPsi: PsiElement, diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
         val position = diagnosticPsi.containingFile.findElementAt(diagnosticPsi.startOffset)
         val positionContext = position?.let { KotlinPositionContextDetector.detect(it) }
 
         if (positionContext !is KotlinNameReferencePositionContext) return emptyList()
         val indexProvider = KtSymbolFromIndexProvider(positionContext.nameExpression.containingKtFile)
 
-        return diagnosticPsi.kotlinUnresolvedReferenceKinds
+        return diagnostics
             .asSequence()
-            .ifEmpty { sequenceOf(KotlinUnresolvedReferenceKind.Regular) }
-            .map { unresolvedReferenceKind ->
-                when (unresolvedReferenceKind) {
-                    is KotlinUnresolvedReferenceKind.Regular -> getCandidateProviders(positionContext)
-                    is UnresolvedDelegateFunction -> sequenceOf(
-                        DelegateMethodImportCandidatesProvider(unresolvedReferenceKind, positionContext),
-                    )
+            .map { diagnostic ->
+                when (diagnostic) {
+                    is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable -> 
+                        sequenceOf(DelegateMethodImportCandidatesProvider(diagnostic.expectedFunctionSignature, positionContext))
+                    is KaFirDiagnostic.DelegateSpecialFunctionMissing -> 
+                        sequenceOf(DelegateMethodImportCandidatesProvider(diagnostic.expectedFunctionSignature, positionContext))
+                    else -> 
+                        getCandidateProviders(positionContext)
                 }.flatMap { it.collectCandidates(indexProvider) }
                     .toList()
             }.mapNotNull { candidates ->
