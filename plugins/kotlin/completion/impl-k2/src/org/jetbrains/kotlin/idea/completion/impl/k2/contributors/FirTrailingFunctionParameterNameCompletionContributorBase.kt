@@ -177,7 +177,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         trailingFunctionDescriptor: TrailingFunctionDescriptor,
         candidateChecker: KaCompletionExtensionCandidateChecker,
         fromIndex: Int = 0,
-        nameSuggester: (KaType, String?) -> Sequence<String>,
+        nameSuggester: (parameterType: KaType, name: String?) -> Sequence<String>,
     ): Sequence<LookupElementBuilder> {
         val parameterTypes = trailingFunctionDescriptor.functionType
             .parameterTypes
