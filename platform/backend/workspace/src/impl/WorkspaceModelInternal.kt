@@ -72,10 +72,10 @@ public interface WorkspaceModelInternal: WorkspaceModel {
    *
    * @see [WorkspaceModel.getBuilderSnapshot]
    */
-  public fun replaceWorkspaceModel(replacement: StorageReplacement): Boolean
+  public fun replaceWorkspaceModel(description: @NonNls String, replacement: StorageReplacement): Boolean
 
   @Deprecated("Use replaceWorkspaceModel instead", ReplaceWith("replaceWorkspaceModel(replacement)"))
-  public fun replaceProjectModel(replacement: StorageReplacement): Boolean = replaceWorkspaceModel(replacement)
+  public fun replaceProjectModel(replacement: StorageReplacement): Boolean = replaceWorkspaceModel("WSM update", replacement)
 
   @ApiStatus.Experimental
   public suspend fun <T> flowOfQuery(query: StorageQuery<T>): Flow<T>
