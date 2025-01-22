@@ -16,6 +16,7 @@ import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SpeedSearchComparator
+import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.TextTransferable
@@ -178,7 +179,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
             myThreadsList.model.removeListDataListener(requester)
             threadsScrollPane.viewport.removeChangeListener(requester)
             stackInfoDescriptionRequester = null
-            setActiveThreadDescription("")
+            myCurrentThreadDescriptionComponent.clear()
           }
         })
         requester
@@ -264,6 +265,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
         StyleConstants.setForeground(this, NamedColorUtil.getInactiveTextColor())
       }
     })))
+    myCurrentThreadDescriptionComponent.revalidate()
     myCurrentThreadDescriptionComponent.repaint()
   }
 
@@ -356,6 +358,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myThreadsContainer.clear()
     myFramesPresentationCache.clear()
     stackInfoDescriptionRequester?.clear()
+    myCurrentThreadDescriptionComponent.clear()
   }
 
   override fun dispose() {}
@@ -622,10 +625,10 @@ internal class StackInfoDescriptionRequester(
 
     descriptionCalculationMap.getOrPut(executionStack) {
       descriptionService.getExecutionStackDescription(executionStack, session).asCompletableFuture()
-    }.whenCompleteAsync { result: XDebuggerExecutionStackDescription?, exception: Throwable? ->
+    }.whenCompleteAsync({ result: XDebuggerExecutionStackDescription?, exception: Throwable? ->
       onFinished(result, exception)
       viewComponent.repaint()
-    }
+    }, EdtExecutorService.getInstance())
   }
 
   internal fun requestDescription(stackInfo: StackInfo) {
