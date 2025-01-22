@@ -5,7 +5,6 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorT
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorToken.SelectorToken
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.*
 
 class TextMateSelectorParser internal constructor(private val myHighlightingSelector: CharSequence) {
   private val myTokens: List<TextMateSelectorToken> = TextMateSelectorLexer.tokenize(myHighlightingSelector)
@@ -167,14 +166,14 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
 
       val highlightingSelectors = ArrayDeque<Node>()
       for (child in children) {
-        highlightingSelectors.push(child)
+        highlightingSelectors.addLast(child)
       }
       if (highlightingSelectors.isEmpty()) {
-        highlightingSelectors.push(Selector(""))
+        highlightingSelectors.addLast(Selector(""))
       }
 
       var currentTargetSelector: TextMateScope? = scope
-      var currentHighlightingSelector = highlightingSelectors.peek()
+      var currentHighlightingSelector = highlightingSelectors.last()
 
       var nestingWeigh: Int = NESTING_WEIGH_INITIAL
       var result = 0
@@ -187,9 +186,9 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
         }
         if (weigh.weigh > 0) {
           result += weigh.weigh * nestingWeigh
-          highlightingSelectors.pop()
+          highlightingSelectors.removeLast()
           if (!highlightingSelectors.isEmpty()) {
-            currentHighlightingSelector = highlightingSelectors.peek()
+            currentHighlightingSelector = highlightingSelectors.last()
           }
         }
         nestingWeigh--
