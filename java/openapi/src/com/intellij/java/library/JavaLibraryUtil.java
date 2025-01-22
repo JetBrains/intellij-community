@@ -121,7 +121,7 @@ public final class JavaLibraryUtil {
 
     return CachedValuesManager.getManager(project).getCachedValue(project, LIBRARY_CLASSES_PRESENCE_KEY, () -> {
       ConcurrentMap<String, Boolean> map = ConcurrentFactoryMap.createMap(classFqn -> {
-        return JavaPsiFacade.getInstance(project).findClass(classFqn, allScope(project)) != null;
+        return JavaPsiFacade.getInstance(project).hasClass(classFqn, allScope(project));
       });
       return createResultWithDependencies(map, project);
     }, false);
@@ -133,7 +133,7 @@ public final class JavaLibraryUtil {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, LIBRARY_CLASSES_PRESENCE_KEY, () -> {
       Project project = module.getProject();
       ConcurrentMap<String, Boolean> map = ConcurrentFactoryMap.createMap(classFqn -> {
-        return JavaPsiFacade.getInstance(project).findClass(classFqn, moduleWithDependenciesAndLibrariesScope(module)) != null;
+        return JavaPsiFacade.getInstance(project).hasClass(classFqn, moduleWithDependenciesAndLibrariesScope(module));
       });
       return createResultWithDependencies(map, project);
     }, false);

@@ -276,6 +276,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       .toArray(PsiClass.EMPTY_ARRAY);
   }
 
+  @Override
+  public boolean hasClassWithShortName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+    PsiClass[] classes = getCachedClassesByName(name, scope);
+    return ContainerUtil.exists(classes, aClass -> PsiSearchScopeUtil.isInScope(scope, aClass));
+  }
+
   private @Nullable PsiPackage findSubPackageByName(@NotNull String name) {
     final String qName = getQualifiedName();
     final String subpackageQName = qName.isEmpty() ? name : qName + "." + name;

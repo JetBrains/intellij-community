@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
   private final Project myProject;
@@ -52,6 +53,14 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
       return PsiClass.EMPTY_ARRAY;
     }
     return myFileManager.findClasses(qualifiedName, scope);
+  }
+
+  @Override
+  public boolean hasClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, @Nullable Predicate<PsiClass> filter) {
+    if (skipIndices()) {
+      return false;
+    }
+    return myFileManager.hasClass(qualifiedName, scope, filter);
   }
 
   @Override

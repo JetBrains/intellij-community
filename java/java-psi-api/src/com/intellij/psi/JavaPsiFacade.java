@@ -36,6 +36,13 @@ public abstract class JavaPsiFacade {
   public abstract PsiClass @NotNull [] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
   /**
+   * Returns {@code true} if the specified scope contains the class with the specified fully qualified name, and {@code false} otherwise.
+   * This method is equivalent to {@code findClass(...) != null} and {@code findClasses(...).length > 0} checks, but in big projects it
+   * may work much faster, because it doesn't need to sort entries if multiple classes with the specified name are present in the scope.
+   */
+  public abstract boolean hasClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+
+  /**
    * Searches the project for the package with the specified full-qualified name and returns one
    * if it is found.
    *

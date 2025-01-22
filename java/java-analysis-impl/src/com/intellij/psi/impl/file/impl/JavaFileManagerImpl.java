@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
@@ -76,6 +77,18 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     ContainerUtil.quickSort(result, (o1, o2) -> scope.compare(o2.getSecond(), o1.getSecond()));
 
     return result.stream().map(p -> p.getFirst()).toArray(PsiClass[]::new);
+  }
+
+  @Override
+  public boolean hasClass(@NotNull String qName, @NotNull GlobalSearchScope scope, @Nullable Predicate<PsiClass> filter) {
+    List<Pair<PsiClass, VirtualFile>> pairs = doFindClasses(qName, scope);
+    if (filter == null) return !pairs.isEmpty();
+    for (Pair<PsiClass, VirtualFile> pair : pairs) {
+      if (filter.test(pair.getFirst())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private @NotNull List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {

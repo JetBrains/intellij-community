@@ -136,11 +136,44 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
     return pkg.findClassByShortName(className, scope);
   }
+  
+  private boolean hasClassInDumbMode(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    final String packageName = StringUtil.getPackageName(qualifiedName);
+    final PsiPackage pkg = findPackage(packageName);
+    final String className = StringUtil.getShortName(qualifiedName);
+    if (pkg != null) {
+      return pkg.hasClassWithShortName(className, scope);
+    }
+    if (packageName.length() < qualifiedName.length()) {
+      PsiClass[] containingClasses = findClassesInDumbMode(packageName, scope);
+      for (PsiClass containingClass : containingClasses) {
+        if (ContainerUtil.exists(containingClass.getInnerClasses(), innerClass -> className.equals(innerClass.getName()))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
   @Override
   public PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     List<PsiClass> allClasses = findClassesWithJvmFacade(qualifiedName, scope);
     return allClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : allClasses.toArray(PsiClass.EMPTY_ARRAY);
+  }
+
+  @Override
+  public boolean hasClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    if (shouldUseSlowResolve()) {
+      return hasClassInDumbMode(qualifiedName, scope);
+    }
+    List<PsiElementFinder> finders = filteredFinders();
+    Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+    for (PsiElementFinder finder : finders) {
+      if (finder.hasClass(qualifiedName, scope, classesFilter)) {
+        return true;
+      }
+    }
+    return !myJvmFacade.getValue().findClassesWithoutJavaFacade(qualifiedName, scope).isEmpty();
   }
 
   private @NotNull List<PsiClass> findClassesWithJvmFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
