@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.poetry
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
@@ -13,17 +14,6 @@ import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
-import kotlinx.coroutines.runBlocking
-import java.util.regex.Pattern
-
-
-/**
- *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
- */
-
-data class PoetryOutdatedVersion(
-  @SerializedName("currentVersion") var currentVersion: String,
-  @SerializedName("latestVersion") var latestVersion: String)
 
 
 class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
@@ -56,7 +46,7 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     }
 
     try {
-        runPoetry(sdk, *args.toTypedArray())
+      runBlockingCancellable { runPoetryWithSdk(sdk, *args.toTypedArray()) }
     }
     finally {
       sdk.associatedModuleDir?.refresh(true, false)
@@ -68,8 +58,8 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     val args = listOf("remove") +
                packages.map { it.name }
     try {
-        runPoetry(sdk, *args.toTypedArray())
-      }
+      runBlockingCancellable { runPoetryWithSdk(sdk, *args.toTypedArray()) }
+    }
     finally {
       sdk.associatedModuleDir?.refresh(true, false)
       refreshAndGetPackages(true)

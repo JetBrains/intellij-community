@@ -68,7 +68,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                              model.myProjectPathFlows.projectPathWithDefault.first().toString(),
                              homePath,
                              false)
-      !!
+      .getOrElse { return Result.failure(it) }
     addSdk(newSdk)
 
     module?.excludeInnerVirtualEnv(newSdk)
@@ -145,7 +145,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
    */
   internal abstract fun savePathToExecutableToProperties(path: Path?)
 
-  protected abstract fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk?
+  protected abstract suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk>
 
   internal abstract suspend fun detectExecutable()
 }

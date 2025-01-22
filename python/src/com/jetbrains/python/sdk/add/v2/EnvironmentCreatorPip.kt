@@ -23,7 +23,7 @@ class EnvironmentCreatorPip(model: PythonMutableTargetAddInterpreterModel) : Cus
     PropertiesComponent.getInstance().pipEnvPath = savingPath
   }
 
-  override fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk? =
+  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk> =
     setupPipEnvSdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages)
 
   override suspend fun detectExecutable() {

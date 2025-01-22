@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.poetry.ui
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
@@ -15,6 +16,7 @@ import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.add.addInterpretersAsync
 import com.jetbrains.python.sdk.poetry.*
+import kotlinx.coroutines.runBlocking
 import java.awt.BorderLayout
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
@@ -44,12 +46,12 @@ class PyAddExistingPoetryEnvPanel(private val project: Project?,
     addInterpretersAsync(sdkComboBox) {
       val existingSdkPaths = sdkHomes(existingSdks)
       val moduleSdks = allModules(project).parallelStream().flatMap { module ->
-        val sdks = detectPoetryEnvs(module, existingSdkPaths, module.basePath)
+        val sdks = runBlocking { detectPoetryEnvs (module, existingSdkPaths, module.basePath) }
           .filterNot { it.isAssociatedWithAnotherModule(module) }
         sdks.forEach { sdkToModule.putIfAbsent(it.name, module) }
         sdks.stream()
       }.toList()
-      val rootSdks = detectPoetryEnvs(module, existingSdkPaths, project?.basePath ?: newProjectPath)
+      val rootSdks = runBlocking { detectPoetryEnvs(module, existingSdkPaths, project?.basePath ?: newProjectPath) }
         .filterNot { it.isAssociatedWithAnotherModule(module) }
       val moduleSdkPaths = moduleSdks.map { it.name }.toSet()
       val sdks = rootSdks.filterNot { moduleSdkPaths.contains(it.name) } + moduleSdks
@@ -63,10 +65,12 @@ class PyAddExistingPoetryEnvPanel(private val project: Project?,
     return when (val sdk = sdkComboBox.selectedSdk) {
       is PyDetectedSdk -> {
         val mappedModule = sdkToModule[sdk.name] ?: module
-        setupPoetrySdkUnderProgress(project, mappedModule, existingSdks, newProjectPath,
-                                    getPythonExecutable(sdk.name), false, sdk.name)?.apply {
-          PySdkSettings.instance.preferredVirtualEnvBaseSdk = getPythonExecutable(sdk.name)
-        }
+        runBlockingCancellable {
+          setupPoetrySdkUnderProgress(project, mappedModule, existingSdks, newProjectPath,
+                                      getPythonExecutable(sdk.name), false, sdk.name).onSuccess {
+            PySdkSettings.instance.preferredVirtualEnvBaseSdk = getPythonExecutable(sdk.name)
+          }
+        }.getOrNull()
       }
       else -> sdk
     }

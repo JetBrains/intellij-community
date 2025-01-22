@@ -2,17 +2,29 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.text.nullize
+import com.intellij.util.xmlb.XmlSerializerUtil
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPythonVersionsService
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
 import com.jetbrains.python.sdk.poetry.poetryPath
+import com.jetbrains.python.sdk.poetry.poetryToml
+import com.jetbrains.python.sdk.poetry.pyProjectToml
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +38,11 @@ class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, pr
   override val interpreterType: InterpreterType = InterpreterType.POETRY
   override val executable: ObservableMutableProperty<String> = model.state.poetryExecutable
 
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
+    super.buildOptions(panel, validationRequestor)
+    addInProjectCheckbox(panel)
+  }
+
   override fun onShown() {
     val moduleDir = when (moduleOrProject) {
       is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.baseDir
@@ -35,7 +52,7 @@ class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, pr
 
     val validatedInterpreters =
       if (moduleDir != null) {
-        PyProjectTomlPythonVersionsService.instance.validateInterpretersVersions(moduleDir, model.baseInterpreters)
+        PoetryPyProjectTomlPythonVersionsService.instance.validateInterpretersVersions(moduleDir, model.baseInterpreters)
           as? StateFlow<List<PythonSelectableInterpreter>> ?: model.baseInterpreters
       }
       else {
@@ -50,10 +67,42 @@ class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, pr
     PropertiesComponent.getInstance().poetryPath = savingPath
   }
 
-  override fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk? =
-    setupPoetrySdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages)
+  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk> {
+    module?.let { service<PoetryConfigService>().setInProjectEnv(it) }
+    return setupPoetrySdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages)
+  }
 
   override suspend fun detectExecutable() {
     model.detectPoetryExecutable()
+  }
+
+  private fun addInProjectCheckbox(panel: Panel) {
+    with(panel) {
+      row {
+        checkBox(PyBundle.message("python.sdk.poetry.dialog.add.new.environment.in.project.checkbox"))
+          .bindSelected(service<PoetryConfigService>().state::isInProjectEnv)
+      }
+    }
+  }
+}
+
+@Service(Service.Level.APP)
+@State(name = "PyPoetrySettings", storages = [Storage("pyPoetrySettings.xml")])
+internal class PoetryConfigService(private val cs: CoroutineScope) : PersistentStateComponent<PoetryConfigService> {
+  var isInProjectEnv: Boolean = false
+
+  override fun getState(): PoetryConfigService = this
+
+  override fun loadState(state: PoetryConfigService) {
+    XmlSerializerUtil.copyBean(state, this)
+  }
+
+  suspend fun setInProjectEnv(module: Module) {
+    val hasPoetryToml = poetryToml(module) != null
+
+    if (isInProjectEnv || hasPoetryToml) {
+      val modulePath = withContext(Dispatchers.IO) { pyProjectToml(module)?.parent }?.toNioPath() ?: module.basePath?.let { Path.of(it) }
+      configurePoetryEnvironment(modulePath, "virtualenvs.in-project", isInProjectEnv.toString(), "--local")
+    }
   }
 }

@@ -24,8 +24,7 @@ fun getPythonExecutableString() = if (SystemInfo.isWindows) "py" else "python"
  * @return executable [Path]
  */
 @Internal
-@RequiresBackgroundThread
-fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String, vararg args: String): Result<Path> {
+suspend fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String, vararg args: String): Result<Path> {
   val result = runCommandLine(GeneralCommandLine(pythonExecutable, scriptPath.absolutePathString(), *args)).getOrElse { return Result.failure(it) }
   return Result.success(Path.of(result.split("\n").last()))
 }
