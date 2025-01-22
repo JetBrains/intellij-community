@@ -103,8 +103,12 @@ private fun collectActions(
   var currentElement = psiFile.findElementAt(offset)
   val dumbService = DumbService.getInstance(project)
   val collectedActions = mutableListOf<AnAction>()
+  val fileDocument = psiFile.fileDocument
+  val lineNumber = fileDocument.getLineNumber(offset)
   while (currentElement != null) {
     for (child in currentElement.children) {
+      val startOffset = child.textRange?.startOffset ?: continue
+      if (fileDocument.getLineNumber(startOffset) != lineNumber) continue
       val lineMarkerInfo = runLineMarkerProvider.getLineMarkerInfo(child)
       if (lineMarkerInfo is MergeableLineMarkerInfo) {
         val r = lineMarkerInfo.createGutterRenderer()
