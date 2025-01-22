@@ -943,8 +943,6 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testCompletionInCustomObjects() = runBlocking {
-    if (ignore()) return@runBlocking
-
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

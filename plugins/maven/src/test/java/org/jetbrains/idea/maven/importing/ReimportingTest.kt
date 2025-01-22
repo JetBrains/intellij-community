@@ -268,7 +268,6 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentVersionProperty() = runBlocking {
-    if (ignore()) return@runBlocking
     val parentPomTemplate =
 
       """

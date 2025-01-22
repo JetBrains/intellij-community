@@ -551,11 +551,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     LocalFileSystem.getInstance().refreshFiles(files)
   }
 
-  protected fun ignore(): Boolean {
-    //printIgnoredMessage(null);
-    return false
-  }
-
   protected fun hasMavenInstallation(): Boolean {
     val result = testMavenHome != null
     if (!result) printIgnoredMessage("Maven installation not found")

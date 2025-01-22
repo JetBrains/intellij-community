@@ -384,8 +384,6 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
   @Test
   fun testCompletionAfterOpenBraceInTheBeginningOfPropertiesFile() = runBlocking {
-    if (ignore()) return@runBlocking
-
     createProjectSubDir("res")
 
     importProjectAsync("""

@@ -619,8 +619,6 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
 
   @Test
   fun testCopingNonMavenResources() = runBlocking {
-    if (ignore()) return@runBlocking
-
     createProjectSubFile("src/main/resources/a.txt", "a")
 
     val configDir = createProjectSubDir("src/config")
