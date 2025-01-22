@@ -913,6 +913,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myRequestFocus = requestFocus;
   }
 
+  public boolean shouldRequestFocus() {
+    return myRequestFocus;
+  }
+
   @Override
   public void cancel(InputEvent e) {
     if (myState == State.CANCEL || myState == State.DISPOSE) {

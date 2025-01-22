@@ -15882,6 +15882,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - setUiVisible(Z):V
 - setUserData(java.util.List):V
 - setWarning(java.lang.String):V
+- shouldRequestFocus():Z
 - show(com.intellij.openapi.ui.popup.PopupShowOptions):V
 - show(com.intellij.ui.awt.RelativePoint):V
 - show(java.awt.Component):V
