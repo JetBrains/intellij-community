@@ -3,11 +3,13 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
@@ -238,8 +240,10 @@ public class HyperlinkLabel extends HighlightableComponent {
 
   protected void fireHyperlinkEvent(@Nullable InputEvent inputEvent) {
     HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null, null, inputEvent);
-    for (HyperlinkListener listener : myListeners) {
-      listener.hyperlinkUpdate(e);
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      for (HyperlinkListener listener : myListeners) {
+        listener.hyperlinkUpdate(e);
+      }
     }
   }
 
