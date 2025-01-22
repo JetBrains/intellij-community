@@ -230,7 +230,7 @@ object MavenImportUtil {
     }
 
     private fun getCompilerLevel(level: String): LanguageLevel? {
-      val configs = if (isTest) mavenProject.testCompilerConfigs else mavenProject.compilerConfigs
+      val configs = if (isTest) mavenProject.testCompilerConfigs else mavenProject.compilerConfigs + mavenProject.pluginConfig
       val fallbackProperty = "maven.compiler.$level"
       val levels = configs.mapNotNull { LanguageLevel.parse(findChildValueByPath(it, level)) }
       val maxLevel = levels.maxWithOrNull(Comparator.naturalOrder())?.toJavaVersion()?.toFeatureString()
@@ -380,18 +380,23 @@ object MavenImportUtil {
 
   internal val MavenProject.declaredAnnotationProcessors: List<String>
     get() {
-      return compilerConfigs.flatMap { getDeclaredAnnotationProcessors(it) }
+      return compilerConfigsOrPluginConfig.flatMap { getDeclaredAnnotationProcessors(it) }
     }
 
-  private val MavenProject.compilerConfigs: List<Element>
+  private val MavenProject.compilerConfigsOrPluginConfig: List<Element>
     get() {
-      val configurations: List<Element> = compileExecutionConfigurations
+      val configurations: List<Element> = compilerConfigs
       if (!configurations.isEmpty()) return configurations
+      return pluginConfig
+    }
+
+  private val MavenProject.pluginConfig: List<Element>
+    get() {
       val configuration: Element? = getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
       return ContainerUtil.createMaybeSingletonList(configuration)
     }
 
-  private val MavenProject.compileExecutionConfigurations: List<Element>
+  private val MavenProject.compilerConfigs: List<Element>
     get() {
       val plugin = findCompilerPlugin()
       if (plugin == null) return emptyList()
