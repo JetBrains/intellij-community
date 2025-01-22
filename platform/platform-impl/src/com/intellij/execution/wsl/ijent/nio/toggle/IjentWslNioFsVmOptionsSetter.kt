@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio.toggle
 
 import com.intellij.CommonBundle
@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicBoolean
 
 @VisibleForTesting
@@ -110,8 +111,11 @@ object IjentWslNioFsVmOptionsSetter {
       ApplicationManager.getApplication().isUnitTestMode ||
       !VMOptions.canWriteOptions()  // It happens when the IDE is launched from `.\gradlew runIde` with intellij-platform-gradle-plugin.
 
+    val serializedProperties: List<String> = ManagementFactory.getRuntimeMXBean().inputArguments
     val changedOptions = ensureInVmOptionsImpl(isEnabled, false) { prefix ->
-      VMOptions.readOption(prefix, getEffectiveVmOptions)
+      serializedProperties
+        .find { systemProperty -> systemProperty.startsWith(prefix) }
+        ?.removePrefix(prefix)
     }
 
     for ((prefix, value) in changedOptions) {
