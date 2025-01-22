@@ -8,6 +8,7 @@ import com.intellij.ide.ui.text.parts.RegularTextPart
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
@@ -34,7 +35,14 @@ import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -43,6 +51,7 @@ import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.time.Duration
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -52,6 +61,7 @@ import javax.swing.JScrollPane
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.StyleConstants
+import kotlin.time.toKotlinDuration
 
 @Internal
 class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
@@ -589,6 +599,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   }
 }
 
+@OptIn(FlowPreview::class)
 internal class StackInfoDescriptionRequester(
   private val threadsList: XDebuggerThreadsList,
   val session: XDebugSessionImpl,
@@ -597,9 +608,26 @@ internal class StackInfoDescriptionRequester(
 
   companion object {
     private val logger = Logger.getInstance(StackInfoDescriptionRequester::class.java)
+    private val DESCRIPTION_GROUPING_EVENT_TIMEOUT: kotlin.time.Duration = Duration.ofMillis(500).toKotlinDuration()
   }
 
   private val descriptionCalculationMap = Collections.synchronizedMap(mutableMapOf<XExecutionStack, CompletableFuture<XDebuggerExecutionStackDescription>>())
+  private val descriptionRequestsFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    session.coroutineScope.launch(Dispatchers.EDT) {
+      descriptionRequestsFlow.debounce(DESCRIPTION_GROUPING_EVENT_TIMEOUT).collectLatest {
+        val firstIndex = threadsList.firstVisibleIndex
+        var lastIndex = threadsList.lastVisibleIndex
+
+        if (firstIndex < 0) return@collectLatest
+        lastIndex = if (lastIndex < 0) threadsList.model.size - 1 else lastIndex
+        for (stackInfo in threadsList.model.items.subList(firstIndex, lastIndex + 1)) {
+          requestDescription(stackInfo)
+        }
+      }
+    }
+  }
 
   override fun stateChanged(e: javax.swing.event.ChangeEvent) {
     triggerDescriptionCalculationForVisiblePart()
@@ -612,14 +640,7 @@ internal class StackInfoDescriptionRequester(
   }
 
   internal fun triggerDescriptionCalculationForVisiblePart() {
-    val firstIndex = threadsList.firstVisibleIndex
-    var lastIndex = threadsList.lastVisibleIndex
-
-    if (firstIndex < 0) return
-    lastIndex = if (lastIndex < 0) threadsList.model.size - 1 else lastIndex
-    for (stackInfo in threadsList.model.items.subList(firstIndex, lastIndex + 1)) {
-      requestDescription(stackInfo)
-    }
+    descriptionRequestsFlow.tryEmit(Unit)
   }
 
   internal fun requestDescription(executionStack: XExecutionStack, onFinished: (XDebuggerExecutionStackDescription?, Throwable?) -> Unit) {
