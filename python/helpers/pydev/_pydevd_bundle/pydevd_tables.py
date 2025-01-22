@@ -34,7 +34,7 @@ def exec_table_command(init_command, command_type, start_index, end_index, forma
         return False, table.result
 
     table_provider = __get_table_provider(table)
-    if not table_provider:
+    if not table_provider and command_type != TableCommandType.IMAGE:
         raise RuntimeError('No table data provider for: {}'.format(type(table)))
 
     res = []
@@ -60,7 +60,8 @@ def exec_table_command(init_command, command_type, start_index, end_index, forma
         res.append(table_provider.get_data(table, True, start_index, end_index, format))
 
     elif command_type == TableCommandType.IMAGE:
-        res.append(table_provider.get_bytes(table))
+        image_provider = __get_image_provider(table)
+        res.append(image_provider.get_bytes(table))
 
     return True, ''.join(res)
 
@@ -101,3 +102,31 @@ def __get_table_provider(output):
         import _pydevd_bundle.tables.pydevd_dataset as table_provider
 
     return table_provider
+
+
+# noinspection PyUnresolvedReferences
+def __get_image_provider(output):
+    # type: (str) -> Any
+    output_type = type(output)
+    image_provider = None
+    type_qualified_name = '{}.{}'.format(output_type.__module__, output_type.__name__)
+    numpy_based_type_qualified_names = ['tensorflow.python.framework.ops.EagerTensor',
+                                        'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
+                                        'tensorflow.python.framework.sparse_tensor.SparseTensor',
+                                        'torch.Tensor']
+    if type_qualified_name == 'builtins.dict':
+        table_type = '{}.{}'.format(type(output['data']).__module__, type(output['data']).__name__)
+        if table_type in numpy_based_type_qualified_names:
+            import _pydevd_bundle.tables.images.pydevd_numpy_based_image as image_provider
+        else:
+            import _pydevd_bundle.tables.images.pydevd_numpy_image as image_provider
+    elif type_qualified_name == 'numpy.ndarray':
+        import _pydevd_bundle.tables.images.pydevd_numpy_image as image_provider
+    elif type_qualified_name in numpy_based_type_qualified_names:
+        import _pydevd_bundle.tables.images.pydevd_numpy_based_image as image_provider
+    elif type_qualified_name == 'PIL.Image.Image':
+        import _pydevd_bundle.tables.images.pydevd_pillow_image as image_provider
+    elif type_qualified_name == 'matplotlib.figure.Figure':
+        import _pydevd_bundle.tables.images.pydevd_matplotlib_image as image_provider
+
+    return image_provider

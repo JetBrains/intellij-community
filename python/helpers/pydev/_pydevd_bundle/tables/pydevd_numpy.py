@@ -1,7 +1,6 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import numpy as np
 import io
-import base64
+import numpy as np
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
@@ -89,34 +88,6 @@ def display_data_csv(table, start_index=None, end_index=None):
         print(__create_table(data, start_index, end_index).to_csv(na_rep ="None", sep=CSV_FORMAT_SEPARATOR, float_format=format))
 
     __compute_data(table, ipython_display)
-
-
-def get_bytes(arr):
-    # type: (np.ndarray) -> str
-    try:
-        from PIL import Image
-
-        if not (np.issubdtype(arr.dtype, np.floating) or np.issubdtype(arr.dtype, np.integer)):
-            raise ValueError("Error: Only numeric array types are supported.")
-
-        if arr.ndim == 1:
-            arr = np.expand_dims(arr, axis=0)
-
-        arr_min, arr_max = np.min(arr), np.max(arr)
-        if arr_min == arr_max:  # handle constant values
-            arr = np.full_like(arr, 127, dtype=np.uint8)
-        else:
-            arr = ((arr - arr_min) / (arr_max - arr_min) * 255).astype(np.uint8)
-
-        mode = 'L' if arr.ndim == 2 else 'RGB'
-        bytes_buffer = io.BytesIO()
-        image = Image.fromarray(arr, mode=mode)
-        image.save(bytes_buffer, format="PNG")
-        return base64.b64encode(bytes_buffer.getvalue()).decode("utf-8")
-    except ImportError:
-        return "Error: Pillow library is not installed."
-    except Exception as e:
-        return "Error: {}".format(e)
 
 
 class _NpTable:
