@@ -2,9 +2,9 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.blockingContext
@@ -263,14 +263,16 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       return true
     }
 
+    @RequiresEdt
     suspend fun addUnversionedFiles(project: Project,
                                     unversionedFilePaths: Iterable<FilePath>,
                                     changeList: LocalChangeList,
                                     inclusionModel: InclusionModel): Boolean {
       val unversionedFiles = unversionedFilePaths.mapNotNull { it.virtualFile }
       if (unversionedFiles.isEmpty()) return true
-
-      FileDocumentManager.getInstance().saveAllDocuments()
+      writeIntentReadAction {
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
       return withContext(Dispatchers.IO) {
         blockingContext {
           ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInSync(project, changeList, unversionedFiles) { newChanges ->
