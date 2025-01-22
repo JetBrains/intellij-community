@@ -326,6 +326,19 @@ http_file(
     downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.46.0-sources.jar",
 )
 
+http_file(
+    name = "proguard-core",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7.jar",
+    sha256 = "db06fa9f6b43bb7d386420f854f41aa55a11023de36bad68e043c3ac3f33b8d5",
+    downloaded_file_path = "proguard-core-9.1.7.jar",
+)
+http_file(
+    name = "proguard-core-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7-sources.jar",
+    sha256 = "495063fbf5a1989435ee15ed6c6caf39b7dc7af22dd495e38fc7e6e7c00f1fcc",
+    downloaded_file_path = "proguard-core-9.1.7-sources.jar",
+)
+
 ### auto-generated section `libraries` end
 
 # Test Libraries

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.abi
 
 import org.jetbrains.org.objectweb.asm.ClassReader
@@ -19,6 +20,7 @@ internal object TestAbiGenerator {
         classVisitor = classWriter,
         classesToBeDeleted = classesToBeDeleted,
         treatInternalAsPrivate = false,
+        isKotlin = true,
       )
       classReader.accept(abiVisitor, ClassReader.SKIP_CODE or ClassReader.SKIP_FRAMES)
       val bytes = classWriter.toByteArray()

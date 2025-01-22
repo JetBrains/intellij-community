@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm
 
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +15,7 @@ import kotlin.system.exitProcess
 
 enum class TestModules(@JvmField val sourcePath: String, private val paramsPath: String) {
   PLATFORM_IMPL("platform/platform-impl/src", "platform/platform-impl/ide-impl.jar-0.params"),
+  LANG_IMPL("platform/lang-impl/src", "platform/lang-impl/lang-impl.jar-0.params"),
   PLATFORM_BOOTSTRAP("platform/platform-impl/bootstrap/src", "platform/platform-impl/bootstrap/ide-bootstrap-kt.jar-0.params");
 
   fun getParams(baseDir: Path): String {

@@ -386,7 +386,7 @@ private suspend fun initAndBuild(
         .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
         .use { span ->
           val builders = arrayOf(
-            JavaBuilder(),
+            JavaBuilder(span, messageHandler.out),
             //NotNullInstrumentingBuilder(),
             JavaBackwardReferenceIndexBuilder(),
             BazelKotlinBuilder(isKotlinBuilderInDumbMode = false, span = span, dataManager = buildDataProvider),

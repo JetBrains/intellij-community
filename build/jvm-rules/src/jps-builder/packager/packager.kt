@@ -18,7 +18,7 @@ import java.nio.file.Path
 
 val emptyStringArray: Array<String> = emptyArray()
 
-data class SourceDescriptor constructor(
+data class SourceDescriptor(
   // absolute and normalized
   @JvmField var sourceFile: Path,
   @JvmField var digest: ByteArray,
@@ -98,6 +98,7 @@ private suspend fun createJar(
     val uniqueGuard = hashSet<String>(sourceDescriptors.size + 10)
 
     for (sourceDescriptor in sourceDescriptors) {
+      val isKotlin = sourceDescriptor.sourceFile.toString().endsWith(".kt")
       for (path in sourceDescriptor.outputs) {
         // duplicated - ignore it
         if (!uniqueGuard.add(path)) {
@@ -117,6 +118,7 @@ private suspend fun createJar(
                 name = name,
                 data = classData,
                 isKotlinModuleMetadata = isKotlinMetadata,
+                isKotlin = isKotlin,
               ))
               continue
             }

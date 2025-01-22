@@ -53,3 +53,5 @@
       version: 18.1.0
     - id: io.opentelemetry:opentelemetry-exporter-logging-otlp
       version: 1.46.0
+    - id: com.guardsquare:proguard-core
+      version: 9.1.7

@@ -7,6 +7,10 @@
     "442db5991a11974d72127353be7d7e7abdf8d943d83b16668cb2e336d7392f54",
     "6a755c09e0e5112a39c9e0910e07021d8700294666cd22c431fcf572acb4eb77"
   ],
+  "com.guardsquare:proguard-core:9.1.7": [
+    "db06fa9f6b43bb7d386420f854f41aa55a11023de36bad68e043c3ac3f33b8d5",
+    "495063fbf5a1989435ee15ed6c6caf39b7dc7af22dd495e38fc7e6e7c00f1fcc"
+  ],
   "dev.drewhamilton.poko:poko-compiler-plugin:0.18.2": [
     "08edf341dfa4dd0a9e15b83a2a74850baad3a4a3ca2f93aed05ca6a481b1f394",
     "02f7ac954f3a9574b37a54d7bdc79190325b9ee38a3244256a84d6d760eb6f1f"

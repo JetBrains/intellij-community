@@ -191,4 +191,11 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "proguard-core",
+    jar = "@proguard-core//file",
+    source_jar = "@proguard-core-sources//file",
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `libraries` end

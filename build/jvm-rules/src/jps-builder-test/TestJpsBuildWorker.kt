@@ -39,7 +39,7 @@ internal object TestJpsBuildWorker {
       configureGlobalJps(tracer, coroutineScope)
 
       val args = parseArgs(testParams.lines().toTypedArray())
-      val messageDigest = MessageDigest.getInstance("SHA-256")
+      val messageDigest = MessageDigest.getInstance("SHA-512")
       RootAllocator(Long.MAX_VALUE).use { allocator ->
         tracer.spanBuilder("build").use { span ->
           buildUsingJps(

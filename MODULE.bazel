@@ -17,8 +17,8 @@ local_path_override(
 
 archive_override(
   module_name = "rules_kotlin",
-  urls = ["https://github.com/develar/rules_kotlin/releases/download/v2.0.0-jb.13/rules_kotlin-v2.0.0-jb.13.tar.gz"],
-  integrity = "sha256-TfuGNoMHAf/2MDz63uE3blNcz8wJN96PIGpUpVRqySI=",
+  url = "https://github.com/develar/rules_kotlin/releases/download/v2.0.0-jb.14/rules_kotlin-v2.0.0-jb.14.tar.gz",
+  sha256 = "6a74d99eb899a3ca92576492fcff35d96c6a5836ab2c8be1e4e9c7c084b8edb6",
 )
 
 # GraalVM

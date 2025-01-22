@@ -9,6 +9,7 @@ kt_jvm_library(
         "@lib//:kotlin-stdlib",
         "//:kotlinx-coroutines-core",
         "@lib//:asm",
+        "//:proguard-core",
         "//:kotlin-metadata",
         "//zip:build-zip",
     ],

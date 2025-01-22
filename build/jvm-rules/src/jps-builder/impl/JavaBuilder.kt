@@ -3,7 +3,6 @@
 package org.jetbrains.bazel.jvm.jps.impl
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
@@ -12,6 +11,9 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.lang.JavaVersion
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.bazel.jvm.jps.hashMap
 import org.jetbrains.bazel.jvm.jps.hashSet
 import org.jetbrains.bazel.jvm.jps.impl.JavaBuilder.Companion.builderName
@@ -48,7 +50,6 @@ import org.jetbrains.jps.service.SharedThreadPool
 import java.io.EOFException
 import java.io.File
 import java.io.IOException
-import java.lang.Boolean
 import java.net.ServerSocket
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -59,78 +60,76 @@ import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
-import java.util.function.Consumer
 import java.util.function.Function
 import javax.tools.Diagnostic
 import javax.tools.DiagnosticListener
 import javax.tools.JavaFileObject
 import kotlin.Any
 import kotlin.ByteArray
-import kotlin.Exception
 import kotlin.Int
 import kotlin.Long
-import kotlin.RuntimeException
 import kotlin.String
 import kotlin.Suppress
 import kotlin.Throwable
-import kotlin.Throws
-import kotlin.also
 import kotlin.checkNotNull
 import kotlin.let
 import kotlin.synchronized
 
-private val LOG = Logger.getInstance(JavaBuilder::class.java)
 private const val JAVA_EXTENSION = "java"
 private const val USE_MODULE_PATH_ONLY_OPTION = "compiler.force.module.path"
 
 @Suppress("RemoveRedundantQualifierName")
 internal val javaModuleTypes = java.util.Set.of(JpsJavaModuleType.INSTANCE)
 
-internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
+private val PREFER_TARGET_JDK_COMPILER: Key<Boolean> = GlobalContextKey.create<Boolean>("_prefer_target_jdk_javac_")
+private val SHOWN_NOTIFICATIONS: Key<MutableSet<String>> = GlobalContextKey.create<MutableSet<String>>("_shown_notifications_")
+private val COMPILING_TOOL = Key.create<JavaCompilingTool>("_java_compiling_tool_")
+private val COMPILER_USAGE_STATISTICS = Key.create<ConcurrentMap<String, MutableCollection<String>>>("_java_compiler_usage_stats_")
+private val MODULE_PATH_SPLITTER: Key<ModulePathSplitter> = GlobalContextKey.create<ModulePathSplitter>("_module_path_splitter_")
+private val COMPILABLE_EXTENSIONS = mutableListOf<String>(JAVA_EXTENSION)
+
+private const val PROC_ONLY_OPTION = "-proc:only"
+private const val PROC_FULL_OPTION = "-proc:full"
+private const val PROC_NONE_OPTION = "-proc:none"
+private const val RELEASE_OPTION = "--release"
+private const val TARGET_OPTION = "-target"
+
+@Suppress("SpellCheckingInspection")
+private const val PROCESSORPATH_OPTION = "-processorpath"
+private const val ENABLE_PREVIEW_OPTION = "--enable-preview"
+private const val PROCESSOR_MODULE_PATH_OPTION = "--processor-module-path"
+private const val SOURCE_OPTION = "-source"
+private const val SYSTEM_OPTION = "--system"
+
+@Suppress("RemoveRedundantQualifierName")
+private val FILTERED_OPTIONS = java.util.Set.of<String?>(TARGET_OPTION, RELEASE_OPTION, "-d")
+
+@Suppress("RemoveRedundantQualifierName", "SpellCheckingInspection")
+private val FILTERED_SINGLE_OPTIONS: MutableSet<String?> = java.util.Set.of(
+  "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, PROC_FULL_OPTION, "-proceedOnError"
+)
+
+@Suppress("RemoveRedundantQualifierName", "SpellCheckingInspection")
+private val POSSIBLY_CONFLICTING_OPTIONS = java.util.Set.of(
+  SOURCE_OPTION, SYSTEM_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
+)
+
+internal class JavaBuilder(private val span: Span, private val out: Appendable) : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
   private val refRegistrars = ArrayList<JavacFileReferencesRegistrar>()
 
   companion object {
     const val BUILDER_ID: String = "java"
 
-    private val PREFER_TARGET_JDK_COMPILER: Key<kotlin.Boolean?> = GlobalContextKey.create<kotlin.Boolean?>("_prefer_target_jdk_javac_")
-    private val SHOWN_NOTIFICATIONS: Key<MutableSet<String>?> = GlobalContextKey.create<MutableSet<String>?>("_shown_notifications_")
-    private val COMPILING_TOOL = Key.create<JavaCompilingTool?>("_java_compiling_tool_")
-    private val COMPILER_USAGE_STATISTICS = Key.create<ConcurrentMap<String?, MutableCollection<String>>?>("_java_compiler_usage_stats_")
-    private val MODULE_PATH_SPLITTER: Key<ModulePathSplitter> = GlobalContextKey.create<ModulePathSplitter?>("_module_path_splitter_")
-    private val COMPILABLE_EXTENSIONS = mutableListOf<String>(JAVA_EXTENSION)
-
-    private const val PROC_ONLY_OPTION = "-proc:only"
-    private const val PROC_FULL_OPTION = "-proc:full"
-    private const val PROC_NONE_OPTION = "-proc:none"
-    private const val RELEASE_OPTION = "--release"
-    private const val TARGET_OPTION = "-target"
-    @Suppress("SpellCheckingInspection")
-    private const val PROCESSORPATH_OPTION = "-processorpath"
-    private const val ENABLE_PREVIEW_OPTION = "--enable-preview"
-    private const val PROCESSOR_MODULE_PATH_OPTION = "--processor-module-path"
-    private const val SOURCE_OPTION = "-source"
-    private const val SYSTEM_OPTION = "--system"
-    @Suppress("RemoveRedundantQualifierName")
-    private val FILTERED_OPTIONS = java.util.Set.of<String?>(TARGET_OPTION, RELEASE_OPTION, "-d")
-    @Suppress("RemoveRedundantQualifierName", "SpellCheckingInspection")
-    private val FILTERED_SINGLE_OPTIONS: MutableSet<String?> = java.util.Set.of(
-      "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, PROC_FULL_OPTION, "-proceedOnError"
-    )
-    @Suppress("RemoveRedundantQualifierName", "SpellCheckingInspection")
-    private val POSSIBLY_CONFLICTING_OPTIONS = java.util.Set.of(
-      SOURCE_OPTION, SYSTEM_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
-    )
-
-    private val ourDefaultRtJar: File?
+    private val ourDefaultRtJar: Path?
     private val ourProcFullRequiredFrom: Int // 0, if not set
 
     init {
-      var rtJar: File? = null
+      var rtJar: Path? = null
       val tokenizer = StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false)
       while (tokenizer.hasMoreTokens()) {
-        val file = File(tokenizer.nextToken())
-        if ("rt.jar" == file.getName()) {
-          rtJar = file
+        val file = Path.of(tokenizer.nextToken())
+        if (file.endsWith("rt.jar")) {
+          rtJar = file.normalize().toAbsolutePath()
           break
         }
       }
@@ -141,76 +140,44 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     val builderName: String
       get() = "java"
 
-    private fun collectAdditionalRequires(options: Iterable<String>): Collection<String> {
-      // --add-reads module=other-module(,other-module)*
-      // The option specifies additional modules to be considered as required by a given module.
-      val result = hashSet<String>()
-      val it = options.iterator()
-      while (it.hasNext()) {
-        val option = it.next()
-        if ("--add-reads".equals(option, ignoreCase = true) && it.hasNext()) {
-          val moduleNames = it.next().substringAfter('=')
-          if (moduleNames.isNotEmpty()) {
-            result.addAll(moduleNames.splitToSequence(','))
-          }
-        }
-      }
-      return result
-    }
-
-    private fun logJavacCall(chunk: ModuleChunk, options: Iterable<String?>, mode: String?) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug((if (Iterators.contains<String?>(options, PROC_ONLY_OPTION)) "Running processors for chunk" else "Compiling chunk") +
-          " [" + chunk.name + "] with options: \"" + options.joinToString(" ") + "\", mode=" + mode)
-      }
-    }
-
     private fun invokeJavac(
       compilerSdkVersion: Int,
       context: CompileContext,
       chunk: ModuleChunk,
       compilingTool: JavaCompilingTool,
       options: Iterable<String>,
-      files: Iterable<File>?,
-      outSink: OutputFileConsumer,
+      files: Iterable<File>,
+      outSink: (OutputFileObject) -> Unit,
       javacCall: JavacCaller
-    ): kotlin.Boolean {
-      if (Iterators.contains<String?>(options, PROC_ONLY_OPTION)) {
+    ): Boolean {
+      if (options.contains(PROC_ONLY_OPTION)) {
         // make a dedicated javac call for annotation processing only
-        val generated: MutableCollection<File> = ArrayList<File>()
-        val processingSuccess = javacCall.invoke(options, files, OutputFileConsumer { fileObject: OutputFileObject? ->
-          if (fileObject!!.getKind() == JavaFileObject.Kind.SOURCE) {
+        val generated = ArrayList<File>()
+        val processingSuccess = javacCall.invoke(options, files, OutputFileConsumer { fileObject ->
+          if (fileObject.getKind() == JavaFileObject.Kind.SOURCE) {
             generated.add(fileObject.file)
           }
-          outSink.save(fileObject)
+          outSink(fileObject)
         })
         if (!processingSuccess) {
           return false
         }
+
         // now call javac with processor-generated sources and without processing-related options
-        val compileOnlyOptions = getCompilationOptions(compilerSdkVersion, context, chunk, null, compilingTool).second
-        return javacCall.invoke(compileOnlyOptions, Iterators.flat<File?>(files, generated), outSink)
+        val compileOnlyOptions = getCompilationOptions(
+          compilerSdkVersion = compilerSdkVersion,
+          context = context,
+          chunk = chunk,
+          profile = null,
+          compilingTool = compilingTool,
+        ).second
+        return javacCall.invoke(compileOnlyOptions, Iterators.flat(files, generated), outSink)
       }
 
       return javacCall.invoke(options, files, outSink)
     }
 
-    private fun updateCompilerUsageStatistics(context: CompileContext?, compilerName: String?, chunk: ModuleChunk) {
-      val map = COMPILER_USAGE_STATISTICS.get(context)
-      var names = map.get(compilerName)
-      if (names == null) {
-        names = Collections.synchronizedSet(HashSet())
-        val prev = map.putIfAbsent(compilerName, names)
-        if (prev != null) {
-          names = prev
-        }
-      }
-      for (module in chunk.modules) {
-        names.add(module.name)
-      }
-    }
-
-    private fun shouldUseReleaseOption(config: JpsJavaCompilerConfiguration, compilerVersion: Int, chunkSdkVersion: Int, targetPlatformVersion: Int): kotlin.Boolean {
+    private fun shouldUseReleaseOption(config: JpsJavaCompilerConfiguration, compilerVersion: Int, chunkSdkVersion: Int, targetPlatformVersion: Int): Boolean {
       if (!config.useReleaseOption()) {
         return false
       }
@@ -229,7 +196,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       return false
     }
 
-    private fun shouldForkCompilerProcess(context: CompileContext, chunk: ModuleChunk, chunkLanguageLevel: Int): kotlin.Boolean {
+    private fun shouldForkCompilerProcess(context: CompileContext, chunk: ModuleChunk, chunkLanguageLevel: Int): Boolean {
       val compilerSdkVersion = JavaVersion.current().feature
 
       if (preferTargetJdkCompiler(context)) {
@@ -251,42 +218,48 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       return !isTargetReleaseSupported(compilerSdkVersion, chunkLanguageLevel)
     }
 
-    private fun isTargetReleaseSupported(compilerVersion: Int, targetPlatformVersion: Int): kotlin.Boolean {
-      if (targetPlatformVersion > compilerVersion) {
-        return false
+    private fun isTargetReleaseSupported(compilerVersion: Int, targetPlatformVersion: Int): Boolean {
+      return when {
+        targetPlatformVersion > compilerVersion -> {
+          false
+        }
+
+        else -> {
+          when {
+            compilerVersion < 9 -> true
+            compilerVersion <= 11 -> targetPlatformVersion >= 6
+            compilerVersion <= 19 -> targetPlatformVersion >= 7
+            else -> targetPlatformVersion >= 8
+          }
+        }
       }
-      if (compilerVersion < 9) {
-        return true
-      }
-      if (compilerVersion <= 11) {
-        return targetPlatformVersion >= 6
-      }
-      if (compilerVersion <= 19) {
-        return targetPlatformVersion >= 7
-      }
-      return targetPlatformVersion >= 8
     }
 
-    private fun isJavac(compilingTool: JavaCompilingTool?): kotlin.Boolean {
+    private fun isJavac(compilingTool: JavaCompilingTool?): Boolean {
       return compilingTool != null && (compilingTool.id == JavaCompilers.JAVAC_ID || compilingTool.id == JavaCompilers.JAVAC_API_ID)
     }
 
-    private fun preferTargetJdkCompiler(context: CompileContext): kotlin.Boolean {
-      var `val` = PREFER_TARGET_JDK_COMPILER.get(context)
-      if (`val` == null) {
+    private fun preferTargetJdkCompiler(context: CompileContext): Boolean {
+      var result = PREFER_TARGET_JDK_COMPILER.get(context)
+      if (result == null) {
         val config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.projectDescriptor.project)
         // default
-        PREFER_TARGET_JDK_COMPILER.set(context, config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER.also { `val` = it })
+        result = config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER
+        PREFER_TARGET_JDK_COMPILER.set(context, result)
       }
-      return `val`!!
+      return result
     }
 
     // If platformCp of the build process is the same as the target platform, do not specify platformCp explicitly
     // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
-    private fun calcEffectivePlatformCp(platformCp: Collection<File>, options: Iterable<String>, compilingTool: JavaCompilingTool?): Iterable<File>? {
-      if (ourDefaultRtJar == null || !isJavac(compilingTool)) {
+    private fun calcEffectivePlatformCp(
+      platformCp: Collection<Path>,
+      options: Iterable<String>
+    ): Collection<Path>? {
+      if (ourDefaultRtJar == null) {
         return platformCp
       }
+
       var profileFeatureRequested = false
       for (option in options) {
         if ("-profile".equals(option, ignoreCase = true)) {
@@ -297,9 +270,10 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       if (!profileFeatureRequested) {
         return platformCp
       }
+
       var isTargetPlatformSameAsBuildRuntime = false
       for (file in platformCp) {
-        if (FileUtil.filesEqual(file, ourDefaultRtJar)) {
+        if (file == ourDefaultRtJar) {
           isTargetPlatformSameAsBuildRuntime = true
           break
         }
@@ -315,7 +289,6 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     }
 
     @Synchronized
-    @Throws(IOException::class)
     private fun ensureJavacServerStarted(context: CompileContext): ExternalJavacManager {
       var server = ExternalJavacManagerKey.KEY.get(context)
       if (server != null) {
@@ -324,7 +297,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
 
       val listenPort = findFreePort()
       server = object : ExternalJavacManager(Utils.getSystemRoot(), SharedThreadPool.getInstance(), 2 * 60 * 1000L /*keep idle builds for 2 minutes*/) {
-        override fun createProcessHandler(processId: UUID?, process: Process, commandLine: String, keepProcessAlive: kotlin.Boolean): ExternalJavacProcessHandler {
+        override fun createProcessHandler(processId: UUID?, process: Process, commandLine: String, keepProcessAlive: Boolean): ExternalJavacProcessHandler {
           return object : ExternalJavacProcessHandler(processId, process, commandLine, keepProcessAlive) {
             override fun executeTask(task: Runnable): Future<*> {
               return SharedThreadPool.getInstance().submit(task)
@@ -383,7 +356,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       }
       if (compilerSdkVersion > 15) {
         // enable javac-related reflection tricks in JPS
-        ClasspathBootstrap.configureReflectionOpenPackages(Consumer { p -> vmOptions.add(p) })
+        ClasspathBootstrap.configureReflectionOpenPackages { vmOptions.add(it) }
       }
       val project = context.projectDescriptor.project
       val compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).currentCompilerOptions
@@ -417,8 +390,8 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
         if (baseDirectory != null) {
           //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
           // `-properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs`
-          val moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.absolutePath)
-          appender = BiConsumer { strings, option -> strings.add(option.replace(PathMacroUtil.DEPRECATED_MODULE_DIR, moduleDirPath!!)) }
+          val moduleDirPath = baseDirectory.toPath().toAbsolutePath().normalize().toString()
+          appender = BiConsumer { strings, option -> strings.add(option.replace(PathMacroUtil.DEPRECATED_MODULE_DIR, moduleDirPath)) }
         }
 
         var skip = false
@@ -480,7 +453,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       notifyMessage(context, BuildMessage.Kind.JPS_INFO, "build.message.user.specified.option.0.is.ignored.for.1", false, option, chunk.presentableShortName)
     }
 
-    private fun notifyMessage(context: CompileContext, kind: BuildMessage.Kind?, messageKey: String, notifyOnce: kotlin.Boolean, vararg params: Any?) {
+    private fun notifyMessage(context: CompileContext, kind: BuildMessage.Kind?, messageKey: String, notifyOnce: Boolean, vararg params: Any?) {
       if (!notifyOnce || SHOWN_NOTIFICATIONS.get(context)!!.add(messageKey)) {
         context.processMessage(CompilerMessage(builderName, kind, JpsBuildBundle.message(messageKey, *params)))
       }
@@ -525,13 +498,13 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
           }
         }
 
-        val srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
+        val sourceOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
           chunk.modules.iterator().next(), chunk.containsTests(), profile
         )
-        if (srcOutput != null) {
-          FileUtil.createDirectory(srcOutput)
+        if (sourceOutput != null) {
+          Files.createDirectories(sourceOutput.toPath())
           options.add("-s")
-          options.add(srcOutput.path)
+          options.add(sourceOutput.path)
         }
       }
     }
@@ -539,7 +512,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     /**
      * @return true if annotation processing is enabled and corresponding options were added, false if the profile is null or disabled
      */
-    fun addAnnotationProcessingOptions(options: MutableList<String>, profile: AnnotationProcessingConfiguration?): kotlin.Boolean {
+    fun addAnnotationProcessingOptions(options: MutableList<String>, profile: AnnotationProcessingConfiguration?): Boolean {
       if (profile == null || !profile.isEnabled) {
         options.add(PROC_NONE_OPTION)
         return false
@@ -547,9 +520,9 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
 
       // configuring annotation processing
       if (!profile.isObtainProcessorsFromClasspath) {
-        val processorsPath = profile.processorPath
+        val processorsPath = profile.processorPath.trim()
         options.add(if (profile.isUseProcessorModulePath) PROCESSOR_MODULE_PATH_OPTION else PROCESSORPATH_OPTION)
-        options.add(FileUtil.toSystemDependentName(processorsPath.trim { it <= ' ' }))
+        options.add(FileUtilRt.toSystemDependentName(processorsPath))
       }
 
       val processors = profile.processors
@@ -689,7 +662,12 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       return chunkSdkVersion
     }
 
-    private fun getForkedJavacSdk(diagnostic: DiagnosticListener<in JavaFileObject?>, chunk: ModuleChunk, targetLanguageLevel: Int): Pair<String?, Int?>? {
+    private fun getForkedJavacSdk(
+      diagnostic: DiagnosticListener<JavaFileObject>,
+      chunk: ModuleChunk,
+      targetLanguageLevel: Int,
+      span: Span,
+    ): Pair<String, Int>? {
       val associatedSdk = getAssociatedSdk(chunk)
       var canRunAssociatedJavac = false
       if (associatedSdk != null) {
@@ -697,21 +675,21 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
         canRunAssociatedJavac = sdkVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION
         if (isTargetReleaseSupported(sdkVersion, targetLanguageLevel)) {
           if (canRunAssociatedJavac) {
-            return Pair.create<String?, Int?>(associatedSdk.first.homePath, sdkVersion)
+            return Pair(associatedSdk.first.homePath, sdkVersion)
           }
         }
         else {
-          LOG.warn("Target bytecode version " + targetLanguageLevel + " is not supported by SDK " + sdkVersion + " associated with module " + chunk.name)
+          span.addEvent("""Target bytecode version $targetLanguageLevel is not supported by SDK $sdkVersion associated with module ${chunk.name}""")
         }
       }
 
       val fallbackJdkHome = System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null)
       if (fallbackJdkHome == null) {
-        LOG.info("Fallback JDK is not specified. (See " + GlobalOptions.FALLBACK_JDK_HOME + " option)")
+        span.addEvent("Fallback JDK is not specified. (See ${GlobalOptions.FALLBACK_JDK_HOME} option)")
       }
       val fallbackJdkVersion = System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null)
       if (fallbackJdkVersion == null) {
-        LOG.info("Fallback JDK version is not specified. (See " + GlobalOptions.FALLBACK_JDK_VERSION + " option)")
+        span.addEvent("Fallback JDK version is not specified. (See ${GlobalOptions.FALLBACK_JDK_VERSION} option)")
       }
 
       if (associatedSdk == null && (fallbackJdkHome == null || fallbackJdkVersion == null)) {
@@ -727,7 +705,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
             return Pair.create<String?, Int?>(fallbackJdkHome, fallbackVersion)
           }
           else {
-            LOG.info("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackVersion + "')." +
+            span.addEvent("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackVersion + "')." +
               " At least version " + ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION + " is required to launch javac process.")
           }
         }
@@ -737,7 +715,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       if (associatedSdk != null) {
         if (canRunAssociatedJavac) {
           // although target release is not supported, attempt to start javac, so that javac properly reports this error
-          return Pair.create<String?, Int?>(associatedSdk.first.homePath, associatedSdk.second)
+          return Pair(associatedSdk.first.homePath, associatedSdk.second)
         }
         else {
           diagnostic.report(PlainMessageDiagnostic(Diagnostic.Kind.ERROR,
@@ -817,7 +795,6 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       val compilerName = entry.key
       context.processMessage(CompilerMessage("", BuildMessage.Kind.JPS_INFO,
         JpsBuildBundle.message("build.message.0.was.used.to.compile.java.sources", compilerName)))
-      LOG.info("$compilerName was used to compile ${entry.value}")
     }
     else {
       for (entry in stats.entries) {
@@ -826,7 +803,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
         context.processMessage(CompilerMessage("", BuildMessage.Kind.JPS_INFO,
           if (moduleNames.size == 1) JpsBuildBundle.message("build.message.0.was.used.to.compile.1", compilerName, moduleNames.iterator().next()) else JpsBuildBundle.message("build.message.0.was.used.to.compile.1.modules", compilerName, moduleNames.size)
         ))
-        LOG.info("$compilerName was used to compile $moduleNames")
+        span.addEvent("$compilerName was used to compile $moduleNames")
       }
     }
   }
@@ -908,7 +885,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     chunk: ModuleChunk,
     dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
     files: Collection<File>,
-    outputConsumer: OutputConsumer?,
+    outputConsumer: OutputConsumer,
     compilingTool: JavaCompilingTool,
     moduleInfoFile: File?,
   ): ExitCode {
@@ -920,41 +897,41 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     }
 
     JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().module, context, builderName)
-    val classpath = ProjectPaths.getCompilationClasspath(chunk, false)
-    val platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false)
+    val classpath = ProjectPaths.getCompilationClasspath(chunk, false).map { it.toPath() }
+    val platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false).map { it.toPath() }
 
     // begin compilation round
     val outputSink = OutputFilesSink(
       context = context,
-      outputConsumer = outputConsumer!!,
+      outputConsumer = outputConsumer,
       mappingsCallback = JavaBuilderUtil.getDependenciesRegistrar(context),
       chunkName = chunk.presentableShortName,
+      span = span,
     )
     var filesWithErrors: Collection<File>? = null
     try {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK
 
-        val diagnosticSink = DiagnosticSink(context, refRegistrars)
+        val diagnosticSink = DiagnosticSink(context = context, registrars = refRegistrars, out = out)
         val chunkName = chunk.name
 
         val filesCount = files.size
         var compiledOk = true
         if (filesCount > 0) {
-          LOG.info("Compiling $filesCount java files; module: $chunkName${if (chunk.containsTests()) " (tests)" else ""}")
-          if (LOG.isDebugEnabled) {
-            for (file in files) {
-              LOG.debug("Compiling " + file.path)
-            }
-            LOG.debug(" classpath for $chunkName:")
-            for (file in classpath) {
-              LOG.debug("  " + file.absolutePath)
-            }
-            LOG.debug(" platform classpath for $chunkName:")
-            for (file in platformCp) {
-              LOG.debug("  " + file.absolutePath)
-            }
+          if (span.isRecording) {
+            span.addEvent(
+              "compiling java files",
+              Attributes.of(
+                AttributeKey.longKey("filesCount"), filesCount.toLong(),
+                AttributeKey.stringKey("module.name"), chunkName,
+                AttributeKey.stringArrayKey("files"), files.map { it.path },
+                AttributeKey.stringArrayKey("classpath"), classpath.map { it.toString() },
+                AttributeKey.stringArrayKey("platform classpath"), platformCp.map { it.toString() },
+              )
+            )
           }
+
           try {
             compiledOk = compileJava(
               context = context,
@@ -981,7 +958,7 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
           diagnosticSink.report(PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.compilation.failed.internal.java.compiler.error")))
         }
 
-        if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.errorCount > 0) {
+        if (diagnosticSink.errorCount > 0 && !Utils.PROCEED_ON_ERROR_KEY.get(context, false)) {
           throw StopBuildException(
             JpsBuildBundle.message("build.message.compilation.failed.errors.0.warnings.1", diagnosticSink.errorCount, diagnosticSink.warningCount)
           )
@@ -1003,14 +980,14 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     context: CompileContext,
     chunk: ModuleChunk,
     files: Collection<File>,
-    originalClassPath: Collection<File>,
-    originalPlatformCp: Collection<File>,
+    originalClassPath: Collection<Path>,
+    originalPlatformCp: Collection<Path>,
     sourcePath: Collection<File>,
     diagnosticSink: DiagnosticOutputConsumer,
-    outputSink: OutputFileConsumer?,
+    outputSink: OutputFileConsumer,
     compilingTool: JavaCompilingTool,
     moduleInfoFile: File?,
-  ): kotlin.Boolean {
+  ): Boolean {
     val modules = chunk.modules
     var profile: ProcessorConfigProfile? = null
 
@@ -1024,9 +1001,9 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     val outs = buildOutputDirectoriesMap(context, chunk)
     val targetLanguageLevel = getTargetPlatformLanguageVersion(chunk.representativeTarget().module)
     // when, forking external javac, compilers from SDK 1.7 and higher are supported
-    val forkSdk: Pair<String?, Int?>?
+    val forkSdk: Pair<String, Int>?
     if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel)) {
-      forkSdk = getForkedJavacSdk(diagnosticSink, chunk, targetLanguageLevel)
+      forkSdk = getForkedJavacSdk(diagnostic = diagnosticSink, chunk = chunk, targetLanguageLevel = targetLanguageLevel, span = span)
       if (forkSdk == null) {
         return false
       }
@@ -1035,26 +1012,32 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       forkSdk = null
     }
 
-    val compilerSdkVersion = (if (forkSdk == null) JavaVersion.current().feature else forkSdk.getSecond())!!
+    val compilerSdkVersion = if (forkSdk == null) JavaVersion.current().feature else forkSdk.getSecond()!!
 
-    val vm_compilerOptions = getCompilationOptions(compilerSdkVersion, context, chunk, profile, compilingTool)
+    val vm_compilerOptions = getCompilationOptions(
+      compilerSdkVersion = compilerSdkVersion,
+      context = context,
+      chunk = chunk,
+      profile = profile,
+      compilingTool = compilingTool,
+    )
     val vmOptions = vm_compilerOptions.first
     val options = vm_compilerOptions.second
 
-    val effectivePlatformCp = calcEffectivePlatformCp(originalPlatformCp, options, compilingTool)
+    val effectivePlatformCp = calcEffectivePlatformCp(platformCp = originalPlatformCp, options = options)
     if (effectivePlatformCp == null) {
-      val text = JpsBuildBundle.message(
+      context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.ERROR, JpsBuildBundle.message(
         "build.message.unsupported.compact.compilation.profile.was.requested", chunk.name, System.getProperty("java.version")
-      )
-      context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.ERROR, text))
+      )))
       return false
     }
 
-    val platformCp: Iterable<File>?
-    val classPath: Iterable<File>?
+    val platformCp: Iterable<Path>?
+    val classPath: Iterable<Path>?
     val modulePath: ModulePath
-    val upgradeModulePath: Iterable<File>?
-    if (moduleInfoFile != null) { // has modules
+    val upgradeModulePath: Iterable<Path>?
+    if (moduleInfoFile != null) {
+      // has modules
       val splitter = MODULE_PATH_SPLITTER.get(context)
       val pair = splitter.splitPath(
         moduleInfoFile, outs.keys, ProjectPaths.getCompilationModulePath(chunk, false), collectAdditionalRequires(options)
@@ -1068,26 +1051,26 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
           mpBuilder.add(pair.first.getModuleName(file), file)
         }
         modulePath = mpBuilder.create()
-        classPath = mutableListOf<File>()
+        classPath = mutableListOf<Path>()
       }
       else {
         // placing only explicitly referenced modules into the module path and the rest of deps to classpath
         modulePath = pair.first
-        classPath = pair.second
+        classPath = pair.second.map { it.toPath() }
       }
       // modules above the JDK in the order entry list make a module upgrade path
       upgradeModulePath = effectivePlatformCp
-      platformCp = emptyList<File>()
+      platformCp = emptyList<Path>()
     }
     else {
       modulePath = ModulePath.EMPTY
-      upgradeModulePath = mutableListOf<File>()
+      upgradeModulePath = mutableListOf<Path>()
       if (!effectivePlatformCp.iterator().hasNext() && getChunkSdkVersion(chunk) >= 9) {
         // If chunk's SDK is 9 or higher, there is no way to specify full platform classpath
         // because platform classes are stored in `jimage` binary files with unknown format.
         // Because of this, we are clearing platform classpath so that javac will resolve against its own boot classpath
         // and prepending additional jars from the JDK configuration to compilation classpath
-        platformCp = emptyList<File>()
+        platformCp = emptyList<Path>()
         classPath = Iterators.flat(effectivePlatformCp, originalClassPath)
       }
       else {
@@ -1096,23 +1079,27 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       }
     }
 
-    val classesConsumer = ClassProcessingConsumer(context, outputSink)
-
     if (forkSdk != null) {
-      updateCompilerUsageStatistics(context, "javac " + forkSdk.getSecond(), chunk)
+      updateCompilerUsageStatistics(context, "javac ${forkSdk.getSecond()}", chunk)
       val server = ensureJavacServerStarted(context)
-      val paths = CompilationPaths.create(platformCp, classPath, upgradeModulePath, modulePath, sourcePath)
+      val paths = CompilationPaths.create(
+        platformCp.map { it.toFile() },
+        classPath.map { it.toFile() },
+        upgradeModulePath.map { it.toFile() },
+        modulePath,
+        sourcePath
+      )
       val heapSize = Utils.suggestForkedCompilerHeapSize()
       return invokeJavac(
-        compilerSdkVersion,
-        context,
-        chunk,
-        compilingTool,
-        options,
-        files,
-        classesConsumer
+        compilerSdkVersion = compilerSdkVersion,
+        context = context,
+        chunk = chunk,
+        compilingTool = compilingTool,
+        options = options,
+        files = files,
+        outSink = { saveClass(fileObject = it, context = context, delegateOutputFileSink = outputSink) },
       ) { options, files, outSink ->
-        logJavacCall(chunk, options, "fork")
+        logJavacCall(options = options, mode = "fork", span = span)
         server.forkJavac(
           forkSdk.getFirst(),
           heapSize,
@@ -1130,37 +1117,33 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
       }
     }
 
-    updateCompilerUsageStatistics(context, compilingTool.description, chunk)
+    updateCompilerUsageStatistics(context = context, compilerName = compilingTool.description, chunk = chunk)
     return invokeJavac(
-      compilerSdkVersion,
-      context,
-      chunk,
-      compilingTool,
-      options,
-      files,
-      classesConsumer,
-      JavacCaller { options, files, outSink ->
-        logJavacCall(chunk, options, "in-process")
+      compilerSdkVersion = compilerSdkVersion,
+      context = context,
+      chunk = chunk,
+      compilingTool = compilingTool,
+      options = options,
+      files = files,
+      outSink = { saveClass(fileObject = it, context = context, delegateOutputFileSink = outputSink) },
+      javacCall = JavacCaller { options, files, outSink ->
+        logJavacCall(options = options, mode = "in-process", span = span)
         JavacMain.compile(
           options,
           files,
-          classPath,
-          platformCp,
+          classPath.map { it.toFile() },
+          platformCp.map { it.toFile() },
           modulePath,
-          upgradeModulePath,
+          upgradeModulePath.map { it.toFile() },
           sourcePath,
           outs,
           diagnosticSink,
           outSink,
           context.cancelStatus,
-          compilingTool
+          compilingTool,
         )
       }
     )
-  }
-
-  private fun interface JavacCaller {
-    fun invoke(options: Iterable<String>, files: Iterable<File>?, outSink: OutputFileConsumer): kotlin.Boolean
   }
 
   override fun chunkBuildFinished(context: CompileContext?, chunk: ModuleChunk?) {
@@ -1168,55 +1151,47 @@ internal class JavaBuilder() : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
     ExternalJavacManagerKey.KEY.get(context)?.shutdownIdleProcesses()
   }
 
-  private class ExplodedModuleNameFinder(context: CompileContext) : Function<File?, String?> {
-    private val outsIndex: TargetOutputIndex
-
-    init {
-      val targetIndex = context.projectDescriptor.buildTargetIndex
-      val javaModuleTargets = ArrayList<ModuleBuildTarget?>()
-      for (type in JavaModuleBuildTargetType.ALL_TYPES) {
-        javaModuleTargets.addAll(targetIndex.getAllTargets(type))
-      }
-      outsIndex = TargetOutputIndexImpl(javaModuleTargets, context)
-    }
-
-    override fun apply(outputDir: File?): String? {
-      for (target in outsIndex.getTargetsByOutputFile(outputDir!!)) {
-        if (target is ModuleBasedTarget<*>) {
-          return target.module.name.trim()
-        }
-      }
-      return ModulePathSplitter.DEFAULT_MODULE_NAME_SEARCH.apply(outputDir)
-    }
-  }
-
-  private inner class ClassProcessingConsumer(private val context: CompileContext, sink: OutputFileConsumer?) : OutputFileConsumer {
-    private val delegateOutputFileSink = sink ?: OutputFileConsumer { fileObject ->
-      throw RuntimeException("Output sink for compiler was not specified")
-    }
-
-    override fun save(fileObject: OutputFileObject) {
-      try {
-        val content = fileObject.content
-        val file = fileObject.file
-        if (content == null) {
-          context.processMessage(CompilerMessage(
-            builderName, BuildMessage.Kind.WARNING, JpsBuildBundle.message("build.message.missing.content.for.file.0", file.path))
-          )
-        }
-        else {
-          saveToFile(file.toPath(), content)
-        }
-      }
-      catch (e: IOException) {
-        context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.ERROR, e.message))
-      }
-
-      delegateOutputFileSink.save(fileObject)
-    }
-  }
-
   override fun getExpectedBuildTime(): Long = 100
+}
+
+private class ExplodedModuleNameFinder(context: CompileContext) : Function<File?, String?> {
+  private val outsIndex: TargetOutputIndex
+
+  init {
+    val targetIndex = context.projectDescriptor.buildTargetIndex
+    val javaModuleTargets = ArrayList<ModuleBuildTarget?>()
+    for (type in JavaModuleBuildTargetType.ALL_TYPES) {
+      javaModuleTargets.addAll(targetIndex.getAllTargets(type))
+    }
+    outsIndex = TargetOutputIndexImpl(javaModuleTargets, context)
+  }
+
+  override fun apply(outputDir: File?): String? {
+    for (target in outsIndex.getTargetsByOutputFile(outputDir!!)) {
+      if (target is ModuleBasedTarget<*>) {
+        return target.module.name.trim()
+      }
+    }
+    return ModulePathSplitter.DEFAULT_MODULE_NAME_SEARCH.apply(outputDir)
+  }
+}
+
+private fun saveClass(fileObject: OutputFileObject, context: CompileContext, delegateOutputFileSink: OutputFileConsumer) {
+  try {
+    val content = fileObject.content
+    val file = fileObject.file
+    if (content == null) {
+      context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.WARNING, "Missing content for file ${file.path}"))
+    }
+    else {
+      saveToFile(file.toPath(), content)
+    }
+  }
+  catch (e: IOException) {
+    context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.ERROR, e.message))
+  }
+
+  delegateOutputFileSink.save(fileObject)
 }
 
 private fun saveToFile(file: Path, content: BinaryContent) {
@@ -1259,6 +1234,7 @@ private class OutputFilesSink(
   private val context: CompileContext,
   private val outputConsumer: OutputConsumer,
   private val mappingsCallback: Backend,
+  private val span: Span,
   chunkName: String
 ) : OutputFileConsumer {
   private val chunkOutputRootName = "$" + chunkName.replace("\\\\s".toRegex(), "_")
@@ -1315,7 +1291,7 @@ private class OutputFilesSink(
         catch (e: Throwable) {
           // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation
           val message = JpsBuildBundle.message("build.message.class.dependency.information.may.be.incomplete", fileObject.file.path)
-          LOG.info(message, e)
+          span.recordException(e)
           for (sourcePath in sourcePaths) {
             context.processMessage(CompilerMessage(
               "java", BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath
@@ -1333,11 +1309,12 @@ private class OutputFilesSink(
 
 private class DiagnosticSink(
   private val context: CompileContext,
-  private val registrars: MutableCollection<JavacFileReferencesRegistrar>
+  private val registrars: MutableCollection<JavacFileReferencesRegistrar>,
+  private val out: Appendable,
 ) : DiagnosticOutputConsumer {
   private val myErrorCount = AtomicInteger(0)
   private val myWarningCount = AtomicInteger(0)
-  private val myFilesWithErrors = hashSet<File>()
+  @JvmField val filesWithErrors = hashSet<File>()
 
   override fun javaFileLoaded(file: File?) {
   }
@@ -1347,7 +1324,7 @@ private class DiagnosticSink(
       registrar.registerFile(
         context,
         data.filePath,
-        Iterators.map(data.refs.entries, Iterators.Function { it }),
+        data.refs.entries,
         data.defs,
         data.casts,
         data.implicitToStringRefs
@@ -1374,77 +1351,60 @@ private class DiagnosticSink(
       return
     }
 
-    if (line.startsWith(ExternalJavacManager.STDOUT_LINE_PREFIX)) {
-      println(line)
-      if (LOG.isDebugEnabled) {
-        LOG.debug(line)
+    when {
+      line.startsWith(ExternalJavacManager.STDOUT_LINE_PREFIX) || line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX) -> {
+        out.appendLine(line)
       }
-    }
-    else if (line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX)) {
-      System.err.println(line)
-      if (LOG.isDebugEnabled) {
-        LOG.debug(line)
+      line.contains("java.lang.OutOfMemoryError") -> {
+        context.processMessage(CompilerMessage("java", BuildMessage.Kind.ERROR, JpsBuildBundle.message("build.message.insufficient.memory")))
+        myErrorCount.incrementAndGet()
       }
-    }
-    else if (line.contains("java.lang.OutOfMemoryError")) {
-      context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.ERROR, JpsBuildBundle.message("build.message.insufficient.memory")))
-      myErrorCount.incrementAndGet()
-    }
-    else {
-      context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.INFO, line))
+      else -> {
+        out.appendLine(line)
+      }
     }
   }
 
-  override fun report(diagnostic: Diagnostic<out JavaFileObject?>) {
-    val kind: BuildMessage.Kind
-    when (diagnostic.kind) {
+  override fun report(diagnostic: Diagnostic<out JavaFileObject>) {
+    val kind = when (diagnostic.kind) {
       Diagnostic.Kind.ERROR -> {
-        kind = BuildMessage.Kind.ERROR
         myErrorCount.incrementAndGet()
+        BuildMessage.Kind.ERROR
       }
 
       Diagnostic.Kind.MANDATORY_WARNING, Diagnostic.Kind.WARNING -> {
-        kind = BuildMessage.Kind.WARNING
         myWarningCount.incrementAndGet()
+        BuildMessage.Kind.WARNING
       }
 
-      Diagnostic.Kind.NOTE -> kind = BuildMessage.Kind.INFO
-      Diagnostic.Kind.OTHER -> kind = if (diagnostic is JpsInfoDiagnostic) BuildMessage.Kind.JPS_INFO else BuildMessage.Kind.OTHER
-      else -> kind = BuildMessage.Kind.OTHER
+      Diagnostic.Kind.NOTE -> BuildMessage.Kind.INFO
+      Diagnostic.Kind.OTHER -> if (diagnostic is JpsInfoDiagnostic) BuildMessage.Kind.JPS_INFO else BuildMessage.Kind.OTHER
+      else -> BuildMessage.Kind.OTHER
     }
-    var sourceFile: File? = null
-    try {
-      // for eclipse compiler just an attempt to call getSource() may lead to an NPE,
-      // so calling this method under try/catch to avoid induced compiler errors
-      val source: JavaFileObject? = diagnostic.getSource()
-      sourceFile = if (source != null) File(source.toUri()) else null
-    }
-    catch (e: Exception) {
-      LOG.info(e)
-    }
-    val srcPath: String?
-    if (sourceFile != null) {
-      if (kind == BuildMessage.Kind.ERROR) {
-        myFilesWithErrors.add(sourceFile)
-      }
-      srcPath = FileUtil.toSystemIndependentName(sourceFile.path)
+
+    val source: JavaFileObject? = diagnostic.getSource()
+    val sourceFile = if (source == null) null else File(source.toUri())
+    val sourcePath = if (sourceFile == null) {
+      null
     }
     else {
-      srcPath = null
+      if (kind == BuildMessage.Kind.ERROR) {
+        filesWithErrors.add(sourceFile)
+      }
+      sourceFile.invariantSeparatorsPath
     }
     val message = diagnostic.getMessage(Locale.US)
-    if (Utils.IS_TEST_MODE) {
-      LOG.info(message)
-    }
-    val compilerMsg = CompilerMessage(
-      builderName, kind, message, srcPath, diagnostic.startPosition,
-      diagnostic.endPosition, diagnostic.position, diagnostic.lineNumber,
-      diagnostic.columnNumber
-    )
-    if (LOG.isDebugEnabled) {
-      LOG.debug(compilerMsg.toString())
-    }
-    context.processMessage(compilerMsg)
+    context.processMessage(CompilerMessage(
+      builderName,
+      kind,
+      message,
+      sourcePath,
+      diagnostic.startPosition,
+      diagnostic.endPosition,
+      diagnostic.position,
+      diagnostic.lineNumber,
+      diagnostic.columnNumber,
+    ))
   }
 
   val errorCount: Int
@@ -1452,7 +1412,41 @@ private class DiagnosticSink(
 
   val warningCount: Int
     get() = myWarningCount.get()
+}
 
-  val filesWithErrors: Collection<File>
-    get() = myFilesWithErrors
+private fun logJavacCall(options: Iterable<String>, mode: String, span: Span) {
+  if (span.isRecording) {
+    span.addEvent("compiling chunk mode", Attributes.of(
+      AttributeKey.stringArrayKey("options"), options.toList(),
+      AttributeKey.stringKey("mode"), mode,
+    ))
+  }
+}
+
+private fun collectAdditionalRequires(options: Iterable<String>): Collection<String> {
+  // --add-reads module=other-module(,other-module)*
+  // The option specifies additional modules to be considered as required by a given module.
+  val result = hashSet<String>()
+  val it = options.iterator()
+  while (it.hasNext()) {
+    val option = it.next()
+    if ("--add-reads".equals(option, ignoreCase = true) && it.hasNext()) {
+      val moduleNames = it.next().substringAfter('=')
+      if (moduleNames.isNotEmpty()) {
+        result.addAll(moduleNames.splitToSequence(','))
+      }
+    }
+  }
+  return result
+}
+
+private fun interface JavacCaller {
+  fun invoke(options: Iterable<String>, files: Iterable<File>, outSink: OutputFileConsumer): Boolean
+}
+
+private fun updateCompilerUsageStatistics(context: CompileContext, compilerName: String, chunk: ModuleChunk) {
+  val names = COMPILER_USAGE_STATISTICS.get(context).computeIfAbsent(compilerName) { Collections.synchronizedSet(hashSet()) }
+  for (module in chunk.modules) {
+    names.add(module.name)
+  }
 }

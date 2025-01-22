@@ -617,6 +617,8 @@ def _run_jps_builder(
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
             "supports-worker-cancellation": "1",
+#             "supports-path-mapping": "1",
+#             "supports-multiplex-sandboxing": "1",
         },
         arguments = [args],
         progress_message = "Incremental compile %%{label} { kt: %d, java: %d }" % (len(srcs.kt), len(srcs.java)),
