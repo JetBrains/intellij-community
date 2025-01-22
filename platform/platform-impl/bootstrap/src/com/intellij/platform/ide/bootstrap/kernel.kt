@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.kernel.util.kernelCoroutineContext
 import com.jetbrains.rhizomedb.EffectInstruction
 import com.jetbrains.rhizomedb.MapAttribute
 import com.jetbrains.rhizomedb.ReifyEntities
@@ -32,11 +33,6 @@ private val CommonInstructionSet: InstructionSet =
     ValidateCoder,
     CreateEntityCoder,
   ))
-
-@ApiStatus.Internal
-fun CoroutineContext.kernelCoroutineContext(): CoroutineContext {
-  return transactor + this[Rete]!! + this[DbSource.ContextElement]!!
-}
 
 internal suspend fun startClientKernel(scope: CoroutineScope): KernelStarted {
   return startKernel(scope, FollowerTransactorMiddleware(CommonInstructionSet.encoder()))
