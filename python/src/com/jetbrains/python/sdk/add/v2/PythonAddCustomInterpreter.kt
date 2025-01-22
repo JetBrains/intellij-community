@@ -31,7 +31,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
     CONDA to CondaNewEnvironmentCreator(model, errorSink),
     PIPENV to EnvironmentCreatorPip(model),
     POETRY to EnvironmentCreatorPoetry(model, moduleOrProject),
-    UV to EnvironmentCreatorUv(model, moduleOrProject),
+    UV to EnvironmentCreatorUv(model),
   )
 
   private val existingInterpreterSelectors = buildMap {

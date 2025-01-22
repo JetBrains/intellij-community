@@ -21,7 +21,7 @@ object PySdkConfigurationCollector : CounterUsagesCollector() {
     CREATED
   }
 
-  internal enum class PipEnvResult { CREATION_FAILURE, NO_EXECUTABLE, NO_EXECUTABLE_FILE, CREATED }
+  internal enum class PipEnvResult { CREATION_FAILURE, CREATED }
 
   internal fun logVirtualEnvDialog(project: Project, permitted: Boolean, source: Source, baseSdk: InputData) {
     venvDialogEvent.log(project, permitted.asDialogResult, source, baseSdk)

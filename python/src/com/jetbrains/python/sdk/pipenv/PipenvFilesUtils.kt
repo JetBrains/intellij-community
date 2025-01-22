@@ -42,12 +42,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.io.FileNotFoundException
 import java.nio.file.Path
 
 const val PIP_FILE: String = "Pipfile"
 const val PIP_FILE_LOCK: String = "Pipfile.lock"
-const val PIPENV_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 const val PIPENV_PATH_SETTING: String = "PyCharm.Pipenv.Path"
 
 /**
@@ -55,13 +53,6 @@ const val PIPENV_PATH_SETTING: String = "PyCharm.Pipenv.Path"
  */
 @Internal
 suspend fun pipFile(module: Module) = withContext(Dispatchers.IO) { findAmongRoots(module, PIP_FILE) }
-
-/**
- * The URLs of package sources configured in the Pipfile.lock of the module associated with this SDK.
- */
-@Internal
-suspend fun pipFileLockSources(sdk: Sdk): List<String> =
-  sdk.parsePipFileLock().getOrNull()?.meta?.sources?.mapNotNull { it.url } ?: listOf(PIPENV_DEFAULT_SOURCE_URL)
 
 /**
  * Resolves and returns the list of Python requirements from the Pipfile.lock of the SDK's associated module.
@@ -197,12 +188,6 @@ private suspend fun getPipFileLockRequirements(virtualFile: VirtualFile, package
   val packages = pipFileLock.packages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
   val devPackages = pipFileLock.devPackages?.let { withContext(Dispatchers.IO) { toRequirements(it) } } ?: emptyList()
   return packages + devPackages
-}
-
-private suspend fun Sdk.parsePipFileLock(): Result<PipFileLock> {
-  // TODO: Log errors if Pipfile.lock is not found
-  val file = pipFileLock() ?: return Result.failure(FileNotFoundException("Pipfile.lock not found"))
-  return parsePipFileLock(file)
 }
 
 private val gson = Gson()

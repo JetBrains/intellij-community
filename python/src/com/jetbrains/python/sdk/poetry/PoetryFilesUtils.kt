@@ -57,7 +57,6 @@ import java.util.concurrent.ConcurrentMap
 const val PY_PROJECT_TOML: String = "pyproject.toml"
 const val POETRY_LOCK: String = "poetry.lock"
 const val POETRY_TOML: String = "poetry.toml"
-const val POETRY_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 
 val LOGGER = Logger.getInstance("#com.jetbrains.python.sdk.poetry")
 

@@ -187,15 +187,6 @@ suspend fun poetryInstallPackage(sdk: Sdk, pkg: String, extraArgs: List<String>)
 suspend fun poetryUninstallPackage(sdk: Sdk, pkg: String): Result<String> = runPoetryWithSdk(sdk, "remove", pkg)
 
 @Internal
-suspend fun poetryShowPackages(sdk: Sdk): Result<List<PythonPackage>> {
-  val output = runPoetryWithSdk(sdk, "show").getOrElse {
-    return Result.failure(it)
-  }
-
-  return parsePoetryShow(output).let { Result.success(it) }
-}
-
-@Internal
 fun parsePoetryShow(input: String): List<PythonPackage> {
   val result = mutableListOf<PythonPackage>()
   input.split("\n").forEach { line ->
