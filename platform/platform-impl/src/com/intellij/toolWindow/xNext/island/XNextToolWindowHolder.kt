@@ -24,10 +24,7 @@ internal class XNextToolWindowHolder private constructor(): JPanel() {
     }
   }
 
-  override fun setBorder(border: Border?) {
-    if(border is JRoundedCornerBorder) return
-    super.setBorder(JRoundedCornerBorder())
-  }
+  override fun setBorder(border: Border?) {}
 
   override fun isOpaque(): Boolean {
     return true
