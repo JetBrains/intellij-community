@@ -12,6 +12,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ public abstract class StatusText {
 
   private String myText = "";
   private int yGap = DEFAULT_Y_GAP;
+  private boolean forceGapAfterLastLine = false;
 
   // Hardcoded layout manages two columns (primary and secondary) with vertically aligned components inside
   protected final class Column {
@@ -326,7 +328,7 @@ public abstract class StatusText {
       Dimension d = fragment.myComponent.getPreferredSize();
       fragment.boundsInColumn.setBounds(0, size.height, d.width, d.height);
       size.height += d.height;
-      if (i != column.fragments.size() - 1) size.height += JBUIScale.scale(fragment.gapAfter);
+      if (i != column.fragments.size() - 1 || forceGapAfterLastLine) size.height += JBUIScale.scale(fragment.gapAfter);
       size.width = Math.max(size.width, d.width);
     }
     if (myCenterAlignText) {
@@ -424,6 +426,19 @@ public abstract class StatusText {
    */
   public @NotNull StatusText withUnscaledGapAfter(int gap) {
     this.yGap = gap;
+    return this;
+  }
+
+  /**
+   * Forces the vertical gap to appear even after the last line.
+   *
+   * @deprecated exists only to emulate an old bug because there's a test that relies on that bug
+   * @return {@code this} instance
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  public @NotNull StatusText forceGapAfterLastLine() {
+    this.forceGapAfterLastLine = true;
     return this;
   }
 
