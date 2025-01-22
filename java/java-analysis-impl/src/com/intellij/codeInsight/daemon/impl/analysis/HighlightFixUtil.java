@@ -89,7 +89,7 @@ public final class HighlightFixUtil {
     PsiModifierList modifierList = refElement.getModifierList();
     if (modifierList == null) return;
 
-    PsiClass packageLocalClassInTheMiddle = getPackageLocalClassInTheMiddle(place);
+    PsiClass packageLocalClassInTheMiddle = JavaPsiModifierUtil.getPackageLocalClassInTheMiddle(place);
     if (packageLocalClassInTheMiddle != null) {
       List<IntentionAction> fixes =
         JvmElementActionFactories.createModifierActions(packageLocalClassInTheMiddle, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
@@ -129,25 +129,6 @@ public final class HighlightFixUtil {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  static @Nullable PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
-    if (place instanceof PsiReferenceExpression expression) {
-      // check for package-private classes in the middle
-      while (true) {
-        if (expression.resolve() instanceof PsiField field) {
-          PsiClass aClass = field.getContainingClass();
-          if (aClass != null && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-              !JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, place)) {
-            return aClass;
-          }
-        }
-        PsiExpression qualifier = expression.getQualifierExpression();
-        if (!(qualifier instanceof PsiReferenceExpression)) break;
-        expression = (PsiReferenceExpression)qualifier;
-      }
-    }
-    return null;
   }
 
   static void registerChangeVariableTypeFixes(@NotNull PsiExpression expression,

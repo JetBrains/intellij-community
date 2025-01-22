@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
+import com.intellij.codeInsight.JavaContainerProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.lang.ASTNode;
@@ -52,6 +54,19 @@ final class JavaErrorFormatUtil {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
 
+  static @NotNull String formatResolvedSymbol(@NotNull JavaResolveResult result) {
+    PsiElement element = result.getElement();
+    String symbolName = element == null ? null : HighlightMessageUtil.getSymbolName(element, result.getSubstitutor());
+    return symbolName == null ? "?" : symbolName;
+  }
+
+  static @NotNull String formatResolvedSymbolContainer(@NotNull JavaResolveResult result) {
+    PsiElement element = result.getElement();
+    PsiElement container = element == null ? null : new JavaContainerProvider().getContainer(element);
+    String symbolName = container == null ? null : HighlightMessageUtil.getSymbolName(container, result.getSubstitutor());
+    return symbolName == null ? "?" : symbolName;
+  }
+  
   static @NotNull String formatArgumentTypes(@NotNull PsiExpressionList list, boolean shortNames) {
     StringBuilder builder = new StringBuilder();
     builder.append("(");

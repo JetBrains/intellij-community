@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -45,7 +46,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
-  private final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
+  final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private final @NotNull StatementChecker myStatementChecker = new StatementChecker(this);
   private final @NotNull LiteralChecker myLiteralChecker = new LiteralChecker(this);
@@ -172,6 +173,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitEnumConstant(enumConstant);
     if (!hasErrorResults()) myClassChecker.checkEnumWithAbstractMethods(enumConstant);
     if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(enumConstant);
+    if (!hasErrorResults()) {
+      PsiClass containingClass = Objects.requireNonNull(enumConstant.getContainingClass());
+      PsiClassType type = JavaPsiFacade.getElementFactory(myProject).createType(containingClass);
+      myExpressionChecker.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null, enumConstant.getArgumentList());
+    }
   }
 
   @Override
@@ -208,6 +214,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkAnonymousSealedProhibited(expression);
     if (!hasErrorResults()) myExpressionChecker.checkQualifiedNew(expression, type, aClass);
     if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkNewExpression(expression, type);
   }
 
   @Override
@@ -482,6 +489,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         myExpressionChecker.checkLocalClassReferencedFromAnotherSwitchBranch(ref, aClass);
       }
       if (!hasErrorResults()) myGenericsChecker.checkRawOnParameterizedType(ref, resolved);
+      if (!hasErrorResults()) {
+        myExpressionChecker.checkAmbiguousConstructorCall(ref, resolved);
+      }
     }
   }
 

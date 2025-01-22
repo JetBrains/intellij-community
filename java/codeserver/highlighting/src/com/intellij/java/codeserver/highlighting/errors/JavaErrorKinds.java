@@ -708,6 +708,26 @@ public final class JavaErrorKinds {
     parameterized(PsiExpression.class, PsiType.class, "string.template.raw.processor")
       .withRawDescription((psi, type) -> message("string.template.raw.processor", type.getPresentableText()));
 
+  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PRIVATE =
+    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.private")
+      .withAnchor((psi, result) -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+      .withRawDescription((psi, result) -> message("access.private", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
+  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PROTECTED =
+    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.protected")
+      .withAnchor((psi, result) -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+      .withRawDescription(
+        (psi, result) -> message("access.protected", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
+  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PACKAGE_LOCAL =
+    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.package.local")
+      .withAnchor((psi, result) -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+      .withRawDescription(
+        (psi, result) -> message("access.package.local", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
+  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_GENERIC_PROBLEM =
+    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.generic.problem")
+      .withAnchor((psi, result) -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+      .withRawDescription(
+        (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
+
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
     return new Simple<>(key);

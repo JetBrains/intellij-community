@@ -453,6 +453,34 @@ final class ExpressionChecker {
     }
   }
 
+  void checkNewExpression(@NotNull PsiNewExpression expression, PsiType type) {
+    if (!(type instanceof PsiClassType classType)) return;
+    PsiClassType.ClassResolveResult typeResult = classType.resolveGenerics();
+    PsiClass aClass = typeResult.getElement();
+    if (aClass == null) return;
+    if (aClass instanceof PsiAnonymousClass anonymousClass) {
+      classType = anonymousClass.getBaseClassType();
+      typeResult = classType.resolveGenerics();
+      aClass = typeResult.getElement();
+      if (aClass == null) return;
+    }
+
+    PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+    checkConstructorCall(typeResult, expression, classType, classReference, expression.getArgumentList());
+  }
+
+  void checkAmbiguousConstructorCall(@NotNull PsiJavaCodeReferenceElement ref, PsiElement resolved) {
+    if (resolved instanceof PsiClass psiClass &&
+        ref.getParent() instanceof PsiNewExpression newExpression && psiClass.getConstructors().length > 0) {
+      if (newExpression.resolveMethod() == null && !PsiTreeUtil.findChildrenOfType(newExpression.getArgumentList(), PsiFunctionalExpression.class).isEmpty()) {
+        PsiType type = newExpression.getType();
+        if (type instanceof PsiClassType classType) {
+          checkConstructorCall(classType.resolveGenerics(), newExpression, type, newExpression.getClassReference(), ref);
+        }
+      }
+    }
+  }
+
   private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
     // Parent resolve failed as well, and it's likely more informative.
     // Suppress this error to allow reporting from parent
@@ -583,5 +611,28 @@ final class ExpressionChecker {
       }
     }
     return isDummy;
+  }
+
+  void checkConstructorCall(@NotNull PsiClassType.ClassResolveResult typeResolveResult,
+                                   @NotNull PsiConstructorCall constructorCall,
+                                   @NotNull PsiType type,
+                                   @Nullable PsiJavaCodeReferenceElement classReference,
+                                   @Nullable PsiElement elementToHighlight) {
+    if (elementToHighlight == null) return;
+    PsiExpressionList list = constructorCall.getArgumentList();
+    if (list == null) return;
+    PsiClass aClass = typeResolveResult.getElement();
+    if (aClass == null) return;
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myVisitor.project()).getResolveHelper();
+    PsiClass accessObjectClass = null;
+    if (constructorCall instanceof PsiNewExpression newExpression) {
+      PsiExpression qualifier = newExpression.getQualifier();
+      if (qualifier != null) {
+        accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
+      }
+    }
+    if (classReference != null && !resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
+      myVisitor.myModifierChecker.reportAccessProblem(classReference, aClass, typeResolveResult);
+    }
   }
 }

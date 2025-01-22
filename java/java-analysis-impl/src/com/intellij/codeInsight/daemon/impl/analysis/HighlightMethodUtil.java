@@ -959,14 +959,6 @@ public final class HighlightMethodUtil {
         accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
       }
     }
-    if (classReference != null && !resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
-      String description = HighlightUtil.accessProblemDescription(classReference, aClass, typeResolveResult);
-      PsiElement element = ObjectUtils.notNull(classReference.getReferenceNameElement(), classReference);
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-      HighlightFixUtil.registerAccessQuickFixAction(asConsumer(info), aClass, classReference, null);
-      errorSink.accept(info);
-      return;
-    }
     PsiMethod[] constructors = aClass.getConstructors();
 
     if (constructors.length == 0) {

@@ -94,6 +94,7 @@ final class JavaErrorFixProvider {
     createGenericFixes();
     createRecordFixes();
     createTypeFixes();
+    createAccessFixes();
     createAnnotationFixes();
     createReceiverParameterFixes();
   }
@@ -317,6 +318,20 @@ final class JavaErrorFixProvider {
       }
     });
     fix(STRING_TEMPLATE_PROCESSOR_MISSING, error -> new MissingStrProcessorFix(error.psi()));
+  }
+  
+  private void createAccessFixes() {
+    JavaFixesProvider<PsiJavaCodeReferenceElement, JavaResolveResult> accessFix = error -> {
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      if (error.context().getElement() instanceof PsiJvmMember member) {
+        HighlightFixUtil.registerAccessQuickFixAction(registrar::add, member, error.psi(), null);
+      }
+      return registrar;
+    };
+    multi(ACCESS_PRIVATE, accessFix);
+    multi(ACCESS_PROTECTED, accessFix);
+    multi(ACCESS_PACKAGE_LOCAL, accessFix);
+    multi(ACCESS_GENERIC_PROBLEM, accessFix);
   }
 
   private void createTypeFixes() {

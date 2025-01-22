@@ -2,6 +2,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,5 +174,30 @@ public final class JavaPsiModifierUtil {
     if (parent == null) return null;
     Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(parent);
     return incompatibleModifierMap == null ? null : getIncompatibleModifier(modifier, modifierList, incompatibleModifierMap);
+  }
+
+  /**
+   * @param place a potential reference expression that refers to a package-private member of another package
+   * @return the package-private class which prevents the place expression from being evaluated, null if nothing is found
+   */
+  public static @Nullable PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
+    if (place instanceof PsiReferenceExpression) {
+      PsiReferenceExpression expression = (PsiReferenceExpression)place;
+      // check for package-private classes in the middle
+      while (true) {
+        PsiField field = ObjectUtils.tryCast(expression.resolve(), PsiField.class);
+        if (field != null) {
+          PsiClass aClass = field.getContainingClass();
+          if (aClass != null && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+              !JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, place)) {
+            return aClass;
+          }
+        }
+        PsiExpression qualifier = expression.getQualifierExpression();
+        if (!(qualifier instanceof PsiReferenceExpression)) break;
+        expression = (PsiReferenceExpression)qualifier;
+      }
+    }
+    return null;
   }
 }

@@ -1301,7 +1301,7 @@ public final class HighlightUtil {
       return Pair.pair(JavaErrorBundle.message("protected.symbol", symbolName, containerName), null);
     }
 
-    PsiClass packageLocalClass = HighlightFixUtil.getPackageLocalClassInTheMiddle(ref);
+    PsiClass packageLocalClass = JavaPsiModifierUtil.getPackageLocalClassInTheMiddle(ref);
     if (packageLocalClass != null) {
       refElement = packageLocalClass;
       symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
@@ -1320,7 +1320,7 @@ public final class HighlightUtil {
 
   static @Nullable @Nls ErrorWithFixes checkModuleAccess(@NotNull PsiElement resolved, @NotNull PsiElement ref, @NotNull JavaResolveResult result) {
     PsiElement refElement = resolved;
-    PsiClass packageLocalClass = HighlightFixUtil.getPackageLocalClassInTheMiddle(ref);
+    PsiClass packageLocalClass = JavaPsiModifierUtil.getPackageLocalClassInTheMiddle(ref);
     if (packageLocalClass != null) {
       refElement = packageLocalClass;
     }
