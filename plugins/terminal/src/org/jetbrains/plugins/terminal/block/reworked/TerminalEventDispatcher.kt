@@ -170,6 +170,8 @@ internal abstract class TerminalEventDispatcher(
       "TerminalResetFontSize",
       "Terminal.CopySelectedText",
       "Terminal.Paste",
+      "Terminal.PageUp",
+      "Terminal.PageDown",
     )
 
     fun getActionsToSkip(): List<AnAction> {

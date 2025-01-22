@@ -187,6 +187,9 @@
 
     <action id="Terminal.EnableNewUi" class="org.jetbrains.plugins.terminal.action.EnableBlockTerminalUiAction"/>
 
+    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction" use-shortcut-of="EditorPageUp"/>
+    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction" use-shortcut-of="EditorPageDown"/>
+
     <group id="Terminal.ToolWindowActions">
       <reference ref="Terminal.EnableNewUi"/>
     </group>
