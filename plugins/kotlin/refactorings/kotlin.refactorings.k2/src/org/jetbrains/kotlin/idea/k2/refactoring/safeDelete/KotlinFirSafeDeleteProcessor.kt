@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinK2RefactoringsBundle
@@ -124,33 +125,31 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         val overridden = arrayListOf<PsiElement>()
         val containingClass = element.containingClass()
         if (containingClass != null) {
-            analyze(containingClass) {
-                val elementClassSymbol = containingClass.symbol as KaClassSymbol
+            overridden.add(element)
+            element.findAllOverridings().forEach { m ->
+                val original = m.unwrapped
+                if (original != null && !allElementsToDelete.contains(original)) {
+                    analyze(original.getKaModule(original.project, useSiteModule = null)) {
+                        val elementClassSymbol = containingClass.symbol as KaClassSymbol
 
-                fun isMultipleInheritance(function: KaSymbol): Boolean {
-                    val superMethods = (function as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
-                    return superMethods.any {
-                        val superClassSymbol = it.containingDeclaration as? KaClassSymbol ?: return@any false
-                        val superMethod = it.psi ?: return@any false
-                        return@any !isInside(superMethod) && !superClassSymbol.isSubClassOf(elementClassSymbol)
-                    }
-                }
+                        fun isMultipleInheritance(function: KaSymbol): Boolean {
+                            val superMethods = (function as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
+                            return superMethods.any {
+                                val superClassSymbol = it.containingDeclaration as? KaClassSymbol ?: return@any false
+                                val superMethod = it.psi ?: return@any false
+                                return@any !isInside(superMethod) && !superClassSymbol.isSubClassOf(elementClassSymbol)
+                            }
+                        }
 
-                overridden.add(element)
-                element.findAllOverridings().forEach { m ->
-                    val original = m.unwrapped
-                    if (original != null && !allElementsToDelete.contains(original)) {
                         val oSymbol = when (original) {
                             is KtDeclaration -> original.symbol
                             is PsiMember -> original.callableSymbol
                             else -> null
                         }
 
-                        if (oSymbol != null && isMultipleInheritance(oSymbol)) {
-                            return@forEach
+                        if (oSymbol == null || !isMultipleInheritance(oSymbol)) {
+                            overridden.add(original)
                         }
-
-                        overridden.add(original)
                     }
                 }
             }
