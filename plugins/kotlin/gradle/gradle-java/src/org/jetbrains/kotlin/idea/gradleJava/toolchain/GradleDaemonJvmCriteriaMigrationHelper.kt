@@ -18,11 +18,10 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getTopLevelBuildScriptSettingsPsiFile
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import org.jetbrains.plugins.gradle.util.toJvmVendor
+import org.jetbrains.plugins.gradle.util.toJvmCriteria
 import java.util.concurrent.CompletableFuture
 
 object GradleDaemonJvmCriteriaMigrationHelper {
@@ -44,10 +43,7 @@ object GradleDaemonJvmCriteriaMigrationHelper {
             displayMigrationFailureMessage(project)
             return false
         }
-        val gradleJvmCriteria = GradleDaemonJvmCriteria(
-            version = gradleJvmInfo.version.feature.toString(),
-            vendor = gradleJvmInfo.variant.toJvmVendor()
-        )
+        val gradleJvmCriteria = gradleJvmInfo.toJvmCriteria()
 
         applyDefaultToolchainResolverPlugin(project)
 
