@@ -18,6 +18,13 @@ package com.intellij.vcs.log
 import com.intellij.openapi.vfs.VirtualFile
 
 /**
+ * Unique commit identifier used in the VCS log storage.
+ *
+ * Can be obtained by [VcsLogDataProvider.getCommitIndex] method.
+ */
+typealias VcsLogCommitStorageIndex = Int
+
+/**
  * Allows to retrieve information about commits in the log, such as commit indexes and commit details.
  *
  * @see VcsLogCommitDataCache
@@ -41,14 +48,14 @@ interface VcsLogDataProvider {
    * @param commitIndex index of a commit
    * @return commit identified by this index or null
    */
-  fun getCommitId(commitIndex: Int): CommitId?
+  fun getCommitId(commitIndex: VcsLogCommitStorageIndex): CommitId?
 
   /**
-   * Returns a unique integer identifier for a commit with specified hash and root.
+   * Returns a unique identifier for a commit with specified hash and root.
    *
    * @param hash commit hash
    * @param root root of the repository for the commit
    * @return commit index
    */
-  fun getCommitIndex(hash: Hash, root: VirtualFile): Int
+  fun getCommitIndex(hash: Hash, root: VirtualFile): VcsLogCommitStorageIndex
 }

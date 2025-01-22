@@ -14,6 +14,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
@@ -93,7 +94,7 @@ internal class GitLinkToCommitResolver(private val project: Project) {
   @RequiresBackgroundThread
   internal fun resolveLinks(
     logData: VcsLogData,
-    visibleGraph: VisibleGraphImpl<Int>,
+    visibleGraph: VisibleGraphImpl<VcsLogCommitStorageIndex>,
     commitId: CommitId, commitMessage: String,
     processingCount: Int
   ) {
@@ -135,7 +136,7 @@ internal class GitLinkToCommitResolver(private val project: Project) {
 
   private fun resolveHash(
     logData: VcsLogData,
-    visibleGraph: VisibleGraphImpl<Int>,
+    visibleGraph: VisibleGraphImpl<VcsLogCommitStorageIndex>,
     commitId: CommitId, commitMessage: String,
     processingCount: Int
   ): String? {
@@ -160,7 +161,7 @@ internal class GitLinkToCommitResolver(private val project: Project) {
 
   private fun iterateCommits(
     logData: VcsLogData,
-    visibleGraph: VisibleGraphImpl<Int>,
+    visibleGraph: VisibleGraphImpl<VcsLogCommitStorageIndex>,
     startFromCommitIndex: Int,
     commitsCount: Int,
     consumer: (VcsCommitMetadata) -> Boolean
@@ -192,7 +193,7 @@ internal class GitLinkToCommitResolver(private val project: Project) {
     return prefixesCache.getIfPresent(commitId) ?: emptyList()
   }
 
-  private fun VcsCommitMetadata.getCommitIndex(logData: VcsLogData): Int = logData.getCommitIndex(id, root)
+  private fun VcsCommitMetadata.getCommitIndex(logData: VcsLogData): VcsLogCommitStorageIndex = logData.getCommitIndex(id, root)
 
   private fun VcsCommitMetadata.getCommitId(): CommitId = CommitId(id, root)
 

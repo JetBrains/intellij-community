@@ -4,6 +4,7 @@ package com.intellij.vcs.log.visible
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogProvider
@@ -17,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 open class VisiblePack @JvmOverloads constructor(
   val dataPack: DataPackBase,
-  val visibleGraph: VisibleGraph<Int>,
+  val visibleGraph: VisibleGraph<VcsLogCommitStorageIndex>,
   val canRequestMore: Boolean,
   private val filters: VcsLogFilterCollection,
   data: Map<Key<*>, Any?> = emptyMap(),
@@ -43,7 +44,7 @@ open class VisiblePack @JvmOverloads constructor(
     return visibleGraph.visibleCommitCount == 0
   }
 
-  open fun getRootAtHead(headCommitIndex: Int): VirtualFile? {
+  open fun getRootAtHead(headCommitIndex: VcsLogCommitStorageIndex): VirtualFile? {
     return dataPack.refsModel.rootAtHead(headCommitIndex)
   }
 

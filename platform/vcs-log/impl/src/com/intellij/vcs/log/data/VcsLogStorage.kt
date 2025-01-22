@@ -6,6 +6,7 @@ package com.intellij.vcs.log.data
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsRef
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.util.function.Predicate
@@ -22,7 +23,7 @@ interface VcsLogStorage {
    * @param root root of the repository for the commit
    * @return a commit index
    */
-  fun getCommitIndex(hash: Hash, root: VirtualFile): Int
+  fun getCommitIndex(hash: Hash, root: VirtualFile): VcsLogCommitStorageIndex
 
   /**
    * Returns a commit for a specified index or null if this index does not correspond to any commit.
@@ -30,7 +31,7 @@ interface VcsLogStorage {
    * @param commitIndex index of a commit
    * @return commit identified by this index or null
    */
-  fun getCommitId(commitIndex: Int): CommitId?
+  fun getCommitId(commitIndex: VcsLogCommitStorageIndex): CommitId?
 
   /**
    * Return mapping of specified commit indexes to the corresponding commits.
@@ -39,7 +40,7 @@ interface VcsLogStorage {
    *
    * @return commits identified by the given commit indexes or empty map
    */
-  fun getCommitIds(commitIds: Collection<Int>): Map<Int, CommitId> {
+  fun getCommitIds(commitIds: Collection<VcsLogCommitStorageIndex>): Map<VcsLogCommitStorageIndex, CommitId> {
     val result = Int2ObjectOpenHashMap<CommitId>()
     for (commitIndex in commitIds) {
       getCommitId(commitIndex)?.let {

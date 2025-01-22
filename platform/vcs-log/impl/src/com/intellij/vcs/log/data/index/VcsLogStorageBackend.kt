@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.StorageId
@@ -15,28 +16,28 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
   var isFresh: Boolean
   val isEmpty: Boolean
 
-  fun getMessage(commitId: Int): String?
+  fun getMessage(commitId: VcsLogCommitStorageIndex): String?
 
-  fun getMessages(commitIds: Collection<Int>): Map<Int, String> {
+  fun getMessages(commitIds: Collection<VcsLogCommitStorageIndex>): Map<VcsLogCommitStorageIndex, String> {
     return commitIds.mapNotNull { commitId -> getMessage(commitId)?.let { message -> commitId to message } }.toMap()
   }
 
-  fun getTimestamp(commitId: Int): LongArray?
+  fun getTimestamp(commitId: VcsLogCommitStorageIndex): LongArray?
 
-  fun getAuthorTime(commitIds: Collection<Int>): Map<Int, Long> {
+  fun getAuthorTime(commitIds: Collection<VcsLogCommitStorageIndex>): Map<VcsLogCommitStorageIndex, Long> {
     return commitIds.mapNotNull { getTimestamp(it)?.let { times -> it to times[0] } }.toMap()
   }
 
-  fun getCommitTime(commitIds: Collection<Int>): Map<Int, Long> {
+  fun getCommitTime(commitIds: Collection<VcsLogCommitStorageIndex>): Map<VcsLogCommitStorageIndex, Long> {
     return commitIds.mapNotNull { getTimestamp(it)?.let { times -> it to times[1] } }.toMap()
   }
 
-  fun getParents(commitId: Int): IntArray?
+  fun getParents(commitId: VcsLogCommitStorageIndex): IntArray?
 
-  fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>>
+  fun getParents(commitIds: Collection<VcsLogCommitStorageIndex>): Map<Int, List<Hash>>
 
   @Throws(IOException::class)
-  fun containsCommit(commitId: Int): Boolean
+  fun containsCommit(commitId: VcsLogCommitStorageIndex): Boolean
 
   @Throws(IOException::class)
   fun collectMissingCommits(commitIds: IntSet): IntSet
@@ -45,7 +46,7 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
   fun iterateIndexedCommits(limit: Int, processor: IntFunction<Boolean>)
 
   @Throws(IOException::class)
-  fun processMessages(processor: (Int, String) -> Boolean)
+  fun processMessages(processor: (VcsLogCommitStorageIndex, String) -> Boolean)
 
   fun createWriter(): VcsLogWriter
 
@@ -60,7 +61,7 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
 
 internal interface VcsLogWriter {
   @Throws(IOException::class)
-  fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails)
+  fun putCommit(commitId: VcsLogCommitStorageIndex, details: VcsLogIndexer.CompressedDetails)
   fun flush()
   fun close(performCommit: Boolean)
   fun interrupt()

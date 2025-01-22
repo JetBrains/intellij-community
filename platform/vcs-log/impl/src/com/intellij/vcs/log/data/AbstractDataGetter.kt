@@ -27,7 +27,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     Disposer.register(this, disposableFlag)
   }
 
-  override fun loadCommitsData(commits: List<Int>,
+  override fun loadCommitsData(commits: List<VcsLogCommitStorageIndex>,
                                consumer: Consumer<in List<T>>,
                                errorConsumer: Consumer<in Throwable>,
                                indicator: ProgressIndicator?) {
@@ -74,9 +74,9 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
-  fun loadCommitsDataSynchronously(commits: Iterable<Int>,
+  fun loadCommitsDataSynchronously(commits: Iterable<VcsLogCommitStorageIndex>,
                                    indicator: ProgressIndicator,
-                                   consumer: (Int, T) -> Unit) {
+                                   consumer: (VcsLogCommitStorageIndex, T) -> Unit) {
     val toLoad = IntOpenHashSet()
     for (id in commits) {
       val details = getCachedData(id)
@@ -114,9 +114,9 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     }
   }
 
-  protected abstract fun getCachedData(commits: List<Int>): Int2ObjectMap<T>
+  protected abstract fun getCachedData(commits: List<VcsLogCommitStorageIndex>): Int2ObjectMap<T>
 
-  protected abstract fun saveInCache(commit: Int, details: T)
+  protected abstract fun saveInCache(commit: VcsLogCommitStorageIndex, details: T)
 
   protected open fun cacheCommits(commits: IntOpenHashSet) = Unit
 
@@ -153,7 +153,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     @RequiresBackgroundThread
     @Throws(VcsException::class)
     @JvmStatic
-    fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(commits: List<Int>): List<T> {
+    fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(commits: List<VcsLogCommitStorageIndex>): List<T> {
       val commitToDetailsMap = Int2ObjectOpenHashMap<T>()
       loadCommitsDataSynchronously(commits,
                                    ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()) { commitIndex, details ->

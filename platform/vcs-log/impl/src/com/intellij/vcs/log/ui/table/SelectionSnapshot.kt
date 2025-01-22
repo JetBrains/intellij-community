@@ -5,6 +5,7 @@ import com.google.common.primitives.Ints
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScrollingUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.graph.VisibleGraph
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
@@ -21,7 +22,7 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
 
   init {
     val selectedRows = ContainerUtil.sorted(Ints.asList(*table.selectedRows))
-    val selectedRowsToCommits = mutableMapOf<Int, Int>()
+    val selectedRowsToCommits = mutableMapOf<Int, VcsLogCommitStorageIndex>()
     for (row in selectedRows) {
       val commitId = table.model.getId(row) ?: continue
       selectedRowsToCommits[row] = commitId
@@ -51,7 +52,7 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
     return range
   }
 
-  fun restore(graph: VisibleGraph<Int>, scroll: Boolean, permanentGraphChanged: Boolean) {
+  fun restore(graph: VisibleGraph<VcsLogCommitStorageIndex>, scroll: Boolean, permanentGraphChanged: Boolean) {
     val scrollToTop = isOnTop && permanentGraphChanged
     val commitsToRows = mapCommitsToRows(graph, scroll && !scrollToTop)
 
@@ -77,15 +78,15 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
     }
   }
 
-  private fun mapCommitsToRows(graph: VisibleGraph<Int>, scroll: Boolean): MutableMap<Int, Int> {
-    val commits = mutableSetOf<Int>()
+  private fun mapCommitsToRows(graph: VisibleGraph<VcsLogCommitStorageIndex>, scroll: Boolean): MutableMap<VcsLogCommitStorageIndex, Int> {
+    val commits = mutableSetOf<VcsLogCommitStorageIndex>()
     commits.addAll(selectedCommits)
     if (scroll && scrollingTarget != null && scrollingTarget.commit != null) commits.add(scrollingTarget.commit)
     return mapCommitsToRows(commits, graph)
   }
 
-  private fun mapCommitsToRows(commits: MutableCollection<Int>, graph: VisibleGraph<Int>): MutableMap<Int, Int> {
-    val commitsToRows = mutableMapOf<Int, Int>()
+  private fun mapCommitsToRows(commits: MutableCollection<VcsLogCommitStorageIndex>, graph: VisibleGraph<VcsLogCommitStorageIndex>): MutableMap<VcsLogCommitStorageIndex, Int> {
+    val commitsToRows = mutableMapOf<VcsLogCommitStorageIndex, Int>()
     for (row in 0 until graph.visibleCommitCount) {
       val commit = graph.getRowInfo(row).commit
       if (commits.remove(commit)) {

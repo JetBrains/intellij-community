@@ -8,7 +8,9 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogProvider
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.CalledInAny
 
@@ -22,29 +24,29 @@ class CommitDetailsGetter internal constructor(storage: VcsLogStorage,
 
   private val cache = Caffeine.newBuilder()
     .maximumSize(10_000)
-    .build<Int, VcsFullCommitDetails>()
+    .build<VcsLogCommitStorageIndex, VcsFullCommitDetails>()
   private val placeholdersCache = Caffeine.newBuilder()
     .maximumSize(1000)
     .weakValues()
-    .build<Int, LoadingDetailsImpl> { LoadingDetailsImpl(storage, it, 0) }
+    .build<VcsLogCommitStorageIndex, LoadingDetailsImpl> { LoadingDetailsImpl(storage, it, 0) }
 
   init {
     LowMemoryWatcher.register({ cache.invalidateAll() }, this)
   }
 
   @CalledInAny
-  fun getCachedDataOrPlaceholder(commitId: Int): VcsFullCommitDetails {
+  fun getCachedDataOrPlaceholder(commitId: VcsLogCommitStorageIndex): VcsFullCommitDetails {
     return getCachedData(commitId) ?: placeholdersCache.get(commitId)!!
   }
 
   @CalledInAny
-  override fun getCachedData(commitId: Int) = cache.getIfPresent(commitId)
+  override fun getCachedData(commitId: VcsLogCommitStorageIndex): VcsFullCommitDetails? = cache.getIfPresent(commitId)
 
   @CalledInAny
-  override fun getCachedData(commits: List<Int>) = Int2ObjectOpenHashMap(cache.getAllPresent(commits))
+  override fun getCachedData(commits: List<VcsLogCommitStorageIndex>): Int2ObjectMap<VcsFullCommitDetails> = Int2ObjectOpenHashMap(cache.getAllPresent(commits))
 
   @CalledInAny
-  override fun saveInCache(commit: Int, details: VcsFullCommitDetails) = cache.put(commit, details)
+  override fun saveInCache(commit: VcsLogCommitStorageIndex, details: VcsFullCommitDetails) = cache.put(commit, details)
 
   @Throws(VcsException::class)
   override fun doLoadCommitsDataFromProvider(logProvider: VcsLogProvider,

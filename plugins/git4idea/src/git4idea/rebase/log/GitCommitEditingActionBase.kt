@@ -15,6 +15,7 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -65,7 +66,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       val root = commitEditingData.repository.root
       val logData = commitEditingData.logData
       val dataPack = logData.dataPack
-      val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
+      val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<VcsLogCommitStorageIndex>
       val commitsInfo = permanentGraph.permanentCommitsInfo
       val commitIndices = commitEditingData.selection.ids
 

@@ -2,20 +2,21 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.util.indexing.StorageException
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsUser
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
 
 internal interface VcsLogUsersStorage {
-  fun getCommitterForCommit(commitId: Int): VcsUser?
+  fun getCommitterForCommit(commitId: VcsLogCommitStorageIndex): VcsUser?
 
-  fun getAuthorForCommit(commitId: Int): VcsUser?
+  fun getAuthorForCommit(commitId: VcsLogCommitStorageIndex): VcsUser?
 
-  fun getAuthorForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> {
+  fun getAuthorForCommits(commitIds: Iterable<VcsLogCommitStorageIndex>): Map<VcsLogCommitStorageIndex, VcsUser> {
     return commitIds.mapNotNull { commitId -> getAuthorForCommit(commitId)?.let { user -> commitId to user } }.toMap()
   }
 
-  fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> {
+  fun getCommitterForCommits(commitIds: Iterable<VcsLogCommitStorageIndex>): Map<VcsLogCommitStorageIndex, VcsUser> {
     return commitIds.mapNotNull { commitId -> getCommitterForCommit(commitId)?.let { user -> commitId to user } }.toMap()
   }
 

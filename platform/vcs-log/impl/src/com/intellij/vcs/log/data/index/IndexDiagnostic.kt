@@ -8,6 +8,7 @@ import com.intellij.util.applyIf
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.graph.api.EdgeFilter
@@ -24,7 +25,7 @@ internal object IndexDiagnostic {
   private const val COMMITS_TO_CHECK = 10
   private const val INDEXED_COMMITS_ITERATIONS_LIMIT = 5_000
 
-  fun IndexDataGetter.getDiffFor(commitsIdList: List<Int>, commitDetailsList: List<VcsFullCommitDetails>, checkAllCommits: Boolean = true): String {
+  fun IndexDataGetter.getDiffFor(commitsIdList: List<VcsLogCommitStorageIndex>, commitDetailsList: List<VcsFullCommitDetails>, checkAllCommits: Boolean = true): String {
     val report = StringBuilder()
     for ((commitId, commitDetails) in commitsIdList.zip(commitDetailsList)) {
       getDiffFor(commitId, commitDetails)?.let { commitReport ->
@@ -36,7 +37,7 @@ internal object IndexDiagnostic {
     return report.toString()
   }
 
-  private fun IndexDataGetter.getDiffFor(commitId: Int, commitDetails: VcsFullCommitDetails): String? {
+  private fun IndexDataGetter.getDiffFor(commitId: VcsLogCommitStorageIndex, commitDetails: VcsFullCommitDetails): String? {
     val difference = getCommitDetailsDiff(commitDetails, IndexedDetails(this, logStorage, commitId))
                      ?: getFilteringDiff(commitId, commitDetails)
     if (difference == null) return null
@@ -69,7 +70,7 @@ internal object IndexDiagnostic {
       .append("\n")
   }
 
-  private fun IndexDataGetter.getFilteringDiff(commitId: Int, details: VcsFullCommitDetails): String? {
+  private fun IndexDataGetter.getFilteringDiff(commitId: VcsLogCommitStorageIndex, details: VcsFullCommitDetails): String? {
     val authorFilter = VcsLogFilterObject.fromUser(details.author)
     val textFilter = details.fullMessage.lineSequence().firstOrNull { it.length > 5 }?.let {
       VcsLogFilterObject.fromPattern(it.take(25), false, true)
@@ -94,11 +95,11 @@ internal object IndexDiagnostic {
     return sb.toString()
   }
 
-  fun DataPack.pickCommits(storage: VcsLogStorage, roots: Collection<VirtualFile>, old: Boolean): Set<Int> {
+  fun DataPack.pickCommits(storage: VcsLogStorage, roots: Collection<VirtualFile>, old: Boolean): Set<VcsLogCommitStorageIndex> {
     val result = IntOpenHashSet()
 
     val rootsToCheck = roots.toMutableSet()
-    @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return emptySet()
+    @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return emptySet()
     val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
     val nodeRange = (0 until graph.nodesCount()).applyIf<IntProgression>(old) { reversed() }
     for (node in nodeRange) {
@@ -124,13 +125,13 @@ internal object IndexDiagnostic {
     return result
   }
 
-  fun DataPack.pickIndexedCommits(dataGetter: IndexDataGetter, roots: Collection<VirtualFile>): Set<Int> {
+  fun DataPack.pickIndexedCommits(dataGetter: IndexDataGetter, roots: Collection<VirtualFile>): Set<VcsLogCommitStorageIndex> {
     if (roots.isEmpty()) return emptySet()
 
     val result = IntOpenHashSet()
 
     // try to pick commits evenly across the graph
-    @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return emptySet()
+    @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex> ?: return emptySet()
     for (i in 0 until COMMITS_TO_CHECK) {
       val node = i * (permanentGraphInfo.linearGraph.nodesCount() / COMMITS_TO_CHECK)
       if (permanentGraphInfo.linearGraph.getAdjacentEdges(node, EdgeFilter.NORMAL_DOWN).size != 1) continue

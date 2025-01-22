@@ -2,10 +2,7 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsLogObjectsFactory
-import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.LoadingDetailsImpl
 import com.intellij.vcs.log.data.VcsLogStorage
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
@@ -17,7 +14,7 @@ import java.util.*
 @ApiStatus.Internal
 class IndexedDetails(private val dataGetter: IndexDataGetter,
                      storage: VcsLogStorage,
-                     private val commitIndex: Int,
+                     private val commitIndex: VcsLogCommitStorageIndex,
                      loadingTaskIndex: Long = 0) : LoadingDetailsImpl(storage, commitIndex, loadingTaskIndex) {
   private val _parents by lazy { dataGetter.getParents(commitIndex) }
   private val _author by lazy { dataGetter.getAuthor(commitIndex) }
@@ -63,7 +60,7 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
     }
 
     @JvmStatic
-    fun createMetadata(commitIndexes: Set<Int>,
+    fun createMetadata(commitIndexes: Set<VcsLogCommitStorageIndex>,
                        dataGetter: IndexDataGetter,
                        storage: VcsLogStorage,
                        factory: VcsLogObjectsFactory): Int2ObjectMap<VcsCommitMetadata> {
@@ -100,7 +97,7 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
     }
 
     @JvmStatic
-    fun createMetadata(commitIndex: Int,
+    fun createMetadata(commitIndex: VcsLogCommitStorageIndex,
                        dataGetter: IndexDataGetter,
                        storage: VcsLogStorage,
                        factory: VcsLogObjectsFactory): VcsCommitMetadata? {

@@ -9,6 +9,7 @@ import com.intellij.settingsSync.core.git.record.RecordService
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogDataProvider
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.ui.table.VcsLogCommitListModel
@@ -114,7 +115,7 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
 
   override val dataProvider: VcsLogDataProvider get() = logData
 
-  override fun getId(row: Int): Int? {
+  override fun getId(row: Int): VcsLogCommitStorageIndex? {
     return visiblePack.visibleGraph.getRowInfo(row).getCommit()
   }
 

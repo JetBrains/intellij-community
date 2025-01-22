@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogDataProvider
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.PrintElement
@@ -66,12 +67,12 @@ class GraphTableModel @ApiStatus.Internal constructor(
     }
   }
 
-  override fun getId(row: Int): Int? {
+  override fun getId(row: Int): VcsLogCommitStorageIndex? {
     return getGraphRowInfo(row)?.commit
   }
 
-  private fun getGraphRowInfo(row: Int): RowInfo<Int>? {
-    return visiblePack.visibleGraph.getRowInfo(row);
+  private fun getGraphRowInfo(row: Int): RowInfo<VcsLogCommitStorageIndex>? {
+    return visiblePack.visibleGraph.getRowInfo(row)
   }
 
   fun getRowType(row: Int): RowType? {

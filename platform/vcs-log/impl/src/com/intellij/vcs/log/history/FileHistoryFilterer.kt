@@ -247,7 +247,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                                 dataPack: DataPack,
                                 filters: VcsLogFilterCollection,
                                 graphOptions: PermanentGraph.Options,
-                                oldRenames: MultiMap<UnorderedPair<Int>, Rename>,
+                                oldRenames: MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename>,
                                 oldFileHistory: FileHistory): VisiblePack {
       val matchingHeads = vcsLogFilterer.getMatchingHeads(dataPack.refsModel, setOf(root), filters)
       val data = indexDataGetter.createFileHistoryData(filePath).build(oldRenames)
@@ -273,7 +273,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       return VisiblePack(dataPack, visibleGraph, fileHistory.unmatchedAdditionsDeletions.isNotEmpty(), filters).withFileHistory(fileHistory)
     }
 
-    private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<Int>, Rename> {
+    private fun collectRenamesFromProvider(fileHistory: FileHistory): MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename> {
       if (fileHistory.unmatchedAdditionsDeletions.isEmpty()) return MultiMap.empty()
 
       TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.CollectingRenames.getName()).use { span ->
@@ -290,7 +290,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         span.setAttribute("numberOfAdditionDeletions", fileHistory.unmatchedAdditionsDeletions.size.toLong())
         span.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(vcsKey))
 
-        val result = MultiMap<UnorderedPair<Int>, Rename>()
+        val result = MultiMap<UnorderedPair<VcsLogCommitStorageIndex>, Rename>()
         renames.forEach { rename -> result.putValue(rename.commits, rename) }
         return result
       }
@@ -331,8 +331,8 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
 
     private fun createVisibleGraph(dataPack: DataPack,
                                    graphOptions: PermanentGraph.Options,
-                                   matchingHeads: Set<Int>?,
-                                   matchingCommits: Set<Int>?): VisibleGraph<Int> {
+                                   matchingHeads: Set<VcsLogCommitStorageIndex>?,
+                                   matchingCommits: Set<VcsLogCommitStorageIndex>?): VisibleGraph<VcsLogCommitStorageIndex> {
       if (matchingHeads.matchesNothing() || matchingCommits.matchesNothing()) {
         return EmptyVisibleGraph.getInstance()
       }
@@ -359,7 +359,7 @@ private fun <K : Any, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): Multi
   return result
 }
 
-private data class CommitMetadataWithPath(@JvmField val commit: Int, @JvmField val metadata: VcsCommitMetadata, @JvmField val path: CommitFileState)
+private data class CommitMetadataWithPath(@JvmField val commit: VcsLogCommitStorageIndex, @JvmField val metadata: VcsCommitMetadata, @JvmField val path: CommitFileState)
 
 private class FileHistoryCollector(val handler: VcsLogFileHistoryHandler,
                                    val storage: VcsLogStorage,

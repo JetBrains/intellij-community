@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.graph.GraphColorManagerImpl
 import com.intellij.vcs.log.graph.GraphCommit
@@ -17,7 +18,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.NonNls
 
 open class DataPack internal constructor(
-  refsModel: RefsModel, val permanentGraph: PermanentGraph<Int>,
+  refsModel: RefsModel, val permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,
   providers: Map<VirtualFile, VcsLogProvider>,
   full: Boolean,
 ) : DataPackBase(providers, refsModel, full) {
@@ -35,7 +36,7 @@ open class DataPack internal constructor(
 
     @JvmStatic
     fun build(
-      commits: List<GraphCommit<Int>>, refs: Map<VirtualFile, CompressedRefs>, providers: Map<VirtualFile, VcsLogProvider>,
+      commits: List<GraphCommit<VcsLogCommitStorageIndex>>, refs: Map<VirtualFile, CompressedRefs>, providers: Map<VirtualFile, VcsLogProvider>,
       storage: VcsLogStorage, full: Boolean,
     ): DataPack {
       val refsModel = RefsModel.create(refs, getHeads(commits), storage, providers)
@@ -47,7 +48,7 @@ open class DataPack internal constructor(
 }
 
 class SmallDataPack private constructor(
-  refsModel: RefsModel, permanentGraph: PermanentGraph<Int>,
+  refsModel: RefsModel, permanentGraph: PermanentGraph<VcsLogCommitStorageIndex>,
   providers: Map<VirtualFile, VcsLogProvider>,
 ) :
   DataPack(refsModel, permanentGraph, providers, false) {
@@ -55,7 +56,7 @@ class SmallDataPack private constructor(
   companion object {
     @JvmStatic
     fun build(
-      commits: List<GraphCommit<Int>>,
+      commits: List<GraphCommit<VcsLogCommitStorageIndex>>,
       refs: Map<VirtualFile, CompressedRefs>,
       providers: Map<VirtualFile, VcsLogProvider>,
       storage: VcsLogStorage,
@@ -69,9 +70,9 @@ class SmallDataPack private constructor(
 }
 
 private fun buildPermanentGraph(
-  commits: List<GraphCommit<Int>>, refsModel: RefsModel, providers: Map<VirtualFile, VcsLogProvider>,
+  commits: List<GraphCommit<VcsLogCommitStorageIndex>>, refsModel: RefsModel, providers: Map<VirtualFile, VcsLogProvider>,
   storage: VcsLogStorage,
-): PermanentGraph<Int> {
+): PermanentGraph<VcsLogCommitStorageIndex> {
   if (commits.isEmpty()) return EmptyPermanentGraph.getInstance()
 
   val headCommitsComparator = HeadCommitsComparator(refsModel, providers.mapValues { it.value.referenceManager }) { commitIndex ->
@@ -85,7 +86,7 @@ private fun buildPermanentGraph(
   }
 }
 
-private fun getHeads(commits: List<GraphCommit<Int>>): Set<Int> {
+private fun getHeads(commits: List<GraphCommit<VcsLogCommitStorageIndex>>): Set<VcsLogCommitStorageIndex> {
   val parents = commits.flatMapTo(IntOpenHashSet()) { it.parents }
   return buildSet {
     for (commit in commits) {

@@ -75,7 +75,7 @@ internal open class IndexSpeedSearch(project: Project, private val index: VcsLog
     return IndexedDetails(dataGetter, storage, commitId)
   }
 
-  protected fun getCommitId(row: Int): Int? = myComponent.model.getId(row)
+  protected fun getCommitId(row: Int): VcsLogCommitStorageIndex? = myComponent.model.getId(row)
 }
 
 private data class MatchResult(@JvmField val pattern: String,

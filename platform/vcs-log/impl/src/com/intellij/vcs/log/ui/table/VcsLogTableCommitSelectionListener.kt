@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.table
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Condition
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
@@ -22,7 +23,7 @@ internal abstract class VcsLogTableCommitSelectionListener(
     }, Condition { o: Any? -> lastEvent !== event })
   }
 
-  protected abstract fun handleSelection(commitIds: List<Int>)
+  protected abstract fun handleSelection(commitIds: List<VcsLogCommitStorageIndex>)
 
   protected open fun onHandlingScheduled() = Unit
 }

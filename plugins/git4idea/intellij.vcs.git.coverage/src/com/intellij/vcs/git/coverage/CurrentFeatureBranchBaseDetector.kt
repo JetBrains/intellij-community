@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.git.coverage.CurrentFeatureBranchBaseDetector.Status
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
@@ -45,7 +46,7 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
   private val pack = logData?.dataPack
 
   @Suppress("UNCHECKED_CAST")
-  private val permanentGraph = pack?.permanentGraph as? PermanentGraphInfo<Int>
+  private val permanentGraph = pack?.permanentGraph as? PermanentGraphInfo<VcsLogCommitStorageIndex>
 
   fun findBaseCommit(): Status {
     val project = repository.project
@@ -86,7 +87,7 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
 
   private fun computeStatus(
     headHash: Hash,
-    permanentCommitsInfo: PermanentCommitsInfo<Int>,
+    permanentCommitsInfo: PermanentCommitsInfo<VcsLogCommitStorageIndex>,
     protectedBranchHashes: List<Pair<GitRemoteBranch, Hash>>,
   ): Pair<Status, Boolean> {
     val headNodeId = getCommitIndex(headHash)
@@ -184,7 +185,7 @@ internal fun findBaseCommit(linearGraph: LinearGraph, headNodeId: Int, protected
     }
     val nextLayer = bfsWalk.step()
     if (nextLayer.isEmpty()) break
-    val protectedCommits = hashSetOf<Int>()
+    val protectedCommits = hashSetOf<VcsLogCommitStorageIndex>()
     for (commit in nextLayer) {
       val protectedNodeId = findProtectedBranchNodeId(commit, graph, visited, protectedNodeIds) ?: continue
       foundCommits += CurrentFeatureBranchBaseDetector.BaseCommit(commit, protectedNodeId)

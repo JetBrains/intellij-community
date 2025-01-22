@@ -53,7 +53,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     val dataPack = logData.dataPack
     val hashIndex = logData.getCommitIndex(start, root)
 
-    val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
+    val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<VcsLogCommitStorageIndex>
 
     val hashNodeId = permanentGraph.permanentCommitsInfo.getNodeId(hashIndex).takeIf { it != -1 }
                      ?: throw IllegalArgumentException("Hash '${start.asString()}' doesn't exist in repository: $root")
