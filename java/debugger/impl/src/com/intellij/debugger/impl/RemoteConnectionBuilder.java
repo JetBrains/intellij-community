@@ -100,6 +100,10 @@ public class RemoteConnectionBuilder {
       debuggeeRunProperties.append(",quiet=y");
     }
 
+    if (Registry.is("debugger.jdwp.include.virtual.threads")) {
+      debuggeeRunProperties.append(",includevirtualthreads=y");
+    }
+
     final String _debuggeeRunProperties = debuggeeRunProperties.toString();
 
     ApplicationManager.getApplication().runReadAction(() -> {

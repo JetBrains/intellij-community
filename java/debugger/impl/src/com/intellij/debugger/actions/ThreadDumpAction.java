@@ -21,6 +21,7 @@ import com.intellij.threadDumpParser.ThreadDumpParser;
 import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebugSession;
+import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -135,6 +136,13 @@ public final class ThreadDumpAction extends DumbAwareAction {
           buffer.append(" nid=NA");
         }
       }
+
+      // Virtual threads might be included in the list of all threads (i.e., see JDWP's option includevirtualthreads).
+      if (threadReference instanceof ThreadReferenceImpl impl && impl.isVirtual()) {
+        buffer.append(" virtual");
+        threadState.setVirtual(true);
+      }
+
       //ThreadGroupReference groupReference = threadReference.threadGroup();
       //if (groupReference != null) {
       //  buffer.append(", ").append(JavaDebuggerBundle.message("threads.export.attribute.label.group", groupReference.name()));
