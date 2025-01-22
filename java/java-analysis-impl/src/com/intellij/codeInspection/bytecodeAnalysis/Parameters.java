@@ -3,6 +3,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -195,6 +196,9 @@ class NonNullInAnalysis extends Analysis<PResult> {
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
       steps ++;
+      if (steps % 100 == 0) {
+        ProgressManager.checkCanceled();
+      }
       TooComplexException.check(method, steps);
       PendingAction action = pendingActions.get(--pendingTop);
       if (action instanceof MakeResult makeResult) {
@@ -406,6 +410,9 @@ class NullableInAnalysis extends Analysis<PResult> {
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
       steps ++;
+      if (steps % 100 == 0) {
+        ProgressManager.checkCanceled();
+      }
       TooComplexException.check(method, steps);
       State state = Objects.requireNonNull(pending.get(--pendingTop));
       int insnIndex = state.conf.insnIndex;
