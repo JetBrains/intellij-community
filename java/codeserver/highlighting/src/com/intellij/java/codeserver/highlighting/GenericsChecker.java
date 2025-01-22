@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,6 +13,8 @@ import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -249,5 +252,168 @@ final class GenericsChecker {
         }
       }
     }
+  }
+
+  void checkParameterizedReferenceTypeArguments(@Nullable PsiElement resolved,
+                                                @NotNull PsiJavaCodeReferenceElement referenceElement,
+                                                @NotNull PsiSubstitutor substitutor) {
+    if (!(resolved instanceof PsiTypeParameterListOwner typeParameterListOwner)) return;
+    checkReferenceTypeArgumentList(typeParameterListOwner, referenceElement.getParameterList(), substitutor);
+  }
+
+  void checkReferenceTypeArgumentList(@NotNull PsiTypeParameterListOwner typeParameterListOwner,
+                                      @Nullable PsiReferenceParameterList referenceParameterList,
+                                      @NotNull PsiSubstitutor substitutor) {
+    PsiDiamondType.DiamondInferenceResult inferenceResult = null;
+    PsiTypeElement[] referenceElements = null;
+    if (referenceParameterList != null) {
+      referenceElements = referenceParameterList.getTypeParameterElements();
+      if (referenceElements.length == 1 && referenceElements[0].getType() instanceof PsiDiamondType diamondType) {
+        if (!typeParameterListOwner.hasTypeParameters()) {
+          myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE.create(referenceParameterList));
+          return;
+        }
+        inferenceResult = diamondType.resolveInferredTypes();
+        String errorMessage = inferenceResult.getErrorMessage();
+        if (errorMessage != null) {
+          PsiType expectedType = detectExpectedType(referenceParameterList);
+          if (!(inferenceResult.failedToInfer() && expectedType instanceof PsiClassType classType && classType.isRaw())) {
+            if (inferenceResult == PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT ||
+                inferenceResult == PsiDiamondType.DiamondInferenceResult.EXPLICIT_CONSTRUCTOR_TYPE_ARGS) {
+              myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_DIAMOND_INFERENCE_FAILURE.create(referenceParameterList, inferenceResult));
+              return;
+            }
+          }
+        }
+
+        PsiElement parent = referenceParameterList.getParent().getParent();
+        if (parent instanceof PsiAnonymousClass anonymousClass &&
+            ContainerUtil.exists(anonymousClass.getMethods(),
+                                 method -> !method.hasModifierProperty(PsiModifier.PRIVATE) && method.findSuperMethods().length == 0)) {
+          myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_DIAMOND_ANONYMOUS_INNER_NON_PRIVATE.create(referenceParameterList));
+          return;
+        }
+      }
+    }
+
+    PsiTypeParameter[] typeParameters = typeParameterListOwner.getTypeParameters();
+    int targetParametersNum = typeParameters.length;
+    int refParametersNum = referenceParameterList == null ? 0 : referenceParameterList.getTypeArguments().length;
+    if (targetParametersNum != refParametersNum && refParametersNum != 0) {
+      if (targetParametersNum == 0) {
+        boolean shouldSuppress = PsiTreeUtil.getParentOfType(referenceParameterList, PsiCall.class) != null &&
+                                 typeParameterListOwner instanceof PsiMethod psiMethod &&
+                                 (myVisitor.sdkVersion().isAtLeast(JavaSdkVersion.JDK_1_7) || hasSuperMethodsWithTypeParams(psiMethod));
+        if (!shouldSuppress) {
+          if (typeParameterListOwner instanceof PsiMethod psiMethod) {
+            myVisitor.report(JavaErrorKinds.TYPE_PARAMETER_ABSENT_METHOD.create(referenceParameterList, psiMethod));
+          }
+          else if (typeParameterListOwner instanceof PsiClass psiClass) {
+            myVisitor.report(JavaErrorKinds.TYPE_PARAMETER_ABSENT_CLASS.create(referenceParameterList, psiClass));
+          }
+          return;
+        }
+      }
+      else {
+        myVisitor.report(JavaErrorKinds.TYPE_PARAMETER_COUNT_MISMATCH.create(referenceParameterList, typeParameterListOwner));
+        return;
+      }
+    }
+
+    // bounds check
+    if (targetParametersNum > 0 && refParametersNum != 0) {
+      if (inferenceResult != null) {
+        PsiType[] types = inferenceResult.getTypes();
+        for (int i = 0; i < typeParameters.length; i++) {
+          checkTypeParameterWithinItsBound(typeParameters[i], substitutor, types[i], referenceElements[0], referenceParameterList);
+          if (myVisitor.hasErrorResults()) return;
+        }
+      }
+      else {
+        for (int i = 0; i < typeParameters.length; i++) {
+          PsiTypeElement typeElement = referenceElements[i];
+          checkTypeParameterWithinItsBound(typeParameters[i], substitutor, typeElement.getType(), typeElement, referenceParameterList);
+          if (myVisitor.hasErrorResults()) return;
+        }
+      }
+    }
+  }
+
+  private void checkTypeParameterWithinItsBound(@NotNull PsiTypeParameter classParameter,
+                                                @NotNull PsiSubstitutor substitutor,
+                                                @NotNull PsiType type,
+                                                @NotNull PsiTypeElement typeElement2Highlight,
+                                                @Nullable PsiReferenceParameterList referenceParameterList) {
+    PsiClass referenceClass = type instanceof PsiClassType classType ? classType.resolve() : null;
+    PsiType psiType = substitutor.substitute(classParameter);
+    if (psiType instanceof PsiClassType && !(PsiUtil.resolveClassInType(psiType) instanceof PsiTypeParameter)) {
+      if (GenericsUtil.checkNotInBounds(type, psiType, referenceParameterList)) {
+        myVisitor.report(JavaErrorKinds.TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH.create(typeElement2Highlight));
+        return;
+      }
+    }
+
+    PsiClassType[] bounds = classParameter.getSuperTypes();
+    for (PsiType bound : bounds) {
+      bound = substitutor.substitute(bound);
+      if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && GenericsUtil.checkNotInBounds(type, bound, referenceParameterList)) {
+        PsiClass boundClass = bound instanceof PsiClassType classType ? classType.resolve() : null;
+
+        boolean extend = boundClass == null ||
+                         referenceClass == null ||
+                         referenceClass.isInterface() == boundClass.isInterface() ||
+                         referenceClass instanceof PsiTypeParameter;
+        var kind = extend
+                   ? JavaErrorKinds.TYPE_PARAMETER_TYPE_NOT_WITHIN_EXTEND_BOUND
+                   : JavaErrorKinds.TYPE_PARAMETER_TYPE_NOT_WITHIN_IMPLEMENT_BOUND;
+        myVisitor.report(kind.create(typeElement2Highlight, new JavaErrorKinds.TypeParameterBoundMismatchContext(
+          classParameter, bound, type)));
+      }
+    }
+  }
+
+  private static PsiType detectExpectedType(@NotNull PsiReferenceParameterList referenceParameterList) {
+    PsiNewExpression newExpression = Objects.requireNonNull(PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class));
+    PsiElement parent = newExpression.getParent();
+    PsiType expectedType = null;
+    if (parent instanceof PsiVariable psiVariable && newExpression.equals(psiVariable.getInitializer())) {
+      expectedType = psiVariable.getType();
+    }
+    else if (parent instanceof PsiAssignmentExpression expression && newExpression.equals(expression.getRExpression())) {
+      expectedType = expression.getLExpression().getType();
+    }
+    else if (parent instanceof PsiReturnStatement) {
+      PsiElement method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
+      if (method instanceof PsiMethod psiMethod) {
+        expectedType = psiMethod.getReturnType();
+      }
+    }
+    else if (parent instanceof PsiExpressionList) {
+      PsiElement pParent = parent.getParent();
+      if (pParent instanceof PsiCallExpression callExpression) {
+        PsiExpressionList argumentList = callExpression.getArgumentList();
+        if (parent.equals(argumentList)) {
+          PsiMethod method = callExpression.resolveMethod();
+          if (method != null) {
+            PsiExpression[] expressions = argumentList.getExpressions();
+            int idx = ArrayUtilRt.find(expressions, newExpression);
+            if (idx > -1) {
+              PsiParameter parameter = method.getParameterList().getParameter(idx);
+              if (parameter != null) {
+                expectedType = parameter.getType();
+              }
+            }
+          }
+        }
+      }
+    }
+    return expectedType;
+  }
+
+  private static boolean hasSuperMethodsWithTypeParams(@NotNull PsiMethod method) {
+    for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
+      if (superMethod.hasTypeParameters()) return true;
+    }
+    return false;
   }
 }

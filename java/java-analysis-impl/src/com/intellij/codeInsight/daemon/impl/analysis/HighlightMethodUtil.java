@@ -80,7 +80,7 @@ public final class HighlightMethodUtil {
   static HighlightInfo.Builder checkMethodIncompatibleReturnType(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
                                                                  @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
                                                                  boolean includeRealPositionInfo,
-                                                                 @Nullable TextRange textRange, @Nullable Ref<? super String> description) {
+                                                                 @Nullable TextRange textRange) {
     PsiMethod method = methodSignature.getMethod();
     PsiType returnType = methodSignature.getSubstitutor().substitute(method.getReturnType());
     PsiClass aClass = method.getContainingClass();
@@ -104,7 +104,7 @@ public final class HighlightMethodUtil {
       }
       HighlightInfo.Builder info = checkSuperMethodSignature(
         superMethod, superMethodSignature, superReturnType, method, methodSignature, returnType,
-        textRange, PsiUtil.getLanguageLevel(aClass), description);
+        textRange, PsiUtil.getLanguageLevel(aClass));
       if (info != null) {
         return info;
       }
@@ -120,8 +120,7 @@ public final class HighlightMethodUtil {
                                                                  @NotNull MethodSignatureBackedByPsiMethod methodSignature,
                                                                  @NotNull PsiType returnType,
                                                                  @NotNull TextRange range,
-                                                                 @NotNull LanguageLevel languageLevel,
-                                                                 @Nullable Ref<? super String> description) {
+                                                                 @NotNull LanguageLevel languageLevel) {
     PsiClass superContainingClass = superMethod.getContainingClass();
     if (superContainingClass != null &&
         CommonClassNames.JAVA_LANG_OBJECT.equals(superContainingClass.getQualifiedName()) &&
@@ -155,20 +154,17 @@ public final class HighlightMethodUtil {
     }
 
     return createIncompatibleReturnTypeMessage(method, superMethod, substitutedSuperReturnType, returnType,
-                                               JavaErrorBundle.message("incompatible.return.type"), range,
-                                               description);
+                                               JavaErrorBundle.message("incompatible.return.type"), range
+    );
   }
 
-  private static @NotNull HighlightInfo.Builder createIncompatibleReturnTypeMessage(@NotNull PsiMethod method,
+  private static HighlightInfo.@NotNull Builder createIncompatibleReturnTypeMessage(@NotNull PsiMethod method,
                                                                                     @NotNull PsiMethod superMethod,
                                                                                     @NotNull PsiType substitutedSuperReturnType,
                                                                                     @NotNull PsiType returnType,
                                                                                     @NotNull @Nls String detailMessage,
-                                                                                    @NotNull TextRange textRange, @Nullable Ref<? super String> descriptionH) {
+                                                                                    @NotNull TextRange textRange) {
     String description = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
-    if (descriptionH != null) {
-      descriptionH.set(description);
-    }
     HighlightInfo.Builder errorResult =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
     if (method instanceof LightRecordMethod recordMethod) {
@@ -191,49 +187,6 @@ public final class HighlightMethodUtil {
     }
 
     return errorResult;
-  }
-
-
-  static void checkMethodCall(@NotNull PsiMethodCallExpression methodCall,
-                              @NotNull PsiResolveHelper resolveHelper,
-                              @NotNull JavaSdkVersion javaSdkVersion,
-                              @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiExpressionList list = methodCall.getArgumentList();
-    PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
-    JavaResolveResult[] results = referenceToMethod.multiResolve(true);
-    JavaResolveResult resolveResult = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-    PsiElement resolved = resolveResult.getElement();
-
-    boolean isDummy = isDummyConstructorCall(methodCall, resolveHelper, list, referenceToMethod);
-    if (isDummy) return;
-    HighlightInfo.Builder builder = null;
-
-    PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    if (!(resolved instanceof PsiMethod) || !resolveResult.isValidResult()) {
-      MethodCandidateInfo candidateInfo = resolveResult instanceof MethodCandidateInfo ? (MethodCandidateInfo)resolveResult : null;
-      PsiMethod resolvedMethod = candidateInfo != null ? candidateInfo.getElement() : null;
-
-      if (resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect()) {
-        if (candidateInfo != null && !candidateInfo.isApplicable()) {
-          if (!candidateInfo.isTypeArgumentsApplicable()) {
-            PsiReferenceParameterList typeArgumentList = methodCall.getTypeArgumentList();
-            PsiSubstitutor applicabilitySubstitutor = candidateInfo.getSubstitutor(false);
-            if (typeArgumentList.getTypeArguments().length == 0 && resolvedMethod.hasTypeParameters()) {
-              builder = GenericsHighlightUtil.checkInferredTypeArguments(resolvedMethod, methodCall, applicabilitySubstitutor);
-            }
-            else {
-              builder = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, applicabilitySubstitutor, javaSdkVersion);
-            }
-          }
-        }
-      }
-    }
-    if (builder == null) {
-      builder = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor, javaSdkVersion);
-    }
-    if (builder != null) {
-      errorSink.accept(builder);
-    }
   }
 
   /**

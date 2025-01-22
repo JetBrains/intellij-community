@@ -14,11 +14,16 @@ import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.lang.jvm.util.JvmUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -31,10 +36,7 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 public final class HighlightFixUtil {
@@ -713,7 +715,7 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerCallInferenceFixes(@NotNull PsiMethodCallExpression callExpression, @NotNull Consumer<CommonIntentionAction> info) {
+  static void registerCallInferenceFixes(@NotNull PsiMethodCallExpression callExpression, @NotNull Consumer<? super CommonIntentionAction> info) {
     JavaResolveResult result = callExpression.getMethodExpression().advancedResolve(true);
     if (!(result instanceof MethodCandidateInfo resolveResult)) return;
     PsiMethod method = resolveResult.getElement();
@@ -746,6 +748,43 @@ public final class HighlightFixUtil {
             info.accept(QuickFixFactory.getInstance().createChangeExtendsToImplementsFix(containingClass, type));
           }
         }
+      }
+    }
+  }
+
+  static void registerVariableParameterizedTypeFixes(@NotNull Consumer<? super CommonIntentionAction> info,
+                                                     @NotNull PsiVariable variable,
+                                                     @NotNull PsiReferenceParameterList parameterList) {
+    PsiType type = variable.getType();
+    if (!(type instanceof PsiClassType classType)) return;
+
+    if (DumbService.getInstance(variable.getProject()).isDumb()) return;
+
+    String shortName = classType.getClassName();
+    PsiFile file = parameterList.getContainingFile();
+    Project project = file.getProject();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
+    PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(project));
+    PsiElementFactory factory = facade.getElementFactory();
+    JavaSdkVersion version = Objects.requireNonNullElse(JavaVersionService.getInstance().getJavaSdkVersion(file),
+                                                        JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(file)));
+    for (PsiClass aClass : classes) {
+      if (aClass == null) {
+        continue;
+      }
+      if (GenericsHighlightUtil.checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false, version) == null) {
+        PsiType[] actualTypeParameters = parameterList.getTypeArguments();
+        PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
+        Map<PsiTypeParameter, PsiType> map = new HashMap<>();
+        for (int j = 0; j < Math.min(classTypeParameters.length, actualTypeParameters.length); j++) {
+          PsiTypeParameter classTypeParameter = classTypeParameters[j];
+          PsiType actualTypeParameter = actualTypeParameters[j];
+          map.put(classTypeParameter, actualTypeParameter);
+        }
+        PsiSubstitutor substitutor = factory.createSubstitutor(map);
+        PsiType suggestedType = factory.createType(aClass, substitutor);
+        registerChangeVariableTypeFixes(variable, suggestedType, variable.getInitializer(), info);
       }
     }
   }

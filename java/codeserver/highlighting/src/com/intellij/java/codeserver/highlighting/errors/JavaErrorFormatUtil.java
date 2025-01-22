@@ -178,4 +178,9 @@ final class JavaErrorFormatUtil {
     if (element instanceof PsiLabeledStatement statement) return statement.getName() + ':';
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
+
+  static @NotNull String formatClassOrType(@NotNull PsiType type) {
+    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return psiClass == null ? type.getPresentableText() : formatClass(psiClass);
+  }
 }

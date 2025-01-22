@@ -385,6 +385,41 @@ public final class JavaErrorKinds {
     parameterized(PsiMethodCallExpression.class, IncompatibleIntersectionContext.class, "type.parameter.incompatible.upper.bounds")
       .withRange((call, ctx) -> getRange(call))
       .withRawDescription((call, ctx) -> message("type.parameter.incompatible.upper.bounds", ctx.parameter().getName(), ctx.message()));
+  public static final Parameterized<PsiMethodCallExpression, TypeParameterBoundMismatchContext>
+    TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_EXTEND_BOUND =
+    parameterized(PsiMethodCallExpression.class, TypeParameterBoundMismatchContext.class,
+                  "type.parameter.inferred.type.not.within.extend.bound")
+      .withRawDescription((call, ctx) -> message("type.parameter.inferred.type.not.within.extend.bound", formatClass(ctx.parameter()),
+                                                 formatType(ctx.bound()), formatType(ctx.actualType())));
+  public static final Parameterized<PsiMethodCallExpression, TypeParameterBoundMismatchContext>
+    TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_IMPLEMENT_BOUND =
+    parameterized(PsiMethodCallExpression.class, TypeParameterBoundMismatchContext.class,
+                  "type.parameter.inferred.type.not.within.implement.bound")
+      .withRawDescription((call, ctx) -> message("type.parameter.inferred.type.not.within.implement.bound", formatClass(ctx.parameter()),
+                                                 formatType(ctx.bound()), formatType(ctx.actualType())));
+  public static final Parameterized<PsiTypeElement, TypeParameterBoundMismatchContext> TYPE_PARAMETER_TYPE_NOT_WITHIN_EXTEND_BOUND =
+    parameterized(PsiTypeElement.class, TypeParameterBoundMismatchContext.class, "type.parameter.type.not.within.extend.bound")
+      .withRawDescription((call, ctx) -> message("type.parameter.type.not.within.extend.bound",
+                                                 formatClassOrType(ctx.actualType()),
+                                                 formatType(ctx.bound())));
+  public static final Parameterized<PsiTypeElement, TypeParameterBoundMismatchContext> TYPE_PARAMETER_TYPE_NOT_WITHIN_IMPLEMENT_BOUND =
+    parameterized(PsiTypeElement.class, TypeParameterBoundMismatchContext.class, "type.parameter.type.not.within.implement.bound")
+      .withRawDescription((call, ctx) -> message("type.parameter.type.not.within.implement.bound", 
+                                                 formatClassOrType(ctx.actualType()),
+                                                 formatType(ctx.bound())));
+  public static final Parameterized<PsiReferenceParameterList, PsiClass> TYPE_PARAMETER_ABSENT_CLASS =
+    parameterized(PsiReferenceParameterList.class, PsiClass.class, "type.parameter.absent.class")
+      .withRawDescription((list, cls) -> message("type.parameter.absent.class", formatClass(cls)));
+  public static final Parameterized<PsiReferenceParameterList, PsiMethod> TYPE_PARAMETER_ABSENT_METHOD =
+    parameterized(PsiReferenceParameterList.class, PsiMethod.class, "type.parameter.absent.method")
+      .withRawDescription((list, method) -> message("type.parameter.absent.method", formatMethod(method)));
+  public static final Parameterized<PsiReferenceParameterList, PsiTypeParameterListOwner> TYPE_PARAMETER_COUNT_MISMATCH =
+    parameterized(PsiReferenceParameterList.class, PsiTypeParameterListOwner.class, "type.parameter.count.mismatch")
+      .withRawDescription((list, owner) -> message("type.parameter.count.mismatch", list.getTypeArgumentCount(),
+                                                   owner.getTypeParameters().length));
+  public static final Simple<PsiTypeElement> TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH = error("type.parameter.actual.inferred.mismatch");
+  public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE =
+    error("new.expression.diamond.not.applicable");
 
   public static final Simple<PsiMethod> METHOD_DUPLICATE =
     error(PsiMethod.class, "method.duplicate")
@@ -567,6 +602,13 @@ public final class JavaErrorKinds {
     error("new.expression.qualified.qualified.class.reference");
   public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_NOT_ALLOWED =
     error("new.expression.diamond.not.allowed");
+  public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_ANONYMOUS_INNER_NON_PRIVATE =
+    error("new.expression.diamond.anonymous.inner.non.private");
+  public static final Parameterized<PsiReferenceParameterList, PsiDiamondType.DiamondInferenceResult>
+    NEW_EXPRESSION_DIAMOND_INFERENCE_FAILURE =
+    parameterized(PsiReferenceParameterList.class, PsiDiamondType.DiamondInferenceResult.class, "new.expression.diamond.inference.failure")
+      .withRawDescription(
+        (list, inferenceResult) -> message("new.expression.diamond.inference.failure", inferenceResult.getErrorMessage()));
 
   public static final Parameterized<PsiReferenceParameterList, PsiClass> REFERENCE_TYPE_ARGUMENT_STATIC_CLASS =
     parameterized(PsiReferenceParameterList.class, PsiClass.class, "reference.type.argument.static.class")
@@ -764,4 +806,10 @@ public final class JavaErrorKinds {
   }
 
   public record IncompatibleIntersectionContext(@NotNull PsiTypeParameter parameter, @NotNull @Nls String message) {}
+
+  public record TypeParameterBoundMismatchContext(@NotNull PsiTypeParameter parameter,
+                                                  @NotNull PsiType bound,
+                                                  @NotNull PsiType actualType) {
+
+  }
 }

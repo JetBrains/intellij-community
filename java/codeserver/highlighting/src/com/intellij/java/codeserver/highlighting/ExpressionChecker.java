@@ -6,6 +6,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
@@ -18,10 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -344,16 +342,48 @@ final class ExpressionChecker {
       MethodCandidateInfo candidateInfo = resolveResult instanceof MethodCandidateInfo ? (MethodCandidateInfo)resolveResult : null;
       PsiMethod resolvedMethod = candidateInfo != null ? candidateInfo.getElement() : null;
 
-      if (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect()) {
-      }
-      else if (candidateInfo != null && !candidateInfo.isApplicable()) {
-        if (candidateInfo.isTypeArgumentsApplicable()) {
-          checkIncompatibleCall(list, candidateInfo);
+      if (resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect()) {
+        if (candidateInfo != null && !candidateInfo.isApplicable()) {
+          if (candidateInfo.isTypeArgumentsApplicable()) {
+            checkIncompatibleCall(list, candidateInfo);
+          }
+          else {
+            PsiReferenceParameterList typeArgumentList = methodCall.getTypeArgumentList();
+            PsiSubstitutor applicabilitySubstitutor = candidateInfo.getSubstitutor(false);
+            if (typeArgumentList.getTypeArguments().length == 0 && resolvedMethod.hasTypeParameters()) {
+              checkInferredTypeArguments(resolvedMethod, methodCall, applicabilitySubstitutor);
+            }
+            else {
+              myVisitor.myGenericsChecker.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, applicabilitySubstitutor);
+            }
+          }
+        }
+        else {
+          myVisitor.report(JavaErrorKinds.CALL_EXPECTED.create(methodCall));
         }
       }
-      else {
-        myVisitor.report(JavaErrorKinds.CALL_EXPECTED.create(methodCall));
-      }
+    }
+    if (!myVisitor.hasErrorResults()) {
+      myVisitor.myGenericsChecker.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor);
+    }
+  }
+
+  void checkInferredTypeArguments(@NotNull PsiTypeParameterListOwner listOwner,
+                                  @NotNull PsiMethodCallExpression call,
+                                  @NotNull PsiSubstitutor substitutor) {
+    PsiTypeParameter[] typeParameters = listOwner.getTypeParameters();
+    Pair<PsiTypeParameter, PsiType> inferredTypeArgument = GenericsUtil.findTypeParameterWithBoundError(
+      typeParameters, substitutor, call, false);
+    if (inferredTypeArgument != null) {
+      PsiType extendsType = inferredTypeArgument.second;
+      PsiTypeParameter typeParameter = inferredTypeArgument.first;
+      PsiClass boundClass = extendsType instanceof PsiClassType classType ? classType.resolve() : null;
+
+      var kind = boundClass == null || typeParameter.isInterface() == boundClass.isInterface()
+                 ? JavaErrorKinds.TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_EXTEND_BOUND
+                 : JavaErrorKinds.TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_IMPLEMENT_BOUND;
+      myVisitor.report(kind.create(call, new JavaErrorKinds.TypeParameterBoundMismatchContext(
+        typeParameter, extendsType, Objects.requireNonNull(substitutor.substitute(typeParameter)))));
     }
   }
 

@@ -23,6 +23,7 @@ import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightRecordMethod;
@@ -80,7 +81,7 @@ final class JavaErrorFixProvider {
                                             CLASS_IMPLICIT_INITIALIZER, CLASS_IMPLICIT_PACKAGE,
                                             RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, ANNOTATION_PERMITS,
                                             NEW_EXPRESSION_DIAMOND_NOT_ALLOWED, REFERENCE_TYPE_ARGUMENT_STATIC_CLASS,
-                                            STATEMENT_CASE_OUTSIDE_SWITCH)) {
+                                            STATEMENT_CASE_OUTSIDE_SWITCH, NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE)) {
       fix(kind, genericRemover);
     }
     
@@ -241,6 +242,40 @@ final class JavaErrorFixProvider {
     fix(NEW_EXPRESSION_QUALIFIED_ANONYMOUS_IMPLEMENTS_INTERFACE, error -> myFactory.createRemoveNewQualifierFix(error.psi(), null));
     fix(NEW_EXPRESSION_QUALIFIED_QUALIFIED_CLASS_REFERENCE,
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("remove.qualifier.fix")));
+    fix(NEW_EXPRESSION_DIAMOND_INFERENCE_FAILURE,
+        error -> {
+          if (error.context() == PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT &&
+              !PsiUtil.isLanguageLevel9OrHigher(error.psi())) {
+            return myFactory.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_9);
+          }
+          return null;
+        });
+    fix(TYPE_PARAMETER_ABSENT_CLASS, error -> myFactory.createChangeClassSignatureFromUsageFix(error.context(), error.psi()));
+    fix(TYPE_PARAMETER_COUNT_MISMATCH,
+        error -> error.context() instanceof PsiClass cls ? myFactory.createChangeClassSignatureFromUsageFix(cls, error.psi()) : null);
+    JavaFixProvider<PsiTypeElement, TypeParameterBoundMismatchContext> addBoundFix = error -> {
+      if (error.context().bound() instanceof PsiClassType bound) {
+        PsiClass psiClass = bound.resolve();
+        if (psiClass != null) {
+          return myFactory.createExtendsListFix(psiClass, bound, true);
+        }
+      }
+      return null;
+    };
+    fix(TYPE_PARAMETER_TYPE_NOT_WITHIN_EXTEND_BOUND, addBoundFix);
+    fix(TYPE_PARAMETER_TYPE_NOT_WITHIN_IMPLEMENT_BOUND, addBoundFix);
+    multi(TYPE_PARAMETER_ABSENT_CLASS, error -> {
+      PsiReferenceParameterList referenceParameterList = error.psi();
+      PsiElement grandParent = referenceParameterList.getParent().getParent();
+      if (!(grandParent instanceof PsiTypeElement)) return List.of();
+      if (!(PsiTreeUtil.skipParentsOfType(grandParent, PsiTypeElement.class) instanceof PsiVariable variable)) return List.of();
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      if (error.context().getTypeParameters().length == 0) {
+        registrar.add(PriorityIntentionActionWrapper.highPriority(myFactory.createDeleteFix(referenceParameterList)));
+      }
+      HighlightFixUtil.registerVariableParameterizedTypeFixes(registrar::add, variable, referenceParameterList);
+      return registrar;
+    });
     fix(LITERAL_CHARACTER_TOO_LONG, error -> myFactory.createConvertToStringLiteralAction());
     fix(LITERAL_CHARACTER_EMPTY, error -> myFactory.createConvertToStringLiteralAction());
     fix(PATTERN_TYPE_PATTERN_EXPECTED, error -> {

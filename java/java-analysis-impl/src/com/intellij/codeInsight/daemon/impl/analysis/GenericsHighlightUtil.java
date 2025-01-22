@@ -11,7 +11,6 @@ import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -26,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -44,33 +42,6 @@ public final class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GenericsHighlightUtil.class);
 
   private GenericsHighlightUtil() { }
-
-  static HighlightInfo.Builder checkInferredTypeArguments(@NotNull PsiTypeParameterListOwner listOwner,
-                                                  @NotNull PsiElement call,
-                                                  @NotNull PsiSubstitutor substitutor) {
-    PsiTypeParameter[] typeParameters = listOwner.getTypeParameters();
-    Pair<PsiTypeParameter, PsiType> inferredTypeArgument = GenericsUtil.findTypeParameterWithBoundError(typeParameters, substitutor,
-                                                                                                              call, false);
-    if (inferredTypeArgument != null) {
-      PsiType extendsType = inferredTypeArgument.second;
-      PsiTypeParameter typeParameter = inferredTypeArgument.first;
-      PsiClass boundClass = extendsType instanceof PsiClassType classType ? classType.resolve() : null;
-
-      @NonNls String messageKey = boundClass == null || typeParameter.isInterface() == boundClass.isInterface()
-                                  ? "generics.inferred.type.for.type.parameter.is.not.within.its.bound.extend"
-                                  : "generics.inferred.type.for.type.parameter.is.not.within.its.bound.implement";
-
-      String description = JavaErrorBundle.message(
-        messageKey,
-        HighlightUtil.formatClass(typeParameter),
-        JavaHighlightUtil.formatType(extendsType),
-        JavaHighlightUtil.formatType(substitutor.substitute(typeParameter))
-      );
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(call).descriptionAndTooltip(description);
-    }
-
-    return null;
-  }
 
   static HighlightInfo.Builder checkParameterizedReferenceTypeArguments(@Nullable PsiElement resolved,
                                                                 @NotNull PsiJavaCodeReferenceElement referenceElement,
@@ -169,7 +140,7 @@ public final class GenericsHighlightUtil {
                   .highPriority(QuickFixFactory.getInstance().createDeleteFix(referenceParameterList));
                 builder.registerFix(action, null, null, null, null);
               }
-              registerVariableParameterizedTypeFixes(builder, (PsiVariable)variable, referenceParameterList, javaSdkVersion);
+              HighlightFixUtil.registerVariableParameterizedTypeFixes(HighlightUtil.asConsumer(builder), (PsiVariable)variable, referenceParameterList);
             }
           }
         }
@@ -333,8 +304,8 @@ public final class GenericsHighlightUtil {
         if (aClass instanceof PsiTypeParameter) {
           HighlightInfo.Builder info =
             HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, signature.getSuperSignatures(), true,
-                                                                  HighlightNamesUtil.getClassDeclarationTextRange(aClass),
-                                                                  null);
+                                                                  HighlightNamesUtil.getClassDeclarationTextRange(aClass)
+            );
           if (info != null) {
             overrideEquivalentMethodsErrors.put(aClass, info);
           }
@@ -1074,42 +1045,6 @@ public final class GenericsHighlightUtil {
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
     }
     return containingClass != null && PsiUtil.typeParametersIterator(containingClass).hasNext();
-  }
-
-  private static void registerVariableParameterizedTypeFixes(@Nullable HighlightInfo.Builder builder,
-                                                             @NotNull PsiVariable variable,
-                                                             @NotNull PsiReferenceParameterList parameterList,
-                                                             @NotNull JavaSdkVersion version) {
-    PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType classType) || builder == null) return;
-
-    if (DumbService.getInstance(variable.getProject()).isDumb()) return;
-
-    String shortName = classType.getClassName();
-    PsiManager manager = parameterList.getManager();
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(parameterList.getProject());
-    PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(manager.getProject()));
-    PsiElementFactory factory = facade.getElementFactory();
-    for (PsiClass aClass : classes) {
-      if (aClass == null) {
-        LOG.error("null class returned for " + shortName);
-        continue;
-      }
-      if (checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false, version) == null) {
-        PsiType[] actualTypeParameters = parameterList.getTypeArguments();
-        PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
-        Map<PsiTypeParameter, PsiType> map = new HashMap<>();
-        for (int j = 0; j < Math.min(classTypeParameters.length, actualTypeParameters.length); j++) {
-          PsiTypeParameter classTypeParameter = classTypeParameters[j];
-          PsiType actualTypeParameter = actualTypeParameters[j];
-          map.put(classTypeParameter, actualTypeParameter);
-        }
-        PsiSubstitutor substitutor = factory.createSubstitutor(map);
-        PsiType suggestedType = factory.createType(aClass, substitutor);
-        HighlightFixUtil.registerChangeVariableTypeFixes(variable, suggestedType, variable.getInitializer(), builder);
-      }
-    }
   }
 
   static HighlightInfo.Builder checkMemberSignatureTypesAccessibility(@NotNull PsiReferenceExpression ref) {

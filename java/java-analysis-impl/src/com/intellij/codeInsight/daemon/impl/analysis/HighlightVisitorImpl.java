@@ -770,15 +770,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
     visitElement(expression);
-    if (!hasErrorResults()) {
-      try {
-        HighlightMethodUtil.checkMethodCall(expression, getResolveHelper(), myJavaSdkVersion,
-                                            myErrorSink);
-      }
-      catch (IndexNotReadyException ignored) {
-      }
-    }
-
     if (!hasErrorResults()) add(HighlightMethodUtil.checkConstructorCallProblems(expression));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkSuperAbstractMethodDirectCall(expression));
 
