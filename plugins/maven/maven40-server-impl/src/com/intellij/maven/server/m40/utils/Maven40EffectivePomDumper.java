@@ -11,6 +11,7 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
@@ -104,7 +105,11 @@ public final class Maven40EffectivePomDumper {
       try {
         // copied from DefaultMavenProjectBuilder.buildWithDependencies
         ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
-        ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
+        ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
+        projectBuildingRequest.setRepositorySession(session.getRepositorySession());
+
+        List<ProjectBuildingResult> results = builder.build(Collections.singletonList(file), false, projectBuildingRequest);
+        ProjectBuildingResult buildingResult = results.get(0);
 
         MavenProject project = buildingResult.getProject();
 
