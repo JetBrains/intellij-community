@@ -57,13 +57,12 @@ fun Path.getEelDescriptor(): EelDescriptor {
 
 /**
  * Retrieves [EelDescriptor] for the environment where [this] is located.
- * @throws IllegalArgumentException if the project is [Project.isDefault]
+ * If the project is not the real one (i.e., it is default or not backed by a real file), then [LocalEelDescriptor] will be returned.
  */
-@Throws(IllegalArgumentException::class)
 fun Project.getEelDescriptor(): EelDescriptor {
   val filePath = projectFilePath
   if (filePath == null) {
-    throw IllegalArgumentException("EelDescriptor must not be requested for the default project")
+    return LocalEelDescriptor
   }
   return Path.of(filePath).getEelDescriptor()
 }
