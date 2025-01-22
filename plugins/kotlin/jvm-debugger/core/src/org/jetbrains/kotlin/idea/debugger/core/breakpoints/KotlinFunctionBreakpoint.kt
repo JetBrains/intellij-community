@@ -28,10 +28,10 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.debugger.base.util.runSmartReadActionIfUnderProgressElseDumb
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade
@@ -57,7 +57,7 @@ open class KotlinFunctionBreakpoint(
             sourcePosition
         ) ?: return null
 
-        return DumbService.getInstance(myProject).runReadActionInSmartMode<KtLightClass?> {
+        return runSmartReadActionIfUnderProgressElseDumb(myProject, null) {
             declaration.toLightClass()
         }
     }
@@ -123,8 +123,8 @@ open class KotlinFunctionBreakpoint(
 }
 
 fun SourcePosition.getMethodDescriptor(project: Project): MethodDescriptor? =
-    DumbService.getInstance(project).runReadActionInSmartMode<MethodDescriptor?> {
-        val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return@runReadActionInSmartMode null
+    runSmartReadActionIfUnderProgressElseDumb(project, null) f@{
+        val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return@f null
         val descriptor = getMethodDescriptorInReadActionInSmartMode(project, this, document)
         descriptor?.takeIf { it.methodName != null && it.methodSignature != null }
     }

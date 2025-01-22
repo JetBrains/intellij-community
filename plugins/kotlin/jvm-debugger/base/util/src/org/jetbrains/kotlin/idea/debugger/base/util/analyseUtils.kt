@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.base.util
 
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
@@ -50,3 +51,14 @@ suspend fun <T> dumbAnalyze(useSiteElement: KtElement, fallback: T, action: KaSe
     dumbAction(readAction { useSiteElement.project }, fallback) {
         readAction { analyze(useSiteElement, action) }
     }
+
+inline fun <T> runSmartReadActionIfUnderProgressElseDumb(project: Project, default: T, crossinline action: () -> T): T {
+    val isCancellableSection = DebuggerManagerThreadImpl.hasNonDefaultProgressIndicator()
+    return if (isCancellableSection) {
+        ReadAction.nonBlocking<T> { action() }
+            .inSmartMode(project)
+            .executeSynchronously()
+    } else {
+        dumbAction(project, default, action)
+    }
+}

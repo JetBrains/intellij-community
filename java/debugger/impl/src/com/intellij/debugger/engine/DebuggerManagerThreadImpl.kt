@@ -356,7 +356,8 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
     /**
      * Debugger thread runs in a progress indicator itself, so we need to check whether we have any other progress indicator additionally.
      */
-    internal fun hasNonDefaultProgressIndicator(): Boolean {
+    @ApiStatus.Internal
+    fun hasNonDefaultProgressIndicator(): Boolean {
       val hasProgressIndicator = ProgressManager.getInstance().hasProgressIndicator()
       if (!hasProgressIndicator) return false
       if (!isManagerThread()) return true
