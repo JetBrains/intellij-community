@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.trialStateWidget
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -24,9 +27,18 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 import kotlin.math.min
 
 internal class TrialStateWidget : DumbAwareAction(), CustomComponentAction {
+
+  class TrialStateWidgetUnregister: AppLifecycleListener {
+    override fun appStarted() {
+      if (!TrialStateService.isEnabled()) {
+        ActionManagerEx.getInstanceEx().unregisterAction("TrialStateWidget")
+      }
+    }
+  }
 
   private var tooltip: GotItTooltip? = null
 
@@ -40,9 +52,11 @@ internal class TrialStateWidget : DumbAwareAction(), CustomComponentAction {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = TrialStateService.isEnabled() && TrialStateService.getInstance().state.value != null
+    e.presentation.isEnabledAndVisible = e.place == ActionPlaces.MAIN_TOOLBAR &&
+                                         TrialStateService.isEnabled() &&
+                                         TrialStateService.isApplicable() &&
+                                         TrialStateService.getInstance().state.value != null
   }
-
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val result = TrialStateButtonWrapper()
@@ -61,7 +75,9 @@ internal class TrialStateWidget : DumbAwareAction(), CustomComponentAction {
 
     result.button.addMouseListener(object : MouseAdapter() {
       override fun mouseClicked(e: MouseEvent?) {
-        ActionManager.getInstance().tryToExecute(this@TrialStateWidget, e, null, place, false)
+        if (e != null && SwingUtilities.isLeftMouseButton(e)) {
+          ActionManager.getInstance().tryToExecute(this@TrialStateWidget, e, null, place, false)
+        }
       }
     })
 

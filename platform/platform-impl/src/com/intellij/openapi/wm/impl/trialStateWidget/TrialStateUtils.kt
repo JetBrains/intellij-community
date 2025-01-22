@@ -3,8 +3,11 @@ package com.intellij.openapi.wm.impl.trialStateWidget
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ui.LicensingFacade
+import java.text.ParseException
+import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.*
 
 internal object TrialStateUtils {
 
@@ -34,8 +37,22 @@ internal object TrialStateUtils {
   }
 
   fun getTrialLengthDays(): Int {
-    // todo implement
-    return 31
+    val license = LicensingFacade.getInstance() ?: return 0
+    val metadata = license.metadata
+
+    if (metadata == null || metadata.length < 20) {
+      return 0
+    }
+
+    val generationDate = try {
+      SimpleDateFormat("yyyyMMdd", Locale.ENGLISH).parse(metadata.substring(2, 10))
+    }
+    catch (_: ParseException) {
+      return 0
+    }
+
+    val result = ChronoUnit.DAYS.between(generationDate.toInstant(), license.expirationDate.toInstant())
+    return result.toInt()
   }
 
   fun openTrailStateTab() {

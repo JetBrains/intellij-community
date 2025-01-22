@@ -92,6 +92,10 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
     fun isEnabled(): Boolean {
       return Registry.`is`("trial.state.widget") && (PlatformUtils.isPyCharm() || PlatformUtils.isIntelliJ())
     }
+
+    fun isApplicable(): Boolean {
+      return LicensingFacade.getInstance()?.isEvaluationLicense == true
+    }
   }
 
   private val mutableState = MutableStateFlow<State?>(null)
