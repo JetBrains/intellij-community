@@ -10,12 +10,13 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.PythonBinary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -24,7 +25,7 @@ import java.nio.file.Path
 /**
  * Creates a Python virtual environment, throws [ExecutionException] if creation process failed
  */
-@Throws(ExecutionException::class)
+@Throws(PyExecutionException::class)
 @Internal
 suspend fun createVirtualenv(
   baseInterpreterPath: PythonBinary,
@@ -74,7 +75,12 @@ suspend fun createVirtualenv(
   //targetedCommandLineBuilder.exePath = TargetValue.fixed("")
   //val targetedCommandLine = targetedCommandLineBuilder.build()
 
-  val process = targetEnvironment.createProcess(targetedCommandLine)
+  val process = try {
+    targetEnvironment.createProcess(targetedCommandLine)
+  }
+  catch (e: ExecutionException) {
+    throw PyExecutionException(PyBundle.message("sdk.venv.error", e.toString()), targetedCommandLine.collectCommandsSynchronously().joinToString(" "), emptyList())
+  }
 
   val handler = CapturingProcessHandler(process, targetedCommandLine.charset, targetedCommandLine.getCommandPresentation(targetEnvironment))
 
@@ -84,7 +90,7 @@ suspend fun createVirtualenv(
     }
   }
   if (result.exitCode != 0) {
-    throw ExecutionException(PyBundle.message("sdk.venv.error", result.stderr))
+    throw PyExecutionException(PyBundle.message("sdk.venv.error", result.exitCode), targetedCommandLine.collectCommandsSynchronously().joinToString(" "), emptyList(), result)
   }
 
   withContext(Dispatchers.EDT) {
