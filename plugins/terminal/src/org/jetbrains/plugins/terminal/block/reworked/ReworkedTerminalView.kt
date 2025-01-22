@@ -288,7 +288,7 @@ internal class ReworkedTerminalView(
 
   override fun dispose() {}
 
-  private class TerminalPanel(initialContent: Editor) : Wrapper(), UiDataProvider {
+  private inner class TerminalPanel(initialContent: Editor) : Wrapper(), UiDataProvider {
     private var curEditor: Editor = initialContent
 
     init {
@@ -305,6 +305,7 @@ internal class ReworkedTerminalView(
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.EDITOR] = curEditor
+      sink[TerminalInput.KEY] = terminalInput
     }
   }
 }

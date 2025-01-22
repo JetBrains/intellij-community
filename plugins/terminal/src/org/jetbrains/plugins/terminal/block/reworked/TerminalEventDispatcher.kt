@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
-import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -24,7 +23,10 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.action.SendShortcutToTerminalAction
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
 import java.awt.AWTEvent
-import java.awt.event.*
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelListener
 import javax.swing.KeyStroke
 
 /**
@@ -167,6 +169,7 @@ internal abstract class TerminalEventDispatcher(
       "TerminalDecreaseFontSize",
       "TerminalResetFontSize",
       "Terminal.CopySelectedText",
+      "Terminal.Paste",
     )
 
     fun getActionsToSkip(): List<AnAction> {
