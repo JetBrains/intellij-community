@@ -1542,8 +1542,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
               .withDeclarationElement(declarationElement);
           }
           case TypeVarTuple -> {
-            Ref<PyPositionalVariadicType> defaultType =
-              defaultExpression != null ? Ref.create(getTypeVarTupleParameterDefaultType(defaultExpression, context)) : null;
+            Ref<PyPositionalVariadicType> defaultType = defaultExpression != null ? Ref.create(
+              as(getTypeParameterBoundType(defaultExpression, context), PyPositionalVariadicType.class)) : null;
             yield new PyTypeVarTupleTypeImpl(name)
               .withScopeOwner(scopeOwner)
               .withDefaultType(defaultType)
@@ -1681,10 +1681,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       types.add(Ref.deref(getType(argument, context)));
     }
     return PyUnionType.union(types);
-  }
-
-  private static @Nullable PyPositionalVariadicType getTypeVarTupleParameterDefaultType(@NotNull PyExpression defaultExpression, @NotNull Context context) {
-    return as(getTypeParameterBoundType(defaultExpression, context), PyPositionalVariadicType.class);
   }
 
   private static @Nullable PyType getTypeParameterBoundType(@NotNull PyExpression boundExpression, @NotNull Context context) {
