@@ -5,28 +5,24 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.diagnostic.DefaultIdeaErrorLogger;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.VMOptions;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.ide.plugins.PluginUtilImpl;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -70,9 +66,9 @@ public final class IdeaLogger extends JulLogger {
       return false;
     }
 
-    int hash = ThrowableInterner.computeAccurateTraceHashCode(t);
-    AtomicInteger counter = MyCache.getOrCreate(hash, t);
-    int occurrences = counter.incrementAndGet();
+    var hash = ThrowableInterner.computeAccurateTraceHashCode(t);
+    var counter = MyCache.getOrCreate(hash, t);
+    var occurrences = counter.incrementAndGet();
     return occurrences != 1;
   }
 
@@ -81,12 +77,12 @@ public final class IdeaLogger extends JulLogger {
       return;
     }
 
-    Application app = ApplicationManager.getApplication();
+    var app = ApplicationManager.getApplication();
     if (app != null && !app.isUnitTestMode() && !app.isDisposed()) {
-      PluginUtil pluginUtil = PluginUtil.getInstance();
+      var pluginUtil = PluginUtil.getInstance();
       if (pluginUtil != null) {
-        PluginId pluginId = pluginUtil.findPluginId(t);
-        VMOptions.MemoryKind kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
+        var pluginId = pluginUtil.findPluginId(t);
+        var kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
         LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
       }
     }
@@ -97,7 +93,7 @@ public final class IdeaLogger extends JulLogger {
   }
 
   private static final Supplier<String> ourApplicationInfoProvider = () -> {
-    ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
+    var info = ApplicationInfoImpl.getShadowInstance();
     return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asString();
   };
 
@@ -139,20 +135,20 @@ public final class IdeaLogger extends JulLogger {
     }
   }
 
-  private void doLogError(String message, @Nullable Throwable t, String @NotNull ... details) {
+  private void doLogError(String message, @Nullable Throwable t, String... details) {
     if (t instanceof ControlFlowException) {
       logSevere(message, ensureNotControlFlow(t));
       ExceptionUtil.rethrow(t);
     }
 
-    String detailString = String.join("\n", details);
+    var detailString = String.join("\n", details);
     if (!detailString.isEmpty()) {
       detailString = "\nDetails: " + detailString;
     }
 
     if (ourErrorsOccurred == null) {
-      String mess = "Logger errors occurred. See IDEA logs for details. " +
-                    (message == null || message.isEmpty() ? "" : "Error message is '" + message + "'");
+      var mess = "Logger errors occurred. See IDEA logs for details. " +
+                 (message == null || message.isEmpty() ? "" : "Error message is '" + message + "'");
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
@@ -162,30 +158,30 @@ public final class IdeaLogger extends JulLogger {
   private void logErrorHeader(@Nullable Throwable t) {
     logSevere(ourApplicationInfoProvider.get());
 
-    Properties properties = System.getProperties();
+    var properties = System.getProperties();
     logSevere("JDK: " + properties.getProperty("java.version", "unknown") +
-                    "; VM: " + properties.getProperty("java.vm.name", "unknown") +
-                    "; Vendor: " + properties.getProperty("java.vendor", "unknown"));
+              "; VM: " + properties.getProperty("java.vm.name", "unknown") +
+              "; Vendor: " + properties.getProperty("java.vendor", "unknown"));
     logSevere("OS: " + properties.getProperty("os.name", "unknown"));
 
     // do not use getInstance here - container maybe already disposed
     if (t != null && PluginManagerCore.arePluginsInitialized()) {
-      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginUtilImpl.doFindPluginId(t));
+      var plugin = PluginManagerCore.getPlugin(PluginUtilImpl.doFindPluginId(t));
       if (plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())) {
         logSevere("Plugin to blame: " + plugin.getName() + " version: " + plugin.getVersion());
       }
     }
 
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    var application = ApplicationManagerEx.getApplicationEx();
     if (application != null && application.isComponentCreated() && !application.isDisposed()) {
-      String lastPreformedActionId = ourLastActionId;
+      var lastPreformedActionId = ourLastActionId;
       if (lastPreformedActionId != null) {
         logSevere("Last Action: " + lastPreformedActionId);
       }
 
-      CommandProcessor commandProcessor = application.getServiceIfCreated(CommandProcessor.class);
+      var commandProcessor = application.getServiceIfCreated(CommandProcessor.class);
       if (commandProcessor != null) {
-        String currentCommandName = commandProcessor.getCurrentCommandName();
+        var currentCommandName = commandProcessor.getCurrentCommandName();
         if (currentCommandName != null) {
           logSevere("Current Command: " + currentCommandName);
         }
