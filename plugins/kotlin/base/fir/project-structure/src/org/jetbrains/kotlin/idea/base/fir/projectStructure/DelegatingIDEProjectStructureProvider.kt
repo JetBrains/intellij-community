@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.library.KotlinLibrary
 /**
  * A solution for the transition period, allowing a switch to the old `IdeaModuleInfo`-based implementation `ProjectStructureProviderIdeImpl`
  * implementation via the `kotlin.use.new.project.structure.provider` registry key.
+ *
+ * Should be removed as a part of KTIJ-32817
  */
 internal class DelegatingIDEProjectStructureProvider(project: Project) : IDEProjectStructureProvider() {
     val delegate = if (useNewK2ProjectStructureProvider) {

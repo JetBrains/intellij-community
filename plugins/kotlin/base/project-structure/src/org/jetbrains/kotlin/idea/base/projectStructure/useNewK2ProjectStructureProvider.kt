@@ -6,6 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * In progress of migration to new project structure provider, see KTIJ-31422
+ *
+ * Should be removed as a part of KTIJ-32817
  */
 @get:ApiStatus.Internal
 val useNewK2ProjectStructureProvider: Boolean

@@ -52,6 +52,7 @@ internal class K2IdeKotlinModuleDependentsProvider(project: Project) : IdeKotlin
     }
 }
 
+// should probably be removed as a part of KTIJ-32817
 @Service(Service.Level.PROJECT)
 private class K2LibraryUsageIndex(private val project: Project) {
     private val moduleDependentsByLibrary: CachedValue<Map<LibraryId, List<ModuleId>>> =
