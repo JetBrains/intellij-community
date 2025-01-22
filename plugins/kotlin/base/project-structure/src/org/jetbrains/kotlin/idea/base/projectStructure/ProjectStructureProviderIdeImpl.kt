@@ -323,7 +323,7 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
         return getKtModuleByModuleInfo(moduleInfo) as KaLibraryModule
     }
 
-    override fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule> {
+    override fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule> {
         return ModuleInfoProvider.getInstance(project)
             .collectLibraryBinariesModuleInfos(virtualFile)
             .mapTo(mutableListOf()) { getKtModuleByModuleInfo(it) }

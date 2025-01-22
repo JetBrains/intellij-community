@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModu
 import org.jetbrains.kotlin.analysis.api.projectStructure.directRegularDependenciesOfType
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
-import org.jetbrains.kotlin.idea.base.projectStructure.getContainingKaModules
+import org.jetbrains.kotlin.idea.base.projectStructure.getAssociatedKaModules
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.utils.SmartList
 @ApiStatus.Internal
 class FirLibrarySourceScopeService(private val project: Project): LibrarySourceScopeService {
     override fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> {
-        val binaryModuleInfos = virtualFile.getContainingKaModules(project).filterIsInstance<KaLibraryModule>()
+        val binaryModuleInfos = virtualFile.getAssociatedKaModules(project).filterIsInstance<KaLibraryModule>()
 
         val primaryScope = binaryModuleInfos.mapNotNull { it.librarySources?.contentScope }.union()
         val additionalScope = binaryModuleInfos.flatMap {

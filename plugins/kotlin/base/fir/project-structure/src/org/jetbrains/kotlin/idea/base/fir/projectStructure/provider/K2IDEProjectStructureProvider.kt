@@ -206,7 +206,7 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
         return (module as? KaLibrarySdkModuleImpl)?.sdk
     }
 
-    override fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule> {
+    override fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule> {
         return CandidateCollector.collectCandidatesByVirtualFile(virtualFile, project)
             .flatMap { createKaModules(it) }
             .toList()

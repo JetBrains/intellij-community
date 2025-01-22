@@ -63,7 +63,7 @@ internal class DelegatingIDEProjectStructureProvider(project: Project) : IDEProj
     override fun getOpenapiSdk(module: KaLibraryModule): Sdk? = delegate.getOpenapiSdk(module)
     override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule = delegate.getKaLibraryModule(sdk)
     override fun getKotlinLibraries(module: KaLibraryModule): List<KotlinLibrary> = delegate.getKotlinLibraries(module)
-    override fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule> = delegate.getContainingKaModules(virtualFile)
+    override fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule> = delegate.getAssociatedKaModules(virtualFile)
     override fun getForcedKaModule(file: PsiFile): KaModule? = delegate.getForcedKaModule(file)
     override fun setForcedKaModule(file: PsiFile, kaModule: KaModule?) = delegate.setForcedKaModule(file, kaModule)
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule = delegate.getModule(element, useSiteModule)
