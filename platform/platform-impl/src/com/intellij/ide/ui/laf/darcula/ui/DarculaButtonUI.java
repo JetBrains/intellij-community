@@ -8,7 +8,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent;
-import com.intellij.openapi.fileEditor.impl.DesignProcessor;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -206,7 +206,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   private Paint getDefaultButtonPaint(JComponent c, Rectangle r) {
-    Paint paint = DesignProcessor.getInstance().getCustomDefaultButtonPaint(c, r);
+    Paint paint = InternalUICustomization.getInstance().getCustomDefaultButtonPaint(c, r);
     return paint != null ? paint : UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd());
   }
 

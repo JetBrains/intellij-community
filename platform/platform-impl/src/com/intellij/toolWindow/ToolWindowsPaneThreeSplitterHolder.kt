@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
-import com.intellij.openapi.fileEditor.impl.DesignProcessor
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.ui.ThreeComponentsSplitter
 import com.intellij.openapi.util.registry.Registry
 import javax.swing.JComponent
@@ -41,7 +41,7 @@ internal class ToolWindowsPaneThreeSplitterHolder(vertical: Boolean = false, one
     splitter.dividerWidth = 0
     splitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
 
-    splitter.background = DesignProcessor.getInstance().getToolWindowsPaneThreeSplitterBackground()
+    splitter.background = InternalUICustomization.getInstance().getToolWindowsPaneThreeSplitterBackground()
   }
 
 }

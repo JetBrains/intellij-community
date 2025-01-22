@@ -5,7 +5,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.impl.DesignProcessor
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.toolWindow.xNext.toolbar.actions.XNextToolbarGroup
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
@@ -31,6 +31,6 @@ internal class XNextActionToolbar : ActionToolbarImpl ("XNextStatusBar", XNextTo
   }
 
   private fun updateBackground() {
-    background = DesignProcessor.getInstance().getCustomMainBackgroundColor()
+    background = InternalUICustomization.getInstance().getCustomMainBackgroundColor()
   }
 }

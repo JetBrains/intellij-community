@@ -184,7 +184,7 @@
                         serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
 
     <!--XNext-->
-    <applicationService serviceImplementation="com.intellij.openapi.fileEditor.impl.DesignProcessor"/>
+    <applicationService serviceImplementation="com.intellij.openapi.application.impl.InternalUICustomization"/>
     <!---->
 
   </extensions>

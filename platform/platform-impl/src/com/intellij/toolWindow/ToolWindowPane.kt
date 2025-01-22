@@ -10,7 +10,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.impl.DesignProcessor
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
@@ -107,7 +107,7 @@ class ToolWindowPane private constructor(
     }
 
     private fun createButtonManager(paneId: String): ToolWindowButtonManager {
-      DesignProcessor.getInstance().internalCustomizer.createCustomButtonManager(paneId)?.let {
+      InternalUICustomization.getInstance().internalCustomizer.createCustomButtonManager(paneId)?.let {
         return it
       }
 
@@ -611,7 +611,7 @@ class ToolWindowPane private constructor(
       }
 
       override fun createDivider(): Divider {
-        return DesignProcessor.getInstance().createCustomDivider(isVisible, this) ?: super.createDivider()
+        return InternalUICustomization.getInstance().createCustomDivider(isVisible, this) ?: super.createDivider()
       }
 
       override fun toString() = "[$firstComponent|$secondComponent]"

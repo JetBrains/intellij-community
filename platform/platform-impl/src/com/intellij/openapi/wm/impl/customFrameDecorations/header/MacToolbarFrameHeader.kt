@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.fileEditor.impl.DesignProcessor
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
@@ -125,7 +125,7 @@ internal class MacToolbarFrameHeader(
   }
 
   override fun getComponentGraphics(graphics: Graphics?): Graphics? {
-    return DesignProcessor.getInstance().transformGraphics(this, super.getComponentGraphics(graphics))
+    return InternalUICustomization.getInstance().transformGraphics(this, super.getComponentGraphics(graphics))
   }
 
   private fun isCompactHeaderFast(): Boolean {
@@ -242,7 +242,7 @@ internal class MacToolbarFrameHeader(
 
   private fun updateBackground(isActive: Boolean = frame.isActive) {
     val color = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(isActive)
-    background =  DesignProcessor.getInstance().frameHeaderBackgroundConverter(color) ?: color
+    background = InternalUICustomization.getInstance().frameHeaderBackgroundConverter(color) ?: color
   }
 
   override fun getAccessibleContext(): AccessibleContext {
