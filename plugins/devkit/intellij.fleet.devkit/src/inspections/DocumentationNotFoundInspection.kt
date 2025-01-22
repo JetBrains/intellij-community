@@ -29,13 +29,18 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
 import org.yaml.snakeyaml.Yaml
 
-internal class SettingRegistrationDocumentationInspection : AbstractKotlinInspection() {
+private val SETTING_DECLARATION_FQ_NAME = FqName("fleet.common.settings.SettingsKey")
+private val SETTING_REGISTRATION_FQ_NAME = FqName("fleet.frontend.settings.SettingsRegistrar.setting")
+private val RUN_TASK_REGISTRATION_FQ_NAME = FqName("fleet.frontend.run.api.RunTaskRegistrar.task")
+
+internal class DocumentationNotFoundInspection : AbstractKotlinInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
     object : KtVisitorVoid() {
       override fun visitCallExpression(expression: KtCallExpression) {
@@ -67,10 +72,11 @@ internal fun analyzeCallExpression(element: KtCallExpression): DocumentationSear
     val fqName = call?.symbol?.callableId?.asSingleFqName()
                  ?: element.resolveToCall()?.successfulConstructorCallOrNull()?.symbol?.containingClassId?.asSingleFqName()
                  ?: return null
-    if (fqName != FqName("fleet.common.settings.SettingsKey")) return null
+    if (fqName != SETTING_DECLARATION_FQ_NAME) return null
     val property = element.parent as? KtProperty ?: return null
-    val search = ReferencesSearch.search(property, GlobalSearchScope.projectScope(property.project))
-    return search.mapNotNull {
+    val module = property.module ?: return null
+    val search = ReferencesSearch.search(property, GlobalSearchScope.moduleWithDependentsScope(module))
+    return search.asSequence().mapNotNull {
       val callExpr = it.element.parentsOfType<KtCallExpression>().firstOrNull() ?: return@mapNotNull null
       val kaCall = callExpr.resolveToCall()?.successfulFunctionCallOrNull() ?: return@mapNotNull null
       if (kaCall.isSettingRegistrationCall()) {
@@ -82,68 +88,76 @@ internal fun analyzeCallExpression(element: KtCallExpression): DocumentationSear
 }
 
 private fun KaFunctionCall<*>.isSettingRegistrationCall(): Boolean {
-  return symbol.callableId?.asSingleFqName() == FqName("fleet.frontend.settings.SettingsRegistrar.setting")
+  return symbol.callableId?.asSingleFqName() == SETTING_REGISTRATION_FQ_NAME
 }
 
 private fun KaFunctionCall<*>.isRunTaskRegistrationCall(): Boolean {
-  return symbol.callableId?.asSingleFqName() == FqName("fleet.frontend.run.api.RunTaskRegistrar.task")
+  return symbol.callableId?.asSingleFqName() == RUN_TASK_REGISTRATION_FQ_NAME
 }
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun visitSettingRegistrationCall(call: KaFunctionCall<*>, element: KtCallExpression): DocumentationSearchResult? {
-  val argument = call.argumentMapping.firstNotNullOfOrNull { (expr, par) ->
-    if (par.name.toString() == "setting") expr
-    else null
-  } ?: return null
+  val argument = call.getParameterValueOrNull("setting") ?: return null
   val variable = argument.resolveToCall()?.successfulVariableAccessCall()?.symbol ?: return null
   val settingsKeyCall = (variable as? KaPropertySymbol)?.initializer?.initializerPsi?.resolveToCall()?.successfulFunctionCallOrNull()
                         ?: return null
-  val keyArgument = settingsKeyCall.argumentMapping.firstNotNullOfOrNull { (expr, par) ->
-    if (par.name.toString() == "key") expr
-    else null
-  } ?: return null
+  val keyArgument = settingsKeyCall.getParameterValueOrNull("key") ?: return null
   val key = keyArgument.getStringValue() ?: return null
   val documentationStatus = getDocumentation(element)
   val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
   return if (documentationStatus is DocumentationStatus.Exists) {
     if (key !in documentationStatus.documentedSettings) {
-      DocumentationSearchResult("Setting \"$key\" isn't documented", NavigateToDocumentationFix(module), documentationStatus.file)
+      DocumentationSearchResult(
+        DevKitFleetBundle.message("setting.isnt.documented", key),
+        NavigateToDocumentationFix(module),
+        documentationStatus.file
+      )
     }
     else DocumentationSearchResult(file = documentationStatus.file)
   }
   else {
-    DocumentationSearchResult("documentation.yaml not found", CreateDocumentationFileFix(module))
+    DocumentationSearchResult(
+      DevKitFleetBundle.message("documentation.yaml.not.found"),
+      CreateDocumentationFileFix(module)
+    )
   }
 }
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun visitRunTaskRegistrationCall(call: KaFunctionCall<*>, element: KtCallExpression): DocumentationSearchResult? {
-  val argument = call.argumentMapping.firstNotNullOfOrNull { (expr, par) ->
-    if (par.name.toString() == "taskType") expr
-    else null
-  } ?: return null
+  val argument = call.getParameterValueOrNull("taskType") ?: return null
   val variable = argument.resolveToCall()?.successfulVariableAccessCall()?.symbol ?: return null
   val taskTypeCall = (variable as? KaPropertySymbol)?.initializer?.initializerPsi?.resolveToCall()?.successfulFunctionCallOrNull()
                      ?: return null
-  val idArgument = taskTypeCall.argumentMapping.firstNotNullOfOrNull { (expr, par) ->
-    if (par.name.toString() == "id") expr
-    else null
-  } ?: return null
+  val idArgument = taskTypeCall.getParameterValueOrNull("id") ?: return null
   val id = idArgument.getStringValue() ?: return null
   val documentationStatus = getDocumentation(element)
   val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
   return if (documentationStatus is DocumentationStatus.Exists) {
     if (id !in documentationStatus.documentedRunConfigs) {
-      DocumentationSearchResult("Run Configuration \"$id\" isn't documented", NavigateToDocumentationFix(module), documentationStatus.file)
+      DocumentationSearchResult(
+        DevKitFleetBundle.message("run.configuration.isnt.documented", id),
+        NavigateToDocumentationFix(module),
+        documentationStatus.file
+      )
     }
     else DocumentationSearchResult(file = documentationStatus.file)
   }
   else {
-    DocumentationSearchResult("documentation.yaml not found", CreateDocumentationFileFix(module))
+    DocumentationSearchResult(
+      DevKitFleetBundle.message("documentation.yaml.not.found"),
+      CreateDocumentationFileFix(module)
+    )
   }
 }
+
+private fun KaFunctionCall<*>.getParameterValueOrNull(name: String): KtExpression? =
+  argumentMapping.firstNotNullOfOrNull { (expr, par) ->
+    if (par.name.toString() == name) expr
+    else null
+  }
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
@@ -228,4 +242,3 @@ private class NavigateToDocumentationFix(val module: Module) : LocalQuickFix {
     fileEditorManager.openFile(virtualFile, true)
   }
 }
-

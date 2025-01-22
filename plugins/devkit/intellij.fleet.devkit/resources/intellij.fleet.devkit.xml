@@ -11,10 +11,10 @@
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.fleet.inspections.SettingRegistrationDocumentationInspection"
+                     implementationClass="org.jetbrains.idea.devkit.fleet.inspections.DocumentationNotFoundInspection"
                      key="inspections.plugin.fleet.setting.is.documented"/>
     <codeInsight.lineMarkerProvider
       language="kotlin"
-      implementationClass="org.jetbrains.idea.devkit.fleet.inspections.NavigateToDocumentationLineMarkerProvider"/>
+      implementationClass="org.jetbrains.idea.devkit.fleet.NavigateToDocumentationLineMarkerProvider"/>
   </extensions>
 </idea-plugin>

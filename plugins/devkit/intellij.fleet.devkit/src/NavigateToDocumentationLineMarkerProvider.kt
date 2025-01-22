@@ -1,4 +1,4 @@
-package org.jetbrains.idea.devkit.fleet.inspections
+package org.jetbrains.idea.devkit.fleet
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.idea.devkit.DevKitIcons
-import org.jetbrains.idea.devkit.fleet.DevKitFleetBundle
+import org.jetbrains.idea.devkit.fleet.inspections.analyzeCallExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import javax.swing.Icon
 
