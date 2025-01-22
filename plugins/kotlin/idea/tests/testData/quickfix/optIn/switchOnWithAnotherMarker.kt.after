@@ -1,7 +1,7 @@
 // "Opt in for 'RequiresOptIn' in module 'light_idea_test_case'" "true"
 // COMPILER_ARGUMENTS: -version -opt-in=AnotherMarker
 // COMPILER_ARGUMENTS_AFTER: -version -opt-in=AnotherMarker -opt-in=kotlin.RequiresOptIn
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // WITH_STDLIB
 // LANGUAGE_VERSION: 1.6
 

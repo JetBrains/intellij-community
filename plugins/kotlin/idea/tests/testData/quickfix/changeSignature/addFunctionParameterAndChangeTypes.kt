@@ -1,5 +1,5 @@
 // "Change the signature of function 'foo'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 fun foo(x: Int, i: Double) {
     foo();

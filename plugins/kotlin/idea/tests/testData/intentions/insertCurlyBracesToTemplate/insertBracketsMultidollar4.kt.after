@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
 /* Can't enable the feature in K1 mode */
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // AFTER-WARNING: Variable 'y' is never used
 
 fun test() {

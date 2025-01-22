@@ -1,5 +1,5 @@
 // "Add SOURCE retention" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Change existing retention to SOURCE
 // ACTION: Make internal
 // ACTION: Make private

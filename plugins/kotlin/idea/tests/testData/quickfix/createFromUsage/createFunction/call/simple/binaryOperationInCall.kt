@@ -1,5 +1,5 @@
 // "Create function 'operate'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class OperandA
 class OperandB
 class OperandC

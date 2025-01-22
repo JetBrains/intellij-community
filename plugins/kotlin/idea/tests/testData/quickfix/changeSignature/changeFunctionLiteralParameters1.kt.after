@@ -1,5 +1,5 @@
 // "Change the signature of lambda expression" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 fun f(x: Int, y: Int, z : () -> Int) {
     f(1, 2, { 42});

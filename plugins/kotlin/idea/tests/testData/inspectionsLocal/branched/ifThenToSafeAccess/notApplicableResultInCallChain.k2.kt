@@ -2,7 +2,7 @@
 /* See https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md */
 // FIX: Replace 'if' expression with safe access expression
 // WITH_STDLIB
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 val someNullableString: String? = ""
 fun String.bar(): Result<String> = Result.success("")

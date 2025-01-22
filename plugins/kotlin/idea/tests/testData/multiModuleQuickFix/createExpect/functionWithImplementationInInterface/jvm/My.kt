@@ -1,6 +1,6 @@
 // "Create expected function in common module testModule_Common" "true"
 // SHOULD_FAIL_WITH: "The function declaration shouldn&#39;t have a default implementation"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 
 actual interface My {

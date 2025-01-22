@@ -1,5 +1,5 @@
 // "Remove parameter 'm'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun test() {
     Foo.foo()
     Foo.foo(1<caret>)

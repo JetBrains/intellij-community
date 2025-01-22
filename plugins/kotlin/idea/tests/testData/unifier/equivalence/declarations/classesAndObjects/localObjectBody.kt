@@ -1,5 +1,5 @@
 // IGNORE_K2
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun foo() {
     {
         <selection>object A {

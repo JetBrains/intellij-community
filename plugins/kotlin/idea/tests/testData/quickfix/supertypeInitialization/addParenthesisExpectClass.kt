@@ -1,7 +1,7 @@
 // "Change to constructor invocation" "true"
 // PRIORITY: HIGH
 // ENABLE_MULTIPLATFORM
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 expect open class A
 

@@ -1,5 +1,5 @@
 // "Change parameter 'x' type of function 'foo' to 'Any?'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // LANGUAGE_VERSION: 1.8
 
 fun <T> foo(x: Any?) {}

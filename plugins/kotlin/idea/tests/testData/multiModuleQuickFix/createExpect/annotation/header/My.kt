@@ -1,3 +1,3 @@
 // My: to be implemented
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // IGNORE_K2

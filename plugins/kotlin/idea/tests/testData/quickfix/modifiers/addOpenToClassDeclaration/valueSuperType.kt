@@ -1,5 +1,5 @@
 // "Make 'V' open" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Introduce import alias
 @JvmInline
 value class V(val x: Int)

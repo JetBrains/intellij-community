@@ -1,7 +1,7 @@
 // "Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'" "true"
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // COMPILER_ARGUMENTS_AFTER: -opt-in=kotlin.RequiresOptIn -opt-in=test.MyExperimentalAPI
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // WITH_STDLIB
 
 package test

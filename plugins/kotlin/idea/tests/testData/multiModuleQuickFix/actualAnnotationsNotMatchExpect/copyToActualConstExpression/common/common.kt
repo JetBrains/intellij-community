@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 annotation class Ann(val value: String)
 
 const val CONSTVAL = "hello"

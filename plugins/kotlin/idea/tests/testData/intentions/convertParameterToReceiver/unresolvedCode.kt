@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 fun main() {
     foo(listOf(1, 2, 3))

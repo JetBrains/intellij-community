@@ -1,5 +1,5 @@
 // "Remove default parameter value" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 interface Foo {
     fun test(x: Int, y: Int)
 }

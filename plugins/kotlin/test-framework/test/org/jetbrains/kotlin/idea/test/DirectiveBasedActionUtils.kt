@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 
 
 object DirectiveBasedActionUtils {
-    const val DISABLE_ERRORS_DIRECTIVE: String = "// DISABLE-ERRORS"
+    const val DISABLE_ERRORS_DIRECTIVE: String = "// DISABLE_ERRORS"
     const val DISABLE_WARNINGS_DIRECTIVE: String = "// DISABLE-WARNINGS"
     const val ENABLE_WARNINGS_DIRECTIVE: String = "// ENABLE-WARNINGS"
     const val PRIORITY_DIRECTIVE = "PRIORITY"

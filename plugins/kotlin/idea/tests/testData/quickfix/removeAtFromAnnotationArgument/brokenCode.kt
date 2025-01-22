@@ -1,5 +1,5 @@
 // "Remove @ from annotation argument" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 @Suppress({ <caret>@x
 y() }) fun test() {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveAtFromAnnotationArgument

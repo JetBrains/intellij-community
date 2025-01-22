@@ -5,7 +5,7 @@
 // ACTION: Introduce local variable
 // ACTION: Move lambda argument into parentheses
 // ACTION: Specify explicit lambda signature
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // WITH_STDLIB
 fun test(list: List<Int>) {
     list.filter { 1<caret> }

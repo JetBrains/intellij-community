@@ -1,5 +1,5 @@
 // IGNORE_K2
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun foo() {
     <selection>class A {
         fun a(x: Int): Int = b(x) + 1

@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 interface A {
     abstract fun <caret>foo(): Int
 }

@@ -1,5 +1,5 @@
 // "Add parameter to function 'values'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 enum class A {}
 fun a() {

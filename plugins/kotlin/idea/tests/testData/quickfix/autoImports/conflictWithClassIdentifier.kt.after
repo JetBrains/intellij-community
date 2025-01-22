@@ -1,7 +1,7 @@
 import java.util.Arrays
 
 // "Import class 'Arrays'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class java
 
 fun test() {

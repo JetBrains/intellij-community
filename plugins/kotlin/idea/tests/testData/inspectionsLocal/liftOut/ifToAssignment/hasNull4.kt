@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun bar(i: Int) {
     var str: String? = null
 

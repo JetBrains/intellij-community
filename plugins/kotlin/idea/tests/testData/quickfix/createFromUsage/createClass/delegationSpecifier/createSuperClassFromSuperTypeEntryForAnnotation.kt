@@ -1,3 +1,3 @@
 // "Create class 'Unknown'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 annotation class A : Unknown<caret>

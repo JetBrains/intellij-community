@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 @RequiresOptIn
 annotation class FirstExperience

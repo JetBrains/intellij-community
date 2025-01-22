@@ -1,4 +1,4 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 @JvmInline
 value class C(val <caret>x: Int)

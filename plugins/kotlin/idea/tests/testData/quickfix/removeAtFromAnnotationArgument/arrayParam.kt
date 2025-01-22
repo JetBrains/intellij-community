@@ -1,5 +1,5 @@
 // "Remove @ from annotation argument" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 annotation class Y()
 annotation class X(val value: Array<Y>)

@@ -1,5 +1,5 @@
 // "Add 'fun' modifier to 'I'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Convert to anonymous object
 // ACTION: Introduce import alias
 // ACTION: Split property declaration

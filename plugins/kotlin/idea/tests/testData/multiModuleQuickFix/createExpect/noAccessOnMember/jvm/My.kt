@@ -1,5 +1,5 @@
 // "Create expected function in common module testModule_Common" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 actual class My {
     actual fun <caret>foo(param: String): Int = 42

@@ -15,4 +15,4 @@ fun test() {
     a[3]
 }
 
-// DISABLE-ERRORS
+// DISABLE_ERRORS

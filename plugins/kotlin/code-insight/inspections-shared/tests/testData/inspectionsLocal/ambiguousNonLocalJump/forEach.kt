@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // COMPILER_ARGUMENTS: -XXLanguage:+BreakContinueInInlineLambdas
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun foo() {
     for (i in 1..5) {
         (1..5).forEach {

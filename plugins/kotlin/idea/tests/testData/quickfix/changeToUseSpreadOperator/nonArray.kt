@@ -4,7 +4,7 @@
 // ACTION: Convert to block body
 // ACTION: Create function 'foo'
 // ACTION: Enable option 'Function return types' for 'Types' inlay hints
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 // Fix this test case if https://youtrack.jetbrains.com/issue/KT-12663 is implemented
 

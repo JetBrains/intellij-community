@@ -16,4 +16,4 @@ public class ServerEx() : Server() {
     override fun processRequest() = Server.Foo
 }
 
-// DISABLE-ERRORS
+// DISABLE_ERRORS

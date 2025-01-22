@@ -1,5 +1,5 @@
 // "Change parameter 'a' type of function 'foo' to 'String'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 package test
 
 open class B {

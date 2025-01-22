@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+TrailingCommas
 // FIX: Fix comma position
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 fun a() {
     val a = {

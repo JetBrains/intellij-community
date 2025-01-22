@@ -6,7 +6,7 @@
 // ACTION: Convert property initializer to getter
 // ACTION: Convert to lazy property
 // ACTION: Introduce import alias
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // WITH_STDLIB
 val a: List<Int> = listOf(1)
 val b: List<Int> = <caret>listOf(a)

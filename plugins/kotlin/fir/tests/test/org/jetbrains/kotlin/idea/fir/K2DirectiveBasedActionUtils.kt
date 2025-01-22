@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 object K2DirectiveBasedActionUtils {
-    const val DISABLE_K2_ERRORS_DIRECTIVE: String = "// DISABLE-K2-ERRORS"
-    const val DISABLE_K2_WARNINGS_DIRECTIVE: String = "// DISABLE-K2-WARNINGS"
+    const val DISABLE_K2_ERRORS_DIRECTIVE: String = "// DISABLE_K2_ERRORS"
+    const val DISABLE_K2_WARNINGS_DIRECTIVE: String = "// DISABLE_K2_WARNINGS"
 
     const val K2_ERROR_DIRECTIVE: String = "// K2_ERROR:"
     const val K2_AFTER_ERROR_DIRECTIVE: String = "// K2_AFTER_ERROR:"

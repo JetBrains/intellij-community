@@ -1,5 +1,5 @@
 // "Replace 'if' expression with safe access expression" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class Test {
     var x: String? = ""
 

@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
 /* Can't enable the feature in K1 mode */
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // IS_APPLICABLE: false
 
 fun foo() {

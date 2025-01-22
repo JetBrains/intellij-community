@@ -13,6 +13,6 @@ public class ServerEx() : Server() {
     override fun processRequest() = "foo" + foo
 }
 
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 // ISSUE: KTIJ-29712

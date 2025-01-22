@@ -1,5 +1,5 @@
 // "Add '== true'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Add 'toString()' call
 // ACTION: Change parameter 's' type of function 'baz' to 'Boolean?'
 // ACTION: Create function 'baz'

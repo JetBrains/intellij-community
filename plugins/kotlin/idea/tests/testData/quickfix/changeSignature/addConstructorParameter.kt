@@ -1,5 +1,5 @@
 // "Add parameter to constructor 'Base'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 open class Base(var x: Int) {
     val y = Base(1, 2);

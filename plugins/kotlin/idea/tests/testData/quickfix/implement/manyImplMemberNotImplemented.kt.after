@@ -1,6 +1,6 @@
 // "Implement members" "true"
 // WITH_STDLIB
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 interface A {
     fun foo() {}
     fun bar() {}

@@ -1,5 +1,5 @@
 // "Remove parameter 'x'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 fun f(<caret>y: Int) {
     f(2);

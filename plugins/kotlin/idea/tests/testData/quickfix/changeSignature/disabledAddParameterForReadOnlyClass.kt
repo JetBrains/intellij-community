@@ -1,5 +1,5 @@
 // "Add parameter to function 'plus'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 fun a() {
     1.plus(1, <caret>2)

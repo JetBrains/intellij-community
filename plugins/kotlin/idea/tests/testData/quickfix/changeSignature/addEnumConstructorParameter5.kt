@@ -1,5 +1,5 @@
 // "Add parameter to constructor 'Foo'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 enum class Foo {
     A(1<caret>),
     B(2),

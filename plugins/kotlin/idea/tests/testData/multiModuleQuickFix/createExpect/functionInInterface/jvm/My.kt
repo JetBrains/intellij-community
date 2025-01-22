@@ -1,5 +1,5 @@
 // "Create expected function in common module testModule_Common" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 
 actual interface My {

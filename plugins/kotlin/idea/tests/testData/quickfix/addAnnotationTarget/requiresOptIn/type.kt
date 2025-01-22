@@ -3,7 +3,7 @@
 // ACTION: Convert to lazy property
 // ACTION: Introduce import alias
 // WITH_STDLIB
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 val x: @MyExperimentalAPI<caret> Int = 1
 
 @RequiresOptIn

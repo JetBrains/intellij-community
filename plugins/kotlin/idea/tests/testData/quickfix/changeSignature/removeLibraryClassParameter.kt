@@ -1,5 +1,5 @@
 // "Remove parameter 'message'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // IGNORE_IRRELEVANT_ACTIONS
 
 @Deprecated<caret>

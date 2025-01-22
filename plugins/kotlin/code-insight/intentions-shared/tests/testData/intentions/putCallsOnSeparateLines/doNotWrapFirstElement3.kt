@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun calculate(): Int {
     return call1()
         <caret>.call2()

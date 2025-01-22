@@ -2,7 +2,7 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+WhenGuards
 /* Issue: KTIJ-32336 */
 /* When guards can't be enabled in the K1 mode, which leads to an error. But the issue still affects it, so the errors are disabled */
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 interface A
 sealed interface B : A {

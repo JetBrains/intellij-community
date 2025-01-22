@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE-K2-ERRORS
+// DISABLE_K2_ERRORS
 // TODO: KTIJ-32773
 plugins {
     kotlin("jvm") version "2.0.0"
