@@ -2,19 +2,14 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -22,9 +17,10 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AssociateFunction.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AssociateFunction.*
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -106,28 +102,25 @@ class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
     })
 }
 
-class ReplaceAssociateFunctionFix(private val function: AssociateFunction, private val hasDestination: Boolean) : LocalQuickFix {
+class ReplaceAssociateFunctionFix(
+    private val function: AssociateFunction,
+    private val hasDestination: Boolean,
+) : KotlinModCommandQuickFix<KtExpression>() {
     private val functionName = function.name(hasDestination)
 
     override fun getName(): String = KotlinBundle.message("replace.with.0", functionName)
 
-    override fun getFamilyName(): String = name
-
-    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val dotQualifiedExpression = descriptor.psiElement.getStrictParentOfType<KtDotQualifiedExpression>() ?: return
+    override fun applyFix(
+        project: Project,
+        element: KtExpression,
+        updater: ModPsiUpdater,
+    ) {
+        val dotQualifiedExpression = element.getStrictParentOfType<KtDotQualifiedExpression>() ?: return
         val receiverExpression = dotQualifiedExpression.receiverExpression
         val callExpression = dotQualifiedExpression.callExpression ?: return
         val lambda = callExpression.lambda() ?: return
         val lastStatement = lambda.functionLiteral.lastStatement() ?: return
-        val (keySelector, valueTransform) =
-            allowAnalysisOnEdt {
-                allowAnalysisFromWriteAction {
-                    analyze(lastStatement) {
-                        lastStatement.pair()
-                    }
-                }
-            } ?: return
+        val (keySelector, valueTransform) = analyze(lastStatement) { lastStatement.pair() } ?: return
 
         val psiFactory = KtPsiFactory(project)
         if (function == ASSOCIATE_BY_KEY_AND_VALUE) {
@@ -168,6 +161,8 @@ class ReplaceAssociateFunctionFix(private val function: AssociateFunction, priva
             dotQualifiedExpression.replace(newExpression)
         }
     }
+
+    override fun getFamilyName(): String = name
 
     private fun BuilderByPattern<KtExpression>.appendLambda(lambda: KtLambdaExpression, body: KtExpression? = null) {
         appendFixedText("{")
