@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.AbstractBorder
 import javax.swing.border.Border
@@ -16,18 +17,16 @@ import kotlin.math.max
 
 internal class XNextToolWindowHolder private constructor(): JPanel() {
   companion object {
-    private val bord = JRoundedCornerBorder()
-
     @JvmStatic
-    fun create(): XNextToolWindowHolder = XNextToolWindowHolder().apply {
-      border = bord
+    fun create(): JComponent = XNextToolWindowHolder().apply {
+      border = JRoundedCornerBorder()
       ClientProperty.putRecursive(this, IdeBackgroundUtil.NO_BACKGROUND, true)
     }
   }
 
-  override fun setBorder(border_: Border?) {
-    if(border == bord) return
-    super.setBorder(bord)
+  override fun setBorder(border: Border?) {
+    if(border is JRoundedCornerBorder) return
+    super.setBorder(JRoundedCornerBorder())
   }
 
   override fun isOpaque(): Boolean {
@@ -51,21 +50,24 @@ private class JRoundedCornerBorder : AbstractBorder() {
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     val g2 = g.create() as Graphics2D
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-    val extArea = Area(Rectangle(0, 0, width, height))
-    extArea.subtract(Area(getBorderShape(width, height)))
-    g2.color = DesignProcessor.getInstance().getCustomMainBackgroundColor() ?: c.background
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
-    g2.fill(extArea)
+      val extArea = Area(Rectangle(0, 0, width, height))
+      extArea.subtract(Area(getBorderShape(width, height)))
+      g2.color = DesignProcessor.getInstance().getCustomMainBackgroundColor() ?: c.background
 
-    g2.color = c.parent.background
-    val th = JBUI.scale(THICKNESS).toFloat()
-    g2.stroke = BasicStroke(th, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
-    val borderShape = getBorderShape(width, height)
-    g2.draw(borderShape)
+      g2.fill(extArea)
 
-    g2.dispose()
+      g2.color = c.parent.background
+      val th = JBUI.scale(THICKNESS).toFloat()
+      g2.stroke = BasicStroke(th, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+      val borderShape = getBorderShape(width, height)
+      g2.draw(borderShape)
+    } finally {
+      g2.dispose()
+    }
   }
 
   override fun getBorderInsets(c: Component?): Insets {
