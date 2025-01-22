@@ -41,10 +41,6 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
         testClass<AbstractK2HighlightUsagesTest> {
             model("highlightUsages")
         }
-
-        testClass<AbstractK2UnresolvedReferenceKindHighlightingTest> {
-            model("unresolvedReferenceKind")
-        }
     }
 
     testGroup("highlighting/highlighting-k2", category = HIGHLIGHTING, testDataPath = "testData") {
