@@ -57,7 +57,7 @@ abstract class CodeExecutionManager {
     codeFile.writeText(code)
     // If this is the first execution, the plugin might need to set up the environment
     if (shouldSetup) {
-      setupEnvironment(basePath, sdk)
+      setupEnvironment(project)
       shouldSetup = false
     }
     // Compile
