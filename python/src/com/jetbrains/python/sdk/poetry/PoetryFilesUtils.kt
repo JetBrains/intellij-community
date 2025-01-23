@@ -75,7 +75,7 @@ suspend fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): VirtualFile? =
   }
 
 
-private suspend fun poetryLock(module: Module) = withContext(Dispatchers.IO) { findAmongRoots(module, POETRY_LOCK) }
+suspend fun poetryLock(module: Module) = withContext(Dispatchers.IO) { findAmongRoots(module, POETRY_LOCK) }
 
 /**
  * The PyProject.toml found in the main content root of the module.
