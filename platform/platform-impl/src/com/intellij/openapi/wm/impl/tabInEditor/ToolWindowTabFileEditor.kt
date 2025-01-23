@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -14,7 +14,7 @@ import javax.swing.LayoutFocusTraversalPolicy
 
 internal class ToolWindowTabFileEditor(
   private val project: Project,
-  private val file: ToolWindowTabFileImpl
+  private val file: ToolWindowTabFile
 ) : UserDataHolderBase(), FileEditor {
 
   override fun getComponent(): JComponent = file.component
@@ -35,7 +35,7 @@ internal class ToolWindowTabFileEditor(
 
   override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
 
-  override fun getFile(): ToolWindowTabFileImpl = file
+  override fun getFile(): ToolWindowTabFile = file
 
   override fun dispose() {
     FileEditorManager.getInstance(project).closeFile(this.file)

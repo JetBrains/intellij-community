@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.wm.impl.tabInEditor
 
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
@@ -10,12 +10,12 @@ import com.intellij.openapi.vfs.VirtualFile
 
 internal class ToolWindowTabFileEditorProvider : FileEditorProvider, DumbAware {
 
-  override fun accept(project: Project, file: VirtualFile): Boolean = file is ToolWindowTabFileImpl
+  override fun accept(project: Project, file: VirtualFile): Boolean = file is ToolWindowTabFile
 
   override fun acceptRequiresReadAction(): Boolean = false
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor =
-    ToolWindowTabFileEditor(project, file as ToolWindowTabFileImpl)
+    ToolWindowTabFileEditor(project, file as ToolWindowTabFile)
 
   override fun getEditorTypeId(): String = "ToolWindowTabFileEditor"
 
