@@ -29,7 +29,7 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, 
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
   private lateinit var versionComboBox: ComboBox<LanguageLevel>
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     with(panel) {
       row(message("sdk.create.python.version")) {
         pythonVersion = propertyGraph.property(condaSupportedLanguages.first())

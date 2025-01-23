@@ -24,6 +24,7 @@ import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.PyError
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
@@ -40,7 +41,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
   internal val propertyGraph
     get() = model.propertyGraph
 
-  abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor)
+  abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink)
   open fun onShown() {}
 
   /**

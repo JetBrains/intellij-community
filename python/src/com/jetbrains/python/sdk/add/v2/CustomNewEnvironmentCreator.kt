@@ -21,9 +21,10 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.PyError
 import com.jetbrains.python.util.asPythonResult
-import com.jetbrains.python.util.failure
+import com.jetbrains.python.util.emit
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -32,7 +33,7 @@ import java.nio.file.Path
 abstract class CustomNewEnvironmentCreator(private val name: String, model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
   internal lateinit var basePythonComboBox: PythonInterpreterComboBox
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
         basePythonComboBox = pythonInterpreterComboBox(model.state.baseInterpreter,
@@ -47,7 +48,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                          validationRequestor,
                          message("sdk.create.custom.venv.executable.path", name),
                          message("sdk.create.custom.venv.missing.text", name),
-                         createInstallFix()).component
+                         createInstallFix(errorSink)).component
     }
   }
 
@@ -100,10 +101,10 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
    * 5. Reruns `detectExecutable`
    */
   @RequiresEdt
-  private fun createInstallFix(): ActionLink {
+  private fun createInstallFix(errorSink: ErrorSink): ActionLink {
     return ActionLink(message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       PythonSdkFlavor.clearExecutablesCache()
-      installExecutable()
+      installExecutable(errorSink)
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
         detectExecutable()
       }
@@ -118,13 +119,15 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
    * 2. Install the executable (specified by `name`) using either a custom installation script or via pip.
    */
   @RequiresEdt
-  private fun installExecutable() {
+  private fun installExecutable(errorSink: ErrorSink) {
     val pythonExecutable = model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString()
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       if (installationScript != null) {
-        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name).getOrNull()
-        if (executablePath != null) {
-          savePathToExecutableToProperties(executablePath)
+        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name)
+        executablePath.onSuccess {
+        savePathToExecutableToProperties(it)
+      }.onFailure {
+        errorSink.emit(it.localizedMessage)
         }
       }
     }

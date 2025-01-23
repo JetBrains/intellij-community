@@ -27,6 +27,7 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_E
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.PyError
 import com.jetbrains.python.util.failure
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +57,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
       }
     }
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     val firstFixLink = ActionLink(message("sdk.create.custom.venv.use.different.venv.link", ".venv1")) {
       PythonNewProjectWizardCollector.logSuggestedVenvDirFixUsed()
       val newPath = suggestedLocation.resolve(suggestedVenvName)

@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel, private val errorSink: ErrorSink) : PythonExistingEnvironmentConfigurator(model) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     with(panel) {
       executableSelector(state.condaExecutable,
                          validationRequestor,

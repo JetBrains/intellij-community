@@ -14,6 +14,7 @@ import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -40,7 +41,7 @@ abstract class CustomExistingEnvironmentSelector(private val name: String, model
     }
   }
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     with(panel) {
       executableSelector(
         executable,

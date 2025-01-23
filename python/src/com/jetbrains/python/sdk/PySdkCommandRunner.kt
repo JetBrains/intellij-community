@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -26,17 +27,24 @@ internal object Logger {
  */
 internal suspend fun runCommandLine(commandLine: GeneralCommandLine): Result<String> {
   Logger.LOG.info("Running command: ${commandLine.commandLineString}")
-  val commandOutput = with(CapturingProcessHandler(commandLine)) {
-    withContext(Dispatchers.IO) {
-      runProcess()
-    }
-  }
+  try {
 
-  return processOutput(
-    commandOutput,
-    commandLine.exePath,
-    commandLine.parametersList.list,
-  )
+
+    val commandOutput = with(CapturingProcessHandler(commandLine)) {
+      withContext(Dispatchers.IO) {
+        runProcess()
+      }
+    }
+
+    return processOutput(
+      commandOutput,
+      commandLine.exePath,
+      commandLine.parametersList.list,
+    )
+  }
+  catch (e: ExecutionException) {
+    return Result.failure(PyExecutionException(e.localizedMessage, commandLine.exePath, commandLine.parametersList.array.toList()))
+  }
 }
 
 /**

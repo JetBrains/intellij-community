@@ -27,6 +27,7 @@ import com.jetbrains.python.sdk.poetry.poetryToml
 import com.jetbrains.python.sdk.poetry.pyProjectToml
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
@@ -37,8 +38,8 @@ class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, pr
   override val interpreterType: InterpreterType = InterpreterType.POETRY
   override val executable: ObservableMutableProperty<String> = model.state.poetryExecutable
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
-    super.buildOptions(panel, validationRequestor)
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
+    super.buildOptions(panel, validationRequestor, errorSink)
     addInProjectCheckbox(panel)
   }
 

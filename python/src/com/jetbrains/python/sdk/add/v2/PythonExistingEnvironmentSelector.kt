@@ -11,13 +11,14 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.PyError
 
 class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : PythonExistingEnvironmentConfigurator(model) {
 
   private lateinit var comboBox: PythonInterpreterComboBox
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     with(panel) {
       row(message("sdk.create.custom.python.path")) {
         comboBox = pythonInterpreterComboBox(model.state.selectedInterpreter,
