@@ -319,8 +319,7 @@ internal class MavenProjectImportContextProvider(
     }
 
     val sourceLevel = languageLevels.sourceLevel
-    val testSourceLevel = languageLevels.testSourceLevel
-    val moduleData = ModuleData(moduleName, type, sourceLevel, testSourceLevel)
+    val moduleData = ModuleData(moduleName, type, sourceLevel)
     return MavenProjectImportData(project, moduleData, changes, listOf())
   }
 
@@ -330,21 +329,19 @@ internal class MavenProjectImportContextProvider(
     changes: MavenProjectModifications,
     languageLevels: LanguageLevels,
   ): MavenProjectImportData {
-    val type = StandardMavenModuleType.COMPOUND_MODULE
-
     val sourceLevel = languageLevels.sourceLevel
     val testSourceLevel = languageLevels.testSourceLevel
-    val moduleData = ModuleData(moduleName, type, sourceLevel, testSourceLevel)
+    val moduleData = ModuleData(moduleName, StandardMavenModuleType.COMPOUND_MODULE, sourceLevel)
 
     val moduleMainName = "$moduleName.$MAIN_SUFFIX"
-    val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, sourceLevel, testSourceLevel)
+    val mainData = ModuleData(moduleMainName, StandardMavenModuleType.MAIN_ONLY, sourceLevel)
 
     val moduleTestName = "$moduleName.$TEST_SUFFIX"
-    val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, sourceLevel, testSourceLevel)
+    val testData = ModuleData(moduleTestName, StandardMavenModuleType.TEST_ONLY, testSourceLevel)
 
     val compileSourceRootModules = getNonDefaultCompilerExecutions(project).map {
       val suffix = escapeCompileSourceRootModuleSuffix(it)
-      ModuleData("$moduleName.$suffix", StandardMavenModuleType.MAIN_ONLY_ADDITIONAL, sourceLevel, testSourceLevel)
+      ModuleData("$moduleName.$suffix", StandardMavenModuleType.MAIN_ONLY_ADDITIONAL, sourceLevel)
     }
 
     val otherModules = listOf(mainData) + compileSourceRootModules + testData

@@ -10,12 +10,8 @@ import org.jetbrains.idea.maven.project.MavenProjectModifications
 internal class ModuleData(
   val moduleName: String,
   val type: StandardMavenModuleType,
-  private val sourceLevel: LanguageLevel?,
-  private val testSourceLevel: LanguageLevel?,
+  val sourceLanguageLevel: LanguageLevel?,
 ) {
-  val sourceLanguageLevel: LanguageLevel?
-    get() = if (type == StandardMavenModuleType.TEST_ONLY) testSourceLevel else sourceLevel
-
   val isDefaultMainModule = type == StandardMavenModuleType.MAIN_ONLY
   val isAdditionalMainModule = type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL
   val isMainModule = isDefaultMainModule || isAdditionalMainModule
