@@ -15,11 +15,15 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonHelpersLocator
+import com.jetbrains.python.execution.PyExecutionFailure
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.util.PyError
+import com.jetbrains.python.util.asPythonResult
+import com.jetbrains.python.util.failure
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -51,7 +55,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
     basePythonComboBox.setItems(model.baseInterpreters)
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Sdk, PyError> {
     savePathToExecutableToProperties(null)
 
     // todo think about better error handling
@@ -68,13 +72,13 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                              model.myProjectPathFlows.projectPathWithDefault.first().toString(),
                              homePath,
                              false)
-      .getOrElse { return Result.failure(it) }
+      .getOrElse { return com.jetbrains.python.Result.failure(if (it is PyExecutionFailure) PyError.ExecException(it) else PyError.Message(it.localizedMessage)) }
     newSdk.persist()
 
     module?.excludeInnerVirtualEnv(newSdk)
     model.addInterpreter(newSdk)
 
-    return Result.success(newSdk)
+    return com.jetbrains.python.Result.success(newSdk)
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo =

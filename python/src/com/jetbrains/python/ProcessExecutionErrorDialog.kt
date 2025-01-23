@@ -14,6 +14,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.python.execution.FailureReason
 import com.jetbrains.python.execution.PyExecutionFailure
+import com.jetbrains.python.execution.userMessage
 import java.awt.Dimension
 import java.awt.Font
 import javax.swing.*
@@ -36,7 +37,7 @@ fun showProcessExecutionErrorDialog(
     val command = (listOf(exception.command) + exception.args).joinToString(" ")
     when (val err = exception.failureReason) {
       FailureReason.CantStart -> {
-        appendProcessOutput(command, exception.toString(), "", null)
+        appendProcessOutput(command, "\n", exception.userMessage, null)
 
       }
       is FailureReason.ExecutionFailed -> {

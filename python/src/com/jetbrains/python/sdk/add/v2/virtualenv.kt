@@ -79,7 +79,7 @@ suspend fun createVirtualenv(
     targetEnvironment.createProcess(targetedCommandLine)
   }
   catch (e: ExecutionException) {
-    throw PyExecutionException(PyBundle.message("sdk.venv.error", e.toString()), targetedCommandLine.collectCommandsSynchronously().joinToString(" "), emptyList())
+    throw PyExecutionException(PyBundle.message("sdk.venv.error", e.localizedMessage), targetedCommandLine.collectCommandsSynchronously().joinToString(" "), emptyList())
   }
 
   val handler = CapturingProcessHandler(process, targetedCommandLine.charset, targetedCommandLine.getCommandPresentation(targetEnvironment))

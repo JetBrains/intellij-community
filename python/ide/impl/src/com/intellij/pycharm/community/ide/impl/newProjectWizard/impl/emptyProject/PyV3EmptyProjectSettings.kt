@@ -9,12 +9,14 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcome
+import com.jetbrains.python.Result
+import com.jetbrains.python.util.PyError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class PyV3EmptyProjectSettings(var generateWelcomeScript: Boolean = false) : PyV3ProjectTypeSpecificSettings {
 
-  override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): Result<Unit> {
+  override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): Result<Unit, PyError> {
     if (!generateWelcomeScript) return Result.success(Unit)
     val file = writeAction {
       PyWelcome.prepareFile(module.project, baseDir)

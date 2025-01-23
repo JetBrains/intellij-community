@@ -9,12 +9,17 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.Result
+import com.jetbrains.python.Result.Failure
+import com.jetbrains.python.Result.Success
 import com.jetbrains.python.execution.PyExecutionFailure
+import com.jetbrains.python.execution.userMessage
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.showProcessExecutionErrorDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 
 /**
  * [FlowCollector.emit] user-readable errors here.
@@ -63,7 +68,9 @@ sealed class PyError(val message: @NlsSafe String) {
   /**
    * Some process can't be executed. To be displayed specially.
    */
-  data class ExecException(val execFailure: PyExecutionFailure) : PyError(execFailure.toString())
+  data class ExecException(val execFailure: PyExecutionFailure) : PyError(execFailure.userMessage)
+
+  override fun toString(): String = message
 }
 
 /**
@@ -94,4 +101,32 @@ suspend fun ErrorSink.emit(@NlsSafe message: String) {
 
 suspend fun ErrorSink.emit(e: PyExecutionException) {
   emit(PyError.ExecException(e))
+}
+
+fun failure(message: @Nls String): Failure<PyError.Message> = Result.failure(PyError.Message(message))
+fun failure(failure: PyExecutionFailure): Failure<PyError.ExecException> = Result.failure(PyError.ExecException(failure))
+
+@Deprecated("Migrate to native python result")
+fun <T> kotlin.Result<T>.asPythonResult(): Result<T, PyError> =
+  Result.success(getOrElse {
+    return if (it is PyExecutionException) {
+      failure(it)
+    }
+    else {
+      failure(it.localizedMessage)
+    }
+  }
+  )
+
+@Deprecated("Use python result, not kotlin result")
+fun <S, E> Result<S, E>.asKotlinResult(): kotlin.Result<S> = when (this) {
+  is Failure -> kotlin.Result.failure(
+    when (val r = error) {
+      is Throwable -> r
+      is PyError.Message -> Exception(r.message)
+      is PyError.ExecException -> Exception(r.execFailure.userMessage)
+      else -> Exception(r.toString())
+    }
+  )
+  is Success -> kotlin.Result.success(result)
 }

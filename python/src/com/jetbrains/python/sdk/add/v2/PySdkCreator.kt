@@ -2,12 +2,14 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.Result
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.util.PyError
 
 interface PySdkCreator {
   /**
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
-  suspend fun getSdk(moduleOrProject: ModuleOrProject): Result<Pair<Sdk, InterpreterStatisticsInfo>>
+  suspend fun getSdk(moduleOrProject: ModuleOrProject): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError>
 }

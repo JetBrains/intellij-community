@@ -20,11 +20,11 @@ import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCol
 import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
 import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.statistics.version
 import com.jetbrains.python.util.PyError
-import com.jetbrains.python.util.emit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -66,10 +66,10 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module) {
     val coroutineScope = project.service<MyService>().coroutineScope
     coroutineScope.launch {
-      val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir).getOrElse {
+      val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir).getOr {
         withContext(Dispatchers.EDT) {
           // TODO: Migrate to python Result using PyError as exception not to make this dynamic check
-          uiServices.errorSink.emit(if (it is PyExecutionException) PyError.ExecException(it) else PyError.Message(it.localizedMessage))
+          uiServices.errorSink.emit(it.error)
         }
         return@launch // Since we failed to generate project, we do not need to go any further
       }
@@ -91,8 +91,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
       uiServices.expandProjectTreeView(project)
       typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
-        // TODO: Migrate to python Result using PyError as exception not to make this dynamic check
-        uiServices.errorSink.emit(if (it is PyExecutionException) PyError.ExecException(it) else PyError.Message(it.localizedMessage))
+        uiServices.errorSink.emit(it)
       }
       uiServices.expandProjectTreeView(project)
     }

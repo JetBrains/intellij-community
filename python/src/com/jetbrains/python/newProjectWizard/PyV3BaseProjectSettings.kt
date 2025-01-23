@@ -7,11 +7,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.Result
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.util.PyError
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -23,7 +25,7 @@ import kotlinx.coroutines.launch
 class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
   lateinit var sdkCreator: PySdkCreator
 
-  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile): Result<Pair<Sdk, InterpreterStatisticsInfo>> = coroutineScope {
+  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
       launch(CoroutineName("Generating git") + Dispatchers.IO) {
@@ -32,13 +34,13 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
         }
       }
     }
-    val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOrElse { return@coroutineScope Result.failure(it) }
+    val (sdk: Sdk, interpreterStatistics: InterpreterStatisticsInfo) = getSdkAndInterpreter(module).getOr { return@coroutineScope it }
     sdk.setAssociationToModule(module)
     module.pythonSdk = sdk
-    return@coroutineScope Result.success(Pair(sdk, interpreterStatistics))
+    return@coroutineScope com.jetbrains.python.Result.success(Pair(sdk, interpreterStatistics))
   }
 
-  private suspend fun getSdkAndInterpreter(module: Module): Result<Pair<Sdk, InterpreterStatisticsInfo>> =
+  private suspend fun getSdkAndInterpreter(module: Module): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> =
     sdkCreator.getSdk(ModuleOrProject.ModuleAndProject(module))
 
 

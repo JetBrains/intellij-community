@@ -20,13 +20,15 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
-import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.util.PyError
+import com.jetbrains.python.util.failure
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -197,14 +199,14 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
     return currentName.removeSuffix(digitSuffix) + newSuffix
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> =
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Sdk, PyError> =
     // todo remove project path, or move to controller
     try {
       val venvPath = Path.of(model.state.venvPath.get())
       model.setupVirtualenv(venvPath, model.myProjectPathFlows.projectPathWithDefault.first())
     }
     catch (e: InvalidPathException) {
-      Result.failure(e)
+      failure(e.localizedMessage)
     }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

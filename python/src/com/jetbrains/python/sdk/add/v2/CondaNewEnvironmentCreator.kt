@@ -10,6 +10,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.Result
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -19,6 +20,8 @@ import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.ui.flow.bindText
 import com.jetbrains.python.util.ErrorSink
+import com.jetbrains.python.util.PyError
+import com.jetbrains.python.util.asPythonResult
 
 // TODO: DOC
 class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, private val errorSink: ErrorSink) : PythonNewEnvironmentCreator(model) {
@@ -52,8 +55,8 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, 
 
   override fun onShown() = Unit
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
-    return model.createCondaEnvironment(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), model.state.newCondaEnvName.get()))
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> {
+    return model.createCondaEnvironment(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), model.state.newCondaEnvName.get())).asPythonResult()
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

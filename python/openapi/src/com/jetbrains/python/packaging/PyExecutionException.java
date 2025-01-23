@@ -9,6 +9,7 @@ import com.jetbrains.python.PyCommunityBundle;
 import com.jetbrains.python.execution.FailureReason;
 import com.jetbrains.python.execution.FailureReasonKt;
 import com.jetbrains.python.execution.PyExecutionFailure;
+import com.jetbrains.python.execution.PyExecutionFailureKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +51,7 @@ public final class PyExecutionException extends ExecutionException implements Py
                               @NotNull String command,
                               @NotNull List<String> args,
                               @NotNull List<? extends PyExecutionFix> fixes) {
-    super(PyCommunityBundle.INSTANCE.message("python.execution.cant.start.error",
-                                             additionalMessage != null ? additionalMessage : "",
-                                             command + " " + StringUtil.join(args, " ")));
+    super(PyExecutionFailureKt.getUserMessage(command, args, additionalMessage, FailureReason.CantStart.INSTANCE));
     myAdditionalMessage = additionalMessage;
     myCommand = command;
     myArgs = args;
@@ -84,13 +83,7 @@ public final class PyExecutionException extends ExecutionException implements Py
                               @NotNull List<String> args,
                               @NotNull ProcessOutput output,
                               @NotNull List<? extends PyExecutionFix> fixes) {
-    super(PyCommunityBundle.INSTANCE.message("python.execution.error",
-                                             additionalMessage != null ? additionalMessage : "",
-                                             command + " " + StringUtil.join(args, " "),
-                                             output.getStdout(),
-                                             output.getStderr(),
-                                             output.getExitCode()
-    ));
+    super(PyExecutionFailureKt.getUserMessage(command, args, additionalMessage, new FailureReason.ExecutionFailed(output)));
     myAdditionalMessage = additionalMessage;
     myCommand = command;
     myArgs = args;

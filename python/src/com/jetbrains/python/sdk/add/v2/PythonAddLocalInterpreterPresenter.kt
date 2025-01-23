@@ -3,14 +3,12 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.util.ErrorSink
-import com.jetbrains.python.util.PyError
-import com.jetbrains.python.util.emit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -29,7 +27,8 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
    */
   val pathForVEnv: Path
     get() = when (moduleOrProject) {
-              is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath() ?: moduleOrProject.project.basePath?.toNioPathOrNull()
+              is ModuleOrProject.ModuleAndProject -> moduleOrProject.module.rootManager.contentRoots.firstOrNull()?.toNioPath()
+                                                     ?: moduleOrProject.project.basePath?.toNioPathOrNull()
               is ModuleOrProject.ProjectOnly -> moduleOrProject.project.basePath?.toNioPathOrNull()
             } ?: envReader.getVEnvRootDir()
 
@@ -37,12 +36,15 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
   val sdkCreatedFlow: Flow<Sdk> = _sdkShared.asSharedFlow()
 
   suspend fun okClicked(addEnvironment: PythonAddEnvironment) {
-    val sdk = addEnvironment.getOrCreateSdk(moduleOrProject).getOrElse {
-      // TODO: Migrate to python Result with PyError as error, not to check type dynamically
-      errorSink.emit(if (it is PyExecutionException) PyError.ExecException(it) else PyError.Message(it.localizedMessage))
-      return
+    when (val r = addEnvironment.getOrCreateSdk(moduleOrProject)) {
+      is Result.Failure -> {
+        errorSink.emit(r.error)
+        return
+      }
+      is Result.Success -> {
+        moduleOrProject.project.pySdkService.persistSdk(r.result)
+        _sdkShared.emit(r.result)
+      }
     }
-    moduleOrProject.project.pySdkService.persistSdk(sdk)
-    _sdkShared.emit(sdk)
   }
 }

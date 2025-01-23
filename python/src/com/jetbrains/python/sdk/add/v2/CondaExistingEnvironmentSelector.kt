@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.layout.predicate
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.Result
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -22,6 +23,8 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ErrorSink
+import com.jetbrains.python.util.PyError
+import com.jetbrains.python.util.asPythonResult
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -105,8 +108,8 @@ class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel, private
     //}
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> =
-    model.selectCondaEnvironment(base = false)
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> =
+    model.selectCondaEnvironment(base = false).asPythonResult()
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
     //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()

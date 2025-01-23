@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.Result
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
@@ -23,6 +24,7 @@ import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.util.PyError
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 
@@ -46,7 +48,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
    *
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
-  abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk>
+  abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError>
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 

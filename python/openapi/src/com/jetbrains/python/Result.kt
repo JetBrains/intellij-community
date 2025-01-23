@@ -4,6 +4,7 @@ package com.jetbrains.python
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.python.Result.Failure
 import com.jetbrains.python.Result.Success
+import java.lang.Exception
 
 /**
  * Operation result to be used as `Maybe` instead of checked exceptions.
@@ -133,7 +134,7 @@ fun <T> Result<T, *>.orLogException(logger: Logger): T? =
     is Success -> r.result
   }
 
-fun <S, E> Result<S, E>.onSuccess(code: (S) -> Unit): Result<S, E> {
+inline fun <S, E> Result<S, E>.onSuccess(code: (S) -> Unit): Result<S, E> {
   when (this) {
     is Failure -> Unit
     is Success -> {
@@ -143,7 +144,7 @@ fun <S, E> Result<S, E>.onSuccess(code: (S) -> Unit): Result<S, E> {
   return this
 }
 
-fun <S, E> Result<S, E>.onFailure(code: (E) -> Unit): Result<S, E> {
+inline fun <S, E> Result<S, E>.onFailure(code: (E) -> Unit): Result<S, E> {
   when (this) {
     is Success -> Unit
     is Failure -> {
@@ -159,3 +160,4 @@ val <S, E> Result<S, E>.isFailure: Boolean get() = this is Failure
 val <S, E> Result<S, E>.isSuccess: Boolean get() = this is Success
 fun <S, E> Result<S, E>.exceptionOrNull(): S = this.orThrow()
 fun <S, E> Result<S, E>.getOrThrow(): S = orThrow()
+
