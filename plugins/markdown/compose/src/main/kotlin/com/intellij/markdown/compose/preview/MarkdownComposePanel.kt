@@ -5,12 +5,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -22,6 +17,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.compose.JBComposePanel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -53,7 +49,7 @@ internal class MarkdownComposePanel(
 
   constructor() : this(null, null)
 
-  private val scrollToLineFlow = MutableSharedFlow<Int>()
+  private val scrollToLineFlow = MutableSharedFlow<Int>(replay = 1)
 
   private val panelComponent by lazy {
     JBComposePanel {
@@ -96,6 +92,7 @@ internal class MarkdownComposePanel(
     }
   }
 
+  @OptIn(FlowPreview::class)
   @Suppress("FunctionName")
   @Composable
   private fun MarkdownPreviewPanel(scrollState: ScrollState, scrollingSynchronizer: ScrollingSynchronizer?, blockRenderer: ScrollSyncMarkdownBlockRenderer) {
