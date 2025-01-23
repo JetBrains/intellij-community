@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.jediterm.terminal.TerminalOutputStream
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInput
@@ -81,8 +83,18 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRe
   }
 
   private fun paseIntoInput(input: TerminalInput) {
-    val text = getClipboardText() ?: return
+    var text = getClipboardText() ?: return
+    // The following logic was borrowed from JediTerm.
+    // Sanitize clipboard text to use CR as the line separator.
+    // See https://github.com/JetBrains/jediterm/issues/136.
     if (text.isNotEmpty()) {
+      // On Windows, Java automatically does this CRLF->LF sanitization, but
+      // other terminals on Unix typically also do this sanitization.
+      if (!SystemInfoRt.isWindows) {
+        text = text.replace("\r\n", "\n")
+      }
+      // Now convert this into what the terminal typically expects.
+      text = text.replace("\n", "\r")
       input.sendString(text)
     }
   }
