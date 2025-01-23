@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -248,7 +247,7 @@ public final class JBCefApp {
    * <li>It should be available in the running JBR.</li>
    * <li>It should have a compatible version.</li>
    * </ul>
-   * In order to assuredly meet the above requirements, the IDE should run with a bundled JBR.
+   * To assuredly meet the above requirements, the IDE should run with a bundled JBR.
    */
   public static boolean isSupported() {
     boolean testModeEnabled = RegistryManager.getInstance().is("ide.browser.jcef.testMode.enabled");
@@ -488,7 +487,7 @@ public final class JBCefApp {
     @Override
     public boolean onBeforeTerminate() {
       // Do not let JCEF auto-terminate by Cmd+Q (or an alternative),
-      // so that IDE (user) has an option to decide
+      // so that IDE (user) can decide
       return true;
     }
 
@@ -589,12 +588,12 @@ public final class JBCefApp {
 
     Version version = Version.parseVersion(libcVersionString);
     if (version == null) {
-      LOG.error("Failed to parse the glibc version: " + libcVersionString);
+      LOG.warn("Failed to parse the glibc version: " + libcVersionString);
       return false;
     }
 
     if (version.compareTo(MIN_SUPPORTED_GLIBC_VERSION) < 0) {
-      LOG.warn("Incompatible glibc version: " + libcVersionString);
+      LOG.warn("Incompatible glibc version: " + libcVersionString + "; JCEF is disabled");
       return false;
     }
 
