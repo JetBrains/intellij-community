@@ -490,7 +490,7 @@ f:org.jetbrains.jewel.ui.component.PlatformIconKt
 - sf:PlatformIcon-uDo3WH8(org.jetbrains.jewel.ui.icon.IntelliJIconKey,java.lang.String,androidx.compose.ui.Modifier,J,org.jetbrains.jewel.ui.painter.PainterHint,androidx.compose.runtime.Composer,I,I):V
 - sf:PlatformIcon-uDo3WH8(org.jetbrains.jewel.ui.icon.IntelliJIconKey,java.lang.String,androidx.compose.ui.Modifier,J,org.jetbrains.jewel.ui.painter.PainterHint[],androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.PopupContainerKt
-- sf:PopupContainer(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:PopupContainer(kotlin.jvm.functions.Function0,androidx.compose.ui.Alignment$Horizontal,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.PopupContainerStyle,androidx.compose.ui.window.PopupProperties,androidx.compose.ui.window.PopupPositionProvider,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.ui.component.PopupManager
 - sf:$stable:I
 - <init>():V
