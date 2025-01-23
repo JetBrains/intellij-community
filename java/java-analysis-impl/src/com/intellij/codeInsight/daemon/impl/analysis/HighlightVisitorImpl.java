@@ -1313,12 +1313,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitSuperExpression(@NotNull PsiSuperExpression expr) {
-    add(HighlightUtil.checkThisOrSuperExpressionInIllegalContext(expr, expr.getQualifier(), myLanguageLevel));
-    if (!hasErrorResults()) visitExpression(expr);
-  }
-
-  @Override
   public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
     checkSwitchBlock(statement);
@@ -1344,10 +1338,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitThisExpression(@NotNull PsiThisExpression expr) {
     if (!(expr.getParent() instanceof PsiReceiverParameter)) {
-      add(HighlightUtil.checkThisOrSuperExpressionInIllegalContext(expr, expr.getQualifier(), myLanguageLevel));
-      if (!hasErrorResults()) {
-        add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, mySurroundingConstructor));
-      }
+      add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, mySurroundingConstructor));
       if (!hasErrorResults()) visitExpression(expr);
     }
   }
@@ -1618,20 +1609,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
-  }
-
-  @Override
-  public void visitTypeTestPattern(@NotNull PsiTypeTestPattern pattern) {
-    super.visitTypeTestPattern(pattern);
-    if (pattern.getParent() instanceof PsiCaseLabelElementList) {
-      add(checkFeature(pattern, JavaFeature.PATTERNS_IN_SWITCH));
-    }
-  }
-
-  @Override
-  public void visitUnnamedPattern(@NotNull PsiUnnamedPattern pattern) {
-    super.visitUnnamedPattern(pattern);
-    add(checkFeature(pattern, JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES));
   }
 
   private @Nullable HighlightInfo.Builder checkFeature(@NotNull PsiElement element, @NotNull JavaFeature feature) {

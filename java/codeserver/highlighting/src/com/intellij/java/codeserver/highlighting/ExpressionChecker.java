@@ -527,6 +527,93 @@ final class ExpressionChecker {
     }
   }
 
+  private @Nullable PsiClass checkQualifier(@NotNull PsiQualifiedExpression expr) {
+    PsiJavaCodeReferenceElement qualifier = expr.getQualifier();
+    if (qualifier != null) {
+      PsiElement resolved = qualifier.advancedResolve(true).getElement();
+      if (resolved instanceof PsiClass cls) {
+        return cls;
+      }
+      if (resolved != null) {
+        myVisitor.report(JavaErrorKinds.EXPRESSION_QUALIFIED_CLASS_EXPECTED.create(qualifier));
+      }
+      return null;
+    }
+    return PsiUtil.getContainingClass(expr);
+  }
+
+  void checkThisExpressionInIllegalContext(@NotNull PsiThisExpression expr) {
+    PsiClass aClass = checkQualifier(expr);
+    if (aClass == null) return;
+
+    if (!InheritanceUtil.hasEnclosingInstanceInScope(aClass, expr, false, false)) {
+      checkIllegalEnclosingUsage(expr, null, aClass, expr);
+    }
+  }
+
+  void checkSuperExpressionInIllegalContext(@NotNull PsiSuperExpression expr) {
+    PsiJavaCodeReferenceElement qualifier = expr.getQualifier();
+    PsiElement parent = expr.getParent();
+    if (!(parent instanceof PsiReferenceExpression ref)) {
+      // like in 'Object o = super;'
+      myVisitor.report(JavaErrorKinds.EXPRESSION_SUPER_DOT_EXPECTED.create(expr));
+      return;
+    }
+
+    PsiClass aClass = checkQualifier(expr);
+    if (aClass == null) return;
+
+    boolean extensionQualifier = qualifier != null && myVisitor.isApplicable(JavaFeature.EXTENSION_METHODS);
+
+    if (!InheritanceUtil.hasEnclosingInstanceInScope(aClass, expr, false, false)) {
+      boolean resolvesToImmediateSuperInterface =
+        extensionQualifier && aClass.equals(PsiUtil.resolveClassInClassTypeOnly(expr.getType())) &&
+        PsiUtil.getEnclosingStaticElement(expr, PsiUtil.getContainingClass(expr)) == null;
+      if (!resolvesToImmediateSuperInterface) {
+        checkIllegalEnclosingUsage(expr, null, aClass, expr);
+        if (myVisitor.hasErrorResults()) return;
+      }
+      PsiElement resolved = ref.resolve();
+      //15.11.2
+      //The form T.super.Identifier refers to the field named Identifier of the lexically enclosing instance corresponding to T,
+      //but with that instance viewed as an instance of the superclass of T.
+      if (resolved instanceof PsiField) {
+        myVisitor.report(JavaErrorKinds.EXPRESSION_SUPER_NOT_ENCLOSING_CLASS.create(expr, aClass));
+      }
+    }
+    if (extensionQualifier && aClass.isInterface()) {
+      //15.12.1 for method invocation expressions; 15.13 for method references
+      //If TypeName denotes an interface, I, then let T be the type declaration immediately enclosing the method reference expression.
+      //It is a compile-time error if I is not a direct superinterface of T,
+      //or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
+      PsiClass classT = PsiUtil.getContainingClass(expr);
+      if (classT != null) {
+        PsiElement resolved = ref.resolve();
+
+        PsiClass containingClass =
+          ObjectUtils.notNull(resolved instanceof PsiMethod psiMethod ? psiMethod.getContainingClass() : null, aClass);
+        for (PsiClass superClass : classT.getSupers()) {
+          if (superClass.isInheritor(containingClass, true)) {
+            if (superClass.isInheritor(aClass, true)) {
+              myVisitor.report(JavaErrorKinds.EXPRESSION_SUPER_BAD_QUALIFIER_REDUNDANT_EXTENDED.create(
+                qualifier, new JavaErrorKinds.SuperclassSubclassContext(superClass, containingClass)));
+              return;
+            }
+            if (resolved instanceof PsiMethod psiMethod &&
+                MethodSignatureUtil.findMethodBySuperMethod(superClass, psiMethod, true) != resolved) {
+              myVisitor.report(JavaErrorKinds.EXPRESSION_SUPER_BAD_QUALIFIER_METHOD_OVERRIDDEN.create(expr, superClass));
+              return;
+            }
+          }
+        }
+
+        if (!classT.isInheritor(aClass, false)) {
+          myVisitor.report(JavaErrorKinds.EXPRESSION_SUPER_NO_ENCLOSING_INSTANCE.create(qualifier, aClass));
+        }
+      }
+    }
+  }
+
   private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
     // Parent resolve failed as well, and it's likely more informative.
     // Suppress this error to allow reporting from parent

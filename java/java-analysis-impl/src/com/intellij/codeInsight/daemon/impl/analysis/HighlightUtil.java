@@ -1148,101 +1148,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkThisOrSuperExpressionInIllegalContext(@NotNull PsiQualifiedExpression expr,
-                                                                  @Nullable PsiJavaCodeReferenceElement qualifier,
-                                                                  @NotNull LanguageLevel languageLevel) {
-    if (expr instanceof PsiSuperExpression) {
-      PsiElement parent = expr.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
-        // like in 'Object o = super;'
-        int o = expr.getTextRange().getEndOffset();
-        String description = JavaErrorBundle.message("dot.expected.after.super.or.this");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(o, o + 1).descriptionAndTooltip(description);
-      }
-    }
-
-    PsiClass aClass;
-    if (qualifier != null) {
-      PsiElement resolved = qualifier.advancedResolve(true).getElement();
-      if (resolved != null && !(resolved instanceof PsiClass)) {
-        String description = JavaErrorBundle.message("class.expected");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description);
-      }
-      aClass = (PsiClass)resolved;
-    }
-    else {
-      aClass = getContainingClass(expr);
-    }
-    if (aClass == null) return null;
-
-    if (!InheritanceUtil.hasEnclosingInstanceInScope(aClass, expr, false, false)) {
-      if (!resolvesToImmediateSuperInterface(expr, qualifier, aClass, languageLevel)) {
-        return HighlightClassUtil.checkIllegalEnclosingUsage(expr, null, aClass, expr);
-      }
-      if (expr instanceof PsiSuperExpression) {
-        PsiElement resolved = ((PsiReferenceExpression)expr.getParent()).resolve();
-        //15.11.2
-        //The form T.super.Identifier refers to the field named Identifier of the lexically enclosing instance corresponding to T,
-        //but with that instance viewed as an instance of the superclass of T.
-        if (resolved instanceof PsiField) {
-          String description = JavaErrorBundle.message("is.not.an.enclosing.class", formatClass(aClass));
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description);
-        }
-      }
-    }
-
-    if (qualifier != null && aClass.isInterface() && expr instanceof PsiSuperExpression &&
-        JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel)) {
-      //15.12.1 for method invocation expressions; 15.13 for method references
-      //If TypeName denotes an interface, I, then let T be the type declaration immediately enclosing the method reference expression.
-      //It is a compile-time error if I is not a direct superinterface of T,
-      //or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
-      PsiClass classT = getContainingClass(expr);
-      if (classT != null) {
-        PsiElement parent = expr.getParent();
-        PsiElement resolved = parent instanceof PsiReferenceExpression expression ? expression.resolve() : null;
-
-        PsiClass containingClass =
-          ObjectUtils.notNull(resolved instanceof PsiMethod psiMethod ? psiMethod.getContainingClass() : null, aClass);
-        for (PsiClass superClass : classT.getSupers()) {
-          if (superClass.isInheritor(containingClass, true)) {
-            if (superClass.isInheritor(aClass, true)) {
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(qualifier)
-                .descriptionAndTooltip(
-                  JavaErrorBundle.message("bad.qualifier.in.super.method.reference.extended", format(containingClass), formatClass(superClass)))
-                ;
-            }
-            else if (resolved instanceof PsiMethod psiMethod &&
-                     MethodSignatureUtil.findMethodBySuperMethod(superClass, psiMethod, true) != resolved) {
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(qualifier)
-                .descriptionAndTooltip(
-                  JavaErrorBundle.message("bad.qualifier.in.super.method.reference.overridden", psiMethod.getName(), formatClass(superClass)))
-                ;
-            }
-
-          }
-        }
-
-        if (!classT.isInheritor(aClass, false)) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .range(qualifier)
-            .descriptionAndTooltip(JavaErrorBundle.message("no.enclosing.instance.in.scope", format(aClass)));
-        }
-      }
-    }
-    return null;
-  }
-
-  private static @Nullable PsiClass getContainingClass(@NotNull PsiExpression expr) {
-    PsiClass aClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
-    while (aClass instanceof PsiAnonymousClass anonymousClass && PsiTreeUtil.isAncestor(anonymousClass.getArgumentList(), expr, true)) {
-      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-    }
-    return aClass;
-  }
-
   static HighlightInfo.Builder checkUnqualifiedSuperInDefaultMethod(@NotNull LanguageLevel languageLevel,
                                                             @NotNull PsiReferenceExpression expr,
                                                             @Nullable PsiExpression qualifier) {
@@ -1257,17 +1162,6 @@ public final class HighlightUtil {
       }
     }
     return null;
-  }
-
-  private static boolean resolvesToImmediateSuperInterface(@NotNull PsiExpression expr,
-                                                           @Nullable PsiJavaCodeReferenceElement qualifier,
-                                                           @NotNull PsiClass aClass,
-                                                           @NotNull LanguageLevel languageLevel) {
-    if (!(expr instanceof PsiSuperExpression) || qualifier == null || !JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel)) return false;
-    PsiType superType = expr.getType();
-    if (!(superType instanceof PsiClassType classType)) return false;
-    PsiClass superClass = classType.resolve();
-    return aClass.equals(superClass) && PsiUtil.getEnclosingStaticElement(expr, PsiTreeUtil.getParentOfType(expr, PsiClass.class)) == null;
   }
 
   static @NotNull @NlsContexts.DetailedDescription String staticContextProblemDescription(@NotNull PsiElement refElement) {

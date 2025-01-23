@@ -91,7 +91,7 @@ final class StatementChecker {
         if (sub || sup) {
           PsiTypeElement element = typeElements.get(sub ? i : j);
           myVisitor.report(JavaErrorKinds.EXCEPTION_MUST_BE_DISJOINT.create(
-            element, new JavaErrorKinds.InvalidDisjointTypeContext(sub ? class2 : class1, sub ? class1 : class2)));
+            element, new JavaErrorKinds.SuperclassSubclassContext(sub ? class2 : class1, sub ? class1 : class2)));
           break;
         }
       }

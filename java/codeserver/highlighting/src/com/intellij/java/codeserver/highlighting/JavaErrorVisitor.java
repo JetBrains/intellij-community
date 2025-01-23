@@ -666,6 +666,34 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitTypeTestPattern(@NotNull PsiTypeTestPattern pattern) {
+    super.visitTypeTestPattern(pattern);
+    if (pattern.getParent() instanceof PsiCaseLabelElementList) {
+      checkFeature(pattern, JavaFeature.PATTERNS_IN_SWITCH);
+    }
+  }
+
+  @Override
+  public void visitUnnamedPattern(@NotNull PsiUnnamedPattern pattern) {
+    super.visitUnnamedPattern(pattern);
+    checkFeature(pattern, JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);
+  }
+
+  @Override
+  public void visitSuperExpression(@NotNull PsiSuperExpression expr) {
+    myExpressionChecker.checkSuperExpressionInIllegalContext(expr);
+    if (!hasErrorResults()) visitExpression(expr);
+  }
+
+  @Override
+  public void visitThisExpression(@NotNull PsiThisExpression expr) {
+    if (!(expr.getParent() instanceof PsiReceiverParameter)) {
+      myExpressionChecker.checkThisExpressionInIllegalContext(expr);
+      if (!hasErrorResults()) visitExpression(expr);
+    }
+  }
+
+  @Override
   public void visitMethod(@NotNull PsiMethod method) {
     super.visitMethod(method);
     PsiClass aClass = method.getContainingClass();

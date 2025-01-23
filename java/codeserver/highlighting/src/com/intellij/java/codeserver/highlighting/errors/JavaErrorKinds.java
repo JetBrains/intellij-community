@@ -577,8 +577,8 @@ public final class JavaErrorKinds {
       .withRange(JavaErrorFormatUtil::getRange)
       .<Collection<PsiClassType>>parameterized()
       .withRawDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
-  public static final Parameterized<PsiTypeElement, InvalidDisjointTypeContext> EXCEPTION_MUST_BE_DISJOINT =
-    parameterized(PsiTypeElement.class, InvalidDisjointTypeContext.class, "exception.must.be.disjoint")
+  public static final Parameterized<PsiTypeElement, SuperclassSubclassContext> EXCEPTION_MUST_BE_DISJOINT =
+    parameterized(PsiTypeElement.class, SuperclassSubclassContext.class, "exception.must.be.disjoint")
       .withRawDescription((te, ctx) -> message(
         "exception.must.be.disjoint",
         PsiFormatUtil.formatClass(ctx.subClass(), PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME),
@@ -625,6 +625,27 @@ public final class JavaErrorKinds {
     parameterized("pattern.type.pattern.expected");
 
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
+  public static final Simple<PsiSuperExpression> EXPRESSION_SUPER_DOT_EXPECTED = 
+    error(PsiSuperExpression.class, "expression.super.dot.expected")
+      .withRange(expr -> TextRange.from(expr.getTextLength(), 1));
+  public static final Parameterized<PsiSuperExpression, PsiClass> EXPRESSION_SUPER_NOT_ENCLOSING_CLASS = 
+    parameterized(PsiSuperExpression.class, PsiClass.class, "expression.super.not.enclosing.class")
+      .withRawDescription((expr, cls) -> message("expression.super.not.enclosing.class", formatClass(cls)));
+  public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> EXPRESSION_SUPER_BAD_QUALIFIER_REDUNDANT_EXTENDED =
+    parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "expression.super.bad.qualifier.redundant.extended")
+      .withRawDescription((expr, ctx) -> message("expression.super.bad.qualifier.redundant.extended",
+                                                 formatClass(ctx.subClass()), formatClass(ctx.superClass())));
+  public static final Parameterized<PsiSuperExpression, PsiClass> EXPRESSION_SUPER_BAD_QUALIFIER_METHOD_OVERRIDDEN =
+    parameterized(PsiSuperExpression.class, PsiClass.class, "expression.super.bad.qualifier.method.overridden")
+      .withAnchor((expr, superClass) -> expr.getQualifier())
+      .withRawDescription((expr, superClass) -> message("expression.super.bad.qualifier.method.overridden",
+                                                 ((PsiReferenceExpression)expr.getParent()).getReferenceName(), 
+                                                 formatClass(superClass)));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> EXPRESSION_SUPER_NO_ENCLOSING_INSTANCE =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "expression.super.no.enclosing.instance")
+      .withRawDescription((expr, cls) -> message("expression.super.no.enclosing.instance", formatClass(cls)));
+  public static final Simple<PsiJavaCodeReferenceElement> EXPRESSION_QUALIFIED_CLASS_EXPECTED = 
+    error(PsiJavaCodeReferenceElement.class, "expression.qualified.class.expected");
 
   public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE =
     error("new.expression.diamond.not.applicable");
@@ -887,7 +908,7 @@ public final class JavaErrorKinds {
                                                      @Nullable PsiJavaCodeReferenceElement exceptionReference) {
   }
 
-  public record InvalidDisjointTypeContext(@NotNull PsiClass superClass, @NotNull PsiClass subClass) {
+  public record SuperclassSubclassContext(@NotNull PsiClass superClass, @NotNull PsiClass subClass) {
   }
 
   public record IncompatibleIntersectionContext(@NotNull PsiTypeParameter parameter, @NotNull @Nls String message) {}
