@@ -142,6 +142,9 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   @Volatile
   private var myWriteAcquired: Thread? = null
 
+  @Volatile
+  private var myWriteIntentAcquired: Thread? = null
+
   override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): CoroutineContext {
     if (!isLockStoredInContext) {
       return EmptyCoroutineContext
@@ -247,7 +250,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
 
     when (ts.permit) {
-      null -> ts.acquire(getWriteIntentPermit())
+      null -> {
+        ts.acquire(getWriteIntentPermit())
+        myWriteIntentAcquired = Thread.currentThread()
+      }
       is ReadPermit -> error("WriteIntentReadAction can not be called from ReadAction")
       is WriteIntentPermit -> {
         // Volatile read
@@ -271,6 +277,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
       if (release) {
         ts.release()
+        myWriteIntentAcquired = null
       }
       if (releaseSecondary) {
         mySecondaryPermits.get().removeLast().release()
@@ -282,10 +289,30 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   override fun isWriteIntentLocked(): Boolean {
     val ts = myState.get()
-    return ts.hasWrite || ts.hasWriteIntent
+    val shared = ts.sharedLock
+    if (shared == null) {
+      return ts.hasWrite || ts.hasWriteIntent
+    }
+    else {
+      return myWriteIntentAcquired == Thread.currentThread()
+    }
   }
 
-  override fun isReadAccessAllowed(): Boolean = getThreadState().hasPermit
+  override fun isReadAccessAllowed(): Boolean {
+    val threadState = getThreadState()
+    val shared = threadState.sharedLock
+    if (shared == null) {
+      // Having any permit (r/w/wi) without the presence of the second lock means that this thread has _some_ permission,
+      // and even the weakest possible permission allows read access
+      return threadState.hasPermit
+    }
+    else {
+      // When there is the second lock installed, it is not enough to look at the primary lock:
+      // the current thread now has inherited write intent permit, which should not give read access.
+      // Otherwise, it would be impossible to upgrade WI to W
+      return !mySecondaryPermits.get().isNullOrEmpty()
+    }
+  }
 
   override fun executeOnPooledThread(action: Runnable, expired: BooleanSupplier): Future<*> {
     val actionDecorated = decorateRunnable(action)
