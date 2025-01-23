@@ -123,6 +123,9 @@
       <action id="Git.Rebase" class="git4idea.actions.GitRebase"/>
       <reference ref="Git.MainMenu.RebaseActions"/>
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction"/>
+      <action id="Git.RevertResolved" class="git4idea.actions.GitRevertResolvedAction" icon="AllIcons.Actions.Rollback">
+        <add-to-group group-id="ChangesViewPopupMenu" anchor="first"/>
+      </action>
       <separator/>
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" icon="AllIcons.Vcs.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default"/>
@@ -259,6 +262,7 @@
       <reference ref="ChangesView.RevertFiles"/>
       <separator/>
       <reference ref="Git.ResolveConflicts"/>
+      <reference ref="Git.RevertResolved"/>
       <separator/>
       <reference ref="GitRepositoryActions"/>
       <add-to-group group-id="VcsGroup" anchor="last"/>
@@ -498,6 +502,7 @@
 
     <group id="GitMergeRebaseWidgetGroup">
       <reference ref="Git.ResolveConflicts"/>
+      <reference ref="Git.RevertResolved"/>
       <reference ref="Git.Rebase.Continue"/>
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
