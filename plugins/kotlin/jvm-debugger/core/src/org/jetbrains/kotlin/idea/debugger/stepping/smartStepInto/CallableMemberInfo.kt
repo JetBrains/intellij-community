@@ -24,6 +24,7 @@ data class CallableMemberInfo(
     val name: String,
     val isLocal: Boolean,
     var ordinal: Int,
+    val isEqualsNullCall: Boolean,
 ) {
     val isNameMangledInBytecode = isInlineClassMember || hasInlineClassInParameters
 }
@@ -32,7 +33,8 @@ context(KaSession)
 internal fun CallableMemberInfo(
     symbol: KaFunctionSymbol,
     ordinal: Int = 0,
-    name: String = symbol.methodName()
+    name: String = symbol.methodName(),
+    isEqualsNullCall: Boolean = false,
 ): CallableMemberInfo {
     val isInvoke = symbol.isInvoke()
     val isSuspend = symbol.isSuspend()
@@ -48,6 +50,7 @@ internal fun CallableMemberInfo(
         name = effectiveName,
         isLocal = symbol.isLocal,
         ordinal = ordinal,
+        isEqualsNullCall = isEqualsNullCall,
     )
 }
 

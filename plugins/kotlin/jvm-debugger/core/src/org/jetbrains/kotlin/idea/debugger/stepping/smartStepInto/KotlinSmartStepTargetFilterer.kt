@@ -95,6 +95,9 @@ class KotlinSmartStepTargetFilterer(
     }
 
     private suspend fun KotlinMethodSmartStepTarget.matches(owner: String, name: String, signature: String, currentCount: Int): Boolean {
+        if (isIntrinsicEquals(owner, name, signature) && methodInfo.name == "equals" && ordinal == currentCount) {
+            return true
+        }
         val matchingByNameAndOrdinalTargets = targets.filter { it.ordinal == currentCount && methodNameMatches(it.methodInfo, name) }
         if (this !in matchingByNameAndOrdinalTargets) return false
         // Declaration may be empty only for invoke functions
@@ -161,6 +164,9 @@ class KotlinSmartStepTargetFilterer(
             !targetWasVisited[i]
         }
 }
+
+internal fun isIntrinsicEquals(owner: String, name: String, signature: String): Boolean =
+    owner == "kotlin/jvm/internal/Intrinsics" && name == "areEqual" && signature == "(Ljava/lang/Object;Ljava/lang/Object;)Z"
 
 private data class BytecodeSignature(val owner: String, val name: String, val signature: String, val isStatic: Boolean)
 

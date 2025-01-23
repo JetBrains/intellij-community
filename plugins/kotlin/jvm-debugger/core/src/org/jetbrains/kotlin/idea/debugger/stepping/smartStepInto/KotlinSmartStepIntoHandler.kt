@@ -238,7 +238,12 @@ private suspend fun filterSmartStepTargets(
     }, true)
 
     val targetFilterer = KotlinSmartStepTargetFilterer(targets, debugProcess)
-    val (unvisitedTargets, unvisitedAtTheEnd) = targetFiltererAdapter.visitTrace(targetFilterer, debugProcess.positionManager)
+    var (unvisitedTargets, unvisitedAtTheEnd) = targetFiltererAdapter.visitTrace(targetFilterer, debugProcess.positionManager)
+    val eliminatedEqualsCalls = unvisitedAtTheEnd.filter { it.methodInfo.isEqualsNullCall }
+    if (eliminatedEqualsCalls.isNotEmpty()) {
+        unvisitedAtTheEnd = unvisitedAtTheEnd - eliminatedEqualsCalls
+        unvisitedTargets = unvisitedTargets - eliminatedEqualsCalls
+    }
     if (unvisitedAtTheEnd.isNotEmpty()) {
         val targetStrings = unvisitedAtTheEnd.map { "Target(name=${it.methodInfo.name}, ordinal=${it.ordinal})" }
         val session = debugProcess.session

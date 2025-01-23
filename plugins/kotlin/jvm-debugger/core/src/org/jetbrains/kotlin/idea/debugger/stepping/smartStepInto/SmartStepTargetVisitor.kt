@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -329,49 +328,65 @@ class SmartStepTargetVisitor(
         super.visitSimpleNameExpression(expression)
     }
 
-    private fun recordFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
-        analyze(expression) {
-            val resolvedCall = resolveFunctionCall(expression) ?: return
-            val symbol = resolvedCall.partiallyAppliedSymbol.symbol
-            if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
-                return
-            }
+    private fun recordFunctionCall(expression: KtExpression, highlightExpression: KtExpression) = analyze(expression) {
+        analyzeFunctionCall(expression, highlightExpression)
+    }
 
-            val declaration = getFunctionDeclaration(symbol)
-            if (declaration is PsiMethod) {
-                append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
-                return
-            }
+    private fun KaSession.analyzeFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
+        val resolvedCall = resolveFunctionCall(expression) ?: return
+        val symbol = resolvedCall.partiallyAppliedSymbol.symbol
+        if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
+            return
+        }
 
-            if (declaration == null && !(symbol.isInvoke())) {
-                return
-            }
+        val declaration = getFunctionDeclaration(symbol)
+        if (declaration is PsiMethod) {
+            append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
+            return
+        }
 
-            if (declaration !is KtDeclaration?) return
+        if (declaration == null && !(symbol.isInvoke())) {
+            return
+        }
 
-            // We can't step into @InlineOnly callables as there is no LVT, so skip them
-            if (declaration is KtCallableDeclaration && declaration.isInlineOnly()) {
-                return
-            }
+        if (declaration !is KtDeclaration?) return
 
-            val callLabel = KotlinMethodSmartStepTarget.calcLabel(symbol)
-            val label = if (symbol.isInvoke() && highlightExpression is KtSimpleNameExpression) {
-                "${highlightExpression.text}.$callLabel"
-            } else {
-                callLabel
-            }
+        // We can't step into @InlineOnly callables as there is no LVT, so skip them
+        if (declaration is KtCallableDeclaration && declaration.isInlineOnly()) {
+            return
+        }
 
-            val ordinal = if (declaration == null) 0 else countExistingMethodCalls(declaration)
-            append(
-                KotlinMethodSmartStepTarget(
-                    lines,
-                    highlightExpression,
-                    label,
-                    declaration,
-                    ordinal,
-                    CallableMemberInfo(symbol, ordinal)
-                )
+        val callLabel = KotlinMethodSmartStepTarget.calcLabel(symbol)
+        val label = if (symbol.isInvoke() && highlightExpression is KtSimpleNameExpression) {
+            "${highlightExpression.text}.$callLabel"
+        } else {
+            callLabel
+        }
+
+        val isEqualsNullCall = isEqualsNullCall(highlightExpression)
+        val ordinal = if (declaration == null) 0 else countExistingMethodCalls(declaration)
+        append(
+            KotlinMethodSmartStepTarget(
+                lines,
+                highlightExpression,
+                label,
+                declaration,
+                ordinal,
+                CallableMemberInfo(symbol, ordinal, isEqualsNullCall = isEqualsNullCall)
             )
+        )
+    }
+
+    /**
+     * Calls to `==` can be skipped in bytecode in case of trivial comparisons with null.
+     */
+    private fun isEqualsNullCall(expression: KtExpression): Boolean {
+        if (expression !is KtOperationReferenceExpression) return false
+        if (expression.operationSignTokenType != KtTokens.EQEQ) return false
+        val parent = expression.parent
+        if (parent !is KtBinaryExpression) return false
+        return listOfNotNull(parent.left, parent.right).any {
+            it is KtConstantExpression && it.iElementType.debugName == "NULL"
         }
     }
 

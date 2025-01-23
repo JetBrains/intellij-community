@@ -1358,6 +1358,11 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
             runTest("testData/stepping/custom/defaultLambdaParameterInConstructor.kt");
         }
 
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("testData/stepping/custom/equals.kt");
+        }
+
         @TestMetadata("filterChainedFunctionCalls.kt")
         public void testFilterChainedFunctionCalls() throws Exception {
             runTest("testData/stepping/custom/filterChainedFunctionCalls.kt");

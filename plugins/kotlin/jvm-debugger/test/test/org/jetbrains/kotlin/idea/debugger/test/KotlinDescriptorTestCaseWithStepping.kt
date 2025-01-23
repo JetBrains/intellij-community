@@ -7,6 +7,7 @@ import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.debugger.engine.BasicStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.NamedMethodFilter
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -210,8 +211,12 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     private fun checkNumberOfSmartStepTargets(expectedNumber: Int) {
         val smartStepFilters = createSmartStepIntoFilters()
         try {
+            val actualTargets = smartStepFilters.joinToString(prefix = "[", postfix = "]") {
+                if (it is NamedMethodFilter) it.methodName else it.toString()
+            }
+            val location = debuggerContext.suspendContext?.location
             assertEquals(
-                "Actual and expected numbers of smart step targets do not match",
+                "Actual and expected numbers of smart step targets do not match, targets: $actualTargets location: $location",
                 expectedNumber,
                 smartStepFilters.size
             )
