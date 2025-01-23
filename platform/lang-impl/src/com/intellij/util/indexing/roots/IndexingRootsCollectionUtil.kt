@@ -313,7 +313,6 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
                        val customIterators: List<IndexableFilesIterator>)
 
   fun getIteratorsFromRoots(libraryOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
-                            sdkOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
                             storage: EntityStorage,
                             project: Project): Iterators {
     val moduleDependencyIndex = ModuleDependencyIndex.getInstance(project)
@@ -344,9 +343,7 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
         is SdkRootsDescription -> {
           if (moduleDependencyIndex.hasDependencyOn(description.sdk.symbolicId)) {
             description.createIterator(storage)?.let { iterator ->
-              if (sdkOriginsToFilterDuplicates.add(iterator.origin)) {
-                externalIterators.add(iterator)
-              }
+              externalIterators.add(iterator)
             }
           }
         }

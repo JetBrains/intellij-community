@@ -6,10 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -88,7 +85,6 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     }
 
     Set<IndexableSetOrigin> libraryOrigins = new HashSet<>();
-    Set<IndexableSetOrigin> sdkOrigins = new HashSet<>();
 
     WorkspaceIndexingRootsBuilder.Companion.Settings settings = new WorkspaceIndexingRootsBuilder.Companion.Settings();
     settings.setCollectExplicitRootsForModules(false);
@@ -96,7 +92,7 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     WorkspaceIndexingRootsBuilder builder =
       WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings);
     WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots =
-      builder.getIteratorsFromRoots(libraryOrigins, sdkOrigins, entityStorage, project);
+      builder.getIteratorsFromRoots(libraryOrigins, entityStorage, project);
     iterators.addAll(iteratorsFromRoots.getContentIterators());
     iterators.addAll(iteratorsFromRoots.getExternalIterators());
 
