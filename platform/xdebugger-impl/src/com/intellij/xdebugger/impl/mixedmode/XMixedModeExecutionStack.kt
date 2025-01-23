@@ -16,6 +16,7 @@ import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.CancellationException
 import kotlin.time.measureTimedValue
@@ -66,6 +67,7 @@ class XMixedModeExecutionStack(
         computeStackFramesInternal(firstFrameIndex, container)
       }
       catch (t: Throwable) {
+        ensureActive()
         if (!computedFramesMap.isCompleted)
           computedFramesMap.completeExceptionally(Exception("Failed to compute stack frames", t))
 

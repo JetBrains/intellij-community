@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -63,6 +64,8 @@ class XMixedModeSuspendContext(
         computeExecutionStacksInternal(container)
       }
       catch (t: Throwable) {
+        ensureActive()
+
         if (!isStacksComputed.isCompleted)
           isStacksComputed.completeExceptionally(t)
 
