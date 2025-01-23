@@ -617,7 +617,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
         return;
       }
       PsiElement parent = PsiTreeUtil.getParentOfType(referenceExpression, true, PsiMethodCallExpression.class, PsiExpressionList.class);
-      if (parent instanceof PsiMethodCallExpression && !isCloseMethodCalled(referenceExpression) || parent instanceof PsiExpressionList) {
+      if (parent instanceof PsiMethodCallExpression methodCallExpression && !isCloseMethodCalled(methodCallExpression) || parent instanceof PsiExpressionList) {
         used = true;
       }
     }
@@ -628,11 +628,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
              PsiTreeUtil.getParentOfType(variable, true, PsiAnonymousClass.class, PsiLambdaExpression.class);
     }
 
-    private static boolean isCloseMethodCalled(@NotNull PsiReferenceExpression referenceExpression) {
-      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class);
-      if (methodCallExpression == null) {
-        return false;
-      }
+    private static boolean isCloseMethodCalled(@NotNull PsiMethodCallExpression methodCallExpression) {
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       if (!argumentList.isEmpty()) {
         return false;
