@@ -12,15 +12,13 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class DefaultExternalSourceSet implements ExternalSourceSet {
-  private static final long serialVersionUID = 2L;
+
+  private static final long serialVersionUID = 3L;
 
   private String name;
   private boolean isPreview;
   private String sourceCompatibility;
   private String targetCompatibility;
-  // The jdkInstallationPath exists only for migration.
-  // Source sets are serialized with the project data nodes.
-  private String jdkInstallationPath;
   private File javaToolchainHome;
   private Collection<File> artifacts;
   private @NotNull Collection<ExternalDependency> dependencies;
@@ -71,15 +69,10 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   @Override
   public @Nullable File getJavaToolchainHome() {
-    if (jdkInstallationPath != null) {
-      javaToolchainHome = new File(jdkInstallationPath);
-      jdkInstallationPath = null;
-    }
     return javaToolchainHome;
   }
 
   public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
-    this.jdkInstallationPath = null;
     this.javaToolchainHome = javaToolchainHome;
   }
 
