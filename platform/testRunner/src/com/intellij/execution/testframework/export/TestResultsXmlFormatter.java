@@ -13,7 +13,6 @@ import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Attribute;
@@ -261,8 +260,8 @@ public final class TestResultsXmlFormatter {
           final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
           try {
             HashMap<String, String> attributes = new HashMap<>();
-            attributes.put(EXPECTED, JDOMUtil.removeControlChars(diffHyperlink.getLeft()));
-            attributes.put(ACTUAL, JDOMUtil.removeControlChars(diffHyperlink.getRight()));
+            attributes.put(EXPECTED, replaceZeroTokens(diffHyperlink.getLeft()));
+            attributes.put(ACTUAL, replaceZeroTokens(diffHyperlink.getRight()));
             startElement(DIFF, attributes);
             endElement(DIFF);
           }
@@ -306,7 +305,7 @@ public final class TestResultsXmlFormatter {
     StringBuilder output = new StringBuilder();
     StringTokenizer t = new StringTokenizer(text.toString(), "\n");
     while (t.hasMoreTokens()) {
-      output.append(JDOMUtil.removeControlChars(t.nextToken())).append("\n");
+      output.append(replaceZeroTokens(t.nextToken())).append("\n");
     }
 
     Map<String, String> a = new HashMap<>();
@@ -315,6 +314,11 @@ public final class TestResultsXmlFormatter {
     writeText(output.toString());
     text.delete(0, text.length());
     endElement(ELEM_OUTPUT);
+  }
+
+  @NotNull
+  private static String replaceZeroTokens(String str) {
+    return str.replaceAll("\u0000", "");
   }
 
   private static @NonNls String getTypeString(ConsoleViewContentType type) {
