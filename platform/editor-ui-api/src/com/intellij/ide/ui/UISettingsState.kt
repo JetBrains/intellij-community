@@ -199,7 +199,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SEPARATE_MAIN_MENU")
   var separateMainMenu: Boolean by property(false)
   @get:OptionTag("SHOW_MAIN_MENU_MODE")
-  var mainMenuDisplayMode: String? by string()
+  var mainMenuDisplayMode: String? by string(MainMenuDisplayMode.UNDER_HAMBURGER_BUTTON.name)
   @get:OptionTag("DEFAULT_AUTOSCROLL_TO_SOURCE")
   var defaultAutoScrollToSource: Boolean by property(false)
   @get:Transient

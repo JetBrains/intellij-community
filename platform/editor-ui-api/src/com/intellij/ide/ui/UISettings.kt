@@ -828,9 +828,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       Registry.get("ide.allow.merge.buttons").setValue(false)
       state.allowMergeButtons = true
     }
-    if (state.mainMenuDisplayMode == null) {
-      state.mainMenuDisplayMode = if (state.separateMainMenu) MainMenuDisplayMode.SEPARATE_TOOLBAR.name
-      else MainMenuDisplayMode.UNDER_HAMBURGER_BUTTON.name
+    if (state.separateMainMenu) {
+      state.mainMenuDisplayMode = MainMenuDisplayMode.SEPARATE_TOOLBAR.name
+      state.separateMainMenu = false
     }
   }
 
