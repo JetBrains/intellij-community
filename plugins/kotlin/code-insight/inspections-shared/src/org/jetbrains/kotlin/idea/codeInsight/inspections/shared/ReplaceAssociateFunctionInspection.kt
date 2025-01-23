@@ -17,23 +17,29 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AssociateFunction.*
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction.*
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds.BASE_COLLECTIONS_PACKAGE
+import org.jetbrains.kotlin.name.StandardClassIds.BASE_SEQUENCES_PACKAGE
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 private val associateFunctionNames: List<String> = listOf("associate", "associateTo")
-private val associateFqNames: List<FqName> = listOf(FqName("kotlin.collections.associate"), FqName("kotlin.sequences.associate"))
-private val associateToFqNames: List<FqName> = listOf(FqName("kotlin.collections.associateTo"), FqName("kotlin.sequences.associateTo"))
-private val PAIR_CLASS_ID = ClassId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("Pair"))
+private val associateFqNames: Set<FqName> =
+    arrayOf(BASE_COLLECTIONS_PACKAGE, BASE_SEQUENCES_PACKAGE).mapTo(hashSetOf()) { it.child(Name.identifier("associate")) }
+private val associateToFqNames: Set<FqName> =
+    arrayOf(BASE_COLLECTIONS_PACKAGE, BASE_SEQUENCES_PACKAGE).mapTo(hashSetOf()) { it.child(Name.identifier("associateTo")) }
+private val PAIR_CLASS_ID =
+    ClassId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("Pair"))
 
 class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
 
@@ -197,14 +203,6 @@ class ReplaceAssociateFunctionFix(
             } ?: return
             lastStatement.replace(if (function == ASSOCIATE_WITH) valueTransform else keySelector)
         }
-    }
-}
-
-enum class AssociateFunction(val functionName: String) {
-    ASSOCIATE_WITH("associateWith"), ASSOCIATE_BY("associateBy"), ASSOCIATE_BY_KEY_AND_VALUE("associateBy");
-
-    fun name(hasDestination: Boolean): String {
-        return if (hasDestination) "${functionName}To" else functionName
     }
 }
 

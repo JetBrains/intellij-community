@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AssociateFunction
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceAssociateFunctionFix
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceAssociateFunctionInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
