@@ -18,7 +18,10 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -37,11 +40,10 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPosit
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isFirstStatement
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.partitionIsInstance
 import org.jetbrains.kotlin.utils.yieldIfNotNull
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<C : KotlinRawPositionContext>(
     parameters: KotlinFirCompletionParameters,
@@ -206,7 +208,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                 val classSymbol = parameterType.expandedSymbol as? KaNamedClassSymbol
                     ?: return@sequence
 
-                val suggestedNames = destructurizeAndSubstitute(
+                val suggestedNames = getSubstitutedComponents(
                     classSymbol = classSymbol,
                     candidateChecker = candidateChecker,
                     parameterType = parameterType,
@@ -246,13 +248,13 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun destructurizeAndSubstitute(
+    private fun getSubstitutedComponents(
         classSymbol: KaNamedClassSymbol,
         candidateChecker: KaCompletionExtensionCandidateChecker,
         parameterType: KaClassType,
         receiverTypes: List<KaClassType> = listOf(parameterType), // todo all receiver types
-    ): List<Destructurized> {
-        val components = destructurize(classSymbol, receiverTypes)
+    ): List<SubstitutedSymbol> {
+        val components = classSymbol.getComponents(receiverTypes)
         if (components.isEmpty()) return emptyList()
 
         val defaultSubstitutor = classSymbol.typeParameters
@@ -260,7 +262,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
             .toMap()
             .let { createSubstitutor(it) }
 
-        val substituted = components.mapNotNull { (callableSymbol, returnType) ->
+        val substituted = components.mapNotNull { callableSymbol ->
             val substitutor = if (callableSymbol.isExtension) {
                 val callable = candidateChecker
                     .computeApplicability(callableSymbol) as? KaExtensionApplicabilityResult.ApplicableAsExtensionCallable
@@ -270,9 +272,9 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                 defaultSubstitutor
             }
 
-            Destructurized(
+            SubstitutedSymbol(
                 callableSymbol = callableSymbol,
-                returnType = substitutor.substitute(returnType),
+                returnType = substitutor.substitute(callableSymbol.returnType),
             )
         }
 
@@ -281,41 +283,34 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
     }
 
     context(KaSession)
-    private fun destructurize(
-        classSymbol: KaNamedClassSymbol,
+    private fun KaNamedClassSymbol.getComponents(
         receiverTypes: List<KaClassType>,
-    ): List<Destructurized> {
-        val targetScope = classSymbol.memberScope
-        val nameFilter = Name::hasComponentName
-        val (candidateSymbols, symbols) = targetScope.callables(nameFilter)
+    ): Collection<KaNamedFunctionSymbol> {
+        val nameFilter: (Name) -> Boolean = DataClassResolver::isComponentLike
+        val (candidateSymbols, symbols) = memberScope.callables(nameFilter)
             .ifEmpty {
                 symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(nameFilter, receiverTypes) { declaration ->
                     visibilityChecker.canBeVisible(declaration)
                             && declaration.canBeAnalysed()
                 }
-            }.toList()
-            .sortedBy { it.name }
+            }.asIterable()
             .partitionIsInstance<KaCallableSymbol, KaNamedFunctionSymbol>()
         if (symbols.isNotEmpty()) return emptyList()
 
-        val indices = candidateSymbols.asSequence()
+        val symbolsByIndex = candidateSymbols.asSequence()
             .filter { it.isOperator }
             .filter { it.visibility == KaSymbolVisibility.PUBLIC } // todo visibilityChecker::isVisible
-            .map { it.name }
-            .mapNotNull { name ->
-                val matcher = ComponentFunctionNameRegex.matcher(name)
-                if (matcher.find()) matcher.group(1) else null
-            }.mapNotNull { it.toIntOrNull() }
-            .toList()
+            .associateByTo(sortedMapOf()) { functionSymbol ->
+                DataClassResolver.getComponentIndex(functionSymbol.name.asString())
+            }
 
-        val count = candidateSymbols.size
-        if (count == 0
-            || indices.size != count
-            || indices.first() != 1
-            || indices.last() != count
+        if (symbolsByIndex.isEmpty()
+            || symbolsByIndex.size != candidateSymbols.size
+            || symbolsByIndex.firstKey() != 1
+            || symbolsByIndex.lastKey() != candidateSymbols.size
         ) return emptyList()
 
-        return candidateSymbols.map { Destructurized(it) }
+        return symbolsByIndex.values
     }
 }
 
@@ -400,15 +395,7 @@ private fun createExtensionCandidateChecker(
     )
 }
 
-private val ComponentFunctionNameRegex: Pattern = Pattern.compile("^component(\\d+)$")
-
-private data class Destructurized(
+private data class SubstitutedSymbol(
     val callableSymbol: KaNamedFunctionSymbol,
-    val returnType: KaType = callableSymbol.returnType,
+    val returnType: KaType,
 )
-
-private fun Pattern.matcher(name: Name): Matcher =
-    matcher(name.asString())
-
-private val Name.hasComponentName: Boolean
-    get() = ComponentFunctionNameRegex.matcher(this).matches()
