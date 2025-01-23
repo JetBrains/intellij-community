@@ -1502,17 +1502,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   private static @Nullable PyTypeParameterType getTypeParameterTypeFromTypeParameter(@NotNull PsiElement element, @NotNull Context context) {
     if (element instanceof PyTypeParameter typeParameter) {
+      String name = typeParameter.getName();
+      if (name == null) {
+        return null;
+      }
 
       PyTypeParameterListOwner typeParameterOwner = PsiTreeUtil.getStubOrPsiParentOfType(element, PyTypeParameterListOwner.class);
       PyQualifiedNameOwner scopeOwner = typeParameterOwner instanceof PyQualifiedNameOwner qualifiedNameOwner ? qualifiedNameOwner : null;
-
-      String boundExpressionText = typeParameter.getBoundExpressionText();
-      String name = typeParameter.getName();
-      PyTypeParameter.Kind kind = typeParameter.getKind();
-
-      PyExpression boundExpression = boundExpressionText != null
-                                     ? PyUtil.createExpressionFromFragment(boundExpressionText, typeParameter.getContainingFile())
-                                     : null;
 
       String defaultExpressionText = typeParameter.getDefaultExpressionText();
       PyExpression defaultExpression = defaultExpressionText != null
@@ -1531,29 +1527,31 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
       PyQualifiedNameOwner declarationElement = as(element, PyQualifiedNameOwner.class);
 
-      if (name != null) {
-        return switch (kind) {
-          case TypeVar -> {
-            PyType boundType = boundExpression != null ? getTypeParameterBoundType(boundExpression, context) : null;
-            yield new PyTypeVarTypeImpl(name, boundType, defaultType)
-              .withScopeOwner(scopeOwner)
-              .withDeclarationElement(declarationElement);
-          }
-          case ParamSpec -> {
-            yield new PyParamSpecType(name)
-              .withScopeOwner(scopeOwner)
-              .withDefaultType(
-                Ref.deref(defaultType) instanceof PyCallableParameterVariadicType variadicType ? Ref.create(variadicType) : null)
-              .withDeclarationElement(declarationElement);
-          }
-          case TypeVarTuple -> {
-            yield new PyTypeVarTupleTypeImpl(name)
-              .withScopeOwner(scopeOwner)
-              .withDefaultType(Ref.deref(defaultType) instanceof PyPositionalVariadicType variadicType ? Ref.create(variadicType) : null)
-              .withDeclarationElement(declarationElement);
-          }
-        };
-      }
+      switch (typeParameter.getKind()) {
+        case TypeVar -> {
+          String boundExpressionText = typeParameter.getBoundExpressionText();
+          PyExpression boundExpression = boundExpressionText != null
+                                         ? PyUtil.createExpressionFromFragment(boundExpressionText, typeParameter.getContainingFile())
+                                         : null;
+          PyType boundType = boundExpression != null ? getTypeParameterBoundType(boundExpression, context) : null;
+          return new PyTypeVarTypeImpl(name, boundType, defaultType)
+            .withScopeOwner(scopeOwner)
+            .withDeclarationElement(declarationElement);
+        }
+        case ParamSpec -> {
+          return new PyParamSpecType(name)
+            .withScopeOwner(scopeOwner)
+            .withDefaultType(
+              Ref.deref(defaultType) instanceof PyCallableParameterVariadicType variadicType ? Ref.create(variadicType) : null)
+            .withDeclarationElement(declarationElement);
+        }
+        case TypeVarTuple -> {
+          return new PyTypeVarTupleTypeImpl(name)
+            .withScopeOwner(scopeOwner)
+            .withDefaultType(Ref.deref(defaultType) instanceof PyPositionalVariadicType variadicType ? Ref.create(variadicType) : null)
+            .withDeclarationElement(declarationElement);
+        }
+      };
     }
     return null;
   }
