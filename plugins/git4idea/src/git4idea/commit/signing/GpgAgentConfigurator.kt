@@ -15,7 +15,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -26,10 +25,9 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.platform.util.coroutines.flow.debounceBatch
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import git4idea.commands.GitScriptGenerator
 import git4idea.commit.signing.GpgAgentConfig.Companion.readConfig
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_BACKUP_FILE_NAME
@@ -49,6 +47,9 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -60,6 +61,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<GpgAgentConfigurator>()
 
@@ -88,22 +90,27 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
       }
   }
 
-  private val updateLauncherQueue = MergingUpdateQueue("update pinentry launcher queue", 100, true, null, this, null, false)
+  private val updateLauncherFlow = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
 
   fun init() {
-    val connection = application.messageBus.connect(this)
-    connection.subscribe(GitExecutableManager.TOPIC, GitExecutableListener {
+    cs.launch {
+      updateLauncherFlow.consumeAsFlow().debounceBatch(100.milliseconds).collect {
+        updateExistingPinentryLauncher()
+      }
+    }
+
+    application.messageBus.connect(this).subscribe(GitExecutableManager.TOPIC, GitExecutableListener {
       project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
-      emitUpdateLauncherEvent()
+      updateLauncherFlow.trySend(Unit)
     })
     project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, object: GitConfigListener {
       override fun notifyConfigChanged(repository: GitRepository) {
         project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
-        emitUpdateLauncherEvent()
+        updateLauncherFlow.trySend(Unit)
       }
     })
 
-    emitUpdateLauncherEvent()
+    updateLauncherFlow.trySend(Unit)
   }
 
   @RequiresBackgroundThread
@@ -176,14 +183,6 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
       restartAgent(gitExecutable)
     }
     project.service<GpgAgentConfigurationNotificator>().notifyConfigurationSuccessful(gpgAgentPaths, backupCreated)
-  }
-
-  private fun emitUpdateLauncherEvent() {
-    updateLauncherQueue.queue(Update.create("pinentry") {
-      runBlockingCancellable {
-        updateExistingPinentryLauncher()
-      }
-    })
   }
 
   @VisibleForTesting
