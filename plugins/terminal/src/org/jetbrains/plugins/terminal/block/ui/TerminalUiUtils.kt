@@ -43,6 +43,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
+import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
@@ -424,4 +425,12 @@ internal fun stickScrollBarToBottom(verticalScrollBar: JScrollBar) {
 internal fun CharBuffer.normalize(): String {
   val s = this.toString()
   return if (s.contains(CharUtils.DWC)) s.filterTo(StringBuilder(s.length - 1)) { it != CharUtils.DWC }.toString() else s
+}
+
+internal fun TerminalLine.getLengthWithoutDwc(): Int {
+  val dwcCount = entries.fold(0) { curCount, entry ->
+    val dwcInEntryCount = entry.text.count { it == CharUtils.DWC }
+    curCount + dwcInEntryCount
+  }
+  return length() - dwcCount
 }

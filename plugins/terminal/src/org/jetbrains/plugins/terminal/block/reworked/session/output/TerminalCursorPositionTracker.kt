@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal.block.reworked.session.output
 
 import com.jediterm.terminal.model.TerminalTextBuffer
+import com.jediterm.terminal.util.CharUtils
+import org.jetbrains.plugins.terminal.block.ui.getLengthWithoutDwc
 
 internal class TerminalCursorPositionTracker(
   private val textBuffer: TerminalTextBuffer,
@@ -36,12 +38,17 @@ internal class TerminalCursorPositionTracker(
     check(cursorPositionChanged) { "It is expected that this method is called only if something is changed" }
 
     var line = cursorY
-    var column = cursorX
+    // Lines in the terminal buffer contain special character DWC (double width character)
+    // that indicate that the previous character is double width (for example, chinese symbol).
+    // This character is synthetic and present there only to create space in the TextBuffer grid.
+    // But DWC is dropped when we parse the TextBuffer to string, so we also should exclude them from the offset calculation there.
+    val dwcCountBeforeCursor = textBuffer.getLine(line).text.subSequence(0, cursorX).count { it == CharUtils.DWC }
+    var column = cursorX - dwcCountBeforeCursor
 
     // Ensure that line is either not a wrapped line or the start of the wrapped line.
     while (line - 1 >= -textBuffer.historyLinesCount && textBuffer.getLine(line - 1).isWrapped) {
       line--
-      column += textBuffer.getLine(line).length()
+      column += textBuffer.getLine(line).getLengthWithoutDwc()
     }
 
     val logicalLine = textBuffer.getLogicalLineIndex(line) + discardedHistoryTracker.getDiscardedLogicalLinesCount()
