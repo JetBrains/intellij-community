@@ -210,7 +210,7 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
     else {
       popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, ActionSelectionAid.MNEMONICS, true, place);
+        null, group, context, null, true, place);
     }
 
     popup.setShowSubmenuOnHover(true);
@@ -224,7 +224,7 @@ public final class SettingsEntryPointAction extends ActionGroup
 
     MyPopup(@NotNull ActionGroup group, @NotNull DataContext context, @NotNull PresentationFactory presentationFactory, @NotNull String place) {
       super(null, null, group, context, place, presentationFactory,
-            ActionPopupOptions.mnemonicsAndDisabled(), null);
+            ActionPopupOptions.showDisabled(), null);
       myPresentationFactory = presentationFactory;
     }
 
