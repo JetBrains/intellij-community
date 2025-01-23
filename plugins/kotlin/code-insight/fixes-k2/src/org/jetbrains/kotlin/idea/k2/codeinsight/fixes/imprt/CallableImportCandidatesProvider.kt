@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionCon
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
@@ -101,19 +102,19 @@ internal class DelegateMethodImportCandidatesProvider(
     positionContext: KotlinNameReferencePositionContext,
 ) : CallableImportCandidatesProvider(positionContext) {
 
+    private val missingDelegateFunctionNames: List<Name> =
+        listOf(
+            OperatorNameConventions.GET_VALUE, 
+            OperatorNameConventions.SET_VALUE,
+        ).filter { expectedDelegateFunctionSignature.startsWith(it.asString() + "(") }
+
     context(KaSession)
     override fun collectCandidates(
         indexProvider: KtSymbolFromIndexProvider,
     ): List<CallableImportCandidate> {
-        val functionName = OperatorNameConventions.GET_VALUE.takeIf {
-            expectedDelegateFunctionSignature.startsWith(OperatorNameConventions.GET_VALUE.asString() + "(")
-        } ?: OperatorNameConventions.SET_VALUE.takeIf {
-            expectedDelegateFunctionSignature.startsWith(OperatorNameConventions.SET_VALUE.asString() + "(")
-        } ?: return emptyList()
-
         val expressionType = positionContext.position.parentOfType<KtPropertyDelegate>()?.expression?.expressionType ?: return emptyList()
-        return indexProvider.getExtensionCallableSymbolsByName(
-            name = functionName,
+        return indexProvider.getExtensionCallableSymbolsByNameFilter(
+            nameFilter = { it in missingDelegateFunctionNames },
             receiverTypes = listOf(expressionType),
         ) { acceptsKotlinCallable(it) }
             .map { CallableImportCandidate.create(it) }
