@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports assignments where the assigned value is never used afterward in the code.
+<p><b>Example:</b></p>
+<pre><code>
+  fun example() {
+      var local = 0
+      print(local)
+      local = 42  // Assigned value is never read
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>
