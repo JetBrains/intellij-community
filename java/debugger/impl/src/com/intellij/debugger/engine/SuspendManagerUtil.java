@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -70,6 +70,7 @@ public final class SuspendManagerUtil {
   @ApiStatus.Internal
   public static @Nullable SuspendContextImpl getPausedSuspendingContext(@NotNull SuspendManager suspendManager,
                                                                         @NotNull ThreadReferenceProxyImpl thread) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     List<SuspendContextImpl> pausedContexts = suspendManager.getPausedContexts();
     SuspendContextImpl context = ContainerUtil.find(pausedContexts, suspendContext ->
       suspendContext.getEventThread() == thread && suspendContext.suspends(thread)

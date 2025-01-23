@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
@@ -80,23 +80,26 @@ public final class DebuggerContextUtil {
                                                               @NotNull ThreadReferenceProxyImpl thread,
                                                               @Nullable StackFrameProxyImpl frameProxy,
                                                               @NotNull Consumer<@NotNull DebuggerContextImpl> action) {
-    SuspendContextImpl pausedContext = SuspendManagerUtil.getPausedSuspendingContext(debugProcess.getSuspendManager(), thread);
-    DebuggerContextImpl defaultDebuggerContext = debugProcess.getDebuggerContext();
-    if (pausedContext == defaultDebuggerContext.getSuspendContext() || pausedContext == null) {
-      action.accept(defaultDebuggerContext);
-    }
-    else {
-      pausedContext.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
-        @Override
-        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-          DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(
-            debugProcess.getSession(), pausedContext, thread, frameProxy
-          );
-          debuggerContext.initCaches();
-          action.accept(debuggerContext);
+    Objects.requireNonNull(debugProcess.getDebuggerContext().getManagerThread())
+      .schedule(PrioritizedTask.Priority.NORMAL, () -> {
+        SuspendContextImpl pausedContext = SuspendManagerUtil.getPausedSuspendingContext(debugProcess.getSuspendManager(), thread);
+        DebuggerContextImpl defaultDebuggerContext = debugProcess.getDebuggerContext();
+        if (pausedContext == defaultDebuggerContext.getSuspendContext() || pausedContext == null) {
+          action.accept(defaultDebuggerContext);
+        }
+        else {
+          pausedContext.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
+            @Override
+            public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+              DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(
+                debugProcess.getSession(), pausedContext, thread, frameProxy
+              );
+              debuggerContext.initCaches();
+              action.accept(debuggerContext);
+            }
+          });
         }
       });
-    }
   }
 
   /**
