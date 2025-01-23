@@ -138,12 +138,14 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
   private fun configureGpgAgent(gpgAgentPaths: GpgAgentPaths, pinetryFallback: String = "pinentry") {
     val config = readConfig(gpgAgentPaths.gpgAgentConf)
-    project.service<GpgAgentConfigurator>().doConfigure(
-      GitExecutableManager.getInstance().getExecutable(project),
-      gpgAgentPaths,
-      config,
-      pinetryFallback
-    )
+    runBlocking {
+      project.service<GpgAgentConfigurator>().doConfigure(
+        GitExecutableManager.getInstance().getExecutable(project),
+        gpgAgentPaths,
+        config,
+        pinetryFallback
+      )
+    }
   }
 
   private fun assertScriptContentStructure(scriptContent: String) {
