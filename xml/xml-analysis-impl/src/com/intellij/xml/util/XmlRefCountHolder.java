@@ -263,7 +263,8 @@ public final class XmlRefCountHolder {
     private void updateMap(final @NotNull XmlAttribute attribute, final @NotNull XmlAttributeValue value, final boolean soft) {
       final String id = XmlHighlightVisitor.getUnquotedValue(value, attribute.getParent());
       if (XmlUtil.isSimpleValue(id, value) &&
-          PsiTreeUtil.getChildOfType(value, OuterLanguageElement.class) == null) {
+          PsiTreeUtil.getChildOfType(value, OuterLanguageElement.class) == null &&
+          !id.isBlank()) {
         myHolder.registerId(id, value, soft);
       }
     }
