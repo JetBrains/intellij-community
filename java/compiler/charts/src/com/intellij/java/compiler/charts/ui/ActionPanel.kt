@@ -238,7 +238,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
             val declaration = vm.changeStatistic()
             label.text = declaration.title()
             block.background = declaration.color().background()
-            diagrams.smartDraw()
+            diagrams.smartDraw(true, true)
           }
         })
       })

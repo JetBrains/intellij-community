@@ -9,13 +9,15 @@ import com.intellij.java.compiler.charts.impl.ChartModule
 import com.intellij.java.compiler.charts.impl.ModuleKey
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 data class UIModel(
   private val hasNewData: () -> Unit,
   private val threadAddedEvent: () -> Unit,
 ) {
-  private val threads: MutableMap<Long, Int> = LinkedHashMap()
-  private val modules: MutableMap<ModuleKey, ChartModuleImpl> = HashMap()
+  private val threadsCount = AtomicInteger(0)
+  private val threads: MutableMap<Long, Int> = ConcurrentHashMap()
+  private val modules: MutableMap<ModuleKey, ChartModuleImpl> = ConcurrentHashMap()
   private val statistics: MutableMap<Class<out StatisticChartEvent>, NavigableSet<StatisticChartEvent>> = ConcurrentHashMap()
 
   fun add(event: ModuleChartEvent) {
@@ -23,16 +25,8 @@ data class UIModel(
       .add(event)
 
     if (threads[event.threadId()] == null) {
-      threads[event.threadId()] = threads.size
-      // check
-      var index = 0
-      for ((threadId, position) in threads) {
-        if (threadId == event.threadId()) {
-          if (position != index) threads[threadId] = index
-          break
-        }
-        index++
-      }
+      threads.computeIfAbsent(event.threadId(), {_ -> threadsCount.andIncrement})
+
       // finish
       threadAddedEvent()
       hasNewData()
