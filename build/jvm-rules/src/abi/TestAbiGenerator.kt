@@ -16,11 +16,10 @@ internal object TestAbiGenerator {
       val classReader = ClassReader(zip.getInputStream(zip.getEntry(className.replace('.', '/') + ".class")))
       val classesToBeDeleted = HashSet<String>()
       val classWriter = ClassWriter(classReader, 0)
-      val abiVisitor = AbiClassVisitor(
+      val abiVisitor = KotlinAbiClassVisitor(
         classVisitor = classWriter,
         classesToBeDeleted = classesToBeDeleted,
         treatInternalAsPrivate = false,
-        isKotlin = true,
       )
       classReader.accept(abiVisitor, ClassReader.SKIP_CODE or ClassReader.SKIP_FRAMES)
       val bytes = classWriter.toByteArray()

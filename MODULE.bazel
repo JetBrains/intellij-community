@@ -22,8 +22,8 @@ archive_override(
 )
 
 # GraalVM
-git_override(
-    module_name = "rules_graalvm",
-    remote = "https://github.com/develar/rules_graalvm",
-    commit = "9d12232f7798df7087952314600f1ee0f4e4f9f7",
-)
+# git_override(
+#     module_name = "rules_graalvm",
+#     remote = "https://github.com/develar/rules_graalvm",
+#     commit = "9d12232f7798df7087952314600f1ee0f4e4f9f7",
+# )

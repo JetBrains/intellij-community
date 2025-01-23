@@ -12,8 +12,8 @@ label_flag(
 
 label_flag(
     name = "worker-impl",
-    # build_setting_default = "//src/misc:worker-jvm",
-    build_setting_default = "//src/misc:worker-native",
+    build_setting_default = "//src/misc:worker-jvm",
+    # build_setting_default = "//src/misc:worker-native",
     visibility = ["//visibility:public"],
 )
 

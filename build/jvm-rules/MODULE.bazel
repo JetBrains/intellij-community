@@ -3,13 +3,10 @@ module(name = "rules_jvm", version = "0.1")
 bazel_dep(name = "bazel_worker_api", version = "0.0.4")
 bazel_dep(name = "rules_java", version = "8.7.1")
 bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.5")
-bazel_dep(name = "rules_graalvm", version = "0.11.3")
+# bazel_dep(name = "rules_graalvm", version = "0.11.3")
 bazel_dep(name = "lib")
 bazel_dep(name = "protobuf", version = "29.2")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
-
-# https://github.com/bazelbuild/bazel/issues/6681#issuecomment-2188972754
-bazel_dep(name = "contrib_rules_jvm", version = "0.27.0")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -28,29 +25,29 @@ http_archive(
 )
 
 # GraalVM
-git_override(
-    module_name = "rules_graalvm",
-    remote = "https://github.com/develar/rules_graalvm",
-    commit = "9d12232f7798df7087952314600f1ee0f4e4f9f7",
-)
+# git_override(
+#     module_name = "rules_graalvm",
+#     remote = "https://github.com/develar/rules_graalvm",
+#     commit = "9d12232f7798df7087952314600f1ee0f4e4f9f7",
+# )
 
 # local_path_override(
 #   module_name = "rules_graalvm",
 #   path = "../rules_graalvm",
 # )
-graalvm = use_extension("@rules_graalvm//:extensions.bzl", "graalvm")
+# graalvm = use_extension("@rules_graalvm//:extensions.bzl", "graalvm")
 
-graalvm.graalvm(
-    name = "graalvm",
-    distribution = "oracle",
-    java_version = "23",
-    version = "23.0.1",
-)
+# graalvm.graalvm(
+#     name = "graalvm",
+#     distribution = "oracle",
+#     java_version = "23",
+#     version = "23.0.1",
+# )
 
-use_repo(graalvm, "graalvm")
-register_toolchains("@graalvm//:jvm")
-register_toolchains("@graalvm//:sdk")
-register_toolchains("@graalvm//:toolchain")
+# use_repo(graalvm, "graalvm")
+# register_toolchains("@graalvm//:jvm")
+# register_toolchains("@graalvm//:sdk")
+# register_toolchains("@graalvm//:toolchain")
 
 # Kotlin Rules
 archive_override(

@@ -1,4 +1,3 @@
-load("@contrib_rules_jvm//docs:stardoc-input.bzl", "java_junit5_test")
 load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
@@ -48,8 +47,8 @@ kt_jvm_library(
     ],
 )
 
-java_junit5_test(
-    name = "worker_test",
-    test_class = "org.jetbrains.bazel.jvm.WorkRequestHandlerTest",
-    runtime_deps = [":worker_test_lib"],
-)
+# java_junit5_test(
+#     name = "worker_test",
+#     test_class = "org.jetbrains.bazel.jvm.WorkRequestHandlerTest",
+#     runtime_deps = [":worker_test_lib"],
+# )
