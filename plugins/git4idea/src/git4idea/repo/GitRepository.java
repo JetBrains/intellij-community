@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
@@ -8,6 +8,7 @@ import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
+import git4idea.merge.GitResolvedMergeConflictsFilesHolder;
 import git4idea.status.GitStagingAreaHolder;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
@@ -72,6 +73,9 @@ public interface GitRepository extends Repository {
 
   @NotNull
   GitUntrackedFilesHolder getUntrackedFilesHolder();
+
+  @NotNull
+  GitResolvedMergeConflictsFilesHolder getResolvedConflictsFilesHolder();
 
 
   @NotNull

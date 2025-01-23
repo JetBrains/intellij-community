@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.dvcs.DvcsUtil
@@ -21,6 +21,7 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchesCollection
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
+import git4idea.merge.GitResolvedMergeConflictsFilesHolder
 import git4idea.status.GitStagingAreaHolder
 import git4idea.telemetry.GitTelemetrySpan
 import kotlinx.coroutines.CoroutineScope
@@ -45,6 +46,7 @@ class GitRepositoryImpl private constructor(
 
   private val stagingAreaHolder: GitStagingAreaHolder
   private val untrackedFilesHolder: GitUntrackedFilesHolder
+  private val resolvedFilesHolder: GitResolvedMergeConflictsFilesHolder
   private val tagHolder: GitTagHolder
 
   @Volatile
@@ -65,6 +67,9 @@ class GitRepositoryImpl private constructor(
     untrackedFilesHolder = GitUntrackedFilesHolder(this)
     Disposer.register(this, untrackedFilesHolder)
 
+    resolvedFilesHolder = GitResolvedMergeConflictsFilesHolder(this)
+    Disposer.register(this, resolvedFilesHolder)
+
     tagHolder = GitTagHolder(this)
     repoInfo = readRepoInfo()
   }
@@ -84,6 +89,10 @@ class GitRepositoryImpl private constructor(
 
   override fun getUntrackedFilesHolder(): GitUntrackedFilesHolder {
     return untrackedFilesHolder
+  }
+
+  override fun getResolvedConflictsFilesHolder(): GitResolvedMergeConflictsFilesHolder {
+    return resolvedFilesHolder
   }
 
   override fun getIgnoredFilesHolder(): GitRepositoryIgnoredFilesHolder {
@@ -262,6 +271,7 @@ class GitRepositoryImpl private constructor(
         updater.installListeners()
         notifyIfRepoChanged(this, null, initialRepoInfo)
         this.untrackedFilesHolder.invalidate()
+        this.resolvedConflictsFilesHolder.invalidate()
       }
     }
 

@@ -699,6 +699,7 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - getLogicallyLockedFolders():java.util.Map
 - getModifiedWithoutEditing():java.util.List
 - getRegisteredExecutors():java.util.List
+- getResolvedConflictPaths():java.util.List
 - getState():org.jdom.Element
 - getStatus(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.FileStatus
 - getStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
@@ -719,6 +720,7 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - isIgnoredInUpdateMode():Z
 - isInUpdate():Z
 - isLogicallyLocked(com.intellij.openapi.vfs.VirtualFile):Z
+- isResolvedConflict(com.intellij.openapi.vcs.FilePath):Z
 - s:isUnder(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.VcsDirtyScope):Z
 - isUnversioned(com.intellij.openapi.vfs.VirtualFile):Z
 - isUnversionedInUpdateMode():Z
@@ -1096,6 +1098,7 @@ com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 - com.intellij.openapi.vcs.changes.FileHolder
 - sf:TOPIC:com.intellij.util.messages.Topic
 - sf:VCS_IGNORED_FILES_HOLDER_EP:com.intellij.openapi.extensions.ProjectExtensionPointName
+- sf:VCS_RESOLVED_CONFLICTS_FILES_HOLDER_EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - sf:VCS_UNVERSIONED_FILES_HOLDER_EP:com.intellij.openapi.extensions.ProjectExtensionPointName
 - isInUpdatingMode():Z
 com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider
@@ -2506,6 +2509,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - sf:MODIFIED_WITHOUT_EDITING_TAG:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - psf:MODULE_SORT_WEIGHT:I
 - psf:REPOSITORY_SORT_WEIGHT:I
+- psf:RESOLVED_CONFLICTS_SORT_WEIGHT:I
 - sf:SWITCHED_FILES_TAG:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - sf:SWITCHED_ROOTS_TAG:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - sf:TO_TEXT_CONVERTER:com.intellij.util.containers.Convertor

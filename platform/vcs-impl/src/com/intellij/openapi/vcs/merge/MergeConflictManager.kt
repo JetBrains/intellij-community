@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
@@ -32,6 +33,12 @@ class MergeConflictManager(private val project: Project, private val cs: Corouti
       }
     }, cs)
   }
+
+  fun isResolvedConflict(path: FilePath): Boolean =
+    ChangeListManager.getInstance(project).isResolvedConflict(path)
+
+  fun getResolvedConflictPaths(): List<FilePath> =
+    ChangeListManager.getInstance(project).getResolvedConflictPaths()
 
   fun isMergeConflict(): Boolean =
     ChangeListManager.getInstance(project).allChanges.any { isMergeConflict(it.fileStatus) }

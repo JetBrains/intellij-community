@@ -674,6 +674,7 @@
       implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
     <vcs.ignoredFilesHolder implementation="git4idea.repo.GitIgnoredFilesHolder$Provider"/>
     <vcs.unversionedFilesHolder implementation="git4idea.repo.GitUnversionedFilesHolder$Provider"/>
+    <vcs.resolvedConflictsFilesHolder implementation="git4idea.merge.GitResolvedConflictsFilesHolder$Provider"/>
     <projectConfigurable id="vcs.Git" key="settings.git.option.group" instance="git4idea.config.GitVcsPanel"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
     <generalVcsSettingsExtension instance="git4idea.rebase.log.GitLogCommitEditingConfigurable"

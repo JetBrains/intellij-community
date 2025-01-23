@@ -251,7 +251,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
    * @see #installGroupingSupport(ChangesTree, ChangesGroupingSupport, Supplier, Consumer)
    */
   protected @NotNull ChangesGroupingSupport installGroupingSupport() {
-    ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, false);
+    ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, true);
 
     migrateShowFlattenSetting();
     installGroupingSupport(this, result, GROUPING_KEYS, DEFAULT_GROUPING_KEYS);

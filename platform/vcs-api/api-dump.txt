@@ -1030,6 +1030,7 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangeListManager
 - a:getModifiedWithoutEditing():java.util.List
 - a:getRegisteredExecutors():java.util.List
+- a:getResolvedConflictPaths():java.util.List
 - a:getStatus(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.FileStatus
 - a:getStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
 - a:getSwitchedBranch(com.intellij.openapi.vfs.VirtualFile):java.lang.String
@@ -1044,6 +1045,7 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - a:isFreezedWithNotification(java.lang.String):Z
 - a:isIgnoredFile(com.intellij.openapi.vcs.FilePath):Z
 - a:isIgnoredFile(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isResolvedConflict(com.intellij.openapi.vcs.FilePath):Z
 - a:isUnversioned(com.intellij.openapi.vfs.VirtualFile):Z
 - a:registerCommitExecutor(com.intellij.openapi.vcs.changes.CommitExecutor):V
 - a:removeChangeListListener(com.intellij.openapi.vcs.changes.ChangeListListener):V

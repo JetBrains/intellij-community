@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -568,6 +568,14 @@ public class GitImpl extends GitImplBase {
   public @NotNull GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.LS_FILES);
     h.addParameters("--unmerged");
+    h.setSilent(true);
+    return runCommand(h);
+  }
+
+  @Override
+  public @NotNull GitCommandResult getResolvedFiles(@NotNull GitRepository repository) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.LS_FILES);
+    h.addParameters("--resolve-undo");
     h.setSilent(true);
     return runCommand(h);
   }

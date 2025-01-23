@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserConflictsNodeKt.CONFLICTS_NODE_TAG;
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserResolvedConflictsNodeKt.RESOLVED_CONFLICTS_NODE_TAG;
 
 @ApiStatus.Internal
 public class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrategy<ChangesViewTreeStateStrategy.MyState> {
@@ -37,9 +38,9 @@ public class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrate
   private static void initTreeStateIfNeeded(@NotNull ChangesListView view,
                                             @NotNull ChangesBrowserNode<?> newRoot,
                                             int oldFileCount) {
-    DefaultMutableTreeNode firstConflictNode = getFirstConflictNode(view);
-    if (firstConflictNode != null) {
-      TreeUtil.selectNode(view, firstConflictNode);
+    DefaultMutableTreeNode firstMergeNode = getFirstMergeConflictNode(view);
+    if (firstMergeNode != null) {
+      TreeUtil.selectNode(view, firstMergeNode);
     }
 
     ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
@@ -64,8 +65,26 @@ public class ChangesViewTreeStateStrategy implements ChangesTree.TreeStateStrate
       });
   }
 
+  private static @Nullable ChangesBrowserNode<?> getFirstMergeConflictNode(@NotNull ChangesListView view) {
+    ChangesBrowserNode<?> conflictNode = getFirstConflictNode(view);
+    if (conflictNode != null) return conflictNode;
+
+    ChangesBrowserNode<?> resolvedConflictNode = getFirstResolvedConflictNode(view);
+    if (resolvedConflictNode != null) return resolvedConflictNode;
+
+    return null;
+  }
+
   private static @Nullable ChangesBrowserNode<?> getFirstConflictNode(@NotNull ChangesListView view) {
     return VcsTreeModelData.allUnderTag(view, CONFLICTS_NODE_TAG).iterateRawNodes()
+      .filter(ChangesBrowserChangeNode.class)
+      .find(node -> {
+        return MergeConflictManager.isMergeConflict(node.getUserObject().getFileStatus());
+      });
+  }
+
+  private static @Nullable ChangesBrowserNode<?> getFirstResolvedConflictNode(@NotNull ChangesListView view) {
+    return VcsTreeModelData.allUnderTag(view, RESOLVED_CONFLICTS_NODE_TAG).iterateRawNodes()
       .filter(ChangesBrowserChangeNode.class)
       .find(node -> {
         return MergeConflictManager.isMergeConflict(node.getUserObject().getFileStatus());
