@@ -674,6 +674,21 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
+    super.visitAssignmentExpression(assignment);
+    if (!hasErrorResults()) myExpressionChecker.checkAssignmentCompatibleTypes(assignment);
+    if (!hasErrorResults()) myExpressionChecker.checkAssignmentOperatorApplicable(assignment);
+    if (!hasErrorResults()) myExpressionChecker.checkOutsideDeclaredCantBeAssignmentInGuard(assignment.getLExpression());
+  }
+
+  @Override
+  public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
+    super.visitUnaryExpression(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkUnaryOperatorApplicable(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkOutsideDeclaredCantBeAssignmentInGuard(expression.getOperand());
+  }
+
+  @Override
   public void visitUnnamedPattern(@NotNull PsiUnnamedPattern pattern) {
     super.visitUnnamedPattern(pattern);
     checkFeature(pattern, JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);

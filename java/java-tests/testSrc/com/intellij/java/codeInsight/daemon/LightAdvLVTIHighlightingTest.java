@@ -103,10 +103,10 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
     String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 8px 4px;color: "+greyed+"'>Required type:</td>" +
-                      "<td style='padding: 0px 4px 8px 0px;'><font color=\""+toolTipForeground+"\">anonymous Object</font></td></tr>" +
-                      "<tr><td style='padding: 0px 16px 0px 4px;color: "+greyed+"'>Provided:</td>" +
-                      "<td style='padding: 0px 4px 0px 0px;'><font color=\""+errorTipForeground+"\">Object</font></td></tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: "+greyed+"\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: "+toolTipForeground+"\">anonymous Object</span></td></tr>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: "+greyed+"\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: "+errorTipForeground+"\">Object</span></td></tr>" +
                       "</table>" +
                       "</html>";
 
@@ -123,10 +123,10 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
     String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 8px 4px;color: "+greyed+"'>Required type:</td>" +
-                      "<td style='padding: 0px 4px 8px 0px;'><font color=\""+toolTipForeground+"\">anonymous X</font></td></tr>" +
-                      "<tr><td style='padding: 0px 16px 0px 4px;color: "+greyed+"'>Provided:</td>" +
-                      "<td style='padding: 0px 4px 0px 0px;'><font color=\""+errorTipForeground+"\">Y</font></td></tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: "+greyed+"\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: "+toolTipForeground+"\">anonymous X</span></td></tr>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: "+greyed+"\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: "+errorTipForeground+"\">Y</span></td></tr>" +
                       "</table>" +
                       "</html>";
 

@@ -353,6 +353,19 @@ final class JavaErrorFixProvider {
     multi(CALL_CONSTRUCTOR_MUST_BE_FIRST_STATEMENT, error -> HighlightUtil.getIncreaseLanguageLevelFixes(
       error.psi(), JavaFeature.STATEMENTS_BEFORE_SUPER));
     fix(STRING_TEMPLATE_PROCESSOR_MISSING, error -> new MissingStrProcessorFix(error.psi()));
+    multi(UNARY_OPERATOR_NOT_APPLICABLE, error -> {
+      PsiUnaryExpression unary = error.psi();
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      if (unary instanceof PsiPrefixExpression prefixExpression && unary.getOperationTokenType() == JavaTokenType.EXCL) {
+        registrar.add(myFactory.createNegationBroadScopeFix(prefixExpression));
+        PsiExpression operand = unary.getOperand();
+        if (operand != null) {
+          AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(registrar::add, operand, PsiTypes.booleanType(), operand.getType());
+          ContainerUtil.addIfNotNull(registrar, HighlightFixUtil.createChangeReturnTypeFix(operand, PsiTypes.booleanType()));
+        }
+      }
+      return registrar;
+    });
   }
   
   private void createAccessFixes() {
@@ -410,6 +423,15 @@ final class JavaErrorFixProvider {
         }
         if (expression instanceof PsiMethodCallExpression callExpression) {
           HighlightFixUtil.registerCallInferenceFixes(callExpression, registrar::add);
+        }
+        else if (parent instanceof PsiAssignmentExpression assignment && assignment.getRExpression() == expression) {
+          PsiExpression lExpr = assignment.getLExpression();
+
+          registrar.add(myFactory.createChangeToAppendFix(assignment.getOperationTokenType(), lType, assignment));
+          if (rType != null) {
+            HighlightFixUtil.registerChangeVariableTypeFixes(lExpr, rType, expression, registrar::add);
+            HighlightFixUtil.registerChangeVariableTypeFixes(expression, lType, lExpr, registrar::add);
+          }
         }
         return registrar;
       }

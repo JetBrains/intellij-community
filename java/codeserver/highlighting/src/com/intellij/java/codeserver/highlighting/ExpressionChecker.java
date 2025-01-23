@@ -14,6 +14,7 @@ import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
@@ -612,6 +613,83 @@ final class ExpressionChecker {
         }
       }
     }
+  }
+
+  void checkAssignmentCompatibleTypes(@NotNull PsiAssignmentExpression assignment) {
+    PsiExpression lExpr = assignment.getLExpression();
+    PsiExpression rExpr = assignment.getRExpression();
+    if (rExpr == null) return;
+    PsiType lType = lExpr.getType();
+    PsiType rType = rExpr.getType();
+    if (rType == null) return;
+
+    IElementType sign = assignment.getOperationTokenType();
+    if (JavaTokenType.EQ.equals(sign)) {
+      checkAssignability(lType, rType, rExpr, rExpr);
+    }
+    else {
+      // 15.26.2. Compound Assignment Operators
+      IElementType opSign = TypeConversionUtil.convertEQtoOperation(sign);
+      PsiType type = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opSign, true);
+      if (type == null || lType == null || lType instanceof PsiLambdaParameterType || type instanceof PsiLambdaParameterType ||
+          TypeConversionUtil.areTypesConvertible(type, lType)) {
+        return;
+      }
+      if (IncompleteModelUtil.isIncompleteModel(assignment) && IncompleteModelUtil.isPotentiallyConvertible(lType, rExpr)) {
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(rExpr, new JavaIncompatibleTypeErrorContext(lType, type)));
+    }
+  }
+
+  void checkAssignmentOperatorApplicable(@NotNull PsiAssignmentExpression assignment) {
+    PsiJavaToken operationSign = assignment.getOperationSign();
+    IElementType eqOpSign = operationSign.getTokenType();
+    IElementType opSign = TypeConversionUtil.convertEQtoOperation(eqOpSign);
+    if (opSign == null) return;
+    PsiType lType = assignment.getLExpression().getType();
+    PsiExpression rExpression = assignment.getRExpression();
+    if (rExpression == null) return;
+    PsiType rType = rExpression.getType();
+    if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, lType, rType, true)) {
+      if (lType instanceof PsiLambdaParameterType || rType instanceof PsiLambdaParameterType) {
+        // Unresolved lambda parameter type is used: an error for parameter should be more descriptive, so let's avoid reporting type error
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.BINARY_OPERATOR_NOT_APPLICABLE.create(
+        operationSign, new JavaIncompatibleTypeErrorContext(lType, rType)));
+    }
+  }
+
+  void checkUnaryOperatorApplicable(@NotNull PsiUnaryExpression unary) {
+    PsiJavaToken token = unary.getOperationSign();
+    PsiExpression operand = unary.getOperand();
+    if (operand != null && !TypeConversionUtil.isUnaryOperatorApplicable(token, operand)) {
+      PsiType type = operand.getType();
+      if (type == null || type instanceof PsiLambdaParameterType) return;
+      myVisitor.report(JavaErrorKinds.UNARY_OPERATOR_NOT_APPLICABLE.create(unary, type));
+    }
+  }
+
+  /**
+   * JEP 440-441
+   * Any variable that is used but not declared by a guard must either be final or effectively final (4.12.4)
+   * and cannot be assigned to (15.26),
+   * incremented (15.14.2), or decremented (15.14.3), otherwise a compile-time error occurs
+   **/
+  void checkOutsideDeclaredCantBeAssignmentInGuard(@Nullable PsiExpression expressionVariable) {
+    if (expressionVariable == null) return;
+    if (!PsiUtil.isAccessedForWriting(expressionVariable)) return;
+    PsiSwitchLabelStatementBase label = PsiTreeUtil.getParentOfType(expressionVariable, PsiSwitchLabelStatementBase.class);
+    if (label == null) return;
+    PsiExpression guardingExpression = label.getGuardExpression();
+    if (!PsiTreeUtil.isAncestor(guardingExpression, expressionVariable, false)) return;
+    if (!(expressionVariable instanceof PsiReferenceExpression referenceExpression &&
+          referenceExpression.resolve() instanceof PsiVariable psiVariable)) {
+      return;
+    }
+    if (PsiTreeUtil.isAncestor(guardingExpression, psiVariable, false)) return;
+    myVisitor.report(JavaErrorKinds.ASSIGNMENT_DECLARED_OUTSIDE_GUARD.create(expressionVariable, psiVariable));
   }
 
   private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {

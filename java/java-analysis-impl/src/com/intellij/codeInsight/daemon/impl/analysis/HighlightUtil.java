@@ -256,105 +256,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  /**
-   * JEP 440-441
-   * Any variable that is used but not declared by a guard must either be final or effectively final (4.12.4)
-   * and cannot be assigned to (15.26),
-   * incremented (15.14.2), or decremented (15.14.3), otherwise a compile-time error occurs
-   **/
-  static @Nullable HighlightInfo.Builder checkOutsideDeclaredCantBeAssignmentInGuard(@Nullable PsiExpression expressionVariable) {
-    if (expressionVariable == null) {
-      return null;
-    }
-    if (!PsiUtil.isAccessedForWriting(expressionVariable)) {
-      return null;
-    }
-    PsiSwitchLabelStatementBase label = PsiTreeUtil.getParentOfType(expressionVariable, PsiSwitchLabelStatementBase.class);
-    if (label == null) {
-      return null;
-    }
-    PsiExpression guardingExpression = label.getGuardExpression();
-    if (!PsiTreeUtil.isAncestor(guardingExpression, expressionVariable, false)) {
-      return null;
-    }
-    if (!(expressionVariable instanceof PsiReferenceExpression referenceExpression &&
-          referenceExpression.resolve() instanceof PsiVariable psiVariable)) {
-      return null;
-    }
-    if (PsiTreeUtil.isAncestor(guardingExpression, psiVariable, false)) {
-      return null;
-    }
-    String message = JavaErrorBundle.message("impossible.assign.declared.outside.guard", psiVariable.getName());
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-      .range(expressionVariable)
-      .descriptionAndTooltip(message);
-  }
-
-  static HighlightInfo.Builder checkAssignmentOperatorApplicable(@NotNull PsiAssignmentExpression assignment) {
-    PsiJavaToken operationSign = assignment.getOperationSign();
-    IElementType eqOpSign = operationSign.getTokenType();
-    IElementType opSign = TypeConversionUtil.convertEQtoOperation(eqOpSign);
-    if (opSign == null) return null;
-    PsiType lType = assignment.getLExpression().getType();
-    PsiExpression rExpression = assignment.getRExpression();
-    if (rExpression == null) return null;
-    PsiType rType = rExpression.getType();
-    HighlightInfo.Builder errorResult = null;
-    if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, lType, rType, true)) {
-      if (lType instanceof PsiLambdaParameterType || rType instanceof PsiLambdaParameterType) {
-        // Unresolved lambda parameter type is used: an error for parameter should be more descriptive, so let's avoid reporting type error
-        return null;
-      }
-      String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
-      String message = JavaErrorBundle.message("binary.operator.not.applicable", operatorText,
-                                               JavaHighlightUtil.formatType(lType),
-                                               JavaHighlightUtil.formatType(rType));
-
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(operationSign).descriptionAndTooltip(message);
-    }
-    return errorResult;
-  }
-
-
-  static HighlightInfo.Builder checkAssignmentCompatibleTypes(@NotNull PsiAssignmentExpression assignment) {
-    PsiExpression lExpr = assignment.getLExpression();
-    PsiExpression rExpr = assignment.getRExpression();
-    if (rExpr == null) return null;
-    PsiType lType = lExpr.getType();
-    PsiType rType = rExpr.getType();
-    if (rType == null) return null;
-
-    IElementType sign = assignment.getOperationTokenType();
-    HighlightInfo.Builder highlightInfo;
-    if (JavaTokenType.EQ.equals(sign)) {
-      highlightInfo = checkAssignability(lType, rType, rExpr, assignment);
-    }
-    else {
-      // 15.26.2. Compound Assignment Operators
-      IElementType opSign = TypeConversionUtil.convertEQtoOperation(sign);
-      PsiType type = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opSign, true);
-      if (type == null || lType == null || lType instanceof PsiLambdaParameterType || type instanceof PsiLambdaParameterType ||
-          TypeConversionUtil.areTypesConvertible(type, lType)) {
-        return null;
-      }
-      if (IncompleteModelUtil.isIncompleteModel(assignment) && IncompleteModelUtil.isPotentiallyConvertible(lType, rExpr)) {
-        return null;
-      }
-      highlightInfo = createIncompatibleTypeHighlightInfo(lType, type, assignment.getTextRange(), 0);
-      IntentionAction action = getFixFactory().createChangeToAppendFix(sign, lType, assignment);
-      highlightInfo.registerFix(action, null, null, null, null);
-    }
-    if (highlightInfo == null) {
-      return null;
-    }
-    HighlightFixUtil.registerChangeVariableTypeFixes(lExpr, rType, rExpr, highlightInfo);
-    if (lType != null) {
-      HighlightFixUtil.registerChangeVariableTypeFixes(rExpr, lType, lExpr, highlightInfo);
-    }
-    return highlightInfo;
-  }
-
-
   static HighlightInfo.Builder checkVariableInitializerType(@NotNull PsiVariable variable) {
     PsiExpression initializer = variable.getInitializer();
     // array initializer checked in checkArrayInitializerApplicable
@@ -367,7 +268,7 @@ public final class HighlightUtil {
     HighlightInfo.Builder highlightInfo = checkAssignability(lType, rType, initializer, new TextRange(start, end), 0);
     if (highlightInfo != null) {
       HighlightFixUtil.registerChangeVariableTypeFixes(variable, rType, variable.getInitializer(), highlightInfo);
-      HighlightFixUtil.registerChangeVariableTypeFixes(initializer, lType, null, highlightInfo);
+      HighlightFixUtil.registerChangeVariableTypeFixes(initializer, lType, null, asConsumer(highlightInfo));
     }
     return highlightInfo;
   }
@@ -1065,7 +966,7 @@ public final class HighlightUtil {
       HighlightFixUtil.registerChangeVariableTypeFixes(localVariable, expectedType, null, info);
     }
     else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
-      HighlightFixUtil.registerChangeVariableTypeFixes(assignmentExpression.getLExpression(), expectedType, null, info);
+      HighlightFixUtil.registerChangeVariableTypeFixes(assignmentExpression.getLExpression(), expectedType, null, asConsumer(info));
     }
   }
 
@@ -1122,31 +1023,6 @@ public final class HighlightUtil {
     return null;
   }
 
-
-  static HighlightInfo.Builder checkUnaryOperatorApplicable(@NotNull PsiJavaToken token, @Nullable PsiExpression expression) {
-    if (expression != null && !TypeConversionUtil.isUnaryOperatorApplicable(token, expression)) {
-      PsiType type = expression.getType();
-      if (type == null || type instanceof PsiLambdaParameterType) return null;
-      String message = JavaErrorBundle.message("unary.operator.not.applicable", token.getText(), JavaHighlightUtil.formatType(type));
-
-      PsiElement parentExpr = token.getParent();
-      HighlightInfo.Builder highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parentExpr).descriptionAndTooltip(message);
-      if (parentExpr instanceof PsiPrefixExpression prefixExpression && token.getTokenType() == JavaTokenType.EXCL) {
-        IntentionAction action1 = getFixFactory().createNegationBroadScopeFix(prefixExpression);
-        highlightInfo.registerFix(action1, null, null, null, null);
-        if (expression instanceof PsiMethodCallExpression callExpression) {
-          PsiMethod method = callExpression.resolveMethod();
-          if (method != null) {
-            IntentionAction action = getFixFactory().createMethodReturnFix(method, PsiTypes.booleanType(), true);
-            highlightInfo.registerFix(action, null, null, null, null);
-          }
-        }
-      }
-      return highlightInfo;
-    }
-    return null;
-  }
 
   static HighlightInfo.Builder checkUnqualifiedSuperInDefaultMethod(@NotNull LanguageLevel languageLevel,
                                                             @NotNull PsiReferenceExpression expr,

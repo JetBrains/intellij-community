@@ -598,7 +598,8 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> TYPE_INCOMPATIBLE =
     parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "type.incompatible")
-      .withRange((psi, context) -> getRange(psi))
+      .withAnchor((psi, context) -> psi.getParent() instanceof PsiAssignmentExpression assignment ? assignment : psi)
+      .withRange((psi, context) -> psi.getParent() instanceof PsiAssignmentExpression ? null : getRange(psi))
       .withDescription((psi, context) -> context.createDescription())
       .withTooltip((psi, context) -> context.createTooltip());
   public static final Simple<PsiKeyword> TYPE_VOID_ILLEGAL = error("type.void.illegal");
@@ -646,6 +647,19 @@ public final class JavaErrorKinds {
       .withRawDescription((expr, cls) -> message("expression.super.no.enclosing.instance", formatClass(cls)));
   public static final Simple<PsiJavaCodeReferenceElement> EXPRESSION_QUALIFIED_CLASS_EXPECTED = 
     error(PsiJavaCodeReferenceElement.class, "expression.qualified.class.expected");
+  
+  public static final Parameterized<PsiExpression, PsiVariable> ASSIGNMENT_DECLARED_OUTSIDE_GUARD =
+    parameterized(PsiExpression.class, PsiVariable.class, "assignment.declared.outside.guard")
+      .withRawDescription((expr, variable) -> message("assignment.declared.outside.guard", variable.getName()));
+  
+  public static final Parameterized<PsiJavaToken, JavaIncompatibleTypeErrorContext> BINARY_OPERATOR_NOT_APPLICABLE =
+    parameterized(PsiJavaToken.class, JavaIncompatibleTypeErrorContext.class, "binary.operator.not.applicable")
+      .withRawDescription((token, context) -> message("binary.operator.not.applicable", token.getText().replace("=", ""),
+                                                    formatType(context.lType()), formatType(context.rType())));
+  public static final Parameterized<PsiUnaryExpression, PsiType> UNARY_OPERATOR_NOT_APPLICABLE =
+    parameterized(PsiUnaryExpression.class, PsiType.class, "unary.operator.not.applicable")
+      .withRawDescription((unary, type) -> message("unary.operator.not.applicable", 
+                                                   unary.getOperationSign().getText(), formatType(type)));
 
   public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE =
     error("new.expression.diamond.not.applicable");

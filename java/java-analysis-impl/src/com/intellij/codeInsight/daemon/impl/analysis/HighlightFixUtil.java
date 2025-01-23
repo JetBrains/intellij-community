@@ -134,21 +134,18 @@ public final class HighlightFixUtil {
   static void registerChangeVariableTypeFixes(@NotNull PsiExpression expression,
                                               @NotNull PsiType type,
                                               @Nullable PsiExpression lExpr,
-                                              @Nullable HighlightInfo.Builder highlightInfo) {
-    if (highlightInfo == null || !(expression instanceof  PsiReferenceExpression)) return;
+                                              @NotNull Consumer<? super CommonIntentionAction> info) {
+    if (!(expression instanceof PsiReferenceExpression ref)) return;
+    if (!(ref.resolve() instanceof PsiVariable variable)) return;
 
-    PsiElement element = ((PsiReferenceExpression)expression).resolve();
-    if (!(element instanceof PsiVariable)) return;
-
-    registerChangeVariableTypeFixes((PsiVariable)element, type, lExpr, highlightInfo);
+    registerChangeVariableTypeFixes(variable, type, lExpr, info);
 
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(lExpr);
-    if (stripped instanceof PsiMethodCallExpression && lExpr.getParent() instanceof PsiAssignmentExpression) {
-      PsiElement parent = lExpr.getParent();
-      if (parent.getParent() instanceof PsiStatement) {
-        PsiMethod method = ((PsiMethodCallExpression)stripped).resolveMethod();
+    if (stripped instanceof PsiMethodCallExpression call && lExpr.getParent() instanceof PsiAssignmentExpression assignment) {
+      if (assignment.getParent() instanceof PsiStatement) {
+        PsiMethod method = call.resolveMethod();
         if (method != null && PsiTypes.voidType().equals(method.getReturnType())) {
-          highlightInfo.registerFix(new ReplaceAssignmentFromVoidWithStatementIntentionAction(parent, stripped), null, null, null, null);
+          info.accept(new ReplaceAssignmentFromVoidWithStatementIntentionAction(assignment, stripped));
         }
       }
     }

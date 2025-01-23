@@ -297,14 +297,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
-    if (!hasErrorResults()) add(HighlightUtil.checkAssignmentCompatibleTypes(assignment));
-    if (!hasErrorResults()) add(HighlightUtil.checkAssignmentOperatorApplicable(assignment));
-    if (!hasErrorResults()) add(HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard(assignment.getLExpression()));
-    if (!hasErrorResults()) visitExpression(assignment);
-  }
-
-  @Override
   public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
     super.visitPolyadicExpression(expression);
     if (!hasErrorResults()) add(HighlightUtil.checkPolyadicOperatorApplicable(expression));
@@ -812,15 +804,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!hasErrorResults()) add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
       if (!hasErrorResults()) GenericsHighlightUtil.checkCatchParameterIsClass(parameter, myErrorSink);
     }
-  }
-
-  @Override
-  public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
-    super.visitUnaryExpression(expression);
-    if (!hasErrorResults()) {
-      add(HighlightUtil.checkUnaryOperatorApplicable(expression.getOperationSign(), expression.getOperand()));
-    }
-    if (!hasErrorResults()) add(HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard(expression.getOperand()));
   }
 
   @Override
