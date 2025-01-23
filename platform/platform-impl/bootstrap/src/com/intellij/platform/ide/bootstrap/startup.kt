@@ -37,6 +37,8 @@ import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
+import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
 import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -242,11 +244,13 @@ fun CoroutineScope.startApplication(
   }
 
   val kernelStarted = async {
-    if (PlatformUtils.isJetBrainsClient()) {
-      startClientKernel(mainScope)
-    }
-    else {
-      startServerKernel(mainScope)
+    span("Starting Kernel") {
+      if (PlatformUtils.isJetBrainsClient()) {
+        startClientKernel(mainScope)
+      }
+      else {
+        startServerKernel(mainScope)
+      }
     }
   }
 

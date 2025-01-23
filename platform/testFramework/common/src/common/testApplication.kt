@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
-import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
@@ -74,6 +73,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
