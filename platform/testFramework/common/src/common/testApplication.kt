@@ -151,7 +151,6 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   val kernelStarted = runBlocking {
     startServerKernel(GlobalScope)
   }
-  installThreadContext(kernelStarted.coroutineContext)
 
   val app = ApplicationImpl(kernelStarted.coroutineContext, isHeadless)
   Disposer.register(app) {
