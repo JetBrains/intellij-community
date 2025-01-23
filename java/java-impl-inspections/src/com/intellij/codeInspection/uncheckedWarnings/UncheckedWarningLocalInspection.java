@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.uncheckedWarnings;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableArrayTypeFix;
@@ -16,6 +15,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -364,7 +364,7 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
                                               PsiExpression expression, PsiType parameterType,
                                               PsiType itemType,
                                               @NotNull Supplier<? extends @NotNull LocalQuickFix @NotNull []> fixesSupplier) {
-      if (GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()) != null) return;
+      if (JavaErrorCollector.findSingleError(expression) != null) return;
       if (parameterType == null || itemType == null) return;
       if (!TypeConversionUtil.isAssignable(parameterType, itemType)) return;
       if (JavaGenericsUtil.isRawToGeneric(parameterType, itemType)) {

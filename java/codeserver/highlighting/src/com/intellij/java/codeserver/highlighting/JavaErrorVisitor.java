@@ -215,6 +215,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myExpressionChecker.checkQualifiedNew(expression, type, aClass);
     if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(expression);
     if (!hasErrorResults()) myExpressionChecker.checkNewExpression(expression, type);
+    if (!hasErrorResults()) myGenericsChecker.checkGenericArrayCreation(expression, type);
   }
 
   @Override
@@ -285,6 +286,14 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       }
     }
     if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(expression);
+    if (!hasErrorResults()) {
+      PsiElement qualifier = expression.getQualifier();
+      if (qualifier instanceof PsiTypeElement typeElement) {
+        PsiType psiType = typeElement.getType();
+        myGenericsChecker.checkGenericArrayCreation(qualifier, psiType);
+        if (hasErrorResults()) return;
+      }
+    }
   }
 
   @Override
@@ -481,6 +490,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
     super.visitArrayInitializerExpression(expression);
     if (!hasErrorResults()) myExpressionChecker.checkArrayInitializerApplicable(expression);
+    if (!(expression.getParent() instanceof PsiNewExpression)) {
+      if (!hasErrorResults()) myGenericsChecker.checkGenericArrayCreation(expression, expression.getType());
+    }
   }
 
     @Override

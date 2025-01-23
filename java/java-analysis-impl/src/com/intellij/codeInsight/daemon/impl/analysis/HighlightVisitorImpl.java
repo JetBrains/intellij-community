@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
@@ -31,6 +32,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -283,14 +285,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       return myHolder.add(info);
     }
     return false;
-  }
-
-  @Override
-  public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
-    super.visitArrayInitializerExpression(expression);
-    if (!(expression.getParent() instanceof PsiNewExpression)) {
-      if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()));
-    }
   }
 
   @Override
@@ -763,7 +757,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitNewExpression(@NotNull PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericArrayCreation(expression, type));
 
     if (!hasErrorResults()) visitExpression(expression);
 
@@ -1101,15 +1094,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiElement qualifier = expression.getQualifier();
       if (qualifier instanceof PsiTypeElement typeElement) {
         PsiType psiType = typeElement.getType();
-        HighlightInfo.Builder genericArrayCreationInfo = GenericsHighlightUtil.checkGenericArrayCreation(qualifier, psiType);
-        if (genericArrayCreationInfo != null) {
-          add(genericArrayCreationInfo);
-        }
-        else {
-          String wildcardMessage = PsiMethodReferenceUtil.checkTypeArguments(typeElement, psiType);
-          if (wildcardMessage != null) {
-            add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(wildcardMessage));
-          }
+        String wildcardMessage = checkTypeArguments(typeElement, psiType);
+        if (wildcardMessage != null) {
+          add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(wildcardMessage));
         }
       }
     }
@@ -1588,4 +1575,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }
 
+  private static @NlsContexts.DetailedDescription String checkTypeArguments(PsiTypeElement qualifier, PsiType psiType) {
+    if (psiType instanceof PsiClassType) {
+      final PsiJavaCodeReferenceElement referenceElement = qualifier.getInnermostComponentReferenceElement();
+      if (referenceElement != null) {
+        PsiType[] typeParameters = referenceElement.getTypeParameters();
+        for (PsiType typeParameter : typeParameters) {
+          if (typeParameter instanceof PsiWildcardType) {
+            return JavaPsiBundle.message("error.message.wildcard.not.expected");
+          }
+        }
+      }
+    }
+    return null;
+  }
 }

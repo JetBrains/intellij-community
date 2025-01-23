@@ -101,7 +101,7 @@ final class JavaErrorFixProvider {
                                             STATEMENT_CASE_OUTSIDE_SWITCH, NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE,
                                             NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS,
                                             CALL_DIRECT_ABSTRACT_METHOD_ACCESS, RECORD_SPECIAL_METHOD_TYPE_PARAMETERS,
-                                            RECORD_SPECIAL_METHOD_THROWS)) {
+                                            RECORD_SPECIAL_METHOD_THROWS, ARRAY_TYPE_ARGUMENTS, ARRAY_EMPTY_DIAMOND)) {
       fix(kind, genericRemover);
     }
 
@@ -312,6 +312,7 @@ final class JavaErrorFixProvider {
       return myFactory.createReplaceWithTypePatternFix(error.psi(), error.context(), patternVarName);
     });
     fix(ARRAY_INITIALIZER_NOT_ALLOWED, error -> myFactory.createAddNewArrayExpressionFix(error.psi()));
+    fix(ARRAY_GENERIC, error -> error.psi() instanceof PsiReferenceParameterList list ? myFactory.createDeleteFix(list) : null);
     fix(ARRAY_TYPE_EXPECTED, error -> error.psi().getParent() instanceof PsiArrayAccessExpression accessExpression ?
                                       myFactory.createReplaceWithListAccessFix(accessExpression) : null);
     fix(ARRAY_ILLEGAL_INITIALIZER, error -> {

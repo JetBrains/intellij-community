@@ -302,21 +302,6 @@ public final class PsiMethodReferenceUtil {
     return type;
   }
 
-  public static @NlsContexts.DetailedDescription String checkTypeArguments(PsiTypeElement qualifier, PsiType psiType) {
-    if (psiType instanceof PsiClassType) {
-      final PsiJavaCodeReferenceElement referenceElement = qualifier.getInnermostComponentReferenceElement();
-      if (referenceElement != null) {
-        PsiType[] typeParameters = referenceElement.getTypeParameters();
-        for (PsiType typeParameter : typeParameters) {
-          if (typeParameter instanceof PsiWildcardType) {
-            return JavaPsiBundle.message("error.message.wildcard.not.expected");
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   public static @NlsContexts.DetailedDescription String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, PsiType functionalInterfaceType) {
     final Ref<@Nls String> errorMessage = Ref.create();
     if (!isReturnTypeCompatible(expression, result, functionalInterfaceType, errorMessage)) {

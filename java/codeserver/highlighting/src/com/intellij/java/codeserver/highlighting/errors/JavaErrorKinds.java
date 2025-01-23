@@ -621,6 +621,9 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiExpression, PsiType> ARRAY_TYPE_EXPECTED =
     parameterized(PsiExpression.class, PsiType.class, "array.type.expected")
       .withRawDescription((expr, type) -> message("array.type.expected", formatType(type)));
+  public static final Simple<PsiElement> ARRAY_GENERIC = error("array.generic");
+  public static final Simple<PsiReferenceParameterList> ARRAY_EMPTY_DIAMOND = error("array.empty.diamond");
+  public static final Simple<PsiReferenceParameterList> ARRAY_TYPE_ARGUMENTS = error("array.type.arguments");
 
   public static final Parameterized<PsiReferenceExpression, PsiClass> PATTERN_TYPE_PATTERN_EXPECTED =
     parameterized("pattern.type.pattern.expected");

@@ -416,4 +416,44 @@ final class GenericsChecker {
     }
     return false;
   }
+
+  void checkGenericArrayCreation(@NotNull PsiElement element, @Nullable PsiType type) {
+    if (type instanceof PsiArrayType arrayType) {
+      if (element instanceof PsiNewExpression newExpression) {
+        PsiReferenceParameterList typeArgumentList = newExpression.getTypeArgumentList();
+        if (typeArgumentList.getTypeArgumentCount() > 0) {
+          myVisitor.report(JavaErrorKinds.ARRAY_TYPE_ARGUMENTS.create(typeArgumentList));
+          return;
+        }
+        PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+        if (classReference != null) {
+          PsiReferenceParameterList parameterList = classReference.getParameterList();
+          if (parameterList != null) {
+            PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+            if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
+              myVisitor.report(JavaErrorKinds.ARRAY_EMPTY_DIAMOND.create(parameterList));
+              return;
+            }
+            if (typeParameterElements.length >= 1 && !JavaGenericsUtil.isReifiableType(arrayType.getComponentType())) {
+              myVisitor.report(JavaErrorKinds.ARRAY_GENERIC.create(parameterList));
+              return;
+            }
+          }
+        }
+      }
+      if (!JavaGenericsUtil.isReifiableType(arrayType.getComponentType())) {
+        if (element.getParent() instanceof PsiMethodReferenceExpression && element.getFirstChild() instanceof PsiTypeElement typeElement) {
+          PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.findChildOfType(typeElement, PsiJavaCodeReferenceElement.class);
+          if (referenceElement != null) {
+            PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+            if (parameterList != null && parameterList.getTypeArgumentCount() > 0) {
+              myVisitor.report(JavaErrorKinds.ARRAY_GENERIC.create(parameterList));
+              return;
+            }
+          }
+        }
+        myVisitor.report(JavaErrorKinds.ARRAY_GENERIC.create(element));
+      }
+    }
+  }
 }

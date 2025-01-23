@@ -778,60 +778,6 @@ public final class GenericsHighlightUtil {
     return enumClass != null && enumClass.isEnum() ? enumClass : null;
   }
 
-  public static HighlightInfo.Builder checkGenericArrayCreation(@NotNull PsiElement element, @Nullable PsiType type) {
-    if (type instanceof PsiArrayType arrayType) {
-      if (element instanceof PsiNewExpression newExpression) {
-        PsiReferenceParameterList typeArgumentList = newExpression.getTypeArgumentList();
-        if (typeArgumentList.getTypeArgumentCount() > 0) {
-          String description = JavaErrorBundle.message("array.creation.with.type.arguments");
-          HighlightInfo.Builder info =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeArgumentList).descriptionAndTooltip(description);
-          info.registerFix(QuickFixFactory.getInstance().createDeleteFix(typeArgumentList), null, null, null, null);
-          return info;
-        }
-        PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-        if (classReference != null) {
-          PsiReferenceParameterList parameterList = classReference.getParameterList();
-          if (parameterList != null) {
-            PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
-            if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
-              String description = JavaErrorBundle.message("cannot.create.array.with.empty.diamond");
-              HighlightInfo.Builder info =
-                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList).descriptionAndTooltip(description);
-              info.registerFix(QuickFixFactory.getInstance().createDeleteFix(parameterList), null, null, null, null);
-              return info;
-            }
-            if (typeParameterElements.length >= 1 && !JavaGenericsUtil.isReifiableType(arrayType.getComponentType())) {
-              String description = JavaErrorBundle.message("generic.array.creation");
-              HighlightInfo.Builder info =
-                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList).descriptionAndTooltip(description);
-              info.registerFix(QuickFixFactory.getInstance().createDeleteFix(parameterList), null, null, null, null);
-              return info;
-            }
-          }
-        }
-      }
-      if (!JavaGenericsUtil.isReifiableType(arrayType.getComponentType())) {
-        String description = JavaErrorBundle.message("generic.array.creation");
-        if (element.getParent() instanceof PsiMethodReferenceExpression && element.getFirstChild() instanceof PsiTypeElement typeElement) {
-          PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.findChildOfType(typeElement, PsiJavaCodeReferenceElement.class);
-          if (referenceElement != null) {
-            PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-            if (parameterList != null && parameterList.getTypeArgumentCount() > 0) {
-              HighlightInfo.Builder info =
-                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList).descriptionAndTooltip(description);
-              info.registerFix(QuickFixFactory.getInstance().createDeleteFix(parameterList), null, null, null, null);
-              return info;
-            }
-          }
-        }
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-      }
-    }
-
-    return null;
-  }
-
   static void checkCatchParameterIsClass(@NotNull PsiParameter parameter, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) return;
 
