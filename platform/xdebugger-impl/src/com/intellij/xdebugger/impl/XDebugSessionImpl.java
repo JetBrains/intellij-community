@@ -1236,11 +1236,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stop() {
-    stop(myDebugProcess);
-  }
-
-  private void stop(XDebugProcess process) {
-    ProcessHandler processHandler = process == null ? null : process.getProcessHandler();
+    ProcessHandler processHandler = getProcessHandler();
     if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
 
     if (processHandler.detachIsDefault()) {
@@ -1373,8 +1369,14 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  public ProcessHandler getProcessHandler() {
-    if (!isMixedMode()) return myDebugProcess.getProcessHandler();
+  public @Nullable ProcessHandler getProcessHandler() {
+    if (!isMixedMode()) {
+      // we had this check in `stop` method, moved it to here
+      if(myDebugProcess == null) {
+        return null;
+      }
+      return myDebugProcess.getProcessHandler();
+    }
     return myMixedModeExtension.getProcessHandler();
   }
 
