@@ -4,8 +4,8 @@ package com.intellij.internal.ui.sandbox.tests.components
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.impl.trialStateWidget.TrialStateButton
-import com.intellij.openapi.wm.impl.trialStateWidget.TrialStateButton.ColorState
+import com.intellij.ui.components.trialState.TrialStateButton
+import com.intellij.ui.components.trialState.TrialStateButton.ColorState
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent

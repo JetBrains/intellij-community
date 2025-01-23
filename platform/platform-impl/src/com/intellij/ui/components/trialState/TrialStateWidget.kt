@@ -1,12 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.trialStateWidget
+package com.intellij.ui.components.trialState
 
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.EDT
@@ -14,8 +10,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.trialStateWidget.TrialStateService.TrialState
 import com.intellij.ui.GotItTooltip
+import com.intellij.ui.components.trialState.TrialStateService.TrialState
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
@@ -33,7 +29,7 @@ import kotlin.math.min
 
 internal class TrialStateWidget : DumbAwareAction(), CustomComponentAction {
 
-  class TrialStateWidgetUnregister: AppLifecycleListener {
+  class TrialStateWidgetUnregister : AppLifecycleListener {
     override fun appStarted() {
       if (!TrialStateService.isEnabled()) {
         ActionManagerEx.getInstanceEx().unregisterAction("TrialStateWidget")

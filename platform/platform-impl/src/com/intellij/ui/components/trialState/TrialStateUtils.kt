@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.trialStateWidget
+package com.intellij.ui.components.trialState
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.LicensingFacade
@@ -59,7 +64,10 @@ internal object TrialStateUtils {
   }
 
   fun showRegister() {
-    // todo implement
-    println("showRegister not implemented")
+    val actionManager = ActionManager.getInstance()
+    val registerAction = actionManager.getAction("Register") ?: return
+    ActionUtil.performActionDumbAwareWithCallbacks(registerAction,
+                                                   AnActionEvent.createEvent(SimpleDataContext.builder().build(), null, "",
+                                                                             ActionUiKind.NONE, null))
   }
 }

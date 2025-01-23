@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.trialStateWidget
+package com.intellij.ui.components.trialState
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
@@ -7,9 +7,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.trialStateWidget.TrialStateButton.ColorState
 import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.LicensingFacade
@@ -38,7 +38,7 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
 
   data class State(
     val trialState: TrialState, val trialStateChanged: Boolean,
-    val colorState: ColorState, private val remainedDays: Int, private val trialLengthDays: Int,
+    val colorState: TrialStateButton.ColorState, private val remainedDays: Int, private val trialLengthDays: Int,
   ) {
 
     fun getButtonText(): @NlsContexts.Button String {
@@ -55,7 +55,8 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
     }
 
     fun getGotItTooltip(): GotItTooltip? {
-      val result = when (trialState) {
+      lateinit var result: GotItTooltip
+      result = when (trialState) {
         TrialState.TRIAL_STARTED -> GotItTooltip(GOT_IT_ID, IdeBundle.message("trial.state.got.it.trial.started.text"))
           .withHeader(IdeBundle.message("trial.state.got.it.trial.started.title", trialLengthDays))
           .addLearnMoreButton()
@@ -73,6 +74,8 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
             buildString {
               append(IdeBundle.message("trial.state.got.it.grace.period.text.begin"))
               append(link(IdeBundle.message("trial.state.got.it.grace.period.text.link")) {
+                Disposer.dispose(result)
+
                 TrialStateUtils.showRegister()
               })
               append(IdeBundle.message("trial.state.got.it.grace.period.text.end"))
@@ -105,7 +108,9 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
     fun getInstance(): TrialStateService = service<TrialStateService>()
 
     fun isEnabled(): Boolean {
-      return Registry.`is`("trial.state.widget") && (PlatformUtils.isPyCharm() || PlatformUtils.isIntelliJ())
+      // Community IDEs don't have the registry key
+      return Registry.`is`("trial.state.widget", false) &&
+             (PlatformUtils.isPyCharm() || PlatformUtils.isIntelliJ())
     }
 
     fun isApplicable(): Boolean {
@@ -163,7 +168,7 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
       lastTrialState = trialState
     }
 
-    val colorState = if (lastColorStateClicked && newColorState != ColorState.EXPIRING) ColorState.DEFAULT else newColorState
+    val colorState = if (lastColorStateClicked && newColorState != TrialStateButton.ColorState.EXPIRING) TrialStateButton.ColorState.DEFAULT else newColorState
 
     return State(trialState = trialState, trialStateChanged = trialStateChanged, colorState = colorState,
                  remainedDays = remainedDays, trialLengthDays = trialLengthDays)
@@ -209,16 +214,16 @@ private var lastColorStateClicked: Boolean
   get() = PropertiesComponent.getInstance().getBoolean(LAST_COLOR_CLICKED_KEY, false)
   set(value) = PropertiesComponent.getInstance().setValue(LAST_COLOR_CLICKED_KEY, value)
 
-private fun getColorState(trialState: TrialStateService.TrialState): ColorState {
+private fun getColorState(trialState: TrialStateService.TrialState): TrialStateButton.ColorState {
   return when (trialState) {
     TrialStateService.TrialState.TRIAL_STARTED,
     TrialStateService.TrialState.ACTIVE,
-      -> ColorState.ACTIVE
-    TrialStateService.TrialState.ALERT -> ColorState.ALERT
+      -> TrialStateButton.ColorState.ACTIVE
+    TrialStateService.TrialState.ALERT -> TrialStateButton.ColorState.ALERT
     TrialStateService.TrialState.EXPIRING,
     TrialStateService.TrialState.GRACE,
     TrialStateService.TrialState.GRACE_ENDED,
-      -> ColorState.EXPIRING
+      -> TrialStateButton.ColorState.EXPIRING
   }
 }
 

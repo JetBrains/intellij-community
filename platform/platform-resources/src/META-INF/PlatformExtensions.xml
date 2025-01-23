@@ -1853,7 +1853,7 @@
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.ui.mac.MergeAllWindowsAction$RecentProjectsFullScreenTabSupport"
               topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.openapi.wm.impl.trialStateWidget.TrialStateWidget$TrialStateWidgetUnregister"
+    <listener class="com.intellij.ui.components.trialState.TrialStateWidget$TrialStateWidgetUnregister"
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.openapi.vcs.FileStatusCleaner"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
