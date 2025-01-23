@@ -155,8 +155,15 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
       LOG.debug { "Session for '$clientId' will be removed after delay" }
       scope.launch {
         delay(disposedRemovalDelay)
-        sessions.remove(clientId)
-        LOG.debug { "Session for '$clientId' removed from after $disposedRemovalDelay" }
+        // trying to remove exactly the same session that was added.
+        // it may happen that during disposedRemovalDelay some new session was added with the same client id (e.g. FakeProtocolId).
+        // we need to not remove it
+        if (sessions.remove(clientId, session)) {
+          LOG.debug { "Session for '$clientId' removed from after $disposedRemovalDelay" }
+        }
+        else {
+          LOG.debug { "Session for '$clientId' was skipped because another session with the same client id key was added" }
+        }
       }
     }
   }
