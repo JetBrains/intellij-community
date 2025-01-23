@@ -14,6 +14,7 @@ import com.intellij.platform.eel.provider.utils.forwardLocalServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import java.nio.charset.Charset
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.name
 
@@ -84,7 +85,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   fun pathPrefix(): String {
-    return eel.descriptor.routingPrefix().toString()
+    return eel.descriptor.routingPrefix().toString().removeSuffix(FileSystems.getDefault().separator)
   }
 
   /**
