@@ -56,6 +56,8 @@ public final class JavaErrorKinds {
       .withAnchor(statement -> requireNonNull(statement.getAnnotationList()));
   public static final Simple<PsiReferenceList> ANNOTATION_MEMBER_THROWS_NOT_ALLOWED =
     error(PsiReferenceList.class, "annotation.member.may.not.have.throws.list").withAnchor(list -> requireNonNull(list.getFirstChild()));
+  public static final Simple<PsiParameterList> ANNOTATION_MEMBER_MAY_NOT_HAVE_PARAMETERS =
+    error(PsiParameterList.class, "annotation.member.may.not.have.parameters");
   public static final Simple<PsiReferenceList> ANNOTATION_NOT_ALLOWED_EXTENDS =
     error(PsiReferenceList.class, "annotation.may.not.have.extends.list").withAnchor(list -> requireNonNull(list.getFirstChild()));
   public static final Simple<PsiElement> ANNOTATION_LOCAL = error("annotation.cannot.be.local");
@@ -678,6 +680,7 @@ public final class JavaErrorKinds {
       .withRawDescription((ref, field) -> message("reference.enum.self", field.getName()));
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
+  public static final Simple<PsiStatement> STATEMENT_INVALID = error("statement.invalid");
   
   public static final Simple<PsiExpression> GUARD_MISPLACED = error("guard.misplaced");
   public static final Simple<PsiExpression> GUARD_EVALUATED_TO_FALSE = error("guard.evaluated.to.false");

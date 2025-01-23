@@ -576,11 +576,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitForStatement(@NotNull PsiForStatement statement) {
-    add(HighlightUtil.checkForStatement(statement));
-  }
-
-  @Override
   public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
     visitElement(statement);
     if (!hasErrorResults()) add(ImportsHighlightUtil.checkStaticOnDemandImportResolvesToClass(statement));
@@ -817,12 +812,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!hasErrorResults()) add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
       if (!hasErrorResults()) GenericsHighlightUtil.checkCatchParameterIsClass(parameter, myErrorSink);
     }
-  }
-
-  @Override
-  public void visitParameterList(@NotNull PsiParameterList list) {
-    super.visitParameterList(list);
-    if (!hasErrorResults()) add(HighlightUtil.checkAnnotationMethodParameters(list));
   }
 
   @Override

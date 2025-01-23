@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LocalRefUseInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithUnnamedPatternFix;
@@ -41,6 +40,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.SerializationUtils;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
@@ -163,7 +163,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
       @Override
       public void visitField(@NotNull PsiField field) {
         if (!compareVisibilities(field, getFieldVisibility())) return;
-        if (HighlightUtil.isSerializationImplicitlyUsedField(field)) return;
+        if (SerializationUtils.isSerializationImplicitlyUsedField(field)) return;
         if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
           if (!info.isReferenced(field) && !UnusedSymbolUtil.isImplicitUsage(project, field)) {
             List<IntentionAction> fixes = new ArrayList<>(suggestionsToMakeFieldUsed(field));

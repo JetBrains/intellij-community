@@ -134,6 +134,14 @@ final class AnnotationChecker {
     }
   }
 
+  void checkAnnotationMethodParameters(@NotNull PsiParameterList list) {
+    PsiElement parent = list.getParent();
+    if (PsiUtil.isAnnotationMethod(parent) &&
+        (!list.isEmpty() || PsiTreeUtil.getChildOfType(list, PsiReceiverParameter.class) != null)) {
+      myVisitor.report(JavaErrorKinds.ANNOTATION_MEMBER_MAY_NOT_HAVE_PARAMETERS.create(list));
+    }
+  }
+
   private static boolean cyclicDependencies(@NotNull PsiClass aClass,
                                             @Nullable PsiType type,
                                             @NotNull Set<? super PsiClass> checked) {

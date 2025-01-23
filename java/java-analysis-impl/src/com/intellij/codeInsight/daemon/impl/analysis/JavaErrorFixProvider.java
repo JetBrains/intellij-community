@@ -736,6 +736,7 @@ final class JavaErrorFixProvider {
     fix(ANNOTATION_NOT_ALLOWED_ON_PACKAGE, error ->
       myFactory.createDeleteFix(error.psi(), JavaAnalysisBundle.message("intention.text.remove.annotation")));
     fix(ANNOTATION_DUPLICATE_NON_REPEATABLE, error -> myFactory.createCollapseAnnotationsFix(error.psi()));
+    fix(ANNOTATION_MEMBER_MAY_NOT_HAVE_PARAMETERS, error -> myFactory.createRemoveParameterListFix((PsiMethod)error.psi().getParent()));
   }
 
   private @NotNull IntentionAction addModifierFix(@NotNull PsiModifierListOwner owner, @PsiModifier.ModifierConstant String modifier) {

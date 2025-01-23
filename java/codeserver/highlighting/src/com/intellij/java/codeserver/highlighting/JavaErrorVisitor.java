@@ -655,6 +655,17 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitParameterList(@NotNull PsiParameterList list) {
+    super.visitParameterList(list);
+    if (!hasErrorResults()) myAnnotationChecker.checkAnnotationMethodParameters(list);
+  }
+
+  @Override
+  public void visitForStatement(@NotNull PsiForStatement statement) {
+    myStatementChecker.checkForStatement(statement);
+  }
+
+  @Override
   public void visitMethod(@NotNull PsiMethod method) {
     super.visitMethod(method);
     PsiClass aClass = method.getContainingClass();

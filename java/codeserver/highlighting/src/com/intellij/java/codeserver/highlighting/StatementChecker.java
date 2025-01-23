@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -169,6 +170,20 @@ final class StatementChecker {
         myVisitor.report(JavaErrorKinds.EXCEPTION_NEVER_THROWN_TRY_MULTI.create(typeElement, classType));
       }
     }
+  }
+
+  void checkForStatement(@NotNull PsiForStatement statement) {
+    PsiStatement init = statement.getInitialization();
+    if (init == null ||
+        init instanceof PsiEmptyStatement ||
+        init instanceof PsiDeclarationStatement declarationStatement &&
+        ArrayUtil.getFirstElement(declarationStatement.getDeclaredElements()) instanceof PsiLocalVariable ||
+        init instanceof PsiExpressionStatement ||
+        init instanceof PsiExpressionListStatement) {
+      return;
+    }
+
+    myVisitor.report(JavaErrorKinds.STATEMENT_INVALID.create(init));
   }
 
 

@@ -53,7 +53,6 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
@@ -80,7 +79,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class HighlightUtil {
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
-  private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   private static final @NlsSafe String ANONYMOUS = "anonymous ";
 
   private HighlightUtil() { }
@@ -2299,27 +2297,6 @@ public final class HighlightUtil {
     return builder;
   }
 
-
-  public static boolean isSerializationImplicitlyUsedField(@NotNull PsiField field) {
-    String name = field.getName();
-    if (CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(name)) {
-      if (!PsiTypes.longType().equals(field.getType())) return false;
-    }
-    else if (SERIAL_PERSISTENT_FIELDS_FIELD_NAME.equals(name)) {
-      if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-      if (!(field.getType() instanceof PsiArrayType arrayType) || arrayType.getArrayDimensions() != 1) return false;
-      PsiType componentType = arrayType.getComponentType();
-      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
-      if (aClass != null && !"java.io.ObjectStreamField".equals(aClass.getQualifiedName())) return false;
-    }
-    else {
-      return false;
-    }
-    if (!field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) return false;
-    PsiClass aClass = field.getContainingClass();
-    return aClass == null || JavaHighlightUtil.isSerializable(aClass);
-  }
-
   static HighlightInfo.Builder checkClassReferenceAfterQualifier(@NotNull PsiReferenceExpression expression, @Nullable PsiElement resolved) {
     if (!(resolved instanceof PsiClass)) return null;
     PsiExpression qualifier = expression.getQualifierExpression();
@@ -2349,35 +2326,6 @@ public final class HighlightUtil {
     IntentionAction action = getFixFactory().createRemoveQualifierFix(qualifier, expression, (PsiClass)resolved);
     info.registerFix(action, null, null, null, null);
     return info;
-  }
-
-  static HighlightInfo.Builder checkAnnotationMethodParameters(@NotNull PsiParameterList list) {
-    PsiElement parent = list.getParent();
-    if (PsiUtil.isAnnotationMethod(parent) &&
-        (!list.isEmpty() || PsiTreeUtil.getChildOfType(list, PsiReceiverParameter.class) != null)) {
-      String message = JavaErrorBundle.message("annotation.interface.members.may.not.have.parameters");
-      HighlightInfo.Builder highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(message);
-      IntentionAction action = getFixFactory().createRemoveParameterListFix((PsiMethod)parent);
-      highlightInfo.registerFix(action, null, null, null, null);
-      return highlightInfo;
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkForStatement(@NotNull PsiForStatement statement) {
-    PsiStatement init = statement.getInitialization();
-    if (init == null ||
-        init instanceof PsiEmptyStatement ||
-        init instanceof PsiDeclarationStatement declarationStatement &&
-        ArrayUtil.getFirstElement(declarationStatement.getDeclaredElements()) instanceof PsiLocalVariable ||
-        init instanceof PsiExpressionStatement ||
-        init instanceof PsiExpressionListStatement) {
-      return null;
-    }
-
-    String message = JavaErrorBundle.message("invalid.statement");
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(init).descriptionAndTooltip(message);
   }
 
   private static @NotNull LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull JavaFeature feature) {

@@ -16,7 +16,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,6 +26,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +76,7 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
-      if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
+      if (SerializationUtils.isSerializationImplicitlyUsedField(field)) {
         return;
       }
       final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
