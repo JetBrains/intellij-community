@@ -13,8 +13,10 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,24 +70,17 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   @Override
-  public void visitPyFunction(final @NotNull PyFunction node) {
-    if (!PyiUtil.isOverload(node, myTypeEvalContext)) {
-      processScope(node);
+  public void visitPyElement(@NotNull PyElement node) {
+    if (node instanceof ScopeOwner scopeOwner && !(node instanceof PyFile)) {
+      processScope(scopeOwner);
     }
-  }
-
-  @Override
-  public void visitPyLambdaExpression(final @NotNull PyLambdaExpression node) {
-    processScope(node);
-  }
-
-  @Override
-  public void visitPyClass(@NotNull PyClass node) {
-    processScope(node);
   }
 
   private void processScope(final ScopeOwner owner) {
     if (owner.getContainingFile() instanceof PyExpressionCodeFragment) {
+      return;
+    }
+    if (owner instanceof PyFunction pyFunction && PyiUtil.isOverload(pyFunction, myTypeEvalContext)) {
       return;
     }
     if (!(owner instanceof PyClass) && !callsLocals(owner)) {
@@ -93,21 +88,11 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
     owner.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyFunction(@NotNull PyFunction node) {
-        collectUsedReads(node);
-        super.visitPyFunction(node);
-      }
-
-      @Override
-      public void visitPyLambdaExpression(@NotNull PyLambdaExpression node) {
-        collectUsedReads(node);
-        super.visitPyLambdaExpression(node);
-      }
-
-      @Override
-      public void visitPyClass(@NotNull PyClass node) {
-        collectUsedReads(node);
-        super.visitPyClass(node);
+      public void visitPyElement(@NotNull PyElement node) {
+        if (node instanceof ScopeOwner scopeOwner) {
+          collectUsedReads(scopeOwner);
+        }
+        super.visitPyElement(node);
       }
     });
   }
@@ -359,9 +344,21 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         registerWarning(name != null ? name : element,
                         PyPsiBundle.message("INSP.unused.locals.local.class.isnot.used", cls.getName()), new PyRemoveStatementQuickFix());
       }
+      else if (element instanceof PyTypeAliasStatement typeAlias) {
+        final PsiElement name = typeAlias.getNameIdentifier();
+        registerWarning(name != null ? name : element,
+                        PyPsiBundle.message("INSP.unused.locals.type.alias.isnot.used", typeAlias.getName()),
+                        new PyRemoveStatementQuickFix());
+      }
+      else if (element instanceof PyTypeParameter typeParameter) {
+        final PsiElement name = typeParameter.getNameIdentifier();
+        registerWarning(name != null ? name : element,
+                        PyPsiBundle.message("INSP.unused.locals.type.parameter.isnot.used", typeParameter.getName()),
+                        new PyRemoveStatementQuickFix());
+      }
       else {
         // Local variable or parameter
-        String name = element.getText();
+        String name = element instanceof PsiNamedElement namedElement ? StringUtil.notNullize(namedElement.getName()) : element.getText();
         if (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter) {
           PyNamedParameter namedParameter = element instanceof PyNamedParameter
                                             ? (PyNamedParameter) element

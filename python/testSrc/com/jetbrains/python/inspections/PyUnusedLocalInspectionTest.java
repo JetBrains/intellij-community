@@ -219,6 +219,16 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-78662
+  public void testUnusedTypeAliasReferredToInOtherTypeAlias() {
+    doTest();
+  }
+
+  // PY-78663
+  public void testUnusedTypeParameterInTypeAlias() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
