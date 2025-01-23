@@ -9,14 +9,23 @@ import org.jetbrains.annotations.ApiStatus
 interface VcsRootErrorFilter {
   fun filterErrors(project: Project, errors: Collection<VcsRootError>): Collection<VcsRootError>
 
+  fun isIgnoredDirectory(project: Project, directory: String): Boolean = false
+
   companion object {
     @JvmStatic
     fun filter(project: Project, errors: Collection<VcsRootError>): Collection<VcsRootError> {
       var result = errors
-      ExtensionPointName.create<VcsRootErrorFilter>("com.intellij.vcsRootErrorFilter").extensionList.forEach {
+      filters().forEach {
         result = it.filterErrors(project, result)
       }
       return result
     }
+
+    @JvmStatic
+    fun isIgnored(project: Project, directory: String): Boolean {
+      return filters().any { it.isIgnoredDirectory(project, directory) }
+    }
+
+    private fun filters(): List<VcsRootErrorFilter> = ExtensionPointName.create<VcsRootErrorFilter>("com.intellij.vcsRootErrorFilter").extensionList
   }
 }

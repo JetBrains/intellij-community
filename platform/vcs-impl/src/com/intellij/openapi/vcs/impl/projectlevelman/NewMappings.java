@@ -711,7 +711,11 @@ public final class NewMappings implements Disposable {
       Collection<VcsDirectoryMapping> mappings = entry.getValue();
 
       List<Pair<VirtualFile, VcsDirectoryMapping>> objects = ContainerUtil.mapNotNull(mappings, dm -> {
-        VirtualFile vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
+        String directory = dm.getDirectory();
+        if (VcsRootErrorFilter.isIgnored(myProject, directory)) {
+          return Pair.create(null, dm);
+        }
+        VirtualFile vf = lfs.refreshAndFindFileByPath(directory);
         return vf == null ? null : Pair.create(vf, dm);
       });
 
