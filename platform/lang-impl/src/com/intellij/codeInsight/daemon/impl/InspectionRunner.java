@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -285,10 +285,18 @@ class InspectionRunner {
     });
   }
 
-  private void registerSuppressedElements(@NotNull PsiElement element, @NotNull String id, @Nullable String alternativeID) {
+  private void registerSuppressedElements(@NotNull PsiElement element, @NotNull LocalInspectionToolWrapper tool) {
+    String id = tool.getID();
     mySuppressedElements.computeIfAbsent(id, __ -> new HashSet<>()).add(element);
+    String alternativeID = tool.getAlternativeID();
     if (alternativeID != null && !alternativeID.equals(id)) {
       mySuppressedElements.computeIfAbsent(alternativeID, __ -> new HashSet<>()).add(element);
+    }
+    InspectionElementsMerger elementsMerger = InspectionElementsMerger.getMerger(tool.getShortName());
+    if (elementsMerger != null) {
+      for (String suppressId : elementsMerger.getSuppressIds()) {
+        mySuppressedElements.computeIfAbsent(suppressId, __ -> new HashSet<>()).add(element);
+      }
     }
   }
 
@@ -304,7 +312,7 @@ class InspectionRunner {
       for (ProblemDescriptor descriptor : context.holder.getResults()) {
         PsiElement element = descriptor.getPsiElement();
         if (element != null && tool.isSuppressedFor(element)) {
-          registerSuppressedElements(element, toolWrapper.getID(), toolWrapper.getAlternativeID());
+          registerSuppressedElements(element, toolWrapper);
         }
       }
     }
@@ -466,7 +474,7 @@ class InspectionRunner {
           isSuppressedForHost = wrapper.getTool().isSuppressedFor(host);
         }
         if (isSuppressedForHost || descriptorPsiElement != null && wrapper.getTool().isSuppressedFor(descriptorPsiElement)) {
-          registerSuppressedElements(host, wrapper.getID(), wrapper.getAlternativeID());
+          registerSuppressedElements(host, wrapper);
           // remove descriptor at index i from applying
           descriptors = ContainerUtil.concat(descriptors.subList(0, i), descriptors.subList(i+1, descriptors.size()));
           if (LOG.isTraceEnabled()) {
