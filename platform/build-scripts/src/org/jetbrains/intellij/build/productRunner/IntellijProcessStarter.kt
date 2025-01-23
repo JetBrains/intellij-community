@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.getCommandLineArgumentsForOpenPackages
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.io.runJava
+import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -39,8 +40,8 @@ suspend fun runApplicationStarter(
   timeout: Duration = DEFAULT_TIMEOUT,
   isFinalClassPath: Boolean = false,
 ) {
-  val tempFileNamePrefix = args.firstOrNull() ?: "appStarter"
-  val tempDir = createTempDirectory(context.paths.tempDir, tempFileNamePrefix)
+  val appStarterId = args.firstOrNull() ?: "appStarter"
+  val tempDir = createTempDirectory(context.paths.tempDir, appStarterId)
   Files.createDirectories(tempDir)
 
   val jvmArgs = getCommandLineArgumentsForOpenPackages(context).toMutableList()
@@ -72,19 +73,30 @@ suspend fun runApplicationStarter(
     }
   }.toJvmArgs())
   jvmArgs.addAll(vmOptions.takeIf { it.isNotEmpty() } ?: listOf("-Xmx2g"))
-  System.getProperty("intellij.build.${args.first()}.debug.port")?.let {
+  val debugProperty = "intellij.build.$appStarterId.debug.port"
+  System.getProperty(debugProperty)?.let {
     jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it")
   }
 
   val effectiveIdeClasspath = if (isFinalClassPath) classpath else prepareFlatClasspath(classpath = classpath, tempDir = tempDir, context = context)
-  runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = timeout) {
-    val logFile = findLogFile(systemDir)
-    if (logFile != null) {
-      val logFileToPublish = Files.createTempFile(tempFileNamePrefix, ".log")
-      Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
-      context.notifyArtifactBuilt(logFileToPublish)
-      Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
+  try {
+    runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = timeout) {
+      val logFile = findLogFile(systemDir)
+      if (logFile != null) {
+        val logFileToPublish = Files.createTempFile(appStarterId, ".log")
+        Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
+        context.notifyArtifactBuilt(logFileToPublish)
+        Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
+      }
     }
+  }
+  catch (e: Exception) {
+    throw RuntimeException(
+      "The application '$appStarterId' failed. " +
+      "To debug it in IDE, specify '-D$debugProperty=<some debug port>', " +
+      "then click 'Attach debugger' in a debugger console or use 'Remote JVM  Debug' run configuration.",
+      e
+    )
   }
 }
 
