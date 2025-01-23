@@ -20,7 +20,6 @@ import org.jetbrains.plugins.terminal.block.session.TerminalModel
 import org.jetbrains.plugins.terminal.block.ui.getDisposed
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
-import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 
 internal class SimpleTerminalController(
   settings: JBTerminalSystemSettingsProviderBase,
@@ -51,7 +50,11 @@ internal class SimpleTerminalController(
     val eventsHandler = SimpleTerminalEventsHandler(session, settings, outputModel)
     setupKeyEventDispatcher(editor, eventsHandler, disposable = this)
     setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
-    TerminalOutputEditorInputMethodSupport(editor, session, caretModel).install(this)
+    TerminalOutputEditorInputMethodSupport(
+      editor,
+      sendInputString = { text -> session.terminalOutputStream.sendString(text, true) },
+      getCaretPosition = { caretModel.getCaretPosition() }
+    ).install(this)
     terminalModel.withContentLock {
       updateEditorContent()
     }
