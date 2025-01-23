@@ -5,6 +5,8 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
@@ -21,6 +23,11 @@ public class XmlDuplicatedIdInspection extends XmlSuppressableInspectionTool imp
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+    // Enable check only for plain XML and HTML files
+    if (holder.getFile().getLanguage() != XMLLanguage.INSTANCE
+        && holder.getFile().getLanguage() != HTMLLanguage.INSTANCE) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new XmlElementVisitor() {
       @Override
       public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
@@ -28,9 +35,6 @@ public class XmlDuplicatedIdInspection extends XmlSuppressableInspectionTool imp
           return;
         }
         final PsiFile file = value.getContainingFile();
-        if (!(file instanceof XmlFile)) {
-          return;
-        }
         PsiFile baseFile = PsiUtilCore.getTemplateLanguageFile(file);
         if (baseFile != file && !(baseFile instanceof XmlFile)) {
           return;
