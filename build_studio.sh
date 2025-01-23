@@ -5,6 +5,8 @@ set -e
 
 PROG_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+"${PROG_DIR}/build_kotlinc.py"
+
 function die() {
   echo "$*" > /dev/stderr
   echo "Usage: $0 [--incremental]" > /dev/stderr
