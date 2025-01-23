@@ -664,5 +664,14 @@
                      language="kotlin"
                      key="inspection.redundant.label.display.name" bundle="messages.KotlinBundle">
     </localInspection>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.VariableNeverReadInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.variable.is.never.read.display.name" bundle="messages.KotlinBundle">
+    </localInspection>
   </extensions>
 </idea-plugin>
