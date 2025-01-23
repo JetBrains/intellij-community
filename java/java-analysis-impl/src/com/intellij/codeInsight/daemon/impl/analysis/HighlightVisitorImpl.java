@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
@@ -256,9 +255,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     } else {
       info.range(anchor);
     }
-    for (CommonIntentionAction fix : errorFixProvider.getFixes(error)) {
-      info.registerFix(fix.asIntention(), null, null, null, null);
-    }
+    errorFixProvider.processFixes(error, fix -> info.registerFix(fix.asIntention(), null, null, null, null));
     if (error.kind() == JavaErrorKinds.EXPRESSION_EXPECTED) {
       UnresolvedReferenceQuickFixUpdater.getInstance(getProject()).registerQuickFixesLater((PsiReference)error.psi(), info);
     }
