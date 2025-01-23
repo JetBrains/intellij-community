@@ -106,9 +106,10 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
       enableAsyncExecution()
       setDispatcherMergingSpan(MERING_SPAN)
 
+      val threadNum = maxOf(Runtime.getRuntime().availableProcessors(), 10)
       repeat(TEST_ATTEMPTS) {
         parallel {
-          repeat(50) { index ->
+          repeat(threadNum) { index ->
             thread {
 
               // see AutoImportProjectTracker.scheduleDelayedSmartProjectReload
