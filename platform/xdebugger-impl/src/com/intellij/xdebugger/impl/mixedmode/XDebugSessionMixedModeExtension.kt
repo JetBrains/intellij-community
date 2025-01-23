@@ -97,6 +97,11 @@ class XDebugSessionMixedModeExtension(
   }
 
   fun onResumed(isLowLevel: Boolean) {
+    if (!session.isMixedModeHighProcessReady) {
+      session.sessionResumed()
+      return
+    }
+
     coroutineScope.launch {
       val handled = stateMachine.onSessionResumed(isLowLevel)
       if (!handled) {
@@ -122,5 +127,9 @@ class XDebugSessionMixedModeExtension(
       high.asXDebugProcess.processHandler,
       low.asXDebugProcess.processHandler,
       checkNotNull(session.mixedModeConfig)).also { processHandler = it }
+  }
+
+  fun stop() {
+    stateMachine.set(Stop)
   }
 }

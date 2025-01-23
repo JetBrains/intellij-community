@@ -1236,6 +1236,10 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stop() {
+    if (myMixedModeExtension != null) {
+      myMixedModeExtension.stop();
+    }
+
     ProcessHandler processHandler = getProcessHandler();
     if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
 

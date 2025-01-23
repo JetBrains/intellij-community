@@ -44,6 +44,7 @@ class MixedModeProcessTransitionStateMachine(
   class LowLevelRunToAddressStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
   class HighLevelRunToAddressStarted(val sourcePosition: XSourcePosition, val high : XSuspendContext) : State
   class HighLevelRunToAddressStartedLowRun : State
+  object Exited : State
 
   interface Event
   object HighStarted : Event
@@ -55,6 +56,7 @@ class MixedModeProcessTransitionStateMachine(
   object LowRun : Event
   class LowLevelRunToAddress(val sourcePosition: XSourcePosition, val low: XSuspendContext) : Event
   class HighLevelRunToAddress(val sourcePosition: XSourcePosition, val high: XSuspendContext) : Event
+  object Stop : Event
 
   private val nullObjectHighLevelSuspendContext: XSuspendContext = object : XSuspendContext() {}
 
@@ -408,6 +410,9 @@ class MixedModeProcessTransitionStateMachine(
           }
         }
       }
+      is Stop -> {
+        changeState(Exited)
+      }
     }
   }
 
@@ -417,7 +422,9 @@ class MixedModeProcessTransitionStateMachine(
   }
 
   private fun changeState(newState: State) {
-    if (state is BothStopped) {
+    if (newState is Exited)
+      runBlocking { suspendContextCoroutine.coroutineContext.job.cancelAndJoin() }
+    else if (state is BothStopped) {
       runBlocking { suspendContextCoroutine.coroutineContext.job.cancelAndJoin() }
       suspendContextCoroutine = coroutineScope.childScope("suspendContextCoroutine", supervisor = true)
     }
