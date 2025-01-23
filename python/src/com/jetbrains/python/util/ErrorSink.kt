@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import kotlin.reflect.KClass
 
 /**
  * [FlowCollector.emit] user-readable errors here.
@@ -129,4 +130,10 @@ fun <S, E> Result<S, E>.asKotlinResult(): kotlin.Result<S> = when (this) {
     }
   )
   is Success -> kotlin.Result.success(result)
+}
+
+
+interface CustomErrorRendererEP<T : PyError.Message> {
+  val clazz: KClass<T>
+  suspend fun renderMe(error: T)
 }

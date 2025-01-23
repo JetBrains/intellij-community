@@ -22,7 +22,7 @@ class PythonWithLanguageLevelImpl internal constructor(
   override val languageLevel: LanguageLevel,
 ) : PythonWithLanguageLevel, Comparable<PythonWithLanguageLevelImpl> {
   companion object {
-    suspend fun createByPythonBinary(pythonBinary: PythonBinary): Result<PythonWithLanguageLevelImpl, LocalizedErrorString> {
+    suspend fun createByPythonBinary(pythonBinary: PythonBinary): Result<PythonWithLanguageLevelImpl, @Nls String> {
       val languageLevel = pythonBinary.validatePythonAndGetVersion().getOr { return it }
       return Result.success(PythonWithLanguageLevelImpl(pythonBinary, languageLevel))
     }

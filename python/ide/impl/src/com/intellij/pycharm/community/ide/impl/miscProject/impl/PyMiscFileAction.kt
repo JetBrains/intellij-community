@@ -44,7 +44,7 @@ internal class PyMiscFileAction(private val miscFileType: MiscFileType) : AnActi
       scopeProvider = { it.service<MyService>().scope })) {
       is Result.Success -> Unit
       is Result.Failure -> {
-        Messages.showErrorDialog(null as Project?, r.error.text, PyCharmCommunityCustomizationBundle.message("misc.project.error.title"))
+        Messages.showErrorDialog(null as Project?, r.error, PyCharmCommunityCustomizationBundle.message("misc.project.error.title"))
       }
     }
   }

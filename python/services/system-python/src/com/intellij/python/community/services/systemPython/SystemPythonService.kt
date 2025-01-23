@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.installer.installBinary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 /**
  * Service to register and obtain [SystemPython]s
@@ -37,7 +38,7 @@ sealed interface SystemPythonService {
    * When user provides a path to the python binary, use this method to the [SystemPython].
    * @return either [SystemPython] or an error if python is broken.
    */
-  suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, LocalizedErrorString>
+  suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, @Nls String>
 
   /**
    * @return tool to install python on OS If [eelApi] supports python installation
@@ -56,7 +57,7 @@ fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplicati
 @State(name = "SystemPythonService", storages = [Storage("SystemPythonService.xml")], allowLoadInTests = true)
 private class SystemPythonServiceImpl : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
 
-  override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, LocalizedErrorString> {
+  override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, @Nls String> {
     val impl = PythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr { return it }
     state.userProvidedPythons.add(pythonPath)
     return Result.success(SystemPython(impl))

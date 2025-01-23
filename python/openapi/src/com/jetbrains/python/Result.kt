@@ -8,7 +8,7 @@ import java.lang.Exception
 
 /**
  * Operation result to be used as `Maybe` instead of checked exceptions.
- * Unlike Kotlin `Result`, [ERR] could be anything (See [LocalizedErrorString]).
+ * Unlike Kotlin `Result`, [ERR] could be anything (i.e [String]).
  *
  * Typical usages:
  *

@@ -23,10 +23,10 @@ import kotlin.time.Duration.Companion.seconds
  * As we need workable pythons, we validate it by executing
  */
 @ApiStatus.Internal
-suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, LocalizedErrorString> = withContext(Dispatchers.IO) {
+suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, @NlsSafe String> = withContext(Dispatchers.IO) {
   val smokeTestOutput = executeWithResult("-c", "print(1)").getOr { return@withContext it }.trim()
   if (smokeTestOutput != "1") {
-    return@withContext failure(LocalizedErrorString(message("python.get.version.error", pathString, smokeTestOutput)))
+    return@withContext failure(message("python.get.version.error", pathString, smokeTestOutput))
   }
 
   val versionString = executeWithResult(PYTHON_VERSION_ARG).getOr { return@withContext it }
@@ -34,7 +34,7 @@ suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, Lo
     LanguageLevel.fromPythonVersion(it)
   }
   if (languageLevel == null) {
-    return@withContext failure(LocalizedErrorString(message("python.get.version.wrong.version", pathString, versionString)))
+    return@withContext failure(message("python.get.version.wrong.version", pathString, versionString))
   }
   return@withContext Result.success(languageLevel)
 }
@@ -43,13 +43,13 @@ suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, Lo
  * Executes [this] with [args], returns either stdout or error (if execution failed or exit code != 0)
  */
 @ApiStatus.Internal
-suspend fun PythonBinary.executeWithResult(vararg args: String): Result<@NlsSafe String, LocalizedErrorString> {
+suspend fun PythonBinary.executeWithResult(vararg args: String): Result<@NlsSafe String, @NlsSafe String> {
   val output = exec(*args, timeout = 5.seconds).getOr {
     val text = it.error?.message ?: message("python.get.version.too.long", pathString)
-    return failure(LocalizedErrorString(text))
+    return failure(text)
   }
   return if (output.exitCode != 0) {
-    failure(LocalizedErrorString(message("python.get.version.error", pathString, "code ${output.exitCode}, {output.stderr}")))
+    failure(message("python.get.version.error", pathString, "code ${output.exitCode}, {output.stderr}"))
   }
   else {
     Result.success(output.stdout)

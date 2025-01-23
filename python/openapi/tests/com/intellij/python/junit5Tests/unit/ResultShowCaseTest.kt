@@ -4,6 +4,7 @@ package com.intellij.python.junit5Tests.unit
 import com.jetbrains.python.LocalizedErrorString
 import com.jetbrains.python.Result
 import com.jetbrains.python.mapResult
+import org.jetbrains.annotations.Nls
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
@@ -25,7 +26,7 @@ class ResultShowCaseTest {
 
     fun openFile(): Result<ByteBuffer, IOException> = Result.Success(ByteBuffer.allocate(1))
     fun readData(bytes: ByteBuffer): Result<Data, IOException> = Result.Success(Data(bytes[0]))
-    fun businessLogic(data: Data): Result<Money, LocalizedErrorString> = Result.Success(Money(data.b))
+    fun businessLogic(data: Data): Result<Money, @Nls String> = Result.Success(Money(data.b))
   }
 
   @Test
@@ -40,7 +41,7 @@ class ResultShowCaseTest {
       )
     when (result) { // Classic matching
       is Result.Success -> println("Money: ${result.result.dollars}")
-      is Result.Failure -> fail("Too bad: ${result.error.text}")
+      is Result.Failure -> fail("Too bad: ${result.error}")
     }
   }
 
@@ -69,7 +70,7 @@ class ResultShowCaseTest {
       is Result.Success -> r.result
     }
     when (val r = businessLogic(data)) {
-      is Result.Failure -> fail(r.error.text)
+      is Result.Failure -> fail(r.error)
       is Result.Success -> Unit
     }
   }

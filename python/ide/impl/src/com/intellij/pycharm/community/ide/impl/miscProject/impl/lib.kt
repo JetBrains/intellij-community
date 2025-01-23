@@ -40,6 +40,7 @@ import com.jetbrains.python.sdk.add.v2.createSdk
 import com.jetbrains.python.sdk.add.v2.createVirtualenv
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
@@ -66,7 +67,7 @@ fun createMiscProject(
   confirmInstallation: suspend () -> Boolean,
   projectPath: Path = miscProjectDefaultPath.value,
   systemPythonService: SystemPythonService = SystemPythonService(),
-): Result<Job, LocalizedErrorString> =
+): Result<Job, @Nls String> =
   runWithModalProgressBlocking(ModalTaskOwner.guess(),
                                PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
                                TaskCancellation.cancellable()) {
@@ -142,7 +143,7 @@ private suspend fun createProjectAndSdk(
   projectPath: Path,
   confirmInstallation: suspend () -> Boolean,
   systemPythonService: SystemPythonService,
-): Result<Pair<Project, Sdk>, LocalizedErrorString> {
+): Result<Pair<Project, Sdk>, @Nls String> {
   val projectPathVfs = createProjectDir(projectPath).getOr { return it }
   val venvDirPath = projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
 
@@ -159,7 +160,7 @@ private suspend fun createProjectAndSdk(
     venvPython = findExistingVenv(venvDirPath)
     if (venvPython == null) {
       // No venv even after venv installation
-      return Result.failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", "", venvDirPath)))
+      return Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", "", venvDirPath))
     }
   }
 
@@ -194,16 +195,16 @@ private suspend fun findExistingVenv(
   }
 }
 
-private suspend fun createVenv(systemPython: PythonBinary, venvDirPath: Path, projectPath: Path): Result<Unit, LocalizedErrorString> =
+private suspend fun createVenv(systemPython: PythonBinary, venvDirPath: Path, projectPath: Path): Result<Unit, @Nls String> =
   try {
     createVirtualenv(systemPython, venvDirPath, projectPath)
     Result.success(Unit)
   }
   catch (e: ExecutionException) {
-    Result.failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", e.toString(), venvDirPath)))
+    Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", e.toString(), venvDirPath))
   }
 
-private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, pythonService: SystemPythonService): Result<PythonBinary, LocalizedErrorString> {
+private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, pythonService: SystemPythonService): Result<PythonBinary, @Nls String> {
 
 
   // First, find the latest python according to strategy
@@ -213,15 +214,15 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
   if (systemPythonBinary == null) {
     // Install it
     val installer = pythonService.getInstaller()
-                    ?: return Result.failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.install.not.supported")))
+                    ?: return Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.install.not.supported"))
     if (confirmInstallation()) {
       // Install
       when (val r = installer.installLatestPython()) {
         is Result.Failure -> {
           val error = r.error
           logger.warn("Python installation failed $error")
-          return Result.Failure(LocalizedErrorString(
-            PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", error)))
+          return Result.Failure(
+            PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", error))
         }
         is Result.Success -> {
           // Find the latest python again, after installation
@@ -232,7 +233,7 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
   }
 
   return if (systemPythonBinary == null) {
-    Result.Failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.all.pythons.bad")))
+    Result.Failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.all.pythons.bad"))
   }
   else {
     Result.Success(systemPythonBinary.pythonBinary)
@@ -267,14 +268,14 @@ private suspend fun getSdk(pythonPath: PythonBinary, project: Project): Sdk =
 /**
  * Creating a project != creating a directory for it, but we need a directory to create a template file
  */
-private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, LocalizedErrorString> = withContext(Dispatchers.IO) {
+private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, @Nls String> = withContext(Dispatchers.IO) {
   try {
     projectPath.createDirectories()
   }
   catch (e: IOException) {
     thisLogger().warn("Couldn't create $projectPath", e)
-    return@withContext Result.Failure(LocalizedErrorString(
-      PyCharmCommunityCustomizationBundle.message("misc.project.error.create.dir", projectPath, e.localizedMessage)))
+    return@withContext Result.Failure(
+      PyCharmCommunityCustomizationBundle.message("misc.project.error.create.dir", projectPath, e.localizedMessage))
   }
   val projectPathVfs = VfsUtil.findFile(projectPath, true)
                        ?: error("Can't find VFS $projectPath")
