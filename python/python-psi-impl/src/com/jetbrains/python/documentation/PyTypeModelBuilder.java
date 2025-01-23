@@ -368,7 +368,8 @@ public class PyTypeModelBuilder {
       result = buildCallable((PyCallableType)type);
     }
     else if (type instanceof PyTypeVarType typeVarType) {
-      result = new TypeVarType(type.getName(), typeVarType.getBound() != null ? build(typeVarType.getBound(), true) : null);
+      PyType effectiveBound = PyTypeUtil.getEffectiveBound(typeVarType);
+      result = new TypeVarType(type.getName(), effectiveBound != null ? build(effectiveBound, true) : null);
     }
     else if (type instanceof PyCallableParameterListType callableParameterListType) {
       result = new CallableParameterList(buildParameterModels(callableParameterListType.getParameters()));

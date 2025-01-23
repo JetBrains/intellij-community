@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL;
@@ -1486,7 +1487,16 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
                                  ? Ref.create(posVariadic) : null);
             }
             else if (calleeQNames.contains(TYPE_VAR) || calleeQNames.contains(TYPE_VAR_EXT)) {
-              return new PyTypeVarTypeImpl(name, getGenericTypeBound(arguments, context), defaultType);
+              // TypeVar __init__ parameters:
+              // (name, *constraints, bound = None, contravariant = False, covariant = False, infer_variance = False, default = ...)
+              List<PyType> constraints = Stream.of(arguments)
+                .skip(1)
+                .takeWhile(expr -> !(expr instanceof PyKeywordArgument))
+                .map(expr -> Ref.deref(getType(expr, context)))
+                .toList();
+              PyExpression boundExpression = assignedCall.getKeywordArgument("bound");
+              PyType bound = boundExpression == null ? null : Ref.deref(getType(boundExpression, context));
+              return new PyTypeVarTypeImpl(name, constraints, bound, defaultType);
             }
             else if (calleeQNames.contains(PARAM_SPEC) || calleeQNames.contains(PARAM_SPEC_EXT)) {
               return new PyParamSpecType(name)
@@ -1521,7 +1531,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (defaultExpression != null) {
         final PyExpression defaultExprWithoutParens = PyPsiUtils.flattenParens(defaultExpression);
         defaultType = defaultExprWithoutParens != null
-                      ? doPreventingRecursion(context, false, () -> getType(defaultExprWithoutParens, context))
+                      ? getTypePreventingRecursion(defaultExprWithoutParens, context)
                       : Ref.create();
       }
 
@@ -1529,12 +1539,20 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
       switch (typeParameter.getKind()) {
         case TypeVar -> {
+          List<@Nullable PyType> constraints = List.of();
+          PyType boundType = null;
           String boundExpressionText = typeParameter.getBoundExpressionText();
           PyExpression boundExpression = boundExpressionText != null
-                                         ? PyUtil.createExpressionFromFragment(boundExpressionText, typeParameter.getContainingFile())
+                                         ? PyPsiUtils.flattenParens(PyUtil.createExpressionFromFragment(boundExpressionText,
+                                                                                                        typeParameter.getContainingFile()))
                                          : null;
-          PyType boundType = boundExpression != null ? getTypeParameterBoundType(boundExpression, context) : null;
-          return new PyTypeVarTypeImpl(name, boundType, defaultType)
+          if (boundExpression instanceof PyTupleExpression tupleExpression) {
+            constraints = ContainerUtil.map(tupleExpression.getElements(), expr -> Ref.deref(getTypePreventingRecursion(expr, context)));
+          }
+          else if (boundExpression != null) {
+            boundType = Ref.deref(getTypePreventingRecursion(boundExpression, context));
+          }
+          return new PyTypeVarTypeImpl(name, constraints, boundType, defaultType)
             .withScopeOwner(scopeOwner)
             .withDeclarationElement(declarationElement);
         }
@@ -1551,9 +1569,13 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             .withDefaultType(Ref.deref(defaultType) instanceof PyPositionalVariadicType variadicType ? Ref.create(variadicType) : null)
             .withDeclarationElement(declarationElement);
         }
-      };
+      }
     }
     return null;
+  }
+
+  private static @Nullable Ref<PyType> getTypePreventingRecursion(@NotNull PyExpression expression, @NotNull Context context) {
+    return doPreventingRecursion(context, false, () -> getType(expression, context));
   }
 
   // See https://peps.python.org/pep-0484/#scoping-rules-for-type-variables
@@ -1662,41 +1684,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     PyExpression starredExpression = starExpression.getExpression();
     if (!(starredExpression instanceof PyReferenceExpression || starredExpression instanceof PySubscriptionExpression)) return null;
     return Ref.create(Ref.deref(getType(starredExpression, context)));
-  }
-
-  private static @Nullable PyType getGenericTypeBound(PyExpression @NotNull [] typeVarArguments, @NotNull Context context) {
-    final List<PyType> types = new ArrayList<>();
-    for (int i = 1; i < typeVarArguments.length; i++) {
-      final PyExpression argument = typeVarArguments[i];
-
-      if (argument instanceof PyKeywordArgument) {
-        if ("bound".equals(((PyKeywordArgument)argument).getKeyword())) {
-          final PyExpression value = ((PyKeywordArgument)argument).getValueExpression();
-          return value == null ? null : Ref.deref(getType(value, context));
-        }
-        else {
-          break; // covariant, contravariant
-        }
-      }
-
-      types.add(Ref.deref(getType(argument, context)));
-    }
-    return PyUnionType.union(types);
-  }
-
-  private static @Nullable PyType getTypeParameterBoundType(@NotNull PyExpression boundExpression, @NotNull Context context) {
-    PyExpression bound = PyPsiUtils.flattenParens(boundExpression);
-    if (bound != null) {
-      if (bound instanceof PyTupleExpression tupleExpression) {
-        return StreamEx.of(tupleExpression.getElements())
-          .map(expr -> Ref.deref(getType(expr, context)))
-          .collect(PyTypeUtil.toUnion());
-      }
-      else {
-        return doPreventingRecursion(context, false, () -> Ref.deref(getType(bound, context)));
-      }
-    }
-    return null;
   }
 
   private static  @NotNull List<PyType> getIndexTypes(@NotNull PySubscriptionExpression expression, @NotNull Context context) {

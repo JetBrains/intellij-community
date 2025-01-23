@@ -3352,6 +3352,34 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-78653
+  public void testTypeVarConstraints() {
+    doTest("tuple[str, str]", """
+      from typing import TypeVar
+      
+      AnyStr = TypeVar('AnyStr', str, bytes)
+      
+      def concat(x: AnyStr, y: AnyStr) -> AnyStr:
+          return x + y
+      
+      class MyStr(str): ...
+      
+      s1 = concat(MyStr('apple'), MyStr('pie'))
+      s2 = concat(MyStr('apple'), 'pie')
+      expr = (s1, s2)
+      """);
+    doTest("tuple[str, str]", """
+      def concat[AnyStr: (str, bytes)](x: AnyStr, y: AnyStr) -> AnyStr:
+          return x + y
+      
+      class MyStr(str): ...
+      
+      s1 = concat(MyStr('apple'), MyStr('pie'))
+      s2 = concat(MyStr('apple'), 'pie')
+      expr = (s1, s2)
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

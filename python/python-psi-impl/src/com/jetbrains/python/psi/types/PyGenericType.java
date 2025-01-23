@@ -25,23 +25,29 @@ import java.util.Objects;
 @Deprecated(forRemoval = true)
 public class PyGenericType implements PyTypeVarType {
   private final @NotNull String myName;
+  private final @NotNull List<@Nullable PyType> myConstraints;
   private final @Nullable PyType myBound;
   private final @Nullable Ref<PyType> myDefaultType;
   private final boolean myIsDefinition;
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
   private @Nullable PyQualifiedNameOwner myScopeOwner;
 
-  public PyGenericType(@NotNull String name, @Nullable PyType bound, @Nullable Ref<PyType> defaultType) {
-    this(name, bound, defaultType, false, null, null);
+  public PyGenericType(@NotNull String name,
+                       @NotNull List<@Nullable PyType> constraints,
+                       @Nullable PyType bound,
+                       @Nullable Ref<PyType> defaultType) {
+    this(name, constraints, bound, defaultType, false, null, null);
   }
 
   private PyGenericType(@NotNull String name,
-                       @Nullable PyType bound,
-                       @Nullable Ref<PyType> defaultType,
-                       boolean isDefinition,
-                       @Nullable PyQualifiedNameOwner declarationElement,
-                       @Nullable PyQualifiedNameOwner scopeOwner) {
+                        @NotNull List<@Nullable PyType> constraints,
+                        @Nullable PyType bound,
+                        @Nullable Ref<PyType> defaultType,
+                        boolean isDefinition,
+                        @Nullable PyQualifiedNameOwner declarationElement,
+                        @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
+    myConstraints = constraints;
     myBound = bound;
     myDefaultType = defaultType;
     myIsDefinition = isDefinition;
@@ -76,12 +82,13 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   private @Nullable PyType getBoundPromotedToClassObjectTypesIfNeeded() {
+    PyType effectiveBound = myConstraints.isEmpty() ? myBound : PyUnionType.union(myConstraints);
     if (myIsDefinition) {
-      return PyTypeUtil.toStream(myBound)
+      return PyTypeUtil.toStream(effectiveBound)
         .map(t -> t instanceof PyInstantiableType ? ((PyInstantiableType<?>)t).toClass() : t)
         .collect(PyTypeUtil.toUnion());
     }
-    return myBound;
+    return effectiveBound;
   }
 
   @Override
@@ -123,6 +130,11 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   @Override
+  public @NotNull List<@Nullable PyType> getConstraints() {
+    return myConstraints;
+  }
+
+  @Override
   public @Nullable PyType getBound() {
     return myBound;
   }
@@ -143,7 +155,8 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   public @NotNull PyGenericType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
-    return new PyGenericType(getName(), getBound(), getDefaultType(), isDefinition(), getDeclarationElement(), scopeOwner);
+    return new PyGenericType(getName(), getConstraints(), getBound(), getDefaultType(), isDefinition(), getDeclarationElement(),
+                             scopeOwner);
   }
 
   public @NotNull PyGenericType withTargetExpression(@Nullable PyTargetExpression targetExpression) {
@@ -151,7 +164,8 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   public @NotNull PyGenericType withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
-    return new PyGenericType(getName(), getBound(), getDefaultType(), isDefinition(), declarationElement, getScopeOwner());
+    return new PyGenericType(getName(), getConstraints(), getBound(), getDefaultType(), isDefinition(), declarationElement,
+                             getScopeOwner());
   }
 
   @ApiStatus.Internal
@@ -164,11 +178,15 @@ public class PyGenericType implements PyTypeVarType {
 
   @Override
   public @NotNull PyGenericType toInstance() {
-    return myIsDefinition ? new PyGenericType(myName, myBound, myDefaultType, false, myDeclarationElement, myScopeOwner) : this;
+    return myIsDefinition
+           ? new PyGenericType(myName, myConstraints, myBound, myDefaultType, false, myDeclarationElement, myScopeOwner)
+           : this;
   }
 
   @Override
   public @NotNull PyGenericType toClass() {
-    return myIsDefinition ? this : new PyGenericType(myName, myBound, myDefaultType, true, myDeclarationElement, myScopeOwner);
+    return myIsDefinition
+           ? this
+           : new PyGenericType(myName, myConstraints, myBound, myDefaultType, true, myDeclarationElement, myScopeOwner);
   }
 }

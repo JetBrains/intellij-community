@@ -162,4 +162,9 @@ public final class PyTypeUtil {
   public static boolean isDict(@Nullable PyType type) {
     return type instanceof PyCollectionType && "dict".equals(type.getName());
   }
+
+  @ApiStatus.Internal
+  public static @Nullable PyType getEffectiveBound(@NotNull PyTypeVarType typeVarType) {
+    return typeVarType.getConstraints().isEmpty() ? typeVarType.getBound() : PyUnionType.union(typeVarType.getConstraints());
+  }
 }

@@ -172,7 +172,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
                          context: TypeEvalContext,
                          substitutions: PyTypeChecker.GenericSubstitutions?): PyType? {
       val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
-      val substitutionOrBound = if (substitution is PyTypeVarType) substitution.bound else substitution
+      val substitutionOrBound = if (substitution is PyTypeVarType) PyTypeUtil.getEffectiveBound(substitution) else substitution
       if (substitutionOrBound == null) return null
       return promoteToType(substitutionOrBound, expression, context, containsLiteral(substitutionOrBound))
     }

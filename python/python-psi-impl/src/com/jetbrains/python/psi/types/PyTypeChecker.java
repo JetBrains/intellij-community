@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.PyNames.FUNCTION;
@@ -266,18 +265,28 @@ public final class PyTypeChecker {
     }
     final PyType substitution = substituted;
     PyType bound = expected.getBound();
+    List<@Nullable PyType> constraints = expected.getConstraints();
+    int matchedConstraintIndex = -1;
     // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
     if (expected.isDefinition()) {
-      final Function<PyType, PyType> toDefinition = t -> t instanceof PyInstantiableType ? ((PyInstantiableType<?>)t).toClass() : t;
-      bound = PyUnionType.union(PyTypeUtil.toStream(bound).map(toDefinition).toList());
+      bound = toClass(bound);
+      constraints = ContainerUtil.map(constraints, PyTypeChecker::toClass);
     }
 
     // Remove value-specific components from the actual type to make it safe to propagate
-    PyType safeActual = bound instanceof PyLiteralStringType ? actual : replaceLiteralStringWithStr(actual);
+    PyType safeActual = constraints.isEmpty() && bound instanceof PyLiteralStringType ? actual : replaceLiteralStringWithStr(actual);
 
-    Optional<Boolean> match = match(bound, safeActual, context);
-    if (match.isPresent() && !match.get()) {
-      return false;
+    if (constraints.isEmpty()) {
+      Optional<Boolean> match = match(bound, safeActual, context);
+      if (match.isPresent() && !match.get()) {
+        return false;
+      }
+    }
+    else {
+      matchedConstraintIndex = ContainerUtil.indexOf(constraints, constraint -> match(constraint, safeActual, context).orElse(true));
+      if (matchedConstraintIndex == -1) {
+        return false;
+      }
     }
 
     if (substitution != null) {
@@ -294,13 +303,23 @@ public final class PyTypeChecker {
     }
 
     if (safeActual != null) {
-      context.mySubstitutions.typeVars.put(expected, safeActual);
+      PyType type = constraints.isEmpty() ? safeActual : constraints.get(matchedConstraintIndex);
+      context.mySubstitutions.typeVars.put(expected, type);
     }
-    else if (bound != null) {
-      context.mySubstitutions.typeVars.put(expected, PyUnionType.createWeakType(bound));
+    else {
+      PyType effectiveBound = PyTypeUtil.getEffectiveBound(expected);
+      if (effectiveBound != null) {
+        context.mySubstitutions.typeVars.put(expected, PyUnionType.createWeakType(effectiveBound));
+      }
     }
 
     return true;
+  }
+
+  private static @Nullable PyType toClass(@Nullable PyType type) {
+    return PyTypeUtil.toStream(type)
+      .map(t -> t instanceof PyInstantiableType<?> instantiableType ? instantiableType.toClass() : t)
+      .collect(PyTypeUtil.toUnion());
   }
 
   private static boolean match(@NotNull PyPositionalVariadicType expected, @Nullable PyType actual, @NotNull MatchContext context) {
@@ -1518,8 +1537,7 @@ public final class PyTypeChecker {
       if (typeVarType.isDefinition()) {
         return true;
       }
-
-      return isCallable(typeVarType.getBound());
+      return isCallable(PyTypeUtil.getEffectiveBound(typeVarType));
     }
     return false;
   }
