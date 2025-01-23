@@ -112,6 +112,10 @@ internal class DelegateMethodImportCandidatesProvider(
             expectedDelegateFunctionName,
             OperatorNameConventions.PROVIDE_DELEGATE,
         )
+    
+    override fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean {
+        return kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD) && super.acceptsKotlinCallable(kotlinCallable)
+    }
 
     context(KaSession)
     override fun collectCandidates(
