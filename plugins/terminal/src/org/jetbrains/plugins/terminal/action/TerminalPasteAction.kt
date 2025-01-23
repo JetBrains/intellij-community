@@ -95,7 +95,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRe
       }
       // Now convert this into what the terminal typically expects.
       text = text.replace("\n", "\r")
-      input.sendString(text)
+      input.sendBracketedString(text)
     }
   }
 

@@ -94,7 +94,7 @@ internal class ReworkedTerminalView(
     sessionModel = TerminalSessionModelImpl(settings)
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
-    terminalInput = TerminalInput(terminalSessionFuture)
+    terminalInput = TerminalInput(terminalSessionFuture, sessionModel)
 
     outputModel = createOutputModel(
       editor = createOutputEditor(settings, parentDisposable = this),
