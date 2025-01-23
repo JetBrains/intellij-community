@@ -20,7 +20,9 @@ object NotebookCellInlayControllerUtil {
   ): RangeHighlighterEx? {
     val editor = inlay.editor as EditorEx
 
-    return if (isVisible && highlighter == null) {
+    highlighter?.let { editor.markupModel.removeHighlighter(it) }
+
+    return if (isVisible) {
       val rangeMarkerId = (inlay as RangeMarkerEx).id
 
       editor.markupModel.addRangeHighlighterAndChangeAttributes(
@@ -38,9 +40,6 @@ object NotebookCellInlayControllerUtil {
           rangeMarkerId
         )
       }
-    } else if (!isVisible) {
-      highlighter?.let { editor.markupModel.removeHighlighter(it) }
-      null
     } else {
       highlighter
     }

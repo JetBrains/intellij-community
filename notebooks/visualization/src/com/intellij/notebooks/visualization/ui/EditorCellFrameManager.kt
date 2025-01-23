@@ -3,7 +3,10 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookMarkdownCellLeftBorderRenderer
+import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
 import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.getLayerController
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -15,47 +18,49 @@ import java.awt.geom.Line2D
 class EditorCellFrameManager(
   private val editor: EditorImpl,
   private val view: EditorCellView,
-) {  // PY-74106
+): Disposable {  // PY-74106
   private var leftBorderHighlighter: RangeHighlighter? = null
   private var rightBorderLine: Line2D? = null
   private val frameColor = JBColor.LIGHT_GRAY
+  private var isSelected = false
+
+  private val boundsChangeListener = object : JupyterBoundsChangeListener {
+    override fun boundsChanged() {
+      if (isSelected) redrawBorders()
+    }
+  }
+
+  init {
+    JupyterBoundsChangeHandler.Companion.get(editor).subscribe(this, boundsChangeListener)
+  }
 
   fun updateMarkdownCellShow(selected: Boolean) {
+    isSelected = selected
+
+    when (selected) {
+      true -> redrawBorders()
+      else -> clearBorders()
+    }
+  }
+
+  private fun redrawBorders() {
     val layerController = editor.getLayerController()
+    view.updateFrameVisibility(true, frameColor)
 
-    // draw or remove top and bottom lines with frame corners
-    view.updateFrameVisibility(selected, frameColor)
-
-    if (selected) {
-      // add left and right sides of the border
-      val startOffset = editor.document.getLineStartOffset(view.cell.interval.lines.first)
-      val endOffset = editor.document.getLineEndOffset(view.cell.interval.lines.last)
-      addLeftBorderHighlighter(startOffset, endOffset)
-      updateRightBorder(layerController)
-    } else {
-      removeHighlighter(leftBorderHighlighter)
-      leftBorderHighlighter = null
-      removeRightBorder(layerController)
-    }
+    redrawLeftBorder()
+    redrawRightBorder(layerController)
   }
 
-  private fun addLeftBorderHighlighter(startOffset: Int, endOffset: Int) {
-    if (leftBorderHighlighter == null) {
-      leftBorderHighlighter = editor.markupModel.addRangeHighlighterAndChangeAttributes(
-        null,
-        startOffset,
-        endOffset,
-        HighlighterLayer.FIRST - 100,
-        HighlighterTargetArea.LINES_IN_RANGE,
-        false
-      ) { o: RangeHighlighterEx ->
-        o.lineMarkerRenderer = NotebookMarkdownCellLeftBorderRenderer(o, color = frameColor)
-        { view.input.component.calculateBounds().let { it.y to it.height } }
-      }
-    }
+  private fun redrawLeftBorder() {
+    removeLeftBorder()
+
+    val startOffset = editor.document.getLineStartOffset(view.cell.interval.lines.first)
+    val endOffset = editor.document.getLineEndOffset(view.cell.interval.lines.last)
+    addLeftBorderHighlighter(startOffset, endOffset)
   }
 
-  private fun updateRightBorder(layerController: EditorLayerController?) {
+
+  private fun redrawRightBorder(layerController: EditorLayerController?) {
     layerController ?: return
     removeRightBorder(layerController)
 
@@ -77,6 +82,28 @@ class EditorCellFrameManager(
     }
   }
 
+  private fun clearBorders() {
+    view.updateFrameVisibility(false, frameColor)
+    removeLeftBorder()
+    removeRightBorder(editor.getLayerController())
+  }
+
+  private fun addLeftBorderHighlighter(startOffset: Int, endOffset: Int) {
+    if (leftBorderHighlighter == null) {
+      leftBorderHighlighter = editor.markupModel.addRangeHighlighterAndChangeAttributes(
+        null,
+        startOffset,
+        endOffset,
+        HighlighterLayer.FIRST - 100,
+        HighlighterTargetArea.LINES_IN_RANGE,
+        false
+      ) { o: RangeHighlighterEx ->
+        o.lineMarkerRenderer = NotebookMarkdownCellLeftBorderRenderer(o, color = frameColor)
+        { view.input.component.calculateBounds().let { it.y to it.height } }
+      }
+    }
+  }
+
   private fun removeRightBorder(layerController: EditorLayerController?) {
     rightBorderLine?.let {
       layerController?.removeOverlayLine(it)
@@ -84,16 +111,16 @@ class EditorCellFrameManager(
     }
   }
 
-  private fun removeHighlighter(highlighter: RangeHighlighter?) {
-    highlighter?.let {
+  private fun removeLeftBorder() {
+    leftBorderHighlighter?.let {
       editor.markupModel.removeHighlighter(it)
+      leftBorderHighlighter = null
     }
   }
 
-  fun dispose() {
-    removeRightBorder(editor.getLayerController())
-    removeHighlighter(leftBorderHighlighter)
-    leftBorderHighlighter = null
+  override fun dispose() {
+    JupyterBoundsChangeHandler.Companion.get(editor).unsubscribe(boundsChangeListener)
+    clearBorders()
   }
 
 }
