@@ -725,12 +725,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun getSourceLanguageLevelForModule(moduleName: String): LanguageLevel? {
-    return LanguageLevelUtil.getCustomLanguageLevel(getModule("project"))
+    return LanguageLevelUtil.getCustomLanguageLevel(getModule(moduleName))
   }
 
   protected fun getTargetLanguageLevelForModule(moduleName: String): LanguageLevel? {
     val compilerConfiguration = CompilerConfiguration.getInstance(project)
-    val targetLevel = compilerConfiguration.getBytecodeTargetLevel(getModule("project")) ?: return null
+    val targetLevel = compilerConfiguration.getBytecodeTargetLevel(getModule(moduleName)) ?: return null
     return LanguageLevel.parse(targetLevel)
   }
 

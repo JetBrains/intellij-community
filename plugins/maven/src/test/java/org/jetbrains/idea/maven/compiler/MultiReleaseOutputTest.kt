@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.compiler
 
 import com.intellij.maven.testFramework.MavenCompilingTestCase
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.pom.java.LanguageLevel
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -48,5 +49,46 @@ class MultiReleaseOutputTest : MavenCompilingTestCase() {
 
     assertExists("target/classes/A.class")
     assertExists("target/classes/B.class")
+  }
+
+  @Test
+  fun `test language level`() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>  
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <executions>
+                <execution>
+                  <id>additionalSourceRoot</id>
+                  <configuration>
+                    <release>9</release>
+                    <multiReleaseOutput>true</multiReleaseOutput>
+                    <compileSourceRoots>
+                      <root>${'$'}{project.basedir}/src/main/java-additional</root>
+                    </compileSourceRoots>
+                  </configuration>
+                </execution>
+              </executions>
+          </plugin>
+        </plugins>
+      </build>
+      """.trimIndent()
+    )
+
+    assertModules("project", "project.main", "project.additionalSourceRoot", "project.test")
+
+    assertEquals(LanguageLevel.JDK_1_8, getSourceLanguageLevelForModule("project.main"))
+    assertEquals(LanguageLevel.JDK_1_8, getTargetLanguageLevelForModule("project.main"))
+
+    assertEquals(LanguageLevel.JDK_1_9, getSourceLanguageLevelForModule("project.additionalSourceRoot"))
+    assertEquals(LanguageLevel.JDK_1_9, getTargetLanguageLevelForModule("project.additionalSourceRoot"))
   }
 }
