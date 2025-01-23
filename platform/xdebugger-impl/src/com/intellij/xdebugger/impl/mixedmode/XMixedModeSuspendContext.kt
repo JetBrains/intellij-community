@@ -10,15 +10,16 @@ import com.intellij.xdebugger.frame.XMixedModeSuspendContextBase
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.nativeThreadId
 import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
-import com.intellij.xdebugger.mixedMode.MixedModeFramesBuilder
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.measureTimedValue
@@ -35,6 +36,8 @@ class XMixedModeSuspendContext(
 
   private val stacksMap = ConcurrentHashMap<Long, XMixedModeExecutionStack>()
   private val isStacksComputed = CompletableDeferred<Boolean>()
+  private var activeThreadId: Long? = null
+  private val activeExecutionStackBasedOnDebugProcesses by lazy { createActiveExecutionStack() }
 
   init {
     session.adviseOnFrameChanged { stack, _ ->
@@ -43,15 +46,13 @@ class XMixedModeSuspendContext(
     }
   }
 
-  private var activeThreadId: Long? = null
-  private val activeExecutionStackBasedOnDebugProcesses by lazy { createActiveExecutionStack() }
+  override fun getActiveExecutionStack(): XExecutionStack? =
+    when (val currentThreadId = activeThreadId) {
+      null -> activeExecutionStackBasedOnDebugProcesses
+      else -> stacksMap[currentThreadId]
+    }?.also { logger.info("Active execution stack ${it.topFrame}") }
 
-  override fun getActiveExecutionStack(): XExecutionStack? {
-    val currentThreadId = activeThreadId
-    return (if (currentThreadId == null) /*thread wasn't changed*/ activeExecutionStackBasedOnDebugProcesses else stacksMap[currentThreadId])
-      ?.also { logger.info("Active execution stack ${it.topFrame}") }
-  }
-
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
     if (isStacksComputed.isCompleted) {
       isStacksComputed.getCompleted().also { assert(it) }
@@ -75,26 +76,56 @@ class XMixedModeSuspendContext(
     }
   }
 
+  @TestOnly
+  fun getComputeStacksDeferred(): Deferred<ConcurrentHashMap<Long, XMixedModeExecutionStack>> {
+    val stacksMap = CompletableDeferred<ConcurrentHashMap<Long, XMixedModeExecutionStack>>()
+    mixedModeDebugCoroutineScope.async(Dispatchers.Default) {
+      isStacksComputed.await()
+      stacksMap.complete(this@XMixedModeSuspendContext.stacksMap)
+    }
+
+    return stacksMap
+  }
+
+  fun setActiveThreadId(threadId: Long) {
+    activeThreadId = threadId
+  }
+
   private suspend fun computeExecutionStacksInternal(container: XExecutionStackContainer) {
-    activeExecutionStackBasedOnDebugProcesses?.computedFramesMap?.await()
-
     val acc = MyAccumulatingContainer()
-
     highLevelDebugSuspendContext.computeExecutionStacks(acc)
 
     val highLevelStacks = measureTimedValue { acc.frames.await() }.also { logger.info("High level stacks loaded in ${it.duration}") }.value
     val threadIdToHighLevelStackMap = highLevelStacks.associateBy { stack -> stack.nativeThreadId }
 
-    val combinedContainer = MyMixedModeCombinedContainer(
-      activeExecutionStackBasedOnDebugProcesses,
-      session,
-      threadIdToHighLevelStackMap,
-      container,
-      highLevelDebugProcess.getFramesMatcher(),
-      mixedModeDebugCoroutineScope,
-      this@XMixedModeSuspendContext)
+    lowLevelDebugSuspendContext.computeExecutionStacks(object : XExecutionStackContainer {
+      override fun addExecutionStack(executionStacks: List<XExecutionStack?>, last: Boolean) {
+        val mixedStacks = executionStacks.map {
+          if (it !is XExecutionStackWithNativeThreadId) error("Expected XExecutionStackWithNativeThreadId")
+          val activeStack = activeExecutionStackBasedOnDebugProcesses
+          if (activeStack?.lowLevelExecutionStack == it)
+            activeStack
+          else {
+            val correspondedHighLevelStack = threadIdToHighLevelStackMap[it.getNativeThreadId()]
+            XMixedModeExecutionStack(session,
+                                     it,
+                                     correspondedHighLevelStack,
+                                     highLevelDebugProcess.getFramesMatcher(),
+                                     mixedModeDebugCoroutineScope)
+          }
+        }
 
-    lowLevelDebugSuspendContext.computeExecutionStacks(combinedContainer)
+        mixedStacks.forEach { t -> stacksMap[t.nativeThreadId] = t }
+        container.addExecutionStack(mixedStacks, last)
+
+        if (last)
+          isStacksComputed.complete(true)
+      }
+
+      override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
+        isStacksComputed.completeExceptionally(Exception(errorMessage))
+      }
+    })
   }
 
   private fun createActiveExecutionStack(): XMixedModeExecutionStack? {
@@ -115,20 +146,6 @@ class XMixedModeSuspendContext(
       }
   }
 
-  fun getComputeStacksDeferred(): Deferred<ConcurrentHashMap<Long, XMixedModeExecutionStack>> {
-    val stacksMap = CompletableDeferred<ConcurrentHashMap<Long, XMixedModeExecutionStack>>()
-    mixedModeDebugCoroutineScope.async(Dispatchers.Default) {
-      isStacksComputed.await()
-      stacksMap.complete(this@XMixedModeSuspendContext.stacksMap)
-    }
-
-    return stacksMap
-  }
-
-  fun setActiveThreadId(threadId: Long) {
-    activeThreadId = threadId
-  }
-
   private class MyAccumulatingContainer : XExecutionStackContainer {
     private val mutableStacks = mutableListOf<XExecutionStack>()
     val frames: CompletableDeferred<List<XExecutionStack>> = CompletableDeferred<List<XExecutionStack>>()
@@ -141,40 +158,6 @@ class XMixedModeSuspendContext(
 
     override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
       frames.completeExceptionally(Exception(errorMessage))
-    }
-  }
-
-  private class MyMixedModeCombinedContainer(
-    private val activeExecutionStack: XMixedModeExecutionStack?,
-    val session: XDebugSession,
-    val highLevelExecutionStacks: Map<Long, XExecutionStack>,
-    val resultContainer: XExecutionStackContainer,
-    val mixedModeFramesMatcher: MixedModeFramesBuilder,
-    val coroutineScope: CoroutineScope,
-    val suspendContext: XMixedModeSuspendContext,
-  ) : XExecutionStackContainer {
-    override fun addExecutionStack(executionStacks: List<XExecutionStack?>, last: Boolean) {
-      val mixedStacks = executionStacks.filterNotNull().map {
-        if (it !is XExecutionStackWithNativeThreadId) error("Expected XExecutionStackWithNativeThreadId")
-        if (activeExecutionStack?.lowLevelExecutionStack == it) {
-          activeExecutionStack
-        }
-        else {
-          val correspondedHighLevelStack = highLevelExecutionStacks[it.getNativeThreadId()]
-          XMixedModeExecutionStack(session, it, correspondedHighLevelStack, mixedModeFramesMatcher, coroutineScope)
-        }
-      }
-
-      mixedStacks.forEach { t ->
-        suspendContext.stacksMap[t.nativeThreadId] = t
-      }
-
-      suspendContext.isStacksComputed.complete(true)
-      resultContainer.addExecutionStack(mixedStacks, last)
-    }
-
-    override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-      suspendContext.isStacksComputed.completeExceptionally(Exception(errorMessage))
     }
   }
 }
