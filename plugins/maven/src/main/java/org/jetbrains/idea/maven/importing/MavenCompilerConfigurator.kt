@@ -20,6 +20,7 @@ import org.jetbrains.idea.maven.MavenDisposable
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getCompileExecutionConfigurations
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getMavenModuleType
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestCompileExecutionConfigurations
+import org.jetbrains.idea.maven.importing.MavenImportUtil.unescapeCompileSourceRootModuleSuffix
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
@@ -114,9 +115,10 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
                                ideCompilerConfiguration: CompilerConfigurationImpl,
                                defaultCompilerExtension: MavenCompilerExtension?) {
     mavenProjectWithModule.forEach { (mavenProject, modules) ->
+      val compoundModule = modules.firstOrNull { getMavenModuleType(project, it.name) == StandardMavenModuleType.COMPOUND_MODULE }
       modules.forEach { module ->
         applyCompilerExtensionConfiguration(mavenProject, module, ideCompilerConfiguration, defaultCompilerExtension)
-        configureTargetLevel(mavenProject, module, ideCompilerConfiguration, defaultCompilerExtension)
+        configureTargetLevel(mavenProject, module, compoundModule, ideCompilerConfiguration, defaultCompilerExtension)
       }
 
       excludeArchetypeResources(project, mavenProject, ideCompilerConfiguration)
@@ -171,14 +173,25 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
 
   private fun configureTargetLevel(mavenProject: MavenProject,
                                    module: Module,
+                                   compoundModule: Module?,
                                    ideCompilerConfiguration: CompilerConfiguration,
                                    defaultCompilerExtension: MavenCompilerExtension?) {
     var targetLevel = defaultCompilerExtension?.getDefaultCompilerTargetLevel(mavenProject, module)
-    MavenLog.LOG.debug("Bytecode target level $targetLevel in module ${module.name}, compiler extension = ${defaultCompilerExtension?.mavenCompilerId}")
+    val moduleName = module.name
+    MavenLog.LOG.debug("Bytecode target level $targetLevel in module $moduleName, compiler extension = ${defaultCompilerExtension?.mavenCompilerId}")
     if (targetLevel == null) {
-      var level: LanguageLevel?
-      if (isTestModule(module.project, module.name)) {
+      var level: LanguageLevel? = null
+      val project = module.project
+      val type = getMavenModuleType(project, moduleName)
+      if (type == StandardMavenModuleType.TEST_ONLY) {
         level = MavenImportUtil.getTestTargetLanguageLevel(mavenProject)
+      }
+      else if (type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) {
+        if (null != compoundModule) {
+          val moduleSuffix = moduleName.substring(compoundModule.name.length + 1)
+          val executionId = unescapeCompileSourceRootModuleSuffix(moduleSuffix)
+          level = MavenImportUtil.getTargetLanguageLevel(mavenProject, executionId)
+        }
       }
       else {
         level = MavenImportUtil.getTargetLanguageLevel(mavenProject)
@@ -186,12 +199,12 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
       if (level == null) {
         level = MavenImportUtil.getDefaultLevel(mavenProject)
       }
-      level = MavenImportUtil.adjustLevelAndNotify(module.project, level)
+      level = MavenImportUtil.adjustLevelAndNotify(project, level)
       // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin!
       targetLevel = level.toJavaVersion().toString()
     }
 
-    MavenLog.LOG.debug("Setting bytecode target level $targetLevel in module ${module.name}")
+    MavenLog.LOG.debug("Setting bytecode target level $targetLevel in module $moduleName")
     ideCompilerConfiguration.setBytecodeTargetLevel(module, targetLevel)
   }
 

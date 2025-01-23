@@ -82,12 +82,20 @@ object MavenImportUtil {
     return MavenLanguageLevelFinder(mavenProject, true, false).getMavenLanguageLevel()
   }
 
+  internal fun getSourceLanguageLevel(mavenProject: MavenProject, executionId: String): LanguageLevel? {
+    return MavenLanguageLevelFinder(mavenProject, true, false, executionId).getMavenLanguageLevel()
+  }
+
   internal fun getTestSourceLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
     return MavenLanguageLevelFinder(mavenProject, true, true).getMavenLanguageLevel()
   }
 
   internal fun getTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
     return MavenLanguageLevelFinder(mavenProject, false, false).getMavenLanguageLevel()
+  }
+
+  internal fun getTargetLanguageLevel(mavenProject: MavenProject, executionId: String): LanguageLevel? {
+    return MavenLanguageLevelFinder(mavenProject, false, false, executionId).getMavenLanguageLevel()
   }
 
   internal fun getTestTargetLanguageLevel(mavenProject: MavenProject): LanguageLevel? {
@@ -209,7 +217,12 @@ object MavenImportUtil {
     return compileSourceRootEncoder.decode(suffix)
   }
 
-  private class MavenLanguageLevelFinder(val mavenProject: MavenProject, val isSource: Boolean, val isTest: Boolean) {
+  private class MavenLanguageLevelFinder(
+    val mavenProject: MavenProject,
+    val isSource: Boolean,
+    val isTest: Boolean,
+    val executionId: String? = null,
+  ) {
     fun getMavenLanguageLevel(): LanguageLevel? {
       val useReleaseCompilerProp = isReleaseCompilerProp(mavenProject)
       val releaseLevel = if (useReleaseCompilerProp) getCompilerLevel("release") else null
@@ -217,6 +230,10 @@ object MavenImportUtil {
     }
 
     private fun getConfigs(): List<Element> {
+      if (null != executionId) return compilerExecutions(mavenProject)
+        .filter { it.executionId == executionId }
+        .mapNotNull { it.configurationElement }
+
       if (isTest) return mavenProject.testCompilerConfigs
 
       val nonDefaultExecutions = getNonDefaultCompilerExecutions(mavenProject).toSet()

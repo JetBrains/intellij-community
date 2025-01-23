@@ -341,7 +341,8 @@ internal class MavenProjectImportContextProvider(
 
     val compileSourceRootModules = getNonDefaultCompilerExecutions(project).map {
       val suffix = escapeCompileSourceRootModuleSuffix(it)
-      ModuleData("$moduleName.$suffix", StandardMavenModuleType.MAIN_ONLY_ADDITIONAL, sourceLevel)
+      val sourceRootLevel = getSourceLanguageLevel(project, it)
+      ModuleData("$moduleName.$suffix", StandardMavenModuleType.MAIN_ONLY_ADDITIONAL, sourceRootLevel)
     }
 
     val otherModules = listOf(mainData) + compileSourceRootModules + testData
