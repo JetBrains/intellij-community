@@ -9,13 +9,11 @@ internal open class StripesUxCustomizer {
     updateStripesVisibility()
   }
 
-  private fun updateStripesVisibility() {
-    NotRoamableUiSettings.getInstance().xNextStripe = xNextStripe()
+  protected open fun updateStripesVisibility() {
+    NotRoamableUiSettings.getInstance().xNextStripe = false
   }
 
   open fun createCustomButtonManager(paneId: String): ToolWindowButtonManager? = null
 
   open fun decorateAndReturnHolder(divider: JComponent, child: JComponent): JComponent? = null
-
-  open fun xNextStripe(): Boolean = false
 }

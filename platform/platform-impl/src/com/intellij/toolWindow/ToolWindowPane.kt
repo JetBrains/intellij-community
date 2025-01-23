@@ -136,12 +136,8 @@ class ToolWindowPane private constructor(
   /*
    * Splitters
    */
-  private val verticalSplitterHolder:  ToolWindowsPaneThreeSplitterHolder = ToolWindowsPaneThreeSplitterHolder(true)
-  private val horizontalSplitterHolder: ToolWindowsPaneThreeSplitterHolder = ToolWindowsPaneThreeSplitterHolder(false)
-
-  private val verticalSplitter: ThreeComponentsSplitter = verticalSplitterHolder.splitter
-  private val horizontalSplitter: ThreeComponentsSplitter = horizontalSplitterHolder.splitter
-
+  private val verticalSplitter: ThreeComponentsSplitter
+  private val horizontalSplitter: ThreeComponentsSplitter
   private var isWideScreen: Boolean
   private var leftHorizontalSplit: Boolean
   private var rightHorizontalSplit: Boolean
@@ -155,6 +151,11 @@ class ToolWindowPane private constructor(
     name = paneId
 
     // splitters
+    verticalSplitter = ThreeComponentsSplitter(true)
+    horizontalSplitter = ThreeComponentsSplitter(false)
+    setUpSplitter(verticalSplitter)
+    setUpSplitter(horizontalSplitter)
+
     val registryValue = Registry.get("ide.mainSplitter.min.size")
     registryValue.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
@@ -168,10 +169,10 @@ class ToolWindowPane private constructor(
     leftHorizontalSplit = uiSettings.leftHorizontalSplit
     rightHorizontalSplit = uiSettings.rightHorizontalSplit
     if (isWideScreen) {
-      horizontalSplitterHolder.innerComponent = verticalSplitter
+      horizontalSplitter.innerComponent = verticalSplitter
     }
     else {
-      verticalSplitterHolder.innerComponent = horizontalSplitter
+      verticalSplitter.innerComponent = horizontalSplitter
     }
     updateToolStripesVisibility(uiSettings)
 
@@ -186,6 +187,13 @@ class ToolWindowPane private constructor(
     if (Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
       ToolWindowInnerDragHelper(disposable, this).start()
     }
+  }
+
+  private fun setUpSplitter(splitter: ThreeComponentsSplitter) {
+    splitter.dividerWidth = 0
+    splitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
+
+    splitter.background = InternalUICustomization.getInstance().getToolWindowsPaneThreeSplitterBackground()
   }
 
   override fun removeNotify() {
@@ -288,10 +296,10 @@ class ToolWindowPane private constructor(
 
   private fun setComponent(component: JComponent?, anchor: ToolWindowAnchor, weight: Float) {
     when (anchor) {
-      ToolWindowAnchor.TOP -> verticalSplitterHolder.firstComponent = component
-      ToolWindowAnchor.LEFT -> horizontalSplitterHolder.firstComponent = component
-      ToolWindowAnchor.BOTTOM -> verticalSplitterHolder.lastComponent = component
-      ToolWindowAnchor.RIGHT -> horizontalSplitterHolder.lastComponent = component
+      ToolWindowAnchor.TOP -> verticalSplitter.firstComponent = component
+      ToolWindowAnchor.LEFT -> horizontalSplitter.firstComponent = component
+      ToolWindowAnchor.BOTTOM -> verticalSplitter.lastComponent = component
+      ToolWindowAnchor.RIGHT -> horizontalSplitter.lastComponent = component
       else -> LOG.error("unknown anchor: $anchor")
     }
     setWeight(anchor, weight)
@@ -351,8 +359,7 @@ class ToolWindowPane private constructor(
     }
     val proportion = if (window.windowInfo.isSplit) {
       normalizeWeight(1.0f - sideWeight)
-    }
-    else {
+    } else {
       normalizeWeight(sideWeight)
     }
     splitter.proportion = proportion
@@ -365,10 +372,10 @@ class ToolWindowPane private constructor(
 
   private fun getComponentAt(anchor: ToolWindowAnchor): JComponent? {
     return when (anchor) {
-      ToolWindowAnchor.TOP -> verticalSplitterHolder.firstComponent
-      ToolWindowAnchor.LEFT -> horizontalSplitterHolder.firstComponent
-      ToolWindowAnchor.BOTTOM -> verticalSplitterHolder.lastComponent
-      ToolWindowAnchor.RIGHT -> horizontalSplitterHolder.lastComponent
+      ToolWindowAnchor.TOP -> verticalSplitter.firstComponent
+      ToolWindowAnchor.LEFT -> horizontalSplitter.firstComponent
+      ToolWindowAnchor.BOTTOM -> verticalSplitter.lastComponent
+      ToolWindowAnchor.RIGHT -> horizontalSplitter.lastComponent
       else -> {
         LOG.error("unknown anchor: $anchor")
         null
@@ -378,12 +385,12 @@ class ToolWindowPane private constructor(
 
   @RequiresEdt
   fun setDocumentComponent(component: JComponent?) {
-    (if (isWideScreen) verticalSplitterHolder else horizontalSplitterHolder).innerComponent = component
+    (if (isWideScreen) verticalSplitter else horizontalSplitter).innerComponent = component
   }
 
   @RequiresEdt
   fun getDocumentComponent(): JComponent? {
-    return (if (isWideScreen) verticalSplitterHolder else horizontalSplitterHolder).innerComponent
+    return (if (isWideScreen) verticalSplitter else horizontalSplitter).innerComponent
   }
 
   private fun updateToolStripesVisibility(uiSettings: UISettings) {
@@ -432,7 +439,7 @@ class ToolWindowPane private constructor(
       component = getComponentAt(window.anchor)
       if (component != null) {
         resizer = if (window.anchor.isHorizontal) {
-          if (verticalSplitterHolder.firstComponent === component) Resizer.Splitter.FirstComponent(verticalSplitter)
+          if (verticalSplitter.firstComponent === component) Resizer.Splitter.FirstComponent(verticalSplitter)
           else Resizer.Splitter.LastComponent(verticalSplitter)
         }
         else {
@@ -592,12 +599,10 @@ class ToolWindowPane private constructor(
     }
   }
 
-  private fun addAndSplitDockedComponentCmd(
-    newComponent: JComponent,
-    info: WindowInfo,
-    dirtyMode: Boolean,
-    manager: ToolWindowManagerImpl,
-  ) {
+  private fun addAndSplitDockedComponentCmd(newComponent: JComponent,
+                                            info: WindowInfo,
+                                            dirtyMode: Boolean,
+                                            manager: ToolWindowManagerImpl) {
     val anchor = info.anchor
 
     class MySplitter : OnePixelSplitter(), UISettingsListener {
@@ -668,10 +673,8 @@ class ToolWindowPane private constructor(
       if (info.isSplit) {
         splitter.firstComponent = oldComponent
         splitter.secondComponent = newComponent
-        LOG.debug {
-          "Determining the split proportion for ${oldInfo.id}+${info.id} " +
-          "using oldInfo.sideWeight=${oldInfo.sideWeight}"
-        }
+        LOG.debug { "Determining the split proportion for ${oldInfo.id}+${info.id} " +
+                    "using oldInfo.sideWeight=${oldInfo.sideWeight}" }
         val proportion = state.getPreferredSplitProportion(
           id = oldInfo.id!!,
           defaultValue = normalizeWeight(oldInfo.sideWeight / (oldInfo.sideWeight + info.sideWeight)),
@@ -695,11 +698,9 @@ class ToolWindowPane private constructor(
           normalizeWeight(info.weight)
         }
       }
-      LOG.debug {
-        "Calculated splitter weight of $newWeight for ${oldInfo.id}+${info.id} " +
-        "using isSplit=${info.isSplit}, isHorizontal=${anchor.isHorizontal}, isSplitVertically=${anchor.isSplitVertically}, " +
-        "oldInfo.weight=${oldInfo.weight}, newInfo.weight=${info.weight}"
-      }
+      LOG.debug { "Calculated splitter weight of $newWeight for ${oldInfo.id}+${info.id} " +
+                  "using isSplit=${info.isSplit}, isHorizontal=${anchor.isHorizontal}, isSplitVertically=${anchor.isSplitVertically}, " +
+                  "oldInfo.weight=${oldInfo.weight}, newInfo.weight=${info.weight}" }
     }
     else {
       newWeight = normalizeWeight(info.weight)
@@ -925,14 +926,12 @@ private class FrameLayeredPane(splitter: JComponent, frame: JFrame) : JLayeredPa
   }
 }
 
-private class Surface(
-  private val myTopImage: Image,
-  private val myBottomImage: Image,
-  bottomImageOffset: Point2D,
-  private val direction: Int,
-  private val anchor: ToolWindowAnchor,
-  private val desiredTimeToComplete: Int,
-) : JComponent() {
+private class Surface(private val myTopImage: Image,
+                      private val myBottomImage: Image,
+                      bottomImageOffset: Point2D,
+                      private val  direction: Int,
+                      private val anchor: ToolWindowAnchor,
+                      private val desiredTimeToComplete: Int) : JComponent() {
   private val bottomImageOffset = bottomImageOffset.clone() as Point2D
   private var offset = 0
 
