@@ -83,7 +83,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRe
   private fun paseIntoInput(input: TerminalInput) {
     val text = getClipboardText() ?: return
     if (text.isNotEmpty()) {
-      input.send(text)
+      input.sendString(text)
     }
   }
 

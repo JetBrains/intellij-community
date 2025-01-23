@@ -12,12 +12,12 @@ internal class TerminalInput(
     val KEY: DataKey<TerminalInput> = DataKey.create("TerminalInput")
   }
 
-  fun send(data: String) {
+  fun sendString(data: String) {
     // TODO: should there always be UTF8?
-    send(data.toByteArray(StandardCharsets.UTF_8))
+    sendBytes(data.toByteArray(StandardCharsets.UTF_8))
   }
 
-  fun send(data: ByteArray) {
+  fun sendBytes(data: ByteArray) {
     terminalSessionFuture.thenAccept { session ->
       session?.inputChannel?.trySend(TerminalWriteBytesEvent(data))
     }

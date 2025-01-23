@@ -78,17 +78,17 @@ internal open class TerminalEventsHandlerImpl(
       // numLock does not change the code sent by keypad VK_DELETE,
       // although it send the char '.'
       if (keyCode == KeyEvent.VK_DELETE && keyChar == '.') {
-        terminalInput.send(byteArrayOf('.'.code.toByte()))
+        terminalInput.sendBytes(byteArrayOf('.'.code.toByte()))
         return true
       }
       // CTRL + Space is not handled in KeyEvent; handle it manually
       if (keyChar == ' ' && e.modifiersEx and InputEvent.CTRL_DOWN_MASK != 0) {
-        terminalInput.send(byteArrayOf(Ascii.NUL))
+        terminalInput.sendBytes(byteArrayOf(Ascii.NUL))
         return true
       }
       val code = encodingManager.getCode(keyCode, e.modifiers)
       if (code != null) {
-        terminalInput.send(code)
+        terminalInput.sendBytes(code)
         // TODO
         //if (settings.scrollToBottomOnTyping() && TerminalPanel.isCodeThatScrolls(keyCode)) {
         //  scrollToBottom()
@@ -100,7 +100,7 @@ internal open class TerminalEventsHandlerImpl(
         //  Option+f produces e.getKeyChar()='ƒ' (402), but 'f' (102) is needed.
         //  Option+b produces e.getKeyChar()='∫' (8747), but 'b' (98) is needed.
         val string = String(charArrayOf(Ascii.ESC.toInt().toChar(), simpleMapKeyCodeToChar(e)))
-        terminalInput.send(string)
+        terminalInput.sendString(string)
         return true
       }
       if (Character.isISOControl(keyChar)) { // keys filtered out here will be processed in processTerminalKeyTyped
@@ -122,7 +122,7 @@ internal open class TerminalEventsHandlerImpl(
       // Command + backtick is a short-cut on Mac OSX, so we shouldn't type anything
       return false
     }
-    terminalInput.send(keyChar.toString())
+    terminalInput.sendString(keyChar.toString())
     // TODO
     //if (settings.scrollToBottomOnTyping()) {
     //scrollToBottom()
@@ -158,7 +158,7 @@ internal open class TerminalEventsHandlerImpl(
           code = code or MouseButtonModifierFlags.MOUSE_BUTTON_SCROLL_FLAG
         }
         code = applyModifierKeys(event, code)
-        terminalInput.send(mouseReport(code, x + 1, y + 1))
+        terminalInput.sendBytes(mouseReport(code, x + 1, y + 1))
       }
     }
   }
@@ -176,7 +176,7 @@ internal open class TerminalEventsHandlerImpl(
           MouseButtonCodes.RELEASE
         }
         code = applyModifierKeys(event, code)
-        terminalInput.send(mouseReport(code, x + 1, y + 1))
+        terminalInput.sendBytes(mouseReport(code, x + 1, y + 1))
       }
     }
     lastMotionReport = null
@@ -187,7 +187,7 @@ internal open class TerminalEventsHandlerImpl(
       return
     }
     if (shouldSendMouseData(MouseMode.MOUSE_REPORTING_ALL_MOTION)) {
-      terminalInput.send(mouseReport(MouseButtonCodes.RELEASE, x + 1, y + 1))
+      terminalInput.sendBytes(mouseReport(MouseButtonCodes.RELEASE, x + 1, y + 1))
     }
     lastMotionReport = Point(x, y)
   }
@@ -202,7 +202,7 @@ internal open class TerminalEventsHandlerImpl(
       if (code != MouseButtonCodes.NONE) {
         code = code or MouseButtonModifierFlags.MOUSE_BUTTON_MOTION_FLAG
         code = applyModifierKeys(event, code)
-        terminalInput.send(mouseReport(code, x + 1, y + 1))
+        terminalInput.sendBytes(mouseReport(code, x + 1, y + 1))
       }
     }
     lastMotionReport = Point(x, y)
@@ -223,7 +223,7 @@ internal open class TerminalEventsHandlerImpl(
         encodingManager.getCode(KeyEvent.VK_DOWN, 0)
       }
       for (i in 0 until abs(event.unitsToScroll)) {
-        terminalInput.send(arrowKeys!!)
+        terminalInput.sendBytes(arrowKeys!!)
       }
       event.consume()
     }
