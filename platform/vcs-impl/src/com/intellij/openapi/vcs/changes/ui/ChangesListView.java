@@ -156,6 +156,9 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
       if (file == null) return null;
       return new FileSelectInContext(myProject, file, null);
     });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
+      return VcsTreeModelData.findSelectedVirtualFile(this);
+    });
     sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return VcsTreeModelData.mapToVirtualFile(treeSelection)
         .toArray(VirtualFile.EMPTY_ARRAY);

@@ -311,6 +311,9 @@ public abstract class VcsTreeModelData {
     sink.lazy(VcsDataKeys.VIRTUAL_FILES, () -> {
       return mapToVirtualFile(treeSelection);
     });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
+      return findSelectedVirtualFile(tree);
+    });
     sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return mapToVirtualFile(treeSelection).toArray(VirtualFile.EMPTY_ARRAY);
     });
@@ -345,26 +348,41 @@ public abstract class VcsTreeModelData {
       .filter(VirtualFile::isValid);
   }
 
+  static @Nullable VirtualFile findSelectedVirtualFile(@NotNull JTree tree) {
+    TreePath leadSelectionPath = tree.getLeadSelectionPath();
+    if (leadSelectionPath == null) return null;
+    return treePathToVirtualFile(leadSelectionPath);
+  }
+
+  private static @Nullable VirtualFile treePathToVirtualFile(@NotNull TreePath path) {
+    VirtualFile virtualFile = objectToVirtualFile(((ChangesBrowserNode<?>)path.getLastPathComponent()).getUserObject());
+    if (virtualFile == null || !virtualFile.isValid()) return null;
+    return virtualFile;
+  }
+
   static @NotNull JBIterable<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
     return mapObjectToVirtualFile(data.iterateUserObjects());
   }
 
   static @NotNull JBIterable<VirtualFile> mapObjectToVirtualFile(@NotNull JBIterable<Object> userObjects) {
-    return userObjects.map(entry -> {
-        if (entry instanceof Change) {
-          FilePath path = ChangesUtil.getAfterPath((Change)entry);
-          return path != null ? path.getVirtualFile() : null;
-        }
-        else if (entry instanceof VirtualFile) {
-          return (VirtualFile)entry;
-        }
-        else if (entry instanceof FilePath) {
-          return ((FilePath)entry).getVirtualFile();
-        }
-        return null;
-      })
+    return userObjects
+      .map(VcsTreeModelData::objectToVirtualFile)
       .filterNotNull()
       .filter(VirtualFile::isValid);
+  }
+
+  private static @Nullable VirtualFile objectToVirtualFile(@Nullable Object userObject) {
+    if (userObject instanceof Change) {
+      FilePath path = ChangesUtil.getAfterPath((Change)userObject);
+      return path != null ? path.getVirtualFile() : null;
+    }
+    else if (userObject instanceof VirtualFile) {
+      return (VirtualFile)userObject;
+    }
+    else if (userObject instanceof FilePath) {
+      return ((FilePath)userObject).getVirtualFile();
+    }
+    return null;
   }
 
   static @NotNull JBIterable<FilePath> mapToFilePath(@NotNull VcsTreeModelData data) {
