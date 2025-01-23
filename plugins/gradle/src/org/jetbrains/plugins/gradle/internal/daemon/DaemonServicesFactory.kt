@@ -22,11 +22,10 @@ import java.lang.reflect.Proxy
 fun getDaemonServiceFactory(daemonClientFactory: DaemonClientFactory, myServiceDirectoryPath: String?): ServiceRegistry {
   val layoutParameters = getBuildLayoutParameters(myServiceDirectoryPath)
   val daemonParameters = getDaemonParameters(layoutParameters)
-  return getDaemonServicesBefore8Dot8(daemonClientFactory, daemonParameters)
-  //return when {
-  //  GradleVersionUtil.isCurrentGradleAtLeast("8.8") -> getDaemonServicesAfter8Dot8(daemonClientFactory, daemonParameters)
-  //  else -> getDaemonServicesBefore8Dot8(daemonClientFactory, daemonParameters)
-  //}
+  return when {
+    GradleVersionUtil.isCurrentGradleAtLeast("8.8") -> getDaemonServicesAfter8Dot8(daemonClientFactory, daemonParameters)
+    else -> getDaemonServicesBefore8Dot8(daemonClientFactory, daemonParameters)
+  }
 }
 
 private fun getDaemonServicesBefore8Dot8(daemonClientFactory: DaemonClientFactory,
