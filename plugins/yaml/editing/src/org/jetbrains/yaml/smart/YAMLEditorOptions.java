@@ -27,6 +27,11 @@ public class YAMLEditorOptions implements PersistentStateComponent<YAMLEditorOpt
     XmlSerializerUtil.copyBean(state, this);
   }
 
+  @Override
+  public void noStateLoaded() {
+    loadState(new YAMLEditorOptions());
+  }
+
   public boolean isUseSmartPaste() {
     return myUseSmartPaste;
   }

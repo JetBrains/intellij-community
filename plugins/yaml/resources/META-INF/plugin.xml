@@ -77,6 +77,8 @@
     <lang.inspectionSuppressor language="yaml" implementationClass="org.jetbrains.yaml.YAMLlInspectionSuppressor"/>
     <annotator language="yaml" implementationClass="org.jetbrains.yaml.annotator.YAMLInvalidBlockChildrenErrorAnnotator"/>
     <applicationService serviceImplementation="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
+    <applicationSettings service="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
+    <rdct.remoteSettingProvider implementation="org.jetbrains.yaml.smart.YAMLRemoteSettingInfoProvider"/>
     <editorSmartKeysConfigurable instance="org.jetbrains.yaml.smart.YAMLSmartOptionsProvider"
                                  id="editor.preferences.yamlOptions"
                                  bundle="messages.YAMLBundle"
