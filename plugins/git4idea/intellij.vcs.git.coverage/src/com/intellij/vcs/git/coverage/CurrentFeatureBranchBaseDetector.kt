@@ -14,6 +14,7 @@ import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.utils.BfsWalk
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
@@ -160,7 +161,7 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
 }
 
 @VisibleForTesting
-internal fun findBaseCommit(linearGraph: LinearGraph, headNodeId: Int, protectedNodeIds: Set<Int>): Status {
+internal fun findBaseCommit(linearGraph: LinearGraph, headNodeId: VcsLogGraphNodeId, protectedNodeIds: Set<VcsLogGraphNodeId>): Status {
   val graph = LinearGraphUtils.asLiteLinearGraph(linearGraph)
 
   val visited = BitSetFlags(graph.nodesCount())
@@ -201,9 +202,9 @@ internal fun findBaseCommit(linearGraph: LinearGraph, headNodeId: Int, protected
   return Status.InternalSuccess(foundCommits)
 }
 
-private fun findProtectedBranchNodeId(commitId: Int, linearGraph: LiteLinearGraph, visited: BitSetFlags, protectedNodeIds: Set<Int>): Int? {
+private fun findProtectedBranchNodeId(nodeId: VcsLogGraphNodeId, linearGraph: LiteLinearGraph, visited: BitSetFlags, protectedNodeIds: Set<VcsLogGraphNodeId>): Int? {
   var protectedNodeId: Int? = null
-  DfsWalk(listOf(commitId), linearGraph, visited).walk(goDown = false) { nodeId ->
+  DfsWalk(listOf(nodeId), linearGraph, visited).walk(goDown = false) { nodeId ->
     if (nodeId in protectedNodeIds) {
       protectedNodeId = nodeId
       false

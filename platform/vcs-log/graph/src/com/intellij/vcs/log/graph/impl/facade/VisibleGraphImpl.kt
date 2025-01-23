@@ -10,6 +10,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetter
 import com.intellij.vcs.log.graph.api.printer.GraphPrintElement
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction
@@ -81,7 +82,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
   }
 
   private inner class ActionControllerImpl : ActionController<CommitId> {
-    private fun convertToNodeId(nodeIndex: VcsLogVisibleGraphIndex?): Int? {
+    private fun convertToNodeId(nodeIndex: VcsLogVisibleGraphIndex?): VcsLogGraphNodeId? {
       return if (nodeIndex == null) null else graphController.compiledGraph.getNodeId(nodeIndex)
     }
 
@@ -94,7 +95,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
 
       val edge = affectedElement.graphElement as? GraphEdge ?: return null
 
-      var targetId: Int? = null
+      var targetId: VcsLogGraphNodeId? = null
       if (edge.type == GraphEdgeType.NOT_LOAD_COMMIT) {
         assert(edgePrintElement.type == EdgePrintElement.Type.DOWN)
         targetId = edge.targetId
@@ -190,7 +191,7 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
 
   data class LinearGraphActionImpl(override val affectedElement: GraphPrintElement?, override val type: GraphAction.Type) : LinearGraphAction
 
-  private inner class RowInfoImpl(private val nodeId: Int, private val visibleRow: VcsLogVisibleGraphIndex) : RowInfo<CommitId> {
+  private inner class RowInfoImpl(private val nodeId: VcsLogGraphNodeId, private val visibleRow: VcsLogVisibleGraphIndex) : RowInfo<CommitId> {
     override fun getCommit(): CommitId {
       return permanentGraph.permanentCommitsInfo.getCommitId(nodeId)
     }

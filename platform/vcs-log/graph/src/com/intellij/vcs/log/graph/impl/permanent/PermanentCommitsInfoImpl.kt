@@ -3,13 +3,13 @@ package com.intellij.vcs.log.graph.impl.permanent
 
 import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.impl.facade.RowsMapping
 import com.intellij.vcs.log.graph.utils.TimestampGetter
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 @ApiStatus.Internal
 class PermanentCommitsInfoImpl<CommitId : Any> private constructor(private val rowsMapping: RowsMapping<CommitId>,
@@ -17,18 +17,18 @@ class PermanentCommitsInfoImpl<CommitId : Any> private constructor(private val r
   val timestampGetter: TimestampGetter
     get() = rowsMapping
 
-  override fun getCommitId(nodeId: Int): CommitId {
+  override fun getCommitId(nodeId: VcsLogGraphNodeId): CommitId {
     if (nodeId < 0) return notLoadedCommits[nodeId]
     return rowsMapping.getCommitId(nodeId)
   }
 
-  override fun getTimestamp(nodeId: Int): Long {
+  override fun getTimestamp(nodeId: VcsLogGraphNodeId): Long {
     if (nodeId < 0) return 0
     return rowsMapping.getTimestamp(nodeId)
   }
 
   // todo optimize with special map
-  override fun getNodeId(commitId: CommitId): Int {
+  override fun getNodeId(commitId: CommitId): VcsLogGraphNodeId {
     val indexOf = rowsMapping.commitIdMapping.indexOf(commitId)
     if (indexOf != -1) return indexOf
 
@@ -44,15 +44,15 @@ class PermanentCommitsInfoImpl<CommitId : Any> private constructor(private val r
     return -1
   }
 
-  fun convertToCommitIdList(commitIndexes: Collection<Int>): List<CommitId> {
+  fun convertToCommitIdList(commitIndexes: Collection<VcsLogGraphNodeId>): List<CommitId> {
     return commitIndexes.map(this::getCommitId)
   }
 
-  fun convertToCommitIdSet(commitIndexes: Collection<Int>): Set<CommitId> {
+  fun convertToCommitIdSet(commitIndexes: Collection<VcsLogGraphNodeId>): Set<CommitId> {
     return commitIndexes.mapTo(HashSet(), this::getCommitId)
   }
 
-  override fun convertToNodeIds(commitIds: Collection<CommitId>): Set<Int> {
+  override fun convertToNodeIds(commitIds: Collection<CommitId>): Set<VcsLogGraphNodeId> {
     return convertToNodeIds(commitIds, false)
   }
 
