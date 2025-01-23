@@ -143,6 +143,7 @@ object K2CreateParameterFromUsageBuilder {
                 project,
                 editor,
                 originalExpression,
+                null,
                 container,
                 { getExpectedType(originalExpression) },
                 { _ -> listOf(name) },

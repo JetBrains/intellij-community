@@ -161,7 +161,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
             suggestedNames.addAll(KotlinNameSuggester.suggestNamesByType(expressionType, targetParent, nameValidator, "p"))
             suggestedNames
         }
-        addParameter(project, editor, expression, targetParent, expressionTypeEvaluator, nameSuggester)
+        addParameter(project, editor, expression, expression, targetParent, expressionTypeEvaluator, nameSuggester)
     }
 
     /**
@@ -173,6 +173,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         project: Project,
         editor: Editor,
         expression: KtExpression,
+        argumentValue: KtExpression?,
         targetParent: KtNamedDeclaration,
         expressionTypeEvaluator: KaSession.() -> KaType?,
         nameSuggester: KaSession.(KaType) -> List<String>,
@@ -237,7 +238,8 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                 expressionType,
                 parametersUsages,
                 occurrencesToReplace,
-                psiFactory
+                psiFactory,
+                argumentValue
             ) to expressionType
         }
 
@@ -336,7 +338,8 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         replacementType: KaType,
         parametersUsages: MultiMap<KtElement, KtElement>,
         occurrencesToReplace: List<KotlinPsiRange>,
-        psiFactory: KtPsiFactory
+        psiFactory: KtPsiFactory,
+        argumentValue: KtExpression?
     ): IntroduceParameterDescriptor<KtNamedDeclaration> = helper.configure(
         IntroduceParameterDescriptor(
             originalRange = originalExpression.toRange(),
@@ -348,7 +351,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                     functionalTypeRenderer = KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
                 }, position = Variance.IN_VARIANCE)
             },
-            argumentValue = originalExpression,
+            argumentValue = argumentValue,
             withDefaultValue = false,
             parametersUsages = parametersUsages,
             occurrencesToReplace = occurrencesToReplace,
@@ -498,7 +501,7 @@ fun IntroduceParameterDescriptor<KtNamedDeclaration>.performRefactoring(editor: 
         context = targetCallable
     )
 
-    val containingParameter = defaultValue?.parentOfType<KtParameter>()
+    val containingParameter = originalRange.elements.firstOrNull()?.parentOfType<KtParameter>()
 
     val targetParameterIndex = containingParameter?.let { (callable as? KtFunction)?.valueParameterList?.parameters?.indexOf(containingParameter) } ?: -1
 

@@ -18,15 +18,15 @@ data class IntroduceParameterDescriptor<Descriptor>(
   val callableDescriptor: Descriptor,
   val newParameterName: String,
   val newParameterTypeText: String,
-  val argumentValue: KtExpression,
+  val argumentValue: KtExpression?,
   val withDefaultValue: Boolean,
   val parametersUsages: MultiMap<KtElement, KtElement>,
   val occurrencesToReplace: List<KotlinPsiRange>,
   val parametersToRemove: List<KtElement> = getParametersToRemove(withDefaultValue, parametersUsages, occurrencesToReplace),
   val occurrenceReplacer: IntroduceParameterDescriptor<Descriptor>.(KotlinPsiRange) -> Unit = {}
 ) {
-    val newArgumentValue: KtExpression by lazy {
-        if (argumentValue.mustBeParenthesizedInInitializerPosition()) {
+    val newArgumentValue: KtExpression? by lazy {
+        if (argumentValue != null && argumentValue.mustBeParenthesizedInInitializerPosition()) {
             KtPsiFactory(callable.project).createExpressionByPattern("($0)", argumentValue)
         } else {
             argumentValue
