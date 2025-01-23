@@ -171,6 +171,7 @@ internal abstract class TerminalEventDispatcher(
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",
       "TerminalResetFontSize",
+      "Terminal.Escape",
       "Terminal.CopySelectedText",
       "Terminal.Paste",
       "Terminal.PageUp",

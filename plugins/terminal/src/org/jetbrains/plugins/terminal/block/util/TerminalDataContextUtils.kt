@@ -38,6 +38,8 @@ object TerminalDataContextUtils {
     get() = getUserData(IS_OUTPUT_MODEL_EDITOR_KEY) == true
   val Editor.isAlternateBufferModelEditor: Boolean
     get() = getUserData(IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY) == true
+  val Editor.isReworkedTerminalEditor: Boolean
+    get() = isOutputModelEditor || isAlternateBufferModelEditor
   val Editor.terminalPromptModel: TerminalPromptModel?
     get() = getUserData(TerminalPromptModel.KEY)
 
