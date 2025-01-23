@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -97,38 +96,6 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     });
   }
 
-  @Override
-  public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression pyString) {
-    final ScopeOwner owner = ScopeUtil.getScopeOwner(pyString);
-    if (owner != null && !(owner instanceof PsiFile)) {
-      final PsiElement instrAnchor = getControlFlowAnchorForString(pyString);
-      if (instrAnchor == null) return;
-      final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
-      final int startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, instrAnchor);
-      if (startInstruction < 0) return;
-      final Project project = pyString.getProject();
-      final List<Pair<PsiElement, TextRange>> pairs = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(pyString);
-      if (pairs != null) {
-        for (Pair<PsiElement, TextRange> pair : pairs) {
-          pair.getFirst().accept(new PyRecursiveElementVisitor() {
-            @Override
-            public void visitPyReferenceExpression(@NotNull PyReferenceExpression expr) {
-              final PyExpression qualifier = expr.getQualifier();
-              if (qualifier != null) {
-                qualifier.accept(this);
-                return;
-              }
-              final String name = expr.getName();
-              if (name != null) {
-                analyzeReadsInScope(name, owner, instructions, startInstruction, pyString);
-              }
-            }
-          });
-        }
-      }
-    }
-  }
-
   private static @Nullable PsiElement getControlFlowAnchorForString(@NotNull PyStringLiteralExpression host) {
     final PsiElement comprehensionPart = PsiTreeUtil.findFirstParent(host, element -> {
       // Any comprehension component and its result are represented as children expressions of the comprehension element.
@@ -207,12 +174,51 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
+  private @NotNull Set<PsiElement> analyzeReadsInDoctests(@NotNull PyStringLiteralExpression docstring, @NotNull ScopeOwner owner) {
+    final PsiElement instrAnchor = getControlFlowAnchorForString(docstring);
+    if (instrAnchor == null) return Collections.emptySet();
+    final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
+    final int startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, instrAnchor);
+    if (startInstruction < 0) return Collections.emptySet();
+    final Project project = docstring.getProject();
+    final List<Pair<PsiElement, TextRange>> pairs = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(docstring);
+    if (pairs != null) {
+      Set<PsiElement> result = new HashSet<>();
+      for (Pair<PsiElement, TextRange> pair : pairs) {
+        pair.getFirst().accept(new PyRecursiveElementVisitor() {
+          @Override
+          public void visitPyReferenceExpression(@NotNull PyReferenceExpression expr) {
+            final PyExpression qualifier = expr.getQualifier();
+            if (qualifier != null) {
+              qualifier.accept(this);
+              return;
+            }
+            final String name = expr.getName();
+            if (name != null) {
+              result.addAll(analyzeReadsInScope(name, owner, instructions, startInstruction, docstring));
+            }
+          }
+        });
+      }
+      return result;
+    }
+    return Collections.emptySet();
+  }
+
+
   private void collectUsedReads(final ScopeOwner owner) {
     // Avoid performing the analysis twice for the same nested function
     if (myScopeReads.containsKey(owner)) {
       return;
     }
     Set<PsiElement> allPathsScopeReads = new HashSet<>();
+    if (owner instanceof PyDocStringOwner docStringOwner) {
+      PyStringLiteralExpression docstring = docStringOwner.getDocStringExpression();
+      if (docstring != null) {
+        allPathsScopeReads.addAll(analyzeReadsInDoctests(docstring, owner));
+      }
+    }
+    
     final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     for (int i = 0; i < instructions.length; i++) {
       final Instruction instruction = instructions[i];
