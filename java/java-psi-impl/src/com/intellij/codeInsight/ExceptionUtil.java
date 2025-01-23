@@ -902,10 +902,10 @@ public final class ExceptionUtil {
    * This includes both individual exception types and disjunction types in multi-catch blocks.
    *
    * @param catchSectionList a list of {@code PsiCatchSection}
-   * @return {@code ThreeState.YES} if there is any duplicate exception type across the provided catch sections, {@code ThreeState.UNSURE} if it
-   * is impossible to detect the duplicates, {@code ThreeState.NO} otherwise
+   * @return {@code true} if there is any duplicate exception type across the provided catch sections, {@code false} if it is
+   * impossible to detect an exception type or {@code catchSectionList} contains duplicate exceptions.
    */
-  public static @NotNull ThreeState hasDuplicateExceptions(@NotNull List<? extends PsiCatchSection> catchSectionList) {
+  public static boolean hasDuplicateExceptions(@NotNull List<? extends PsiCatchSection> catchSectionList) {
     Set<PsiType> uniqueTypeSet = new HashSet<>();
     int typesCount = 0;
     for (PsiCatchSection catchSection : catchSectionList) {
@@ -918,10 +918,10 @@ public final class ExceptionUtil {
         uniqueTypeSet.add(type);
         typesCount++;
       } else {
-        return ThreeState.UNSURE;
+        return false;
       }
     }
-    return typesCount != uniqueTypeSet.size() ? ThreeState.YES : ThreeState.NO;
+    return typesCount != uniqueTypeSet.size();
   }
 
   /**

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -14,7 +13,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -157,24 +155,51 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
           }
         }
       }
-      sb.append(tryBlock.getText());
+
+      if (!context.myCatchSectionsToAdd.isEmpty() && tryStatement.getCatchSections().length != 0) {
+        sb.append("{").append("try");
+        if (!addTryAndCatchBlocks(tryStatement, sb)) return;
+        sb.append("}");
+      } else {
+        if (!addTryAndCatchBlocks(tryStatement, sb)) return;
+      }
 
       for (PsiCatchSection section : context.myCatchSectionsToAdd) {
         sb.append(section.getText());
       }
+
+      if (!addFinallyBlock(tryStatement, sb)) return;
+
+      tryStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(sb.toString(), tryStatement));
+    }
+
+    private static boolean addTryAndCatchBlocks(@NotNull PsiTryStatement tryStatement, @NotNull StringBuilder sb) {
+      PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+      if (tryBlock == null) return false;
+      sb.append(tryBlock.getText());
+
+      for (PsiCatchSection section : tryStatement.getCatchSections()) {
+        sb.append(section.getText());
+      }
+
+      return true;
+    }
+
+    private static boolean addFinallyBlock(@NotNull PsiTryStatement tryStatement, @NotNull StringBuilder sb) {
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock == null) return;
+      if (finallyBlock == null) return false;
       if (!ControlFlowUtils.isEmptyCodeBlock(finallyBlock)) {
         sb.append("finally").append(finallyBlock.getText());
       }
       else {
         PsiElement[] finallyBlockChildren = finallyBlock.getChildren();
-        if (!StreamEx.of(finallyBlockChildren).skip(1).limit(finallyBlockChildren.length - 2).allMatch(el -> el instanceof PsiWhiteSpace)) {
+        if (!StreamEx.of(finallyBlockChildren).skip(1).limit(finallyBlockChildren.length - 2)
+          .allMatch(el -> el instanceof PsiWhiteSpace)) {
           PsiElement tryParent = tryStatement.getParent();
           tryParent.addRangeAfter(finallyBlockChildren[1], finallyBlockChildren[finallyBlockChildren.length - 2], tryStatement);
         }
       }
-      tryStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(sb.toString(), tryStatement));
+      return true;
     }
 
     private static void deleteStatement(@NotNull PsiStatement statement, @NotNull Set<PsiCatchSection> catchSectionSet) {
@@ -262,25 +287,18 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       BitSet closedVariableStatementIndices = new BitSet(finallyStatements.length);
       Set<PsiVariable> collectedVariables = new HashSet<>();
       List<PsiCatchSection> catchSectionsToMigrate = new ArrayList<>();
-      boolean isPrefixOfTryStatements = true;
       for (int i = 0, length = finallyStatements.length; i < length; i++) {
         PsiStatement statement = finallyStatements[i];
         boolean shouldDeleteStatement;
-        if (statement instanceof PsiTryStatement && isPrefixOfTryStatements) {
-          if (ContainerUtil.exists(collectedVariables, variable -> VariableAccessUtils.variableIsUsed(variable, statement))) return null;
+        if (statement instanceof PsiTryStatement) {
+          if (i != 0) return null;
           shouldDeleteStatement = findAutoCloseableVariables(statement, collectedVariables, catchSectionsToMigrate);
         } else {
-          isPrefixOfTryStatements = false;
           shouldDeleteStatement = findAutoClosableVariableWithoutTry(statement, collectedVariables);
         }
         closedVariableStatementIndices.set(i, shouldDeleteStatement);
       }
 
-
-
-      List<PsiCatchSection> mergedCatchSections = tryMergeCatchSections(Arrays.asList(tryStatement.getCatchSections()), catchSectionsToMigrate);
-
-      if (mergedCatchSections == null) return null;
       if (collectedVariables.isEmpty()) return null;
       if (resourceVariableUsedInCatches(tryStatement, collectedVariables)) return null;
       if (resourceVariablesUsedInFinally(finallyBlock, collectedVariables)) return null;
@@ -342,7 +360,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
           .anyMatch(variable1 -> isVariableUsedOutsideContext(variable1, tryStatement) || isVariableUsedInsideContext(variable1, finallyBlock));
         if (varUsedNotInTry) return null;
       }
-      return new Context(resourceVariables, new HashSet<>(statementsToDelete), mergedCatchSections);
+      return new Context(resourceVariables, new HashSet<>(statementsToDelete), catchSectionsToMigrate);
     }
 
     private static boolean initializersAreAtTheBeginning(IntList initializerPositions) {
@@ -371,23 +389,6 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       current = PsiTreeUtil.getNextSiblingOfType(current.getNextSibling(), PsiStatement.class);
     }
     return statements;
-  }
-
-  private static @Nullable List<PsiCatchSection> tryMergeCatchSections(@NotNull List<PsiCatchSection> outerCatchSectionList, @NotNull List<PsiCatchSection> innerCatchSectionList) {
-    if (innerCatchSectionList.isEmpty()) return outerCatchSectionList;
-    if (outerCatchSectionList.isEmpty()) {
-      int numberOfDisjointTypes = ContainerUtil.count(innerCatchSectionList, section -> section.getCatchType() instanceof PsiDisjunctionType);
-      return numberOfDisjointTypes <= 1 && ExceptionUtil.hasDuplicateExceptions(innerCatchSectionList) == ThreeState.NO ? innerCatchSectionList : null;
-    }
-    List<PsiCatchSection> mergedCatchSectionList = new ArrayList<>(outerCatchSectionList);
-    mergedCatchSectionList.addAll(innerCatchSectionList);
-
-    if (ContainerUtil.exists(mergedCatchSectionList, section -> section.getCatchType() instanceof PsiDisjunctionType) ||
-        ExceptionUtil.hasDuplicateExceptions(mergedCatchSectionList) != ThreeState.NO ||
-        !ExceptionUtil.sortCatchSectionByHierarchy(mergedCatchSectionList)) {
-      return null;
-    }
-    return mergedCatchSectionList;
   }
 
   private static boolean resourceVariablesUsedInFinally(@NotNull PsiCodeBlock finallyBlock, @NotNull Set<? extends PsiVariable> collectedVariables) {

@@ -6,17 +6,13 @@ class Test {
     String sideEffect = "foo";
     try<caret> {
       System.out.println(sideEffect);
-    }
-    finally {
+    } catch(Exception e) {
+      System.out.println(sideEffect);
+    }finally {
       try {
         stream.close();
       } catch (IOException e) {
         sideEffect = "bar";
-      }
-      try {
-        stream2.close();
-      } catch (Exception e) {
-        System.out.println(sideEffect);
       }
     }
   }

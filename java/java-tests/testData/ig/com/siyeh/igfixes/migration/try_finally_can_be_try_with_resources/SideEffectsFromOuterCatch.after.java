@@ -5,11 +5,13 @@ class Test {
   void method(InputStream stream) {
     String sideEffect = "foo";
       try<caret> (stream) {
-          stream.read()
+          try {
+              stream.read()
+          } catch (Exception e) {
+              sideEffect = "bar";
+          }
       } catch (IOException e) {
           System.out.println(sideEffect);
-      } catch (Exception e) {
-          sideEffect = "bar";
       }
   }
 }
