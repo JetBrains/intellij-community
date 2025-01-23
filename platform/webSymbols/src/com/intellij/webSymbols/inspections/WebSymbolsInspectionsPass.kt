@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.inspections
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -62,7 +63,7 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
     }
 
     val myInspectionToolInfos = mutableMapOf<String, InspectionToolInfo>()
-    val highlights = referencesWithProblems.flatMap { (offset, ref) -> ref.createProblemAnnotations(offset, myInspectionToolInfos) }
+    val highlights = referencesWithProblems.flatMap { (offset, ref) -> createProblemAnnotations(ref, offset, myInspectionToolInfos) }
     BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, psiFile, myDocument, 0, psiFile.textLength, highlights, id)
   }
 
@@ -78,18 +79,23 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
 
   private val inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).currentProfile
 
-  private fun WebSymbolReference.createProblemAnnotations(offset: Int, map: MutableMap<String, InspectionToolInfo>): List<HighlightInfo> =
-    getProblems().mapNotNull { problem ->
+  private fun createProblemAnnotations(
+    reference: WebSymbolReference,
+    offset: Int,
+    map: MutableMap<String, InspectionToolInfo>,
+  ): List<HighlightInfo> {
+    return reference.getProblems().mapNotNull { problem ->
       val inspectionInfos = problem.getInspectionInfo(problem.kind, map)
-      if (inspectionInfos.isNotEmpty() && inspectionInfos.any { !it.enabled || it.isSuppressedFor(element) })
+      if (inspectionInfos.isNotEmpty() && inspectionInfos.any { !it.enabled || it.isSuppressedFor(reference.element) }) {
         return@mapNotNull null
+      }
 
       val firstTool = inspectionInfos.firstOrNull()
       val descriptor = problem.descriptor
       val attributesKey: TextAttributesKey? =
         (descriptor as? ProblemDescriptorBase)?.enforcedTextAttributes
         ?: if (descriptor.highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-          firstTool?.let { inspectionProfile.getEditorAttributes(it.shortName, this.element) }
+          firstTool?.let { inspectionProfile.getEditorAttributes(it.shortName, reference.element) }
         else null
       val highlightDisplayKey = firstTool?.highlightDisplayKey
 
@@ -98,17 +104,19 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
         ?.map { QuickFixWrapper.wrap(descriptor, it) }
         ?.takeIf { it.isNotEmpty() }
 
-      createHighlightInfo(absoluteRange.shiftRight(offset),
-                          ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.NONE),
-                          attributesKey,
-                          descriptor.highlightType,
-                          highlightDisplayKey,
-                       inspectionInfos.minOfOrNull { it.severity } ?: problem.kind.defaultSeverity,
-                       descriptorFixes ?: highlightDisplayKey
-                         ?.let { HighlightDisplayKey.getDisplayNameByKey(it) }
-                         ?.let { listOf(EmptyIntentionAction(it)) }
-                       ?: emptyList())
+      createHighlightInfo(
+        range = reference.absoluteRange.shiftRight(offset),
+        message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, reference.element, ProblemDescriptorUtil.NONE),
+        textAttributesKey = attributesKey,
+        type = descriptor.highlightType,
+        displayKey = highlightDisplayKey,
+        severity = inspectionInfos.minOfOrNull { it.severity } ?: problem.kind.defaultSeverity,
+        fixesToRegister = descriptorFixes ?: highlightDisplayKey
+          ?.let { HighlightDisplayKey.getDisplayNameByKey(it) }
+          ?.let { listOf(EmptyIntentionAction(it)) } ?: emptyList(),
+      )
     }
+  }
 
   private fun createHighlightInfo(range: TextRange,
                                   @InspectionMessage message: String,
@@ -182,9 +190,9 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
 
 
     @InspectionMessage
-    internal fun ProblemKind.getDefaultProblemMessage(symbolKindName: String?): String {
+    internal fun getDefaultProblemMessage(kind: ProblemKind, symbolKindName: String?): String {
       @PropertyKey(resourceBundle = WebSymbolsBundle.BUNDLE)
-      val key = when (this) {
+      val key = when (kind) {
         ProblemKind.DeprecatedSymbol -> return WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.message") +
                                                " " +
                                                WebSymbolsBundle.message("web.inspection.message.deprecated.symbol.explanation")

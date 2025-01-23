@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +43,8 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 public final class EncodingUtil {
-
-  enum FailReason {
+  @ApiStatus.Internal
+  public enum FailReason {
     IS_DIRECTORY,
     IS_BINARY,
     BY_FILE,
@@ -265,7 +266,8 @@ public final class EncodingUtil {
     return charsetFromContent != null ? FailReason.BY_FILE : fileTypeDescriptionError(virtualFile);
   }
 
-  static @Nullable FailReason checkCanConvertAndReload(@NotNull VirtualFile selectedFile) {
+  @ApiStatus.Internal
+  public static @Nullable FailReason checkCanConvertAndReload(@NotNull VirtualFile selectedFile) {
     FailReason result = checkCanConvert(selectedFile);
     if (result == null) return null;
     return checkCanReload(selectedFile, null);
@@ -281,7 +283,8 @@ public final class EncodingUtil {
     return Pair.create(current.get(), errorDescription);
   }
 
-  static @NotNull @Nls String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  public static @NotNull @Nls String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
     return switch (reason) {
       case IS_DIRECTORY -> IdeBundle.message("no.charset.set.reason.disabled.for.directory");
       case IS_BINARY -> IdeBundle.message("no.charset.set.reason.disabled.for.binary.file");

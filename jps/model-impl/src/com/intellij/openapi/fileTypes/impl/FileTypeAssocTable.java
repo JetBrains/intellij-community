@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -111,15 +111,18 @@ public final class FileTypeAssocTable<T> {
     return Pair.getSecond(previousAssociation);
   }
 
-  void addHashBangPattern(@NotNull String hashBang, @NotNull T type) {
+  @ApiStatus.Internal
+  public void addHashBangPattern(@NotNull String hashBang, @NotNull T type) {
     myHashBangMap.put(hashBang, type);
   }
 
-  void removeHashBangPattern(@NotNull String hashBang, @NotNull T type) {
+  @ApiStatus.Internal
+  public void removeHashBangPattern(@NotNull String hashBang, @NotNull T type) {
     myHashBangMap.remove(hashBang, type);
   }
 
-  void removeAssociation(@NotNull FileNameMatcher matcher, @Nullable T type) {
+  @ApiStatus.Internal
+  public void removeAssociation(@NotNull FileNameMatcher matcher, @Nullable T type) {
     if (matcher instanceof ExtensionFileNameMatcher) {
       String extension = ((ExtensionFileNameMatcher)matcher).getExtension();
       if (type == null || type.equals(myExtensionMappings.get(extension))) {
@@ -141,7 +144,8 @@ public final class FileTypeAssocTable<T> {
     myMatchingMappings.removeIf(assoc -> matcher.equals(assoc.getFirst()) && (type == null || type.equals(assoc.getSecond())));
   }
 
-  void removeAllAssociations(@NotNull T type) {
+  @ApiStatus.Internal
+  public void removeAllAssociations(@NotNull T type) {
     removeAllAssociations(bean -> bean.equals(type));
   }
 
@@ -173,7 +177,8 @@ public final class FileTypeAssocTable<T> {
   }
 
   @Nullable
-  T findAssociatedFileType(@NotNull FileNameMatcher matcher) {
+  @ApiStatus.Internal
+  public T findAssociatedFileType(@NotNull FileNameMatcher matcher) {
     if (matcher instanceof ExtensionFileNameMatcher) {
       return findByExtension(((ExtensionFileNameMatcher)matcher).getExtension());
     }
@@ -247,7 +252,7 @@ public final class FileTypeAssocTable<T> {
   public @NotNull @Unmodifiable List<String> getHashBangPatterns(@NotNull T type) {
     return myHashBangMap.entrySet().stream()
       .filter(e -> e.getValue().equals(type))
-      .map(e -> e.getKey())
+      .map(Map.Entry::getKey)
       .collect(Collectors.toList());
   }
 

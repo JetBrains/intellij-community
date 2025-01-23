@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -127,10 +127,10 @@ public final class StubTreeBuilder {
         PsiDependentFileContent fileContent = (PsiDependentFileContent)inputData;
         FileViewProvider viewProvider = fileContent.getPsiFile().getViewProvider();
         PsiFile psi = viewProvider.getStubBindingRoot();
-        // if we load AST, it should be easily gc-able. See PsiFileImpl.createTreeElementPointer()
+        // If we load AST, it should be easily gc-able. See PsiFileImpl.createTreeElementPointer()
         data = psi.getManager().runInBatchFilesMode(() -> {
           psi.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, contentAsText);
-          StubElement built = null;
+          StubElement<?> built = null;
           try {
             LanguageStubDescriptor stubDescriptor = ((PsiFileImpl)psi).getStubDescriptor();
             if (stubDescriptor != null) {
@@ -180,7 +180,7 @@ public final class StubTreeBuilder {
 
   private static void ensureNormalizedOrder(Stub element) {
     if (element instanceof StubBase<?>) {
-      ((StubBase<?>)element).myStubList.finalizeLoadingStage();
+      ((StubBase<?>)element).getStubList().finalizeLoadingStage();
     }
   }
 

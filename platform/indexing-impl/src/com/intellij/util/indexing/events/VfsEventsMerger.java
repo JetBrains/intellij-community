@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RollingFileHandler;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,6 +15,7 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +61,8 @@ public final class VfsEventsMerger {
 
   private final AtomicInteger myPublishedEventIndex = new AtomicInteger();
 
-  int getPublishedEventIndex() {
+  @ApiStatus.Internal
+  public int getPublishedEventIndex() {
     return myPublishedEventIndex.get();
   }
 
@@ -143,7 +144,8 @@ public final class VfsEventsMerger {
     return !myChangeInfos.isEmpty();
   }
 
-  int getApproximateChangesCount() {
+  @ApiStatus.Internal
+  public int getApproximateChangesCount() {
     return myChangeInfos.size();
   }
 
@@ -200,28 +202,34 @@ public final class VfsEventsMerger {
       return builder.toString().trim();
     }
 
-    boolean isContentChanged() {
+    @ApiStatus.Internal
+    public boolean isContentChanged() {
       return (eventMask & FILE_CONTENT_CHANGED) != 0;
     }
 
-    boolean isFileRemoved() {
+    @ApiStatus.Internal
+    public boolean isFileRemoved() {
       return (eventMask & FILE_REMOVED) != 0;
     }
 
-    boolean isFileAdded() {
+    @ApiStatus.Internal
+    public boolean isFileAdded() {
       return (eventMask & FILE_ADDED) != 0;
     }
 
-    boolean isTransientStateChanged() {
+    @ApiStatus.Internal
+    public boolean isTransientStateChanged() {
       return (eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0;
     }
 
     @NotNull
-    VirtualFile getFile() {
+    @ApiStatus.Internal
+    public VirtualFile getFile() {
       return file;
     }
 
-    int getFileId() {
+    @ApiStatus.Internal
+    public int getFileId() {
       int fileId = FileBasedIndex.getFileId(file);
       assert fileId >= 0;
       return fileId;

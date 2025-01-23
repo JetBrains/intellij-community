@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
@@ -12,6 +12,7 @@ import com.intellij.ui.GroupedComboBoxRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +134,8 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     if (separatorInfo != null) mySeparatorInfos.add(separatorInfo);
   }
 
-  static final class MySchemeListItem<T extends Scheme> {
+  @ApiStatus.Internal
+  public static final class MySchemeListItem<T extends Scheme> {
     private final @Nullable T myScheme;
 
     MySchemeListItem(@Nullable T scheme) {
@@ -171,7 +173,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     item.setIpad(JBUI.insetsLeft(indent > 0 ? indent * 10 : 0));
   }
 
-  private class SeparatorInfo {
+  private final class SeparatorInfo {
     private final @NotNull MySchemeListItem<T> myListItem;
     private final @Nls String title;
 

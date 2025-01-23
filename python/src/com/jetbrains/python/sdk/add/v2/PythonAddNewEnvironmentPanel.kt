@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.application.ApplicationManager
@@ -36,7 +36,6 @@ import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.PyError
 import com.jetbrains.python.util.ShowingMessageErrorSync
-import com.jetbrains.python.util.asKotlinResult
 import com.jetbrains.python.util.asPythonResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -44,8 +43,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlin.getOrElse
-
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise

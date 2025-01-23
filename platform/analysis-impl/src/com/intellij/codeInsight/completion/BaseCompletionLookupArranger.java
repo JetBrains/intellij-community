@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -47,7 +47,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     .thenComparing(LookupElementPresentation::getTypeText, NaturalComparator.INSTANCE);
   private static final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR =
     Comparator.comparing(DEFAULT_PRESENTATION::get, PRESENTATION_COMPARATOR);
-  static final int MAX_PREFERRED_COUNT = 5;
+  @ApiStatus.Internal
+  public static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<Object> FORCE_MIDDLE_MATCH = Key.create("FORCE_MIDDLE_MATCH");
 
   private final List<LookupElement> myFrozenItems = new ArrayList<>();
@@ -126,7 +127,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return result;
   }
 
-  void associateSorter(LookupElement element, CompletionSorterImpl sorter) {
+  @ApiStatus.Internal
+  public void associateSorter(LookupElement element, CompletionSorterImpl sorter) {
     element.putUserData(mySorterKey, sorter);
   }
 
@@ -464,7 +466,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return context;
   }
 
-  void setLastLookupPrefix(String lookupPrefix) {
+  @ApiStatus.Internal
+  public void setLastLookupPrefix(String lookupPrefix) {
     myLastLookupPrefix = lookupPrefix;
   }
 

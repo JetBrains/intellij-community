@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -15,7 +16,8 @@ import java.util.function.IntUnaryOperator;
 /**
  * A storage for stub-related data, shared by all stubs in one file. More memory-efficient, than keeping the same data in stub objects themselves.
  */
-abstract class StubList extends AbstractList<StubBase<?>> {
+@ApiStatus.Internal
+public abstract class StubList extends AbstractList<StubBase<?>> {
   /** A list to hold ids of stub children at contiguous ranges, to avoid allocating separate lists in each parent stub */
   private final MostlyUShortIntList myJoinedChildrenList;
 
@@ -196,7 +198,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
    * with all stubs re-targeted to that copy.
    */
   @NotNull
-  StubList finalizeLoadingStage() {
+  @ApiStatus.Internal
+  public StubList finalizeLoadingStage() {
     if (myTempState != null) {
       myTempState = null;
       myJoinedChildrenList.trimToSize();
@@ -207,7 +210,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
 
   @NotNull
   @Unmodifiable
-  List<StubElement<?>> toPlainList() {
+  @ApiStatus.Internal
+  public List<StubElement<?>> toPlainList() {
     //noinspection unchecked
     return (List)this;
   }
@@ -325,7 +329,8 @@ final class MaterialStubList extends StubList {
 
   @NotNull
   @Override
-  StubList finalizeLoadingStage() {
+  @ApiStatus.Internal
+  public StubList finalizeLoadingStage() {
     if (!isChildrenLayoutOptimal()) {
       return createOptimizedCopy();
     }

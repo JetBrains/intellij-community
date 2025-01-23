@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -6,14 +6,16 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class InjectedCaret implements Caret {
   private final EditorWindow myEditorWindow;
-  final Caret myDelegate;
+  private final Caret myDelegate;
 
-  InjectedCaret(@NotNull EditorWindow window, @NotNull Caret delegate) {
+  @ApiStatus.Internal
+  public InjectedCaret(@NotNull EditorWindow window, @NotNull Caret delegate) {
     myEditorWindow = window;
     myDelegate = delegate;
   }

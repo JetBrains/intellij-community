@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -301,7 +301,8 @@ public final class FileManagerImpl implements FileManager {
 
   private boolean myProcessingFileTypesChange;
 
-  void processFileTypesChanged(boolean clearViewProviders) {
+  @ApiStatus.Internal
+  public void processFileTypesChanged(boolean clearViewProviders) {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
     DebugUtil.performPsiModification(null, () -> {

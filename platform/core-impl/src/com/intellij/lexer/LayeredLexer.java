@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -128,7 +128,7 @@ public class LayeredLexer extends DelegateLexer {
         myCurrentLayerLexer = null;
         if (!selfStopping) {
           super.advance();
-          // In case when we have non-covered gap we should return left part as next token
+          // In case when we have a non-covered gap, we should return left part as next token
         } else if (tokenEnd != myBaseTokenEnd) {
           myState = IN_LAYER_LEXER_FINISHED_STATE;
           myLayerLeftPart = tokenEnd;

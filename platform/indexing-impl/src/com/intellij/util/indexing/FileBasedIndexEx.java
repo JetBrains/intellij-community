@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -73,7 +73,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
 
   @ApiStatus.Internal
-  static boolean doTraceIndexUpdates() {
+  public static boolean doTraceIndexUpdates() {
     return TRACE_INDEX_UPDATES;
   }
 

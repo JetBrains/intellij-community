@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
@@ -80,7 +80,8 @@ public final class TargetElementUtilBase {
     return Character.isJavaIdentifierPart(text.charAt(offset));
   }
 
-  static final LanguageExtension<TargetElementEvaluator> TARGET_ELEMENT_EVALUATOR =
+  @ApiStatus.Internal
+  public static final LanguageExtension<TargetElementEvaluator> TARGET_ELEMENT_EVALUATOR =
     new LanguageExtension<>("com.intellij.targetElementEvaluator");
 
   private static @Nullable TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.references
 
 import com.intellij.codeInspection.InspectionManager
@@ -199,7 +199,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
             inspectionManager.createProblemDescriptor(
               element, TextRange(segment.start, segment.end),
               toolMapping?.getProblemMessage(segment.displayName)
-              ?: problemKind.getDefaultProblemMessage(segment.displayName),
+              ?: getDefaultProblemMessage(problemKind, segment.displayName),
               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true,
               *WebSymbolsProblemQuickFixProvider.getQuickFixes(element, symbol, segment, problemKind).toTypedArray()
             )

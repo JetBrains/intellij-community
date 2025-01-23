@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.ImmutableCharSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-final class CompletionAssertions {
+@ApiStatus.Internal
+public final class CompletionAssertions {
   static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
     Document document = editor.getDocument();
     int docLength = document.getTextLength();
@@ -80,7 +82,8 @@ final class CompletionAssertions {
       new Attachment("docText.txt", document.getText()));
   }
 
-  static void checkEditorValid(Editor editor) {
+  @ApiStatus.Internal
+  public static void checkEditorValid(Editor editor) {
     if (!isEditorValid(editor)) {
       throw new AssertionError();
     }
@@ -166,7 +169,8 @@ final class CompletionAssertions {
            ", physical=" + file.isPhysical();
   }
 
-  static final class WatchingInsertionContext extends InsertionContext implements Disposable {
+  @ApiStatus.Internal
+  public static final class WatchingInsertionContext extends InsertionContext implements Disposable {
     private RangeMarkerEx tailWatcher;
     Throwable invalidateTrace;
     DocumentEvent killer;
@@ -195,7 +199,8 @@ final class CompletionAssertions {
       getDocument().addDocumentListener(spy);
     }
 
-    void stopWatching() {
+    @ApiStatus.Internal
+    public void stopWatching() {
       if (tailWatcher != null) {
         if (spy != null) {
           getDocument().removeDocumentListener(spy);

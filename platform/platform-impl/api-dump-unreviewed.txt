@@ -3155,17 +3155,12 @@ f:com.intellij.ide.gdpr.Consent
 - <init>(com.intellij.ide.gdpr.ConsentAttributes):V
 - <init>(java.lang.String,com.intellij.ide.gdpr.Version,java.lang.String,java.lang.String,Z,Z,java.lang.String):V
 - derive(Z):com.intellij.ide.gdpr.Consent
-- equals(java.lang.Object):Z
-- getId():java.lang.String
 - getLocale():java.lang.String
 - getName():java.lang.String
 - getText():java.lang.String
-- getVersion():com.intellij.ide.gdpr.Version
-- hashCode():I
 - isAccepted():Z
 - isDeleted():Z
 - toConsentAttributes():com.intellij.ide.gdpr.ConsentAttributes
-- a:toString():java.lang.String
 c:com.intellij.ide.gdpr.ConsentSettingsUi
 - javax.swing.JPanel
 - com.intellij.openapi.options.ConfigurableUi

@@ -2940,10 +2940,8 @@ a:com.intellij.openapi.vfs.impl.ArchiveHandler
 - clearCaches():V
 - a:contentsToByteArray(java.lang.String):B[]
 - pa:createEntriesMap():java.util.Map
-- p:createRootEntry():com.intellij.openapi.vfs.impl.ArchiveHandler$EntryInfo
 - getAttributes(java.lang.String):com.intellij.openapi.util.io.FileAttributes
 - p:getEntriesMap():java.util.Map
-- p:getEntryInfo(java.lang.String):com.intellij.openapi.vfs.impl.ArchiveHandler$EntryInfo
 - getFile():java.io.File
 - getInputStream(java.lang.String):java.io.InputStream
 - getPath():java.nio.file.Path
@@ -2951,13 +2949,6 @@ a:com.intellij.openapi.vfs.impl.ArchiveHandler
 - p:normalizeName(java.lang.String):java.lang.String
 - pf:processEntry(java.util.Map,com.intellij.openapi.diagnostic.Logger,java.lang.String,java.util.function.BiFunction):V
 - pf:processEntry(java.util.Map,java.lang.String,java.util.function.BiFunction):V
-pc:com.intellij.openapi.vfs.impl.ArchiveHandler$EntryInfo
-- f:isDirectory:Z
-- f:length:J
-- f:parent:com.intellij.openapi.vfs.impl.ArchiveHandler$EntryInfo
-- f:shortName:java.lang.CharSequence
-- f:timestamp:J
-- <init>(java.lang.CharSequence,Z,J,J,com.intellij.openapi.vfs.impl.ArchiveHandler$EntryInfo):V
 c:com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
 - com.intellij.openapi.vfs.newvfs.BulkFileListener
 - <init>(com.intellij.openapi.vfs.VirtualFileListener):V

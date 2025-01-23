@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -41,6 +41,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,7 +216,8 @@ public final class RenameUtil {
     }
   }
 
-  static void registerUndoableRename(PsiElement element, @Nullable RefactoringElementListener listener) {
+  @ApiStatus.Internal
+  public static void registerUndoableRename(PsiElement element, @Nullable RefactoringElementListener listener) {
     final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : FqnUtil.elementToFqn(element, null);
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {

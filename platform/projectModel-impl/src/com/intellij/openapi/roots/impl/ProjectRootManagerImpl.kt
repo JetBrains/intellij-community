@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.application.*
@@ -170,7 +170,7 @@ open class ProjectRootManagerImpl(
   }
 
   @ApiStatus.Internal
-  protected val fileTypesChanged: BatchSession<Boolean, Boolean> = object : BatchSession<Boolean, Boolean>(true) {
+  @JvmField val fileTypesChanged: BatchSession<Boolean, Boolean> = object : BatchSession<Boolean, Boolean>(true) {
     override fun fireRootsChanged(change: Boolean): Boolean {
       return this@ProjectRootManagerImpl.fireRootsChanged(true, emptyList())
     }

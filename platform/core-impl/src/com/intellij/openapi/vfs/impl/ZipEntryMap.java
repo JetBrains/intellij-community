@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Conditions;
@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  * Map of relativePath => ArchiveHandler.EntryInfo optimised for memory:
- * - it does not store keys (may be recovered from the ArchiveHandler.EntryInfo)
+ * - it does not store keys (maybe recovered from the ArchiveHandler.EntryInfo)
  * - does not support removal
  */
 final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
@@ -150,8 +150,9 @@ final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   }
 
   private EntrySet entrySet;
+
   @Override
-  public @NotNull EntrySet entrySet() {
+  public @NotNull Set<Entry<String, ArchiveHandler.EntryInfo>> entrySet() {
     EntrySet es;
     return (es = entrySet) == null ? (entrySet = new EntrySet()) : es;
   }

@@ -1,15 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class StubSerializationUtil {
+@ApiStatus.Internal
+public final class StubSerializationUtil {
   private StubSerializationUtil() {}
 
-  static ObjectStubSerializer<Stub, Stub> getSerializer(@NotNull Stub rootStub) {
+  public static ObjectStubSerializer<Stub, Stub> getSerializer(@NotNull Stub rootStub) {
     if (rootStub instanceof PsiFileStub) {
       ObjectStubSerializer serializer = StubElementRegistryService.getInstance().getStubSerializer(((PsiFileStub<?>)rootStub).getFileElementType());
       return (ObjectStubSerializer<Stub, Stub>)serializer;

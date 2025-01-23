@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -37,10 +37,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -579,8 +576,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myBomForNewUtf8Files = option;
   }
 
-  @NotNull
-  BOMForNewUTF8Files getBOMForNewUTF8Files() {
+  @ApiStatus.Internal
+  public @NotNull BOMForNewUTF8Files getBOMForNewUTF8Files() {
     return myBomForNewUtf8Files;
   }
 

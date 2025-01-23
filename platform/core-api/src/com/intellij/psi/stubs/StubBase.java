@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.project.Project;
@@ -25,6 +25,11 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   protected StubBase(@Nullable StubElement parent, IStubElementType<?, ?> elementType) {
     this(parent, (IElementType)elementType);
+  }
+
+  @ApiStatus.Internal
+  public StubList getStubList() {
+    return myStubList;
   }
 
   @ApiStatus.Experimental

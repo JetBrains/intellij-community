@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,8 @@ import java.util.*;
  * Add token via {@link #print(String, ConsoleViewContentType, HyperlinkInfo)}
  * Get all tokens via {@link #drain()}
  */
-final class TokenBuffer {
+@ApiStatus.Internal
+public final class TokenBuffer {
   // special token which means that the deferred text starts with "\r" so it shouldn't be appended to the document end.
   // Instead, the last line of the document should be removed
   static final TokenInfo CR_TOKEN = new TokenInfo(ConsoleViewContentType.SYSTEM_OUTPUT, "\r", null);
@@ -27,7 +29,8 @@ final class TokenBuffer {
   private int size; // total lengths of all tokens
   private int startIndex; // index of text start in the first TokeInfo. This TokenInfo can become sliced after total size overflows maxCapacity
 
-  TokenBuffer(int maxCapacity) {
+  @ApiStatus.Internal
+  public TokenBuffer(int maxCapacity) {
     this.maxCapacity = maxCapacity;
     if (maxCapacity <= 0) throw new IllegalArgumentException(String.valueOf(maxCapacity));
   }
@@ -126,7 +129,8 @@ final class TokenBuffer {
     return size - startIndex;
   }
 
-  void clear() {
+  @ApiStatus.Internal
+  public void clear() {
     tokens.clear();
     startIndex = 0;
     size = 0;
@@ -174,12 +178,13 @@ final class TokenBuffer {
     return maxCapacity;
   }
 
-  static final class TokenInfo {
-    final @NotNull ConsoleViewContentType contentType;
+  @ApiStatus.Internal
+  public static final class TokenInfo {
+    public final @NotNull ConsoleViewContentType contentType;
     private final String text;
     private final HyperlinkInfo myHyperlinkInfo;
 
-    TokenInfo(@NotNull ConsoleViewContentType contentType,
+    public TokenInfo(@NotNull ConsoleViewContentType contentType,
               @NotNull String text,
               @Nullable HyperlinkInfo hyperlinkInfo) {
       this.contentType = contentType;
@@ -196,12 +201,14 @@ final class TokenBuffer {
       return contentType + "[" + length() + "]";
     }
 
-    HyperlinkInfo getHyperlinkInfo() {
+    @ApiStatus.Internal
+    public HyperlinkInfo getHyperlinkInfo() {
       return myHyperlinkInfo;
     }
 
     @NotNull
-    String getText() {
+    @ApiStatus.Internal
+    public String getText() {
       return text;
     }
   }

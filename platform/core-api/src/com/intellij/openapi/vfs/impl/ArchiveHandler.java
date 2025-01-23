@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +39,8 @@ public abstract class ArchiveHandler {
   public static final FileAttributes DIRECTORY_ATTRIBUTES =
     new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.SENSITIVE);
 
-  protected static class EntryInfo {
+  @ApiStatus.Internal
+  public static class EntryInfo {
     public final EntryInfo parent;
     public final CharSequence shortName;
     public final boolean isDirectory;
@@ -172,6 +173,7 @@ public abstract class ArchiveHandler {
     }
   }
 
+  @ApiStatus.Internal
   protected @Nullable EntryInfo getEntryInfo(@NotNull String relativePath) {
     return getEntriesMap().get(relativePath);
   }
@@ -209,6 +211,7 @@ public abstract class ArchiveHandler {
 
   protected abstract @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException;
 
+  @ApiStatus.Internal
   protected @NotNull EntryInfo createRootEntry() {
     return new EntryInfo("", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, null);
   }

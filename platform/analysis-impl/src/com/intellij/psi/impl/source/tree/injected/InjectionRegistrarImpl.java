@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -44,6 +44,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-class InjectionRegistrarImpl implements MultiHostRegistrar {
+@ApiStatus.Internal
+public final class InjectionRegistrarImpl implements MultiHostRegistrar {
   private final PsiDocumentManagerBase myDocumentManagerBase;
   private List<PsiFile> resultFiles;
   private List<Pair<ReferenceInjector, Place>> resultReferences;
@@ -68,7 +70,7 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
   private final PsiFile myHostPsiFile;
   private Thread currentThread;
 
-  InjectionRegistrarImpl(@NotNull Project project,
+  public InjectionRegistrarImpl(@NotNull Project project,
                          @NotNull PsiFile hostPsiFile,
                          @NotNull PsiElement contextElement,
                          @NotNull PsiDocumentManager docManager) {
@@ -83,7 +85,8 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
   }
 
   @Nullable
-  InjectionResult getInjectedResult() {
+  @ApiStatus.Internal
+  public InjectionResult getInjectedResult() {
     return resultFiles == null && resultReferences == null ? null : new InjectionResult(myHostPsiFile, resultFiles, resultReferences);
   }
 
@@ -840,7 +843,8 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
 
   // performance: avoid context.getContainingFile()
   @NotNull
-  PsiFile getHostPsiFile() {
+  @ApiStatus.Internal
+  public PsiFile getHostPsiFile() {
     return myHostPsiFile;
   }
 }
