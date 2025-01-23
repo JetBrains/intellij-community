@@ -7,11 +7,11 @@ import com.intellij.execution.impl.SingleConfigurationConfigurable;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.run.MavenCommandLineState;
 import org.jetbrains.idea.maven.execution.run.MavenExtRemoteConnectionCreator;
+import org.jetbrains.idea.maven.execution.run.MavenShCommandLineState;
 import org.jetbrains.idea.maven.execution.run.configuration.MavenRunConfigurationSettingsEditor;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeType;
@@ -117,6 +118,9 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @Override
   public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) {
+    if (Registry.is("maven.use.scripts")) {
+      return new MavenShCommandLineState(env, this);
+    }
     return new MavenCommandLineState(env, this);
   }
 
