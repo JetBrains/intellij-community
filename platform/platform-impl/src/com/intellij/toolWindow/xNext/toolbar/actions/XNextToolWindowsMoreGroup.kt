@@ -19,12 +19,13 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager
+import com.intellij.ui.UIBundle
 
 internal class XNextToolWindowsMoreGroup : ActionGroup(), DumbAware {
   init {
     isPopup = true
     templatePresentation.icon = AllIcons.General.Groups
-    templatePresentation.text = "More"
+    templatePresentation.text = UIBundle.message("more.button.accessible.name")
   }
 
   override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
@@ -75,7 +76,7 @@ internal class XNextToolWindowsMoreGroup : ActionGroup(), DumbAware {
 }
 
 internal open class TogglePinActionBase(val toolWindowId: String)
-  : DumbAwareAction("Pin") {
+  : DumbAwareAction(UIBundle.message("xnext.action.pin.tab.tooltip")) {
   init {
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfPreferred
   }
@@ -88,9 +89,9 @@ internal open class TogglePinActionBase(val toolWindowId: String)
 
     Toggleable.setSelected(e.presentation, pinned)
     e.presentation.text = if (pinned)
-      "Unpin"
+      UIBundle.message("xnext.action.unpin.tab.tooltip")
     else
-      "Pin"
+      UIBundle.message("xnext.action.pin.tab.tooltip")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
