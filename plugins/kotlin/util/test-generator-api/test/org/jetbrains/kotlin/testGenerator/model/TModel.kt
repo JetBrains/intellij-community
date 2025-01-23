@@ -51,6 +51,7 @@ object Patterns {
 
     val TEST: ModelMatcher = forExtension("test")
     val KT: ModelMatcher = forExtension("kt")
+    val GROOVY: ModelMatcher = forExtension("groovy")
     val TXT: ModelMatcher = forExtension("txt")
     val KTS: ModelMatcher = forExtension("kts")
     val JAVA: ModelMatcher = forExtension("java")

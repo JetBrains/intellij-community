@@ -62,5 +62,6 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.features-trainer.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy.tests.k2" scope="RUNTIME" />
   </component>
 </module>

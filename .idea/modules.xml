@@ -1202,6 +1202,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/git/kotlin.git.iml" filepath="$PROJECT_DIR$/plugins/kotlin/git/kotlin.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-common/kotlin.gradle.code-insight-common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-common/kotlin.gradle.code-insight-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-groovy/kotlin.gradle.code-insight-groovy.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-groovy/kotlin.gradle.code-insight-groovy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-groovy/tests.k2/kotlin.gradle.code-insight-groovy.tests.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-groovy/tests.k2/kotlin.gradle.code-insight-groovy.tests.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-toml/kotlin.gradle.code-insight-toml.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-toml/kotlin.gradle.code-insight-toml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle/kotlin.gradle.gradle.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle/kotlin.gradle.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/kotlin.gradle.gradle-java.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/kotlin.gradle.gradle-java.iml" />

@@ -44,6 +44,8 @@
             language="Groovy"
             hasStaticDescription="true"
             level="ERROR" key="inspection.gradle.kotlinx.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
+
+    <copyPastePreProcessor implementation="org.jetbrains.kotlin.idea.groovy.GroovyLibraryDependenciesToBuildGradleKtsCopyPastePreprocessor"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
     <gradleBuildScriptSupport implementation="org.jetbrains.kotlin.idea.groovy.GroovyGradleBuildScriptSupport"/>

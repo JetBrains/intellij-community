@@ -82,5 +82,6 @@
     <orderEntry type="module" module-name="kotlin.injection.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.parcelize.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy.tests.k2" scope="TEST" />
   </component>
 </module>

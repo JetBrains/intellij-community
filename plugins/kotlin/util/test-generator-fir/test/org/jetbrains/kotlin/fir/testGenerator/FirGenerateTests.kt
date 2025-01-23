@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.fir.uast.test.*
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
+import org.jetbrains.kotlin.fir.testGenerator.gradle.generateK2GradleTests
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents.AbstractModuleDependentsTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.AbstractDirectInheritorsProviderTest
@@ -95,6 +96,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2AnalysisApiTests()
     generateK2InjectionTests()
     generateProjectStructureTest()
+    generateK2GradleTests()
 
     testGroup("base/fir/analysis-api-platform") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
