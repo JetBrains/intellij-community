@@ -56,14 +56,19 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
         element: E,
     ): C?
 
-    /**
-     * Use [PsiUpdateModCommandAction] if you don't need an elementContext.
-     * See more in plugins/kotlin/docs/fir-ide/architecture/code-insights.md.
-     */
     abstract class ElementBased<E : PsiElement, C : Any>(
         element: E,
         @FileModifier.SafeFieldForPreview private val elementContext: C,
     ) : KotlinPsiUpdateModCommandAction<E, C>(element, null) {
+
+        init {
+            require(elementContext !is Unit) {
+                """
+                Use [PsiUpdateModCommandAction] if you don't need an elementContext.
+                See more in plugins/kotlin/docs/fir-ide/architecture/code-insights.md.
+                """.trimIndent()
+            }
+        }
 
         final override fun getElementContext(
             actionContext: ActionContext,
