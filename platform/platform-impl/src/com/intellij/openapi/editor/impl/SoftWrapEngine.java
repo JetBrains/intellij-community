@@ -166,13 +166,8 @@ public final class SoftWrapEngine {
       myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
     }
     if (!myEditor.getState().getDisableDefaultSoftWrapsCalculation()) {
-      if (myLineWrapPositionStrategy.canWrapLineAtOffset(myText, maxOffset))  return maxOffset;
-      for (int i = 0, offset = maxOffset; i < BASIC_LOOK_BACK_LENGTH && offset >= minOffset; i++) {
-        int prevOffset = Character.offsetByCodePoints(myText, offset, -1);
-        if (myLineWrapPositionStrategy.canWrapLineAtOffset(myText, prevOffset)) return offset;
-        //noinspection AssignmentToForLoopParameter
-        offset = prevOffset;
-      }
+      int position = findWrapPosition(myText, maxOffset, minOffset, myLineWrapPositionStrategy);
+      if (position != -1) return position;
     }
 
     int wrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(myDocument, myEditor.getProject(), minOffset - 1, maxOffset + 1, maxOffset + 1,
@@ -182,6 +177,25 @@ public final class SoftWrapEngine {
     if (wrapOffset > maxOffset) return maxOffset;
     if (DocumentUtil.isInsideSurrogatePair(myDocument, wrapOffset)) return wrapOffset - 1;
     return wrapOffset;
+  }
+
+  /**
+   * Finds the most appropriate position for wrapping text within the specified range.
+   * This method iterates backward from the maximum offset to the minimum offset
+   * while checking each character's suitability for line wrapping based on the provided strategy.
+   *
+   * @return the offset at which the wrap can occur, or {@code -1} if no suitable wrap position is found
+   */
+  @ApiStatus.Internal
+  public static int findWrapPosition(CharSequence text, int maxOffset, int minOffset, LineWrapPositionStrategy strategy) {
+    if (strategy.canWrapLineAtOffset(text, maxOffset))  return maxOffset;
+    for (int i = 0, offset = maxOffset; i < BASIC_LOOK_BACK_LENGTH && offset >= minOffset; i++) {
+      int prevOffset = Character.offsetByCodePoints(text, offset, -1);
+      if (strategy.canWrapLineAtOffset(text, prevOffset)) return offset;
+      //noinspection AssignmentToForLoopParameter
+      offset = prevOffset;
+    }
+    return -1;
   }
 
   private int getEndOffsetUpperEstimate() {

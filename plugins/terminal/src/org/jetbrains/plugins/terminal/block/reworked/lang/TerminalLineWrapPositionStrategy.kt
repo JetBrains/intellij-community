@@ -11,20 +11,6 @@ import com.intellij.openapi.project.Project
  * So, actually, it is a hard wrap.
  */
 internal class TerminalLineWrapPositionStrategy : LineWrapPositionStrategy {
-  override fun calculateWrapPosition(
-    document: Document,
-    project: Project?,
-    startOffset: Int,
-    endOffset: Int,
-    maxPreferredOffset: Int,
-    allowToBeyondMaxPreferredOffset: Boolean,
-    isSoftWrap: Boolean,
-  ): Int {
-    // Wrap after the last character that fits into the required width
-    return maxPreferredOffset - 1
-  }
-
-
   /**
    * By default, disallows breaking before low surrogate characters to prevent break inside of surrogate pairs.
    */
@@ -37,5 +23,22 @@ internal class TerminalLineWrapPositionStrategy : LineWrapPositionStrategy {
       }
     }
     return true
+  }
+
+  /**
+   * This method is not reachable
+   * because the valid offset will be found in [canWrapLineAtOffset][org.jetbrains.plugins.terminal.block.reworked.lang.TerminalLineWrapPositionStrategy.canWrapLineAtOffset] method
+   */
+  override fun calculateWrapPosition(
+    document: Document,
+    project: Project?,
+    startOffset: Int,
+    endOffset: Int,
+    maxPreferredOffset: Int,
+    allowToBeyondMaxPreferredOffset: Boolean,
+    isSoftWrap: Boolean,
+  ): Int {
+    // Wrap after the last character that fits into the required width
+    return maxPreferredOffset - 1
   }
 }

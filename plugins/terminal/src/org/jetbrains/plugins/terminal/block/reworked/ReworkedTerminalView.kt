@@ -31,11 +31,7 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInput
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalResizeEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
+import org.jetbrains.plugins.terminal.block.reworked.session.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
@@ -233,6 +229,8 @@ internal class ReworkedTerminalView(
     val parentDisposable = coroutineScope.asDisposable()
     setupKeyEventDispatcher(model.editor, eventsHandler, parentDisposable)
     setupMouseListener(model.editor, sessionModel, settings, eventsHandler, parentDisposable)
+
+    (model.editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(EmptySoftWrapPainter)
 
     return model
   }

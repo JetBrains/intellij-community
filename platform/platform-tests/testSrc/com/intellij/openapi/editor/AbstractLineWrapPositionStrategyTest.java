@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.editor.impl.SoftWrapEngine;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
@@ -49,6 +50,11 @@ public abstract class AbstractLineWrapPositionStrategyTest {
       allowToBeyondMaxPreferredOffset, true
     );
     assertSame(context.wrapIndex, actual);
+  }
+
+  protected void doTestDefaultWrap(@NotNull LineWrapPositionStrategy strategy, final String text, int expectedResult) {
+    int offset = SoftWrapEngine.findWrapPosition(text, text.length() - 1, 1, strategy);
+    assertSame(expectedResult, offset);
   }
 
   private Document createMockDocument(@NotNull final String text) {
