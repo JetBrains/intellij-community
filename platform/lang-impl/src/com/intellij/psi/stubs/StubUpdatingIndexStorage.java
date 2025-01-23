@@ -59,23 +59,11 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content)
     throws MapReduceIndexMappingException, ProcessCanceledException {
     try {
-      StorageUpdate indexUpdate = super.mapInputAndPrepareUpdate(inputId, content);
-      IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
+      StorageUpdate indexUpdate = withStubIndexingDiagnosticUpdate(inputId, content, super.mapInputAndPrepareUpdate(inputId, content));
 
       return () -> {
         try {
-          boolean updateSuccessful = indexUpdate.update();
-          if (updateSuccessful && !StaleIndexesChecker.isStaleIdDeletion()) {
-            ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
-            if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
-              LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
-            }
-          }
-          else {
-            // this is valuable information. Log it even without TRACE_STUB_INDEX_UPDATES flag
-            LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
-          }
-          return updateSuccessful;
+          return indexUpdate.update();
         }
         catch (Throwable t) {
           // ProcessCanceledException is not expected here
@@ -94,6 +82,25 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
       LOG.warn("mapInputAndPrepareUpdate interrupted,inputId=" + inputId + "," + t, FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES ? t : null);
       throw t;
     }
+  }
+
+  @NotNull
+  public static StorageUpdate withStubIndexingDiagnosticUpdate(int inputId, @Nullable FileContent content, @NotNull StorageUpdate indexUpdate) {
+    IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
+    return () -> {
+      boolean updateSuccessful = indexUpdate.update();
+      if (updateSuccessful && !StaleIndexesChecker.isStaleIdDeletion()) {
+        ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
+        if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+          LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
+        }
+      }
+      else {
+        // this is valuable information. Log it even without TRACE_STUB_INDEX_UPDATES flag
+        LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + updateSuccessful);
+      }
+      return updateSuccessful;
+    };
   }
 
   @Override
