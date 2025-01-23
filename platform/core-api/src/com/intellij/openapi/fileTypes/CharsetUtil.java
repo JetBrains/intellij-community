@@ -18,12 +18,18 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class CharsetUtil {
   private static final Map<String, Boolean> ourSupportsCharsetDetection = new ConcurrentHashMap<>();
 
-  private static boolean overridesExtractCharsetFromContent(LanguageFileType fileType) {
+  private static boolean overridesExtractCharsetFromContent(@NotNull LanguageFileType fileType) {
     Class<?> ftClass = fileType.getClass();
     String methodName = "extractCharsetFromFileContent";
-    Class<?> declaring1 = ReflectionUtil.getMethodDeclaringClass(ftClass, methodName, Project.class, VirtualFile.class, String.class);
     Class<?> declaring2 = ReflectionUtil.getMethodDeclaringClass(ftClass, methodName, Project.class, VirtualFile.class, CharSequence.class);
-    return !LanguageFileType.class.equals(declaring1) || !LanguageFileType.class.equals(declaring2);
+    if (!LanguageFileType.class.equals(declaring2)) {
+      return true;
+    }
+    Class<?> declaring1 = ReflectionUtil.getMethodDeclaringClass(ftClass, methodName, Project.class, VirtualFile.class, String.class);
+    if (!LanguageFileType.class.equals(declaring1)) {
+      return true;
+    }
+    return false;
   }
 
   public static Charset extractCharsetFromFileContent(@Nullable Project project,
@@ -32,7 +38,7 @@ public final class CharsetUtil {
                                                       @NotNull CharSequence text) {
     if (fileType instanceof LanguageFileType &&
         // otherwise the default implementations will always convert CharSequence to String unnecessarily, producing garbage
-        ourSupportsCharsetDetection.computeIfAbsent(fileType.getName(),
+        ourSupportsCharsetDetection.computeIfAbsent(fileType.getClass().getName(),
                                                     __ -> overridesExtractCharsetFromContent((LanguageFileType)fileType))) {
       return ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
     }
@@ -131,5 +137,9 @@ public final class CharsetUtil {
     }
 
     return null;
+  }
+
+  static void clearFileTypeCaches() {
+    ourSupportsCharsetDetection.clear();
   }
 }
