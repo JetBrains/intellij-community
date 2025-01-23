@@ -463,7 +463,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         }
       }
     }
-    if (!hasErrorResults() && resultForIncompleteCode != null && PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, expression)) {
+    if (!hasErrorResults() && resultForIncompleteCode != null && isApplicable(JavaFeature.PATTERNS_IN_SWITCH)) {
       myExpressionChecker.checkPatternVariableRequired(expression, resultForIncompleteCode);
     }
     if (!hasErrorResults() && resultForIncompleteCode != null) {
@@ -472,6 +472,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults() && resolved instanceof PsiField field) {
       myExpressionChecker.checkIllegalForwardReferenceToField(expression, field);
     }
+    myExpressionChecker.checkUnqualifiedSuperInDefaultMethod(expression, qualifierExpression);
   }
   
   
@@ -679,6 +680,12 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myExpressionChecker.checkAssignmentCompatibleTypes(assignment);
     if (!hasErrorResults()) myExpressionChecker.checkAssignmentOperatorApplicable(assignment);
     if (!hasErrorResults()) myExpressionChecker.checkOutsideDeclaredCantBeAssignmentInGuard(assignment.getLExpression());
+  }
+
+  @Override
+  public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
+    super.visitPolyadicExpression(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkPolyadicOperatorApplicable(expression);
   }
 
   @Override

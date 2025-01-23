@@ -297,12 +297,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
-    super.visitPolyadicExpression(expression);
-    if (!hasErrorResults()) add(HighlightUtil.checkPolyadicOperatorApplicable(expression));
-  }
-
-  @Override
   public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     add(checkFeature(expression, JavaFeature.LAMBDA_EXPRESSIONS));
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
@@ -1016,7 +1010,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkAccessStaticFieldFromEnumConstructor(expression, result));
     if (!hasErrorResults()) add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
     PsiExpression qualifierExpression = expression.getQualifierExpression();
-    add(HighlightUtil.checkUnqualifiedSuperInDefaultMethod(myLanguageLevel, expression, qualifierExpression));
     if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
       add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
     }

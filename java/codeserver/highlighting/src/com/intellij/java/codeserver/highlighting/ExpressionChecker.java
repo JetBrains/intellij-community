@@ -671,6 +671,27 @@ final class ExpressionChecker {
     }
   }
 
+  void checkPolyadicOperatorApplicable(@NotNull PsiPolyadicExpression expression) {
+    PsiExpression[] operands = expression.getOperands();
+
+    PsiType lType = operands[0].getType();
+    IElementType operationSign = expression.getOperationTokenType();
+    for (int i = 1; i < operands.length; i++) {
+      PsiExpression operand = operands[i];
+      PsiType rType = operand.getType();
+      if (lType instanceof PsiLambdaParameterType || rType instanceof PsiLambdaParameterType) return;
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false) &&
+          !(IncompleteModelUtil.isIncompleteModel(expression) &&
+            IncompleteModelUtil.isPotentiallyConvertible(lType, rType, expression))) {
+        PsiJavaToken token = expression.getTokenBeforeOperand(operand);
+        assert token != null : expression;
+        myVisitor.report(JavaErrorKinds.BINARY_OPERATOR_NOT_APPLICABLE.create(token, new JavaIncompatibleTypeErrorContext(lType, rType)));
+        return;
+      }
+      lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, operationSign, true);
+    }
+  }
+
   /**
    * JEP 440-441
    * Any variable that is used but not declared by a guard must either be final or effectively final (4.12.4)
@@ -690,6 +711,16 @@ final class ExpressionChecker {
     }
     if (PsiTreeUtil.isAncestor(guardingExpression, psiVariable, false)) return;
     myVisitor.report(JavaErrorKinds.ASSIGNMENT_DECLARED_OUTSIDE_GUARD.create(expressionVariable, psiVariable));
+  }
+
+  void checkUnqualifiedSuperInDefaultMethod(@NotNull PsiReferenceExpression expr,
+                                            @Nullable PsiExpression qualifier) {
+    if (myVisitor.isApplicable(JavaFeature.EXTENSION_METHODS) && qualifier instanceof PsiSuperExpression superExpression) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
+      if (method != null && method.hasModifierProperty(PsiModifier.DEFAULT) && superExpression.getQualifier() == null) {
+        myVisitor.report(JavaErrorKinds.EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD.create(expr, superExpression));
+      }
+    }
   }
 
   private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {

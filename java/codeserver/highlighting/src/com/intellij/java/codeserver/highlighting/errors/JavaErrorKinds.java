@@ -626,6 +626,8 @@ public final class JavaErrorKinds {
     parameterized("pattern.type.pattern.expected");
 
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
+  public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 
+    parameterized("expression.super.unqualified.default.method");
   public static final Simple<PsiSuperExpression> EXPRESSION_SUPER_DOT_EXPECTED = 
     error(PsiSuperExpression.class, "expression.super.dot.expected")
       .withRange(expr -> TextRange.from(expr.getTextLength(), 1));
@@ -654,8 +656,14 @@ public final class JavaErrorKinds {
   
   public static final Parameterized<PsiJavaToken, JavaIncompatibleTypeErrorContext> BINARY_OPERATOR_NOT_APPLICABLE =
     parameterized(PsiJavaToken.class, JavaIncompatibleTypeErrorContext.class, "binary.operator.not.applicable")
-      .withRawDescription((token, context) -> message("binary.operator.not.applicable", token.getText().replace("=", ""),
-                                                    formatType(context.lType()), formatType(context.rType())));
+      .withAnchor((token, context) -> TypeConversionUtil.convertEQtoOperation(token.getTokenType()) == null ? token.getParent() : token)
+      .withRawDescription((token, context) -> {
+        String text = token.getText();
+        if (TypeConversionUtil.convertEQtoOperation(token.getTokenType()) != null) {
+          text = text.replace("=", "");
+        }
+        return message("binary.operator.not.applicable", text, formatType(context.lType()), formatType(context.rType()));
+      });
   public static final Parameterized<PsiUnaryExpression, PsiType> UNARY_OPERATOR_NOT_APPLICABLE =
     parameterized(PsiUnaryExpression.class, PsiType.class, "unary.operator.not.applicable")
       .withRawDescription((unary, type) -> message("unary.operator.not.applicable", 

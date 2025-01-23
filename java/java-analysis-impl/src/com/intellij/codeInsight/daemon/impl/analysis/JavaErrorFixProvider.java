@@ -366,6 +366,11 @@ final class JavaErrorFixProvider {
       }
       return registrar;
     });
+    multi(EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD, error -> {
+      List<CommonIntentionAction> registrar = new ArrayList<>();
+      QualifySuperArgumentFix.registerQuickFixAction(error.context(), registrar::add);
+      return registrar;
+    });
   }
   
   private void createAccessFixes() {
@@ -409,6 +414,9 @@ final class JavaErrorFixProvider {
             assignment.getOperationTokenType() == JavaTokenType.EQ) {
           registrar.add(myFactory.createAssignmentToComparisonFix(assignment));
         }
+        else if (expression instanceof PsiMethodCallExpression callExpression) {
+          HighlightFixUtil.registerCallInferenceFixes(callExpression, registrar::add);
+        }
         if (parent instanceof PsiArrayInitializerExpression initializerList) {
           PsiType sameType = JavaHighlightUtil.sameType(initializerList.getInitializers());
           ContainerUtil.addIfNotNull(registrar, sameType == null ? null : VariableArrayTypeFix.createFix(initializerList, sameType));
@@ -420,9 +428,6 @@ final class JavaErrorFixProvider {
         }
         else if (parent instanceof PsiLocalVariable var && rType != null) {
           HighlightFixUtil.registerChangeVariableTypeFixes(var, rType, var.getInitializer(), registrar::add);
-        }
-        if (expression instanceof PsiMethodCallExpression callExpression) {
-          HighlightFixUtil.registerCallInferenceFixes(callExpression, registrar::add);
         }
         else if (parent instanceof PsiAssignmentExpression assignment && assignment.getRExpression() == expression) {
           PsiExpression lExpr = assignment.getLExpression();

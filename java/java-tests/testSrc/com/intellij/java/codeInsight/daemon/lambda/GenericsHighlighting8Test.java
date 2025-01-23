@@ -1039,12 +1039,18 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
     String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 8px 4px;color: " + greyed + "'>Required type:</td>" +
-                      "<td style='padding: 0px 4px 8px 0px;'><font color=\"" + toolTipForeground + "\">Generic</font></td><td style='padding: 0px 0px 8px 0px;'>&lt;<font color=\"" + toolTipForeground + "\">? extends Number</font>,</td><td style='padding: 0px 0px 8px 0px;'><font color=\"" + toolTipForeground + "\">Number</font>,</td><td style='padding: 0px 0px 8px 0px;'><font color=\"" + toolTipForeground + "\">Integer</font>&gt;</td></tr>" +
-                      "<tr><td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
-                      "<td style='padding: 0px 4px 0px 0px;'><font color=\"" + toolTipForeground + "\">Generic</font></td><td style='padding: 0px 0px 0px 0px;'>&lt;<font color=\"" + toolTipForeground + "\">Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color=\"" + red + "\">Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color=\"" + toolTipForeground + "\">Integer</font>&gt;</td></tr>" +
-                      "</table>" +
-                      "</html>";
+                      "<td style=\"padding: 0px 16px 8px 4px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: " + toolTipForeground + "\">Generic</span></td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'>&lt;<span style=\"color: " + toolTipForeground + "\">? extends Number</span>,</td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'><span style=\"color: " + toolTipForeground + "\">Number</span>,</td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'><span style=\"color: " + toolTipForeground + "\">Integer</span>&gt;</td></tr>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: " + greyed + "\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: " + toolTipForeground + "\">Generic</span></td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'>&lt;<span style=\"color: " + toolTipForeground + "\">Integer</span>,</td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'><span style=\"color: " + red + "\">Integer</span>,</td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'><span style=\"color: " + toolTipForeground + "\">Integer</span>&gt;</td>" +
+                      "</tr>" +
+                      "</table></html>";
 
     doHighlighting()
       .stream()

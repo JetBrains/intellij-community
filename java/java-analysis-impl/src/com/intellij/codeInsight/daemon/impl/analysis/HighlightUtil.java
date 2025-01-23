@@ -996,50 +996,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkPolyadicOperatorApplicable(@NotNull PsiPolyadicExpression expression) {
-    PsiExpression[] operands = expression.getOperands();
-
-    PsiType lType = operands[0].getType();
-    IElementType operationSign = expression.getOperationTokenType();
-    for (int i = 1; i < operands.length; i++) {
-      PsiExpression operand = operands[i];
-      PsiType rType = operand.getType();
-      if (lType instanceof PsiLambdaParameterType || rType instanceof PsiLambdaParameterType) {
-        return null;
-      }
-      if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false) &&
-          !(IncompleteModelUtil.isIncompleteModel(expression) &&
-            IncompleteModelUtil.isPotentiallyConvertible(lType, rType, expression))) {
-        PsiJavaToken token = expression.getTokenBeforeOperand(operand);
-        assert token != null : expression;
-        String message = JavaErrorBundle.message("binary.operator.not.applicable", token.getText(),
-                                                 JavaHighlightUtil.formatType(lType),
-                                                 JavaHighlightUtil.formatType(rType));
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      }
-      lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, operationSign, true);
-    }
-
-    return null;
-  }
-
-
-  static HighlightInfo.Builder checkUnqualifiedSuperInDefaultMethod(@NotNull LanguageLevel languageLevel,
-                                                            @NotNull PsiReferenceExpression expr,
-                                                            @Nullable PsiExpression qualifier) {
-    if (JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel) && qualifier instanceof PsiSuperExpression superExpression) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-      if (method != null && method.hasModifierProperty(PsiModifier.DEFAULT) && superExpression.getQualifier() == null) {
-        String description = JavaErrorBundle.message("unqualified.super.disallowed");
-        HighlightInfo.Builder builder =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description);
-        QualifySuperArgumentFix.registerQuickFixAction(superExpression, asConsumer(builder));
-        return builder;
-      }
-    }
-    return null;
-  }
-
   static @NotNull @NlsContexts.DetailedDescription String staticContextProblemDescription(@NotNull PsiElement refElement) {
     String type = JavaElementKind.fromElement(refElement).lessDescriptive().subject();
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
