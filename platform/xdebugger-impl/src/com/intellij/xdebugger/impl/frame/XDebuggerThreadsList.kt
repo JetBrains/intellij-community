@@ -5,18 +5,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
-import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStack.AdditionalDisplayInfo
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -47,7 +43,7 @@ class XDebuggerThreadsList(
     val THREADS_LIST: DataKey<XDebuggerThreadsList> = DataKey.create("THREADS_LIST")
 
     fun createDefault(withDescription: Boolean): XDebuggerThreadsList {
-      val renderer = XDebuggerGroupedFrameListRenderer(withDescription)
+      val renderer = if (withDescription) XDebuggerGroupedFrameListRendererWithDescription() else XDebuggerGroupedFrameListRenderer()
       val list = XDebuggerThreadsList(renderer)
       list.doInit()
       return list
@@ -122,8 +118,7 @@ class XDebuggerThreadsList(
     model.removeAll()
   }
 
-  private class XDebuggerGroupedFrameListRenderer(private val withDescription: Boolean) : GroupedItemsListRenderer<StackInfo>(XDebuggerListItemDescriptor()) {
-    private val myOriginalRenderer = XDebuggerThreadsListRenderer(withDescription)
+  private open class XDebuggerGroupedFrameListRenderer : GroupedItemsListRenderer<StackInfo>(XDebuggerListItemDescriptor()) {
 
     init {
       mySeparatorComponent.setCaptionCentered(false)
@@ -136,12 +131,21 @@ class XDebuggerThreadsList(
       isSelected: Boolean,
       cellHasFocus: Boolean,
     ): Component {
-      return myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      @Suppress("UNCHECKED_CAST") val renderer = itemComponent as? ListCellRenderer<StackInfo> ?: throw IllegalStateException("Invalid component $itemComponent")
+      return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     }
 
     override fun createItemComponent(): JComponent {
       createLabel()
-      return XDebuggerThreadsListRenderer(withDescription)
+      return XDebuggerThreadsListRenderer()
+    }
+  }
+
+  private class XDebuggerGroupedFrameListRendererWithDescription : XDebuggerGroupedFrameListRenderer() {
+
+    override fun createItemComponent(): JComponent {
+      createLabel()
+      return XDebuggerThreadsListRendererWithDescription()
     }
   }
 
@@ -155,9 +159,6 @@ class XDebuggerThreadsList(
     override fun getCaptionAboveOf(value: StackInfo?): String? = null
   }
 }
-
-
-private val logger = Logger.getInstance(StackInfo::class.java)
 
 data class StackInfo internal constructor(
   @Nls val displayText: String,

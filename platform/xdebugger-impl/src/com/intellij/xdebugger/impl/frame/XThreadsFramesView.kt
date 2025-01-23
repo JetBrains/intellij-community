@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.ui.text.StyledTextPane
 import com.intellij.ide.ui.text.paragraph.TextParagraph
@@ -18,6 +19,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.util.concurrency.EdtExecutorService
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.TextTransferable
@@ -173,7 +175,12 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     val frameListWrapper = JPanel(BorderLayout(0, 0))
 
     if (supportsDescription) {
-      frameListWrapper.add(myCurrentThreadDescriptionComponent, BorderLayout.NORTH)
+      frameListWrapper.add(
+        JPanel(BorderLayout()).apply {
+          border = JBEmptyBorder(0, 20, 0, 0)
+          add(myCurrentThreadDescriptionComponent)
+        },
+        BorderLayout.NORTH)
     }
     addFramesNavigationAd(frameListWrapper)
     frameListWrapper.add(myFramesList.withSpeedSearch().toScrollPane(), BorderLayout.CENTER)
@@ -344,6 +351,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private fun XExecutionStack.setActive(session: XDebugSession) {
     myFramesManager.setActive(this)
 
+    setActiveThreadDescription(IdeBundle.message("progress.text.loading"))
     stackInfoDescriptionRequester?.requestDescription(this) { description, exception ->
       description?.let { setActiveThreadDescription(it.longDescription) }
     }
