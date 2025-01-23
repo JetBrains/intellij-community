@@ -223,7 +223,7 @@ class EditorTabbedContainer internal constructor(
         if (UISettings.getInstance().showFileIconInTabs) {
           it.setIcon(icon)
         }
-        InternalUICustomization.getInstance().markAIComponent(it.component, selectedEditor)
+        InternalUICustomization.getInstance().componentMarker.markAIComponent(it.component, selectedEditor)
       }
     )
     selectedEditor?.tabActions?.let {
@@ -636,7 +636,7 @@ private class EditorTabs(
     return closeTabAction?.getIcon(isHovered)
   }
 
-  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance().createEditorTabPainterAdapter()
+  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance().editorTabPainterAdapter
 
   override fun createTabBorder(): JBTabsBorder = JBEditorTabsBorder(this)
 

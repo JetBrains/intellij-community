@@ -5,8 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
 import com.intellij.ui.JBColor
@@ -25,27 +23,11 @@ open class InternalUICustomization {
   companion object{
     @JvmStatic
     fun getInstance(): InternalUICustomization = ApplicationManager.getApplication().getService(InternalUICustomization::class.java)
-    @JvmStatic
-    protected val AI_COMPONENT: Key<Boolean> = Key.create("AI_COMPONENT")
   }
 
-  open fun isAIComponent(c: JComponent): Boolean = false
+  open val componentMarker: InternalUiComponentMarker = InternalUiComponentMarker()
 
-  open fun markAIComponent(c: JComponent, isAI: Boolean) {}
-
-  open fun markAIComponent(dataHolder: UserDataHolder) {
-    dataHolder.putUserData(AI_COMPONENT, true)
-  }
-
-  open fun markAIComponent(c: JComponent, dataHolder: UserDataHolder?) {
-    markAIComponent(c, dataHolder?.getUserData(AI_COMPONENT) ?: false)
-  }
-
-  open fun markAiContainerFor(c: JComponent): Unit = Unit
-
-  open fun unmarkAiContainerFor(c: JComponent): Unit = Unit
-
-  open fun createEditorTabPainterAdapter(): TabPainterAdapter = EditorTabPainterAdapter()
+  open val editorTabPainterAdapter: TabPainterAdapter = EditorTabPainterAdapter()
 
   /**
    * TODO
@@ -68,7 +50,9 @@ open class InternalUICustomization {
 
   open fun getToolWindowsPaneThreeSplitterBackground(): Color = JBColor.GRAY
 
-  open fun getCustomDefaultButtonPaint(c: JComponent, r: Rectangle): Paint? = null
+  open fun getCustomDefaultButtonPaint(c: JComponent, r: Rectangle): Paint? {
+    return componentMarker.getCustomDefaultButtonPaint(c, r)
+  }
 
   open fun getMainToolbarBackground(active: Boolean): Color {
     return JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(active)

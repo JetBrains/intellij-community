@@ -6,6 +6,7 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import fleet.util.logging.logger
 import java.awt.*
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
@@ -24,7 +25,15 @@ internal class XNextToolWindowHolder private constructor(): JPanel() {
     }
   }
 
-  override fun setBorder(border: Border?) {}
+  override fun setBorder(border: Border?) {
+    if (border !is JRoundedCornerBorder) {
+      logger<XNextToolWindowHolder>().error {
+        "Border type is invalid. Expected JRoundedCornerBorder, but received: ${border?.javaClass?.name ?: "null"}."
+      }
+      return 
+    }
+    super.setBorder(border)
+  }
 
   override fun isOpaque(): Boolean {
     return true
