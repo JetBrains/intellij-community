@@ -18,6 +18,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.MavenDisposable
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getCompileExecutionConfigurations
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getMavenModuleType
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestCompileExecutionConfigurations
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -25,9 +26,7 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
-private val ALL_PROJECTS_COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
 internal val DEFAULT_COMPILER_EXTENSION = Key.create<MavenCompilerExtension>("default.compiler")
-internal val DEFAULT_COMPILER_IS_SET = Key.create<Boolean>("default.compiler.updated")
 private const val JAVAC_ID = "javac"
 private const val MAVEN_COMPILER_PARAMETERS = "maven.compiler.parameters"
 
@@ -128,7 +127,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
                                                   module: Module,
                                                   ideCompilerConfiguration: CompilerConfigurationImpl,
                                                   defaultCompilerExtension: MavenCompilerExtension?) {
-    val isTestModule = MavenImportUtil.isTestModule(module.project, module.name)
+    val isTestModule = isTestModule(module.project, module.name)
     val mavenConfiguration = collectRawMavenData(mavenProject, isTestModule)
     val projectCompilerId = if (mavenProject.packaging == "pom") {
       null
@@ -178,7 +177,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
     MavenLog.LOG.debug("Bytecode target level $targetLevel in module ${module.name}, compiler extension = ${defaultCompilerExtension?.mavenCompilerId}")
     if (targetLevel == null) {
       var level: LanguageLevel?
-      if (MavenImportUtil.isTestModule(module.project, module.name)) {
+      if (isTestModule(module.project, module.name)) {
         level = MavenImportUtil.getTestTargetLanguageLevel(mavenProject)
       }
       else {
@@ -260,9 +259,8 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
         }
       }
 
-
       if (configData.forTests) {
-        val testData = collectTestCompilerArgs(it);
+        val testData = collectTestCompilerArgs(it)
         if (testData.isNotEmpty()) {
           result.addAll(testData)
           return result.toList()
@@ -340,6 +338,11 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
       }
     }
     return result
+  }
+
+  private fun isTestModule(project: Project, moduleName: String): Boolean {
+    val type = getMavenModuleType(project, moduleName)
+    return type == StandardMavenModuleType.TEST_ONLY
   }
 }
 

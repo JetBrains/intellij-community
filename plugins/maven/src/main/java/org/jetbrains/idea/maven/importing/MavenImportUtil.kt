@@ -325,11 +325,6 @@ object MavenImportUtil {
     return type == StandardMavenModuleType.MAIN_ONLY || type == StandardMavenModuleType.TEST_ONLY
   }
 
-  internal fun isTestModule(project: Project, moduleName: String): Boolean {
-    val type = getMavenModuleType(project, moduleName)
-    return type == StandardMavenModuleType.TEST_ONLY
-  }
-
   @JvmStatic
   fun findPomXml(module: Module): VirtualFile? {
     val project = module.project
