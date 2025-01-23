@@ -17,14 +17,16 @@ import kotlin.jvm.optionals.getOrNull
 
 private val spacePackagePathRegex = Regex(".*/p/(?<project>[\\w-]+)/(?<repository>[\\w-]+)")
 
-// used by Qodana and Space plugins
+// used by Qodana plugin for jbteam users
 @ApiStatus.Internal
 suspend fun isSpacePrivatePackageUrl(url: String): Boolean {
   if (!isSpacePackageUrl(url)) {
     // don't do request if fast check returned false
     return false
   }
-  return serviceAsync<SpacePackagesCheckerService>().isSpacePrivatePackageUrl(url)
+  val parsedUrl = URL(url)
+  return (parsedUrl.host.endsWith(".jetbrains.team") || parsedUrl.host.endsWith(".jetbrains.space")) &&
+         serviceAsync<SpacePackagesCheckerService>().isSpacePrivatePackageUrl(url)
 }
 
 @ApiStatus.Internal
@@ -83,10 +85,6 @@ private class SpacePackagesCheckerService(private val scope: CoroutineScope) {
   private suspend fun isSpacePrivatePackageRequest(url: String): Boolean {
     val response = withContext(Dispatchers.IO) {
       client.sendAsync(HttpRequest.newBuilder(URI.create(url)).GET().build(), HttpResponse.BodyHandlers.ofString()).await()
-    }
-    val serverHeader = response.headers().firstValue("server").getOrNull() ?: return false
-    if (!serverHeader.contains("Space Packages")) {
-      return false
     }
     val authenticateHeader = response.headers().firstValue("www-authenticate")
     return authenticateHeader.isPresent
