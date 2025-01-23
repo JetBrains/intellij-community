@@ -18,7 +18,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListen
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.externalSystem.autoimport.settings.BackgroundAsyncSupplier
-import com.intellij.openapi.externalSystem.autoimport.settings.CachingAsyncSupplier
+import com.intellij.openapi.externalSystem.service.ui.completion.cache.AsyncLocalCache
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -27,6 +27,7 @@ import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -353,12 +354,17 @@ class ProjectSettingsTracker(
 
   private inner class SettingsFilesAsyncSupplier : AsyncSupplier<Set<String>> {
 
-    private val cachingAsyncSupplier = CachingAsyncSupplier(
-      BackgroundAsyncSupplier.Builder(projectAware::settingsFiles)
-        .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
-        .build(backgroundExecutor))
+    private val modificationTracker = SimpleModificationTracker()
 
-    private val supplier = BackgroundAsyncSupplier.Builder(cachingAsyncSupplier)
+    private val settingsFilesCache = AsyncLocalCache<Set<String>>()
+
+    private fun getOrCollectSettingsFiles(): Set<String> {
+      return settingsFilesCache.getOrCreateValueBlocking(modificationTracker.modificationCount) {
+        projectAware.settingsFiles
+      }
+    }
+
+    private val supplier = BackgroundAsyncSupplier.Builder(::getOrCollectSettingsFiles)
       .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
       .build(backgroundExecutor)
 
@@ -371,7 +377,7 @@ class ProjectSettingsTracker(
     }
 
     fun invalidate() {
-      cachingAsyncSupplier.invalidate()
+      modificationTracker.incModificationCount()
     }
   }
 
