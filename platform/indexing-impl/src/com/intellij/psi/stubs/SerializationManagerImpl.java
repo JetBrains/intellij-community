@@ -59,7 +59,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @NonInjectable
-  public SerializationManagerImpl(@NotNull Supplier<? extends Path> nameStorageFile, boolean unmodifiable) {
+  public SerializationManagerImpl(@NotNull Supplier<? extends @Nullable Path> nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
     myUnmodifiable = unmodifiable;
     initialize();
