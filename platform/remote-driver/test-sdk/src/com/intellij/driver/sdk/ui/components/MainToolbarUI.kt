@@ -40,4 +40,3 @@ val MainToolbarUI.resumeButton get() = x { contains(byAccessibleName("Resume")) 
 val MainToolbarUI.pauseButton get() = x { contains(byAccessibleName("Pause")) }
 val MainToolbarUI.restartDebugButton get() = x { contains(byAccessibleName("Restart Debug")) }
 val MainToolbarUI.stopButton get() = x { contains(byAccessibleName("Stop")) }
-val MainToolbarUI.stopButtonWith2Configs get() = x { and(contains(byAccessibleName("Stop")), byVisibleText("2")) }
