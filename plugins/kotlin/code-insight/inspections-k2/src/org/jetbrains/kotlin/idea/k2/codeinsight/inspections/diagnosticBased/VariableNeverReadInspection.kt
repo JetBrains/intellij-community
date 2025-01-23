@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinDiagnosticBasedInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.namedDeclarationVisitor
 import kotlin.reflect.KClass
 
-internal class VariableNeverReadInspection : KotlinDiagnosticBasedInspectionBase<KtNamedDeclaration, KaFirDiagnostic.VariableNeverRead, Unit>() {
+internal class VariableNeverReadInspection : KotlinKtDiagnosticBasedInspectionBase<KtNamedDeclaration, KaFirDiagnostic.VariableNeverRead, Unit>() {
     override val diagnosticType: KClass<KaFirDiagnostic.VariableNeverRead>
         get() = KaFirDiagnostic.VariableNeverRead::class
 

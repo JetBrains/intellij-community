@@ -9,7 +9,7 @@ import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinDiagnosticBasedInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinPsiDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -19,13 +19,13 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KaDiagnosticWithPsi<KtModifierListOwner>>(
     private val modifierSet: TokenSet,
-) : KotlinDiagnosticBasedInspectionBase<KtModifierListOwner, DIAGNOSTIC, RedundantModifierInspectionBase.ModifierContext>(),
+) : KotlinPsiDiagnosticBasedInspectionBase<KtModifierListOwner, DIAGNOSTIC, RedundantModifierInspectionBase.ModifierContext>(),
     CleanupLocalInspectionTool {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
-    ) = object : KtVisitorVoid() {
+    ): KtVisitorVoid = object : KtVisitorVoid() {
 
         override fun visitDeclaration(dcl: KtDeclaration) {
             visitTargetElement(dcl, holder, isOnTheFly)
