@@ -18,7 +18,7 @@ import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter.Comp
 
 internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   // order matters, because only the first enabled handler will be executed
-  private val handlers: List<TerminalEscapeHandler> = listOf(
+  private val handlers: List<Handler> = listOf(
     CloseHistoryHandler(),
     SelectPromptHandler(),
     CloseSearchHandler(),
@@ -50,14 +50,14 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionR
     return actions.filterIsInstance<TerminalEscapeAction>()
   }
 
-  private interface TerminalEscapeHandler {
+  private interface Handler {
     fun execute(e: AnActionEvent)
 
     /** It is assumed that [com.intellij.openapi.editor.Editor] is not null, and it is a prompt or output editor */
     fun isEnabled(e: AnActionEvent): Boolean
   }
 
-  private class CloseHistoryHandler : TerminalEscapeHandler {
+  private class CloseHistoryHandler : Handler {
     override fun execute(e: AnActionEvent) {
       e.promptController?.onCommandHistoryClosed()
     }
@@ -67,7 +67,7 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionR
     }
   }
 
-  private class SelectPromptHandler : TerminalEscapeHandler {
+  private class SelectPromptHandler : Handler {
     override fun execute(e: AnActionEvent) {
       e.selectionController?.clearSelection()
     }
@@ -79,7 +79,7 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionR
     }
   }
 
-  private class CloseSearchHandler : TerminalEscapeHandler {
+  private class CloseSearchHandler : Handler {
     override fun execute(e: AnActionEvent) {
       e.blockTerminalController?.finishSearchSession()
     }
@@ -89,7 +89,7 @@ internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionR
     }
   }
 
-  private class SelectEditorHandler : TerminalEscapeHandler {
+  private class SelectEditorHandler : Handler {
     override fun execute(e: AnActionEvent) {
       ToolWindowManager.getInstance(e.project!!).activateEditorComponent()
     }
