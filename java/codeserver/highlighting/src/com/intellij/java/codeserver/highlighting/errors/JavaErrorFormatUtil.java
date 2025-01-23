@@ -13,10 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +77,19 @@ final class JavaErrorFormatUtil {
     }
     builder.append(")");
     return builder.toString();
+  }
+
+  static @NotNull @Nls String getRecordMethodKind(@NotNull PsiMethod method) {
+    if (JavaPsiRecordUtil.isCompactConstructor(method)) {
+      return JavaCompilationErrorBundle.message("record.compact.constructor");
+    }
+    if (JavaPsiRecordUtil.isCanonicalConstructor(method)) {
+      return JavaCompilationErrorBundle.message("record.canonical.constructor");
+    }
+    if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+      return JavaCompilationErrorBundle.message("record.accessor");
+    }
+    throw new IllegalArgumentException("Record special method expected: " + method);
   }
   
   static @Nullable TextRange getRange(@NotNull PsiElement element) {

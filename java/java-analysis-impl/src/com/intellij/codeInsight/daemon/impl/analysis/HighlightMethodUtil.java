@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -27,7 +26,6 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
-import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -40,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.asConsumer;
 
@@ -663,136 +660,6 @@ public final class HighlightMethodUtil {
     }
 
     return Objects.requireNonNullElse(GenericsUtil.getLeastUpperBound(currentType, valueType, manager), Objects.requireNonNullElse(currentType, valueType));
-  }
-
-  static HighlightInfo.Builder checkRecordAccessorDeclaration(@NotNull PsiMethod method) {
-    PsiRecordComponent component = JavaPsiRecordUtil.getRecordComponentForAccessor(method);
-    if (component == null) return null;
-    PsiIdentifier identifier = method.getNameIdentifier();
-    if (identifier == null) return null;
-    PsiType componentType = component.getType();
-    PsiType methodType = method.getReturnType();
-    if (methodType == null) return null; // Either constructor or incorrect method, will be reported in another way
-    if (componentType instanceof PsiEllipsisType ellipsisType) {
-      componentType = ellipsisType.getComponentType().createArrayType();
-    }
-    if (!componentType.equals(methodType)) {
-      String message =
-        JavaErrorBundle.message("record.accessor.wrong.return.type", componentType.getPresentableText(), methodType.getPresentableText());
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
-        Objects.requireNonNull(method.getReturnTypeElement())).descriptionAndTooltip(message);
-      IntentionAction action = QuickFixFactory.getInstance().createMethodReturnFix(method, componentType, false);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-    return checkRecordSpecialMethodDeclaration(method, JavaErrorBundle.message("record.accessor"));
-  }
-
-  static void checkRecordConstructorDeclaration(@NotNull PsiMethod method, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (!method.isConstructor()) return;
-    PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return;
-    PsiIdentifier identifier = method.getNameIdentifier();
-    if (identifier == null) return;
-    if (!aClass.isRecord()) {
-      if (JavaPsiRecordUtil.isCompactConstructor(method)) {
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
-          identifier).descriptionAndTooltip(JavaErrorBundle.message("compact.constructor.in.regular.class"));
-        IntentionAction action = QuickFixFactory.getInstance().createAddParameterListFix(method);
-        info.registerFix(action, null, null, null, null);
-        errorSink.accept(info);
-      }
-      return;
-    }
-    if (JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
-      PsiParameter[] parameters = method.getParameterList().getParameters();
-      PsiRecordComponent[] components = aClass.getRecordComponents();
-      assert parameters.length == components.length;
-      for (int i = 0; i < parameters.length; i++) {
-        PsiType componentType = components[i].getType();
-        PsiType parameterType = parameters[i].getType();
-        String componentName = components[i].getName();
-        String parameterName = parameters[i].getName();
-        if (!parameterType.equals(componentType)) {
-          String message =
-            JavaErrorBundle.message("record.canonical.constructor.wrong.parameter.type", componentName,
-                                    componentType.getPresentableText(), parameterType.getPresentableText());
-          HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
-            Objects.requireNonNull(parameters[i].getTypeElement())).descriptionAndTooltip(message);
-          IntentionAction action = QuickFixFactory.getInstance().createMethodParameterTypeFix(method, i, componentType, false);
-          info.registerFix(action, null, null, null, null);
-          errorSink.accept(info);
-        }
-        if (!parameterName.equals(componentName)) {
-          String message = JavaErrorBundle.message("record.canonical.constructor.wrong.parameter.name", componentName, parameterName);
-          HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
-            Objects.requireNonNull(parameters[i].getNameIdentifier())).descriptionAndTooltip(message);
-          if (!ContainerUtil.exists(parameters, parameter -> parameter.getName().equals(componentName))) {
-            IntentionAction action = QuickFixFactory.getInstance().createRenameElementFix(parameters[i], componentName);
-            info.registerFix(action, null, null, null, null);
-          }
-          errorSink.accept(info);
-        }
-      }
-      HighlightInfo.Builder builder = checkRecordSpecialMethodDeclaration(method, JavaErrorBundle.message("record.canonical.constructor"));
-      errorSink.accept(builder);
-      return;
-    }
-    if (JavaPsiRecordUtil.isCompactConstructor(method)) {
-      HighlightInfo.Builder info = checkRecordSpecialMethodDeclaration(method, JavaErrorBundle.message("record.compact.constructor"));
-      errorSink.accept(info);
-      return;
-    }
-    // Non-canonical constructor
-    PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
-    if (call == null || JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
-      String message = JavaErrorBundle.message("record.no.constructor.call.in.non.canonical");
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(message);
-      errorSink.accept(info);
-    }
-  }
-
-  private static @Nullable HighlightInfo.Builder checkRecordSpecialMethodDeclaration(@NotNull PsiMethod method, @NotNull @Nls String methodTitle) {
-    PsiIdentifier identifier = method.getNameIdentifier();
-    if (identifier == null) return null;
-    PsiTypeParameterList typeParameterList = method.getTypeParameterList();
-    if (typeParameterList != null && typeParameterList.getTypeParameters().length > 0) {
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeParameterList)
-        .descriptionAndTooltip(JavaErrorBundle.message("record.special.method.type.parameters", methodTitle));
-      IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(typeParameterList);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-    if (method.isConstructor()) {
-      AccessModifier modifier = AccessModifier.fromModifierList(method.getModifierList());
-      PsiModifierList classModifierList = Objects.requireNonNull(method.getContainingClass()).getModifierList();
-      if (classModifierList != null) {
-        AccessModifier classModifier = AccessModifier.fromModifierList(classModifierList);
-        if (classModifier.isWeaker(modifier)) {
-          HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
-            .descriptionAndTooltip(JavaErrorBundle.message("record.special.method.stronger.access", methodTitle, classModifier));
-          IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(
-            method, classModifier.toPsiModifier(), true, false);
-          info.registerFix(action, null, null, null, null);
-          return info;
-        }
-      }
-    } else if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
-        .descriptionAndTooltip(JavaErrorBundle.message("record.special.method.non.public", methodTitle));
-      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.PUBLIC, true, false);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-    PsiReferenceList throwsList = method.getThrowsList();
-    if (throwsList.getReferenceElements().length > 0) {
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(throwsList.getFirstChild())
-        .descriptionAndTooltip(JavaErrorBundle.message("record.special.method.throws", StringUtil.decapitalize(methodTitle)));
-      IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(throwsList);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-    return null;
   }
 
   static boolean hasSurroundingInferenceError(@NotNull PsiElement context) {

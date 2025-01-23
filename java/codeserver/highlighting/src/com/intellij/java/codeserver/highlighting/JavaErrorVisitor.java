@@ -669,6 +669,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults() && method.isConstructor()) {
       myClassChecker.checkThingNotAllowedInInterface(method);
     }
+    if (!hasErrorResults()) myRecordChecker.checkRecordAccessorDeclaration(method);
+    if (!hasErrorResults()) myRecordChecker.checkRecordConstructorDeclaration(method);
   }
 
   @Override

@@ -9,7 +9,7 @@ record NonPublic(int x) {
   }
 }
 record Throws(int x) {
-  public Throws <error descr="'throws' not allowed on compact constructor">throws</error> Throwable {}
+  public Throws <error descr="Compact constructor should not declare 'throws' clause">throws</error> Throwable {}
 }
 record Generic() {
   public <error descr="Compact constructor cannot have type parameters"><T></error> Generic {}

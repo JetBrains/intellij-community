@@ -194,7 +194,7 @@ public final class JavaErrorKinds {
     error(PsiMember.class, "class.must.implement.method")
       .withRange(member ->
                    member instanceof PsiEnumConstant enumConstant ? enumConstant.getNameIdentifier().getTextRangeInParent() :
-                   member instanceof PsiClass aClass ? JavaErrorFormatUtil.getClassDeclarationTextRange(aClass) : null)
+                   member instanceof PsiClass aClass ? getClassDeclarationTextRange(aClass) : null)
       .<PsiMethod>parameterized()
       .withRawDescription((member, abstractMethod) -> {
         PsiClass aClass = member instanceof PsiEnumConstant enumConstant ?
@@ -341,6 +341,38 @@ public final class JavaErrorKinds {
     error(PsiRecordComponent.class, "record.component.restricted.name")
       .withAnchor(PsiRecordComponent::getNameIdentifier)
       .withRawDescription(component -> message("record.component.restricted.name", component.getName()));
+  public static final Simple<PsiTypeParameterList> RECORD_SPECIAL_METHOD_TYPE_PARAMETERS =
+    error(PsiTypeParameterList.class, "record.special.method.type.parameters")
+      .withRawDescription(tpl -> message("record.special.method.type.parameters", getRecordMethodKind(((PsiMethod)tpl.getParent()))));
+  public static final Simple<PsiReferenceList> RECORD_SPECIAL_METHOD_THROWS =
+    error(PsiReferenceList.class, "record.special.method.throws")
+      .withAnchor(PsiReferenceList::getFirstChild)
+      .withRawDescription(throwsList -> message("record.special.method.throws", getRecordMethodKind(((PsiMethod)throwsList.getParent()))));
+  public static final Parameterized<PsiMethod, AccessModifier> RECORD_CONSTRUCTOR_STRONGER_ACCESS =
+    parameterized(PsiMethod.class, AccessModifier.class, "record.constructor.stronger.access")
+      .withAnchor((method, classModifier) -> method.getNameIdentifier())
+      .withRawDescription(
+        (method, classModifier) -> message("record.constructor.stronger.access", getRecordMethodKind(method), classModifier));
+  public static final Parameterized<PsiMethod, JavaIncompatibleTypeErrorContext> RECORD_ACCESSOR_WRONG_RETURN_TYPE =
+    parameterized(PsiMethod.class, JavaIncompatibleTypeErrorContext.class, "record.accessor.wrong.return.type")
+      .withAnchor((method, ctx) -> method.getReturnTypeElement())
+      .withRawDescription((method, ctx) -> message("record.accessor.wrong.return.type",
+                                                   ctx.lType().getPresentableText(), requireNonNull(ctx.rType()).getPresentableText()));
+  public static final Simple<PsiMethod> RECORD_ACCESSOR_NON_PUBLIC =
+    error(PsiMethod.class, "record.accessor.non.public").withAnchor(PsiMethod::getNameIdentifier);
+  public static final Simple<PsiMethod> RECORD_NO_CONSTRUCTOR_CALL_IN_NON_CANONICAL =
+    error(PsiMethod.class, "record.no.constructor.call.in.non.canonical").withAnchor(PsiMethod::getNameIdentifier);
+  public static final Parameterized<PsiParameter, PsiRecordComponent> RECORD_CANONICAL_CONSTRUCTOR_WRONG_PARAMETER_TYPE =
+    parameterized(PsiParameter.class, PsiRecordComponent.class, "record.canonical.constructor.wrong.parameter.type")
+      .withAnchor((parameter, component) -> parameter.getTypeElement())
+      .withRawDescription((parameter, component) -> message(
+        "record.canonical.constructor.wrong.parameter.type", component.getName(), component.getType().getPresentableText(),
+        parameter.getType().getPresentableText()));
+  public static final Parameterized<PsiParameter, PsiRecordComponent> RECORD_CANONICAL_CONSTRUCTOR_WRONG_PARAMETER_NAME =
+    parameterized(PsiParameter.class, PsiRecordComponent.class, "record.canonical.constructor.wrong.parameter.name")
+      .withAnchor((parameter, component) -> parameter.getNameIdentifier())
+      .withRawDescription((parameter, component) -> message(
+        "record.canonical.constructor.wrong.parameter.name", component.getName(), parameter.getName()));
 
   public static final Simple<PsiParameter> VARARG_NOT_LAST_PARAMETER = error("vararg.not.last.parameter");
   public static final Parameterized<PsiParameter, @NotNull TextRange> VARARG_CSTYLE_DECLARATION =
@@ -424,6 +456,8 @@ public final class JavaErrorKinds {
       .withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange)
       .withRawDescription(
         method -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
+  public static final Simple<PsiMethod> METHOD_NO_PARAMETER_LIST =
+    error(PsiMethod.class, "method.no.parameter.list").withAnchor(PsiMethod::getNameIdentifier);
   public static final Simple<PsiJavaCodeReferenceElement> METHOD_THROWS_CLASS_NAME_EXPECTED =
     error("method.throws.class.name.expected");
   public static final Simple<PsiMethod> METHOD_INTERFACE_BODY =

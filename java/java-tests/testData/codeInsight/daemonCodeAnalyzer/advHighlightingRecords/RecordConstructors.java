@@ -7,7 +7,7 @@ record Generic(String x) {
   public <T> Generic() {this("");}
 }
 record Throws() {
-  public Throws() <error descr="'throws' not allowed on canonical constructor">throws</error> Throwable {}
+  public Throws() <error descr="Canonical constructor should not declare 'throws' clause">throws</error> Throwable {}
   public Throws(int x) throws Throwable { this(); }
 }
 record TypeMismatch<T>(T t) {

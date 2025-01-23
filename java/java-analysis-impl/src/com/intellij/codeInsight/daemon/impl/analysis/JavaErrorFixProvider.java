@@ -82,7 +82,8 @@ final class JavaErrorFixProvider {
                                             NEW_EXPRESSION_DIAMOND_NOT_ALLOWED, REFERENCE_TYPE_ARGUMENT_STATIC_CLASS,
                                             STATEMENT_CASE_OUTSIDE_SWITCH, NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE,
                                             NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS,
-                                            CALL_DIRECT_ABSTRACT_METHOD_ACCESS)) {
+                                            CALL_DIRECT_ABSTRACT_METHOD_ACCESS, RECORD_SPECIAL_METHOD_TYPE_PARAMETERS,
+                                            RECORD_SPECIAL_METHOD_THROWS)) {
       fix(kind, genericRemover);
     }
     
@@ -139,6 +140,7 @@ final class JavaErrorFixProvider {
     fix(METHOD_ABSTRACT_BODY, deleteBody);
     fix(METHOD_INTERFACE_BODY, deleteBody);
     fix(METHOD_NATIVE_BODY, deleteBody);
+    fix(METHOD_NO_PARAMETER_LIST, error -> myFactory.createAddParameterListFix(error.psi()));
     multi(METHOD_INTERFACE_BODY, error -> {
       PsiMethod method = error.psi();
       if (PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method) && Stream.of(method.findDeepestSuperMethods())
@@ -614,6 +616,23 @@ final class JavaErrorFixProvider {
     fix(RECORD_COMPONENT_VARARG_NOT_LAST, error -> myFactory.createMakeVarargParameterLastFix(error.psi()));
     fix(RECORD_COMPONENT_RESTRICTED_NAME, error -> myFactory.createRenameFix(error.psi()));
     fix(RECORD_COMPONENT_CSTYLE_DECLARATION, error -> new NormalizeBracketsFix(error.psi()));
+    fix(RECORD_CONSTRUCTOR_STRONGER_ACCESS, error -> addModifierFix(error.psi(), error.context().toPsiModifier()));
+    fix(RECORD_ACCESSOR_NON_PUBLIC, error -> addModifierFix(error.psi(), PsiModifier.PUBLIC));
+    fix(RECORD_ACCESSOR_WRONG_RETURN_TYPE, error -> myFactory.createMethodReturnFix(error.psi(), error.context().lType(), false));
+    fix(RECORD_CANONICAL_CONSTRUCTOR_WRONG_PARAMETER_TYPE, error -> {
+      PsiParameter parameter = error.psi();
+      PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+      return myFactory.createMethodParameterTypeFix(method, method.getParameterList().getParameterIndex(parameter),
+                                                    error.context().getType(), false);
+    });
+    fix(RECORD_CANONICAL_CONSTRUCTOR_WRONG_PARAMETER_NAME, error -> {
+      PsiParameter parameter = error.psi();
+      PsiParameter[] parameters = ((PsiParameterList)parameter.getParent()).getParameters();
+      String componentName = error.context().getName();
+      return ContainerUtil.exists(parameters, p -> p.getName().equals(componentName))
+             ? null
+             : myFactory.createRenameElementFix(parameter, componentName);
+    });
   }
 
   private void createReceiverParameterFixes() {
