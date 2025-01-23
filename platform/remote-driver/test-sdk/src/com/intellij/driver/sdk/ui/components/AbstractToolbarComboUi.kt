@@ -1,48 +1,55 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
-import com.intellij.driver.sdk.remoteDev.BeControlAdapter
+import com.intellij.driver.sdk.remoteDev.BeControlBuilder
+import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.BeControlComponentBase
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
-import com.intellij.driver.sdk.ui.remote.Robot
+import com.intellij.driver.sdk.ui.remote.Component
 import org.jetbrains.annotations.Nls
 
 fun Finder.abstractToolbarCombo(locator: QueryBuilder.() -> String) =
   x(AbstractToolbarComboUi::class.java) { locator() }
 
 class AbstractToolbarComboUi(data: ComponentData) : UiComponent(data) {
-  val fixture = driver.new(AbstractToolbarComboRef::class, robot, component)
+  private val toolbarCombo by lazy { driver.cast(component, AbstractToolbarComboRef::class) }
 
-  fun getText() = fixture.text
-  fun getLeftIcons(): List<String> = fixture.leftIcons.map { it.toString() }
-  fun getRightIcons(): List<String> = fixture.rightIcons.map { it.toString() }
+  fun getText() = toolbarCombo.text
+  fun getLeftIcons(): List<String> = toolbarCombo.leftIcons.map { it.toString() }
+  fun getRightIcons(): List<String> = toolbarCombo.rightIcons.map { it.toString() }
 }
 
+class AbstractToolbarComboComponentClassBuilder : BeControlBuilder {
+  override fun build(driver: Driver, frontendComponent: Component, backendComponent: Component): Component {
+    return AbstractToolbarComboBeControl(driver, frontendComponent, backendComponent)
+  }
+}
 
-class AbstractToolbarComboAdapter(robot: Robot, component: BeControlComponentBase) :
-  BeControlComponentBase(component.driver, component.frontendComponent, component.backendComponent),
+class AbstractToolbarComboBeControl(driver: Driver, frontendComponent: Component, backendComponent: Component) :
+  BeControlComponentBase(driver, frontendComponent, backendComponent),
   AbstractToolbarComboRef {
 
-  private val fixture: AbstractToolbarComboRef by lazy {
-    driver.cast(onFrontend { contains(byAttribute("classhierarchy", "AbstractToolbarCombo")) }.component, AbstractToolbarComboRef::class)
+  private val toolbarComboComponent: AbstractToolbarComboRef by lazy {
+    driver.cast(onFrontend { byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo") }.component, AbstractToolbarComboRef::class)
   }
 
   override var text: String?
-    get() = fixture.text
+    get() = toolbarComboComponent.text
     set(value) {
     }
   override var leftIcons: List<Icon>
-    get() = fixture.leftIcons
+    get() = toolbarComboComponent.leftIcons
     set(value) {
     }
   override var rightIcons: List<Icon>
-    get() = fixture.rightIcons
+    get() = toolbarComboComponent.rightIcons
     set(value) {
     }
 }
 
-@BeControlAdapter(AbstractToolbarComboAdapter::class)
+@BeControlClass(AbstractToolbarComboComponentClassBuilder::class)
 @Remote("com.intellij.openapi.wm.impl.AbstractToolbarCombo")
 interface AbstractToolbarComboRef {
   var text: @Nls String?
