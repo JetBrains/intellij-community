@@ -19,9 +19,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
@@ -49,7 +48,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -434,19 +432,7 @@ public final class GradleUtil {
     if (dataNode == null) return null;
     File data = dataNode.getData().getBuildScriptSource();
     if (data == null) return null;
-
-    // Copied internals of com.intellij.openapi.vfs.VfsUtil.findFile(java.lang.String, boolean)
-    // and com.intellij.openapi.vfs.VfsUtil.findFile(java.lang.String, boolean)
-    // Should be replaced by com.intellij.openapi.vfs.VfsUtil.findFile(java.lang.String, boolean)
-    // if it will support refreshAndFindFileByPath without using writeLock inside (it is currently marked as Experimental)
-    String filePath = data.getAbsolutePath().replace(File.separatorChar, '/');
-    VirtualFileSystem fileSystem = StandardFileSystems.local();
-    AtomicReference<VirtualFile> gradleBuildScriptSource = new AtomicReference<>(fileSystem.findFileByPath(filePath));
-    if (gradleBuildScriptSource.get() == null || !gradleBuildScriptSource.get().isValid()) {
-      VfsImplUtil.refreshAndFindFileByPath(LocalFileSystem.getInstance(), filePath,
-                                           (gradleBuildVirtualFile) -> gradleBuildScriptSource.set(gradleBuildVirtualFile));
-    }
-    return gradleBuildScriptSource.get();
+    return VfsUtil.findFileByIoFile(data, true);
   }
 
   public static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
