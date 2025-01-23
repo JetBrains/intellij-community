@@ -2,10 +2,11 @@ package com.intellij.cce.python.execution.output
 
 import com.intellij.cce.execution.output.ProcessExecutionLog
 
-class PytestPythonErrorLogProcessor: PythonErrorLogProcessor {
+class PytestPythonErrorLogProcessor : PythonErrorLogProcessor {
+  private val testsRunRegex = Regex("""collected (\d+) items""")
+  private val testErrorOrFailureRegex = Regex("""(\d+) (failed|error)""")
+
   override fun getTestExecutionSuccessRate(executionLog: ProcessExecutionLog): Double {
-    val testsRunRegex = Regex("""collected (\d+) items""")
-    val testErrorOrFailureRegex = Regex("""(\d+) (failed|error)""")
 
     // For pytest we are parsing stdout stream
     val logOutputString = executionLog.out

@@ -2,11 +2,11 @@ package com.intellij.cce.python.execution.output
 
 import com.intellij.cce.execution.output.ProcessExecutionLog
 
-class UnittestPythonErrorLogProcessor: PythonErrorLogProcessor {
-  override fun getTestExecutionSuccessRate(executionLog: ProcessExecutionLog): Double {
-    val testsRunRegex = Regex("""Ran (\d+) tests?""")
-    val testErrorOrFailureRegex = Regex("""(ERROR|FAIL): (.+?)\n""")
+class UnittestPythonErrorLogProcessor : PythonErrorLogProcessor {
+  private val testsRunRegex = Regex("""Ran (\d+) tests?""")
+  private val testErrorOrFailureRegex = Regex("""(ERROR|FAIL): (.+?)\n""")
 
+  override fun getTestExecutionSuccessRate(executionLog: ProcessExecutionLog): Double {
     // For unittest we parse stderr stream
     val logOutputString = executionLog.error
 
