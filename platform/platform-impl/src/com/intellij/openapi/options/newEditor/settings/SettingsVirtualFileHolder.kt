@@ -73,6 +73,8 @@ internal class SettingsVirtualFileHolder private constructor(private val project
     }
 
     override fun isIncludedInEditorHistory(project: Project): Boolean = false
+
+    override fun shouldSkipEventSystem() = true
   }
 
   private class SettingFileType : FakeFileType() {
