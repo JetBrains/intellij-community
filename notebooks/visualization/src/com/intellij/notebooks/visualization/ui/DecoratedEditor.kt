@@ -302,11 +302,7 @@ class DecoratedEditor private constructor(
           }
         }
       }
-      else -> {
-        if (mouseButton == MouseEvent.BUTTON1 || !model.isSelectedCell(clickedCell)) {
-          model.selectSingleCell(clickedCell)
-        }
-      }
+      mouseButton == MouseEvent.BUTTON1 && !model.isSelectedCell(clickedCell) -> model.selectSingleCell(clickedCell)
     }
   }
 
