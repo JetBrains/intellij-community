@@ -167,6 +167,7 @@ class DirectIntentionCommandProvider : CommandProvider {
           val fixes = descriptor.fixes ?: continue
           if (descriptor !is ProblemDescriptorBase) continue
           var textRange = descriptor.textRange ?: continue
+          if (!lineRange.intersects(textRange)) continue
           if (isInjected) {
             textRange = injectedLanguageManager.injectedToHost(psiFile, textRange)
           }
