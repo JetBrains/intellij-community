@@ -102,11 +102,16 @@ internal class DelegateMethodImportCandidatesProvider(
     positionContext: KotlinNameReferencePositionContext,
 ) : CallableImportCandidatesProvider(positionContext) {
 
+    private val expectedDelegateFunctionName: Name? = listOf(
+        OperatorNameConventions.GET_VALUE,
+        OperatorNameConventions.SET_VALUE,
+    ).singleOrNull { expectedDelegateFunctionSignature.startsWith(it.asString() + "(") }
+    
     private val missingDelegateFunctionNames: List<Name> =
-        listOf(
-            OperatorNameConventions.GET_VALUE, 
-            OperatorNameConventions.SET_VALUE,
-        ).filter { expectedDelegateFunctionSignature.startsWith(it.asString() + "(") }
+        listOfNotNull(
+            expectedDelegateFunctionName,
+            OperatorNameConventions.PROVIDE_DELEGATE,
+        )
 
     context(KaSession)
     override fun collectCandidates(
