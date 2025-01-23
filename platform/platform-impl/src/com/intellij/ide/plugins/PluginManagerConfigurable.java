@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,23 +33,22 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.*;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivityKt;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.LicensingFacade;
-import com.intellij.ui.RelativeFont;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -59,6 +59,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
@@ -70,8 +71,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -145,6 +146,10 @@ public final class PluginManagerConfigurable
   private boolean myForceShowInstalledTabForTag = false;
   private boolean myShowMarketplaceTab;
 
+  private Boolean myPluginsAutoUpdateEnabled;
+
+  private Disposable myDisposer = Disposer.newDisposable();
+
   /**
    * @deprecated Use {@link PluginManagerConfigurable#PluginManagerConfigurable()}
    */
@@ -186,6 +191,7 @@ public final class PluginManagerConfigurable
       String query = (index == MARKETPLACE_TAB ? myInstalledTab : myMarketplaceTab).getSearchQuery();
       (index == MARKETPLACE_TAB ? myMarketplaceTab : myInstalledTab).setSearchQuery(query);
     });
+    createGearGotIt();
 
     myUpdateAll.setVisible(false);
     myUpdateAllBundled.setVisible(false);
@@ -265,6 +271,36 @@ public final class PluginManagerConfigurable
 
   private @NotNull DefaultActionGroup createGearActions() {
     DefaultActionGroup actions = new DefaultActionGroup();
+    if (PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
+      UpdateOptions state = UpdateSettings.getInstance().getState();
+      myPluginsAutoUpdateEnabled = state.isPluginsAutoUpdateEnabled();
+
+      MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(myDisposer);
+      connect.subscribe(PluginAutoUpdateListener.Companion.getTOPIC(), new PluginAutoUpdateListener() {
+        @Override
+        public void settingsChanged() {
+          myPluginsAutoUpdateEnabled = state.isPluginsAutoUpdateEnabled();
+        }
+      });
+
+      actions.add(new DumbAwareToggleAction(IdeBundle.message("updates.plugins.autoupdate.settings.action")) {
+        @Override
+        public boolean isSelected(@NotNull AnActionEvent e) {
+          return myPluginsAutoUpdateEnabled;
+        }
+
+        @Override
+        public void setSelected(@NotNull AnActionEvent e, boolean state) {
+          myPluginsAutoUpdateEnabled = state;
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+      });
+      actions.addSeparator();
+    }
     actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.repositories")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -316,6 +352,20 @@ public final class PluginManagerConfigurable
       });
     }
     return actions;
+  }
+
+  private void createGearGotIt() {
+    if (!PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() ||
+        UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled()) {
+      return;
+    }
+
+    String title = IdeBundle.message("plugin.manager.plugins.auto.update.title");
+    GotItTooltip tooltip = new GotItTooltip(title, IdeBundle.message("plugin.manager.plugins.auto.update.description"), myDisposer);
+    tooltip.withHeader(title);
+    tooltip.show((JComponent)myTabHeaderComponent.getComponent(1), (component, balloon) -> {
+      return new Point(component.getWidth() / 2, ((JComponent)component).getVisibleRect().height);
+    });
   }
 
   private static void showRightBottomPopup(@NotNull Component component, @NotNull @Nls String title, @NotNull ActionGroup group) {
@@ -1933,6 +1983,11 @@ public final class PluginManagerConfigurable
 
     pluginsState.runShutdownCallback();
     pluginsState.resetChangesAppliedWithoutRestart();
+
+    if (myDisposer != null) {
+      Disposer.dispose(myDisposer);
+      myDisposer = null;
+    }
   }
 
   @Override
@@ -1942,11 +1997,23 @@ public final class PluginManagerConfigurable
 
   @Override
   public boolean isModified() {
+    if (myPluginsAutoUpdateEnabled != null &&
+        UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled() != myPluginsAutoUpdateEnabled) {
+      return true;
+    }
     return myPluginModel.isModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
+    if (myPluginsAutoUpdateEnabled != null) {
+      UpdateOptions state = UpdateSettings.getInstance().getState();
+      if (state.isPluginsAutoUpdateEnabled() != myPluginsAutoUpdateEnabled) {
+        state.setPluginsAutoUpdateEnabled(myPluginsAutoUpdateEnabled);
+        ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged$intellij_platform_ide_impl();
+      }
+    }
+
     if (myPluginModel.apply(myCardPanel)) return;
 
     if (myPluginModel.createShutdownCallback) {
@@ -1961,6 +2028,9 @@ public final class PluginManagerConfigurable
 
   @Override
   public void reset() {
+    if (myPluginsAutoUpdateEnabled != null) {
+      myPluginsAutoUpdateEnabled = UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled();
+    }
     myPluginModel.clear(myCardPanel);
   }
 

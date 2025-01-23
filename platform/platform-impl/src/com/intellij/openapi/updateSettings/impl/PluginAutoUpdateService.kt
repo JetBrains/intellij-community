@@ -7,8 +7,12 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.ui.OptionsSearchTopHitProvider
+import com.intellij.ide.ui.search.BooleanOptionDescription
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginAutoUpdateRepository
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -20,6 +24,7 @@ import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.move
+import com.intellij.util.messages.Topic
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -186,6 +191,8 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
     cs.launch {
       setupDownloadManager()
     }
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(PluginAutoUpdateListener.TOPIC).settingsChanged()
   }
 
   private fun dropDownloadedUpdates() {
@@ -215,6 +222,15 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
   }
 }
 
+internal interface PluginAutoUpdateListener {
+  fun settingsChanged()
+
+  companion object {
+    @Topic.AppLevel
+    val TOPIC: Topic<PluginAutoUpdateListener> = Topic<PluginAutoUpdateListener>(PluginAutoUpdateListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
+  }
+}
+
 private data class DownloadedUpdate(@JvmField val pluginId: PluginId, @JvmField val version: String, @JvmField val updatePath: Path)
 
 private val LOG
@@ -236,5 +252,23 @@ fun findUnsatisfiedDependencies(
     }
     val dependencySatisfied = enabledModules.any { it == dep.pluginId }
     !dependencySatisfied
+  }
+}
+
+internal class PluginAutoUpdateOptionsProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
+  override fun getId() = "PluginAutoUpdate"
+
+  override fun getOptions(): List<BooleanOptionDescription> {
+    if (!PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
+      return emptyList()
+    }
+    return listOf(object : BooleanOptionDescription(IdeBundle.message("updates.plugins.autoupdate.se.option"), null) {
+      override fun isOptionEnabled() = UpdateSettings.getInstance().isPluginsAutoUpdateEnabled
+
+      override fun setOptionState(enabled: Boolean) {
+        UpdateSettings.getInstance().isPluginsAutoUpdateEnabled = enabled
+        service<PluginAutoUpdateService>().onSettingsChanged()
+      }
+    })
   }
 }

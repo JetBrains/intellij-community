@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.newui.reloadPluginIcon
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
@@ -93,6 +94,15 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
                   toolTipText = IdeBundle.message("updates.plugins.autoupdate.settings.prohibited.by.policy.comment")
                   isEnabled = true
                 }
+              }
+              else {
+                val connect = ApplicationManager.getApplication().messageBus.connect(disposable!!)
+                val component = it.component
+                connect.subscribe(PluginAutoUpdateListener.TOPIC, object : PluginAutoUpdateListener {
+                  override fun settingsChanged() {
+                    component.isSelected = settings.state::isPluginsAutoUpdateEnabled.get()
+                  }
+                })
               }
             }
         }
