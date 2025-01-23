@@ -3,7 +3,6 @@ package com.intellij.codeInspection.defUse;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
@@ -16,6 +15,7 @@ import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -227,7 +227,7 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
       return false;
     }
     for (PsiMethod constructor : constructors) {
-      if (!JavaHighlightUtil.getChainedConstructors(constructor).isEmpty()) continue;
+      if (!JavaPsiConstructorUtil.getChainedConstructors(constructor).isEmpty()) continue;
       final PsiCodeBlock body = constructor.getBody();
       if (body == null || !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
         return false;

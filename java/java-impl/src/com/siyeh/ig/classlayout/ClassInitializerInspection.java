@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
@@ -25,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -127,7 +127,7 @@ public final class ClassInitializerInspection extends BaseInspection {
         AddDefaultConstructorFix.addDefaultConstructor(aClass);
       }
       constructors = aClass.getConstructors();
-      return ContainerUtil.filter(constructors, constructor -> JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
+      return ContainerUtil.filter(constructors, constructor -> JavaPsiConstructorUtil.getChainedConstructors(constructor).isEmpty());
     }
   }
 

@@ -363,6 +363,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
   @Override
   public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+    if (!hasErrorResults()) myExpressionChecker.checkConstructorCallProblems(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkSuperAbstractMethodDirectCall(expression);
     if (!hasErrorResults()) myClassChecker.checkEnumSuperConstructorCall(expression);
     if (!hasErrorResults()) myClassChecker.checkSuperQualifierType(expression);
     if (!hasErrorResults()) myExpressionChecker.checkMethodCall(expression);

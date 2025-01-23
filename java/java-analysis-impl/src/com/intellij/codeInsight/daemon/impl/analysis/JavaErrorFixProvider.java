@@ -30,10 +30,8 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.JavaPsiModifierUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
@@ -83,7 +81,8 @@ final class JavaErrorFixProvider {
                                             RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, ANNOTATION_PERMITS,
                                             NEW_EXPRESSION_DIAMOND_NOT_ALLOWED, REFERENCE_TYPE_ARGUMENT_STATIC_CLASS,
                                             STATEMENT_CASE_OUTSIDE_SWITCH, NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE,
-                                            NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS)) {
+                                            NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS,
+                                            CALL_DIRECT_ABSTRACT_METHOD_ACCESS)) {
       fix(kind, genericRemover);
     }
     
@@ -342,6 +341,15 @@ final class JavaErrorFixProvider {
         return registrar;
       }
     });
+    fix(CALL_DIRECT_ABSTRACT_METHOD_ACCESS, error -> {
+      PsiMethod method = error.context();
+      int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
+      String name = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, 0);
+      String text = QuickFixBundle.message("remove.modifier.fix", name, VisibilityUtil.toPresentableText(PsiModifier.ABSTRACT));
+      return myFactory.createAddMethodBodyFix(method, text);
+    });
+    multi(CALL_CONSTRUCTOR_MUST_BE_FIRST_STATEMENT, error -> HighlightUtil.getIncreaseLanguageLevelFixes(
+      error.psi(), JavaFeature.STATEMENTS_BEFORE_SUPER));
     fix(STRING_TEMPLATE_PROCESSOR_MISSING, error -> new MissingStrProcessorFix(error.psi()));
   }
   

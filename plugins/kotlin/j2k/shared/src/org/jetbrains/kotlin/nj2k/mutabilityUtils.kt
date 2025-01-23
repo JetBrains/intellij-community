@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
 import com.intellij.psi.*
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.JavaPsiConstructorUtil
 import com.intellij.util.MathUtil
 import com.siyeh.ig.psiutils.FinalUtils
 import com.siyeh.ig.psiutils.VariableAccessUtils
@@ -182,7 +182,7 @@ private fun fieldConstructionImpliesMutable(field: PsiField): Boolean {
     val usefulConstructors: MutableList<PsiMethod> = ArrayList()
     for (constructor in constructors) {
         val ctrBody = constructor.getBody() ?: return true
-        val redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor)
+        val redirectedConstructors = JavaPsiConstructorUtil.getChainedConstructors(constructor)
         val usefulRedirectedConstructors: MutableList<PsiMethod> = ArrayList()
         for (redirectedConstructor in redirectedConstructors) {
             val body = redirectedConstructor.getBody()

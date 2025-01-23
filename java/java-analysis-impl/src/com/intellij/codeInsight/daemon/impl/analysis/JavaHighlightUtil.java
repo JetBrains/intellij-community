@@ -10,14 +10,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class JavaHighlightUtil {
@@ -126,31 +123,13 @@ public final class JavaHighlightUtil {
    * return all constructors which are referred from this constructor by
    *  this (...) at the beginning of the constructor body
    * @return referring constructor
+   * @deprecated use {@link JavaPsiConstructorUtil#getChainedConstructors(PsiMethod)} instead
    */
+  @Deprecated
   public static @NotNull List<PsiMethod> getChainedConstructors(@NotNull PsiMethod constructor) {
-    ConstructorVisitorInfo info = new ConstructorVisitorInfo();
-    visitConstructorChain(constructor, info);
-    if (info.visitedConstructors != null) info.visitedConstructors.remove(constructor);
-    return ObjectUtils.notNull(info.visitedConstructors, Collections.emptyList());
+    return JavaPsiConstructorUtil.getChainedConstructors(constructor);
   }
-
-  static void visitConstructorChain(@NotNull PsiMethod entry, @NotNull ConstructorVisitorInfo info) {
-    PsiMethod constructor = entry;
-    while (true) {
-      PsiMethodCallExpression methodCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
-      if (!JavaPsiConstructorUtil.isChainedConstructorCall(methodCall)) return;
-      PsiMethod method = methodCall.resolveMethod();
-      if (method == null) return;
-      if (info.visitedConstructors != null && info.visitedConstructors.contains(method)) {
-        info.recursivelyCalledConstructor = method;
-        return;
-      }
-      if (info.visitedConstructors == null) info.visitedConstructors = new ArrayList<>(5);
-      info.visitedConstructors.add(method);
-      constructor = method;
-    }
-  }
-
+  
   public static @Nullable @Nls String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
     if (type instanceof PsiPrimitiveType) return null;
     if (type instanceof PsiArrayType arrayType) return checkPsiTypeUseInContext(arrayType.getComponentType(), context);
@@ -181,10 +160,5 @@ public final class JavaHighlightUtil {
       return JavaAnalysisBundle.message("message.class.inaccessible", className);
     }
     return JavaAnalysisBundle.message("message.class.inaccessible.from.module", className, module.getName());
-  }
-
-  static class ConstructorVisitorInfo {
-    List<PsiMethod> visitedConstructors;
-    PsiMethod recursivelyCalledConstructor;
   }
 }

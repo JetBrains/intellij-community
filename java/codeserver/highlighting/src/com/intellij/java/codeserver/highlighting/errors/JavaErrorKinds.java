@@ -709,6 +709,24 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, JavaMismatchedCallContext.class, "call.wrong.arguments")
       .withTooltip((psi, ctx) -> ctx.createTooltip())
       .withDescription((psi, ctx) -> ctx.createDescription());
+  public static final Parameterized<PsiMethodCallExpression, PsiMethod> CALL_DIRECT_ABSTRACT_METHOD_ACCESS =
+    parameterized(PsiMethodCallExpression.class, PsiMethod.class, "call.direct.abstract.method.access")
+      .withRawDescription((call, method) -> message("call.direct.abstract.method.access", formatMethod(method)));
+  public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_MUST_BE_FIRST_STATEMENT =
+    error(PsiMethodCallExpression.class, "call.constructor.must.be.first.statement")
+      .withRawDescription(call -> message("call.constructor.must.be.first.statement", call.getMethodExpression().getText() + "()"));
+  public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_ONLY_ALLOWED_IN_CONSTRUCTOR =
+    error(PsiMethodCallExpression.class, "call.constructor.only.allowed.in.constructor")
+      .withRawDescription(call -> message("call.constructor.only.allowed.in.constructor", call.getMethodExpression().getText() + "()"));
+  public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_MUST_BE_TOP_LEVEL_STATEMENT =
+    error(PsiMethodCallExpression.class, "call.constructor.must.be.top.level.statement")
+      .withRawDescription(call -> message("call.constructor.must.be.top.level.statement", call.getMethodExpression().getText() + "()"));
+  public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_DUPLICATE =
+    error(PsiMethodCallExpression.class, "call.constructor.duplicate");
+  public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_RECURSIVE =
+    error(PsiMethodCallExpression.class, "call.constructor.recursive");
+  public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_RECORD_IN_CANONICAL =
+    error(PsiMethodCallExpression.class, "call.constructor.record.in.canonical");
 
   public static final Simple<PsiExpression> STRING_TEMPLATE_VOID_NOT_ALLOWED_IN_EMBEDDED =
     error("string.template.void.not.allowed.in.embedded");

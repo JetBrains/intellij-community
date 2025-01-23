@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
@@ -30,7 +29,6 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -580,66 +578,6 @@ public final class HighlightMethodUtil {
 
     return null;
   }
-
-  static HighlightInfo.Builder checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
-    if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return null;
-    PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-    PsiReferenceExpression expression = methodCall.getMethodExpression();
-    if (method == null || !method.isConstructor()) {
-      String message = JavaErrorBundle.message("constructor.call.only.allowed.in.constructor", expression.getText() + "()");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
-    }
-    PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
-    if (constructorCall != methodCall) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(
-        JavaErrorBundle.message("only.one.constructor.call.allowed.in.constructor", expression.getText() + "()"));
-    }
-    PsiElement codeBlock = methodCall.getParent().getParent();
-    if (!(codeBlock instanceof PsiCodeBlock) || !(codeBlock.getParent() instanceof PsiMethod)) {
-      String message = JavaErrorBundle.message("constructor.call.must.be.top.level.statement", expression.getText() + "()");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
-    }
-    if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
-      String message = JavaErrorBundle.message("record.constructor.call.in.canonical");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
-    }
-    PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(methodCall.getParent(), PsiStatement.class);
-    if (prevStatement != null) {
-      String message = JavaErrorBundle.message("constructor.call.must.be.first.statement", expression.getText() + "()");
-      HighlightInfo.Builder builder =
-        HighlightUtil.checkFeature(methodCall, JavaFeature.STATEMENTS_BEFORE_SUPER, PsiUtil.getLanguageLevel(methodCall),
-                                   methodCall.getContainingFile(), message, HighlightInfoType.ERROR);
-      if (builder != null) return builder;
-    }
-    if (JavaPsiConstructorUtil.isChainedConstructorCall(methodCall) && HighlightControlFlowUtil.isRecursivelyCalledConstructor(method)) {
-      String description = JavaErrorBundle.message("recursive.constructor.invocation");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(description);
-    }
-    return null;
-  }
-
-
-  static HighlightInfo.Builder checkSuperAbstractMethodDirectCall(@NotNull PsiMethodCallExpression methodCallExpression) {
-    PsiReferenceExpression expression = methodCallExpression.getMethodExpression();
-    if (!(expression.getQualifierExpression() instanceof PsiSuperExpression)) return null;
-    PsiMethod method = methodCallExpression.resolveMethod();
-    if (method != null && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      String message = JavaErrorBundle.message("direct.abstract.method.access", JavaHighlightUtil.formatMethod(method));
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCallExpression).descriptionAndTooltip(message);
-      IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(methodCallExpression);
-      info.registerFix(action1, null, null, null, null);
-      int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
-      String name = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, 0);
-      String modifierText = VisibilityUtil.toPresentableText(PsiModifier.ABSTRACT);
-      String text = QuickFixBundle.message("remove.modifier.fix", name, modifierText);
-      IntentionAction action = QuickFixFactory.getInstance().createAddMethodBodyFix(method, text);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-    return null;
-  }
-
 
   static HighlightInfo.Builder checkConstructorHandleSuperClassExceptions(@NotNull PsiMethod method) {
     if (!method.isConstructor()) {

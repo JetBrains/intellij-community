@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -481,6 +482,48 @@ final class ExpressionChecker {
           checkConstructorCall(classType.resolveGenerics(), newExpression, type, newExpression.getClassReference());
         }
       }
+    }
+  }
+
+  void checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
+    if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return;
+    PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+    if (method == null || !method.isConstructor()) {
+      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_ONLY_ALLOWED_IN_CONSTRUCTOR.create(methodCall));
+      return;
+    }
+    PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+    if (constructorCall != methodCall) {
+      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_DUPLICATE.create(methodCall));
+      return;
+    }
+    PsiElement codeBlock = methodCall.getParent().getParent();
+    if (!(codeBlock instanceof PsiCodeBlock) || !(codeBlock.getParent() instanceof PsiMethod)) {
+      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_MUST_BE_TOP_LEVEL_STATEMENT.create(methodCall));
+      return;
+    }
+    if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
+      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_RECORD_IN_CANONICAL.create(methodCall));
+      return;
+    }
+    PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(methodCall.getParent(), PsiStatement.class);
+    if (prevStatement != null) {
+      if (!myVisitor.isApplicable(JavaFeature.STATEMENTS_BEFORE_SUPER)) {
+        myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_MUST_BE_FIRST_STATEMENT.create(methodCall));
+        return;
+      }
+    }
+    if (JavaPsiConstructorUtil.isChainedConstructorCall(methodCall) && JavaPsiConstructorUtil.isRecursivelyCalledConstructor(method)) {
+      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_RECURSIVE.create(methodCall));
+    }
+  }
+
+  void checkSuperAbstractMethodDirectCall(@NotNull PsiMethodCallExpression methodCallExpression) {
+    PsiReferenceExpression expression = methodCallExpression.getMethodExpression();
+    if (!(expression.getQualifierExpression() instanceof PsiSuperExpression)) return;
+    PsiMethod method = methodCallExpression.resolveMethod();
+    if (method != null && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      myVisitor.report(JavaErrorKinds.CALL_DIRECT_ABSTRACT_METHOD_ACCESS.create(methodCallExpression, method));
     }
   }
 

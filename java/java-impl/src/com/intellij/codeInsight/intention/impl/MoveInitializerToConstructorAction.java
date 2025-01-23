@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +56,7 @@ public final class MoveInitializerToConstructorAction extends BaseMoveInitialize
 
   private static @NotNull Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<? extends PsiMethod> constructors) {
     final List<PsiMethod> result = new ArrayList<>(constructors);
-    result.removeIf(constructor -> !JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
+    result.removeIf(constructor -> !JavaPsiConstructorUtil.getChainedConstructors(constructor).isEmpty());
     return result;
   }
 
