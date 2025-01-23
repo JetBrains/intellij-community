@@ -70,10 +70,19 @@ internal class ExpandableMenu(
         updateBounds()
       }
     })
+    if (isSticky()) {
+      SwingUtilities.invokeLater {
+        switchState();
+      }
+    }
   }
 
   fun isEnabled(): Boolean {
     return !SystemInfoRt.isMac && Registry.`is`("ide.main.menu.expand.horizontal")
+  }
+
+  fun isSticky(): Boolean {
+    return isEnabled() && !SystemInfoRt.isMac && Registry.`is`("ide.main.menu.expand.horizontal.sticky")
   }
 
   private fun isShowing(): Boolean {
@@ -112,9 +121,12 @@ internal class ExpandableMenu(
     updateColor()
     layeredPane.add(expandedMenuBar!!, (JLayeredPane.DEFAULT_LAYER - 2) as Any)
 
-    // The first menu usage has no selection in the menu. Fix it by invokeLater
-    ApplicationManager.getApplication().invokeLater {
-      selectMenu(actionMenuToShow)
+    if (!isSticky()) {
+      // Keep original behavior
+      // The first menu usage has no selection in the menu. Fix it by invokeLater
+      ApplicationManager.getApplication().invokeLater {
+        selectMenu(actionMenuToShow)
+      }
     }
   }
 
@@ -167,11 +179,13 @@ internal class ExpandableMenu(
 
   private fun hideExpandedMenuBar() {
     if (isShowing()) {
-      rootPane?.layeredPane?.remove(expandedMenuBar)
-      expandedMenuBar = null
-      headerColorfulPanel = null
+      if (!isSticky()) {
+        rootPane?.layeredPane?.remove(expandedMenuBar)
+        expandedMenuBar = null
+        headerColorfulPanel = null
 
-      rootPane?.repaint()
+        rootPane?.repaint()
+      }
     }
   }
 
