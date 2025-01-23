@@ -29,6 +29,8 @@ import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHandler
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
@@ -284,9 +286,9 @@ class GlobalWorkspaceModel : Disposable {
         homePath = sdkEntity.homePath?.createCopyAtManager(vfuManager)
         version = sdkEntity.version
       }
-      val sdkBridge = storage.getExternalMapping(SDK_BRIDGE_MAPPING_ID).getDataByEntity(sdkEntity)
+      val sdkBridge = storage.sdkMap.getDataByEntity(sdkEntity)
       if (sdkBridge != null) {
-        mutableEntityStorage.getMutableExternalMapping(SDK_BRIDGE_MAPPING_ID).addIfAbsent(sdkEntityCopy, sdkBridge)
+        mutableEntityStorage.mutableSdkMap.addIfAbsent(sdkEntityCopy, sdkBridge)
       }
     }
     return mutableEntityStorage
@@ -303,12 +305,6 @@ class GlobalWorkspaceModel : Disposable {
   }
 
   companion object {
-
-    //TODO:: Fix me don't have dependencies to SdkTableBridgeImpl
-    private val SDK_BRIDGE_MAPPING_ID = ExternalMappingKey.create<Any>("intellij.sdk.bridge")
-
-
-
     private val LOG = logger<GlobalWorkspaceModel>()
     fun getInstance(): GlobalWorkspaceModel = ApplicationManager.getApplication().service()
 
