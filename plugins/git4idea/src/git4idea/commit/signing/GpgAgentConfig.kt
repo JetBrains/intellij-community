@@ -3,10 +3,14 @@ package git4idea.commit.signing
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PathUtil
+import com.intellij.util.io.write
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readLines
+import kotlin.io.path.writeLines
 
 internal data class GpgAgentConfig(val path: Path, val content: Map<String, String>) {
   val pinentryProgram: String? get() = content[PINENTRY_PROGRAM]
@@ -26,8 +30,7 @@ internal data class GpgAgentConfig(val path: Path, val content: Map<String, Stri
   @Throws(IOException::class)
   fun writeToFile() {
     LOG.info("Writing gpg agent config to ${path.toFile()}")
-    FileUtil.writeToFile(path.toFile(),
-                         content.map { (key, value) -> "$key $value".trimEnd() }.joinToString(separator = "\n"))
+    path.writeLines(content.map { (key, value) -> "$key $value".trimEnd() })
   }
 
   companion object {
