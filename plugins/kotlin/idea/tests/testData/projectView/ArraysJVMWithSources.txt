@@ -180,6 +180,9 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/jvmMain/kotlin/collections/A
      CharCodeJVMKt
      CharCodeKt
      CompareToKt
+     ContextParametersKt
+     ContextParametersKt__ContextKt
+     ContextParametersKt__ContextOfKt
      DeepRecursiveKt
      ExceptionsKt
      ExceptionsKt__ExceptionsKt

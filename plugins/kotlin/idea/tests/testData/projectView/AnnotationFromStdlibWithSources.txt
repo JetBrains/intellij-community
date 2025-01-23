@@ -112,6 +112,9 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/commonMain/kotlin/annotation
      CharCodeJVMKt
      CharCodeKt
      CompareToKt
+     ContextParametersKt
+     ContextParametersKt__ContextKt
+     ContextParametersKt__ContextOfKt
      DeepRecursiveKt
      ExceptionsKt
      ExceptionsKt__ExceptionsKt
