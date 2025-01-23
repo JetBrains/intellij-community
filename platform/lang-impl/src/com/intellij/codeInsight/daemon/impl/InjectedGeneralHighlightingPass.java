@@ -267,12 +267,12 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
         }
       }
 
-      HighlightInfo patched =
-        new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
+      //noinspection deprecation
+      HighlightInfo patched = new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.getToolId(), info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
-      patched.setHint(info.hasHint());
+                          false, 0, info.getProblemGroup(), info.getToolId(), info.getGutterIconRenderer(), info.getGroup(),
+                          info.hasHint(), info.getLazyQuickFixes());
 
       info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
         List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);

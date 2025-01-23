@@ -9,7 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
@@ -266,7 +266,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             psiElement.saveKaDiagnosticForUnresolvedReference(diagnostic)
             
             psiElement.reference?.let { ref ->
-                UnresolvedReferenceQuickFixUpdater.getInstance(file.project).registerQuickFixesLater(ref, infoBuilder)
+                UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, infoBuilder)
             }
         }
 

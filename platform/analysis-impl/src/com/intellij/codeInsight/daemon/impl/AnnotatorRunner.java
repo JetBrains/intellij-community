@@ -182,11 +182,12 @@ public final class AnnotatorRunner {
       }
 
       // create manually to avoid extra call to HighlightInfoFilter.accept() in HighlightInfo.Builder.create()
+      //noinspection deprecation
       HighlightInfo patched = new HighlightInfo(injectedInfo.forcedTextAttributes, injectedInfo.forcedTextAttributesKey, injectedInfo.type,
-                          hostRange.getStartOffset(), hostRange.getEndOffset(),
-                          injectedInfo.getDescription(), injectedInfo.getToolTip(), injectedInfo.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP, injectedInfo.unresolvedReference);
-      patched.setHint(injectedInfo.hasHint());
+                                                hostRange.getStartOffset(), hostRange.getEndOffset(),
+                                                injectedInfo.getDescription(), injectedInfo.getToolTip(), injectedInfo.getSeverity(), isAfterEndOfLine, null,
+                                                false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP,
+                                                injectedInfo.hasHint(), injectedInfo.getLazyQuickFixes());
 
       List<HighlightInfo.IntentionActionDescriptor> quickFixes = new ArrayList<>();
       injectedInfo.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {

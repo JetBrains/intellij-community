@@ -8,7 +8,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.NlsContexts;
@@ -389,7 +390,8 @@ public final class HighlightMethodUtil {
     }
     HighlightFixUtil.registerChangeParameterClassFix(methodCall, list, asConsumer(builder));
     if (candidates.length == 0) {
-      UnresolvedReferenceQuickFixUpdater.getInstance(file.getProject()).registerQuickFixesLater(methodCall.getMethodExpression(), builder);
+      PsiReference ref = methodCall.getMethodExpression();
+      UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, builder);
     }
     return builder;
   }

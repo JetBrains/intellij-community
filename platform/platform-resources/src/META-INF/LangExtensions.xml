@@ -1619,8 +1619,8 @@
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.IntentionsUIImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.HighlightInfoUpdater"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.HighlightInfoUpdaterImpl"/>
-    <projectService serviceInterface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater"
-                    serviceImplementation="com.intellij.codeInsight.daemon.impl.UnresolvedReferenceQuickFixUpdaterImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.quickfix.LazyQuickFixUpdater"
+                    serviceImplementation="com.intellij.codeInsight.daemon.impl.LazyQuickFixUpdaterImpl"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.CommentJoinLinesHandler" order="last"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.EditorTracker" serviceImplementation="com.intellij.codeInsight.daemon.impl.EditorTrackerImpl"/>

@@ -1258,16 +1258,17 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
     else {
       // recycle
-      HighlightInfo info = recycled.info();
-      highlighter = info.getHighlighter();
+      HighlightInfo oldInfo = recycled.info();
+      highlighter = oldInfo.getHighlighter();
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, highlighter, markup);
-        ((HighlightingSessionImpl)session).replaceFileLevelHighlight(info, newInfo, highlighter);
+        ((HighlightingSessionImpl)session).replaceFileLevelHighlight(oldInfo, newInfo, highlighter);
       }
       else {
         markup.changeAttributesInBatch(highlighter, changeAttributes);
       }
-      assert info.getGroup() == MANAGED_HIGHLIGHT_INFO_GROUP: info;
+      oldInfo.copyComputedLazyFixesTo(newInfo);
+      assert oldInfo.getGroup() == MANAGED_HIGHLIGHT_INFO_GROUP: oldInfo;
     }
     newInfo.setHighlighter(highlighter);
     range2markerCache.put(finalInfoRange, highlighter);

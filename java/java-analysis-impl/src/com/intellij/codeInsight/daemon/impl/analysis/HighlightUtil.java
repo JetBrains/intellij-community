@@ -13,7 +13,7 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.ide.IdeBundle;
 import com.intellij.modcommand.ModCommandAction;
@@ -1238,7 +1238,7 @@ public final class HighlightUtil {
             info.registerFix(action, null, null, null, null);
           }
         }
-        UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(ref, info);
+        UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info);
         return info;
       }
 

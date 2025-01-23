@@ -11,7 +11,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
@@ -619,6 +619,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
   public void testImportHintsMustBeComputedForAllUnresolvedReferencesInVisibleAreaToBeAbleToShowPopups() throws Exception {
     ThreadingAssertions.assertEventDispatchThread();
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
     @Language("JAVA")
     @NonNls final String text = "class S {{ \n" +
                                 "new ArrayList();\n".repeat(1000) +
@@ -630,7 +631,6 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     getEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100); // make sure editor is visible - auto-import works only for visible area
     UIUtil.dispatchAllInvocationEvents();
-    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
     Editor editor = getEditor();
     TextRange visibleRange = editor.calculateVisibleRange();
@@ -638,7 +638,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     List<HighlightInfo> errors = ContainerUtil.sorted(highlightErrors(), Segment.BY_START_OFFSET_THEN_END_OFFSET);
     assertSize(1000, errors);
-    UnresolvedReferenceQuickFixUpdaterImpl updater = (UnresolvedReferenceQuickFixUpdaterImpl)UnresolvedReferenceQuickFixUpdater.getInstance(getProject());
+    LazyQuickFixUpdaterImpl updater = (LazyQuickFixUpdaterImpl)LazyQuickFixUpdater.getInstance(getProject());
     for (int i = 0; i < errors.size(); i++) {
       HighlightInfo error = errors.get(i);
       if (visibleRange.contains(error)) { // we care only for visible errors; invisible ones may or may not be computed

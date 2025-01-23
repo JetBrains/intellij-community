@@ -10,7 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
@@ -253,7 +253,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     errorFixProvider.processFixes(error, fix -> info.registerFix(fix.asIntention(), null, null, null, null));
     error.psiForKind(JavaErrorKinds.EXPRESSION_EXPECTED, JavaErrorKinds.REFERENCE_UNRESOLVED, JavaErrorKinds.REFERENCE_AMBIGUOUS)
       .or(() -> error.psiForKind(JavaErrorKinds.TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
-      .ifPresent(ref -> UnresolvedReferenceQuickFixUpdater.getInstance(getProject()).registerQuickFixesLater(ref, info));
+      .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
     add(info);
   }
 

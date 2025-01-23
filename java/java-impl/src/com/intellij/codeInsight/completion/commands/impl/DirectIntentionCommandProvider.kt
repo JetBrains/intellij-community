@@ -18,7 +18,6 @@ import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
@@ -48,7 +47,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.coroutines.CoroutineScope
@@ -227,23 +225,14 @@ class DirectIntentionCommandProvider : CommandProvider {
           if (!insideRange.intersects(info.startOffset, info.endOffset) ||
               (isInjected && !insideRange.contains(TextRange(info.startOffset, info.endOffset)))) continue
           val fixes: MutableList<IntentionActionDescriptor> = ArrayList<IntentionActionDescriptor>()
-          val unresolvedReference = info.unresolvedReference
-          if (unresolvedReference != null) {
-            editor.caretModel.moveToOffset(unresolvedReference.element.textRange.endOffset)
-            UnresolvedReferenceQuickFixProvider.registerReferenceFixes<PsiReference>(unresolvedReference, QuickFixActionRegistrarImpl(info))
-          }
           ShowIntentionsPass.addAvailableFixesForGroups(info, topLevelEditor, topLevelFile, fixes, -1, offset, false)
-          if (unresolvedReference != null) {
-            editor.caretModel.moveToOffset(offset)
-          }
           for (descriptor in fixes) {
             if (descriptor.action is EmptyIntentionAction) continue
             val command = DirectErrorFixCompletionCommand(name = descriptor.action.text,
                                                           priority = 100,
                                                           icon = AllIcons.Actions.QuickfixBulb,
                                                           highlightInfo = HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),
-                                                                                              CodeInsightColors.ERRORS_ATTRIBUTES, 100),
-                                                          myOffset = unresolvedReference?.element?.textRange?.endOffset)
+                                                                                              CodeInsightColors.ERRORS_ATTRIBUTES, 100))
             result.add(command)
           }
         }
