@@ -7155,6 +7155,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("destructuring.kt")
+                public void testDestructuring() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/destructuring.kt");
+                }
+
                 @TestMetadata("localValNoReceiver.kt")
                 public void testLocalValNoReceiver() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/localValNoReceiver.kt");
