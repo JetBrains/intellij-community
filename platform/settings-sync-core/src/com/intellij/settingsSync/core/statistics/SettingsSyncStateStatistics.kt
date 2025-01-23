@@ -11,7 +11,7 @@ import com.intellij.settingsSync.core.config.EDITOR_FONT_SUBCATEGORY_ID
 
 class SettingsSyncStateStatistics : ApplicationUsagesCollector() {
 
-  private val GROUP: EventLogGroup = EventLogGroup("settings.sync.state", 3)
+  private val GROUP: EventLogGroup = EventLogGroup("settings.sync.state", 4)
   private val SETTINGS_SYNC_ENABLED_STATE = GROUP.registerEvent("general.state", EventFields.Boolean("enabled"))
   private val DISABLED_CATEGORIES = GROUP.registerEvent("disabled.categories", EventFields.Enum("category", SettingsCategory::class.java))
   private val BUNDLED_PLUGINS_DISABLED = GROUP.registerEvent("disabled.bundled.plugins", EventFields.Boolean("disabled"))
