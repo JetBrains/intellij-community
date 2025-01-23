@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.lang.LanguageNamesValidation;
@@ -144,6 +144,7 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
 
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {
     if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
+    if (elementToRename instanceof PsiImplicitClass) return false;
     if (!PsiUtil.isJvmLocalVariable(elementToRename) && !(elementToRename instanceof PsiLabeledStatement)) {
       return false;
     }
