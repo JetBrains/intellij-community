@@ -1067,7 +1067,9 @@ open class FileEditorManagerImpl(
 
   internal suspend fun checkForbidSplitAndOpenFile(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions) {
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
-      closeFile(file)
+      withContext(Dispatchers.EDT) {
+        closeFile(file)
+      }
     }
 
     if (!ClientId.isCurrentlyUnderLocalId) {
