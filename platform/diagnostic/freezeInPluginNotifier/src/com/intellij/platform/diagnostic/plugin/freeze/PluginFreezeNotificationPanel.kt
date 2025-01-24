@@ -1,15 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.plugin.freeze
 
-import com.intellij.diagnostic.FreezeNotifier
-import com.intellij.diagnostic.IdeErrorsDialog
-import com.intellij.diagnostic.MessagePool
-import com.intellij.diagnostic.ThreadDump
+import com.intellij.diagnostic.*
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isVendorJetBrains
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
@@ -25,7 +21,7 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 internal class PluginFreezeNotifier: FreezeNotifier {
-  override fun notifyFreeze(event: IdeaLoggingEvent, currentDumps: Collection<ThreadDump>, reportDir: Path, durationMs: Long) {
+  override fun notifyFreeze(event: LogMessage, currentDumps: Collection<ThreadDump>, reportDir: Path, durationMs: Long) {
     val freezeWatcher = PluginFreezeWatcher.getInstance()
 
     val freezeReason = freezeWatcher.getFreezeReason()

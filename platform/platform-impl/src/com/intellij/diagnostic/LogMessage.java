@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -22,7 +22,7 @@ public final class LogMessage extends AbstractMessage {
   private final String myMessage;
   private final List<Attachment> myAttachments;
 
-  LogMessage(Throwable throwable, String message, List<Attachment> attachments) {
+  public LogMessage(@NotNull Throwable throwable, @Nullable String message, @NotNull List<Attachment> attachments) {
     myThrowable = ThrowableInterner.intern(throwable);
 
     String str = message;
@@ -60,11 +60,8 @@ public final class LogMessage extends AbstractMessage {
     return Collections.unmodifiableList(myAttachments);
   }
 
-  // factory methods
-  /**
-   * @param userMessage      user-friendly message description (short, single line if possible)
-   * @param attachments      attachments that will be suggested to include to the report
-   */
+  /** @deprecated use {@link IdeaLoggingEvent#IdeaLoggingEvent} directly */
+  @Deprecated(forRemoval = true)
   public static IdeaLoggingEvent eventOf(
     @NotNull Throwable throwable,
     @Nullable String userMessage,
@@ -73,7 +70,7 @@ public final class LogMessage extends AbstractMessage {
     return new IdeaLoggingEvent(userMessage, throwable, new LogMessage(throwable, userMessage, attachments));
   }
 
-  /** @deprecated internal API */
+  /** @deprecated use {@link IdeaLoggingEvent#IdeaLoggingEvent} directly */
   @Deprecated(forRemoval = true)
   public static IdeaLoggingEvent createEvent(@NotNull Throwable throwable, @Nullable String userMessage, Attachment @NotNull ... attachments) {
     return new IdeaLoggingEvent(userMessage, throwable, new LogMessage(throwable, userMessage, List.of(attachments)));

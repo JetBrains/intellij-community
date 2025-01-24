@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.diagnostic
@@ -544,8 +544,8 @@ private suspend fun reportCrashesIfAny() {
                     ?: crashInfo.extraJvmLog
                     ?: crashInfo.osCrashContent
                     ?: "<no crash info retrieved>" // actually should never happen, but it's better than throwing, at least attachments are reported
-      val event = LogMessage.eventOf(JBRCrash(), message, attachments)
-      IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile))
+      val event = LogMessage(JBRCrash(), message, attachments)
+      event.appInfo = Files.readString(appInfoFile)
       IdeaFreezeReporter.report(event)
       LifecycleUsageTriggerCollector.onCrashDetected()
     }

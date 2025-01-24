@@ -103,7 +103,7 @@ class DialogAppender : Handler() {
           val withAttachments = ExceptionUtil.causeAndSuppressed(throwable, ExceptionWithAttachments::class.java).toList()
           val message = withAttachments.asSequence().filterIsInstance<RuntimeExceptionWithAttachments>().firstOrNull()?.userMessage ?: message
           val attachments = withAttachments.asSequence().flatMap { it.attachments.asSequence() }.toList()
-          MessagePool.getInstance().addIdeFatalMessage(message, throwable, attachments)
+          MessagePool.getInstance().addIdeFatalMessage(LogMessage(throwable, message, attachments))
         }
       }
     }

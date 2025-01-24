@@ -22,12 +22,16 @@ public class IdeaLoggingEvent {
   }
 
   public IdeaLoggingEvent(String message, Throwable throwable, @Nullable Object data) {
-    this(message, throwable, List.of(), null, data);
+    myMessage = message;
+    myThrowable = throwable;
+    myAttachments = List.of();
+    myPlugin = null;
+    myData = data;
   }
 
   public IdeaLoggingEvent(
-    String message,
-    Throwable throwable,
+    @Nullable String message,
+    @NotNull Throwable throwable,
     @NotNull List<Attachment> attachments,
     @Nullable IdeaPluginDescriptor plugin,
     @Nullable Object data
@@ -39,10 +43,17 @@ public class IdeaLoggingEvent {
     myData = data;
   }
 
-  public String getMessage() {
+  /** Returns a message passed to {@link Logger#error Logger.error(String, [...])} methods. */
+  public @Nullable String getMessage() {
     return myMessage;
   }
 
+  /**
+   * Returns a throwable.
+   * If the object comes from {@link com.intellij.diagnostic.IdeErrorsDialog} and a text was edited by a user,
+   * the returned throwable only partially resembles an original exception.
+   * Prefer {@link #getThrowableText()}.
+   */
   public Throwable getThrowable() {
     return myThrowable;
   }

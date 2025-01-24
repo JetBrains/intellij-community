@@ -1,12 +1,13 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.plugin.freeze
 
+import com.intellij.diagnostic.LogMessage
 import com.intellij.diagnostic.ThreadDump
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtilImpl
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalyzer
 import com.intellij.threadDumpParser.ThreadState
@@ -30,7 +31,7 @@ internal class PluginFreezeWatcher {
     reason = null
   }
 
-  fun dumpedThreads(event: IdeaLoggingEvent, dump: ThreadDump, durationMs: Long) : FreezeReason? {
+  fun dumpedThreads(event: LogMessage, dump: ThreadDump, durationMs: Long) : FreezeReason? {
     val freezeCausingThreads = FreezeAnalyzer.analyzeFreeze(dump.rawDump, null)?.threads.orEmpty()
     val pluginIds = freezeCausingThreads.mapNotNull { analyzeFreezeCausingPlugin(it) }
     val frozenPlugin = pluginIds.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: return null
@@ -73,7 +74,7 @@ internal class PluginFreezeWatcher {
 
 internal data class FreezeReason(
   val pluginId: PluginId,
-  val event: IdeaLoggingEvent,
+  val event: LogMessage,
   val durationMs: Long,
   val reportToUser: Boolean,
 )

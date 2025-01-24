@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonReader
@@ -11,6 +11,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -32,8 +34,8 @@ internal open class HeapDumpAnalysisSupport {
     val text = getHeapDumpReportText(reportText, heapReportProperties)
     val attachment = Attachment("report.txt", text)
     attachment.isIncluded = true
-    val loggingEvent = LogMessage.eventOf(OutOfMemoryError(), "Heap analysis results", listOf(attachment))
-    ITNReporter().submit(arrayOf(loggingEvent), null, parentComponent) { }
+    val event = IdeaLoggingEvent("Heap analysis results", OutOfMemoryError(), listOf(attachment), null, null)
+    ErrorReportSubmitter.EP_NAME.findExtension(ITNReporter::class.java)?.submit(arrayOf(event), null, parentComponent) { }
   }
 
   /**

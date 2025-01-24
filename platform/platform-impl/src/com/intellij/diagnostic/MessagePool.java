@@ -2,13 +2,11 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,15 +37,13 @@ public final class MessagePool {
 
   private MessagePool() { }
 
+  /** @deprecated use {@link #addIdeFatalMessage(AbstractMessage)} instead */
+  @Deprecated(forRemoval = true)
   public void addIdeFatalMessage(@NotNull IdeaLoggingEvent event) {
     addIdeFatalMessage(event.getData() instanceof AbstractMessage am ? am : new LogMessage(event.getThrowable(), event.getMessage(), List.of()));
   }
 
-  public void addIdeFatalMessage(@Nullable String message, @NotNull Throwable throwable, @NotNull List<Attachment> attachments) {
-    addIdeFatalMessage(new LogMessage(throwable, message, attachments));
-  }
-
-  private void addIdeFatalMessage(AbstractMessage message) {
+  public void addIdeFatalMessage(@NotNull AbstractMessage message) {
     if (myErrors.size() < MAX_POOL_SIZE) {
       doAddMessage(message);
     }
