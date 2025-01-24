@@ -27,7 +27,7 @@
     <tr>
       <th>0</th>
       <td>1</td>
-      <td>1.0</td>
+      <td>1.00</td>
       <td>f</td>
       <td>{'age': 30, 'height': 5.5}</td>
       <td>[1.1, 2.2]</td>
@@ -35,7 +35,7 @@
     <tr>
       <th>1</th>
       <td>2</td>
-      <td>2.0</td>
+      <td>2.00</td>
       <td>s</td>
       <td>{'age': 25, 'height': 6.1}</td>
       <td>[2.2, 3.3]</td>
