@@ -23,7 +23,6 @@ import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.PyError
-import com.jetbrains.python.util.asPythonResult
 import com.jetbrains.python.util.emit
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -123,7 +122,8 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
     val pythonExecutable = model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString()
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       if (installationScript != null) {
-        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name)
+        val versionArgs: List<String> = installationVersion?.let { listOf("-v", it)  } ?: emptyList()
+        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name, *versionArgs.toTypedArray())
         executablePath.onSuccess {
         savePathToExecutableToProperties(it)
       }.onFailure {
@@ -136,6 +136,8 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
   internal abstract val interpreterType: InterpreterType
 
   internal abstract val executable: ObservableMutableProperty<String>
+
+  internal abstract val installationVersion: String?
 
   /**
    * The `installationScript` specifies a custom script for installing an executable in the Python environment.

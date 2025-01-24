@@ -16,6 +16,7 @@ import kotlin.io.path.pathString
 internal class EnvironmentCreatorPip(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("pipenv", model) {
   override val interpreterType: InterpreterType = InterpreterType.PIPENV
   override val executable: ObservableMutableProperty<String> = model.state.pipenvExecutable
+  override val installationVersion: String? = null
 
   override fun savePathToExecutableToProperties(path: Path?) {
     val savingPath = path?.pathString ?: executable.get().nullize() ?: return
