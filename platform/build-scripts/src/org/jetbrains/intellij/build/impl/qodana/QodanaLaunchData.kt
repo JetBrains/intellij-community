@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.OsFamily
 
 internal fun generateQodanaLaunchData(ideContext: BuildContext, arch: JvmArchitecture, os: OsFamily): CustomCommandLaunchData? {
   val qodanaProductProperties = ideContext.productProperties.qodanaProductProperties ?: return null
-  val vmOptions = ideContext.getAdditionalJvmArguments(os, arch, isQodana = true) + qodanaProductProperties.getAdditionalVmOptions(ideContext)
+  val vmOptions = ideContext.getAdditionalJvmArguments(os, arch, isQodana = false) + qodanaProductProperties.getAdditionalVmOptions(ideContext)
   return CustomCommandLaunchData(
     commands = listOf("qodana"),
     additionalJvmArguments = vmOptions
