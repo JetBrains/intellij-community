@@ -1,12 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,17 +40,20 @@ public final class MessagePool {
   private MessagePool() { }
 
   public void addIdeFatalMessage(@NotNull IdeaLoggingEvent event) {
-    AbstractMessage message;
+    addIdeFatalMessage(event.getData() instanceof AbstractMessage am ? am : new LogMessage(event.getThrowable(), event.getMessage(), List.of()));
+  }
+
+  public void addIdeFatalMessage(@Nullable String message, @NotNull Throwable throwable, @NotNull List<Attachment> attachments) {
+    addIdeFatalMessage(new LogMessage(throwable, message, attachments));
+  }
+
+  private void addIdeFatalMessage(AbstractMessage message) {
     if (myErrors.size() < MAX_POOL_SIZE) {
-      message = event.getData() instanceof AbstractMessage am ? am : new LogMessage(event.getThrowable(), event.getMessage(), List.of());
+      doAddMessage(message);
     }
     else if (myErrors.size() == MAX_POOL_SIZE) {
-      message = new LogMessage(new TooManyErrorsException(), null, List.of());
+      doAddMessage(new LogMessage(new TooManyErrorsException(), null, List.of()));
     }
-    else {
-      return;
-    }
-    doAddMessage(message);
   }
 
   public @NotNull State getState() {
