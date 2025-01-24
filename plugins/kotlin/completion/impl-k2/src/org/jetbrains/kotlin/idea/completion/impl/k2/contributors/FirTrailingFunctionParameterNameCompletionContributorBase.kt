@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
@@ -42,7 +41,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isFirstStatement
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.addToStdlib.partitionIsInstance
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<C : KotlinRawPositionContext>(
@@ -289,18 +287,18 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         receiverTypes: List<KaClassType>,
     ): Collection<KaNamedFunctionSymbol> {
         val nameFilter: (Name) -> Boolean = DataClassResolver::isComponentLike
-        val (candidateSymbols, symbols) = memberScope.callables(nameFilter)
+        val candidateSymbols = memberScope.callables(nameFilter)
             .ifEmpty {
                 symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(nameFilter, receiverTypes) { declaration ->
                     visibilityChecker.canBeVisible(declaration)
                             && declaration.canBeAnalysed()
                 }
-            }.asIterable()
-            .partitionIsInstance<KaCallableSymbol, KaNamedFunctionSymbol>()
-        if (symbols.isNotEmpty()) return emptyList()
+            }.filterIsInstance<KaNamedFunctionSymbol>()
+            .filter { it.isOperator }
+            .toList()
+        if (candidateSymbols.isEmpty()) return emptyList()
 
         val symbolsByIndex = candidateSymbols.asSequence()
-            .filter { it.isOperator }
             .filter { it.visibility == KaSymbolVisibility.PUBLIC } // todo visibilityChecker::isVisible
             .associateByTo(sortedMapOf()) { functionSymbol ->
                 DataClassResolver.getComponentIndex(functionSymbol.name.asString())
