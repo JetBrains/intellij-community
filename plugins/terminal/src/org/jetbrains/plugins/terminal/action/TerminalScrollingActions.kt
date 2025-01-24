@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actions.EditorActionUtil
 import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 
 internal class TerminalLineUpAction : TerminalPromotedEditorAction(LineUpHandler())
 
@@ -25,6 +27,10 @@ private class LineUpHandler : Handler(Unit.LINE, -1)
 private class LineDownHandler : Handler(Unit.LINE, +1)
 
 private abstract class Handler(private val unit: Unit, private val direction: Int) : EditorActionHandler() {
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+    return editor.isOutputModelEditor
+  }
+
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     val amount = when (unit) {
       Unit.LINE -> 1
