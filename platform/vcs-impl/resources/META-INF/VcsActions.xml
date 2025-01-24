@@ -21,7 +21,7 @@
       <synonym key="action.Annotate.synonym1"/>
       <synonym key="action.Annotate.with.Blame.text"/>
       <add-to-group group-id="Diff.EditorPopupMenu"/>
-      <add-to-group group-id="Diff.EditorGutterPopupMenu"/>
+      <add-to-group group-id="Diff.EditorGutterPopupMenu" anchor="before" relative-to-action="Diff.EditorGutterPopupMenu.DiffModes"/>
     </action>
     <action id="Show.Current.Revision" class="com.intellij.openapi.vcs.actions.ShowBaseRevisionAction"/>
     <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction" icon="AllIcons.Actions.Diff"/>
