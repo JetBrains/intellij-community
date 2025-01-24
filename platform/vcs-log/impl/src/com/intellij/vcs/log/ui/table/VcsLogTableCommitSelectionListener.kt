@@ -14,6 +14,7 @@ internal abstract class VcsLogTableCommitSelectionListener(
   final override fun valueChanged(event: ListSelectionEvent?) {
     if (event != null && event.valueIsAdjusting) return
     lastEvent = event
+    onHandlingScheduled()
     ApplicationManager.getApplication().invokeLater(Runnable {
       val model = graphTable.model
       val commitIds = graphTable.selectedRows.asSequence().map(model::getId).filterNotNull().toList()
