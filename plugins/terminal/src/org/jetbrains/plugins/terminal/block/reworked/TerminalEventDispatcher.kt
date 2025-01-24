@@ -174,6 +174,8 @@ internal abstract class TerminalEventDispatcher(
       "Terminal.Escape",
       "Terminal.CopySelectedText",
       "Terminal.Paste",
+      "Terminal.LineUp",
+      "Terminal.LineDown",
       "Terminal.PageUp",
       "Terminal.PageDown",
       "Terminal.RenameSession",

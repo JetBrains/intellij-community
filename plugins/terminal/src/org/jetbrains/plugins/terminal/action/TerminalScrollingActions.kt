@@ -8,17 +8,33 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actions.EditorActionUtil
 import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
 
+internal class TerminalLineUpAction : TerminalPromotedEditorAction(LineUpHandler())
+
+internal class TerminalLineDownAction : TerminalPromotedEditorAction(LineDownHandler())
+
 internal class TerminalPageUpAction : TerminalPromotedEditorAction(PageUpHandler())
 
 internal class TerminalPageDownAction : TerminalPromotedEditorAction(PageDownHandler())
 
-private class PageUpHandler : Handler(-1)
+private class PageUpHandler : Handler(Unit.PAGE, -1)
 
-private class PageDownHandler : Handler(+1)
+private class PageDownHandler : Handler(Unit.PAGE, +1)
 
-private abstract class Handler(private val direction: Int) : EditorActionHandler() {
+private class LineUpHandler : Handler(Unit.LINE, -1)
+
+private class LineDownHandler : Handler(Unit.LINE, +1)
+
+private abstract class Handler(private val unit: Unit, private val direction: Int) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val pageLines = editor.scrollingModel.visibleArea.height / editor.lineHeight
-    EditorActionUtil.scrollRelatively(editor, pageLines * direction, 0, false)
+    val amount = when (unit) {
+      Unit.LINE -> 1
+      Unit.PAGE -> editor.scrollingModel.visibleArea.height / editor.lineHeight
+    }
+    EditorActionUtil.scrollRelatively(editor, amount * direction, 0, false)
   }
+}
+
+private enum class Unit {
+  LINE,
+  PAGE
 }
