@@ -194,10 +194,12 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
 
         return when (val parameterType = parameterTypes.singleOrNull()?.lowerBoundIfFlexible()) {
             null -> sequence {
-                val suggestedNames = parameterTypes.mapIndexedNotNull { index, parameterType ->
-                    if (index < fromIndex) return@mapIndexedNotNull null
-                    parameterType to parameterNameSuggester(parameterType, index).first()
-                }
+                val suggestedNames = parameterTypes.asSequence()
+                    .drop(fromIndex)
+                    .mapIndexed { index, parameterType ->
+                        val parameterName = parameterNameSuggester(parameterType, index + fromIndex).first()
+                        parameterType to parameterName
+                    }.toList()
 
                 yieldIfNotNull(createCompoundLookupElement(suggestedNames))
             }
