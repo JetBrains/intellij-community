@@ -8,7 +8,10 @@ import pandas as pd
 import pytest
 import sys
 
-from io import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 from IPython.display import HTML
 
 import _pydevd_bundle.tables.pydevd_pandas as pandas_tables_helpers
