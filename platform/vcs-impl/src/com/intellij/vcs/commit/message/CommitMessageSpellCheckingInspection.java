@@ -3,6 +3,7 @@ package com.intellij.vcs.commit.message;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -41,10 +42,12 @@ public final class CommitMessageSpellCheckingInspection extends BaseCommitMessag
   });
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     LocalInspectionTool tool = ourSpellCheckingInspection.getValue();
 
-    return tool != null ? tool.buildVisitor(holder, isOnTheFly) : super.buildVisitor(holder, isOnTheFly);
+    return tool != null ? tool.buildVisitor(holder, isOnTheFly, session) : super.buildVisitor(holder, isOnTheFly, session);
   }
 
   @Override

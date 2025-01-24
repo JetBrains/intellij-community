@@ -3444,6 +3444,7 @@ com.intellij.profile.codeInspection.InspectionProfileManager
 - a:getProfiles():java.util.Collection
 - getScopesManager():com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 - a:getSeverityRegistrar():com.intellij.codeInsight.daemon.impl.SeverityRegistrar
+- s:hasTooLowSeverity(com.intellij.codeInspection.LocalInspectionToolSession,com.intellij.codeInspection.LocalInspectionTool):Z
 - a:setRootProfile(java.lang.String):V
 a:com.intellij.profile.codeInspection.InspectionProfileProcessor
 - com.intellij.configurationStore.LazySchemeProcessor

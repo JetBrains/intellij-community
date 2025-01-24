@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -72,8 +73,15 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
-    if (!Registry.is("spellchecker.inspection.enabled", true)) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return super.buildVisitor(holder, isOnTheFly);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    if (!Registry.is("spellchecker.inspection.enabled", true) || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());

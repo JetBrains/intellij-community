@@ -75,7 +75,7 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
    * For example, spellchecker plugin might want to skip running itself altogether if minimumSeverity = WARNING.
    * This hint is only a hint, meaning that the annotator might choose to ignore it.
    */
-  public /*abstract*/ HighlightSeverity getMinimumSeverity() {
+  public /*abstract*/ @Nullable HighlightSeverity getMinimumSeverity() {
     return null;
   }
 }

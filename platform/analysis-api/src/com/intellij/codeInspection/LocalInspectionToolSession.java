@@ -54,7 +54,7 @@ public final class LocalInspectionToolSession extends UserDataHolderBase {
    * For example, spellchecker plugin might want to skip running itself altogether if minimumSeverity = WARNING.
    * This hint is only a hint, meaning that the inspection might choose to ignore it.
    */
-  public HighlightSeverity getMinimumSeverity() {
+  public @Nullable HighlightSeverity getMinimumSeverity() {
     return myMinimumSeverity;
   }
 }

@@ -45,6 +45,6 @@ object LanguageDetectionProblemDescriptor {
       else -> arrayOf(GrazieGoToSettingsQuickFix(), NeverSuggestLanguageQuickFix(file.toPointer(), languages))
     }
 
-    return manager.createProblemDescriptor(file, text, isOnTheFly, fixes, ProblemHighlightType.WARNING)
+    return manager.createProblemDescriptor(file, text, isOnTheFly, fixes, ProblemHighlightType.WEAK_WARNING)
   }
 }
