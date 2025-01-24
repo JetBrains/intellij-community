@@ -127,15 +127,23 @@ object K2CreateParameterFromUsageBuilder {
             } else {
                 (expression.extractableSubstringInfo as? K2ExtractableSubstringInfo)?.guessLiteralType() ?: physicalExpression.expressionType
             }
-            val approximatedType = approximateWithResolvableType(type, physicalExpression)
-            if (approximatedType != null && !approximatedType.semanticallyEquals(builtinTypes.unit)) { return approximatedType }
+
+            fun KaType?.withResolvableApproximation(): KaType? {
+                val approximatedType = approximateWithResolvableType(this, physicalExpression)
+                if (approximatedType != null && !approximatedType.semanticallyEquals(builtinTypes.unit)) {
+                    return approximatedType
+                }
+                return null
+            }
+
+            type.withResolvableApproximation()?.let { return it }
 
             expression.expectedType?.let { return it }
             val binaryExpression = expression.getAssignmentByLHS()
             val right = binaryExpression?.right
-            right?.expressionType?.let { return it }
+            right?.expressionType.withResolvableApproximation()?.let { return it }
             right?.expectedType?.let { return it }
-            (expression.parent as? KtDeclaration)?.returnType?.let { return it }
+            (expression.parent as? KtDeclaration)?.returnType.withResolvableApproximation()?.let { return it }
             return builtinTypes.any
         }
 

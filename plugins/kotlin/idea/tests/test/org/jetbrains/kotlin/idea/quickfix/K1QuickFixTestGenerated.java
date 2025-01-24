@@ -7131,6 +7131,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/recursiveBound.kt");
                 }
 
+                @TestMetadata("unknownTypeInReturn.kt")
+                public void testUnknownTypeInReturn() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/unknownTypeInReturn.kt");
+                }
+
                 @TestMetadata("withPackageName.kt")
                 public void testWithPackageName() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/withPackageName.kt");
@@ -7203,6 +7208,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 @TestMetadata("topLevelValNoReceiver.kt")
                 public void testTopLevelValNoReceiver() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/topLevelValNoReceiver.kt");
+                }
+
+                @TestMetadata("unresolvedRight.kt")
+                public void testUnresolvedRight() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/unresolvedRight.kt");
                 }
 
                 @TestMetadata("valOnCompanionObject.kt")
