@@ -55,8 +55,8 @@ public final class JavaElementSignatureProvider extends AbstractElementSignature
 
       StringBuilder buffer = new StringBuilder();
       buffer.append("class").append(ELEMENT_TOKENS_SEPARATOR);
-      if (parent instanceof PsiClass || parent instanceof PsiFile) {
-        String name = aClass.getName();
+      String name = aClass.getName();
+      if (name != null && (parent instanceof PsiClass || parent instanceof PsiFile)) {
         buffer.append(name);
         buffer.append(ELEMENT_TOKENS_SEPARATOR);
         int childIndex = getChildIndex(aClass, parent, name, PsiClass.class);
@@ -176,12 +176,24 @@ public final class JavaElementSignatureProvider extends AbstractElementSignature
           }
           catch (NoSuchElementException e) { //To read previous XML versions correctly
           }
+          catch (NumberFormatException e) {
+            LOG.error(e);
+            yield null;
+          }
 
           yield restoreElementInternal(parent, name, index, PsiClass.class);
         }
         StringTokenizer tok1 = new StringTokenizer(name, ":");
-        int start = Integer.parseInt(tok1.nextToken());
-        int end = Integer.parseInt(tok1.nextToken());
+        int start;
+        int end;
+        try {
+          start = Integer.parseInt(tok1.nextToken());
+          end = Integer.parseInt(tok1.nextToken());
+        }
+        catch (NumberFormatException e) {
+          LOG.error(e);
+          yield null;
+        }
         PsiElement element = file.findElementAt(start);
         if (element != null) {
           TextRange range = element.getTextRange();
