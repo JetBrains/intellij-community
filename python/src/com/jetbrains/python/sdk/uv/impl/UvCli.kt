@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.syncWithImports
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
@@ -14,6 +15,7 @@ import com.jetbrains.python.sdk.runExecutable
 import com.jetbrains.python.sdk.uv.UvCli
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
@@ -67,9 +69,22 @@ fun detectUvExecutable(): Path? {
     else -> "uv"
   }
 
-  return PathEnvironmentVariableUtil.findInPath(name)?.toPath() ?: SystemProperties.getUserHome().let { homePath ->
-    Path.of(homePath, ".local", "bin", name).takeIf { it.exists() } ?: Path.of(homePath, ".cargo", "bin", name).takeIf { it.exists() }
+  val binary = PathEnvironmentVariableUtil.findInPath(name)?.toPath()
+  if (binary != null) {
+    return binary
   }
+
+  val userHome = SystemProperties.getUserHome()
+  val appData = if (SystemInfo.isWindows) System.getenv("APPDATA") else null
+  val paths = mutableListOf<Path>().apply {
+    add(Path.of(userHome, ".local", "bin", name))
+    add(Path.of(userHome, ".local", "bin", name))
+    if (appData != null) {
+      add(Path.of(appData, "Python", "Scripts", name))
+    }
+  }
+
+  return paths.firstOrNull { it.exists() }
 }
 
 fun getUvExecutable(): Path? {
