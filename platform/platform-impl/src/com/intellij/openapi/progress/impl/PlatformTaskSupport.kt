@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.codeWithMe.ClientId
@@ -31,17 +31,13 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
-import com.intellij.platform.ide.progress.suspender.TaskSuspension
-import com.intellij.platform.ide.progress.suspender.TaskSuspender
-import com.intellij.platform.ide.progress.suspender.TaskSuspenderElementKey
-import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
-import com.intellij.platform.ide.progress.suspender.TaskSuspenderState
-import com.intellij.platform.ide.progress.suspender.asContextElement
+import com.intellij.platform.ide.progress.suspender.*
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.filter
@@ -567,6 +563,7 @@ private suspend fun doShowModalIndicator(
       },
     )
 
+    @OptIn(AwaitCancellationAndInvoke::class)
     awaitCancellationAndInvoke {
       dialog.close(DialogWrapper.OK_EXIT_CODE)
     }
@@ -593,6 +590,7 @@ private suspend fun doShowModalIndicator(
       val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
       focusComponent.requestFocusInWindow()
       if (previousFocusOwner != null) {
+        @OptIn(AwaitCancellationAndInvoke::class)
         awaitCancellationAndInvoke {
           // TODO: don't move focus back if the focus owner was changed
           //if (focusComponent.isFocusOwner)
