@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.terminal.action.reworked
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.ToolWindowManager
 import org.jetbrains.plugins.terminal.action.TerminalEscapeHandler
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 
 internal class CancelSelection : TerminalEscapeHandler {
   override val order: Int
@@ -22,7 +24,11 @@ internal class SelectEditor : TerminalEscapeHandler {
   override val order: Int
     get() = 500
 
-  override fun isEnabled(e: AnActionEvent): Boolean = e.project != null && e.editor?.isReworkedTerminalEditor == true
+  override fun isEnabled(e: AnActionEvent): Boolean =
+    e.project != null &&
+    e.editor?.isOutputModelEditor == true && // only for the regular buffer, as apps with the alternate buffer may need Esc themselves
+    e.getData(PlatformDataKeys.TOOL_WINDOW) != null && // if null, it means the terminal itself is in an editor tab (!)
+    AdvancedSettings.getBoolean("terminal.escape.moves.focus.to.editor")
 
   override fun execute(e: AnActionEvent) {
     val project = e.project ?: return
