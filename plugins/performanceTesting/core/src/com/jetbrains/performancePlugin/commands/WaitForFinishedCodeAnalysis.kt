@@ -293,7 +293,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         val (editor, exceptionWithTime) = iterator.next()
         val highlightedEditor = highlightedEditors[editor]
 
-        if (checkTrafficLightRenderer() && !isTrafficLightExists(editor.editor)) {
+        if (status == "stopped" && checkTrafficLightRenderer() && !isTrafficLightExists(editor.editor)) {
           LOG.error("Highlighting traffic light should be shown in the top right corner of the editor, in case of $status")
           takeFullScreenshot("traffic-light-screenshot")
         }
