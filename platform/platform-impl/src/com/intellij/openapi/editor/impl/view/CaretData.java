@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,9 +15,7 @@ public final class CaretData {
 
   private static final CaretData NULL_CARET = new CaretData(-1, -1, ArrayUtilRt.EMPTY_INT_ARRAY, ArrayUtilRt.EMPTY_INT_ARRAY);
 
-  public static @NotNull CaretData createCaretData(@NotNull EditorEx editor) {
-    Document document = editor.getDocument();
-    CaretModel caretModel = editor.getCaretModel();
+  public static @NotNull CaretData createCaretData(@NotNull Document document, @NotNull CaretModel caretModel) {
     int caretRowStart = caretModel.getVisualLineStart();
     int caretRowEnd = caretModel.getVisualLineEnd();
     if (caretRowEnd == document.getTextLength() &&
@@ -26,7 +23,7 @@ public final class CaretData {
         caretRowEnd > document.getLineStartOffset(document.getLineCount() - 1)) {
       caretRowEnd++;
     }
-    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    List<Caret> carets = caretModel.getAllCarets();
     int caretCount = carets.size();
     int[] selectionStarts = new int[caretCount];
     int[] selectionEnds = new int[caretCount];

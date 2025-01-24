@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +42,10 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     return () -> new VisualLineFragmentsIterator(view, visualLinesIterator, quickEvaluationListener, align);
   }
 
-  private EditorView myView;
-  private Document myDocument;
+  private final EditorView myView;
+  private final Document myDocument;
+  private final SoftWrapModelEx mySoftWrapModel;
+  private final FoldingModelEx myFoldingModel;
   private FoldRegion[] myRegions;
   private Fragment myFragment = new Fragment();
   private int myVisualLineStartOffset;
@@ -68,12 +70,15 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   private ScaleContext myScaleContext;
 
   private VisualLineFragmentsIterator(EditorView view, int offset, boolean beforeSoftWrap, boolean align) {
-    EditorImpl editor = view.getEditor();
-    int visualLineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, offset);
+    myView = view;
+    myDocument = view.getDocument();
+    myFoldingModel = view.getFoldingModel();
+    mySoftWrapModel = view.getSoftWrapModel();
 
-    SoftWrapModelImpl softWrapModel = editor.getSoftWrapModel();
-    List<? extends SoftWrap> softWraps = softWrapModel.getRegisteredSoftWraps();
-    int currentOrPrevWrapIndex = softWrapModel.getSoftWrapIndex(offset);
+    int visualLineStartOffset = EditorUtil.getNotFoldedLineStartOffset(myDocument, myFoldingModel, offset, false);
+
+    List<? extends SoftWrap> softWraps = mySoftWrapModel.getRegisteredSoftWraps();
+    int currentOrPrevWrapIndex = mySoftWrapModel.getSoftWrapIndex(offset);
     if (currentOrPrevWrapIndex < 0) {
       currentOrPrevWrapIndex = - currentOrPrevWrapIndex - 2;
     }
@@ -86,12 +91,12 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
       visualLineStartOffset = currentOrPrevWrap.getStart();
     }
 
-    int nextFoldingIndex = editor.getFoldingModel().getLastCollapsedRegionBefore(visualLineStartOffset) + 1;
+    int nextFoldingIndex = myFoldingModel.getLastCollapsedRegionBefore(visualLineStartOffset) + 1;
 
     init(view,
-         align ? editor.offsetToVisualPosition(offset).line : -1,
+         align ? view.offsetToVisualPosition(offset, false, false).line : -1,
          visualLineStartOffset,
-         editor.getDocument().getLineNumber(visualLineStartOffset),
+         myDocument.getLineNumber(visualLineStartOffset),
          currentOrPrevWrapIndex,
          nextFoldingIndex,
          null,
@@ -101,6 +106,11 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   private VisualLineFragmentsIterator(@NotNull EditorView view, @NotNull VisualLinesIterator visualLinesIterator,
                                       @Nullable Runnable quickEvaluationListener, boolean align) {
     assert !visualLinesIterator.atEnd();
+    myView = view;
+    myDocument = view.getDocument();
+    myFoldingModel = view.getFoldingModel();
+    mySoftWrapModel = view.getSoftWrapModel();
+
     init(view,
          visualLinesIterator.getVisualLine(),
          visualLinesIterator.getVisualLineStartOffset(),
@@ -114,18 +124,15 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
   private void init(EditorView view, int visualLine, int startOffset, int startLogicalLine, int currentOrPrevWrapIndex, int nextFoldingIndex,
                     @Nullable Runnable quickEvaluationListener, boolean align) {
     myQuickEvaluationListener = quickEvaluationListener;
-    myView = view;
     EditorImpl editor = view.getEditor();
     myScaleContext = ScaleContext.create(editor.getContentComponent());
     if (align && visualLine != -1 && editor.isRightAligned()) {
       myFragment = new RightAlignedFragment(view.getRightAlignmentLineStartX(visualLine) - myView.getInsets().left);
     }
-    myDocument = editor.getDocument();
-    FoldingModelEx foldingModel = editor.getFoldingModel();
+    FoldingModelEx foldingModel = view.getFoldingModel();
     FoldRegion[] regions = foldingModel.fetchTopLevel();
     myRegions = regions == null ? FoldRegion.EMPTY_ARRAY : regions;
-    SoftWrapModelImpl softWrapModel = editor.getSoftWrapModel();
-    List<? extends SoftWrap> softWraps = softWrapModel.getRegisteredSoftWraps();
+    List<? extends SoftWrap> softWraps = mySoftWrapModel.getRegisteredSoftWraps();
     SoftWrap currentOrPrevWrap = currentOrPrevWrapIndex < 0 || currentOrPrevWrapIndex >= softWraps.size() ? null :
                                  softWraps.get(currentOrPrevWrapIndex);
     SoftWrap followingWrap = currentOrPrevWrapIndex + 1 < 0 || currentOrPrevWrapIndex + 1 >= softWraps.size() ? null :
@@ -157,7 +164,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     if (mySegmentEndOffset > mySegmentStartOffset) {
       mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(myCurrentEndLogicalLine)));
       boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() && mySegmentEndOffset < myNextWrapOffset;
-      myInlays = myView.getEditor().getInlayModel().getInlineElementsInRange(
+      myInlays = myView.getInlayModel().getInlineElementsInRange(
         mySegmentStartOffset,
         mySegmentEndOffset - (normalLineEnd ? 0 : 1)); // including inlays at line end
       if (myInlays.isEmpty() || myInlays.get(0).getOffset() > mySegmentStartOffset) {

@@ -65,3 +65,13 @@ val reportInvokeLaterWithoutModality: Boolean = System.getProperty("ijpl.report.
  */
 @get:ApiStatus.Internal
 val setUserInteractiveQosForEdt: Boolean = System.getProperty("ide.set.qos.for.edt", "true").toBoolean()
+
+/**
+ * Experimental mode for EditorImpl over Rhizome and Andel.
+ * See <a href="https://youtrack.jetbrains.com/issue/IJPL-54">IJPL-54</a>
+ *
+ * - `false` means old reliable behavior
+ * - `true` means new experimental behavior
+ */
+@get:ApiStatus.Internal
+val isRhizomeAdEnabled: Boolean = System.getProperty("ijpl.rhizome.ad.enabled", "false").toBoolean()

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ide
 
@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.impl.ad.ThreadLocalRhizomeDB
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
@@ -935,6 +936,8 @@ internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit
     }
   }
 
+  setImplicitThreadLocalRhizomeIfEnabled()
+
   if (transactionGuard == null) {
     runnable()
   }
@@ -1199,4 +1202,18 @@ private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
     .findConstructor(aClass, MethodType.methodType(Void.TYPE, EventQueue::class.java))
   val postEventQueue = constructor.invoke(eventQueue)
   AppContext.getAppContext().put("PostEventQueue", postEventQueue)
+}
+
+private fun setImplicitThreadLocalRhizomeIfEnabled() {
+  if (isRhizomeAdEnabled) {
+    // It is a workaround on tricky `updateDbInTheEventDispatchThread()` where
+    // the thread local DB is reset by `fleet.kernel.DbSource.ContextElement.restoreThreadContext`
+    try {
+      val db = ThreadLocalRhizomeDB.lastKnownOrPendingDb()
+      ThreadLocalRhizomeDB.setThreadLocalDb(db)
+    }
+    catch (e: Exception) {
+      Logs.LOG.error(e)
+    }
+  }
 }
