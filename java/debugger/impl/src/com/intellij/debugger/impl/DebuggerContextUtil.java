@@ -4,13 +4,10 @@ package com.intellij.debugger.impl;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -23,13 +20,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class DebuggerContextUtil {
@@ -73,33 +67,6 @@ public final class DebuggerContextUtil {
   public static @NotNull DebuggerContextImpl createDebuggerContext(@NotNull DebuggerSession session, SuspendContextImpl suspendContext) {
     return DebuggerContextImpl.createDebuggerContext(
       session, suspendContext, suspendContext != null ? suspendContext.getThread() : null, null);
-  }
-
-  @ApiStatus.Internal
-  public static void scheduleWithCorrectPausedDebuggerContext(@NotNull DebugProcessImpl debugProcess,
-                                                              @NotNull ThreadReferenceProxyImpl thread,
-                                                              @Nullable StackFrameProxyImpl frameProxy,
-                                                              @NotNull Consumer<@NotNull DebuggerContextImpl> action) {
-    Objects.requireNonNull(debugProcess.getDebuggerContext().getManagerThread())
-      .schedule(PrioritizedTask.Priority.NORMAL, () -> {
-        SuspendContextImpl pausedContext = SuspendManagerUtil.getPausedSuspendingContext(debugProcess.getSuspendManager(), thread);
-        DebuggerContextImpl defaultDebuggerContext = debugProcess.getDebuggerContext();
-        if (pausedContext == defaultDebuggerContext.getSuspendContext() || pausedContext == null) {
-          action.accept(defaultDebuggerContext);
-        }
-        else {
-          pausedContext.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
-            @Override
-            public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-              DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(
-                debugProcess.getSession(), pausedContext, thread, frameProxy
-              );
-              debuggerContext.initCaches();
-              action.accept(debuggerContext);
-            }
-          });
-        }
-      });
   }
 
   /**

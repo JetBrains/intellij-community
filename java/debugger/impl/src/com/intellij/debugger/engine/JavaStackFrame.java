@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -106,33 +106,30 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   @Override
   public void computeChildren(final @NotNull XCompositeNode node) {
     if (node.isObsolete()) return;
-    ThreadReferenceProxyImpl thread = myDescriptor.getFrameProxy().threadProxy();
-    DebuggerContextUtil.scheduleWithCorrectPausedDebuggerContext(myDebugProcess, thread, myDescriptor.getFrameProxy(),
-                                                                 c -> scheduleComputeChildrenTask(node, c, thread));
-  }
+    DebuggerContextImpl debuggerContext = myDebugProcess.getDebuggerContext();
+    Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(
+      new DebuggerContextCommandImpl(debuggerContext, myDescriptor.getFrameProxy().threadProxy()) {
+        @Override
+        public @NotNull Priority getPriority() {
+          return Priority.NORMAL;
+        }
 
-  private void scheduleComputeChildrenTask(@NotNull XCompositeNode node, DebuggerContextImpl context, ThreadReferenceProxyImpl thread) {
-    Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context, thread) {
-      @Override
-      public Priority getPriority() {
-        return Priority.NORMAL;
-      }
+        @Override
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+          if (node.isObsolete()) return;
+          XValueChildrenList children = new XValueChildrenList();
+          buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
+          node.addChildren(children, true);
+        }
 
-      @Override
-      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        if (node.isObsolete()) return;
-        XValueChildrenList children = new XValueChildrenList();
-        buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
-        node.addChildren(children, true);
-      }
-
-      @Override
-      protected void commandCancelled() {
-        if (!node.isObsolete()) {
-          node.addChildren(XValueChildrenList.EMPTY, true);
+        @Override
+        protected void commandCancelled() {
+          if (!node.isObsolete()) {
+            node.addChildren(XValueChildrenList.EMPTY, true);
+          }
         }
       }
-    });
+    );
   }
 
   DebuggerContextImpl getFrameDebuggerContext(@Nullable DebuggerContextImpl context) {

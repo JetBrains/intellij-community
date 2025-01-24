@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.events
 
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
 import com.intellij.debugger.impl.DebuggerContextImpl
@@ -22,24 +23,19 @@ abstract class DebuggerContextCommandImpl @JvmOverloads protected constructor(
   private val customThread: ThreadReferenceProxyImpl? = null,
 ) : SuspendContextCommandImpl(debuggerContext.suspendContext) {
 
-  private var myCustomSuspendContext: SuspendContextImpl? = null
-
-  override val suspendContext: SuspendContextImpl?
-    get() {
-      if (myCustomSuspendContext != null) return myCustomSuspendContext
-      return run {
-        val context = super.suspendContext
-        when {
-          customThread == null -> context
-          context == null || context.isResumed || !context.suspends(customThread) -> {
-            SuspendManagerUtil.findContextByThread(debuggerContext.debugProcess!!.suspendManager, customThread)
-          }
-          else -> context
-        }
-      }.also {
-        myCustomSuspendContext = it
+  override val suspendContext: SuspendContextImpl? by lazy {
+    DebuggerManagerThreadImpl.assertIsManagerThread()
+    val context = super.suspendContext
+    when {
+      customThread == null -> context
+      context == null || context.isResumed || !context.suspends(customThread) -> {
+        // first check paused contexts
+        SuspendManagerUtil.getPausedSuspendingContext(debuggerContext.debugProcess!!.suspendManager, customThread)
+        ?: SuspendManagerUtil.findContextByThread(debuggerContext.debugProcess!!.suspendManager, customThread)
       }
+      else -> context
     }
+  }
 
   private val thread: ThreadReferenceProxyImpl?
     get() = customThread ?: debuggerContext.threadProxy
