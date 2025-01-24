@@ -360,7 +360,7 @@ internal class ToolbarFrameHeader(
   private fun initListenerToResizeMenu(): ComponentListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
       if (mode == ShowMode.TOOLBAR_WITH_MENU) {
-        coroutineScope.launch {
+        coroutineScope.launch(Dispatchers.EDT) {
           var wasChanged = false
           val toolbarPrefWidth = (toolbar?.calculatePreferredWidth()
                                   ?: return@launch)
@@ -368,43 +368,40 @@ internal class ToolbarFrameHeader(
           val menuButton = mainMenuButtonComponent
           val menuWidth = toolbarMainMenu.components.sumOf { it.size.width }
           val menuButtonWidth = menuButton.preferredSize.width
+
           var availableWidth = parentPanelWidth - menuWidth - (menuButtonWidth.takeIf { isVisible } ?: 0) - toolbarPrefWidth
           val rootMenuItems = toolbarMainMenu.rootMenuItems
-          if (availableWidth > 0 && removedItems.isNotEmpty()) {
+          //when button is not visible we should keep in mind that it'll be visible on reduce, otherwise we already get it
+          val widthLimit = if (menuButton.isVisible) 0 else menuButton.preferredSize.width
+          if (availableWidth > widthLimit && removedItems.isNotEmpty()) {
             do {
               val item = removedItems.lastOrNull() ?: break
               val itemWidth = item.size.width
-              if (availableWidth - itemWidth < 0) break
-              withContext(Dispatchers.EDT) {
-                toolbarMainMenu.add(item)
-                removedItems.remove(item)
-              }
+              if (availableWidth - itemWidth < widthLimit) break
+              if (toolbarMainMenu.rootMenuItems.none { it.text == item.text }) toolbarMainMenu.add(item)
+              removedItems.removeIf { it.text == item.text }
               availableWidth -= itemWidth
               wasChanged = true
             }
-            while (availableWidth > 0)
+            while (availableWidth > widthLimit)
           }
-          else if (availableWidth < (if (menuButton.isVisible) 0 else menuButtonWidth) && rootMenuItems.count() > 1) {
-            var widthToReduce = -availableWidth
+          else if (availableWidth < 0 && rootMenuItems.count() > 1) {
+            var widthToReduce = -(availableWidth - widthLimit)
             var ind = rootMenuItems.lastIndex
             do {
               val item = if (ind > 0) rootMenuItems[ind] else break
-              removedItems.add(item)
+              if (removedItems.none { it.text == item.text }) removedItems.add(item)
               widthToReduce -= item.size.width
               ind--
               wasChanged = true
             }
             while (widthToReduce > 0)
-            withContext(Dispatchers.EDT) {
-              removedItems.forEach { toolbarMainMenu.remove(it) }
-            }
+            removedItems.forEach { toolbarMainMenu.remove(it) }
           }
-          withContext(Dispatchers.EDT) {
-            mainMenuButtonComponent.isVisible = removedItems.isNotEmpty()
-            if (wasChanged) {
-              toolbarPlaceholder.revalidate()
-              toolbarPlaceholder.repaint()
-            }
+          mainMenuButtonComponent.isVisible = removedItems.isNotEmpty()
+          if (wasChanged) {
+            toolbarPlaceholder.revalidate()
+            toolbarPlaceholder.repaint()
           }
         }
       }
