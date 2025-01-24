@@ -398,7 +398,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                                    bundleSupplier = bundleSupplier,
                                                                    actionRegistrar = actionRegistrar)
             ActionDescriptorName.unregister -> processUnregisterNode(element = element, module = module, actionRegistrar = actionRegistrar)
-            ActionDescriptorName.prohibit -> processProhibitNode(element = element, module = module)
+            ActionDescriptorName.prohibit -> processProhibitNode(element = element, module = module, actionRegistrar = actionRegistrar)
             else -> LOG.error("${descriptor.name} is unknown")
           }
         }
@@ -845,13 +845,13 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  private fun processProhibitNode(element: XmlElement, module: IdeaPluginDescriptor) {
+  private fun processProhibitNode(element: XmlElement, module: IdeaPluginDescriptor, actionRegistrar: ActionRegistrar) {
     val id = element.attributes.get(ID_ATTR_NAME)
     if (id == null) {
       reportActionError(module, "'id' attribute is required for 'unregister' elements")
       return
     }
-    prohibitAction(id)
+    prohibitAction(id, actionRegistrar)
   }
 
   private fun processUnregisterNode(element: XmlElement, module: IdeaPluginDescriptor, actionRegistrar: ActionRegistrar) {
@@ -981,17 +981,29 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
    */
   @Internal
   fun prohibitAction(actionId: String) {
-    val state = actionPostInitRegistrar.state
+    prohibitAction(actionId = actionId, actionPostInitRegistrar)
+  }
+
+  private fun prohibitAction(actionId: String, actionRegistrar: ActionRegistrar) {
+    val state = actionRegistrar.state
     synchronized(state.lock) {
       state.prohibitedActionIds = HashSet(state.prohibitedActionIds).let {
         it.add(actionId)
         it
       }
     }
-    val action = getAction(actionId)
+    val action = getAction(
+      id = actionId,
+      canReturnStub = false,
+      actionRegistrar = actionRegistrar
+    )
     if (action != null) {
-      AbbreviationManager.getInstance().removeAllAbbreviations(actionId)
-      unregisterAction(actionId)
+      if (actionRegistrar == actionPostInitRegistrar) {
+        AbbreviationManager.getInstance().removeAllAbbreviations(actionId)
+      }
+      synchronized(state.lock) {
+        unregisterAction(actionId = actionId, actionRegistrar = actionRegistrar)
+      }
     }
   }
 
