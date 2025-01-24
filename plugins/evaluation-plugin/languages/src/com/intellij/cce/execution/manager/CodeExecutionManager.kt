@@ -31,6 +31,10 @@ abstract class CodeExecutionManager {
 
   protected val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 
+  abstract fun setupTarget()
+  abstract fun removeTarget()
+
+
   protected abstract fun getGeneratedCodeFile(basePath: String, code: String): File
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
   protected abstract fun setupEnvironment(project: Project): ProcessExecutionLog
