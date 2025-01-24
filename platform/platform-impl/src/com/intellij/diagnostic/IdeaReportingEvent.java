@@ -10,8 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
-/** Internal API. See a note in {@link MessagePool}. */
+/** @deprecated obsolete; use {@link IdeaLoggingEvent} */
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
+@SuppressWarnings("unused")
 public final class IdeaReportingEvent extends IdeaLoggingEvent {
   private final IdeaPluginDescriptor myPlugin;
 

@@ -182,9 +182,9 @@ internal object ITNProxy {
     var message = error.event.message?.trim { it <= ' ' } ?: ""
     val stacktrace = error.event.throwableText
     var redacted = false
-    if (error.event is IdeaReportingEvent) {
-      val originalMessage = error.event.originalMessage?.trim { it <= ' ' } ?: ""
-      val originalStacktrace = error.event.originalThrowableText
+    if (eventData is AbstractMessage) {
+      val originalMessage = eventData.message?.trim { it <= ' ' } ?: ""
+      val originalStacktrace = eventData.throwableText
       val messagesDiffer = message != originalMessage
       val tracesDiffer = stacktrace != originalStacktrace
       if (messagesDiffer || tracesDiffer) {

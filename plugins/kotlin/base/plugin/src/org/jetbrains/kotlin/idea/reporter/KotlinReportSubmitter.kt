@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.reporter
 
 import com.intellij.diagnostic.ITNReporter
-import com.intellij.diagnostic.IdeaReportingEvent
 import com.intellij.ide.DataManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -87,20 +86,13 @@ class KotlinReportSubmitter : ITNReporter() {
     }
 
     private fun markEventForK2(event: IdeaLoggingEvent): IdeaLoggingEvent {
-        fun patchMessage(message: String): String {
-            return if (message.isBlank()) KOTLIN_K2_MESSAGE else "$message\n$KOTLIN_K2_MESSAGE"
+        return if (event.javaClass == IdeaLoggingEvent::class.java) {
+            val k2message = if (event.message.isNullOrBlank()) KOTLIN_K2_MESSAGE else "${event.message}\n${KOTLIN_K2_MESSAGE}"
+            IdeaLoggingEvent(k2message, event.throwable, event.attachments, event.plugin, event.data)
+        } else {
+            // leave foreign events (Android Studio, etc.) intact
+            event
         }
-
-        if (event is IdeaReportingEvent) {
-            return IdeaReportingEvent(event.data, patchMessage(event.message ?: ""), event.throwableText, event.plugin)
-        }
-
-        if (event.javaClass == IdeaLoggingEvent::class.java) {
-            return IdeaLoggingEvent(patchMessage(event.message ?: ""), event.throwable, event.data)
-        }
-
-        // Leave foreign event as is (Android Studio, etc.)
-        return event
     }
 
     fun showDialog(parent: Component?, @Nls message: String, @Nls title: String, options: Array<String>, defaultOptionIndex: Int, icon: Icon?): Int {

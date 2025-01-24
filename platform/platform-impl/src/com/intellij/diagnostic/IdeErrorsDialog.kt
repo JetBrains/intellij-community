@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
@@ -521,8 +521,8 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
       }
     }
 
-    val (userMessage, stacktrace) = cluster.decouple()
-    val events = arrayOf<IdeaLoggingEvent>(IdeaReportingEvent(message, userMessage, stacktrace, cluster.plugin))
+    val (userMessage, throwable) = cluster.decouple()
+    val events = arrayOf(IdeaLoggingEvent(userMessage, throwable, message.includedAttachments, cluster.plugin, message))
     var parentComponent: Container = rootPane
     if (dialogClosed) {
       val frame = ComponentUtil.getParentOfType(IdeFrame::class.java, parentComponent)
@@ -676,16 +676,22 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
 
     fun canSubmit(): Boolean = submitter != null && isUnsent
 
-    fun decouple(): Pair<String?, String> {
-      val className = first.throwable.javaClass.name
+    fun decouple(): Pair<String?, Throwable> {
       val detailsText = detailsText!!
-      val p = detailsText.indexOf(className)
-      return when {
-        p == 0 -> null to detailsText
-        p > 0 && detailsText[p - 1] == '\n' -> {
-          detailsText.substring(0, p).trim { it <= ' ' } to detailsText.substring(p)
+      if (detailsText == detailsText()) {
+        return first.message to first.throwable
+      }
+      else {
+        val className = first.throwable.javaClass.name
+        val p = detailsText.indexOf(className)
+        val (message, stacktrace) = when {
+          p == 0 -> null to detailsText
+          p > 0 && detailsText[p - 1] == '\n' -> {
+            detailsText.substring(0, p).trim { it <= ' ' } to detailsText.substring(p)
+          }
+          else -> "*** exception class was changed or removed" to detailsText
         }
-        else -> "*** exception class was changed or removed" to detailsText
+        return message to RecoveredThrowable.fromString(stacktrace)
       }
     }
   }
