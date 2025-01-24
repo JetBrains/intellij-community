@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.kernel.backend.*
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.Obsolescent
@@ -113,12 +112,10 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 
   override suspend fun disposeXValue(xValueId: XValueId) {
-    withKernel {
-      val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return@withKernel
-      withContext(NonCancellable) {
-        change {
-          xValueEntity.delete()
-        }
+    val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return
+    withContext(NonCancellable) {
+      change {
+        xValueEntity.delete()
       }
     }
   }
@@ -127,9 +124,9 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     evaluatorId: XDebuggerEvaluatorId,
     evaluateFun: suspend (XDebuggerEvaluator, XEvaluationCallback) -> Unit,
   ): Deferred<XEvaluationResult> {
-    val evaluatorEntity = withKernel { entity(XDebuggerEvaluatorEntity.EvaluatorId, evaluatorId) }
-                    ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
-    val evaluator = withKernel { evaluatorEntity.evaluator }
+    val evaluatorEntity = entity(XDebuggerEvaluatorEntity.EvaluatorId, evaluatorId)
+                          ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
+    val evaluator = evaluatorEntity.evaluator
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
@@ -154,9 +151,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
       val xValueEntity = newXValueEntity(xValue, evaluatorEntity)
-      val xValueDto = withKernel {
-        xValueEntity.toXValueDto()
-      }
+      val xValueDto = xValueEntity.toXValueDto()
       XEvaluationResult.Evaluated(xValueDto)
     }
   }
@@ -164,8 +159,8 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
 
   override suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>? {
-    val xValueEntity = withKernel { entity(XValueEntity.XValueId, xValueId) } ?: return emptyFlow()
-    val xValue = withKernel { xValueEntity.xValue }
+    val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return emptyFlow()
+    val xValue = xValueEntity.xValue
     val presentations = Channel<XValuePresentationEvent>(capacity = Int.MAX_VALUE)
     return channelFlow {
       val channelCs = this@channelFlow as CoroutineScope
@@ -243,8 +238,8 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 
   override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>? {
-    val xValueEntity = withKernel { entity(XValueEntity.XValueId, xValueId) } ?: return emptyFlow()
-    val xValue = withKernel { xValueEntity.xValue }
+    val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return emptyFlow()
+    val xValue = xValueEntity.xValue
     val rawEvents = Channel<RawComputeChildrenEvent>(capacity = Int.MAX_VALUE)
 
     return channelFlow {
@@ -396,10 +391,8 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         val childrenXValueEntities = childrenXValues.map { childXValue ->
           newChildXValueEntity(childXValue, parentXValueEntity)
         }
-        val childrenXValueDtos = withKernel {
-          childrenXValueEntities.map { childXValueEntity ->
-            childXValueEntity.toXValueDto()
-          }
+        val childrenXValueDtos = childrenXValueEntities.map { childXValueEntity ->
+          childXValueEntity.toXValueDto()
         }
         return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last)
       }
@@ -438,11 +431,9 @@ private suspend fun XValueEntity.toXValueDto(): XValueDto {
   val xValueEntity = this
   val xValue = this.xValue
   val valueMarkupFlow = channelFlow<XValueMarkerDto?> {
-    withKernel {
-      tryWithEntities(xValueEntity) {
-        query { xValueEntity.marker }.collect {
-          send(it)
-        }
+    tryWithEntities(xValueEntity) {
+      query { xValueEntity.marker }.collect {
+        send(it)
       }
     }
   }.toRpc()
@@ -458,17 +449,15 @@ private suspend fun newXValueEntity(
   xValue: XValue,
   evaluatorEntity: XDebuggerEvaluatorEntity,
 ): XValueEntity {
-  return withKernel {
-    val xValueEntity = change {
-      XValueEntity.new {
-        it[XValueEntity.XValueId] = XValueId(UID.random())
-        it[XValueEntity.XValueAttribute] = xValue
-        it[XValueEntity.SessionEntity] = evaluatorEntity.sessionEntity
-      }
+  val xValueEntity = change {
+    XValueEntity.new {
+      it[XValueEntity.XValueId] = XValueId(UID.random())
+      it[XValueEntity.XValueAttribute] = xValue
+      it[XValueEntity.SessionEntity] = evaluatorEntity.sessionEntity
     }
-    xValueEntity.apply {
-      setInitialMarker()
-    }
+  }
+  return xValueEntity.apply {
+    setInitialMarker()
   }
 }
 
@@ -476,18 +465,16 @@ private suspend fun newChildXValueEntity(
   xValue: XValue,
   parentXValue: XValueEntity,
 ): XValueEntity {
-  return withKernel {
-    val xValueEntity = change {
-      XValueEntity.new {
-        it[XValueEntity.XValueId] = XValueId(UID.random())
-        it[XValueEntity.XValueAttribute] = xValue
-        it[XValueEntity.SessionEntity] = parentXValue.sessionEntity
-        it[XValueEntity.ParentXValue] = parentXValue
-      }
+  val xValueEntity = change {
+    XValueEntity.new {
+      it[XValueEntity.XValueId] = XValueId(UID.random())
+      it[XValueEntity.XValueAttribute] = xValue
+      it[XValueEntity.SessionEntity] = parentXValue.sessionEntity
+      it[XValueEntity.ParentXValue] = parentXValue
     }
-    xValueEntity.apply {
-      setInitialMarker()
-    }
+  }
+  return xValueEntity.apply {
+    setInitialMarker()
   }
 }
 
@@ -496,14 +483,12 @@ private fun XValueEntity.setInitialMarker() {
   val session = sessionEntity.session
   (session as XDebugSessionImpl).coroutineScope.launch {
     withEntities(xValueEntity) {
-      withKernel {
-        xValue.isReady.await()
-        val markers = session.valueMarkers
-        val marker = markers?.getMarkup(xValue) ?: return@withKernel
-        change {
-          xValueEntity.update {
-            it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
-          }
+      xValue.isReady.await()
+      val markers = session.valueMarkers
+      val marker = markers?.getMarkup(xValue) ?: return@withEntities
+      change {
+        xValueEntity.update {
+          it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
         }
       }
     }

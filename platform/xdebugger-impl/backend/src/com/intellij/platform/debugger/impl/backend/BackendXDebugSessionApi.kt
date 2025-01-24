@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
-import com.intellij.platform.kernel.withKernel
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
@@ -17,20 +16,16 @@ import kotlinx.coroutines.flow.emptyFlow
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun currentEvaluator(sessionId: XDebugSessionId): Flow<XDebuggerEvaluatorDto?> {
-    return withKernel {
-      val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return@withKernel emptyFlow()
-      channelFlow {
-        withKernel {
-          withEntities(sessionEntity) {
-            query { sessionEntity.evaluator }.collect { entity ->
-              if (entity == null) {
-                send(null)
-                return@collect
-              }
-              val canEvaluateInDocument = entity.evaluator is XDebuggerDocumentOffsetEvaluator
-              send(XDebuggerEvaluatorDto(entity.evaluatorId, canEvaluateInDocument))
-            }
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
+    return channelFlow {
+      withEntities(sessionEntity) {
+        query { sessionEntity.evaluator }.collect { entity ->
+          if (entity == null) {
+            send(null)
+            return@collect
           }
+          val canEvaluateInDocument = entity.evaluator is XDebuggerDocumentOffsetEvaluator
+          send(XDebuggerEvaluatorDto(entity.evaluatorId, canEvaluateInDocument))
         }
       }
     }

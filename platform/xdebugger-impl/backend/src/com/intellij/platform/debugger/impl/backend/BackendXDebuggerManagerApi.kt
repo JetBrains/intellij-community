@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.XDebuggerManager
@@ -21,10 +20,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       if (currentSession == null) {
         return@mapLatest null
       }
-      withKernel {
-        val entity = currentSession.entity.await()
-        XDebugSessionDto(entity.sessionId, currentSession.debugProcess.editorsProvider)
-      }
+      val entity = currentSession.entity.await()
+      XDebugSessionDto(entity.sessionId, currentSession.debugProcess.editorsProvider)
     }
   }
 }

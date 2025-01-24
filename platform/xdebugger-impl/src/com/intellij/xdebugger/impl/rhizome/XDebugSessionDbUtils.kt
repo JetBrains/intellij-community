@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rhizome
 
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
@@ -20,9 +19,8 @@ import java.util.concurrent.atomic.AtomicReference
 internal fun storeXDebugSessionInDb(sessionScope: CoroutineScope, session: XDebugSessionImpl): Deferred<XDebugSessionEntity> {
   val sessionEntity = AtomicReference<XDebugSessionEntity?>()
   val deferred = sessionScope.async {
-    val createdSessionEntity = withKernel {
-      val projectEntity = session.project.asEntity()
-      withEntities(projectEntity) {
+    val projectEntity = session.project.asEntity()
+    val createdSessionEntity = withEntities(projectEntity) {
         change {
           XDebugSessionEntity.new {
             it[XDebugSessionEntity.ProjectEntity] = projectEntity
@@ -31,7 +29,6 @@ internal fun storeXDebugSessionInDb(sessionScope: CoroutineScope, session: XDebu
           }
         }
       }
-    }
     sessionEntity.set(createdSessionEntity)
     createdSessionEntity
   }
@@ -44,10 +41,8 @@ internal fun storeXDebugSessionInDb(sessionScope: CoroutineScope, session: XDebu
     finally {
       withContext(NonCancellable) {
         val entity = sessionEntity.get() ?: return@withContext
-        withKernel {
-          change {
-            entity.delete()
-          }
+        change {
+          entity.delete()
         }
       }
     }

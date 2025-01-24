@@ -2,7 +2,6 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.kernel.withKernel
 import com.intellij.xdebugger.frame.XValueModifier
 import com.intellij.xdebugger.impl.rhizome.XValueEntity
 import com.intellij.xdebugger.impl.rpc.*
@@ -12,7 +11,7 @@ import kotlinx.coroutines.Deferred
 
 internal class BackendXDebuggerValueModifierApi : XDebuggerValueModifierApi {
   override suspend fun setValue(xValueId: XValueId, xExpressionDto: XExpressionDto): Deferred<SetValueResult> {
-    val xValue = withKernel { entity(XValueEntity.XValueId, xValueId)?.xValue } ?: return CompletableDeferred(SetValueResult.Success)
+    val xValue = entity(XValueEntity.XValueId, xValueId)?.xValue ?: return CompletableDeferred(SetValueResult.Success)
     val valueSetDeferred = CompletableDeferred<SetValueResult>()
 
     val modifier = xValue.modifier
@@ -35,7 +34,7 @@ internal class BackendXDebuggerValueModifierApi : XDebuggerValueModifierApi {
   }
 
   override suspend fun initialValueEditorText(xValueId: XValueId): String? {
-    val xValue = withKernel { entity(XValueEntity.XValueId, xValueId)?.xValue } ?: return null
+    val xValue = entity(XValueEntity.XValueId, xValueId)?.xValue ?: return null
     val modifier = xValue.modifier
     if (modifier == null) {
       return null

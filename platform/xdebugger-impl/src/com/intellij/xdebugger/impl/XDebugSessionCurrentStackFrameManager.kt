@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.util.Ref
-import com.intellij.platform.kernel.withKernel
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEvaluatorEntity
@@ -29,22 +28,20 @@ internal class XDebugSessionCurrentStackFrameManager(
     // update sessionEntity's evaluator when stackframe is changed
     // NB!: we assume that the current evaluator depends only on the current StackFrame
     sessionScope.launch {
-      withKernel {
-        val sessionEntity = sessionEntityDeferred.await()
-        currentStackFrame.collectLatest { stackFrame ->
-          val currentEvaluator = stackFrame.get()?.evaluator
-          withEntities(sessionEntity) {
-            change {
-              sessionEntity.evaluator?.delete()
-              if (currentEvaluator != null) {
-                val evaluatorEntity = XDebuggerEvaluatorEntity.new {
-                  it[XDebuggerEvaluatorEntity.EvaluatorId] = XDebuggerEvaluatorId(UID.random())
-                  it[XDebuggerEvaluatorEntity.Evaluator] = currentEvaluator
-                  it[XDebuggerEvaluatorEntity.Session] = sessionEntity
-                }
-                sessionEntity.update {
-                  it[XDebugSessionEntity.Evaluator] = evaluatorEntity
-                }
+      val sessionEntity = sessionEntityDeferred.await()
+      currentStackFrame.collectLatest { stackFrame ->
+        val currentEvaluator = stackFrame.get()?.evaluator
+        withEntities(sessionEntity) {
+          change {
+            sessionEntity.evaluator?.delete()
+            if (currentEvaluator != null) {
+              val evaluatorEntity = XDebuggerEvaluatorEntity.new {
+                it[XDebuggerEvaluatorEntity.EvaluatorId] = XDebuggerEvaluatorId(UID.random())
+                it[XDebuggerEvaluatorEntity.Evaluator] = currentEvaluator
+                it[XDebuggerEvaluatorEntity.Session] = sessionEntity
+              }
+              sessionEntity.update {
+                it[XDebugSessionEntity.Evaluator] = evaluatorEntity
               }
             }
           }

@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.actions.handlers
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.Project
-import com.intellij.platform.kernel.withKernel
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -101,28 +100,26 @@ internal class XMarkObjectActionHandler : MarkObjectActionHandler() {
   private fun updateXValuesInDb(markers: XValueMarkers<*, *>, session: XDebugSessionImpl) {
     // TODO[IJPL-160146]: There is a race when action called twice
     session.coroutineScope.launch {
-      withKernel {
-        val sessionEntity = entity(XDebugSessionEntity.Session, session) ?: return@withKernel
-        val sessionXValues = entities(XValueEntity.SessionEntity, sessionEntity)
-        // TODO[IJPL-160146]: Don't update all the xValues, since some markers may not be changed
-        for (sessionXValueEntity in sessionXValues) {
-          val currentMarker = sessionXValueEntity.marker
-          val marker = markers.getMarkup(sessionXValueEntity.xValue)
+      val sessionEntity = entity(XDebugSessionEntity.Session, session) ?: return@launch
+      val sessionXValues = entities(XValueEntity.SessionEntity, sessionEntity)
+      // TODO[IJPL-160146]: Don't update all the xValues, since some markers may not be changed
+      for (sessionXValueEntity in sessionXValues) {
+        val currentMarker = sessionXValueEntity.marker
+        val marker = markers.getMarkup(sessionXValueEntity.xValue)
 
-          tryWithEntities(sessionXValueEntity) {
-            if (marker != null) {
-              change {
-                sessionXValueEntity.update {
-                  it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
-                }
+        tryWithEntities(sessionXValueEntity) {
+          if (marker != null) {
+            change {
+              sessionXValueEntity.update {
+                it[XValueEntity.Marker] = XValueMarkerDto(marker.text, marker.color, marker.toolTipText)
               }
             }
-            else if (currentMarker != null) {
-              // marker for xValue is removed
-              change {
-                sessionXValueEntity.update {
-                  it[XValueEntity.Marker] = null
-                }
+          }
+          else if (currentMarker != null) {
+            // marker for xValue is removed
+            change {
+              sessionXValueEntity.update {
+                it[XValueEntity.Marker] = null
               }
             }
           }
