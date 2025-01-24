@@ -233,7 +233,7 @@ internal class ReworkedTerminalView(
 
     TerminalOutputEditorInputMethodSupport(
       model.editor,
-      sendInputString = { text -> terminalInput.send(text) },
+      sendInputString = { text -> terminalInput.sendString(text) },
       getCaretPosition = {
         val offset = model.cursorOffsetState.value
         model.editor.offsetToLogicalPosition(offset)
