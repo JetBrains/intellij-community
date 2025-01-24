@@ -96,18 +96,6 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     });
   }
 
-  private static @Nullable PsiElement getControlFlowAnchorForString(@NotNull PyStringLiteralExpression host) {
-    final PsiElement comprehensionPart = PsiTreeUtil.findFirstParent(host, element -> {
-      // Any comprehension component and its result are represented as children expressions of the comprehension element.
-      // Only they have respective nodes in CFG and thus can be used as anchors
-      return element instanceof PyExpression && element.getParent() instanceof PyComprehensionElement;
-    });
-    if (comprehensionPart != null) {
-      return comprehensionPart;
-    }
-    return PsiTreeUtil.getParentOfType(host, PyStatement.class);
-  }
-
   private void collectAllWrites(ScopeOwner owner) {
     final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     Set<PsiElement> scopeWrites = new HashSet<>();
@@ -175,7 +163,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private @NotNull Set<PsiElement> analyzeReadsInDoctests(@NotNull PyStringLiteralExpression docstring, @NotNull ScopeOwner owner) {
-    final PsiElement instrAnchor = getControlFlowAnchorForString(docstring);
+    final PsiElement instrAnchor = PsiTreeUtil.getParentOfType(docstring, PyStatement.class);
     if (instrAnchor == null) return Collections.emptySet();
     final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     final int startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, instrAnchor);
