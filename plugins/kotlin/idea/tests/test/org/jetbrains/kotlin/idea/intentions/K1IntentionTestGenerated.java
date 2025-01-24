@@ -3605,6 +3605,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/when/eliminateSubject/whenWithEqualityTests.kt");
                 }
 
+                @TestMetadata("whenWithGuards.kt")
+                public void testWhenWithGuards() throws Exception {
+                    runTest("testData/intentions/branched/when/eliminateSubject/whenWithGuards.kt");
+                }
+
                 @TestMetadata("whenWithMultipleConditionTypes.kt")
                 public void testWhenWithMultipleConditionTypes() throws Exception {
                     runTest("testData/intentions/branched/when/eliminateSubject/whenWithMultipleConditionTypes.kt");

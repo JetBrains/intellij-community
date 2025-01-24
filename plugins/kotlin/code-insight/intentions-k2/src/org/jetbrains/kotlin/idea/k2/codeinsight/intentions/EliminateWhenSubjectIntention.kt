@@ -57,6 +57,11 @@ class EliminateWhenSubjectIntention : KotlinApplicableModCommandAction<KtWhenExp
                     appendExpressions(
                         entry.conditions.map { it.generateNewConditionWithSubject(subject, elementContext) }, separator = "||"
                     )
+                    val guardExpression = entry.guard?.getExpression()
+                    if (guardExpression != null) {
+                        appendFixedText("&&")
+                        appendExpression(guardExpression)
+                    }
                 }
                 appendFixedText("->")
 
