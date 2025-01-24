@@ -178,7 +178,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/removeFinalUpperBound", pattern = pattern)
             model("$idea/quickfix/removeNoConstructor", pattern = pattern)
             model("$idea/quickfix/removeRedundantAssignment", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/removeRedundantInitializer", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/removeRedundantInitializer", pattern = pattern)
             model("$idea/quickfix/removeRedundantLabel", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeSingleLambdaParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeSuspend", pattern = pattern, isIgnored = true)

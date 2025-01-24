@@ -4,17 +4,24 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinPsiDiagnosticBasedInspectionBase
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import kotlin.reflect.KClass
 
-internal class VariableInitializerIsRedundantInspection : KotlinPsiDiagnosticBasedInspectionBase<KtElement, KaFirDiagnostic.VariableInitializerIsRedundant, Unit>() {
+internal class VariableInitializerIsRedundantInspection : KotlinPsiDiagnosticBasedInspectionBase<KtElement, KaFirDiagnostic.VariableInitializerIsRedundant, TypeInfo>() {
     override val diagnosticType: KClass<KaFirDiagnostic.VariableInitializerIsRedundant>
         get() = KaFirDiagnostic.VariableInitializerIsRedundant::class
 
@@ -22,19 +29,42 @@ internal class VariableInitializerIsRedundantInspection : KotlinPsiDiagnosticBas
     override fun prepareContextByDiagnostic(
         element: KtElement,
         diagnostic: KaFirDiagnostic.VariableInitializerIsRedundant,
-    ): Unit = Unit
+    ): TypeInfo? {
+        val property = PsiTreeUtil.getParentOfType(element, KtProperty::class.java) ?: return null
+        return CallableReturnTypeUpdaterUtils.getTypeInfo(property)
+    }
 
     override fun getProblemDescription(
         element: KtElement,
-        context: Unit,
+        context: TypeInfo,
     ): @InspectionMessage String = KotlinBundle.message("initializer.is.redundant")
 
-    override fun getProblemHighlightType(element: KtElement, context: Unit): ProblemHighlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL
+    override fun getProblemHighlightType(element: KtElement, context: TypeInfo): ProblemHighlightType =
+        ProblemHighlightType.LIKE_UNUSED_SYMBOL
 
     override fun createQuickFix(
         element: KtElement,
-        context: Unit,
-    ): KotlinModCommandQuickFix<KtElement>? = null // KTIJ-29527
+        context: TypeInfo,
+    ): KotlinModCommandQuickFix<KtElement>? = object : KotlinModCommandQuickFix<KtElement>() {
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.initializer")
+
+        override fun applyFix(
+            project: Project,
+            element: KtElement,
+            updater: ModPsiUpdater,
+        ) {
+            val property = PsiTreeUtil.getParentOfType(element, KtProperty::class.java) ?: return
+            val initializer = property.initializer ?: return
+            property.deleteChildRange(property.equalsToken ?: initializer, initializer)
+
+            CallableReturnTypeUpdaterUtils.updateType(
+                declaration = property,
+                typeInfo = context,
+                project = project,
+                updater = updater,
+            )
+        }
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,
