@@ -3,7 +3,6 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
-import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.concurrency.currentThreadOverriddenContextOrNull
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
@@ -14,6 +13,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -21,6 +21,7 @@ import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.lang.Runnable
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
@@ -216,6 +217,21 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       blockingContextTest()
     }
   }
+
+  @Suppress("ForbiddenInSuspectContextMethod")
+  @Test
+  fun `background wa is permitted`(): Unit = timeoutRunBlocking {
+    // we test the absence of deadlocks here
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        runWithModalProgressBlocking {
+          ApplicationManager.getApplication().runWriteAction {
+          }
+        }
+      }
+    }
+  }
+
 
   private suspend fun blockingContextTest() {
     val contextModality = requireNotNull(currentCoroutineContext().contextModality())

@@ -80,14 +80,13 @@ private class ThreadState() {
     }
   }
 
-  fun join(): Boolean {
+  fun join() {
     check(isLockStoredInContext) { "Operation is not supported when lock is not stored in context" }
     val shared = sharedCount.decrementAndGet()
     check(shared >= 0) { "Lock balance problem: lock ${this} un-shared more than shared (${shared})" }
     if (shared == 0) {
       sharedLock = null
     }
-    return shared == 0
   }
 
   val hasPermit get() = permit != null
@@ -156,13 +155,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     if (ts.permit != null) {
       if (shared) {
         ts.fork()
-        // If we share WriteIntentLock for the first time, we should take secondary permit for our thread
-        if (ts.permit is WriteIntentPermit) {
-          val sps = mySecondaryPermits.get()
-          if (sps.isEmpty()) {
-            sps.add(getWriteIntentPermit(ts.sharedLock!!))
-          }
-        }
       }
       return LockStateContextElement(ts)
     }
@@ -177,14 +169,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     if (ctx is LockStateContextElement) {
       val ts = ctx.threadState
-      if (ts.join() && ts.permit is WriteIntentPermit) {
-        val sps = mySecondaryPermits.get()
-        if (sps.size == 1) {
-          val p = sps.removeLast()
-          check(p is WriteIntentPermit) { "Unbalanced calls to getPermitAsContextElement / returnPermitFromContextElement: got ${p} from stack" }
-          p.release()
-        }
-      }
+      ts.join()
     }
   }
 
