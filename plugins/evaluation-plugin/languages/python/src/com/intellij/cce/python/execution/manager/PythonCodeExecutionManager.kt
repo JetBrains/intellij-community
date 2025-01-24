@@ -5,6 +5,7 @@ import com.intellij.cce.evaluable.AIA_EXECUTION_SUCCESS_RATIO
 import com.intellij.cce.evaluable.AIA_TEST_BRANCH_COVERAGE
 import com.intellij.cce.evaluable.AIA_TEST_FILE_PROVIDED
 import com.intellij.cce.evaluable.AIA_TEST_LINE_COVERAGE
+import com.intellij.cce.execution.ExecutionMode
 import com.intellij.cce.execution.manager.CodeExecutionManager
 import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.cce.python.execution.coverage.PythonTestCoverageProcessor
@@ -17,7 +18,7 @@ import java.io.File
 
 class PythonCodeExecutionManager() : CodeExecutionManager() {
   override val language = Language.PYTHON
-  override val inDocker = false
+  override val executionMode = ExecutionMode.LOCAL
 
   private val defaultTestFilePath = "/tests/eval-plugin-test.py"
 
