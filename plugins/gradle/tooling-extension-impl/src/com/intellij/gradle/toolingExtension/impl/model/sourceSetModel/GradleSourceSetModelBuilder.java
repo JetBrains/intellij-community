@@ -490,8 +490,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       JavaCompile javaCompile = (JavaCompile)javaCompileTask;
       externalSourceSet.setJavaToolchainHome(getJavaToolchainHome(project, javaCompile));
       externalSourceSet.setSourceCompatibility(javaCompile.getSourceCompatibility());
-      externalSourceSet.setPreview(javaCompile.getOptions().getCompilerArgs().contains("--enable-preview"));
       externalSourceSet.setTargetCompatibility(javaCompile.getTargetCompatibility());
+      externalSourceSet.setPreview(javaCompile.getOptions().getCompilerArgs().contains("--enable-preview"));
     }
     if (externalSourceSet.getSourceCompatibility() == null) {
       externalSourceSet.setSourceCompatibility(sourceSetResolutionContext.projectSourceCompatibility);

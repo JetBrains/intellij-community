@@ -16,19 +16,21 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   private static final long serialVersionUID = 3L;
 
   private String name;
+
   private boolean isPreview;
+  private File javaToolchainHome;
   private String sourceCompatibility;
   private String targetCompatibility;
-  private File javaToolchainHome;
+
   private Collection<File> artifacts;
   private @NotNull Collection<ExternalDependency> dependencies;
   private @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
 
   public DefaultExternalSourceSet() {
     // Collection can be modified outside by mutation methods
-    sources = new HashMap<>(0);
-    dependencies = new LinkedHashSet<>(0);
     artifacts = new ArrayList<>(0);
+    dependencies = new LinkedHashSet<>(0);
+    sources = new HashMap<>(0);
   }
 
   @Override
@@ -50,6 +52,15 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   }
 
   @Override
+  public @Nullable File getJavaToolchainHome() {
+    return javaToolchainHome;
+  }
+
+  public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
+    this.javaToolchainHome = javaToolchainHome;
+  }
+
+  @Override
   public @Nullable String getSourceCompatibility() {
     return sourceCompatibility;
   }
@@ -65,15 +76,6 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   public void setTargetCompatibility(@Nullable String targetCompatibility) {
     this.targetCompatibility = targetCompatibility;
-  }
-
-  @Override
-  public @Nullable File getJavaToolchainHome() {
-    return javaToolchainHome;
-  }
-
-  public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
-    this.javaToolchainHome = javaToolchainHome;
   }
 
   @Override

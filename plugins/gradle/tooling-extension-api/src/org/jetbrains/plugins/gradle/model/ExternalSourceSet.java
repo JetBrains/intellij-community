@@ -21,13 +21,13 @@ public interface ExternalSourceSet extends Serializable {
   boolean isPreview();
 
   @Nullable
+  File getJavaToolchainHome();
+
+  @Nullable
   String getSourceCompatibility();
 
   @Nullable
   String getTargetCompatibility();
-
-  @Nullable
-  File getJavaToolchainHome();
 
   Collection<File> getArtifacts();
 
