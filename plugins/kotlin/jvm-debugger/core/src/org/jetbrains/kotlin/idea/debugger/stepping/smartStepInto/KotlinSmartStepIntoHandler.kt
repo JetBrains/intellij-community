@@ -245,7 +245,7 @@ private suspend fun filterSmartStepTargets(
         unvisitedTargets = unvisitedTargets - eliminatedEqualsCalls
     }
     if (unvisitedAtTheEnd.isNotEmpty()) {
-        val targetStrings = unvisitedAtTheEnd.map { "Target(name=${it.methodInfo.name}, ordinal=${it.ordinal})" }
+        val targetStrings = unvisitedAtTheEnd.map { "Target(name=${it.methodInfo.name}, info=${it.methodInfo})" }
         val session = debugProcess.session
         if (Registry.`is`("debugger.kotlin.report.smart.step.into.targets.detection.failure")) {
             JvmSmartStepIntoErrorReporter.report(expression, session, position, "Failed to locate target calls: $targetStrings")
