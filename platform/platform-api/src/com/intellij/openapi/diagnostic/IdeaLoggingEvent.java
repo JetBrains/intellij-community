@@ -6,11 +6,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Collections;
 import java.util.List;
 
 public class IdeaLoggingEvent {
   private final String myMessage;
   private final Throwable myThrowable;
+  private final List<Attachment> myAttachments;
   private final @Nullable Object myData;
 
   public IdeaLoggingEvent(String message, Throwable throwable) {
@@ -18,8 +20,18 @@ public class IdeaLoggingEvent {
   }
 
   public IdeaLoggingEvent(String message, Throwable throwable, @Nullable Object data) {
+    this(message, throwable, List.of(), data);
+  }
+
+  public IdeaLoggingEvent(
+    String message,
+    Throwable throwable,
+    @NotNull List<Attachment> attachments,
+    @Nullable Object data
+  ) {
     myMessage = message;
     myThrowable = throwable;
+    myAttachments = Collections.unmodifiableList(attachments);
     myData = data;
   }
 
@@ -35,13 +47,13 @@ public class IdeaLoggingEvent {
     return myThrowable != null ? StringUtil.getThrowableText(myThrowable) : "";
   }
 
-  public @Nullable Object getData() {
-    return myData;
+  /** Returns a (possibly empty) list of attachments marked by a user to be included in the error report. */
+  public @Unmodifiable @NotNull List<Attachment> getAttachments() {
+    return myAttachments;
   }
 
-  /** Returns a (possibly empty) list of attachments marked by a user to be included in the error report. */
-  public @Unmodifiable @NotNull List<Attachment> getIncludedAttachments() {
-    return myData instanceof IdeaLoggingEventData data ? data.getIncludedAttachments() : List.of();
+  public @Nullable Object getData() {
+    return myData;
   }
 
   @Override

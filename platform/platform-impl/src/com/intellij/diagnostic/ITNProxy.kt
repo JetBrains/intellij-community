@@ -203,7 +203,7 @@ internal object ITNProxy {
       append(builder, "error.redacted", java.lang.Boolean.toString(true))
     }
 
-    for (attachment in error.event.includedAttachments) {
+    for (attachment in error.event.attachments) {
       append(builder, "attachment.name", attachment.name)
       append(builder, "attachment.value", attachment.encodedBytes)
     }
