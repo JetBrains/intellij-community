@@ -54,11 +54,9 @@ final class JavaTelescope {
     AtomicInteger totalUsageCount = new AtomicInteger();
 
     if (Registry.is("java.telescope.usages.single.threaded", true)) {
-      ProgressManager.getInstance().runProcess(() -> {
-        for (PsiMember member : members) {
-          if (!countUsagesForMember(file, scope, member, project, totalUsageCount)) break;
-        }
-      }, progress);
+      for (PsiMember member : members) {
+        if (!countUsagesForMember(file, scope, member, project, totalUsageCount)) break;
+      }
     } else {
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(members, progress, member -> {
         return countUsagesForMember(file, scope, member, project, totalUsageCount);
