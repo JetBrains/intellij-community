@@ -217,7 +217,7 @@ class MixedModeProcessTransitionStateMachine(
           is HighLevelDebuggerStoppedAfterStepWaitingForLowStop -> {
             changeState(BothStopped(event.suspendContext, currentState.highLevelSuspendContext))
           }
-          is ResumeLowRunHighResumeStarted -> {
+          is ResumeLowRunHighResumeStarted, is HighLevelRunToAddressStartedLowRun -> {
             // if we are here one of the threads hit a stop event while we were waiting for a mono process to be resumed by managed debugger
             // if the stop event happened on a native, not mono thread, we can just wait for the managed debugger to resume the process and suspend it
             // if it's a mono thread, the mono thread either was resumed and stopped right or was executing native code
@@ -225,7 +225,7 @@ class MixedModeProcessTransitionStateMachine(
             // 1. resume all threads except stopped one
             // 2. wait until managed resume is finished
             // 3. pause the process
-
+            // TODO: need to handle new breakpoints hits, that may happen while we have the threads resumed
             runBlocking(stateMachineHelperScope.coroutineContext) {
               low.continueAllThreads(setOf(low.getStoppedThreadId(event.suspendContext)), silent = true)
             }
