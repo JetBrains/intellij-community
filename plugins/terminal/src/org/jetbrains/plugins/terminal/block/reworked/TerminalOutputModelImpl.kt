@@ -75,6 +75,12 @@ internal class TerminalOutputModelImpl(
 
     val replaceStartOffset = document.getLineStartOffset(documentLineIndex)
     document.replaceString(replaceStartOffset, document.textLength, text)
+    // If the document became shorter, immediately ensure that the cursor is still within the document.
+    // It'll update itself later to the correct position anyway, but having the incorrect value can cause exceptions before that.
+    val newLength = document.textLength
+    if (mutableCursorOffsetState.value > newLength) {
+      mutableCursorOffsetState.value = newLength
+    }
 
     highlightingsModel.removeAfter(replaceStartOffset)
     highlightingsModel.addHighlightings(replaceStartOffset, styles)
