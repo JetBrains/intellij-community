@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
@@ -156,8 +156,13 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
       add(Separator.create(message("option.highlighting.policy.group.name")), Constraints.FIRST)
     }
 
+    val isRightToolbarPlace = e != null && e.place.endsWith(ActionPlaces.DIFF_RIGHT_TOOLBAR)
+    val isGutterPlace = !isRightToolbarPlace
+
     val actions = mutableListOf<AnAction>()
-    actions.add(diffModesSettingsGroup)
+    if (isRightToolbarPlace) {
+      actions.add(diffModesSettingsGroup)
+    }
     actions.add(editorSettingsGroup)
     actions.add(CombinedToggleExpandByDefaultAction(settings, foldingModels))
     actions.addAll(myActions)
@@ -168,7 +173,7 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
     actions.add(Separator.getInstance())
     actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP))
 
-    if (e != null && !e.place.endsWith(ActionPlaces.DIFF_RIGHT_TOOLBAR)) {
+    if (isGutterPlace) {
       val gutterGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP) as ActionGroup
       val result = arrayListOf(*gutterGroup.getChildren(e))
       result.add(Separator.getInstance())
