@@ -1,5 +1,18 @@
 <html>
 <body>
 Reports a redundant <code>Unit</code> return type which can be omitted.
+<p><b>Example:</b></p>
+<pre><code>
+  fun test(): Unit {
+      ...
+  }
+</code></pre>
+<p>The quick fix removes the <code>Unit</code> return type:</p>
+<pre><code>
+  fun test() {
+      ...
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>
