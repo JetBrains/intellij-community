@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 interface SeItemsProviderFactory {
   fun getItemsProvider(project: Project): SeItemsProvider
 

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 interface SeTab {
   val name: String
   val shortName: String

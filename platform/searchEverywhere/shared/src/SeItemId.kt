@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 @Serializable
 data class SeItemId(
   val value: EID

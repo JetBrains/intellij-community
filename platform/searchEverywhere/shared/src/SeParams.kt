@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 @Serializable
 sealed interface SeParams {
   val text: String
@@ -13,6 +14,7 @@ sealed interface SeParams {
 }
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 @Serializable
 data class SeTextSearchParams(override val text: String,
                               override val filterData: SeFilterData?) : SeParams

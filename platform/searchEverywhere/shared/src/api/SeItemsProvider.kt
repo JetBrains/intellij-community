@@ -5,6 +5,7 @@ import com.intellij.platform.searchEverywhere.SeParams
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 interface SeItemsProvider {
   val id: String
 

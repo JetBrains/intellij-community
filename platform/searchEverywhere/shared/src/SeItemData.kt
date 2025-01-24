@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @Serializable
 @ApiStatus.Experimental
+@ApiStatus.Internal
 data class SeItemData(
   val itemId: SeItemId,
   val providerId: SeProviderId,

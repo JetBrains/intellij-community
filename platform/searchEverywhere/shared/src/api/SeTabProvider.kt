@@ -8,6 +8,7 @@ import fleet.kernel.DurableRef
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 interface SeTabProvider {
   suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>): SeTab
 

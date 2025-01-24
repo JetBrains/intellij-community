@@ -5,5 +5,6 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 @Serializable
 data class SeProviderId(val value: String)
