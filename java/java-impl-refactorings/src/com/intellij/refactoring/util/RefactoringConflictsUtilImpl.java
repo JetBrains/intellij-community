@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -133,9 +134,9 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
         conflicts.putValue(targetClass, message);
       }
       // check for member accessibility
-      else if (!manager.getResolveHelper().isAccessible(member, modifierListCopy, ref, targetClass, null)) {
+      else if (!JavaResolveUtil.isAccessible(member, targetClass, modifierListCopy, ref, null, null)) {
         String message = JavaRefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
-                                                       RefactoringUIUtil.getDescription(member, true),
+                                                       RefactoringUIUtil.getDescription(member, false),
                                                        VisibilityUtil.toPresentableText(
                                                          VisibilityUtil.getVisibilityModifier(modifierListCopy)),
                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
