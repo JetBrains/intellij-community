@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.backend.shelf.diff
 
 import com.intellij.diff.FrameDiffTool
@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.P
 import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
 import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapperDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.vcs.impl.backend.shelf.ShelfTreeHolder
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -69,21 +68,21 @@ class ShelvedPreviewProcessor(
   override fun selectChange(change: Wrapper) {
     if (change is ShelvedWrapper) {
       cs.launch {
-        withKernel {
-          val nodeToSelect = TreeUtil.findNodeWithObject(changesProvider.treeModel.root as ChangesBrowserNode<*>, change) as? ChangesBrowserNode<*>
-                             ?: return@withKernel
-          val changeListNode = nodeToSelect.path.firstOrNull { it is ShelvedListNode } as? ChangesBrowserNode<*> ?: return@withKernel
-          val changeEntity = nodeToSelect.getUserData(ShelfTreeHolder.Companion.ENTITY_ID_KEY)?.derefOrNull() as? ShelvedChangeEntity ?: return@withKernel
-          val changeListEntity = changeListNode.getUserData(ShelfTreeHolder.Companion.ENTITY_ID_KEY)?.derefOrNull() as? ShelvedChangeListEntity ?: return@withKernel
-          val projectEntity = project.asEntity()
-          change {
-            shared {
-              entity(SelectShelveChangeEntity.Project, projectEntity)?.delete()
-              SelectShelveChangeEntity.new {
-                it[SelectShelveChangeEntity.Change] = changeEntity
-                it[SelectShelveChangeEntity.ChangeList] = changeListEntity
-                it[SelectShelveChangeEntity.Project] = projectEntity
-              }
+        val nodeToSelect = TreeUtil.findNodeWithObject(changesProvider.treeModel.root as ChangesBrowserNode<*>, change) as? ChangesBrowserNode<*>
+                           ?: return@launch
+        val changeListNode = nodeToSelect.path.firstOrNull { it is ShelvedListNode } as? ChangesBrowserNode<*> ?: return@launch
+        val changeEntity = nodeToSelect.getUserData(ShelfTreeHolder.Companion.ENTITY_ID_KEY)?.derefOrNull() as? ShelvedChangeEntity
+                           ?: return@launch
+        val changeListEntity = changeListNode.getUserData(ShelfTreeHolder.Companion.ENTITY_ID_KEY)?.derefOrNull() as? ShelvedChangeListEntity
+                               ?: return@launch
+        val projectEntity = project.asEntity()
+        change {
+          shared {
+            entity(SelectShelveChangeEntity.Project, projectEntity)?.delete()
+            SelectShelveChangeEntity.new {
+              it[SelectShelveChangeEntity.Change] = changeEntity
+              it[SelectShelveChangeEntity.ChangeList] = changeListEntity
+              it[SelectShelveChangeEntity.Project] = projectEntity
             }
           }
         }

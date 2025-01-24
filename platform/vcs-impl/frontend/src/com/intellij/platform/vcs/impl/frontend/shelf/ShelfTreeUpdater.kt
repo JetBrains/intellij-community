@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.shelf
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.projectId
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.platform.vcs.impl.frontend.changes.ChangesTreeModel
@@ -48,9 +47,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
 
   private suspend fun loadChanges() {
     executeUpdateOperation {
-      withKernel {
-        RemoteShelfApi.getInstance().loadChanges(project.projectId())
-      }
+      RemoteShelfApi.getInstance().loadChanges(project.projectId())
     }
   }
 
@@ -60,17 +57,13 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
 
   private fun subscribeToTreeChanges() {
     cs.launch {
-      withKernel {
-        ShelfTreeEntity.each().collectLatest {
-          executeUpdateOperation {
-            withKernel {
-              val changes = tree.getSelectedChangeNodesGrouped()
-              val rootNode = it.root.convertToTreeNodeRecursive() ?: return@withKernel
-              withContext(Dispatchers.EDT) {
-                tree.model = ChangesTreeModel(rootNode)
-                selectChangesInTree(changes)
-              }
-            }
+      ShelfTreeEntity.each().collectLatest {
+        executeUpdateOperation {
+          val changes = tree.getSelectedChangeNodesGrouped()
+          val rootNode = it.root.convertToTreeNodeRecursive() ?: return@executeUpdateOperation
+          withContext(Dispatchers.EDT) {
+            tree.model = ChangesTreeModel(rootNode)
+            selectChangesInTree(changes)
           }
         }
       }
@@ -78,21 +71,19 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
   }
 
   private suspend fun selectChangesInTree(changes: Map<ShelvedChangeListNode, List<ShelvedChangeNode>>) {
-    withKernel {
-      val firstChangeList = changes.entries.firstOrNull() ?: return@withKernel
-      val changeListNode = TreeUtil.findNode(tree.getRoot()) {
-        shouldNodeBeSelected(firstChangeList.key, it)
-      } ?: return@withKernel
-      val changeNodes = firstChangeList.value.mapNotNull { oldChange ->
-        TreeUtil.findNode(changeListNode) {
-          return@findNode shouldNodeBeSelected(oldChange, it)
-        }
+    val firstChangeList = changes.entries.firstOrNull() ?: return
+    val changeListNode = TreeUtil.findNode(tree.getRoot()) {
+      shouldNodeBeSelected(firstChangeList.key, it)
+    } ?: return
+    val changeNodes = firstChangeList.value.mapNotNull { oldChange ->
+      TreeUtil.findNode(changeListNode) {
+        return@findNode shouldNodeBeSelected(oldChange, it)
       }
-      val pathsToSelect = changeNodes.map { TreeUtil.getPathFromRoot(it) }
-      TreeUtil.selectPaths(tree, pathsToSelect)
-
-      notifyNodesSelected(changeListNode, changeNodes)
     }
+    val pathsToSelect = changeNodes.map { TreeUtil.getPathFromRoot(it) }
+    TreeUtil.selectPaths(tree, pathsToSelect)
+
+    notifyNodesSelected(changeListNode, changeNodes)
   }
 
   suspend fun executeUpdateOperation(updateExecutor: suspend () -> Unit) {
@@ -116,11 +107,9 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
 
   private fun notifyNodesSelected(changeListNode: DefaultMutableTreeNode, changeNodes: List<DefaultMutableTreeNode>) {
     cs.launch(Dispatchers.IO) {
-      withKernel {
-        val changeListEntity = changeListNode.userObject as ShelvedChangeListEntity
-        val dto = ChangeListRpc(changeListEntity.ref(), changeNodes.map { it.userObject as ShelvedChangeEntity }.map { it.ref() })
-        RemoteShelfApi.getInstance().notifyNodeSelected(project.projectId(), dto, false)
-      }
+      val changeListEntity = changeListNode.userObject as ShelvedChangeListEntity
+      val dto = ChangeListRpc(changeListEntity.ref(), changeNodes.map { it.userObject as ShelvedChangeEntity }.map { it.ref() })
+      RemoteShelfApi.getInstance().notifyNodeSelected(project.projectId(), dto, false)
     }
   }
 

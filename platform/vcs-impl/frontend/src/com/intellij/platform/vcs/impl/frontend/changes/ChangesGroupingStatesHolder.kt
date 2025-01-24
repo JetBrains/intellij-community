@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.changes
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemEntity
 import com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemsEntity
 import fleet.kernel.rete.*
@@ -31,15 +30,13 @@ class ChangesGroupingStatesHolder(private val cs: CoroutineScope) {
 
   private fun initializeGroupingKeys() {
     cs.launch {
-      withKernel {
-        GroupingItemEntity.each().tokensFlow().collect { (added, groupingItem) ->
-          val name = groupingItem.value.name
-          if (added) {
-            _allGroupingKeys.add(name)
-          }
-          else {
-            _allGroupingKeys.remove(name)
-          }
+      GroupingItemEntity.each().tokensFlow().collect { (added, groupingItem) ->
+        val name = groupingItem.value.name
+        if (added) {
+          _allGroupingKeys.add(name)
+        }
+        else {
+          _allGroupingKeys.remove(name)
         }
       }
     }
@@ -47,13 +44,11 @@ class ChangesGroupingStatesHolder(private val cs: CoroutineScope) {
 
   private fun subscribeToGroupingItemsChanges() {
     cs.launch {
-      withKernel {
-        GroupingItemsEntity.each().collect { itemsEntity ->
-          val itemsList = itemsEntity.items.map { it.name }.toMutableSet()
-          states[itemsEntity.place] = itemsList
-          itemsEntity.asQuery()[GroupingItemsEntity.Items].collect { groupingKey ->
-            itemsList.add(groupingKey.name)
-          }
+      GroupingItemsEntity.each().collect { itemsEntity ->
+        val itemsList = itemsEntity.items.map { it.name }.toMutableSet()
+        states[itemsEntity.place] = itemsList
+        itemsEntity.asQuery()[GroupingItemsEntity.Items].collect { groupingKey ->
+          itemsList.add(groupingKey.name)
         }
       }
     }

@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.shelf.tree
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.util.ui.tree.TreeUtil
@@ -36,10 +35,8 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
     tree.addTreeSelectionListener {
       cs.launch(Dispatchers.IO) {
         selectionUpdateSemaphore.withPermit {
-          withKernel {
-            val changeListDto = creteSelectedListsDto() ?: return@withKernel
-            RemoteShelfApi.getInstance().notifyNodeSelected(project.projectId(), changeListDto, false)
-          }
+          val changeListDto = creteSelectedListsDto() ?: return@withPermit
+          RemoteShelfApi.getInstance().notifyNodeSelected(project.projectId(), changeListDto, false)
         }
       }
     }
@@ -47,10 +44,8 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
 
   override fun performDiffAction(): Boolean {
     cs.launch(Dispatchers.IO) {
-      withKernel {
-        val changeListDto = creteSelectedListsDto() ?: return@withKernel
-        RemoteShelfApi.getInstance().showDiffForChanges(project.projectId(), changeListDto)
-      }
+      val changeListDto = creteSelectedListsDto() ?: return@launch
+      RemoteShelfApi.getInstance().showDiffForChanges(project.projectId(), changeListDto)
     }
     return true
   }
