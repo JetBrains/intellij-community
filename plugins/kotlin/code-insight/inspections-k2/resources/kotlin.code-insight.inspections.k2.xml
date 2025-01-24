@@ -15,7 +15,7 @@
             serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NotPropertiesServiceImpl"/>
 
     <localInspection
-            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RedundantUnitReturnTypeInspection"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.RedundantUnitReturnTypeInspection"
             groupPath="Kotlin"
             groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
             enabledByDefault="true"
