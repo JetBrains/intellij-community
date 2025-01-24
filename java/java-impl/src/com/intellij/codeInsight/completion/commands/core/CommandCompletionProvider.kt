@@ -14,7 +14,6 @@ import com.intellij.icons.AllIcons.Actions.Lightning
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
@@ -50,7 +49,6 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     resultSet: CompletionResultSet,
   ) {
     if (!Registry.`is`("java.completion.command.enabled")) return
-    if (ApplicationManager.getApplication().isHeadlessEnvironment && !ApplicationManager.getApplication().isUnitTestMode) return
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }
@@ -132,8 +130,8 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         if (additionalInfo.isNotEmpty()) {
           tailText += " ($additionalInfo)"
         }
-        val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name)
-                                                                      .withLookupString(i18nName)
+        val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name.trim())
+                                                                      .withLookupString(i18nName.trim())
                                                                       .withTypeText(tailText)
                                                                       .withIcon(command.icon ?: Lightning)
                                                                       .withInsertHandler(CommandInsertHandler(command))

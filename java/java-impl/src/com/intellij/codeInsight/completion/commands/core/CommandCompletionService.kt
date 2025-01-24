@@ -8,6 +8,8 @@ import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.CharFilter.CUSTOM_DEFAULT_CHAR_FILTERS
+import com.intellij.codeInsight.lookup.impl.LookupCustomizer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateColors
 import com.intellij.java.JavaBundle
@@ -31,6 +33,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.testFramework.LightVirtualFile
@@ -113,7 +116,7 @@ internal class CommandCompletionService(
     val completionFactory = completionService.getFactory(psiFile.language) ?: return
     val fullSuffix = completionFactory.suffix() + completionFactory.filterSuffix().toString()
     val editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-    val index = if(nonWrittenFiles) 0 else findActualIndex(fullSuffix, editor.document.immutableCharSequence, lookup.lookupOriginalStart)
+    val index = if (nonWrittenFiles) 0 else findActualIndex(fullSuffix, editor.document.immutableCharSequence, lookup.lookupOriginalStart)
     val startOffset = lookup.lookupOriginalStart - index
     val endOffset = editor.caretModel.offset
     if (endOffset - startOffset != 1) return
@@ -292,7 +295,7 @@ private class CommandCompletionHighlightingListener(
     val previousHighlighting = lookup.removeUserData(LOOKUP_HIGHLIGHTING)
     previousHighlighting?.forEach { t -> highlightManager.removeSegmentHighlighter(editor, t) }
     val startOffset = lookup.lookupOriginalStart -
-                      if(nonWrittenFiles) 0 else findActualIndex(element.suffix, editor.document.immutableCharSequence, lookup.lookupOriginalStart)
+                      if (nonWrittenFiles) 0 else findActualIndex(element.suffix, editor.document.immutableCharSequence, lookup.lookupOriginalStart)
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
     val endOffset = min(highlightInfo.range.endOffset, startOffset)
@@ -345,5 +348,21 @@ private class CommandCompletionCharFilter : CharFilter() {
     val element = lookup.currentItem ?: return null
     element.`as`(CommandCompletionLookupElement::class.java) ?: return null
     return Result.ADD_TO_PREFIX
+  }
+}
+
+private class CommandCompletionLookupCustomizer : LookupCustomizer {
+  override fun customizeLookup(lookupImpl: LookupImpl) {
+    if (!Registry.`is`("java.completion.command.enabled")) return
+    val project = lookupImpl.project
+    val service = project.service<CommandCompletionService>()
+    val editor = lookupImpl.editor
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
+    val element: PsiElement? = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, editor.caretModel.offset)
+    val language = element?.language ?: psiFile.language
+    val factory = service.getFactory(language)
+    if (factory != null) {
+      lookupImpl.putUserDataIfAbsent(CUSTOM_DEFAULT_CHAR_FILTERS, true)
+    }
   }
 }

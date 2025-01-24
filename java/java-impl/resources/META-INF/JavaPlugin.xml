@@ -2798,6 +2798,7 @@
     <completion.contributor language="TEXT" id="commandsPlain" order="first, after liveTemplates"
                             implementationClass="com.intellij.codeInsight.completion.commands.core.CommandCompletionContributor"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionCharFilter" order="first" id="commandCompletion"/>
+    <lookup.customizer implementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionLookupCustomizer" order="last" id="commandCompletionLookupCustomizer"/>
 
     <registryKey key="java.completion.command.enabled" defaultValue="false"
                  description="Enable experimental support command completion" restartRequired="true"/>

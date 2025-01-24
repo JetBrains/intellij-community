@@ -11,10 +11,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.HintHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 
@@ -37,7 +39,8 @@ interface ClientLookupManager {
 }
 
 @Internal
-abstract class ClientLookupManagerBase(val session: ClientProjectSession): ClientLookupManager {
+abstract class ClientLookupManagerBase(val session: ClientProjectSession) : ClientLookupManager {
+
   private var myActiveLookup: LookupImpl? = null
 
   override fun getActiveLookup(): LookupEx? {
@@ -61,13 +64,18 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession): Clien
   }
 
   @RequiresEdt
-  override fun createLookup(editor: Editor,
-                            items: Array<LookupElement>,
-                            prefix: String,
-                            arranger: LookupArranger): LookupImpl {
+  override fun createLookup(
+    editor: Editor,
+    items: Array<LookupElement>,
+    prefix: String,
+    arranger: LookupArranger,
+  ): LookupImpl {
     hideActiveLookup()
 
     val lookup = createLookup(editor, arranger, session)
+    LOOKUP_CUSTOMIZATION_EP.extensionList.forEach { ex ->
+      ex.customizeLookup(lookup)
+    }
     Disposer.register(lookup) {
       myActiveLookup = null
       (LookupManagerImpl.getInstance(session.project) as LookupManagerImpl).fireActiveLookupChanged(lookup, null)
@@ -94,6 +102,22 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession): Clien
   protected abstract fun createLookup(editor: Editor, arranger: LookupArranger, session: ClientProjectSession): LookupImpl
 }
 
+@ApiStatus.Experimental
+@Internal
+val LOOKUP_CUSTOMIZATION_EP: ExtensionPointName<LookupCustomizer> = ExtensionPointName("com.intellij.lookup.customizer")
+
+/**
+ * Represents a customization mechanism for a lookup interface. Classes implementing this
+ * interface can provide additional configurations or modifications to a given `LookupImpl` object.
+ *
+ * This is intended to be used internally within the system and not exposed for external use.
+ * Use [com.intellij.codeInsight.lookup.LookupManagerListener]
+ */
+@ApiStatus.Experimental
+@Internal
+interface LookupCustomizer {
+  fun customizeLookup(lookupImpl: LookupImpl)
+}
 
 @Internal
 class LocalClientLookupManager(session: ClientProjectSession) : ClientLookupManagerBase(session) {
