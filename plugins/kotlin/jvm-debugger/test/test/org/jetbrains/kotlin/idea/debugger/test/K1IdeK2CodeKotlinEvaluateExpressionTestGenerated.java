@@ -2782,6 +2782,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             public void testInternalMembersInInlinedLambda() throws Exception {
                 runTest("testData/evaluation/jvmMultiModule/internalMembersInInlinedLambda.kt");
             }
+
+            @TestMetadata("objectsInInlineFunctions.kt")
+            public void testObjectsInInlineFunctions() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/objectsInInlineFunctions.kt");
+            }
         }
     }
 }
