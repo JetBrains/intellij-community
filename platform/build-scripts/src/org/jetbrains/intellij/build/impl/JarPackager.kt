@@ -303,14 +303,10 @@ class JarPackager private constructor(
       result
     }
 
-    val source =
-      if (!Files.exists(moduleOutDir)) {
-        context.messages.warning("Module $moduleName output does not exist: $moduleOutDir")
-        null
-      }
-      else if (Files.isDirectory(moduleOutDir)) DirSource(moduleOutDir, excludes)
-      else ZipSource(file = moduleOutDir, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
-    source?.let { moduleSources.add(it) }
+    val source = module.toSource(moduleOutDir, excludes)
+    if (source != null) {
+      moduleSources += source
+    }
 
     if (layout is PluginLayout && layout.mainModule == moduleName) {
       handleCustomAssets(layout, jarAsset)
@@ -903,15 +899,26 @@ suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: Build
   buildJar(
     targetFile = targetFile,
     sources = moduleNames.mapNotNull { moduleName ->
-      val output = context.getModuleOutputDir(context.findRequiredModule(moduleName))
-      if (!Files.exists(output)) {
-        context.messages.warning("Module $moduleName output does not exist: $output")
-        return@mapNotNull null
-      }
-      if (Files.isDirectory(output)) DirSource(dir = output, excludes = commonModuleExcludes)
-      else ZipSource(file = output, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(commonModuleExcludes))
+      val module = context.findRequiredModule(moduleName)
+      val output = context.getModuleOutputDir(module)
+      module.toSource(output, commonModuleExcludes)
     },
   )
+}
+
+private fun JpsModule.toSource(outputDir: Path, excludes: List<PathMatcher>): Source? {
+  return when {
+    Files.isDirectory(outputDir) -> {
+      DirSource(dir = outputDir, excludes = excludes)
+    }
+    Files.exists(outputDir) -> {
+      ZipSource(file = outputDir, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
+    }
+    sourceRoots.any { !it.rootType.isForTests } -> {
+      error("Module $name output does not exist: $outputDir")
+    }
+    else -> null
+  }
 }
 
 private fun createAssetDescriptor(outDir: Path, relativeOutputFile: String, targetFile: Path, context: BuildContext, nativeFiles: List<String>?): AssetDescriptor {
