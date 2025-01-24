@@ -23,16 +23,16 @@ import kotlinx.coroutines.launch
 
 private val LOG = logger<FrontendXDebuggerEvaluator>()
 
-internal fun createFrontendXDebuggerEvaluator(project: Project, scope: CoroutineScope, evaluatorDto: XDebuggerEvaluatorDto): FrontendXDebuggerEvaluator {
+internal fun createFrontendXDebuggerEvaluator(project: Project, evaluatorScope: CoroutineScope, evaluatorDto: XDebuggerEvaluatorDto): FrontendXDebuggerEvaluator {
   return if (evaluatorDto.canEvaluateInDocument) {
-    FrontendXDebuggerDocumentOffsetEvaluator(project, scope, evaluatorDto)
+    FrontendXDebuggerDocumentOffsetEvaluator(project, evaluatorScope, evaluatorDto)
   }
   else {
-    FrontendXDebuggerEvaluator(project, scope, evaluatorDto)
+    FrontendXDebuggerEvaluator(project, evaluatorScope, evaluatorDto)
   }
 }
 
-internal open class FrontendXDebuggerEvaluator(private val project: Project, private val scope: CoroutineScope, private val evaluatorDto: XDebuggerEvaluatorDto) : XDebuggerEvaluator() {
+internal open class FrontendXDebuggerEvaluator(private val project: Project, private val evaluatorScope: CoroutineScope, private val evaluatorDto: XDebuggerEvaluatorDto) : XDebuggerEvaluator() {
   override fun evaluate(expression: String, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
     evaluateByRpc(callback) {
       XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorDto.id, expression, expressionPosition?.toRpc())
@@ -46,11 +46,11 @@ internal open class FrontendXDebuggerEvaluator(private val project: Project, pri
   }
 
   protected fun evaluateByRpc(callback: XEvaluationCallback, evaluate: suspend () -> Deferred<XEvaluationResult>) {
-    scope.launch(Dispatchers.EDT) {
+    evaluatorScope.launch(Dispatchers.EDT) {
       try {
         val evaluation = evaluate().await()
         when (evaluation) {
-          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(project, evaluation.valueId))
+          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(project, evaluatorScope, evaluation.valueId, null))
           is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
         }
       }

@@ -9,8 +9,8 @@ import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.supervisorScope
 
 @Service(Service.Level.PROJECT)
 internal class FrontendXDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
@@ -22,7 +22,7 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
           send(null)
           return@collectLatest
         }
-        coroutineScope {
+        supervisorScope {
           val session = FrontendXDebuggerSession(project, this, sessionDto)
           send(session)
           awaitCancellation()

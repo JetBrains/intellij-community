@@ -12,8 +12,8 @@ import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
 import com.intellij.xdebugger.impl.rpc.XValueMarkerId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.supervisorScope
 
 internal class FrontendXDebuggerSession(
   private val project: Project,
@@ -30,7 +30,7 @@ internal class FrontendXDebuggerSession(
           send(null)
           return@collectLatest
         }
-        coroutineScope {
+        supervisorScope {
           val evaluator = createFrontendXDebuggerEvaluator(project, this, evaluatorDto)
           send(evaluator)
           awaitCancellation()
@@ -40,5 +40,5 @@ internal class FrontendXDebuggerSession(
 
   val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider ?: FrontendXDebuggerEditorsProvider()
 
-  val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers()
+  val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 }

@@ -5,6 +5,10 @@
   </dependencies>
   <actions>
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
+    <action id="FrontendMarkObjectAction" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendMarkObjectAction"
+            use-shortcut-of="ToggleBookmark">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="XDebugger.Inspect"/>
+    </action>
     <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapModifiedFilesAction">
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
       <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>
