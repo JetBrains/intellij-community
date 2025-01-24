@@ -2227,8 +2227,8 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    t = Test()
                    t.member = "str"
-                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">123</warning>
-                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'Type[list]' instead">list</warning>
+                   t.member = <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">123</warning>
+                   t.member = <warning descr="Expected type 'Type[list]' (from '__set__'), got 'str' instead">list</warning>
                    """);
   }
 
@@ -2245,8 +2245,8 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    t = Test()
                    t.member = "str"
-                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">123</warning>
-                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'Type[list]' instead">list</warning>
+                   t.member = <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">123</warning>
+                   t.member = <warning descr="Expected type 'Type[list]' (from '__set__'), got 'str' instead">list</warning>
                    """);
   }
 
@@ -2278,10 +2278,10 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    t = Test()
                    t.member = "abc"
-                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">42</warning>
+                   t.member = <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">42</warning>
                    p = Prod()
-                   p.member = <warning descr="Expected type 'LocalizedString' (from '__set__'), got 'str' instead">"abc"</warning>
-                   p.member = <warning descr="Expected type 'LocalizedString' (from '__set__'), got 'int' instead">42</warning>
+                   p.member = <warning descr="Expected type 'str' (from '__set__'), got 'LocalizedString' instead">"abc"</warning>
+                   p.member = <warning descr="Expected type 'int' (from '__set__'), got 'LocalizedString' instead">42</warning>
                    """);
   }
 
@@ -2300,8 +2300,8 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    t = Test()
                    t.member = 42
-                   t.member = <warning descr="Expected type 'Literal[42]' (from '__set__'), got 'Literal[43]' instead">43</warning>
-                   t.member = <warning descr="Expected type 'Literal[42]' (from '__set__'), got 'Literal[\\"42\\"]' instead">"42"</warning>
+                   t.member = <warning descr="Expected type 'Literal[43]' (from '__set__'), got 'Literal[42]' instead">43</warning>
+                   t.member = <warning descr="Expected type 'Literal[\\"42\\"]' (from '__set__'), got 'Literal[42]' instead">"42"</warning>
                    """);
   }
 
@@ -2320,7 +2320,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    
                    x = Test("foo")
-                   x.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">42</warning>
+                   x.member = <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">42</warning>
                    """);
   }
 

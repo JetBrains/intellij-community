@@ -379,16 +379,15 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-22971
   public void testTopLevelOverloadsAndNoImplementation() {
-    // resolve to the first overload
+    // resolve to the last overload
     final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-    assertTrue(PyiUtil.isOverload(foo, context));
 
     PyiUtil
       .getOverloads(foo, context)
       .forEach(
         overload -> {
-          if (overload != foo) assertTrue(PyPsiUtils.isBefore(foo, overload));
+          if (overload != foo) assertTrue(PyPsiUtils.isBefore(overload, foo));
         }
       );
   }
@@ -403,7 +402,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   // PY-22971
   public void testTopLevelOverloadsAndImplementations() {
-    // resolve to the first overload because there is no subsequent implementation before the reference
+    // resolve to the last overload
     final PyFunction foo = assertResolvesTo(PyFunction.class, "foo");
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
     assertTrue(PyiUtil.isOverload(foo, context));
@@ -411,7 +410,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
     ((PyFile)foo.getContainingFile())
       .getTopLevelFunctions()
       .forEach(
-        function -> assertTrue(function == foo || PyPsiUtils.isBefore(foo, function))
+        function -> assertTrue(function == foo || PyPsiUtils.isBefore(function, foo))
       );
   }
 
