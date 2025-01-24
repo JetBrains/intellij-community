@@ -39,7 +39,7 @@ class EditorCellFrameManager(
 
     when (selected) {
       true -> redrawBorders()
-      else -> clearBorders()
+      else -> clearFrame()
     }
   }
 
@@ -82,7 +82,7 @@ class EditorCellFrameManager(
     }
   }
 
-  private fun clearBorders() {
+  private fun clearFrame() {
     view.updateFrameVisibility(false, frameColor)
     removeLeftBorder()
     removeRightBorder(editor.getLayerController())
@@ -120,7 +120,8 @@ class EditorCellFrameManager(
 
   override fun dispose() {
     JupyterBoundsChangeHandler.Companion.get(editor).unsubscribe(boundsChangeListener)
-    clearBorders()
+    removeLeftBorder()
+    removeRightBorder(editor.getLayerController())
   }
 
 }

@@ -372,7 +372,7 @@ class EditorCellView(
     if (input.runCellButton.lastRunButtonVisibility == shouldBeVisible) return
 
     input.runCellButton.visible = shouldBeVisible
-    input.runCellButton.lastRunButtonVisibility = shouldBeVisible // 更新状態を記録
+    input.runCellButton.lastRunButtonVisibility = shouldBeVisible
   }
 
   private fun updateCellActionsToolbarVisibility() {

@@ -70,30 +70,14 @@ fun Editor.getCells(lines: IntRange): List<NotebookCellLines.Interval> =
 fun Editor.getCellByOrdinal(ordinal: Int): NotebookCellLines.Interval =
   NotebookCellLines.get(this).intervals[ordinal]
 
+fun Editor.safeGetCellByOrdinal(ordinal: Int): NotebookCellLines.Interval? =
+  NotebookCellLines.get(this).intervals.getOrNull(ordinal)
+
 fun Editor.getCellByOffset(offset: Int): NotebookCellLines.Interval =
   getCell(line = document.getLineNumber(offset))
 
 fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Interval> =
   intervalsIterator(lines.first).asSequence().takeWhile { it.lines.first <= lines.last }
-
-fun NotebookCellLines.Interval.getTopMarker(document: Document): String? =
-  if (markers.hasTopLine) document.getLineText(lines.first) else null
-
-fun NotebookCellLines.Interval.getBottomMarker(document: Document): String? =
-  if (markers.hasBottomLine) document.getLineText(lines.last) else null
-
-val NotebookCellLines.Interval.firstContentLine: Int
-  get() =
-    if (markers.hasTopLine) lines.first + 1
-    else lines.first
-
-val NotebookCellLines.Interval.lastContentLine: Int
-  get() =
-    if (markers.hasBottomLine) lines.last - 1
-    else lines.last
-
-val NotebookCellLines.Interval.contentLines: IntRange
-  get() = firstContentLine..lastContentLine
 
 fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLinesLexer.Marker> {
   val markers = ArrayList<NotebookCellLinesLexer.Marker>()
