@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.jediterm.terminal.TerminalOutputStream
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
@@ -44,7 +43,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRe
           pasteIntoPrompt(e, dataContext = null)
         }
       }
-      input != null -> paseIntoInput(input)
+      input != null -> pasteIntoInput(input)
     }
   }
 
@@ -82,7 +81,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRe
     }
   }
 
-  private fun paseIntoInput(input: TerminalInput) {
+  private fun pasteIntoInput(input: TerminalInput) {
     var text = getClipboardText() ?: return
     // The following logic was borrowed from JediTerm.
     // Sanitize clipboard text to use CR as the line separator.
