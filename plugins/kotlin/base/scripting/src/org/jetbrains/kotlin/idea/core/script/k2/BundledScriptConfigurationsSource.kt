@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k2
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -15,6 +16,7 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.idea.core.script.ucache.relativeName
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
@@ -43,7 +45,13 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
 
         if (KotlinScriptLazyResolveProhibitionCondition.prohibitLazyResolve(project, virtualFile)) return null
 
-        DependencyResolutionService.getInstance(project).resolveInBackground {
+        coroutineScope.launch {
+            project.waitForSmartMode()
+
+            val definition = findScriptDefinition(project, VirtualFileScriptSource(virtualFile))
+            val suitableDefinitions = getScriptDefinitionsSource()?.definitions ?: return@launch
+            if (suitableDefinitions.none { it == definition }) return@launch
+
             updateDependenciesAndCreateModules(setOf(BaseScriptModel(virtualFile)))
         }
 
