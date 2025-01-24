@@ -21,7 +21,7 @@ public final class IdeaReportingEvent extends IdeaLoggingEvent {
     @NotNull String stacktrace,
     @Nullable IdeaPluginDescriptor plugin
   ) {
-    super(message, new TextBasedThrowable(stacktrace), messageObject.getIncludedAttachments(), messageObject);
+    super(message, new TextBasedThrowable(stacktrace), messageObject.getIncludedAttachments(), plugin, messageObject);
     myPlugin = plugin;
   }
 
@@ -33,6 +33,9 @@ public final class IdeaReportingEvent extends IdeaLoggingEvent {
     return getData().getThrowableText();
   }
 
+  /** @deprecated use {@link IdeaLoggingEvent#getPlugin} */
+  @Deprecated(forRemoval = true)
+  @Override
   public @Nullable IdeaPluginDescriptor getPlugin() {
     return myPlugin;
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,6 +14,7 @@ public class IdeaLoggingEvent {
   private final String myMessage;
   private final Throwable myThrowable;
   private final List<Attachment> myAttachments;
+  private final @Nullable IdeaPluginDescriptor myPlugin;
   private final @Nullable Object myData;
 
   public IdeaLoggingEvent(String message, Throwable throwable) {
@@ -20,18 +22,20 @@ public class IdeaLoggingEvent {
   }
 
   public IdeaLoggingEvent(String message, Throwable throwable, @Nullable Object data) {
-    this(message, throwable, List.of(), data);
+    this(message, throwable, List.of(), null, data);
   }
 
   public IdeaLoggingEvent(
     String message,
     Throwable throwable,
     @NotNull List<Attachment> attachments,
+    @Nullable IdeaPluginDescriptor plugin,
     @Nullable Object data
   ) {
     myMessage = message;
     myThrowable = throwable;
     myAttachments = Collections.unmodifiableList(attachments);
+    myPlugin = plugin;
     myData = data;
   }
 
@@ -50,6 +54,11 @@ public class IdeaLoggingEvent {
   /** Returns a (possibly empty) list of attachments marked by a user to be included in the error report. */
   public @Unmodifiable @NotNull List<Attachment> getAttachments() {
     return myAttachments;
+  }
+
+  /** Returns a descriptor of a plugin in which an exception has occurred. */
+  public @Nullable IdeaPluginDescriptor getPlugin() {
+    return myPlugin;
   }
 
   public @Nullable Object getData() {

@@ -1,13 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.ITNProxy.ErrorBean
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.DataManager
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginUtil
 import com.intellij.idea.IdeaLogger
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -59,18 +56,14 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
     parentComponent: Component,
     consumer: Consumer<in SubmittedReportInfo>
   ): Boolean {
-    val event = events[0]
-    val plugin =
-      (event as? IdeaReportingEvent)?.plugin ?:
-      event.throwable?.let { PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(it)) }
-    val errorBean = createReportBean(event, additionalInfo, plugin)
+    val errorBean = createReportBean(events[0], additionalInfo)
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
     return submit(project, errorBean, parentComponent, consumer::consume)
   }
 
   @ApiStatus.Internal
-  suspend fun submitAutomated(event: IdeaLoggingEvent, plugin: IdeaPluginDescriptor?): SubmittedReportInfo {
-    val errorBean = createReportBean(event, comment = "Automatically reported exception", plugin)
+  suspend fun submitAutomated(event: IdeaLoggingEvent): SubmittedReportInfo {
+    val errorBean = createReportBean(event, comment = "Automatically reported exception")
     return service<ITNProxyCoroutineScopeHolder>().coroutineScope.async {
       try {
         val reportId = ITNProxy.sendError(errorBean, postUrl)
@@ -91,12 +84,12 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
   @ApiStatus.Internal
   fun hostId(): String = ITNProxy.DEVICE_ID
 
-  private fun createReportBean(event: IdeaLoggingEvent, comment: String?, plugin: IdeaPluginDescriptor?): ErrorBean {
+  private fun createReportBean(event: IdeaLoggingEvent, comment: String?): ErrorBean {
     val lastActionId = IdeaLogger.ourLastActionId
     val prevReport = previousReport
     val eventDate = (event.data as? AbstractMessage)?.date
     val prevReportId = if (prevReport != null && eventDate != null && eventDate.time - prevReport.first in 0..INTERVAL) prevReport.second else -1
-    return ErrorBean(event, comment, plugin?.pluginId?.idString, plugin?.name, plugin?.version, lastActionId, prevReportId)
+    return ErrorBean(event, comment, event.plugin?.pluginId?.idString, event.plugin?.name, event.plugin?.version, lastActionId, prevReportId)
   }
 
   private fun updatePreviousReport(event: IdeaLoggingEvent, reportId: Int) {
