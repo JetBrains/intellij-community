@@ -17,10 +17,10 @@ import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import org.junit.AfterClass
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.div
 import kotlin.io.path.listDirectoryEntries
@@ -53,7 +53,6 @@ private val IGNORED_INSPECTIONS = listOf(
   PyStatementEffectInspection::class,
 ).map { it.java.name }
 
-@Ignore
 @RunWith(Parameterized::class)
 class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   @Test
@@ -222,6 +221,7 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   companion object {
     private const val TESTS_DIR = "typing/conformance/tests"
     private val TESTS_DIR_ABSOLUTE_PATH = Path.of(PythonTestUtil.getTestDataPath(), TESTS_DIR)
+    private val IGNORED_TESTS = Files.readAllLines(TESTS_DIR_ABSOLUTE_PATH / "_ignored.txt").toSet()
     private val allErrors = mutableListOf<Triple<String, Int, Int>>()
 
     @JvmStatic
@@ -230,6 +230,7 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
       return TESTS_DIR_ABSOLUTE_PATH.listDirectoryEntries()
         .map(Path::name)
         .filter { !it.startsWith('_') }
+        .filter { it !in IGNORED_TESTS }
     }
 
     @AfterClass
