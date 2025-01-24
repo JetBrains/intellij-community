@@ -1645,6 +1645,7 @@ f:com.intellij.execution.ui.BeforeRunComponent
 - cleanUpOnLeave():V
 - dispose():V
 - drop(com.intellij.ide.dnd.DnDEvent):V
+- getEnabledTasks():java.util.List
 - hasEnabledTask(com.intellij.openapi.util.Key):Z
 - reset(com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl):V
 - showPopup():V
