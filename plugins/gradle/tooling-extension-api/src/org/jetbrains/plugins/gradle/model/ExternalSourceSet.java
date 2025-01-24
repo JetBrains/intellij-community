@@ -29,8 +29,10 @@ public interface ExternalSourceSet extends Serializable {
   @Nullable
   String getTargetCompatibility();
 
+  @NotNull
   Collection<File> getArtifacts();
 
+  @NotNull
   Collection<ExternalDependency> getDependencies();
 
   @NotNull

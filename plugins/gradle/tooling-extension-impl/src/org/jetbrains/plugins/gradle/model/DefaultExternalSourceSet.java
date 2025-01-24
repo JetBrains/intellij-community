@@ -15,14 +15,14 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   private static final long serialVersionUID = 3L;
 
-  private String name;
+  private @Nullable String name;
 
   private boolean isPreview;
-  private File javaToolchainHome;
-  private String sourceCompatibility;
-  private String targetCompatibility;
+  private @Nullable File javaToolchainHome;
+  private @Nullable String sourceCompatibility;
+  private @Nullable String targetCompatibility;
 
-  private Collection<File> artifacts;
+  private @NotNull Collection<File> artifacts;
   private @NotNull Collection<ExternalDependency> dependencies;
   private @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
 
@@ -35,7 +35,7 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   @Override
   public @NotNull String getName() {
-    return name;
+    return Objects.requireNonNull(name, "The source set's name property has not been initialized");
   }
 
   public void setName(@NotNull String name) {
@@ -79,11 +79,11 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   }
 
   @Override
-  public Collection<File> getArtifacts() {
+  public @NotNull Collection<File> getArtifacts() {
     return artifacts;
   }
 
-  public void setArtifacts(Collection<File> artifacts) {
+  public void setArtifacts(@NotNull Collection<File> artifacts) {
     this.artifacts = artifacts;
   }
 
