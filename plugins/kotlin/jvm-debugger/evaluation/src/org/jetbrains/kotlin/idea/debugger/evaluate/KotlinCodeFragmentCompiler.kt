@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import java.util.concurrent.ExecutionException
 
 interface KotlinCodeFragmentCompiler {
+    val compilerType: CompilerType
+
     fun compileCodeFragment(context: ExecutionContext, codeFragment: KtCodeFragment): CompiledCodeFragmentData
 
     companion object {
@@ -39,6 +41,8 @@ interface KotlinCodeFragmentCompiler {
 }
 
 class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
+    override val compilerType: CompilerType = CompilerType.K2
+
     @OptIn(KaExperimentalApi::class)
     override fun compileCodeFragment(
         context: ExecutionContext,

@@ -140,7 +140,12 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     is EvaluateException -> StatisticsEvaluationResult.COMPILER_INTERNAL_ERROR
                     else -> StatisticsEvaluationResult.UNCLASSIFIED_COMPILATION_PROBLEM
                 }
-                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, evaluationResultValue, CompilerType.K2, context.evaluationContext.origin)
+                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+                    codeFragment.project,
+                    evaluationResultValue,
+                    KotlinCodeFragmentCompiler.getInstance().compilerType,
+                    context.evaluationContext.origin
+                )
             }
             throw e
         }

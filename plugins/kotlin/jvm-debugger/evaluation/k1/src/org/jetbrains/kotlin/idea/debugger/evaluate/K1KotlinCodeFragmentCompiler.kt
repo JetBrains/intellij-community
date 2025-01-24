@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import java.util.*
 
 private class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
+    override val compilerType: CompilerType = CompilerType.IR
+
     override fun compileCodeFragment(
       context: ExecutionContext,
       codeFragment: KtCodeFragment
