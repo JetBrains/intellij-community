@@ -180,6 +180,11 @@
     <applicationService serviceInterface="com.intellij.codeInsight.actions.ReaderModeDefaultsOverride"
                         serviceImplementation="com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl" />
 
+    <applicationService serviceInterface="com.intellij.util.gist.GistManager"
+                        serviceImplementation="com.intellij.util.gist.GistManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.util.gist.storage.GistStorage"
+                        serviceImplementation="com.intellij.util.gist.storage.GistStorageImpl"/>
+
     <projectService serviceInterface="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager"
                         serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
 

@@ -270,11 +270,6 @@
 
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
-    <applicationService serviceInterface="com.intellij.util.gist.GistManager"
-                        serviceImplementation="com.intellij.util.gist.GistManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.util.gist.storage.GistStorage"
-                        serviceImplementation="com.intellij.util.gist.storage.GistStorageImpl"/>
-
     <formattingService implementation="com.intellij.formatting.service.ExternalFormatProcessorAdapter" order="first"/>
     <postFormatProcessor implementation="com.intellij.formatting.LineCommentAddSpacePostFormatProcessor"/>
     <postFormatProcessor implementation="com.intellij.formatting.LineWrappingPostFormatProcessor" order="first"/>
