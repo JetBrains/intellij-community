@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.kernel
 
 import com.intellij.platform.kernel.util.kernelCoroutineContext
@@ -10,12 +10,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
 /**
- * Entry point to operations which work with the kernel.
+ * Allows operating with RhizomeDB in coroutines where Kernel is not provided to the context.
+ * RhizomeDB context is propagated by default to EDT and Services' coroutine scopes.
  *
- * Implementation note:
- * this will become no-op once the kernel becomes a part of the container itself,
- * i.e., once the kernel is added to all coroutines by default.
+ * Use it only for cases when RhizomeDB context is not propagated (e.g. when `CoroutineScope(...)` or `GlobalScope.child(...)` are used).
  */
+@Deprecated("Kernel context is propagated automatically to EDT and Services' coroutine scopes, so `withKernel` shouldn't be needed")
 suspend fun <T> withKernel(action: suspend CoroutineScope.() -> T): T {
   val kernelScope = KernelService.instance.kernelCoroutineScope.await()
   val kernelContext = kernelScope.coroutineContext.kernelCoroutineContext()
