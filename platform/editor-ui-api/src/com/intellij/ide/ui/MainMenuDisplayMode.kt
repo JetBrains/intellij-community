@@ -9,9 +9,9 @@ import com.intellij.openapi.util.NlsActions
  * This class is applicable exclusively for platforms running Linux and Windows operating systems.
 **/
 enum class MainMenuDisplayMode(@NlsActions.ActionText val description: String) {
-  SEPARATE_TOOLBAR(CoreBundle.message ("main.menu.separate.toolbar.description")),
+  UNDER_HAMBURGER_BUTTON(CoreBundle.message("main.menu.under.hamburger.description")),
   MERGED_WITH_MAIN_TOOLBAR(CoreBundle.message("main.menu.merged.description")),
-  UNDER_HAMBURGER_BUTTON(CoreBundle.message("main.menu.under.hamburger.description"));
+  SEPARATE_TOOLBAR(CoreBundle.message ("main.menu.separate.toolbar.description"));
 
   companion object {
     fun valueOf(name: String?): MainMenuDisplayMode = MainMenuDisplayMode.entries.find { it.name.equals(name, true)} ?: UNDER_HAMBURGER_BUTTON
