@@ -182,6 +182,7 @@ public interface EditorEx extends Editor {
   @Override
   VirtualFile getVirtualFile();
 
+  @NotNull
   TextDrawingCallback getTextDrawingCallback();
 
   @NotNull
