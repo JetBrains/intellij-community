@@ -2,6 +2,7 @@
 package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -173,9 +174,9 @@ public class CoreJavaFileManager implements JavaFileManager {
   }
 
   @Override
-  public boolean hasClass(@NotNull String qName, @NotNull GlobalSearchScope scope, @Nullable Predicate<PsiClass> filter) {
+  public boolean hasClass(@NotNull String qName, @NotNull GlobalSearchScope scope, @NotNull Predicate<PsiClass> filter) {
     PsiClass[] classes = findClasses(qName, scope);
-    if (filter == null) return classes.length > 0;
+    if (filter == Predicates.<PsiClass>alwaysTrue()) return classes.length > 0;
     for (PsiClass aClass : classes) {
       if (filter.test(aClass)) return true;
     }

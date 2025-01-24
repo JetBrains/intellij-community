@@ -168,6 +168,9 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
     List<PsiElementFinder> finders = filteredFinders();
     Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
+    if (classesFilter == null) {
+      classesFilter = Predicates.alwaysTrue();
+    }
     for (PsiElementFinder finder : finders) {
       if (finder.hasClass(qualifiedName, scope, classesFilter)) {
         return true;

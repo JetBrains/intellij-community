@@ -56,7 +56,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   }
 
   @Override
-  public boolean hasClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, @Nullable Predicate<PsiClass> filter) {
+  public boolean hasClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, @NotNull Predicate<PsiClass> filter) {
     if (skipIndices()) {
       return false;
     }

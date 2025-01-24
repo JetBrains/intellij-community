@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
@@ -80,9 +81,9 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   @Override
-  public boolean hasClass(@NotNull String qName, @NotNull GlobalSearchScope scope, @Nullable Predicate<PsiClass> filter) {
+  public boolean hasClass(@NotNull String qName, @NotNull GlobalSearchScope scope, @NotNull Predicate<PsiClass> filter) {
     List<Pair<PsiClass, VirtualFile>> pairs = doFindClasses(qName, scope);
-    if (filter == null) return !pairs.isEmpty();
+    if (filter == Predicates.<PsiClass>alwaysTrue()) return !pairs.isEmpty();
     for (Pair<PsiClass, VirtualFile> pair : pairs) {
       if (filter.test(pair.getFirst())) {
         return true;
