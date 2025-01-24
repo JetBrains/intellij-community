@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Key
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.reworked.TerminalEventDispatcher
 import java.awt.event.KeyEvent
-import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
@@ -32,13 +31,12 @@ internal class SendShortcutToTerminalAction(
     templatePresentation.putClientProperty(KEY, Unit)
   }
 
-  private val terminalShortcuts = CustomShortcutSet(
-    *TerminalEventDispatcher.getActionsToSkip()
-      .flatMap { it.shortcutSet.shortcuts.toList() }
-      .toTypedArray()
-  )
-
   internal fun register(component: JComponent) {
+    val terminalShortcuts = CustomShortcutSet(
+      *TerminalEventDispatcher.getActionsToSkip()
+        .flatMap { it.shortcutSet.shortcuts.toList() }
+        .toTypedArray()
+    )
     registerCustomShortcutSet(terminalShortcuts, component)
   }
 
