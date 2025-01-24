@@ -31,6 +31,7 @@ class JavaRemoteDebugRunConfigurationImporter : RunConfigurationImporter {
     consumeIfCast(cfg["port"], Number::class.java) { runConfiguration.PORT = it.toInt().toString() }
     consumeIfCast(cfg["host"], String::class.java) { runConfiguration.HOST = it }
     consumeIfCast(cfg["sharedMemoryAddress"], String::class.java) { runConfiguration.SHMEM_ADDRESS = it }
+    runConfiguration.AUTO_RESTART = (cfg["autoRestart"] as? Boolean) ?: false
   }
 
   override fun canImport(typeName: String): Boolean = typeName == "remote"
