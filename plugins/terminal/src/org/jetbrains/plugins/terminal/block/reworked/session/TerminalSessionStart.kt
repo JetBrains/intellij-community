@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.session.output.ObservableJediTerminal
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDisplayImpl
 import org.jetbrains.plugins.terminal.block.reworked.session.output.createTerminalOutputChannel
+import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 
@@ -39,7 +40,7 @@ internal fun startTerminalSession(
   val outputChannel = createTerminalOutputChannel(services.textBuffer, services.terminalDisplay, services.controller, outputScope)
 
   val inputScope = coroutineScope.childScope("Terminal input handling")
-  val inputChannel = createTerminalInputChannel(services.terminalStarter, inputScope)
+  val inputChannel = createTerminalInputChannel(services, inputScope)
 
   services.executorService.unboundedExecutorService.submit {
     try {
@@ -85,9 +86,12 @@ private fun createJediTermServices(
 }
 
 private fun createTerminalInputChannel(
-  terminalStarter: TerminalStarter,
+  services: JediTermServices,
   coroutineScope: CoroutineScope,
 ): SendChannel<TerminalInputEvent> {
+  val terminalStarter = services.terminalStarter
+  val textBuffer = services.textBuffer
+  val controller = services.controller
   val inputChannel = Channel<TerminalInputEvent>(capacity = Channel.UNLIMITED)
 
   coroutineScope.launch {
@@ -103,6 +107,17 @@ private fun createTerminalInputChannel(
           terminalStarter.close()
           terminalStarter.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
             terminalStarter.requestEmulatorStop()
+          }
+        }
+        is TerminalClearBufferEvent -> {
+          textBuffer.withLock {
+            textBuffer.clearHistory()
+            if (controller.y > 0) {
+              val lastLine = textBuffer.getLine(controller.y - 1)
+              textBuffer.clearScreenBuffer()
+              controller.y = 0
+              textBuffer.addLine(lastLine)
+            }
           }
         }
       }

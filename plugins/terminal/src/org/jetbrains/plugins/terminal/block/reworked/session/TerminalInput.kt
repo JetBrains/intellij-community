@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.reworked.session
 
 import com.intellij.openapi.actionSystem.DataKey
+import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
@@ -29,8 +30,23 @@ internal class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
+    withInputChannel { inputChannel ->
+      inputChannel.trySend(TerminalWriteBytesEvent(data))
+    }
+  }
+
+  fun sendClearBuffer() {
+    withInputChannel { inputChannel ->
+      inputChannel.trySend(TerminalClearBufferEvent)
+    }
+  }
+
+  private fun withInputChannel(block: ((SendChannel<TerminalInputEvent>) -> Unit)) {
     terminalSessionFuture.thenAccept { session ->
-      session?.inputChannel?.trySend(TerminalWriteBytesEvent(data))
+      val inputChannel = session?.inputChannel
+      if (inputChannel != null) {
+        block(inputChannel)
+      }
     }
   }
 }

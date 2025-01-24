@@ -23,3 +23,5 @@ internal data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInpu
 }
 
 internal class TerminalCloseEvent : TerminalInputEvent
+
+internal object TerminalClearBufferEvent : TerminalInputEvent
