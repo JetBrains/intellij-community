@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.net.HttpConfigurable
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
@@ -34,6 +35,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
+@RequiresBackgroundThread
 fun PythonPackageManager.launchReload() {
   runBlockingCancellable {
     runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
