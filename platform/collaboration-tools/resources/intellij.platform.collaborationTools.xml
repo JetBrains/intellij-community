@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <themeMetadataProvider path="/META-INF/CollaborationTools.themeMetadata.json"/>

@@ -6,5 +6,6 @@
     <module name="intellij.platform.vcs.impl.lang.actions"/>
     <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
   </content>
 </idea-plugin>

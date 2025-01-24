@@ -159,6 +159,12 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.android.tools.idea.studiobot.icons",
         iconDirectory = "icons"
       )
+
+      "intellij.platform.vcs.dvcs.impl.shared" -> IntellijIconClassGeneratorModuleConfig(
+        className = "DvcsImplIcons",
+        packageName = "icons",
+      )
+
       else -> super.getConfigForModule(moduleName)
     }
   }

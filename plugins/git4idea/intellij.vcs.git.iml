@@ -101,5 +101,6 @@
     <orderEntry type="module" module-name="intellij.terminal.completion" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
   </component>
 </module>
