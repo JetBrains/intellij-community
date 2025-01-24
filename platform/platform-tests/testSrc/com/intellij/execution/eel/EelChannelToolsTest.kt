@@ -14,6 +14,7 @@ import com.intellij.platform.eel.provider.utils.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import io.ktor.util.decodeString
 import io.mockk.coEvery
+import io.mockk.mockk
 import io.mockk.spyk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -29,11 +30,7 @@ import org.junit.jupiter.api.Timeout
 import org.junitpioneer.jupiter.cartesian.CartesianTest
 import org.junitpioneer.jupiter.params.IntRangeSource
 import org.opentest4j.AssertionFailedError
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.*
 import java.nio.ByteBuffer
 import java.nio.ByteBuffer.allocate
 import java.nio.ByteBuffer.wrap
@@ -402,6 +399,37 @@ class EelChannelToolsTest {
     val text = readJob.await().getOrThrow()
     assertThat("Some litters missing", text.toCharArray().toList(), containsInAnyOrder(*lettersSent.toTypedArray()))
 
+  }
+
+  @CartesianTest
+  fun testKotlinChannel(
+    @IntRangeSource(from = 1, to = TEXT.length + 1) srcBlockSize: Int,
+  ): Unit = timeoutRunBlocking {
+    val eelChannel = ByteArrayInputStreamLimited(data, srcBlockSize).consumeAsEelChannel()
+    val kotlinChannel = consumeReceiveChannelAsKotlin(eelChannel)
+    val result = ByteArrayOutputStream()
+    for (buffer in kotlinChannel) {
+      val data = ByteArray(buffer.remaining())
+      buffer.get(data)
+      result.writeBytes(data)
+    }
+    assertEquals(TEXT, result.toString())
+  }
+
+  @Test
+  fun testKotlinChannelWithError(
+  ): Unit = timeoutRunBlocking {
+    val brokenChannel = mockk<EelReceiveChannel<IOException>>()
+    val error = IOException("go away me busy")
+    coEvery { brokenChannel.receive(any()) } returns ResultErrImpl(error)
+    try {
+      consumeReceiveChannelAsKotlin(brokenChannel).receive()
+    }
+    catch (e: IOException) {
+      assertEquals(error.toString(), e.toString())
+      return@timeoutRunBlocking
+    }
+    fail("No exception was thrown, also channel returned an error")
   }
 }
 

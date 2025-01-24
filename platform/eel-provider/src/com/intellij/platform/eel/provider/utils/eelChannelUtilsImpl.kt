@@ -8,10 +8,9 @@ import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.ResultErrImpl
 import com.intellij.platform.eel.provider.ResultOkImpl
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import java.io.Flushable
 import java.io.IOException
 import java.io.InputStream
@@ -162,3 +161,30 @@ internal class OutputStreamAdapterImpl(
   }
 }
 
+internal fun CoroutineScope.consumeReceiveChannelAsKotlinImpl(receiveChannel: EelReceiveChannel<*>, bufferSize: Int): ReceiveChannel<ByteBuffer> {
+  val channel = Channel<ByteBuffer>()
+  launch {
+    while (true) {
+      val buffer = ByteBuffer.allocate(bufferSize)
+      when (val r = receiveChannel.receive(buffer)) {
+        is EelResult.Error -> {
+          val cause = r.error
+          channel.close(cause as? Throwable ?: IOException(cause.toString()))
+          break
+        }
+        is EelResult.Ok -> {
+          when (r.value) {
+            ReadResult.EOF -> {
+              channel.close()
+              break
+            }
+            ReadResult.NOT_EOF -> {
+              channel.send(buffer.flip())
+            }
+          }
+        }
+      }
+    }
+  }
+  return channel
+}
