@@ -71,8 +71,8 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   companion object {
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean =
-      Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false)
-      && (isUnitTestModeOnUnix() || isRemDevOrWsl(executable))
+      (Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) || application.isUnitTestMode)
+      && (SystemInfo.isUnix || executable is GitExecutable.Wsl)
       && signingIsEnabledInAnyRepo(project)
 
     private fun isUnitTestModeOnUnix(): Boolean =
@@ -115,6 +115,12 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
   @RequiresBackgroundThread
   fun canBeConfigured(project: Project): Boolean {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
+    // Additional condition extending isEnabled check.
+    // We want to show the configuration notification in Remote Development mode or in WSL only.
+    // However, we have to preserve compatibility (updating launcher and enabling PinentryService) for those who
+    // have already configured pinentry for non-remdev Unix
+    if (!isRemDevOrWsl(executable) && !isUnitTestModeOnUnix()) return false
+
     if (!isEnabled(project, executable)) return false
     val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: return false
     val config = GpgAgentConfig.readConfig(gpgAgentPaths.gpgAgentConf) ?: return true
