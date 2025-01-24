@@ -104,7 +104,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
     myFilterUi.setVisiblePack(pack);
 
-    if (pack.canRequestMore()) {
+    if (pack.getCanRequestMore()) {
       requestMore(EmptyRunnable.INSTANCE);
     }
   }

@@ -1,136 +1,82 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.visible;
+package com.intellij.vcs.log.visible
 
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.VcsLogDataPack;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogRefs;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.DataPackBase;
-import com.intellij.vcs.log.graph.VisibleGraph;
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogDataPack
+import com.intellij.vcs.log.VcsLogFilterCollection
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogRefs
+import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.DataPackBase
+import com.intellij.vcs.log.graph.VisibleGraph
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import org.jetbrains.annotations.NonNls
+import java.util.concurrent.ConcurrentHashMap
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+open class VisiblePack @JvmOverloads constructor(
+  val dataPack: DataPackBase,
+  val visibleGraph: VisibleGraph<Int>,
+  val canRequestMore: Boolean,
+  private val filters: VcsLogFilterCollection,
+  data: Map<Key<*>, Any?> = emptyMap(),
+) : VcsLogDataPack, UserDataHolder {
+  val additionalData: MutableMap<Key<*>, Any?> = ConcurrentHashMap<Key<*>, Any?>(data)
 
-public class VisiblePack implements VcsLogDataPack, UserDataHolder {
-  public static final @NotNull VisiblePack EMPTY =
-    new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterObject.EMPTY_COLLECTION) {
-      @Override
-      public String toString() {
-        return "EmptyVisiblePack";
-      }
-    };
+  val isFull: Boolean
+    get() = dataPack.isFull
 
-  public static final @NotNull Key<Boolean> NO_GRAPH_INFORMATION = Key.create("NO_GRAPH_INFORMATION");
-
-  private final @NotNull DataPackBase myDataPack;
-  private final @NotNull VisibleGraph<Integer> myVisibleGraph;
-  private final boolean myCanRequestMore;
-  private final @NotNull VcsLogFilterCollection myFilters;
-  private final @NotNull Map<Key, Object> myAdditionalData = new ConcurrentHashMap<>();
-
-  public VisiblePack(@NotNull DataPackBase dataPack,
-                     @NotNull VisibleGraph<Integer> graph,
-                     boolean canRequestMore,
-                     @NotNull VcsLogFilterCollection filters) {
-    this(dataPack, graph, canRequestMore, filters, Collections.emptyMap());
+  override fun getLogProviders(): MutableMap<VirtualFile?, VcsLogProvider?> {
+    return dataPack.logProviders
   }
 
-  public VisiblePack(@NotNull DataPackBase dataPack,
-                     @NotNull VisibleGraph<Integer> graph,
-                     boolean canRequestMore,
-                     @NotNull VcsLogFilterCollection filters,
-                     @NotNull Map<Key, Object> additionalData) {
-    myDataPack = dataPack;
-    myVisibleGraph = graph;
-    myCanRequestMore = canRequestMore;
-    myFilters = filters;
-    myAdditionalData.putAll(additionalData);
+  override fun getRefs(): VcsLogRefs {
+    return dataPack.refsModel
   }
 
-  public @NotNull VisibleGraph<Integer> getVisibleGraph() {
-    return myVisibleGraph;
+  override fun getFilters(): VcsLogFilterCollection {
+    return filters
   }
 
-  public @NotNull DataPackBase getDataPack() {
-    return myDataPack;
+  override fun isEmpty(): Boolean {
+    return visibleGraph.visibleCommitCount == 0
   }
 
-  public boolean canRequestMore() {
-    return myCanRequestMore;
+  open fun getRootAtHead(headCommitIndex: Int): VirtualFile? {
+    return dataPack.refsModel.rootAtHead(headCommitIndex)
   }
 
-  @Override
-  public @NotNull Map<VirtualFile, VcsLogProvider> getLogProviders() {
-    return myDataPack.getLogProviders();
+  override fun <T> getUserData(key: Key<T>): T? {
+    return additionalData[key] as T?
   }
 
-  @Override
-  public @NotNull VcsLogRefs getRefs() {
-    return myDataPack.getRefsModel();
+  override fun <T> putUserData(key: Key<T>, value: T?) {
+    additionalData.put(key, value)
   }
 
-  public boolean isFull() {
-    return myDataPack.isFull();
-  }
-
-  @Override
-  public @NotNull VcsLogFilterCollection getFilters() {
-    return myFilters;
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return getVisibleGraph().getVisibleCommitCount() == 0;
-  }
-
-  public @Nullable VirtualFile getRootAtHead(int headCommitIndex) {
-    return myDataPack.getRefsModel().rootAtHead(headCommitIndex);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public <T> @Nullable T getUserData(@NotNull Key<T> key) {
-    return (T)myAdditionalData.get(key);
-  }
-
-  @Override
-  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    myAdditionalData.put(key, value);
-  }
-
-  public @NotNull Map<Key, Object> getAdditionalData() {
-    return myAdditionalData;
-  }
-
-  @Override
-  public @NonNls String toString() {
+  override fun toString(): @NonNls String {
     return "VisiblePack{size=" +
-           getVisibleGraph().getVisibleCommitCount() +
+           visibleGraph.visibleCommitCount +
            ", filters=" +
-           myFilters +
+           filters +
            ", canRequestMore=" +
-           myCanRequestMore + "}";
+           canRequestMore + "}"
   }
 
-  public static class ErrorVisiblePack extends VisiblePack {
-    private final @NotNull Throwable myError;
+  class ErrorVisiblePack(dataPack: DataPackBase, filters: VcsLogFilterCollection, val error: Throwable)
+    : VisiblePack(dataPack, EmptyVisibleGraph.getInstance(), false, filters)
 
-    public ErrorVisiblePack(@NotNull DataPackBase dataPack, @NotNull VcsLogFilterCollection filters, @NotNull Throwable error) {
-      super(dataPack, EmptyVisibleGraph.getInstance(), false, filters);
-      myError = error;
+  companion object {
+    @JvmField
+    val EMPTY: VisiblePack = object : VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false,
+                                                  VcsLogFilterObject.EMPTY_COLLECTION) {
+      override fun toString(): String {
+        return "EmptyVisiblePack"
+      }
     }
 
-    public @NotNull Throwable getError() {
-      return myError;
-    }
+    @JvmField
+    val NO_GRAPH_INFORMATION: Key<Boolean> = Key.create<Boolean>("NO_GRAPH_INFORMATION")
   }
 }

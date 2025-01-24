@@ -1373,26 +1373,29 @@ f:com.intellij.vcs.log.visible.VcsLogFiltererImpl
 c:com.intellij.vcs.log.visible.VisiblePack
 - com.intellij.openapi.util.UserDataHolder
 - com.intellij.vcs.log.VcsLogDataPack
+- sf:Companion:com.intellij.vcs.log.visible.VisiblePack$Companion
 - sf:EMPTY:com.intellij.vcs.log.visible.VisiblePack
 - sf:NO_GRAPH_INFORMATION:com.intellij.openapi.util.Key
 - <init>(com.intellij.vcs.log.data.DataPackBase,com.intellij.vcs.log.graph.VisibleGraph,Z,com.intellij.vcs.log.VcsLogFilterCollection):V
 - <init>(com.intellij.vcs.log.data.DataPackBase,com.intellij.vcs.log.graph.VisibleGraph,Z,com.intellij.vcs.log.VcsLogFilterCollection,java.util.Map):V
-- canRequestMore():Z
-- getAdditionalData():java.util.Map
-- getDataPack():com.intellij.vcs.log.data.DataPackBase
+- b:<init>(com.intellij.vcs.log.data.DataPackBase,com.intellij.vcs.log.graph.VisibleGraph,Z,com.intellij.vcs.log.VcsLogFilterCollection,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getAdditionalData():java.util.Map
+- f:getCanRequestMore():Z
+- f:getDataPack():com.intellij.vcs.log.data.DataPackBase
 - getFilters():com.intellij.vcs.log.VcsLogFilterCollection
 - getLogProviders():java.util.Map
 - getRefs():com.intellij.vcs.log.VcsLogRefs
 - getRootAtHead(I):com.intellij.openapi.vfs.VirtualFile
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
-- getVisibleGraph():com.intellij.vcs.log.graph.VisibleGraph
+- f:getVisibleGraph():com.intellij.vcs.log.graph.VisibleGraph
 - isEmpty():Z
-- isFull():Z
+- f:isFull():Z
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
-c:com.intellij.vcs.log.visible.VisiblePack$ErrorVisiblePack
+f:com.intellij.vcs.log.visible.VisiblePack$Companion
+f:com.intellij.vcs.log.visible.VisiblePack$ErrorVisiblePack
 - com.intellij.vcs.log.visible.VisiblePack
 - <init>(com.intellij.vcs.log.data.DataPackBase,com.intellij.vcs.log.VcsLogFilterCollection,java.lang.Throwable):V
-- getError():java.lang.Throwable
+- f:getError():java.lang.Throwable
 com.intellij.vcs.log.visible.VisiblePackChangeListener
 - a:onVisiblePackChange(com.intellij.vcs.log.visible.VisiblePack):V
 com.intellij.vcs.log.visible.VisiblePackRefresher

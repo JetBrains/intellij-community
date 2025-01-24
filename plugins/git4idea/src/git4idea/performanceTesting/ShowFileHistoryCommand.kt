@@ -56,7 +56,7 @@ class ShowFileHistoryCommand(text: String, line: Int) : PerformanceCommandCorout
         LOG.info("suspendCancellableCoroutine launched")
         val listener = object : VcsLogListener {
           override fun onChange(dataPack: VcsLogDataPack, refreshHappened: Boolean) {
-            if (!(dataPack as VisiblePack).canRequestMore()) {
+            if (!(dataPack as VisiblePack).canRequestMore) {
               mainSpan.end()
               scope.close()
               ui.removeLogListener(this)

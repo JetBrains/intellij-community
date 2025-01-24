@@ -259,7 +259,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
     private @NotNull List<MoreCommitsRequest> filterMoreCommitsRequests(@NotNull List<? extends Request> requests) {
       List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
-      if (!moreCommitsRequests.isEmpty() && !myState.myVisiblePack.canRequestMore()) {
+      if (!moreCommitsRequests.isEmpty() && !myState.myVisiblePack.getCanRequestMore()) {
         int visibleCommitCount = myState.myVisiblePack.getVisibleGraph().getVisibleCommitCount();
         int requestCount = myState.myCommitCount.getCount();
         LOG.debug(String.format("Requested to load more commits, however visible pack indicates that more commits can't be loaded " +
