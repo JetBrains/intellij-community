@@ -6,6 +6,7 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import java.util.*
+import kotlin.collections.ArrayList
 
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
@@ -23,9 +24,14 @@ internal class ModulesWithDependencies(val modules: List<IdeaPluginDescriptorImp
   }
 }
 
-internal fun createModulesWithDependencies(plugins: Collection<IdeaPluginDescriptorImpl>): ModulesWithDependencies {
+/**
+ * Computes dependencies between modules in plugins and also computes additional edges in the module graph which shouldn't be treated as
+ *  dependencies but should be used to determine the order in which modules are processed. 
+ */
+internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection<IdeaPluginDescriptorImpl>): Pair<ModulesWithDependencies, IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>> {
   val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
   val modules = ArrayList<IdeaPluginDescriptorImpl>(moduleMap.size)
+  val additionalEdges = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>()
   for (module in plugins) {
     moduleMap.put(module.pluginId.idString, module)
     for (pluginAlias in module.pluginAliases) {
@@ -45,6 +51,7 @@ internal fun createModulesWithDependencies(plugins: Collection<IdeaPluginDescrip
 
   val hasAllModules = moduleMap.containsKey(PluginManagerCore.ALL_MODULES_MARKER.idString)
   val result: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
+  val additionalEdgesForCurrentModule: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
   val directDependencies = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(modules.size)
   for (module in modules) {
     // If a plugin does not include any module dependency tags in its plugin.xml, it's assumed to be a legacy plugin
@@ -60,7 +67,7 @@ internal fun createModulesWithDependencies(plugins: Collection<IdeaPluginDescrip
     }
 
     collectDirectDependenciesInOldFormat(module, moduleMap, result)
-    collectDirectDependenciesInNewFormat(module, moduleMap, result)
+    collectDirectDependenciesInNewFormat(module, moduleMap, result, additionalEdgesForCurrentModule)
 
     // Check modules as well, for example, intellij.diagram.impl.vcs.
     // We are not yet ready to recommend adding a dependency on extracted VCS modules since the coordinates are not finalized.
@@ -101,7 +108,7 @@ internal fun createModulesWithDependencies(plugins: Collection<IdeaPluginDescrip
     }
 
     if (module.moduleName != null && module.pluginId != PluginManagerCore.CORE_ID) {
-      // add main as an implicit dependency for optional content modules; for required modules dependency is in the opposite way. 
+      // add main as an implicit dependency for optional content modules 
       val main = moduleMap.get(module.pluginId.idString)!!
       assert(main !== module)
       if (!module.isRequiredContentModule) {
@@ -109,6 +116,13 @@ internal fun createModulesWithDependencies(plugins: Collection<IdeaPluginDescrip
       }
     }
 
+    if (!additionalEdgesForCurrentModule.isEmpty()) {
+      additionalEdgesForCurrentModule.removeAll(result)
+      if (!additionalEdgesForCurrentModule.isEmpty()) {
+        additionalEdges.put(module, Java11Shim.INSTANCE.copyOfList(additionalEdgesForCurrentModule))
+        additionalEdgesForCurrentModule.clear()
+      }
+    }
     if (!result.isEmpty()) {
       directDependencies.put(module, Java11Shim.INSTANCE.copyOfList(result))
       result.clear()
@@ -118,7 +132,7 @@ internal fun createModulesWithDependencies(plugins: Collection<IdeaPluginDescrip
   return ModulesWithDependencies(
     modules = modules,
     directDependencies = directDependencies,
-  )
+  ) to additionalEdges
 }
 
 // alias in most cases points to Core plugin, so, we cannot use computed dependencies to check
@@ -184,20 +198,24 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
   }
 }
 
-private fun collectDirectDependenciesInNewFormat(module: IdeaPluginDescriptorImpl,
-                                                 idMap: Map<String, IdeaPluginDescriptorImpl>,
-                                                 result: MutableCollection<IdeaPluginDescriptorImpl>) {
+private fun collectDirectDependenciesInNewFormat(
+  module: IdeaPluginDescriptorImpl,
+  idMap: Map<String, IdeaPluginDescriptorImpl>,
+  result: MutableCollection<IdeaPluginDescriptorImpl>,
+  additionalEdges: MutableSet<IdeaPluginDescriptorImpl>
+) {
   for (item in module.dependencies.modules) {
-    val descriptor = idMap.get(item.name)
-    if (descriptor != null) {
-      result.add(descriptor)
-      if (descriptor.isRequiredContentModule) {
-        /* Adds a dependency on the main plugin module.
+    val dependency = idMap.get(item.name)
+    if (dependency != null) {
+      result.add(dependency)
+      if (dependency.isRequiredContentModule) {
+        /* Add edges to all required plugin modules.
            This is needed to ensure that modules depending on a required content module are processed after all required content modules, because if a required module cannot be 
            loaded, the whole plugin will be disabled. */
-        val mainPluginDescriptor = idMap.get(descriptor.pluginId.idString)
-        if (mainPluginDescriptor != null) {
-          result.add(mainPluginDescriptor)
+        val dependencyPluginDescriptor = idMap.get(dependency.pluginId.idString)
+        val currentPluginDescriptor = idMap.get(module.pluginId.idString)
+        if (dependencyPluginDescriptor != null && dependencyPluginDescriptor !== currentPluginDescriptor) {
+          additionalEdges.add(dependencyPluginDescriptor)
         }
       }
     }
@@ -210,13 +228,14 @@ private fun collectDirectDependenciesInNewFormat(module: IdeaPluginDescriptorImp
     }
   }
 
-  /* Add dependencies on all required content modules. This is needed to ensure that the main plugin module is processed after them, and at that point we can determine whether 
-     the plugin can be loaded or not. */
+  /* Add edges to all required content modules. 
+     This is needed to ensure that the main plugin module is processed after them, and at that point we can determine whether the plugin 
+     can be loaded or not. */
   for (item in module.content.modules) {
     if (item.loadingRule.required) {
       val descriptor = idMap.get(item.name)
       if (descriptor != null) {
-        result.add(descriptor)
+        additionalEdges.add(descriptor)
       }
     }
   }

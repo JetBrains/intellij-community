@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.*
 import java.util.function.Supplier
+import kotlin.collections.HashMap
 
 @ApiStatus.Internal
 class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
@@ -21,8 +22,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
   val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>
 
   init {
-    val unsortedModulesWithDependencies = createModulesWithDependencies(unsortedPlugins)
-    builder = DFSTBuilder(ModuleGraph(unsortedModulesWithDependencies), null, true)
+    val (unsortedModulesWithDependencies, additionalEdges) = createModulesWithDependenciesAndAdditionalEdges(unsortedPlugins)
+    builder = DFSTBuilder(ModuleGraph(unsortedModulesWithDependencies, additionalEdges), null, true)
     topologicalComparator = toCoreAwareComparator(builder.comparator())
     sortedModulesWithDependencies = unsortedModulesWithDependencies.sorted(topologicalComparator)
   }
@@ -111,7 +112,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       }
 
       for (ref in module.dependencies.modules) {
-        if (!enabledModuleV2Ids.containsKey(ref.name)) {
+        if (!enabledModuleV2Ids.containsKey(ref.name) && !enabledRequiredContentModules.containsKey(ref.name)) {
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because dependency ${ref.name} is not available")
           if (module.moduleName != null) {
             disabledModuleToProblematicPlugin.put(module.moduleName, disabledModuleToProblematicPlugin.get(ref.name) ?: PluginId.getId(ref.name))

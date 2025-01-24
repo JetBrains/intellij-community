@@ -178,6 +178,24 @@ internal class PluginDependenciesTest {
   }
 
   @Test
+  fun `dependencies between plugin modules`() {
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("embedded.module", PluginBuilder().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("required.module", PluginBuilder().packagePrefix("required").dependency("embedded.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("required2.module", PluginBuilder().packagePrefix("required2").dependency("required.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginDirPath.resolve("sample-plugin"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet.getEnabledModules()).hasSize(4)
+    val requiredModuleDescriptor = pluginSet.findEnabledModule("required.module")!!
+    val requiredModule2Descriptor = pluginSet.findEnabledModule("required2.module")!!
+    val embeddedModuleDescriptor = pluginSet.findEnabledModule("embedded.module")!!
+    checkParentClassLoaders(requiredModule2Descriptor, requiredModuleDescriptor)
+    checkParentClassLoaders(requiredModuleDescriptor, embeddedModuleDescriptor)
+  }
+
+  @Test
   fun `content module in separate JAR`() {
     val pluginDir = pluginDirPath.resolve("sample-plugin")
     PluginBuilder()
