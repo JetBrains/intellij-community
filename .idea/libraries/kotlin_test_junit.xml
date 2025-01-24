@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="kotlin-test-junit" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:2.1.0">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-test-junit:2.1.10">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.1.0/kotlin-test-junit-2.1.0.jar">
-          <sha256sum>4fed5ed01c6ff2fad07a517b986938db5eeb8891a363609077a5257662fbcca5</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.1.10/kotlin-test-junit-2.1.10.jar">
+          <sha256sum>1bc2f4e0bad73a2d04bcc67f46ab63fb10cc8e288f77f94b5e5dc07361ef30be</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -12,11 +12,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.1.0/kotlin-test-junit-2.1.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.1.10/kotlin-test-junit-2.1.10.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.1.0/kotlin-test-junit-2.1.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test-junit/2.1.10/kotlin-test-junit-2.1.10-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
