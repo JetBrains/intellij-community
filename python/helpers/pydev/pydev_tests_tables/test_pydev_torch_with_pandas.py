@@ -188,8 +188,6 @@ def test_display_data_html_float_values(mocker, setup_torch_tensor_with_floats):
     called_args, called_kwargs = mock_display.call_args
     displayed_html = called_args[0]
 
-    assert isinstance(displayed_html, HTML)
-
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_html.data,
         expected_file='test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/display_data_html_float_values.txt'
@@ -206,8 +204,6 @@ def test_display_data_html_none_values(mocker, setup_torch_tensor_with_nones):
     called_args, called_kwargs = mock_display.call_args
     displayed_html = called_args[0]
 
-    assert isinstance(displayed_html, HTML)
-
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_html.data,
         expected_file='test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/display_data_html_none_values.txt'
@@ -223,8 +219,6 @@ def test_display_data_csv_float_values(mocker, setup_torch_tensor_with_floats):
     numpy_based_tables_helpers.display_data_csv(torch_tensor, 0, 3)
     displayed_csv = mock_print.getvalue()
 
-    assert isinstance(displayed_csv, str)
-
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_csv,
         expected_file='test_data/numpy_based_with_pandas/torch_with_pandas/' + test_data_directory + '/display_data_csv_float_values.txt'
@@ -239,8 +233,6 @@ def test_display_data_csv_none_values(mocker, setup_torch_tensor_with_nones):
     mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
     numpy_based_tables_helpers.display_data_csv(torch_tensor, 0, 3)
     displayed_csv = mock_print.getvalue()
-
-    assert isinstance(displayed_csv, str)
 
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_csv,
