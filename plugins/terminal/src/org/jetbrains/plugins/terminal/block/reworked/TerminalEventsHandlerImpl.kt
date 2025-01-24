@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.google.common.base.Ascii
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
@@ -26,7 +27,7 @@ import kotlin.math.abs
  */
 internal open class TerminalEventsHandlerImpl(
   private val sessionModel: TerminalSessionModel,
-  private val outputModel: TerminalOutputModel,
+  private val editor: EditorEx,
   private val encodingManager: TerminalKeyEncodingManager,
   private val terminalInput: TerminalInput,
   private val settings: JBTerminalSystemSettingsProviderBase,
@@ -39,7 +40,7 @@ internal open class TerminalEventsHandlerImpl(
     get() = sessionModel.terminalState.value
 
   override fun keyTyped(e: KeyEvent) {
-    val selectionModel = outputModel.editor.selectionModel
+    val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
     }
@@ -210,7 +211,7 @@ internal open class TerminalEventsHandlerImpl(
 
   override fun mouseWheelMoved(x: Int, y: Int, event: MouseWheelEvent) {
     if (settings.enableMouseReporting() && terminalState.mouseMode != MouseMode.MOUSE_REPORTING_NONE && !event.isShiftDown) {
-      outputModel.editor.selectionModel.removeSelection()
+      editor.selectionModel.removeSelection()
       // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
       mousePressed(x, y, event)
     }

@@ -18,13 +18,10 @@ import org.jetbrains.plugins.terminal.block.ui.*
 import kotlin.math.max
 
 internal class TerminalBlocksDecorator(
-  private val outputModel: TerminalOutputModel,
+  private val editor: EditorEx,
   private val blocksModel: TerminalBlocksModel,
   coroutineScope: CoroutineScope,
 ) {
-  private val editor: EditorEx
-    get() = outputModel.editor
-
   /** Block ID to decoration */
   private val decorations: MutableMap<Int, BlockDecoration> = HashMap()
 

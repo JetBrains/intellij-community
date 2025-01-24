@@ -339,7 +339,7 @@ private val TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY = Key.create<Unit>("TERMI
  */
 internal var Editor.isTerminalOutputScrollChangingActionInProgress: Boolean
   get() = getUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY) != null
-  private set(value) = putUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY, if (value) Unit else null)
+  set(value) = putUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY, if (value) Unit else null)
 
 internal inline fun <T> Editor.doTerminalOutputScrollChangingAction(action: () -> T): T {
   isTerminalOutputScrollChangingActionInProgress = true

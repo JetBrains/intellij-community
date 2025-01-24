@@ -2,12 +2,10 @@
 package org.jetbrains.plugins.terminal.reworked.util
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.asDisposable
@@ -60,19 +58,16 @@ internal object TerminalSessionTestUtil {
     }
   }
 
-  fun createOutputModel(project: Project, parentDisposable: Disposable, maxLength: Int = 0): TerminalOutputModelImpl {
+  fun createOutputModel(maxLength: Int = 0): TerminalOutputModelImpl {
     val document = EditorFactory.getInstance().createDocument("")
-    val editor = EditorFactory.getInstance().createEditor(document, project) as EditorEx
-    Disposer.register(parentDisposable) {
-      EditorFactory.getInstance().releaseEditor(editor)
-    }
-
-    return TerminalOutputModelImpl(editor, maxLength)
+    return TerminalOutputModelImpl(document, maxLength)
   }
 
   suspend fun TerminalOutputModel.update(absoluteLineIndex: Int, text: String, styles: List<StyleRange> = emptyList()) {
     writeAction {
-      updateContent(absoluteLineIndex, text, styles)
+      CommandProcessor.getInstance().runUndoTransparentAction {
+        updateContent(absoluteLineIndex, text, styles)
+      }
     }
   }
 }

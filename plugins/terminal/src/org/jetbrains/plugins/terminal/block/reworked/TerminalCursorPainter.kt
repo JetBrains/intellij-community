@@ -24,13 +24,11 @@ import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 
 internal class TerminalCursorPainter private constructor(
+  private val editor: EditorEx,
   private val outputModel: TerminalOutputModel,
   private val sessionModel: TerminalSessionModel,
   private val coroutineScope: CoroutineScope,
 ) {
-  private val editor: EditorEx
-    get() = outputModel.editor
-
   private var cursorPaintingJob: Job? = null
 
   private var curCursorState: CursorState = CursorState(
@@ -216,8 +214,8 @@ internal class TerminalCursorPainter private constructor(
     private val CURSOR_DARK: Color = Gray._0
 
     @RequiresEdt
-    fun install(outputModel: TerminalOutputModel, sessionModel: TerminalSessionModel, coroutineScope: CoroutineScope) {
-      TerminalCursorPainter(outputModel, sessionModel, coroutineScope)
+    fun install(editor: EditorEx, outputModel: TerminalOutputModel, sessionModel: TerminalSessionModel, coroutineScope: CoroutineScope) {
+      TerminalCursorPainter(editor, outputModel, sessionModel, coroutineScope)
     }
   }
 }

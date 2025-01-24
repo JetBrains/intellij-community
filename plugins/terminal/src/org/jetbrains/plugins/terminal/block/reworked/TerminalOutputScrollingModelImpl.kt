@@ -22,12 +22,10 @@ import kotlin.math.max
  * Lifecycle is bound to the provided Coroutine Scope.
  */
 internal class TerminalOutputScrollingModelImpl(
+  private val editor: EditorEx,
   private val outputModel: TerminalOutputModel,
   coroutineScope: CoroutineScope,
 ) : TerminalOutputScrollingModel {
-  private val editor: EditorEx
-    get() = outputModel.editor
-
   private var shouldScrollToCursor: Boolean = true
 
   init {

@@ -10,9 +10,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlin.math.max
 
-internal class TerminalBlocksModelImpl(outputModel: TerminalOutputModel) : TerminalBlocksModel {
-  private val document: Document = outputModel.editor.document
-
+internal class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksModel {
   private var blockIdCounter: Int = 0
 
   override val blocks: MutableList<TerminalOutputBlock> = mutableListOf()

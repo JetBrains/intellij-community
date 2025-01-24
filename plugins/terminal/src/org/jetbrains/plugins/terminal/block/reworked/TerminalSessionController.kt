@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import kotlinx.coroutines.CoroutineScope
@@ -86,8 +87,10 @@ internal class TerminalSessionController(
   private suspend fun updateOutputContent(event: TerminalContentUpdatedEvent) {
     withContext(Dispatchers.EDT) {
       writeAction {
-        val model = getCurrentOutputModel()
-        model.updateContent(event.startLineLogicalIndex, event.text, event.styles)
+        CommandProcessor.getInstance().runUndoTransparentAction {
+          val model = getCurrentOutputModel()
+          model.updateContent(event.startLineLogicalIndex, event.text, event.styles)
+        }
       }
     }
   }

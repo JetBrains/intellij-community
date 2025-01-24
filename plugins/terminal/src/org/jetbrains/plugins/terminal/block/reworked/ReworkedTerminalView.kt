@@ -31,13 +31,11 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
+import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
 import org.jetbrains.plugins.terminal.block.reworked.session.*
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi
+import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
-import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
-import org.jetbrains.plugins.terminal.block.ui.VerticalSpaceInlayRenderer
-import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.event.ComponentAdapter
@@ -63,8 +61,8 @@ internal class ReworkedTerminalView(
 
   private val terminalInput: TerminalInput
 
-  private val outputModel: TerminalOutputModel
-  private val alternateBufferModel: TerminalOutputModel
+  private val outputEditor: EditorEx
+  private val alternateBufferEditor: EditorEx
 
   private val terminalPanel: TerminalPanel
 
@@ -97,8 +95,9 @@ internal class ReworkedTerminalView(
 
     terminalInput = TerminalInput(terminalSessionFuture, sessionModel)
 
-    outputModel = createOutputModel(
-      editor = createOutputEditor(settings, parentDisposable = this),
+    outputEditor = createOutputEditor(settings, parentDisposable = this)
+    val outputModel = createOutputModel(
+      editor = outputEditor,
       maxOutputLength = AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024,
       settings,
       sessionModel,
@@ -109,8 +108,9 @@ internal class ReworkedTerminalView(
       withTopAndBottomInsets = true
     )
 
-    alternateBufferModel = createOutputModel(
-      editor = createAlternateBufferEditor(settings, parentDisposable = this),
+    alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
+    val alternateBufferModel = createOutputModel(
+      editor = alternateBufferEditor,
       maxOutputLength = 0,
       settings,
       sessionModel,
@@ -121,8 +121,8 @@ internal class ReworkedTerminalView(
       withTopAndBottomInsets = false
     )
 
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
-    TerminalBlocksDecorator(outputModel, blocksModel, coroutineScope.childScope("TerminalBlocksDecorator"))
+    val blocksModel = TerminalBlocksModelImpl(outputEditor.document)
+    TerminalBlocksDecorator(outputEditor, blocksModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
     controller = TerminalSessionController(
       sessionModel,
@@ -133,9 +133,8 @@ internal class ReworkedTerminalView(
       coroutineScope.childScope("TerminalSessionController")
     )
 
-    terminalPanel = TerminalPanel(initialContent = outputModel.editor)
+    terminalPanel = TerminalPanel(initialContent = outputEditor)
 
-    (outputModel.editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(EmptySoftWrapPainter)
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
   }
@@ -161,8 +160,7 @@ internal class ReworkedTerminalView(
   }
 
   override fun getTerminalSize(): TermSize? {
-    val model = getCurOutputModel()
-    return model.editor.calculateTerminalSize()
+    return getCurEditor().calculateTerminalSize()
   }
 
   override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> {
@@ -190,16 +188,16 @@ internal class ReworkedTerminalView(
         if (state.isAlternateScreenBuffer != isAlternateScreenBuffer) {
           isAlternateScreenBuffer = state.isAlternateScreenBuffer
 
-          val model = if (state.isAlternateScreenBuffer) alternateBufferModel else outputModel
-          terminalPanel.setTerminalContent(model.editor)
+          val editor = if (state.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
+          terminalPanel.setTerminalContent(editor)
           IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
         }
       }
     }
   }
 
-  private fun getCurOutputModel(): TerminalOutputModel {
-    return if (sessionModel.terminalState.value.isAlternateScreenBuffer) alternateBufferModel else outputModel
+  private fun getCurEditor(): EditorEx {
+    return if (sessionModel.terminalState.value.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
   }
 
   private fun createOutputModel(
@@ -213,34 +211,52 @@ internal class ReworkedTerminalView(
     withVerticalScroll: Boolean,
     withTopAndBottomInsets: Boolean,
   ): TerminalOutputModel {
-    val model = TerminalOutputModelImpl(editor, maxOutputLength)
+    val model = TerminalOutputModelImpl(editor.document, maxOutputLength)
 
-    TerminalCursorPainter.install(model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
+    val parentDisposable = coroutineScope.asDisposable()
+
+    // Document modifications can change the scroll position.
+    // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
+    model.addListener(parentDisposable, object : TerminalOutputModelListener {
+      override fun beforeContentChanged() {
+        editor.isTerminalOutputScrollChangingActionInProgress = true
+      }
+
+      override fun afterContentChanged(startOffset: Int) {
+        editor.isTerminalOutputScrollChangingActionInProgress = false
+
+        // Also repaint the changed part of the document to ensure that highlightings are properly painted.
+        editor.repaint(startOffset, editor.document.textLength)
+      }
+    })
+
+    editor.highlighter = TerminalTextHighlighter { model.getHighlightings() }
+
+    TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
 
     val scrollingModel = if (withVerticalScroll) {
-      TerminalOutputScrollingModelImpl(model, coroutineScope.childScope("TerminalOutputScrollingModel"))
+      TerminalOutputScrollingModelImpl(editor, model, coroutineScope.childScope("TerminalOutputScrollingModel"))
     }
     else null
 
     if (withTopAndBottomInsets) {
-      addTopAndBottomInsets(model.editor)
+      addTopAndBottomInsets(editor)
     }
 
-    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, model, encodingManager, terminalInput, settings, scrollingModel)
-    val parentDisposable = coroutineScope.asDisposable()
-    setupKeyEventDispatcher(model.editor, eventsHandler, parentDisposable)
-    setupMouseListener(model.editor, sessionModel, settings, eventsHandler, parentDisposable)
+    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel)
+    setupKeyEventDispatcher(editor, eventsHandler, parentDisposable)
+    setupMouseListener(editor, sessionModel, settings, eventsHandler, parentDisposable)
 
     TerminalOutputEditorInputMethodSupport(
-      model.editor,
+      editor,
       sendInputString = { text -> terminalInput.sendString(text) },
       getCaretPosition = {
         val offset = model.cursorOffsetState.value
-        model.editor.offsetToLogicalPosition(offset)
+        editor.offsetToLogicalPosition(offset)
       }
     ).install(parentDisposable)
 
-    (model.editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(EmptySoftWrapPainter)
+    (editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(EmptySoftWrapPainter)
 
     return model
   }

@@ -20,8 +20,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `initial block is replaced with a new one`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
 
@@ -36,8 +36,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `command start offset is set correctly after prompt finish`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.promptStarted(0)
@@ -54,8 +54,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `block end offset is updated on command typing`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.promptStarted(0)
@@ -70,8 +70,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `output start offset is set correctly after command start`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.promptStarted(0)
@@ -89,8 +89,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `new block is created after next prompt start`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.promptStarted(0)
@@ -113,8 +113,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `initial block is left if there was some text`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
     outputModel.update(0, "welcomeText\n\n\n")
@@ -135,8 +135,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `blocks are preserved after full text replace`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     // Prepare
     outputModel.update(0, "\n\n\n")
@@ -171,8 +171,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `single block is left after clear`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     // Prepare
     outputModel.update(0, "\n\n\n")
@@ -206,8 +206,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
    */
   @Test
   fun `single block is left after all text removed`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     // Prepare
     outputModel.update(0, "\n\n\n")
@@ -232,8 +232,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `blocks positions are adjusted after output start trimmed`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable, maxLength = 30)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel(maxLength = 30)
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
     blocksModel.promptStarted(0)
@@ -259,8 +259,8 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `blocks was removed after output start trimmed`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable, maxLength = 30)
-    val blocksModel = TerminalBlocksModelImpl(outputModel)
+    val outputModel = TerminalSessionTestUtil.createOutputModel(maxLength = 30)
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
     outputModel.update(0, "welcome12\n\n\n")
@@ -286,6 +286,6 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
   }
 
   private fun TerminalOutputModel.getText(startOffset: Int, endOffset: Int): String {
-    return editor.document.charsSequence.substring(startOffset, endOffset)
+    return document.charsSequence.substring(startOffset, endOffset)
   }
 }

@@ -23,7 +23,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `update editor content`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
+    val model = TerminalSessionTestUtil.createOutputModel()
 
     val text = """
       123 sdfsdf sdfsdf
@@ -36,12 +36,12 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
     model.update(0, text, emptyList())
 
-    assertEquals(text, model.editor.document.text)
+    assertEquals(text, model.document.text)
   }
 
   @Test
   fun `update editor content incrementally with styles`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable)
+    val model = TerminalSessionTestUtil.createOutputModel()
 
     val text1 = """
       first line
@@ -64,15 +64,15 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       third line
     """.trimIndent()
     val expectedHighlightings = listOf(highlighting(0, 5), highlighting(11, 19), highlighting(20, 26), highlighting(32, 37))
-    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.editor.document, expectedHighlightings)
+    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)
 
-    assertEquals(expectedText, model.editor.document.text)
-    assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
+    assertEquals(expectedText, model.document.text)
+    assertEquals(expectedHighlightingsSnapshot, model.getHighlightings())
   }
 
   @Test
   fun `update editor content incrementally with overflow`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable, maxLength = 16)
+    val model = TerminalSessionTestUtil.createOutputModel(maxLength = 16)
 
     val text1 = """
       foofoo
@@ -95,15 +95,15 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       badbad
     """.trimIndent()
     val expectedHighlightings = listOf(highlighting(3, 9), highlighting(10, 16))
-    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.editor.document, expectedHighlightings)
+    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)
 
-    assertEquals(expectedText, model.editor.document.text)
-    assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
+    assertEquals(expectedText, model.document.text)
+    assertEquals(expectedHighlightingsSnapshot, model.getHighlightings())
   }
 
   @Test
   fun `update editor content after overflow`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable, maxLength = 16)
+    val model = TerminalSessionTestUtil.createOutputModel(maxLength = 16)
 
     val text1 = """
       foofoo
@@ -133,15 +133,15 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       kadkad
     """.trimIndent()
     val expectedHighlightings = listOf(highlighting(3, 9), highlighting(10, 16))
-    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.editor.document, expectedHighlightings)
+    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)
 
-    assertEquals(expectedText, model.editor.document.text)
-    assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
+    assertEquals(expectedText, model.document.text)
+    assertEquals(expectedHighlightingsSnapshot, model.getHighlightings())
   }
 
   @Test
   fun `update editor content from the start when some lines were trimmed already (clear)`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel(project, testRootDisposable, maxLength = 10)
+    val model = TerminalSessionTestUtil.createOutputModel(maxLength = 10)
 
     // Prepare
     val fillerText = "12345"
@@ -154,10 +154,10 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
     val expectedText = "abcde"
     val expectedHighlightings = listOf(highlighting(0, 3), highlighting(3, 5))
-    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.editor.document, expectedHighlightings)
+    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)
 
-    assertEquals(expectedText, model.editor.document.text)
-    assertEquals(expectedHighlightingsSnapshot, model.highlightingsModel.getHighlightingsSnapshot())
+    assertEquals(expectedText, model.document.text)
+    assertEquals(expectedHighlightingsSnapshot, model.getHighlightings())
   }
 
   private fun styleRange(start: Int, end: Int): StyleRange {
