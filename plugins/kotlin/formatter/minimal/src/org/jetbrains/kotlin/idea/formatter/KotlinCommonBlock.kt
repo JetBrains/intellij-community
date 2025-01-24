@@ -1092,6 +1092,11 @@ private val INDENT_RULES = arrayOf(
         .notForType(LBRACKET, RBRACKET)
         .set(Indent.getNormalIndent()),
 
+    strategy("Context Parameters List")
+        .within(CONTEXT_RECEIVER_LIST)
+        .forType(VALUE_PARAMETER)
+        .set(Indent.getNormalIndent()),
+
     strategy("Type aliases")
         .within(TYPEALIAS)
         .notForType(TYPE_ALIAS_KEYWORD, EOL_COMMENT, MODIFIER_LIST, BLOCK_COMMENT, DOC_COMMENT)

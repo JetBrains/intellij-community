@@ -790,6 +790,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/CommentInFunctionLiteral.after.kt");
             }
 
+            @TestMetadata("ContextParameterMultiline.after.kt")
+            public void testContextParameterMultiline() throws Exception {
+                runTest("testData/formatter/ContextParameterMultiline.after.kt");
+            }
+
             @TestMetadata("ContinuationIndentInAssigments.after.kt")
             public void testContinuationIndentInAssigments() throws Exception {
                 runTest("testData/formatter/ContinuationIndentInAssigments.after.kt");
