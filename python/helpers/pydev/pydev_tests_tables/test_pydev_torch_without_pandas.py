@@ -4,6 +4,7 @@ import pytest
 import torch
 import sys
 
+from io import StringIO
 from IPython.display import HTML
 
 import _pydevd_bundle.tables.pydevd_numpy_based as numpy_based_tables_helpers
@@ -180,11 +181,10 @@ def test_get_data_none_values_2e(setup_torch_tensor_with_nones):
 # 13 TODO: fix -- remove trash while formatting (precision troubles?)
 # def test_display_data_html_float_values(mocker, setup_torch_tensor_with_floats):
 #     tensor = setup_torch_tensor_with_floats
+#
 #     # Mock the HTML and display functions
 #     mock_display = mocker.patch('IPython.display.display')
-#
 #     numpy_based_tables_helpers.display_data_html(tensor, 0, 3)
-#
 #     called_args, called_kwargs = mock_display.call_args
 #     displayed_html = called_args[0]
 #
@@ -202,9 +202,7 @@ def test_get_data_none_values_2e(setup_torch_tensor_with_nones):
 #
 #     # Mock the HTML and display functions
 #     mock_display = mocker.patch('IPython.display.display')
-#
 #     numpy_based_tables_helpers.display_data_html(tensor, 0, 3)
-#
 #     called_args, called_kwargs = mock_display.call_args
 #     displayed_html = called_args[0]
 #
@@ -220,12 +218,9 @@ def test_get_data_none_values_2e(setup_torch_tensor_with_nones):
 def test_display_data_csv_float_values(mocker, setup_torch_tensor_with_floats):
     torch_tensor = setup_torch_tensor_with_floats
     # Mock the CSV and display functions
-    mock_print = mocker.patch('builtins.print')
-
+    mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
     numpy_based_tables_helpers.display_data_csv(torch_tensor, 0, 3)
-
-    called_args, called_kwargs = mock_print.call_args
-    displayed_csv = called_args[0]
+    displayed_csv = mock_print.getvalue()
 
     assert isinstance(displayed_csv, str)
 
@@ -240,12 +235,9 @@ def test_display_data_csv_none_values(mocker, setup_torch_tensor_with_nones):
     torch_tensor = setup_torch_tensor_with_nones
 
     # Mock the CSV and display functions
-    mock_print = mocker.patch('builtins.print')
-
+    mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
     numpy_based_tables_helpers.display_data_csv(torch_tensor, 0, 3)
-
-    called_args, called_kwargs = mock_print.call_args
-    displayed_csv = called_args[0]
+    displayed_csv = mock_print.getvalue()
 
     assert isinstance(displayed_csv, str)
 

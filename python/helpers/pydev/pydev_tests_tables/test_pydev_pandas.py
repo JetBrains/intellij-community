@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 import sys
 
+from io import StringIO
 from IPython.display import HTML
 
 import _pydevd_bundle.tables.pydevd_pandas as pandas_tables_helpers
@@ -634,9 +635,7 @@ def test_display_data_html_df(mocker, setup_dataframe):
 
     # Mock the HTML and display functions
     mock_display = mocker.patch('IPython.display.display')
-
     pandas_tables_helpers.display_data_html(df, 0, 16)
-
     called_args, called_kwargs = mock_display.call_args
     displayed_html = called_args[0]
 
@@ -652,12 +651,9 @@ def test_display_data_csv_df(mocker, setup_dataframe):
     df = df.drop(columns=['dates'])
 
     # Mock the CSV and display functions
-    mock_print = mocker.patch('builtins.print')
-
+    mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
     pandas_tables_helpers.display_data_csv(df, 0, 16)
-
-    called_args, called_kwargs = mock_print.call_args
-    displayed_csv = called_args[0]
+    displayed_csv = mock_print.getvalue()
 
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_csv,
@@ -671,9 +667,7 @@ def test_display_data_html_df_with_float_values(mocker, setup_dataframe_with_flo
 
     # Mock the HTML and display functions
     mock_display = mocker.patch('IPython.display.display')
-
     pandas_tables_helpers.display_data_html(df, 0, 3)
-
     called_args, called_kwargs = mock_display.call_args
     displayed_html = called_args[0]
 
@@ -688,12 +682,9 @@ def test_display_data_csv_df_with_float_values(mocker, setup_dataframe_with_floa
     df = setup_dataframe_with_float_values
 
     # Mock the CSV and display functions
-    mock_print = mocker.patch('builtins.print')
-
+    mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
     pandas_tables_helpers.display_data_csv(df, 0, 3)
-
-    called_args, called_kwargs = mock_print.call_args
-    displayed_csv = called_args[0]
+    displayed_csv = mock_print.getvalue()
 
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_csv,

@@ -6,6 +6,7 @@ import pandas as pd
 import datetime
 import sys
 
+from io import StringIO
 from IPython.display import HTML
 
 import _pydevd_bundle.tables.pydevd_dataset as datasets_helpers
@@ -245,9 +246,7 @@ def test_display_data_html_dataset(mocker, setup_dataset):
 
     # Mock the HTML and display functions
     mock_display = mocker.patch('IPython.display.display')
-
     datasets_helpers.display_data_html(dataset, 0, 5)
-
     called_args, called_kwargs = mock_display.call_args
     displayed_html = called_args[0]
 
@@ -263,12 +262,9 @@ def test_display_data_csv_dataset(mocker, setup_dataset):
     dataset = dataset.remove_columns(['dates'])
 
     # Mock the CSV and display functions
-    mock_print = mocker.patch('builtins.print')
-
+    mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
     datasets_helpers.display_data_csv(dataset, 0, 16)
-
-    called_args, called_kwargs = mock_print.call_args
-    displayed_csv = called_args[0]
+    displayed_csv = mock_print.getvalue()
 
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_csv,
@@ -282,9 +278,7 @@ def test_display_data_html_dataset_with_float_values(mocker, setup_dataset_with_
 
     # Mock the HTML and display functions
     mock_display = mocker.patch('IPython.display.display')
-
     datasets_helpers.display_data_html(df, 0, 3)
-
     called_args, called_kwargs = mock_display.call_args
     displayed_html = called_args[0]
 
@@ -299,12 +293,9 @@ def test_display_data_csv_dataset_with_float_values(mocker, setup_dataset_with_f
     df = setup_dataset_with_float_values
 
     # Mock the CSV and display functions
-    mock_print = mocker.patch('builtins.print')
-
+    mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
     datasets_helpers.display_data_csv(df, 0, 3)
-
-    called_args, called_kwargs = mock_print.call_args
-    displayed_csv = called_args[0]
+    displayed_csv = mock_print.getvalue()
 
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_csv,
@@ -315,7 +306,6 @@ def test_display_data_csv_dataset_with_float_values(mocker, setup_dataset_with_f
 def __read_expected_from_file_and_compare_with_actual(actual, expected_file):
     with open(expected_file, 'r') as in_f:
         expected = in_f.read()
-
 
     assert len(expected) > 0
 
