@@ -421,27 +421,28 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     val ts = getThreadState()
     var release = false
     var releaseSecondary = false
+
+    // We must acquire read lock on the second permit first; see similar technique in `startWrite`
+    val sharedLock = ts.sharedLock
+    if (sharedLock != null) {
+      // We need a secondary permit, read one. Optimization: if we have on as last, do nothing
+      val sps = mySecondaryPermits.get()
+      val last = sps.lastOrNull()
+      // If secondary lock does not protect this shared lock yet, get secondary lock
+      // If here is any secondary permit, then additional read permit will do nothing but prevent
+      // wil -> rl -> wl sequence which is (unfortunately) allowed and used now.
+      if (last == null) {
+        sps.add(acquireReadPermit(sharedLock))
+        releaseSecondary = true
+      }
+    }
+
     when (ts.permit) {
       null -> {
         ts.acquire(acquireReadPermit(lock))
         release = true
       }
-      is WriteIntentPermit -> {
-        val sharedLock = ts.sharedLock
-        if (sharedLock != null) {
-          // We need a secondary permit, read one. Optimization: if we have on as last, do nothing
-          val sps = mySecondaryPermits.get()
-          val last = sps.lastOrNull()
-          // If secondary lock does not protect this shared lock yet, get secondary lock
-          // If here is any secondary permit, then additional read permit will do nothing but prevent
-          // wil -> rl -> wl sequence which is (unfortunately) allowed and used now.
-          if (last == null ) {
-            sps.add(acquireReadPermit(sharedLock))
-            releaseSecondary = true
-          }
-        }
-      }
-      is ReadPermit, is WritePermit -> {}
+      is ReadPermit, is WritePermit, is WriteIntentPermit -> {}
     }
 
     // For diagnostic purposes register that we in read action, even if we use stronger lock
@@ -475,6 +476,26 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     val ts = getThreadState()
     var release = false
     var releaseSecondary = false
+
+    // See similar technique in `startWrite`
+    val sharedLock = ts.sharedLock
+    if (sharedLock != null) {
+      // We need a secondary permit, read one. Optimization: if we have on as last, do nothing
+      val sps = mySecondaryPermits.get()
+      val last = sps.lastOrNull()
+      // If secondary lock does not protect this shared lock yet, get secondary lock
+      // If here is any secondary permit, then additional read permit will do nothing but prevent
+      // wil -> rl -> wl sequence which is (unfortunately) allowed and used now.
+      if (last == null) {
+        val p = tryGetReadPermit(sharedLock)
+        if (p == null) {
+          return false
+        }
+        sps.add(p)
+        releaseSecondary = true
+      }
+    }
+
     when (ts.permit) {
       null -> {
         val p = tryGetReadPermit(lock)
@@ -484,26 +505,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
         ts.acquire(p)
         release = true
       }
-      is WriteIntentPermit -> {
-        val sharedLock = ts.sharedLock
-        if (sharedLock != null) {
-          // We need a secondary permit, read one. Optimization: if we have on as last, do nothing
-          val sps = mySecondaryPermits.get()
-          val last = sps.lastOrNull()
-          // If secondary lock does not protect this shared lock yet, get secondary lock
-          // If here is any secondary permit, then additional read permit will do nothing but prevent
-          // wil -> rl -> wl sequence which is (unfortunately) allowed and used now.
-          if (last == null) {
-            val p = tryGetReadPermit(sharedLock)
-            if (p == null) {
-              return false
-            }
-            sps.add(p)
-            releaseSecondary = true
-          }
-        }
-      }
-      is ReadPermit, is WritePermit -> {}
+      is ReadPermit, is WritePermit, is WriteIntentPermit -> {}
     }
 
     // For diagnostic purposes register that we in read action, even if we use stronger lock

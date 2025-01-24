@@ -5,6 +5,7 @@ import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
 import com.intellij.concurrency.currentThreadOverriddenContextOrNull
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.ModalCoroutineTest
 import com.intellij.openapi.application.impl.processApplicationQueue
@@ -299,6 +300,94 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
               finally {
                 writeActionCounter.decrementAndGet()
               }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Suppress("ForbiddenInSuspectContextMethod")
+  @Test
+  fun `simultaneous wa and ra are forbidden`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val writeActionCounter = AtomicInteger(0)
+    writeIntentReadAction {
+      runWithModalProgressBlocking {
+        repeat(Runtime.getRuntime().availableProcessors() * 5) {
+          launch(Dispatchers.Default) {
+            ApplicationManager.getApplication().runWriteAction {
+              try {
+                writeActionCounter.incrementAndGet()
+                Thread.sleep(100)
+              }
+              finally {
+                writeActionCounter.decrementAndGet()
+              }
+            }
+          }
+        }
+        repeat(Runtime.getRuntime().availableProcessors() * 5) {
+          launch(Dispatchers.Default) {
+            ApplicationManager.getApplication().runReadAction {
+              assertEquals(0, writeActionCounter.get())
+              Thread.sleep(100)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `simultaneous wa and attempting ra are forbidden`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val inWriteAction = AtomicBoolean(false)
+    writeIntentReadAction {
+      runWithModalProgressBlocking {
+        val job = Job()
+        launch(Dispatchers.EDT) {
+          writeAction {
+            try {
+              inWriteAction.set(true)
+              job.complete()
+              Thread.sleep(1000)
+            }
+            finally {
+              inWriteAction.set(false)
+            }
+          }
+        }
+        job.asCompletableFuture().join()
+        assertFalse((ApplicationManager.getApplication() as ApplicationEx).tryRunReadAction {
+          fail<Nothing>("RA should not start")
+        })
+      }
+    }
+  }
+
+  @Suppress("ForbiddenInSuspectContextMethod")
+  @Test
+  fun `simultaneous wa and attempting ra are forbidden 2`(): Unit = runBlocking(Dispatchers.EDT) {
+    val writeActionCounter = AtomicInteger(0)
+    writeIntentReadAction {
+      runWithModalProgressBlocking {
+        repeat(Runtime.getRuntime().availableProcessors() * 5) {
+          launch(Dispatchers.Default) {
+            ApplicationManager.getApplication().runWriteAction {
+              try {
+                writeActionCounter.incrementAndGet()
+                Thread.sleep(100)
+              }
+              finally {
+                writeActionCounter.decrementAndGet()
+              }
+            }
+          }
+        }
+        repeat(Runtime.getRuntime().availableProcessors() * 5) {
+          launch(Dispatchers.Default) {
+            (ApplicationManager.getApplication() as ApplicationEx).tryRunReadAction {
+              assertEquals(0, writeActionCounter.get())
+              Thread.sleep(100)
             }
           }
         }
