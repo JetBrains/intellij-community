@@ -50,7 +50,7 @@ internal abstract class TerminalEventDispatcher(
   private val editor: EditorEx,
   private val parentDisposable: Disposable,
 ) : IdeEventQueue.EventDispatcher {
-  private val sendShortcutAction = SendShortcutToTerminalAction()
+  private val sendShortcutAction = SendShortcutToTerminalAction(this)
   private var myRegistered = false
   private var actionsToSkip: List<AnAction> = emptyList()
 
@@ -83,7 +83,7 @@ internal abstract class TerminalEventDispatcher(
     this.actionsToSkip = actionsToSkip
     if (!myRegistered) {
       IdeEventQueue.getInstance().addDispatcher(this, parentDisposable)
-      sendShortcutAction.register(editor.contentComponent, this)
+      sendShortcutAction.register(editor.contentComponent)
       myRegistered = true
     }
   }

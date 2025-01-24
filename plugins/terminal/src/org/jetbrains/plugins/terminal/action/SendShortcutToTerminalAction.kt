@@ -24,7 +24,9 @@ import javax.swing.KeyStroke
  * but it only enables itself if none of the allowed actions are enabled.
  * It is also promoted, so it's considered before other platform actions.
  */
-internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class SendShortcutToTerminalAction(
+  private val dispatcher: TerminalEventDispatcher,
+) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   init {
     templatePresentation.putClientProperty(KEY, Unit)
@@ -36,16 +38,12 @@ internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionRemoteBeh
       .toTypedArray()
   )
 
-  private val registeredDispatchers = ConcurrentHashMap<JComponent, TerminalEventDispatcher>()
-
-  internal fun register(component: JComponent, dispatcher: TerminalEventDispatcher) {
+  internal fun register(component: JComponent) {
     registerCustomShortcutSet(terminalShortcuts, component)
-    registeredDispatchers[component] = dispatcher
   }
 
   internal fun unregister(component: JComponent) {
     unregisterCustomShortcutSet(component)
-    registeredDispatchers.remove(component)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -53,11 +51,6 @@ internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionRemoteBeh
   override fun update(e: AnActionEvent) {
     val shortcut = e.shortcut
     if (shortcut == null) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-    val dispatcher = getDispatcher(e)
-    if (dispatcher == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -73,13 +66,7 @@ internal class SendShortcutToTerminalAction : DumbAwareAction(), ActionRemoteBeh
     e.presentation.isEnabledAndVisible = true
   }
 
-  private fun getDispatcher(e: AnActionEvent): TerminalEventDispatcher? {
-    val component = e.dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return null
-    return registeredDispatchers[component]
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
-    val dispatcher = getDispatcher(e) ?: return
     val event = e.inputEvent as? KeyEvent ?: return
     dispatcher.handleKeyEvent(event)
   }
