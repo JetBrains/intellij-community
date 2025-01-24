@@ -414,11 +414,13 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       schemaObject = ObjectUtils.coalesce(variants.firstOrNull(), schemaObject)
       propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else (psiWalker?.escapeInvalidIdentifier(propertyKey) ?: StringUtil.wrapWithDoubleQuote(propertyKey))
 
+      val extraLookupStrings = jsonSchemaObject.metadata?.firstOrNull { it.key == "aliases" }?.values.orEmpty()
+
       val builder = LookupElementBuilder.create(propertyKey)
         .withPresentableText(completionPath?.let { it.prefix() + "." + key }
                              ?: key.takeIf { psiWalker?.requiresNameQuotes() == false }
                              ?: propertyKey)
-        .withLookupStrings(listOfNotNull(completionPath?.let { it.prefix() + "." + key }, propertyKey) + completionPath?.accessor().orEmpty())
+        .withLookupStrings(listOfNotNull(completionPath?.let { it.prefix() + "." + key }, propertyKey) + completionPath?.accessor().orEmpty() + extraLookupStrings)
         .withTypeText(getDocumentationOrTypeName(schemaObject), true)
         .withIcon(getIcon(JsonSchemaObjectReadingUtils.guessType(schemaObject)))
         .withInsertHandler(choosePropertyInsertHandler(completionPath, variants, schemaObject))
