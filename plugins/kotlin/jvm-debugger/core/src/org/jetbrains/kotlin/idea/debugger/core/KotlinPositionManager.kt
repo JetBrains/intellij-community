@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
@@ -104,6 +104,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     override fun createStackFrames(descriptor: StackFrameDescriptorImpl): List<XStackFrame>? {
+        DebuggerManagerThreadImpl.assertIsManagerThread()
         if (descriptor.location?.isInKotlinSources() != true) {
             return null
         }
