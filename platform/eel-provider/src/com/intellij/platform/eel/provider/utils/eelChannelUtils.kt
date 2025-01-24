@@ -115,7 +115,7 @@ suspend fun <ERR_IN : Any, ERR_OUT : Any> copy(
       buffer.flip()
       do {
         // write data
-        when (val r = dst.send(buffer)) {
+        when (@Suppress("OPT_IN_USAGE") val r = dst.send(buffer)) {
           is EelResult.Error -> return@withContext ResultErrImpl(CopyResultError.OutError(r.error))
           is EelResult.Ok -> Unit
         }

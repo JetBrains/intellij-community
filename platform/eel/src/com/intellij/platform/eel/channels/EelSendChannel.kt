@@ -20,6 +20,7 @@ interface EelSendChannel<out ERR : Any> {
    *
    * @return Either IO [ERR] string or success if [src] was written.
    */
+  @EelSendApi
   @CheckReturnValue
   suspend fun send(src: ByteBuffer): EelResult<Unit, ERR>
 
@@ -41,6 +42,7 @@ suspend fun <ERR : Any> EelSendChannel<ERR>.sendWholeBuffer(src: ByteBuffer): Ee
   }
   var result: EelResult<Unit, ERR>
   do {
+    @Suppress("OPT_IN_USAGE")
     result = send(src).also { it.getOr { return it } }
   }
   while (src.hasRemaining())
