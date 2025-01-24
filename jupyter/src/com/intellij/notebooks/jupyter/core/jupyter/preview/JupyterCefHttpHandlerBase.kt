@@ -22,7 +22,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Set<Stri
   companion object {
     private val allowedTypes = setOf("css", "js", "html", "svg", "woff", "woff2", "ttf")
     private const val JUPYTER_HTTP_URI = "jupyter"
-    private const val PATH_PREFIX = "/${JUPYTER_HTTP_URI}"
+    const val PATH_PREFIX: String = "/${JUPYTER_HTTP_URI}"
 
     /**
      * Jupyter HTTP files can be accessed with this URL
