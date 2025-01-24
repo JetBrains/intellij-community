@@ -685,9 +685,9 @@
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.VariableInitializerIsRedundantInspection"
                      groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin"
                      key="inspection.variable.initializer.is.redundant.display.name" bundle="messages.KotlinBundle">
     </localInspection>
