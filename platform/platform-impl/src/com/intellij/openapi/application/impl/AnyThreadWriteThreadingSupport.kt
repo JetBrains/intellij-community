@@ -591,6 +591,34 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     var release = false
     var releaseSecondary = false
+
+    val sharedLock = ts.sharedLock
+    // If the shared lock is present, then the primary lock is at least in WIL state;
+    // The current process of interaction with the primary lock involves reading its mutable field for permit.
+    // We must establish mutual exclusion with other parties that attempt to read this field
+    // before proceeding with the operations on the primary lock.
+    if (sharedLock != null) {
+      // We need a secondary permit, read one. Optimization: if we have on as last, do nothing
+      val sps = mySecondaryPermits.get()
+      val last = sps.lastOrNull()
+      when (last) {
+        null -> {
+          sps.add(measureWriteLock { getWritePermit(sharedLock) })
+          releaseSecondary = true
+        }
+        is WriteIntentPermit -> {
+          sps.add(measureWriteLock { runSuspend { last.acquireWritePermit() } })
+          releaseSecondary = true
+        }
+        is ReadPermit -> {
+          // Rollback pending
+          myWriteActionPending.decrementAndGet()
+          error("WriteAction can not be called from ReadAction")
+        }
+        is WritePermit -> {}
+      }
+    }
+
     when (ts.permit) {
       null -> {
         ts.acquire(measureWriteLock { getWritePermit(ts) })
@@ -599,28 +627,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       // Read permit is impossible here, as it is first check before all "pendings"
       is ReadPermit -> {}
       is WriteIntentPermit -> {
-        val sharedLock = ts.sharedLock
-        if (sharedLock != null) {
-          // We need a secondary permit, read one. Optimization: if we have on as last, do nothing
-          val sps = mySecondaryPermits.get()
-          val last = sps.lastOrNull()
-          when (last) {
-            null -> {
-              sps.add(measureWriteLock { getWritePermit(sharedLock) })
-              releaseSecondary = true
-            }
-            is WriteIntentPermit -> {
-              sps.add(measureWriteLock { runSuspend { last.acquireWritePermit() } })
-              releaseSecondary = true
-            }
-            is ReadPermit -> {
-              // Rollback pending
-              myWriteActionPending.decrementAndGet()
-              error("WriteAction can not be called from ReadAction")
-            }
-            is WritePermit -> {}
-          }
-        }
         // Upgrade main permit
         ts.acquire(measureWriteLock { getWritePermit(ts) })
         release = true

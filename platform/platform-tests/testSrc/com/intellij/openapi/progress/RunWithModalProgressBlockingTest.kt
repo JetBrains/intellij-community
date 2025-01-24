@@ -22,6 +22,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
@@ -277,6 +278,30 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
             action()
           }
         }, "", true, null)
+      }
+    }
+  }
+
+  @Suppress("ForbiddenInSuspectContextMethod")
+  @Test
+  fun `simultaneous wa and wa are forbidden`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val writeActionCounter = AtomicInteger(0)
+    writeIntentReadAction {
+      runWithModalProgressBlocking {
+        repeat(Runtime.getRuntime().availableProcessors() * 10) {
+          launch(Dispatchers.Default) {
+            ApplicationManager.getApplication().runWriteAction {
+              try {
+                writeActionCounter.incrementAndGet()
+                assertEquals(1, writeActionCounter.get())
+                Thread.sleep(100)
+              }
+              finally {
+                writeActionCounter.decrementAndGet()
+              }
+            }
+          }
+        }
       }
     }
   }
