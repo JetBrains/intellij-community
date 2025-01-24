@@ -2,6 +2,7 @@
   <id>com.intellij.compose</id>
   <name>Compose Multiplatform</name>
   <vendor>JetBrains</vendor>
+  <category>Kotlin Frameworks</category>
   <description>
     <![CDATA[
       IDE support for developing <a href="https://www.jetbrains.com/compose-multiplatform/">Compose Multiplatform</a> and <a href="https://developer.android.com/compose">Jetpack Compose</a> applications.
