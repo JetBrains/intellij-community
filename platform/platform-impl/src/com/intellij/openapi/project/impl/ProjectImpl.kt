@@ -173,6 +173,10 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     emptyConstructorMethodType,
   )
 
+  override fun isComponentCreated(): Boolean {
+    return containerState.get() >= ContainerState.COMPONENT_CREATED
+  }
+
   override fun isInitialized(): Boolean {
     val containerState = containerState.get()
     if ((containerState < ContainerState.COMPONENT_CREATED || containerState >= ContainerState.DISPOSE_IN_PROGRESS) ||
