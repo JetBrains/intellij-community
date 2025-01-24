@@ -387,13 +387,13 @@ abstract class ProjectFrameHelper internal constructor(
 
   internal open suspend fun setProject(project: Project) {
     frameHeaderHelper.setProject(project)
+    statusBar?.initialize()
     statusBar?.let {
       project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
     }
     activationTimestamp?.let {
       serviceAsync<RecentProjectsManager>().setActivationTimestamp(project, it)
     }
-    project.serviceAsync<PerProjectTaskInfoEntityCollector>().startCollectingActiveTasks()
   }
 
   @RequiresEdt

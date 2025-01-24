@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.BridgeTaskSupport
+import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -192,8 +193,6 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
 
-    registerCloneTasks()
-
     if (addToolWindowWidget) {
       val disposable = Disposer.newDisposable()
       coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
@@ -214,6 +213,11 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     enableEvents(AWTEvent.MOUSE_EVENT_MASK)
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK)
     IdeEventQueue.getInstance().addDispatcher({ e -> if (e is MouseEvent) dispatchMouseEvent(e) else false }, coroutineScope)
+  }
+
+  internal fun initialize() {
+    registerCloneTasks()
+    project?.service<PerProjectTaskInfoEntityCollector>()?.startCollectingActiveTasks()
   }
 
   private fun createInfoAndProgressPanel(): InfoAndProgressPanel {
