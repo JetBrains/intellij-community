@@ -2,7 +2,11 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -20,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWit
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.MODIFIER_KEYWORDS_ARRAY
@@ -198,12 +203,17 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
         }
     }
 
-    private class RedundantOverrideFix : LocalQuickFix {
+    private class RedundantOverrideFix : KotlinModCommandQuickFix<KtNamedFunction>() {
         override fun getName(): String = KotlinBundle.message("redundant.override.fix.text")
+
         override fun getFamilyName(): String = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            descriptor.psiElement.delete()
+        override fun applyFix(
+            project: Project,
+            element: KtNamedFunction,
+            updater: ModPsiUpdater
+        ) {
+            element.delete()
         }
     }
 }
