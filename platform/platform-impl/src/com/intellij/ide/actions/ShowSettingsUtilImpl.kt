@@ -20,6 +20,7 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -59,8 +60,9 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     }
 
     private fun showInternal(project: Project?, settingsDialogInitializer: () -> SettingsDialog) {
-      if (AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window")) {
-        val currentOrDefaultProject = currentOrDefaultProject(project)
+      val currentOrDefaultProject = currentOrDefaultProject(project)
+      val isActualProject = currentOrDefaultProject != ProjectManager.getInstance().defaultProject
+      if (AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window") && isActualProject) {
         runWithModalProgressBlocking(currentOrDefaultProject, IdeBundle.message("settings.modal.opening.message")) {
           val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(settingsDialogInitializer);
           val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
