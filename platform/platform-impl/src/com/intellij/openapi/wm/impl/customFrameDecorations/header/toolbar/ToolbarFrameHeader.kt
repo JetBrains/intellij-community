@@ -347,7 +347,7 @@ internal class ToolbarFrameHeader(
   override suspend fun updateMenuActions(forceRebuild: Boolean) {
     expandableMenu.ideMenu.updateMenuActions(forceRebuild)
   }
-  
+
   /**
    *  Used exclusively for `ShowMode.TOOLBAR_WITH_MENU`.
    * This method initializes and returns a `ComponentListener` to dynamically manage the toolbar's menu items
@@ -396,10 +396,14 @@ internal class ToolbarFrameHeader(
               wasChanged = true
             }
             while (widthToReduce > 0)
-            removedItems.forEach { toolbarMainMenu.remove(it) }
+            removedItems.forEach { removedItem ->
+              toolbarMainMenu.rootMenuItems.find { it.text == removedItem.text }
+                ?.let { toolbarMainMenu.remove(it) }
+            }
           }
           mainMenuButtonComponent.isVisible = removedItems.isNotEmpty()
           if (wasChanged) {
+            toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
             toolbarPlaceholder.revalidate()
             toolbarPlaceholder.repaint()
           }
