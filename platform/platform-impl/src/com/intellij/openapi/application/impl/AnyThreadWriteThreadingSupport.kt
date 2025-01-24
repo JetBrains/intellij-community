@@ -218,24 +218,26 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     var release = true
     var releaseSecondary = false
 
+    // See similar technique in `startWrite`
+    val sharedLock = ts.sharedLock
+    if (sharedLock != null) {
+      // Check secondary protection lock
+      val sps = mySecondaryPermits.get()
+      when (sps.lastOrNull()) {
+        null -> {
+          sps.add(getWriteIntentPermit(sharedLock))
+          releaseSecondary = true
+        }
+        is ReadPermit -> error("WriteIntentReadAction can not be called from ReadAction")
+        is WriteIntentPermit, is WritePermit -> {}
+      }
+    }
+
     when (ts.permit) {
       null -> ts.acquire(getWriteIntentPermit())
       is ReadPermit -> error("WriteIntentReadAction can not be called from ReadAction")
       is WriteIntentPermit -> {
         // Volatile read
-        val sharedLock = ts.sharedLock
-        if (sharedLock != null) {
-          // Check secondary protection lock
-          val sps = mySecondaryPermits.get()
-          when (sps.lastOrNull()) {
-            null -> {
-              sps.add(getWriteIntentPermit(sharedLock))
-              releaseSecondary = true
-            }
-            is ReadPermit -> error("WriteIntentReadAction can not be called from ReadAction")
-            is WriteIntentPermit, is WritePermit -> {}
-          }
-        }
         release = false
         checkWriteFromRead("Write Intent Read", "Write Intent")
       }

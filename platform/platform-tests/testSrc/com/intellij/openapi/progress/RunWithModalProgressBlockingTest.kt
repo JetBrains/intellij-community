@@ -394,6 +394,38 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       }
     }
   }
+
+
+  @Suppress("ForbiddenInSuspectContextMethod")
+  @Test
+  fun `simultaneous wa and wira are forbidden`(): Unit = runBlocking(Dispatchers.EDT) {
+    val writeActionCounter = AtomicInteger(0)
+    writeIntentReadAction {
+      runWithModalProgressBlocking {
+        repeat(Runtime.getRuntime().availableProcessors() * 5) {
+          launch(Dispatchers.Default) {
+            ApplicationManager.getApplication().runWriteAction {
+              try {
+                writeActionCounter.incrementAndGet()
+                Thread.sleep(100)
+              }
+              finally {
+                writeActionCounter.decrementAndGet()
+              }
+            }
+          }
+        }
+        repeat(Runtime.getRuntime().availableProcessors() * 5) {
+          launch(Dispatchers.Default) {
+            writeIntentReadAction {
+              assertEquals(0, writeActionCounter.get())
+              Thread.sleep(100)
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 private fun CoroutineScope.runWithModalProgressBlockingCoroutine(action: suspend CoroutineScope.() -> Unit): Job {
