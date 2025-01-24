@@ -5,9 +5,6 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.GotItTooltip
@@ -17,8 +14,6 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.launchOnShow
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -60,12 +55,10 @@ internal class TrialStateWidget : DumbAwareAction(), CustomComponentAction {
 
     result.launchOnShow("TrialStateButton") {
       TrialStateService.getInstance().state.collect { state ->
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          updateButton(result)
+        updateButton(result)
 
-          if (state?.trialStateChanged == true) {
-            showUpdatedStateNotification(result, state)
-          }
+        if (state?.trialStateChanged == true) {
+          showUpdatedStateNotification(result, state)
         }
       }
     }
