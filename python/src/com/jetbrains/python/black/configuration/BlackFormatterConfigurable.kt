@@ -119,7 +119,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
         .columns(COLUMNS_SHORT)
     }
     row {
-      formattingFragmentsNotSupportedLabel = label(PyBundle.message("black.format.fragments.minimal.version.info.label"))
+      formattingFragmentsNotSupportedLabel = label(PyBundle.message("black.format.fragments.supported.info"))
         .applyToComponent { icon = AllIcons.General.Warning }
         .visible(false)
         .component
