@@ -30,9 +30,11 @@ class HtmlReportGenerator(
       "/style.css",
       "/pako.min.js",
       "/tabulator.min.js",
+      "/chart.umd.min.js",
       "/tabulator.min.css",
       "/tabulator.min.css.map",
       "/error.js",
+      "/chartBuilder.js",
       "/options.css",
       "/fonts/JetBrainsMono-Medium.eot",
       "/fonts/JetBrainsMono-Medium.woff"
@@ -92,13 +94,14 @@ class HtmlReportGenerator(
 
   override fun generateGlobalReport(globalMetrics: List<MetricInfo>): Path {
     val reportPath = Paths.get(dirs.filterDir.toString(), globalReportName)
-
     val reportTitle = "Evaluation report"
     createHTML().html {
       head {
         title(reportTitle)
         meta { charset = "utf-8" }
         script { src = "res/tabulator.min.js" }
+        script { src = "res/chart.umd.min.js" }
+        script { src = "res/chartBuilder.js" }
         link {
           href = "res/tabulator.min.css"
           rel = "stylesheet"
@@ -164,7 +167,6 @@ class HtmlReportGenerator(
 
     fun getReportRow(repRef: Map.Entry<String, ReferenceInfo>) =
       "{id:${rowId++},file:${getReportLink(repRef)},${formatMetrics(getReportMetrics(repRef.value))}}"
-
     return """
         |let tableData = [{id:0,file:'Summary',${formatMetrics(globalMetrics)}}
         |${with(errorReferences) { if (isNotEmpty()) map { getErrorRow(it) }.joinToString(",\n", ",") else "" }}
@@ -277,12 +279,13 @@ class HtmlReportGenerator(
             ||if(${metric}.checked){${evaluationTypes.joinToString("") { type -> "table.showColumn('${metric}${type}');" }}
             ||${ifDiff("if (diffHidden())table.hideColumn('${metric}$diffColumnTitle');")}}
             ||else{${evaluationTypes.joinToString("") { type -> "table.hideColumn('${metric}${type}');" }}}
+            ||redrawCharts();
             """.trimMargin()
       }
     }}
         |function toggleColumn(name){${evaluationTypes.joinToString("") { "table.toggleColumn(name+'$it');" }}}
         |let search=document.getElementById('search');search.oninput=()=>table.setFilter(myFilter);
-        |let redrawBtn=document.getElementById('redrawBtn');redrawBtn.onclick=()=>table.redraw();
+        |let redrawBtn=document.getElementById('redrawBtn');redrawBtn.onclick=()=>{table.redraw();redrawCharts();}
         ${
       ifDiff("""
             ||let diffBtn=document.getElementById('diffBtn');
