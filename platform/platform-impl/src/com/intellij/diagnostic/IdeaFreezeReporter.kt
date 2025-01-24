@@ -48,7 +48,6 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
-    @Suppress("KotlinConstantConditions")
     if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer())) {
       throw ExtensionNotApplicableException.create()
     }
@@ -258,7 +257,7 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
     }
     val processCpuLoad = dumpTask.processCpuLoad
     if (processCpuLoad > 0) {
-      message += ", cpu load: ${(processCpuLoad * 100).toInt()}%"
+      message += ", CPU load: ${(processCpuLoad * 100).toInt()}%"
     }
     if (nonEdtCause) {
       message += "\n\nThe stack is from the thread that was blocking EDT"
@@ -376,7 +375,7 @@ private const val COMMON_SUB_STACK_WEIGHT = 0.25
  * DEBUG = true overrides all this, and enables freeze detection anyway
  * -- useful, e.g., while developing/debugging freeze detection code itself.
  */
-private const val DEBUG = false
+private val DEBUG = "false".toBoolean()
 
 private suspend fun reportUnfinishedFreezes() {
   ApplicationManager.getApplication().serviceAsync<PerformanceWatcher>().processUnfinishedFreeze { dir, duration ->

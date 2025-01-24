@@ -27,7 +27,7 @@ public abstract class AbstractMessage {
   public abstract @NotNull Throwable getThrowable();
   public abstract @NotNull String getThrowableText();
 
-  /** Returns a user message (see {@link LogMessage#eventOf}), if present. */
+  /** Returns a message passed along with a throwable to {@link com.intellij.openapi.diagnostic.Logger#error}, if present. */
   public abstract @Nullable String getMessage();
 
   /** Returns a (possibly empty) list of all attachments. */

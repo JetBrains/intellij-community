@@ -25,7 +25,7 @@ public final class LogMessage extends AbstractMessage {
   public LogMessage(@NotNull Throwable throwable, @Nullable String message, @NotNull List<Attachment> attachments) {
     myThrowable = ThrowableInterner.intern(throwable);
 
-    String str = message;
+    var str = message;
     if (str != null && throwable.getMessage() != null) {
       str = Strings.trimStart(str, throwable.getMessage());
       if (!Strings.areSameInstance(str, message)) {

@@ -196,7 +196,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
 
   private fun enableOkButtonIfReady() {
     val cluster = selectedCluster()
-    isOKActionEnabled = cluster.canSubmit() && !cluster.detailsText.isNullOrBlank() && myUpdateControlsJob.isCompleted
+    isOKActionEnabled = cluster.canSubmit && !cluster.detailsText.isNullOrBlank() && myUpdateControlsJob.isCompleted
   }
 
   override fun createCenterPanel(): JComponent? {
@@ -334,7 +334,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
 
   private fun updateMessages() {
     val messages = myMessagePool.getFatalErrors(true, true)
-    val clusters: MutableMap<Long, MessageCluster> = LinkedHashMap()
+    val clusters = LinkedHashMap<Long, MessageCluster>()
     for (message in messages) {
       val digest = CRC32()
       digest.update(ExceptionUtil.getThrowableText(message.throwable).toByteArray(StandardCharsets.UTF_8))
@@ -355,7 +355,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
       updateLabels(cluster)
       updateDetails(cluster)
       updateCredentialsPanel(submitter)
-      isOKActionEnabled = cluster.canSubmit()
+      isOKActionEnabled = cluster.canSubmit
       setDefaultReportActionText(submitter?.reportActionText ?: DiagnosticBundle.message("error.report.impossible.action"))
       setDefaultReportActionTooltip(if (submitter != null) null else DiagnosticBundle.message("error.report.impossible.tooltip"))
       myLoadingDecorator.stopLoading()
@@ -480,7 +480,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
 
   private fun updateDetails(cluster: MessageCluster) {
     val message = cluster.first
-    val canReport = cluster.canSubmit()
+    val canReport = cluster.canSubmit
     if (myLastIndex != myIndex) {
       myCommentArea.text = message.additionalInfo
       myAttachmentList.clear()
@@ -540,8 +540,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
   }
 
   private fun disablePlugin() {
-    val plugin = selectedCluster().plugin
-    if (plugin != null) {
+    selectedCluster().plugin?.let { plugin ->
       DisablePluginsDialog.confirmDisablePlugins(myProject, listOf(plugin))
     }
   }
@@ -671,10 +670,9 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
       return if (userMessage.isNullOrBlank()) stacktrace else "${userMessage}\n\n${stacktrace}"
     }
 
-    val isUnsent: Boolean
-      get() = !(first.isSubmitted || first.isSubmitting)
+    val isUnsent: Boolean get() = !first.isSubmitted && !first.isSubmitting
 
-    fun canSubmit(): Boolean = submitter != null && isUnsent
+    val canSubmit: Boolean get() = submitter != null && isUnsent
 
     fun decouple(): Pair<String?, Throwable> {
       val detailsText = detailsText!!
@@ -816,7 +814,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     var reportingStarted = true
     for (i in myMessageClusters.indices) {
       val cluster = myMessageClusters[i]
-      if (!cluster.canSubmit()) {
+      if (!cluster.canSubmit) {
         continue
       }
 

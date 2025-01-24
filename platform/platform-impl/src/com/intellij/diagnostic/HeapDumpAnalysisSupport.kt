@@ -17,11 +17,8 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import java.awt.Component
-import java.io.File
-import java.io.FileOutputStream
-import java.io.OutputStreamWriter
-import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.*
 
 internal open class HeapDumpAnalysisSupport {
   companion object {
@@ -32,7 +29,7 @@ internal open class HeapDumpAnalysisSupport {
 
   open fun uploadReport(reportText: String, heapReportProperties: HeapReportProperties, parentComponent: Component) {
     val text = getHeapDumpReportText(reportText, heapReportProperties)
-    val attachment = Attachment("report.txt", text)
+    val attachment = Attachment("report.txt", text).apply { isIncluded = true }
     attachment.isIncluded = true
     val event = IdeaLoggingEvent("Heap analysis results", OutOfMemoryError(), listOf(attachment), null, null)
     ErrorReportSubmitter.EP_NAME.findExtension(ITNReporter::class.java)?.submit(arrayOf(event), null, parentComponent) { }
@@ -48,8 +45,8 @@ internal open class HeapDumpAnalysisSupport {
    * Saves the given snapshot for analysis after restart.
    */
   open fun saveSnapshotForAnalysis(hprofPath: Path, reportProperties: HeapReportProperties) {
-    val jsonPath = File(PathManager.getSystemPath(), "pending-snapshot.json")
-    JsonWriter(OutputStreamWriter(FileOutputStream(jsonPath))).use {
+    val jsonPath = Path.of(PathManager.getSystemPath(), "pending-snapshot.json")
+    JsonWriter(jsonPath.bufferedWriter()).use {
       it.beginObject()
       it.name("path").value(hprofPath.toString())
       it.name("reason").value(reportProperties.reason.toString())
@@ -58,11 +55,9 @@ internal open class HeapDumpAnalysisSupport {
     }
   }
 
-  open fun analysisFailed(heapProperties: HeapReportProperties) {
-  }
+  open fun analysisFailed(heapProperties: HeapReportProperties) { }
 
-  open fun analysisComplete(heapProperties: HeapReportProperties) {
-  }
+  open fun analysisComplete(heapProperties: HeapReportProperties) { }
 }
 
 internal class AnalyzePendingSnapshotActivity: ProjectActivity {
@@ -74,7 +69,7 @@ internal class AnalyzePendingSnapshotActivity: ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val jsonPath = Path.of(PathManager.getSystemPath(), "pending-snapshot.json")
-    if (!Files.isRegularFile(jsonPath)) {
+    if (!jsonPath.isRegularFile()) {
       return
     }
 
@@ -82,7 +77,7 @@ internal class AnalyzePendingSnapshotActivity: ProjectActivity {
     var liveStats: String? = null
     var reason: MemoryReportReason? = null
     try {
-      val reader = JsonReader(Files.newBufferedReader(jsonPath))
+      val reader = JsonReader(jsonPath.bufferedReader())
       reader.use {
         it.beginObject()
         while (it.hasNext()) {
@@ -95,14 +90,13 @@ internal class AnalyzePendingSnapshotActivity: ProjectActivity {
         it.endObject()
       }
 
-      Files.deleteIfExists(jsonPath)
+      jsonPath.deleteIfExists()
     }
-    catch (ignore: Exception) {
-    }
+    catch (_: Exception) { }
 
     path?.let {
       val hprofPath = Path.of(it)
-      if (Files.exists(hprofPath)) {
+      if (hprofPath.exists()) {
         val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "")
         AnalysisRunnable(hprofPath, heapProperties, true).run()
       }
