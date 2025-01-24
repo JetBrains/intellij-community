@@ -11,18 +11,20 @@ import java.util.Set;
 public final class ProductCodeRuleValidator extends CustomValidationRule {
 
   private static final Set<String> codes = Set.of(
-    "IU",
-    "IC",
-    "PY",
-    "PC",
-    "WS",
-    "GO",
+    "AI",
     "CL",
+    "DB",
+    "GO",
+    "IC",
+    "IU",
+    "PC",
+    "PS",
+    "PY",
+    "QA",
     "RD",
     "RM",
     "RR",
-    "AS",
-    "QA"
+    "WS"
   );
 
   @Override

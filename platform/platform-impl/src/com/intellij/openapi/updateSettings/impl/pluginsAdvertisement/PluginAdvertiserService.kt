@@ -56,7 +56,7 @@ sealed interface PluginAdvertiserService {
     @JvmStatic
     fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
-        "IC", "AS" -> "IU"
+        "IC", "AI" -> "IU"
         "PC" -> "PY"
         else -> null
       }
@@ -75,7 +75,7 @@ sealed interface PluginAdvertiserService {
     )
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    val pyCharmProfessional = SuggestedIde(
+    val pyCharmProfessional: SuggestedIde = SuggestedIde(
       name = "PyCharm Professional",
       productCode = "PY",
       defaultDownloadUrl = "https://www.jetbrains.com/pycharm/download/",
@@ -104,12 +104,15 @@ sealed interface PluginAdvertiserService {
       "PC" to "pycharm_ce",
       "PE" to "pycharm_edu",
       "WS" to "webstorm",
+      "PS" to "phpstorm",
       "GO" to "go",
       "CL" to "clion",
       "RD" to "rider",
       "RM" to "ruby",
       "RR" to "rust",
-      "AS" to "androidstudio"
+      "AI" to "androidstudio",
+      "QA" to "aqua",
+      "DB" to "datagrip"
     )
 
     internal const val EXECUTABLE_DEPENDENCY_KIND: String = "executable"
