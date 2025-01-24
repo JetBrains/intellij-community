@@ -604,23 +604,25 @@ public class FileEncodingTest implements TestDialog {
 
   @Test
   public void testConvertNotAvailableForHtml() throws IOException {
-    @Language("HTML")
-    var content = "<html><head><meta content=\"text/html; charset=utf-8\" http-equiv=\"content-type\"></head>" +
-                  "<body>" + SOME_CYRILLIC_LETTERS +
-                  "</body></html>";
-    var file = createTempFile("html", NO_BOM, content, StandardCharsets.UTF_8);
-    var document = FileDocumentManager.getInstance().getDocument(file);
+    @org.intellij.lang.annotations.Language("HTML")
+    String content = "<html><head><meta content=\"text/html; charset=utf-8\" http-equiv=\"content-type\"></head>" +
+                     "<body>" + THREE_RUSSIAN_LETTERS +
+                     "</body></html>";
+    VirtualFile virtualFile = createTempFile("html", NO_BOM, content, StandardCharsets.UTF_8);
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     assertNotNull(document);
     FileDocumentManager.getInstance().saveAllDocuments();
-    var fileType = file.getFileType();
+    var fileType = virtualFile.getFileType();
     assertEquals(FileTypeManager.getInstance().getStdFileType("HTML"), fileType);
-    var fromType = ((LanguageFileType)fileType).extractCharsetFromFileContent(getProject(), file, (CharSequence)content);
+    var fromType = ((LanguageFileType)fileType).extractCharsetFromFileContent(getProject(), virtualFile, (CharSequence)content);
     assertEquals(StandardCharsets.UTF_8, fromType);
     var fromProlog = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     assertNull(fromProlog);
-    var charsetFromContent = EncodingManagerImpl.computeCharsetFromContent(file);
-    assertEquals(StandardCharsets.UTF_8, charsetFromContent);
-    var result = EncodingUtil.checkCanConvert(file);
+    var charsetFromContent = EncodingManagerImpl.computeCharsetFromContent(virtualFile);
+    Document docFromVF = FileDocumentManager.getInstance().getDocument(virtualFile);
+    Charset extractedCharset = ((LanguageFileType)fileType).extractCharsetFromFileContent(getProject(), virtualFile, document.getImmutableCharSequence());
+    assertEquals("docFromVF: " + docFromVF + "; fileType=" + fileType + "; extractedCharset=" + extractedCharset, StandardCharsets.UTF_8, charsetFromContent);
+    var result = EncodingUtil.checkCanConvert(virtualFile);
     assertEquals(EncodingUtil.FailReason.BY_FILE, result);
   }
 
