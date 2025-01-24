@@ -14,14 +14,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 @ApiStatus.Internal
 internal class SettingsFileEditor(private val settingsFile: SettingsVirtualFile) : FileEditor {
 
   private val userDataHolder: UserDataHolder = UserDataHolderBase()
+  private val emptyPanelLazy = lazy<JPanel>{ JPanel() }
 
   init {
     userDataHolder.putUserData(FileEditorManagerKeys.DUMB_AWARE, true)
+    userDataHolder.putUserData(FileEditorManagerKeys.FORBID_PREVIEW_TAB, true)
     userDataHolder.putUserData(FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW, true)
   }
 
@@ -30,7 +33,7 @@ internal class SettingsFileEditor(private val settingsFile: SettingsVirtualFile)
   }
 
   override fun getComponent(): JComponent {
-    return settingsFile.dialog.rootPane
+    return settingsFile.dialog.rootPane ?: emptyPanelLazy.value
   }
 
   override fun getPreferredFocusedComponent(): JComponent? {
