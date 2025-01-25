@@ -656,7 +656,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
   private class MessageCluster(val first: AbstractMessage) {
     val pluginId: PluginId? = PluginUtil.getInstance().findPluginId(first.throwable)
     val plugin: IdeaPluginDescriptor? = PluginManagerCore.getPlugin(pluginId)
-    val submitter: ErrorReportSubmitter? = getSubmitter(first.throwable, plugin)
+    val submitter: ErrorReportSubmitter? = DefaultIdeaErrorLogger.findSubmitter(first.throwable, plugin)
     var detailsText: String? = detailsText()
     val messages: MutableList<AbstractMessage> = ArrayList()
 
@@ -878,36 +878,5 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     @Deprecated("use {@link PluginUtil#findPluginId} ", ReplaceWith("PluginUtil.getInstance().findPluginId(t)"), level = DeprecationLevel.ERROR)
     fun findPluginId(t: Throwable): PluginId? =
       PluginUtil.getInstance().findPluginId(t)
-
-    @JvmStatic
-    @ApiStatus.Internal
-    fun getSubmitter(t: Throwable, plugin: IdeaPluginDescriptor?): ErrorReportSubmitter? {
-      if (t is TooManyErrorsException || t is AbstractMethodError) {
-        return null
-      }
-      val reporters: List<ErrorReportSubmitter> = try {
-        ErrorReportSubmitter.EP_NAME.extensionList
-      }
-      catch (_: Throwable) {
-        return null
-      }
-      if (plugin != null) {
-        for (reporter in reporters) {
-          val descriptor = reporter.pluginDescriptor
-          if (descriptor != null && plugin.pluginId == descriptor.pluginId) {
-            return reporter
-          }
-        }
-      }
-      if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
-        for (reporter in reporters) {
-          val descriptor = reporter.pluginDescriptor
-          if (descriptor == null || PluginManagerCore.CORE_ID == descriptor.pluginId) {
-            return reporter
-          }
-        }
-      }
-      return null
-    }
   }
 }

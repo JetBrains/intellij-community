@@ -92,7 +92,7 @@ class DialogAppender : Handler() {
         val notificationEnabled = System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY) != DISABLED_VALUE
 
         val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(throwable))
-        val submitter = IdeErrorsDialog.getSubmitter(throwable, plugin)
+        val submitter = DefaultIdeaErrorLogger.findSubmitter(throwable, plugin)
         val showPluginError = submitter !is ITNReporter || submitter.showErrorInRelease(IdeaLoggingEvent(message, throwable))
 
         if (plugin != null && !plugin.isBundled && !pluginUpdateScheduled.getAndSet(true) && UpdateSettings.getInstance().isPluginsCheckNeeded) {
