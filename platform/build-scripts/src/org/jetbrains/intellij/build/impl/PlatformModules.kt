@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression", "ReplaceGetOrSet")
 package org.jetbrains.intellij.build.impl
 
@@ -526,6 +526,7 @@ private suspend fun processAndGetProductPluginContentModules(
 @Suppress("RemoveRedundantQualifierName")
 private val excludedPaths = java.util.Set.of(
   "/META-INF/ultimate.xml",
+  "/META-INF/ultimate-services.xml",
   "/META-INF/RdServer.xml",
   "/META-INF/unattendedHost.xml",
   "/META-INF/codeWithMe.xml",

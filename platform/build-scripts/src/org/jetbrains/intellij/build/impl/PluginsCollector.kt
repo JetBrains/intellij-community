@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "UsePropertyAccessSyntax")
 
 package org.jetbrains.intellij.build.impl
@@ -187,6 +187,12 @@ suspend fun collectPluginDescriptors(
         AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
       )
       )
+      continue
+    }
+
+    if (id == "com.intellij.modules.ultimate" && !allBundledPlugins.contains(id)) {
+      // if 'ultimate' module is not mentioned in the list of bundled plugins,
+      // then this module does not exist in a form of plugin in this distribution and should be ignored
       continue
     }
 
