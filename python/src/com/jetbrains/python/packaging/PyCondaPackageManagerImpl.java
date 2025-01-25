@@ -24,14 +24,6 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public static final String PYTHON = "python";
   public boolean useConda = true;
 
-  public boolean useConda() {
-    return useConda;
-  }
-
-  public void useConda(boolean conda) {
-    useConda = conda;
-  }
-
   PyCondaPackageManagerImpl(final @NotNull Sdk sdk) {
     super(sdk);
   }

@@ -25,7 +25,6 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
@@ -78,9 +77,6 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
     }
     return createContentPanelWithAdvancedSettingsPanel()
   }
-
-  @RequiresEdt
-  override fun createWelcomeScript(): Boolean = createScript.get()
 
   /**
    * Returns the project location that is either:
@@ -178,10 +174,6 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
       // todo add proper validation with custom component
       return true
     }
-  }
-
-  override fun installFramework(): Boolean {
-    return true
   }
 
   override fun onPanelSelected() {

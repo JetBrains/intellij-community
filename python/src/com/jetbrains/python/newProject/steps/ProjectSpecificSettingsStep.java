@@ -3,11 +3,9 @@ package com.jetbrains.python.newProject.steps;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -21,8 +19,6 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
@@ -43,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -114,10 +109,6 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
     return interpreterPanel.getSdk();
-  }
-
-  public boolean installFramework() {
-    return myInstallFramework;
   }
 
   @Override
@@ -347,21 +338,5 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
       .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && PySdkExtKt.getSdkSeemsValid(sdk))
       .sorted(new PreferredSdkComparator())
       .toList();
-  }
-
-   /**
-   * If {@link PythonProjectGenerator} {@link PythonProjectGenerator#supportsWelcomeScript()},
-   * {@link ProjectSpecificSettingsStep} and inheritors should ask use if one should be created, and return true if so.
-   */
-  @RequiresEdt
-  public boolean createWelcomeScript() {
-    return false;
-  }
-
-  private static @NotNull File getBaseDir() {
-    if (PlatformUtils.isDataSpell() && Path.of(ProjectUtil.getBaseDir()).startsWith(PathManager.getConfigDir())) {
-      return new File(ProjectUtil.getUserHomeProjectDir());
-    }
-    return new File(ProjectUtil.getBaseDir());
   }
 }

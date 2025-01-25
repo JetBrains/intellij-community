@@ -259,12 +259,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     void stateChanged();
   }
 
-  public void fireStateChanged() {
-    for (SettingsListener listener : myListeners) {
-      listener.stateChanged();
-    }
-  }
-
   public void afterProjectGenerated(final @NotNull Project project) {
   }
 

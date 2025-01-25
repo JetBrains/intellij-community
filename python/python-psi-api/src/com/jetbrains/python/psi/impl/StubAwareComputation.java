@@ -127,13 +127,6 @@ public final class StubAwareComputation<Psi extends PsiElement, CustomStub, Resu
     public @NotNull <Result> StubAwareComputation<Psi, CustomStub, Result> overAst(@NotNull Function<Psi, Result> astComputation) {
       return new StubAwareComputation<>(this, null, astComputation, null, null);
     }
-
-    /**
-     * @see StubAwareComputation#overAstStubLike(Function)
-     */
-    public @NotNull <Result> StubAwareComputation<Psi, CustomStub, Result> overAstStubLike(@NotNull Function<Psi, Result> astStubLikeComputation) {
-      return new StubAwareComputation<>(this, null, null, astStubLikeComputation, null);
-    }
   }
 
   private final @NotNull PsiToStubConversion<Psi, ?, CustomStub> myConversion;

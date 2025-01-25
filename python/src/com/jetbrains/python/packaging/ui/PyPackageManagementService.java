@@ -128,16 +128,6 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return result;
   }
 
-  public Map<String, List<RepoPackage>> getAllPackagesByRepository() {
-    Map<String, List<RepoPackage>> result = new HashMap<>();
-    result.put(PyPIPackageUtil.PYPI_LIST_URL, getCachedPyPIPackages());
-    List<String> repositories = getAdditionalRepositories();
-    for (String repo : repositories) {
-      result.put(repo, PyPIPackageUtil.INSTANCE.getAdditionalPackages(List.of(repo)));
-    }
-    return result;
-  }
-
   private static @NotNull List<String> getAdditionalRepositories() {
     return PyPackageService.getInstance().additionalRepositories;
   }

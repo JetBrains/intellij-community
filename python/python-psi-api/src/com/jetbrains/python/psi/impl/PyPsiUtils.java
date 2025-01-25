@@ -199,14 +199,6 @@ public final class PyPsiUtils {
     return PyPsiUtilsCore.getChildByFilter(element, filter, number);
   }
 
-  public static void addBeforeInParent(final @NotNull PsiElement anchor, final PsiElement @NotNull ... newElements) {
-    final ASTNode anchorNode = anchor.getNode();
-    LOG.assertTrue(anchorNode != null);
-    for (PsiElement newElement : newElements) {
-      anchorNode.getTreeParent().addChild(newElement.getNode(), anchorNode);
-    }
-  }
-
   public static void removeElements(final PsiElement @NotNull ... elements) {
     final ASTNode parentNode = elements[0].getParent().getNode();
     LOG.assertTrue(parentNode != null);

@@ -123,18 +123,6 @@ public abstract class PyAbstractPackageCache {
     return myPackages.containsKey(name);
   }
 
-  /**
-   * Returns available package versions sorted in the reversed order using
-   * {@link com.intellij.webcore.packaging.PackageVersionComparator} so that the latest version is the first on the list
-   * or {@code null} if the given package is not contained in the cache or this feature is not available.
-   *
-   * @param packageName case-insensitive name of a package
-   */
-  public @Nullable List<String> getVersions(@NotNull String packageName) {
-    final PackageInfo packageInfo = myPackages.get(packageName);
-    return packageInfo != null ? packageInfo.getVersions() : null;
-  }
-
   @Override
   public String toString() {
     return String.format("%s(size=%d): %s...", getClass().getSimpleName(), myPackages.size(),

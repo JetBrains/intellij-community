@@ -15,8 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Alexei Orischenko
@@ -61,15 +59,6 @@ public final class PythonStringUtil {
         }
       }
       return true;
-    }
-    return false;
-  }
-
-  public static boolean isEmail(String s) {
-    if (!StringUtil.isEmpty(s)) {
-      Pattern p = Pattern.compile("^[\\w\\.-]+@([\\w\\-]+\\.)+[a-z]{2,4}$");
-      Matcher m = p.matcher(s);
-      return m.matches();
     }
     return false;
   }

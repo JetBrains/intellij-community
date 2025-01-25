@@ -42,10 +42,6 @@ public class FileReferenceWithOneContext extends FileReference {
     super(fileReferenceSet, range, index, text);
   }
 
-  public FileReferenceWithOneContext(FileReference original) {
-    super(original);
-  }
-
   @Override
   protected Collection<PsiFileSystemItem> getContextsForBindToElement(VirtualFile curVFile, Project project, FileReferenceHelper helper) {
     return getContexts();
