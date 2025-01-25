@@ -36,7 +36,7 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_N
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
-import com.jetbrains.python.sdk.conda.CondaInstallManager
+import com.jetbrains.python.sdk.installer.CondaInstallManager
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity

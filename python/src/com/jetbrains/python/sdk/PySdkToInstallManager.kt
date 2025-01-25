@@ -4,12 +4,11 @@ package com.jetbrains.python.sdk
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.installer.BinaryInstallation
-import com.jetbrains.python.sdk.installer.PySdkToInstallManager
 
 @Deprecated("This method was never intended to be a public API")
 object PySdkToInstallManager {
   @Deprecated("This method was never intended to be a public API")
-  fun getAvailableVersionsToInstall(): Map<LanguageLevel, BinaryInstallation> = PySdkToInstallManager.getAvailableVersionsToInstall()
+  fun getAvailableVersionsToInstall(): Map<LanguageLevel, BinaryInstallation> = getAvailableVersionsToInstall()
 
   @Deprecated("This method was never intended to be a public API")
   fun findInstalledSdk(

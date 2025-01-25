@@ -16,7 +16,7 @@ object PySdkToInstallManager {
   /**
    * Software Release Installer for Apple Software Package (pkg) files
    */
-  class PkgBinaryInstaller : ResourceTypeBinaryInstaller(ResourceType.APPLE_SOFTWARE_PACKAGE) {
+  internal class PkgBinaryInstaller : ResourceTypeBinaryInstaller(ResourceType.APPLE_SOFTWARE_PACKAGE) {
     override fun buildCommandLine(resource: Resource, path: Path): GeneralCommandLine {
       return ExecUtil.sudoCommand(
         GeneralCommandLine("installer", "-pkg", path.absolutePathString(), "-target", "/"),
@@ -28,7 +28,7 @@ object PySdkToInstallManager {
   /**
    * Software Release Installer for Microsoft Window Executable (exe) files
    */
-  class ExeBinaryInstaller : ResourceTypeBinaryInstaller(ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
+internal  class ExeBinaryInstaller : ResourceTypeBinaryInstaller(ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
     override fun buildCommandLine(resource: Resource, path: Path): GeneralCommandLine {
       return GeneralCommandLine(path.absolutePathString(), "/repair", "/quiet", "InstallAllUsers=0")
     }

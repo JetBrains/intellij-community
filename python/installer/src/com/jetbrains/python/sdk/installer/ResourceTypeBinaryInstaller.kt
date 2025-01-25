@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.installer
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -14,7 +14,7 @@ import java.nio.file.Path
 /**
  * Base Release Installer with resource type specific filtering (like exe, pkg, ...)
  */
-abstract class ResourceTypeBinaryInstaller(private val resourceType: ResourceType) : DownloadableBinaryInstaller() {
+internal abstract class ResourceTypeBinaryInstaller(private val resourceType: ResourceType) : DownloadableBinaryInstaller() {
   abstract fun buildCommandLine(resource: Resource, path: Path): GeneralCommandLine
 
   @Throws(ProcessException::class)

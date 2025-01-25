@@ -10,20 +10,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.system.CpuArch
 import com.jetbrains.python.sdk.Product
 import com.jetbrains.python.sdk.Release
+import org.jetbrains.annotations.ApiStatus
 
-internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
+@ApiStatus.Internal
+object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  enum class DownloadResult { EXCEPTION, SIZE, CHECKSUM, CANCELLED, OK }
-  enum class InstallationResult { EXCEPTION, EXIT_CODE, TIMEOUT, CANCELLED, OK }
+  internal enum class DownloadResult { EXCEPTION, SIZE, CHECKSUM, CANCELLED, OK }
+  internal enum class InstallationResult { EXCEPTION, EXIT_CODE, TIMEOUT, CANCELLED, OK }
   enum class LookupResult { FOUND, NOT_FOUND }
 
-  fun logDownloadEvent(project: Project?, release: Release, downloadResult: DownloadResult) {
+  internal fun logDownloadEvent(project: Project?, release: Release, downloadResult: DownloadResult) {
     downloadEvent.log(project, DownloadEventFields.getEventPairs(release, downloadResult))
   }
 
-  fun logInstallationEvent(project: Project?, release: Release, installationResult: InstallationResult) {
+  internal fun logInstallationEvent(project: Project?, release: Release, installationResult: InstallationResult) {
     installationEvent.log(project, InstallationEventFields.getEventPairs(release, installationResult))
   }
 
@@ -54,7 +56,7 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
   }
 
 
-  object ContextFields {
+  internal object ContextFields {
     private val product = EventFields.Enum("product", Product::class.java)
 
     /**
@@ -85,7 +87,7 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
     }
   }
 
-  object DownloadEventFields {
+  internal object DownloadEventFields {
     private val downloadResult = EventFields.Enum("download_result", DownloadResult::class.java)
     fun getEventPairs(release: Release, result: DownloadResult): List<EventPair<*>> {
       return ContextFields.getEventPairs(release) + listOf(downloadResult.with(result))
@@ -96,7 +98,7 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
     }
   }
 
-  object InstallationEventFields {
+  internal object InstallationEventFields {
     private val installationResult = EventFields.Enum("installation_result", InstallationResult::class.java)
     fun getEventPairs(release: Release, result: InstallationResult): List<EventPair<*>> {
       return ContextFields.getEventPairs(release) + listOf(installationResult.with(result))
@@ -107,7 +109,7 @@ internal object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
     }
   }
 
-  object LookupEventFields {
+  internal object LookupEventFields {
     private val lookupResult = EventFields.Enum("lookup_result", LookupResult::class.java)
     fun getEventPairs(product: Product, version: String?, result: LookupResult): List<EventPair<*>> {
       return ContextFields.getEventPairs(product, version) + listOf(lookupResult.with(result))

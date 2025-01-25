@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.installer
 
 import com.google.common.hash.Hashing
@@ -20,7 +20,7 @@ import kotlin.io.path.fileSize
  * Base Release Installer with additional external resource loading.
  * Responsible for loading and checking the checksum/size of additional resources before processing.
  */
-abstract class DownloadableBinaryInstaller : BinaryInstaller {
+internal abstract class DownloadableBinaryInstaller : BinaryInstaller {
   /**
    * Concrete installer should choose which resources it needs.
    * Might be any additional resources or tools outside the release scope.

@@ -937,6 +937,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-core-impl/intellij.python.community.core.impl.iml" filepath="$PROJECT_DIR$/python/python-core-impl/intellij.python.community.core.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.impl.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" filepath="$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" filepath="$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/poetry/intellij.python.community.impl.poetry.iml" filepath="$PROJECT_DIR$/python/poetry/intellij.python.community.impl.poetry.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" filepath="$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" filepath="$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" />
