@@ -2,6 +2,7 @@
 package com.intellij.ide.trustedProjects
 
 import com.intellij.diagnostic.WindowsDefenderChecker
+import com.intellij.diagnostic.WindowsDefenderChecker.TaskType
 import com.intellij.diagnostic.WindowsDefenderCheckerActivity
 import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
 import com.intellij.ide.IdeBundle
@@ -77,6 +78,8 @@ object TrustedProjectsDialog {
     TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
 
     if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
+      val checker = serviceAsync<WindowsDefenderChecker>()
+      checker.schedule(projectRoot, TaskType.SKIP_NOTIFICATION)
       dialog.getDefenderTrustFolder()?.let { defenderTrustDir ->
         WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll())
         if (defenderTrustDir != projectRoot) {
@@ -85,7 +88,6 @@ object TrustedProjectsDialog {
             add(0, defenderTrustDir)
           }
         }
-        val checker = serviceAsync<WindowsDefenderChecker>()
         WindowsDefenderCheckerActivity.runAndNotify(checker, pathsToExclude, project, projectRoot)
       }
     }
