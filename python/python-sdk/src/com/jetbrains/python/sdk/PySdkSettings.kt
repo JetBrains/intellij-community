@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk
 
 import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ExpandMacroToPathMap
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import kotlin.io.path.absolutePathString
@@ -107,7 +109,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   }
 
   private val defaultVirtualEnvRoot: @SystemIndependent String
-    get() = VirtualEnvSdkFlavor.getDefaultLocation().absolutePathString()
+    get() = VirtualEnvReader.Instance.getVEnvRootDir().absolutePathString()
 
   private val userHome: @SystemIndependent String
     get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())
