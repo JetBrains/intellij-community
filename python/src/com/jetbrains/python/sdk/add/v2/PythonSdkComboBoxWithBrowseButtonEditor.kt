@@ -22,7 +22,7 @@ import javax.swing.ComboBoxEditor
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-class PythonSdkComboBoxWithBrowseButtonEditor(
+internal class PythonSdkComboBoxWithBrowseButtonEditor(
   val comboBox: ComboBox<PythonSelectableInterpreter?>,
   val controller: PythonAddInterpreterModel,
   onPathSelected: (String) -> Unit,

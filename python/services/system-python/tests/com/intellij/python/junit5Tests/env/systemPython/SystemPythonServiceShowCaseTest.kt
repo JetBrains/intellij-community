@@ -16,7 +16,7 @@ import com.intellij.python.junit5Tests.randomBinary
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.VirtualEnvReader
-import com.jetbrains.python.sdk.add.v2.createVirtualenv
+import com.jetbrains.python.createVirtualenv
 import kotlinx.coroutines.async
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasItem

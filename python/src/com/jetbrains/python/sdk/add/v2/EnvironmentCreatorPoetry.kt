@@ -34,7 +34,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("poetry", model) {
+internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("poetry", model) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
   override val executable: ObservableMutableProperty<String> = model.state.poetryExecutable
   override val installationVersion: String = "1.8.0"

@@ -50,7 +50,7 @@ import kotlin.getOrElse
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
-class PythonAddNewEnvironmentPanel(val projectPathFlows: ProjectPathFlows, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null, private val errorSink: ErrorSink) : PySdkCreator {
+internal class PythonAddNewEnvironmentPanel(val projectPathFlows: ProjectPathFlows, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null, private val errorSink: ErrorSink) : PySdkCreator {
   private val propertyGraph = PropertyGraph()
   private val allowedInterpreterTypes = (onlyAllowedInterpreterTypes ?: PythonInterpreterSelectionMode.entries).also {
     assert(it.isNotEmpty()) {

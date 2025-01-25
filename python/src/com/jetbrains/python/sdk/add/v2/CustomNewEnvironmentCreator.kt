@@ -29,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 @Internal
-abstract class CustomNewEnvironmentCreator(private val name: String, model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
+internal abstract class CustomNewEnvironmentCreator(private val name: String, model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
   internal lateinit var basePythonComboBox: PythonInterpreterComboBox
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {

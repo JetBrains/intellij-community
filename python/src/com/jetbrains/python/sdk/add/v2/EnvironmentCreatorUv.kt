@@ -12,7 +12,7 @@ import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
 
-class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("uv", model) {
+internal class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("uv", model) {
   override val interpreterType: InterpreterType = InterpreterType.UV
   override val executable: ObservableMutableProperty<String> = model.state.uvExecutable
   override val installationVersion: String? = null

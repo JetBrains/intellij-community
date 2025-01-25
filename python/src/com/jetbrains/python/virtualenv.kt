@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v2
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.CapturingProcessHandler
@@ -9,9 +9,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.prepareHelperScriptExecution
@@ -21,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+import kotlin.collections.iterator
 
 /**
  * Creates a Python virtual environment, throws [ExecutionException] if creation process failed
@@ -70,10 +68,6 @@ suspend fun createVirtualenv(
   val targetedCommandLine = commandLineBuilder.build()
 
 
-  // todo poerty/pipenv
-  //val targetedCommandLineBuilder = TargetedCommandLineBuilder(request.targetEnvironmentRequest)
-  //targetedCommandLineBuilder.exePath = TargetValue.fixed("")
-  //val targetedCommandLine = targetedCommandLineBuilder.build()
 
   val process = try {
     targetEnvironment.createProcess(targetedCommandLine)

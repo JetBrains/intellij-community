@@ -23,7 +23,7 @@ import java.util.*
 
 
 @Internal
-abstract class CustomExistingEnvironmentSelector(private val name: String, model: PythonMutableTargetAddInterpreterModel, protected val moduleOrProject: ModuleOrProject) : PythonExistingEnvironmentConfigurator(model) {
+internal abstract class CustomExistingEnvironmentSelector(private val name: String, model: PythonMutableTargetAddInterpreterModel, protected val moduleOrProject: ModuleOrProject) : PythonExistingEnvironmentConfigurator(model) {
   private lateinit var comboBox: PythonInterpreterComboBox
   protected val existingEnvironments: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
   protected val selectedEnv: ObservableMutableProperty<PythonSelectableInterpreter?> = propertyGraph.property(null)

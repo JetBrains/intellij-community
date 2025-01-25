@@ -36,8 +36,8 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.*
 import com.jetbrains.python.sdk.VirtualEnvReader
-import com.jetbrains.python.sdk.add.v2.createSdk
-import com.jetbrains.python.sdk.add.v2.createVirtualenv
+import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.createVirtualenv
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls

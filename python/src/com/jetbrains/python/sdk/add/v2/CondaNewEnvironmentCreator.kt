@@ -23,8 +23,7 @@ import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.PyError
 import com.jetbrains.python.util.asPythonResult
 
-// TODO: DOC
-class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, private val errorSink: ErrorSink) : PythonNewEnvironmentCreator(model) {
+internal class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
 
   private lateinit var pythonVersion: ObservableMutableProperty<LanguageLevel>
   private lateinit var versionComboBox: ComboBox<LanguageLevel>

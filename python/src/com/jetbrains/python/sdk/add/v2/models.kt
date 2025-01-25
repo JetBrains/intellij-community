@@ -292,10 +292,10 @@ class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(pro
 }
 
 
-val PythonAddInterpreterModel.existingSdks
+internal val PythonAddInterpreterModel.existingSdks
   get() = allInterpreters.value.filterIsInstance<ExistingSelectableInterpreter>().map { it.sdk }
 
-fun PythonAddInterpreterModel.findInterpreter(path: String): PythonSelectableInterpreter? {
+internal fun PythonAddInterpreterModel.findInterpreter(path: String): PythonSelectableInterpreter? {
   return allInterpreters.value.asSequence().find { it.homePath == path }
 }
 

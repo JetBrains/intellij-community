@@ -28,7 +28,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
 
   private val newInterpreterCreators = mapOf(
     VIRTUALENV to EnvironmentCreatorVenv(model),
-    CONDA to CondaNewEnvironmentCreator(model, errorSink),
+    CONDA to CondaNewEnvironmentCreator(model),
     PIPENV to EnvironmentCreatorPip(model),
     POETRY to EnvironmentCreatorPoetry(model, moduleOrProject),
     UV to EnvironmentCreatorUv(model),

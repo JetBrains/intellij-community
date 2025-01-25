@@ -31,7 +31,7 @@ import javax.swing.Icon
 
 
 @Service(Service.Level.APP)
-class PythonAddSdkService(val coroutineScope: CoroutineScope)
+internal class PythonAddSdkService(val coroutineScope: CoroutineScope)
 
 abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
@@ -77,7 +77,7 @@ enum class PythonInterpreterCreationTargets(val nameKey: String, val icon: Icon)
   SSH("", AllIcons.Nodes.HomeFolder),
 }
 
-fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
+internal fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
   return when (this) {
     PythonInterpreterCreationTargets.LOCAL_MACHINE -> InterpreterTarget.LOCAL
     else -> throw NotImplementedError("PythonInterpreterCreationTargets added, but not accounted for in statistics")

@@ -27,7 +27,7 @@ internal fun PythonAddInterpreterModel.createCondaCommand(): PyCondaCommand =
   PyCondaCommand(state.condaExecutable.get().convertToPathOnTarget(targetEnvironmentConfiguration),
                  targetConfig = targetEnvironmentConfiguration)
 
-suspend fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Result<Sdk> {
+internal suspend fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Result<Sdk> {
   val project = ProjectManager.getInstance().defaultProject
 
   val sdk = withModalProgress(ModalTaskOwner.guess(),
