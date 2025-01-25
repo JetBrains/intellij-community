@@ -1,122 +1,157 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-package org.jetbrains.kotlin.idea.inspections
-
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl.WithDestructuringDeclaration
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.caches.resolve.variableCallOrThis
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.project.builtIns
-import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ForEachParameterNotUsedInspection.UnusedForEachParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.util.setParameterListIfAny
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
-class ForEachParameterNotUsedInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return callExpressionVisitor(fun(it: KtCallExpression) {
-            val calleeExpression = it.calleeExpression as? KtNameReferenceExpression
-            if (calleeExpression?.getReferencedName() != FOREACH_NAME) return
-            val lambda = it.lambdaArguments.singleOrNull()?.getLambdaExpression()
-            if (lambda == null || lambda.functionLiteral.arrow != null) return
-            val context = it.analyze()
-            when (it.getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull()) {
-                COLLECTIONS_FOREACH_FQNAME, SEQUENCES_FOREACH_FQNAME, TEXT_FOREACH_FQNAME -> {
-                    val descriptor = context[BindingContext.FUNCTION, lambda.functionLiteral] ?: return
-                    val iterableParameter = descriptor.valueParameters.singleOrNull() ?: return
+internal class ForEachParameterNotUsedInspection :
+    KotlinApplicableInspectionBase.Multiple<KtCallExpression, UnusedForEachParameterInfo>() {
 
-                    if (iterableParameter !is WithDestructuringDeclaration &&
-                        !lambda.bodyExpression.usesDescriptor(iterableParameter, context)
-                    ) {
-                        val fixes = mutableListOf<LocalQuickFix>()
-                        if (it.parent is KtDotQualifiedExpression) {
-                            fixes += ReplaceWithRepeatFix()
-                        }
-                        fixes += IntroduceAnonymousParameterFix()
-                        holder.registerProblem(
-                            calleeExpression,
-                            KotlinBundle.message("loop.parameter.0.is.unused", iterableParameter.getThisLabelName()),
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                            *fixes.toTypedArray()
-                        )
+    override fun getProblemDescription(
+        element: KtCallExpression,
+        context: UnusedForEachParameterInfo,
+    ): @InspectionMessage String =
+        KotlinBundle.message("loop.parameter.0.is.unused", context.paramName)
+
+    override fun createQuickFixes(
+        element: KtCallExpression,
+        context: UnusedForEachParameterInfo,
+    ): Collection<KotlinModCommandQuickFix<KtCallExpression>> {
+        val fixes = mutableListOf<KotlinModCommandQuickFix<KtCallExpression>>()
+        if (element.parent is KtDotQualifiedExpression) {
+            // Replace with repeat
+            fixes += object : KotlinModCommandQuickFix<KtCallExpression>() {
+                override fun getFamilyName(): @IntentionFamilyName String =
+                    KotlinBundle.message("replace.with.repeat.fix.family.name")
+
+                override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
+                    val qualifiedExpression = element.parent as? KtDotQualifiedExpression ?: return
+                    val receiverExpression = qualifiedExpression.receiverExpression
+                    val sizeText = analyze(receiverExpression) {
+                        val receiverType = receiverExpression.expressionType
+                        if (receiverType?.isSubtypeOf(StandardClassIds.Collection) == true)
+                            "size"
+                        else if (receiverType?.isSubtypeOf(DefaultTypeClassIds.CHAR_SEQUENCE) == true)
+                            "length"
+                        else
+                            "count()"
                     }
+                    val lambdaExpression = context.lambdaExpressionReference.dereference()?.let(updater::getWritable) ?: return
+                    val psiFactory = KtPsiFactory(project)
+                    val replacement = psiFactory.createExpressionByPattern(
+                        "repeat($0.$sizeText, $1)",
+                        receiverExpression,
+                        lambdaExpression
+                    )
+                    val result = qualifiedExpression.replaced(replacement) as KtCallExpression
+                    result.moveFunctionLiteralOutsideParentheses(updater::moveCaretTo)
                 }
             }
-        })
-    }
-
-    private class IntroduceAnonymousParameterFix : LocalQuickFix {
-        override fun getFamilyName() = KotlinBundle.message("introduce.anonymous.parameter.fix.family.name")
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val callExpression = descriptor.psiElement.parent as? KtCallExpression ?: return
-            val literal = callExpression.lambdaArguments.singleOrNull()?.getLambdaExpression()?.functionLiteral ?: return
-            val psiFactory = KtPsiFactory(project)
-            val newParameterList = psiFactory.createLambdaParameterList("_")
-            literal.setParameterListIfAny(psiFactory, newParameterList)
         }
-    }
+        // Introduce anonymous parameter
+        fixes += object : KotlinModCommandQuickFix<KtCallExpression>() {
+            override fun getFamilyName(): @IntentionFamilyName String =
+                KotlinBundle.message("introduce.anonymous.parameter.fix.family.name")
 
-    private class ReplaceWithRepeatFix : LocalQuickFix {
-        override fun getFamilyName() = KotlinBundle.message("replace.with.repeat.fix.family.name")
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val callExpression = descriptor.psiElement.parent as? KtCallExpression ?: return
-            val qualifiedExpression = callExpression.parent as? KtDotQualifiedExpression ?: return
-            val receiverExpression = qualifiedExpression.receiverExpression
-            val receiverClass =
-                receiverExpression.resolveToCall()?.resultingDescriptor?.returnType?.constructor?.declarationDescriptor as? ClassDescriptor
-            val collection = callExpression.builtIns.collection
-            val charSequence = callExpression.builtIns.charSequence
-            val sizeText = when {
-                receiverClass != null && DescriptorUtils.isSubclass(receiverClass, collection) -> "size"
-                receiverClass != null && DescriptorUtils.isSubclass(receiverClass, charSequence) -> "length"
-                else -> "count()"
+            override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
+                val lambdaExpression = context.lambdaExpressionReference.dereference()?.let(updater::getWritable) ?: return
+                val psiFactory = KtPsiFactory(project)
+                val newParameterList = psiFactory.createLambdaParameterList("_")
+                lambdaExpression.functionLiteral.setParameterListIfAny(psiFactory, newParameterList)
             }
-            val lambdaExpression = callExpression.lambdaArguments.singleOrNull()?.getArgumentExpression() ?: return
-            val replacement =
-                KtPsiFactory(project).createExpressionByPattern("repeat($0.$sizeText, $1)", receiverExpression, lambdaExpression)
-            val result = qualifiedExpression.replaced(replacement) as KtCallExpression
-            result.moveFunctionLiteralOutsideParentheses()
+        }
+        return fixes
+    }
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ) = object : KtVisitorVoid() {
+        override fun visitCallExpression(expression: KtCallExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
         }
     }
 
-    private fun KtBlockExpression?.usesDescriptor(descriptor: VariableDescriptor, context: BindingContext): Boolean {
-        if (this == null) return false
+    context(KaSession)
+    override fun prepareContext(element: KtCallExpression): UnusedForEachParameterInfo? {
+        // Synthetic check: ...forEach { }
+        val calleeExpression = element.calleeExpression as? KtNameReferenceExpression
+        if (calleeExpression?.getReferencedName() != FOREACH) return null
+        val lambda = element.lambdaArguments.singleOrNull()?.getLambdaExpression()
+        if (lambda == null || lambda.functionLiteral.arrow != null) return null
+
+        // Check if the callee is forEach of interest.
+        val callInfo = element.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+        val callableId = callInfo.partiallyAppliedSymbol.signature.callableId ?: return null
+        if (callableId != COLLECTIONS_FOREACH && callableId != SEQUENCES_FOREACH && callableId != TEXT_FOREACH)
+            return null
+
+        // Check if the implicit lambda parameter is indeed not used.
+        if (lambda.useLambdaParameter()) return null
+        val anonymousFunctionSymbol = lambda.functionLiteral.symbol
+        val lambdaParameterSymbol = anonymousFunctionSymbol.valueParameters.singleOrNull() ?: return null
+        return UnusedForEachParameterInfo(
+            lambda.createSmartPointer(),
+            lambdaParameterSymbol.name.identifier
+        )
+    }
+
+    context(KaSession)
+    private fun KtLambdaExpression.useLambdaParameter(): Boolean {
         var used = false
-        acceptChildren(object : KtVisitorVoid() {
-            override fun visitKtElement(element: KtElement) {
-                if (!used) {
-                    if (element.children.isNotEmpty()) {
-                        element.acceptChildren(this)
-                    } else {
-                        val resolvedCall = element.getResolvedCall(context) ?: return
-                        used = descriptor == resolvedCall.variableCallOrThis().candidateDescriptor
-                    }
+        bodyExpression?.acceptChildren(object : KtVisitorVoid() {
+            override fun visitElement(element: PsiElement) {
+                if (used) return
+                if (element.children.isNotEmpty()) {
+                    element.acceptChildren(this)
+                } else {
+                    val symbol = (element as? KtElement)
+                        ?.resolveToCall()
+                        ?.singleVariableAccessCall()
+                        ?.partiallyAppliedSymbol
+                        ?.symbol as? KaValueParameterSymbol
+                    // it, which belongs to the lambda in question
+                    used = symbol?.isImplicitLambdaParameter == true &&
+                            symbol.containingDeclaration?.psi == this@useLambdaParameter.functionLiteral
                 }
             }
         })
         return used
     }
+
+    internal data class UnusedForEachParameterInfo(
+        val lambdaExpressionReference: SmartPsiElementPointer<KtLambdaExpression>,
+        val paramName: String,
+    )
 }
 
-private const val FOREACH_NAME = "forEach"
-private val COLLECTIONS_FOREACH_FQNAME = FqName("kotlin.collections.$FOREACH_NAME")
-private val SEQUENCES_FOREACH_FQNAME = FqName("kotlin.sequences.$FOREACH_NAME")
-private val TEXT_FOREACH_FQNAME = FqName("kotlin.text.$FOREACH_NAME")
+private const val FOREACH = "forEach"
+private val FOREACH_NAME = Name.identifier(FOREACH)
+private val COLLECTIONS_FOREACH = CallableId(StandardNames.COLLECTIONS_PACKAGE_FQ_NAME, FOREACH_NAME)
+private val SEQUENCES_FOREACH = CallableId(StandardClassIds.BASE_SEQUENCES_PACKAGE, FOREACH_NAME)
+private val TEXT_FOREACH = CallableId(StandardNames.TEXT_PACKAGE_FQ_NAME, FOREACH_NAME)

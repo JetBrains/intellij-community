@@ -69,6 +69,29 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/forEachParameterNotUsed")
+        public abstract static class ForEachParameterNotUsed extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/forEachParameterNotUsed/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/forEachParameterNotUsed/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspections/naming")
         public abstract static class Naming extends AbstractSharedK1InspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)

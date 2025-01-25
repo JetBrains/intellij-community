@@ -5925,50 +5925,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/forEachParameterNotUsed")
-    public static class ForEachParameterNotUsed extends AbstractLocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("invoke.kt")
-        public void testInvoke() throws Exception {
-            runTest("testData/inspectionsLocal/forEachParameterNotUsed/invoke.kt");
-        }
-
-        @TestMetadata("normal.kt")
-        public void testNormal() throws Exception {
-            runTest("testData/inspectionsLocal/forEachParameterNotUsed/normal.kt");
-        }
-
-        @TestMetadata("repeat.kt")
-        public void testRepeat() throws Exception {
-            runTest("testData/inspectionsLocal/forEachParameterNotUsed/repeat.kt");
-        }
-
-        @TestMetadata("safe.kt")
-        public void testSafe() throws Exception {
-            runTest("testData/inspectionsLocal/forEachParameterNotUsed/safe.kt");
-        }
-
-        @TestMetadata("sequence.kt")
-        public void testSequence() throws Exception {
-            runTest("testData/inspectionsLocal/forEachParameterNotUsed/sequence.kt");
-        }
-
-        @TestMetadata("string.kt")
-        public void testString() throws Exception {
-            runTest("testData/inspectionsLocal/forEachParameterNotUsed/string.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/functionWithLambdaExpressionBody")
     public abstract static class FunctionWithLambdaExpressionBody extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
