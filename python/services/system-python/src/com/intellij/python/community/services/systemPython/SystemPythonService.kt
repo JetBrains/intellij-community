@@ -14,7 +14,7 @@ import com.intellij.python.community.services.systemPython.SystemPythonServiceIm
 import com.intellij.python.community.services.systemPython.spi.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
-import com.jetbrains.python.sdk.PySdkToInstallManager
+import com.jetbrains.python.sdk.installer.PySdkToInstallManager
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.installer.installBinary
 import kotlinx.coroutines.Dispatchers

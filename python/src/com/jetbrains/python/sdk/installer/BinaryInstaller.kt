@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.installer
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -12,7 +13,7 @@ import com.intellij.util.lateinitVal
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.*
 
-val LOGGER = logger<BinaryInstaller>()
+internal val LOGGER: Logger = logger<BinaryInstaller>()
 
 data class ResourcePreview(val description: String, val size: Long) {
   companion object {
