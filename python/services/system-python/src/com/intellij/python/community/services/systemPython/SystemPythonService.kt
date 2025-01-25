@@ -12,7 +12,6 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.spi.SystemPythonProvider
-import com.jetbrains.python.LocalizedErrorString
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.PySdkToInstallManager
@@ -54,7 +53,7 @@ fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplicati
 // Implementation
 
 @Service(APP)
-@State(name = "SystemPythonService", storages = [Storage("SystemPythonService.xml")], allowLoadInTests = true)
+@State(name = "SystemPythonService", storages = [Storage("systemPythonService.xml", roamingType = RoamingType.LOCAL)], allowLoadInTests = true)
 private class SystemPythonServiceImpl : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, @Nls String> {
@@ -94,13 +93,14 @@ private class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSta
         }
 
       }.toSet()
-    state.userProvidedPythons.removeAll(badPythons) // TODO: Doc remove
+    // Remove stale pythons from cache
+    state.userProvidedPythons.removeAll(badPythons)
     return@withContext result
   }
 
 
   class MyServiceState : BaseState() {
-    val userProvidedPythons: MutableCollection<PythonBinary> = mutableSetOf()
+    val userProvidedPythons: MutableCollection<PythonBinary> by list()
   }
 }
 
