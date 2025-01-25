@@ -554,24 +554,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return null
     }
 
-    span("checkTrustedState") {
-      if (!checkTrustedState(projectStoreBaseDir)) {
-        LOG.info("Project is not trusted, aborting")
-        if (options.showWelcomeScreen) {
-          WelcomeFrame.showIfNoProjectOpened()
-        }
-        ProcessCanceledException()
-      }
-      else {
-        null
-      }
-    }?.let {
-      withContext(NonCancellable) {
-        cancelProjectOpening(options.project, it)
-      }
-      throw it
-    }
-
     val continueOpen = span("checkChildProcess") {
       !checkChildProcess(projectStoreBaseDir, options)
     }
@@ -603,6 +585,24 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           return null
         }
       }
+    }
+
+    span("checkTrustedState") {
+      if (!checkTrustedState(projectStoreBaseDir)) {
+        LOG.info("Project is not trusted, aborting")
+        if (options.showWelcomeScreen) {
+          WelcomeFrame.showIfNoProjectOpened()
+        }
+        ProcessCanceledException()
+      }
+      else {
+        null
+      }
+    }?.let {
+      withContext(NonCancellable) {
+        cancelProjectOpening(options.project, it)
+      }
+      throw it
     }
 
     return span("ProjectManager.openAsync") {
