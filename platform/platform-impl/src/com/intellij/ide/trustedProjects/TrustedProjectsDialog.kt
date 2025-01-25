@@ -86,14 +86,7 @@ object TrustedProjectsDialog {
           }
         }
         val checker = serviceAsync<WindowsDefenderChecker>()
-        if (project == null) {
-          checker.schedule(projectRoot, pathsToExclude)
-        }
-        else {
-          WindowsDefenderCheckerActivity.runAndNotify(project) {
-            checker.excludeProjectPaths(project, pathsToExclude)
-          }
-        }
+        WindowsDefenderCheckerActivity.runAndNotify(checker, pathsToExclude, project, projectRoot)
       }
     }
 

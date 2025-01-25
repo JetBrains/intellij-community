@@ -46,7 +46,7 @@ public final class WindowsDefenderStatisticsCollector extends CounterUsagesColle
     NOTIFICATION_EVENT.log(project, globally ? Reaction.GlobalMute : Reaction.ProjectMute);
   }
 
-  static void configured(@NotNull Project project, boolean success) {
+  static void configured(@Nullable Project project, boolean success) {
     AUTO_CONFIG_EVENT.log(project, success);
   }
 

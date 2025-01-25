@@ -60,7 +60,7 @@ public class WindowsDefenderChecker {
     return ApplicationManager.getApplication().getService(WindowsDefenderChecker.class);
   }
 
-  private final Map<Path, List<Path>> myScheduledTasks = Collections.synchronizedMap(new HashMap<>(1));
+  private final Map<Path, TaskType> myScheduledTasks = Collections.synchronizedMap(new HashMap<>(1));
 
   public final boolean isStatusCheckIgnored(@Nullable Project project) {
     return
@@ -81,14 +81,32 @@ public class WindowsDefenderChecker {
   }
 
   @ApiStatus.Internal
-  public final void schedule(@NotNull Path projectPath, @NotNull List<Path> paths) {
-    myScheduledTasks.put(projectPath, paths);
+  public final void schedule(@NotNull Path projectPath, TaskType taskType) {
+    myScheduledTasks.put(projectPath, taskType);
   }
 
   @ApiStatus.Internal
-  final @Nullable List<Path> popScheduledPaths(@NotNull Project project) {
+  final @Nullable TaskType popScheduledPaths(@NotNull Project project) {
     var projectPath = getProjectPath(project);
     return projectPath != null ? myScheduledTasks.remove(projectPath) : null;
+  }
+
+  @ApiStatus.Internal
+  public enum TaskType {
+    NOTIFY_SUCCESS,
+    NOTIFY_FAILURE,
+    SKIP_NOTIFICATION;
+
+    public static TaskType toTaskType(boolean success) {
+      return success ? NOTIFY_SUCCESS : NOTIFY_FAILURE;
+    }
+
+    @Nullable
+    public static Boolean toBoolean(TaskType taskType) {
+      if (taskType == NOTIFY_SUCCESS) return true;
+      if (taskType == NOTIFY_FAILURE) return false;
+      return null;
+    }
   }
 
   private static @Nullable Path getProjectPath(Project project) {
@@ -277,7 +295,16 @@ public class WindowsDefenderChecker {
   }
 
   public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
-    logCaller("paths=" + paths + " project=" + project);
+    return doExcludeProjectPaths(project, null, paths);
+  }
+
+  public final boolean excludeProjectPaths(@Nullable Project project, @NotNull Path projectPath, @NotNull List<Path> paths) {
+    return doExcludeProjectPaths(project, projectPath, paths);
+  }
+
+  private boolean doExcludeProjectPaths(@Nullable Project project, @Nullable Path projectPath, List<Path> paths) {
+    logCaller("paths=" + paths + " project=" + (project != null ? project : projectPath));
+
     try {
       var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
       if (script == null) {
@@ -328,7 +355,9 @@ public class WindowsDefenderChecker {
       }
       else {
         LOG.info("OK; script output:\n" + output.getStdout().trim());
-        PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
+        if (project != null) {
+          PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
+        }
         return true;
       }
     }
