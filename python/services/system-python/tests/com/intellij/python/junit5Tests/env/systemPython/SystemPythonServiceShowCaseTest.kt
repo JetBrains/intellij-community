@@ -17,6 +17,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.createVirtualenv
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import kotlinx.coroutines.async
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasItem
@@ -41,8 +42,8 @@ class SystemPythonServiceShowCaseTest {
         process.stdout.readWholeText().getOrThrow()
       }
       Assertions.assertEquals(0, process.exitCode.await(), "Wrong exit code")
-      val versionString = output.await()
-      Assertions.assertEquals(systemPython.languageLevel, LanguageLevel.fromPythonVersion(versionString), "Wrong version")
+      val versionString = PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(output.await())!!
+      Assertions.assertEquals(systemPython.languageLevel, versionString, "Wrong version")
     }
   }
 

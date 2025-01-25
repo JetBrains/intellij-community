@@ -15,9 +15,13 @@ class PyVersionTest {
       "Python 3.8.0" to LanguageLevel.PYTHON38
     )
     for ((versionString, level) in pythons) {
-      val calculatedLevel = PythonSdkFlavor.getLanguageLevelFromVersionStringStatic(versionString)
+      val calculatedLevel = PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(versionString)
       Assertions.assertEquals(level, calculatedLevel, "wrong level for $versionString")
     }
+  }
 
+  @Test
+  fun testFailure() {
+    Assertions.assertNull(PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe("ASDSD"))
   }
 }

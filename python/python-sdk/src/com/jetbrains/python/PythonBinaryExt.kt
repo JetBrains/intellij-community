@@ -7,7 +7,7 @@ import com.jetbrains.python.PySdkBundle.message
 import com.jetbrains.python.Result.Companion.failure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.PYTHON_VERSION_ARG
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.getVersionStringFromOutput
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -30,9 +30,7 @@ suspend fun PythonBinary.validatePythonAndGetVersion(): Result<LanguageLevel, @N
   }
 
   val versionString = executeWithResult(PYTHON_VERSION_ARG).getOr { return@withContext it }
-  val languageLevel = getVersionStringFromOutput(versionString)?.let {
-    LanguageLevel.fromPythonVersion(it)
-  }
+  val languageLevel = getLanguageLevelFromVersionStringStaticSafe(versionString.trim())
   if (languageLevel == null) {
     return@withContext failure(message("python.get.version.wrong.version", pathString, versionString))
   }
