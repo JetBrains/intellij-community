@@ -5,7 +5,6 @@ import com.intellij.model.Pointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,6 @@ public interface SmartPsiElementPointer<E extends PsiElement> extends Pointer<E>
   @Nullable
   E getElement();
 
-  @Experimental
   @Override
   default @Nullable E dereference() {
     return getElement();

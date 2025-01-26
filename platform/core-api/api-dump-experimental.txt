@@ -372,9 +372,6 @@ com.intellij.psi.PsiElement
 - getPresentationName():java.lang.String
 *:com.intellij.psi.PsiReferencesWrapper
 - a:getReferences():java.util.List
-com.intellij.psi.SmartPsiElementPointer
-- com.intellij.model.Pointer
-- *:dereference():com.intellij.psi.PsiElement
 com.intellij.psi.StubBasedPsiElement
 - com.intellij.psi.PsiElement
 - *:getIElementType():com.intellij.psi.tree.IElementType
