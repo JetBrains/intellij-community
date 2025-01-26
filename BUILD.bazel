@@ -229,6 +229,7 @@ java_library(
     "//plugins/search-everywhere-ml/ranking/yaml:searchEverywhereMl-ranking-yaml",
     "//plugins/search-everywhere-ml/typos:searchEverywhereMl-typos",
     "//plugins/grazie",
+    "//plugins/compose:compose-ide-plugin",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end

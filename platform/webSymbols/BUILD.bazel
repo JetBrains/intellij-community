@@ -62,6 +62,7 @@ jvm_library(
     "//platform/markdown-utils:markdown-utils_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//java/java-runtime:rt",
   ],
   runtime_deps = [":webSymbols_resources"]
 )

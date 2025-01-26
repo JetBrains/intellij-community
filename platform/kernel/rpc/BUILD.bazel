@@ -13,7 +13,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@lib//:rpc-compiler-plugin-provided",
     "@lib//:kotlin-stdlib",
     "//fleet/util/logging/api:fleet-util-logging-api",
     "//fleet/rpc",

@@ -9,7 +9,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//fleet/util/os:fleet-util-os",
-    "@lib//:expects-compiler-plugin-provided",
   ]
 )
 ### auto-generated section `build fleet.preferences` end

@@ -30,6 +30,9 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/eel-impl",
   ],
   runtime_deps = [
     ":core_resources",
@@ -59,6 +62,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/analysis-impl",
     "//platform/lang-impl",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   runtime_deps = ["//plugins/sh"]
 )

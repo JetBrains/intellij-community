@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/built-in-server-api:builtInServer",
     "//platform/platform-util-netty:ide-util-netty",
     "@lib//:http-client",

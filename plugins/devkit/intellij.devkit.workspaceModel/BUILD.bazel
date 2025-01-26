@@ -54,6 +54,11 @@ jvm_library(
     "//plugins/kotlin/base/facet:kotlin-base-facet",
     "@lib//:kotlinc-kotlin-jps-common-provided",
     "//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-reflect",
+    "//platform/backend/workspace",
+    "//platform/util/progress",
   ],
   runtime_deps = [":workspaceModel_resources"]
 )

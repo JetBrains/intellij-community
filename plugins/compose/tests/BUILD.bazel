@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.compose.ide.plugin.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "ide-plugin-tests_test",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = ["//plugins/compose:compose-ide-plugin"],
+  deps = [
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "@lib//:kotlinc-analysis-api",
+  ]
+)
+### auto-generated section `build intellij.compose.ide.plugin.tests` end

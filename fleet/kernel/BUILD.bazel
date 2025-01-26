@@ -22,7 +22,6 @@ jvm_library(
     "//fleet/rhizomedb",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:rhizomedb-compiler-plugin-provided",
     "//fleet/util/core:fleet-util-core",
     "//fleet/rpc",
     "@lib//:kotlinx-coroutines-core",

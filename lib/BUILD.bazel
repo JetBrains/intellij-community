@@ -729,37 +729,37 @@ kt_jvm_import(
 
 java_import(
   name = "bouncy-castle-pgp",
-  jars = ["@bcpg-jdk18on-1_78_1_http//file"],
-  srcjar = "@bcpg-jdk18on-1_78_1-sources_http//file",
+  jars = ["@bcpg-jdk18on-1_80_http//file"],
+  srcjar = "@bcpg-jdk18on-1_80-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "bouncy-castle-provider",
   exports = [
-    ":bcpkix-jdk18on-1_78_1_http_import",
-    ":bcprov-jdk18on-1_78_1_http_import",
-    ":bcutil-jdk18on-1_78_1_http_import",
+    ":bcpkix-jdk18on-1_80_http_import",
+    ":bcutil-jdk18on-1_80_http_import",
+    ":bcprov-jdk18on-1_80_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "bcpkix-jdk18on-1_78_1_http_import",
-  jars = ["@bcpkix-jdk18on-1_78_1_http//file"],
-  srcjar = "@bcpkix-jdk18on-1_78_1-sources_http//file"
+  name = "bcpkix-jdk18on-1_80_http_import",
+  jars = ["@bcpkix-jdk18on-1_80_http//file"],
+  srcjar = "@bcpkix-jdk18on-1_80-sources_http//file"
 )
 
 java_import(
-  name = "bcprov-jdk18on-1_78_1_http_import",
-  jars = ["@bcprov-jdk18on-1_78_1_http//file"],
-  srcjar = "@bcprov-jdk18on-1_78_1-sources_http//file"
+  name = "bcutil-jdk18on-1_80_http_import",
+  jars = ["@bcutil-jdk18on-1_80_http//file"],
+  srcjar = "@bcutil-jdk18on-1_80-sources_http//file"
 )
 
 java_import(
-  name = "bcutil-jdk18on-1_78_1_http_import",
-  jars = ["@bcutil-jdk18on-1_78_1_http//file"],
-  srcjar = "@bcutil-jdk18on-1_78_1-sources_http//file"
+  name = "bcprov-jdk18on-1_80_http_import",
+  jars = ["@bcprov-jdk18on-1_80_http//file"],
+  srcjar = "@bcprov-jdk18on-1_80-sources_http//file"
 )
 
 java_import(
@@ -778,8 +778,8 @@ java_library(
 
 java_import(
   name = "classgraph",
-  jars = ["@classgraph-4_8_174_http//file"],
-  srcjar = "@classgraph-4_8_174-sources_http//file",
+  jars = ["@classgraph-4_8_179_http//file"],
+  srcjar = "@classgraph-4_8_179-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -876,8 +876,8 @@ java_import(
 
 java_import(
   name = "commons-text",
-  jars = ["@commons-text-1_12_0_http//file"],
-  srcjar = "@commons-text-1_12_0-sources_http//file",
+  jars = ["@commons-text-1_13_0_http//file"],
+  srcjar = "@commons-text-1_13_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -1314,8 +1314,8 @@ kt_jvm_import(
 
 java_import(
   name = "easymock",
-  jars = ["@easymock-5_2_0_http//file"],
-  srcjar = "@easymock-5_2_0-sources_http//file",
+  jars = ["@easymock-5_5_0_http//file"],
+  srcjar = "@easymock-5_5_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -1393,13 +1393,6 @@ kt_jvm_import(
   name = "expects-compiler-plugin",
   jar = "@expects-compiler-plugin-2_1_0-0_3_http//file",
   srcjar = "@expects-compiler-plugin-2_1_0-0_3-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "expects-compiler-plugin-provided",
-  exports = [":expects-compiler-plugin"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -2565,20 +2558,6 @@ kt_jvm_import(
   name = "jetbrains-intellij-deps-rwmutex-idea",
   jar = "@rwmutex-idea-0_0_7_http//file",
   srcjar = "@rwmutex-idea-0_0_7-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_import(
-  name = "jetbrains-kotlin-compose-compiler-plugin",
-  jar = "@kotlin-compose-compiler-plugin-2_1_0_http//file",
-  srcjar = "@kotlin-compose-compiler-plugin-2_1_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "jetbrains-kotlin-compose-compiler-plugin-provided",
-  exports = [":jetbrains-kotlin-compose-compiler-plugin"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -7211,6 +7190,13 @@ kt_jvm_import(
   visibility = ["//visibility:public"]
 )
 
+kt_jvm_import(
+  name = "noria-compiler-plugin",
+  jar = "@noria-compiler-plugin-2_1_0-0_4_http//file",
+  srcjar = "@noria-compiler-plugin-2_1_0-0_4-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_import(
   name = "objenesis",
   jars = ["@objenesis-3_4_http//file"],
@@ -9258,24 +9244,10 @@ kt_jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "rhizomedb-compiler-plugin-provided",
-  exports = [":rhizomedb-compiler-plugin"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 kt_jvm_import(
   name = "rpc-compiler-plugin",
   jar = "@rpc-compiler-plugin-2_1_0-0_4_http//file",
   srcjar = "@rpc-compiler-plugin-2_1_0-0_4-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "rpc-compiler-plugin-provided",
-  exports = [":rpc-compiler-plugin"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 

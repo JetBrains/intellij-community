@@ -61,6 +61,7 @@ java_library(
     "//plugins/kotlin/uast/uast-kotlin-idea-fir/tests:kotlin-uast-uast-kotlin-idea-k2-tests",
     "//plugins/kotlin/features-trainer/tests:kotlin-features-trainer-tests",
     "//plugins/kotlin/base/fir/project-structure:kotlin-base-fir-project-structure",
+    "//plugins/kotlin/gradle/code-insight-groovy/tests.k2:kotlin-gradle-code-insight-groovy-tests-k2",
   ]
 )
 ### auto-generated section `build kotlin.fir-all-tests` end

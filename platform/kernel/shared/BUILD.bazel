@@ -15,7 +15,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/kernel/rpc",
-    "@lib//:rhizomedb-compiler-plugin-provided",
     "//fleet/kernel",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-collections-immutable",

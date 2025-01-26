@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.python.community` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "community_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "community",
@@ -22,7 +28,8 @@ jvm_library(
     "//python/python-psi-api:psi",
     "//platform/analysis-api:analysis",
     "//platform/platform-util-io:ide-util-io",
-  ]
+  ],
+  runtime_deps = [":community_resources"]
 )
 
 jvm_library(
@@ -42,7 +49,8 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "@lib//:junit5",
-  ]
+  ],
+  runtime_deps = [":community_resources"]
 )
 
 jvm_test(

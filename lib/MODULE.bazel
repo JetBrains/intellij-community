@@ -637,59 +637,59 @@ http_file(
 )
 
 http_file(
-  name = "bcpg-jdk18on-1_78_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpg-jdk18on/1.78.1/bcpg-jdk18on-1.78.1.jar",
-  sha256 = "1463bb2cb8737e9ae34f5bd93f48e27711365bb277f4918f44608ed89b68792d",
-  downloaded_file_path = "bcpg-jdk18on-1.78.1.jar"
+  name = "bcpg-jdk18on-1_80_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpg-jdk18on/1.80/bcpg-jdk18on-1.80.jar",
+  sha256 = "3799a0d53511b860780af43c44ae8e0519afabb263195af40174f46312cd58bd",
+  downloaded_file_path = "bcpg-jdk18on-1.80.jar"
 )
 
 http_file(
-  name = "bcpg-jdk18on-1_78_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpg-jdk18on/1.78.1/bcpg-jdk18on-1.78.1-sources.jar",
-  sha256 = "6a2d15047188285cf084bac95dc9bb5ef29fe98abb1c6a5149d5e9b484d67e6c",
-  downloaded_file_path = "bcpg-jdk18on-1.78.1-sources.jar"
+  name = "bcpg-jdk18on-1_80-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpg-jdk18on/1.80/bcpg-jdk18on-1.80-sources.jar",
+  sha256 = "01d7d68da70ef53a8b2cdf9cff0a81584ab8f195c42ddfe06c97757c8eb819d3",
+  downloaded_file_path = "bcpg-jdk18on-1.80-sources.jar"
 )
 
 http_file(
-  name = "bcpkix-jdk18on-1_78_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.78.1/bcpkix-jdk18on-1.78.1.jar",
-  sha256 = "4b48ea084e5232b9d79ebca1887b9de037b124931807cd60710748c2aee08cc9",
-  downloaded_file_path = "bcpkix-jdk18on-1.78.1.jar"
+  name = "bcpkix-jdk18on-1_80_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.80/bcpkix-jdk18on-1.80.jar",
+  sha256 = "4f4ba6a92617ea19dc183f0fa5db492eee426fdde2a0a2d6c94777ffd1af6413",
+  downloaded_file_path = "bcpkix-jdk18on-1.80.jar"
 )
 
 http_file(
-  name = "bcprov-jdk18on-1_78_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.78.1/bcprov-jdk18on-1.78.1.jar",
-  sha256 = "add5915e6acfc6ab5836e1fd8a5e21c6488536a8c1f21f386eeb3bf280b702d7",
-  downloaded_file_path = "bcprov-jdk18on-1.78.1.jar"
+  name = "bcutil-jdk18on-1_80_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.80/bcutil-jdk18on-1.80.jar",
+  sha256 = "22eca687f7955411f456af33e6ea8e68fc73cd80cb8b32aa5f7a8b1827d7c678",
+  downloaded_file_path = "bcutil-jdk18on-1.80.jar"
 )
 
 http_file(
-  name = "bcutil-jdk18on-1_78_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.78.1/bcutil-jdk18on-1.78.1.jar",
-  sha256 = "d9fa56f97b0f761ce3bc8d9d74c5d7137a987bf5bd3abfe1003f9bafa45a1d2f",
-  downloaded_file_path = "bcutil-jdk18on-1.78.1.jar"
+  name = "bcprov-jdk18on-1_80_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.80/bcprov-jdk18on-1.80.jar",
+  sha256 = "e8ad209f8c58d291a37ca9750e9e9fac60596956c983e49dd8282381dd8b3249",
+  downloaded_file_path = "bcprov-jdk18on-1.80.jar"
 )
 
 http_file(
-  name = "bcpkix-jdk18on-1_78_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.78.1/bcpkix-jdk18on-1.78.1-sources.jar",
-  sha256 = "ce8a110efa6f2beb40f5fa518e5a8b647cedd05d282df593f450cf5acd7d8ea2",
-  downloaded_file_path = "bcpkix-jdk18on-1.78.1-sources.jar"
+  name = "bcpkix-jdk18on-1_80-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/1.80/bcpkix-jdk18on-1.80-sources.jar",
+  sha256 = "601ec2beb4749f0be65e296811b6e63de567f90d124f26887875bb722fd87e71",
+  downloaded_file_path = "bcpkix-jdk18on-1.80-sources.jar"
 )
 
 http_file(
-  name = "bcprov-jdk18on-1_78_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.78.1/bcprov-jdk18on-1.78.1-sources.jar",
-  sha256 = "be87a544d921152cedcef4b740155047ef2f402544d47382b8c0b15dec11a642",
-  downloaded_file_path = "bcprov-jdk18on-1.78.1-sources.jar"
+  name = "bcutil-jdk18on-1_80-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.80/bcutil-jdk18on-1.80-sources.jar",
+  sha256 = "ce93fac9ddfc390b1e2ef7160bfcf63452e419780c1f4fb2faa2d6fce2065d54",
+  downloaded_file_path = "bcutil-jdk18on-1.80-sources.jar"
 )
 
 http_file(
-  name = "bcutil-jdk18on-1_78_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/1.78.1/bcutil-jdk18on-1.78.1-sources.jar",
-  sha256 = "667b6334ff25c4303d3b1af02599f8547fcc37d0d55393bcb17de4f179c78baa",
-  downloaded_file_path = "bcutil-jdk18on-1.78.1-sources.jar"
+  name = "bcprov-jdk18on-1_80-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk18on/1.80/bcprov-jdk18on-1.80-sources.jar",
+  sha256 = "29e8414b7a07060b07222bb786dd594d2e411de0d7723d2fac8adedb0801cbef",
+  downloaded_file_path = "bcprov-jdk18on-1.80-sources.jar"
 )
 
 http_file(
@@ -707,17 +707,17 @@ http_file(
 )
 
 http_file(
-  name = "classgraph-4_8_174_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.174/classgraph-4.8.174.jar",
-  sha256 = "3594bdb5ff2b420df7330b7e192221eaa6960c5f1e08890c391cb56109e3c4b9",
-  downloaded_file_path = "classgraph-4.8.174.jar"
+  name = "classgraph-4_8_179_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.179/classgraph-4.8.179.jar",
+  sha256 = "16558357f234052370109127a45d69a9bd6d8646925594792634486dc48b159d",
+  downloaded_file_path = "classgraph-4.8.179.jar"
 )
 
 http_file(
-  name = "classgraph-4_8_174-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.174/classgraph-4.8.174-sources.jar",
-  sha256 = "a6ca95260727044daccfb26bae84d4f0787783f029b787ed245ca53ca83cc58b",
-  downloaded_file_path = "classgraph-4.8.174-sources.jar"
+  name = "classgraph-4_8_179-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/classgraph/classgraph/4.8.179/classgraph-4.8.179-sources.jar",
+  sha256 = "dc33a7a96bc89279fac734f586dfca2d56bc57569f89f9850c3e72c6b785404d",
+  downloaded_file_path = "classgraph-4.8.179-sources.jar"
 )
 
 http_file(
@@ -861,17 +861,17 @@ http_file(
 )
 
 http_file(
-  name = "commons-text-1_12_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-text/1.12.0/commons-text-1.12.0.jar",
-  sha256 = "de023257ff166044a56bd1aa9124e843cd05dac5806cc705a9311f3556d5a15f",
-  downloaded_file_path = "commons-text-1.12.0.jar"
+  name = "commons-text-1_13_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-text/1.13.0/commons-text-1.13.0.jar",
+  sha256 = "1e323a501127df78ed0987f345d69d65d0ea7fa3d4fb5b3f84aaeba3a8b20f38",
+  downloaded_file_path = "commons-text-1.13.0.jar"
 )
 
 http_file(
-  name = "commons-text-1_12_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-text/1.12.0/commons-text-1.12.0-sources.jar",
-  sha256 = "191fef119a5f96c9ea99845f35e9fec61b9d4daa23592802bb9894f2efee4f13",
-  downloaded_file_path = "commons-text-1.12.0-sources.jar"
+  name = "commons-text-1_13_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/commons/commons-text/1.13.0/commons-text-1.13.0-sources.jar",
+  sha256 = "ef8983f2336be8ee0aea07175d3f661101142ba233d830c59044dda722c9149c",
+  downloaded_file_path = "commons-text-1.13.0-sources.jar"
 )
 
 http_file(
@@ -1589,17 +1589,17 @@ http_file(
 )
 
 http_file(
-  name = "easymock-5_2_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/easymock/easymock/5.2.0/easymock-5.2.0.jar",
-  sha256 = "e63a6494b96553cbd0dfde13b5f23dabbd811854410d6ebc53a6a6684a1763b5",
-  downloaded_file_path = "easymock-5.2.0.jar"
+  name = "easymock-5_5_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/easymock/easymock/5.5.0/easymock-5.5.0.jar",
+  sha256 = "bf05b56b102be91c7cd0bbad1684d5809ac2ccd0380e684f9445bfde14418f7f",
+  downloaded_file_path = "easymock-5.5.0.jar"
 )
 
 http_file(
-  name = "easymock-5_2_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/easymock/easymock/5.2.0/easymock-5.2.0-sources.jar",
-  sha256 = "2a71cc0f608ac4d395e8242e8c1b9856381161aaca852adb49b529ea2b4aac14",
-  downloaded_file_path = "easymock-5.2.0-sources.jar"
+  name = "easymock-5_5_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/easymock/easymock/5.5.0/easymock-5.5.0-sources.jar",
+  sha256 = "8e4f745f7721c9b7f58cdfdc8fe1eb72841710e4899ada0b7affcd764b5fd037",
+  downloaded_file_path = "easymock-5.5.0-sources.jar"
 )
 
 http_file(
@@ -3497,20 +3497,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/rwmutex-idea/0.0.7/rwmutex-idea-0.0.7-sources.jar",
   sha256 = "17210c0d8d00f8f0658273db5580029c2fc6ae3d58b2face136d8a771f521b12",
   downloaded_file_path = "rwmutex-idea-0.0.7-sources.jar"
-)
-
-http_file(
-  name = "kotlin-compose-compiler-plugin-2_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.0/kotlin-compose-compiler-plugin-2.1.0.jar",
-  sha256 = "5545c33ddbc331ce4f2700b15c7d8b8603d219c434f3370298af45e99f1930b9",
-  downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.0.jar"
-)
-
-http_file(
-  name = "kotlin-compose-compiler-plugin-2_1_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.0/kotlin-compose-compiler-plugin-2.1.0-sources.jar",
-  sha256 = "f984032d119b9ed4e811398ec43f52e83e73b14860817da70016812848eaa900",
-  downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.0-sources.jar"
 )
 
 http_file(
@@ -10154,6 +10140,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/completion/ngram-slp/0.0.3/ngram-slp-0.0.3-sources.jar",
   sha256 = "406b97140745664a1f62cec5440448177d38ec0d4cad40262d5051b0630f6aa4",
   downloaded_file_path = "ngram-slp-0.0.3-sources.jar"
+)
+
+http_file(
+  name = "noria-compiler-plugin-2_1_0-0_4_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.1.0-0.4/noria-compiler-plugin-2.1.0-0.4.jar",
+  sha256 = "85ace15df2c59d1ec717e2f4e68a7a396b06e7c72d879f292a7b3b504b800a75",
+  downloaded_file_path = "noria-compiler-plugin-2.1.0-0.4.jar"
+)
+
+http_file(
+  name = "noria-compiler-plugin-2_1_0-0_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/noria-compiler-plugin/2.1.0-0.4/noria-compiler-plugin-2.1.0-0.4-sources.jar",
+  sha256 = "f4ad2ba4e76e988f3d4fd3d22355f242e0046cca16aaf8bc36648a8a5000733c",
+  downloaded_file_path = "noria-compiler-plugin-2.1.0-0.4-sources.jar"
 )
 
 http_file(

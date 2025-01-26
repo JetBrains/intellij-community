@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.ide.bootstrap.kernel` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-bootstrap-kernel",
+  module_name = "intellij.platform.ide.bootstrap.kernel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//fleet/kernel",
+    "//platform/kernel/shared:kernel",
+    "//platform/util/coroutines",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.bootstrap.kernel` end

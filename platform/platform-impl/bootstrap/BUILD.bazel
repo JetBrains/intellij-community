@@ -30,11 +30,14 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/indexing-api:indexing",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/platform-impl/bootstrap/eel:ide-bootstrap-eel",
+    "//fleet/kernel",
     "@lib//:jna",
     "@lib//:hash4j",
     "@lib//:jbr-api",
     "@lib//:googlecode-plist-dd",
     "@lib//:netty-codec-http",
+    "//platform/platform-impl/bootstrap/kernel:ide-bootstrap-kernel",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap` end

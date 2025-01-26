@@ -10,6 +10,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util",
     "//platform/platform-impl:ide-impl",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
   ]
 )
 
@@ -28,6 +30,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
   ]
 )
 

@@ -26,6 +26,10 @@ jvm_test(
     "//platform/backend/workspace",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
     "@lib//:kotlinc-kotlin-jps-common-provided",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ],
   runtime_deps = ["//plugins/devkit/intellij.devkit:devkit"]
 )

@@ -27,7 +27,6 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-slf4j",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:rpc-compiler-plugin-provided",
     "//fleet/util/core:fleet-util-core",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

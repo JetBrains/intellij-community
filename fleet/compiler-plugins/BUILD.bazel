@@ -1,0 +1,15 @@
+### auto-generated section `build fleet.compiler.plugins` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "compiler-plugins",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "@lib//:expects-compiler-plugin",
+    "@lib//:noria-compiler-plugin",
+    "@lib//:rhizomedb-compiler-plugin",
+    "@lib//:rpc-compiler-plugin",
+    "@lib//:poko-compiler-plugin",
+  ]
+)
+### auto-generated section `build fleet.compiler.plugins` end

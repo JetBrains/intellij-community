@@ -43,6 +43,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/diagnostic/telemetry",
     "@lib//:jetbrains-annotations",
+    "//platform/platform-impl/bootstrap/kernel:ide-bootstrap-kernel",
   ],
   runtime_deps = [":common_resources"]
 )
