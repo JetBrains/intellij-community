@@ -39,6 +39,7 @@ public abstract class FileIndexFacade {
   public abstract boolean isExcludedFile(@NotNull VirtualFile file);
   public abstract boolean isUnderIgnored(@NotNull VirtualFile file);
   
+  @ApiStatus.Internal
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile file, @NotNull Set<?> rootTypes) {
     return isInSource(file);
   }

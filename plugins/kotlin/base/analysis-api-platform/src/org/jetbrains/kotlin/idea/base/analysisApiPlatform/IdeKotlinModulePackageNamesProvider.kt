@@ -12,11 +12,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex.ValueProcessor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.api.platform.utils.NullableConcurrentCache
-import org.jetbrains.kotlin.analysis.api.projectStructure.*
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.names.isSupportedByBinaryRootToPackageIndex
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -38,6 +43,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
  * some binary roots. We compute package names per binary root, so it makes sense to cache it on this level as well.
  */
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 open class IdeKotlinModulePackageNamesProvider(private val project: Project) : Disposable {
     private val cache = NullableConcurrentCache<KaModule, Set<String>?>()
 

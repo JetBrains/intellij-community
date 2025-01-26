@@ -9,7 +9,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TemplateLanguageStubBaseVersion.dropVersion
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class StubElementRegistryServiceImpl : CoreStubElementRegistryServiceImpl(), Disposable.Default {
   @Volatile private lateinit var factories: Map<IElementType, StubElementFactory<*, *>>
   @Volatile private lateinit var lightFactories: Map<IElementType, LightStubElementFactory<*, *>>
