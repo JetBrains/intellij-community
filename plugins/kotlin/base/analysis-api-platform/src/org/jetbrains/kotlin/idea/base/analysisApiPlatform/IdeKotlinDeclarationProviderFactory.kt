@@ -123,7 +123,7 @@ private class IdeKotlinDeclarationProvider(
     override val hasSpecificCallablePackageNamesComputation: Boolean get() = false
 
     override fun computePackageNames(): Set<String>? =
-        contextualModule?.let { IdeKotlinModulePackageNamesProvider.getInstance(project).computePackageNames(it) }
+        contextualModule?.let { KotlinModulePackageNamesProvider.getInstance(project).computePackageNames(it) }
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
         //TODO original LC has platformSourcesFirst()

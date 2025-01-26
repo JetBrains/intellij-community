@@ -22,6 +22,9 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackageProviderFactory"/>
     <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.analysisApiPlatform.KotlinModulePackageNamesProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider"/>
+    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackageProviderMerger"/>
     <projectService
