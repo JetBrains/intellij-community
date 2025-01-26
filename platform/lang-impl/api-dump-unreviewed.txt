@@ -18165,6 +18165,9 @@ a:com.intellij.util.TextFieldCompletionProviderDumbAware
 - com.intellij.openapi.project.DumbAware
 - p:<init>():V
 - p:<init>(Z):V
+f:com.intellij.util.gist.GistAstMarker
+- <init>(com.intellij.openapi.fileTypes.FileType,java.lang.String,kotlin.jvm.functions.Function1):V
+- f:accepts(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
 f:com.intellij.util.indexing.FileBasedIndexImpl
 - com.intellij.util.indexing.FileBasedIndex
 - f:myWriteLock:java.util.concurrent.locks.Lock

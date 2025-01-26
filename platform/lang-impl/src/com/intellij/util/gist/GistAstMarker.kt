@@ -11,7 +11,6 @@ import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.util.AstLoadingFilter
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.io.DataExternalizer
-import org.jetbrains.annotations.ApiStatus
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -21,12 +20,11 @@ private val ACCEPTS_YES: GistMarkerData = GistMarkerData.success(true)
 private val ACCEPTS_NO: GistMarkerData = GistMarkerData.success(false)
 
 /**
- * Lightweight replacement for indexing, computes if file is accepted by marker function on-demand and stores this marker on disk.
+ * Lightweight replacement for indexing, computes if a file is accepted by marker function on-demand and stores this marker on disk.
  * Typical usage: check if a file should have a desired icon based on its content in [com.intellij.ide.IconProvider].
  *
  * @see GistManager
  */
-@ApiStatus.Experimental
 class GistAstMarker(private val fileType: FileType,
                     private val gistId: String,
                     function: (LighterAST) -> Boolean) {
