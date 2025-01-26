@@ -35,9 +35,7 @@ public final class JavaFullClassNameIndex extends CharSequenceHashStubIndexExten
   }
 
   public Collection<PsiClass> getClasses(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    var prm = ProjectRootManager.getInstance(project);
-    var scopePrime = prm != null ? new JavaSourceFilterScope(scope) : scope;
-    return StubIndex.getElements(getKey(), name, project, scopePrime, PsiClass.class);
+    return StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiClass.class);
   }
 
   @Override
