@@ -154,6 +154,15 @@
                      language="kotlin"
                      key="inspection.delegation.to.var.property.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectLiteralToLambdaInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.object.literal.to.lambda.display.name"
+                     bundle="messages.KotlinBundle"/>
+
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.JavaIoSerializableObjectMustHaveReadResolveInspection"
             groupPath="Kotlin"
@@ -179,6 +188,15 @@
                      level="WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.semicolon.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantSamConstructorInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.redundant.sam.constructor.display.name"
+                     bundle="messages.KotlinBundle"/>
 
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveEmptyParenthesesFromLambdaCallInspection"
