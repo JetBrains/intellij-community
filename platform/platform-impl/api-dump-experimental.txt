@@ -319,16 +319,6 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen
 - setDefaultRenderer(java.lang.Class,javax.swing.table.TableCellRenderer):V
 - setModel(com.intellij.ui.treeStructure.treetable.TreeTableModel):V
 - setRowSorter(javax.swing.RowSorter):V
-*f:com.intellij.ui.components.SearchFieldWithExtension
-- javax.swing.JPanel
-- *sf:Companion:com.intellij.ui.components.SearchFieldWithExtension$Companion
-- <init>(javax.swing.JComponent,com.intellij.ui.SearchTextField):V
-- f:getTextField():javax.swing.JTextField
-- getUIClassID():java.lang.String
-- hasFocus():Z
-- requestFocus():V
-- setBackground(java.awt.Color):V
-*f:com.intellij.ui.components.SearchFieldWithExtension$Companion
 *:com.intellij.ui.content.custom.options.ContentLayoutStateSettings
 - a:getDisplayName():java.lang.String
 - a:isEnabled():Z

@@ -14817,6 +14817,15 @@ f:com.intellij.ui.components.LegalNoticeDialog$Builder
 - withCustomAction(java.lang.String,I):com.intellij.ui.components.LegalNoticeDialog$Builder
 - withParent(com.intellij.openapi.project.Project):com.intellij.ui.components.LegalNoticeDialog$Builder
 - withParent(java.awt.Component):com.intellij.ui.components.LegalNoticeDialog$Builder
+f:com.intellij.ui.components.SearchFieldWithExtension
+- javax.swing.JPanel
+- <init>(javax.swing.JComponent,com.intellij.ui.SearchTextField):V
+- f:getTextField():javax.swing.JTextField
+- getUI():javax.swing.plaf.PanelUI
+- getUIClassID():java.lang.String
+- hasFocus():Z
+- requestFocus():V
+- setBackground(java.awt.Color):V
 c:com.intellij.ui.components.SliderSelectorAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.ui.components.SliderSelectorAction$Configuration):V
