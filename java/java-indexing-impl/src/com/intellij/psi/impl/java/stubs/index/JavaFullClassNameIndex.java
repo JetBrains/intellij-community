@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
