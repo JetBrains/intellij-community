@@ -6,7 +6,6 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import java.util.*
-import kotlin.collections.ArrayList
 
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
 private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
@@ -50,7 +49,7 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
   }
 
   val hasAllModules = moduleMap.containsKey(PluginManagerCore.ALL_MODULES_MARKER.idString)
-  val result: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
+  val dependenciesCollector: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
   val additionalEdgesForCurrentModule: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
   val directDependencies = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(modules.size)
   for (module in modules) {
@@ -62,48 +61,48 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
         PluginManagerCore.logger.error("Plugin $module depends on self")
       }
       else {
-        result.add(implicitDep)
+        dependenciesCollector.add(implicitDep)
       }
     }
 
-    collectDirectDependenciesInOldFormat(module, moduleMap, result)
-    collectDirectDependenciesInNewFormat(module, moduleMap, result, additionalEdgesForCurrentModule)
+    collectDirectDependenciesInOldFormat(module, moduleMap, dependenciesCollector)
+    collectDirectDependenciesInNewFormat(module, moduleMap, dependenciesCollector, additionalEdgesForCurrentModule)
 
     // Check modules as well, for example, intellij.diagram.impl.vcs.
     // We are not yet ready to recommend adding a dependency on extracted VCS modules since the coordinates are not finalized.
     if (module.pluginId != PluginManagerCore.CORE_ID || module.moduleName != null) {
       val strictCheck = module.isBundled || PluginManagerCore.isVendorJetBrains(module.vendor ?: "")
       if (!strictCheck || doesDependOnPluginAlias(module, VCS_ALIAS_ID)) {
-        moduleMap.get("intellij.platform.vcs.impl")?.let { result.add(it) }
-        moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
-        moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
+        moduleMap.get("intellij.platform.vcs.impl")?.let { dependenciesCollector.add(it) }
+        moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { dependenciesCollector.add(it) }
+        moduleMap.get("intellij.platform.vcs.log.impl")?.let { dependenciesCollector.add(it) }
       }
       if (!strictCheck) {
         if (System.getProperty("enable.implicit.json.dependency").toBoolean()) {
-          moduleMap.get("com.intellij.modules.json")?.let { result.add(it) }
+          moduleMap.get("com.intellij.modules.json")?.let { dependenciesCollector.add(it) }
         }
-        moduleMap.get("intellij.platform.collaborationTools")?.let { result.add(it) }
+        moduleMap.get("intellij.platform.collaborationTools")?.let { dependenciesCollector.add(it) }
       }
 
       /* Compatibility Layer */
 
       if (doesDependOnPluginAlias(module, RIDER_ALIAS_ID)) {
-        moduleMap.get("intellij.rider")?.let { result.add(it) }
+        moduleMap.get("intellij.rider")?.let { dependenciesCollector.add(it) }
       }
       if (doesDependOnPluginAlias(module, COVERAGE_ALIAS_ID)) {
-        moduleMap.get("intellij.platform.coverage")?.let { result.add(it) }
+        moduleMap.get("intellij.platform.coverage")?.let { dependenciesCollector.add(it) }
       }
       if (doesDependOnPluginAlias(module, ML_INLINE_ALIAS_ID)) {
-        moduleMap.get("intellij.ml.inline.completion")?.let { result.add(it) }
+        moduleMap.get("intellij.ml.inline.completion")?.let { dependenciesCollector.add(it) }
       }
       if (doesDependOnPluginAlias(module, PROVISIONER_ALIAS_ID)) {
-        moduleMap.get("intellij.platform.ide.provisioner")?.let { result.add(it) }
+        moduleMap.get("intellij.platform.ide.provisioner")?.let { dependenciesCollector.add(it) }
       }
       if (doesDependOnPluginAlias(module, PluginId.getId("org.jetbrains.completion.full.line"))) {
-        moduleMap.get("intellij.fullLine.core")?.let { result.add(it) }
-        moduleMap.get("intellij.fullLine.local")?.let { result.add(it) }
-        moduleMap.get("intellij.fullLine.core.impl")?.let { result.add(it) }
-        moduleMap.get("intellij.ml.inline.completion")?.let { result.add(it) }
+        moduleMap.get("intellij.fullLine.core")?.let { dependenciesCollector.add(it) }
+        moduleMap.get("intellij.fullLine.local")?.let { dependenciesCollector.add(it) }
+        moduleMap.get("intellij.fullLine.core.impl")?.let { dependenciesCollector.add(it) }
+        moduleMap.get("intellij.ml.inline.completion")?.let { dependenciesCollector.add(it) }
       }
     }
 
@@ -112,20 +111,20 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       val main = moduleMap.get(module.pluginId.idString)!!
       assert(main !== module)
       if (!module.isRequiredContentModule) {
-        result.add(main)
+        dependenciesCollector.add(main)
       }
     }
 
     if (!additionalEdgesForCurrentModule.isEmpty()) {
-      additionalEdgesForCurrentModule.removeAll(result)
+      additionalEdgesForCurrentModule.removeAll(dependenciesCollector)
       if (!additionalEdgesForCurrentModule.isEmpty()) {
         additionalEdges.put(module, Java11Shim.INSTANCE.copyOfList(additionalEdgesForCurrentModule))
         additionalEdgesForCurrentModule.clear()
       }
     }
-    if (!result.isEmpty()) {
-      directDependencies.put(module, Java11Shim.INSTANCE.copyOfList(result))
-      result.clear()
+    if (!dependenciesCollector.isEmpty()) {
+      directDependencies.put(module, Java11Shim.INSTANCE.copyOfList(dependenciesCollector))
+      dependenciesCollector.clear()
     }
   }
 
@@ -162,7 +161,7 @@ private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
 
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
                                                  idMap: Map<String, IdeaPluginDescriptorImpl>,
-                                                 result: MutableSet<IdeaPluginDescriptorImpl>) {
+                                                 dependenciesCollector: MutableSet<IdeaPluginDescriptorImpl>) {
   for (dependency in rootDescriptor.pluginDependencies) {
     // check for missing optional dependency
     val dep = idMap.get(dependency.pluginId.idString) ?: continue
@@ -176,24 +175,24 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
       }
       else {
         // e.g. `.env` plugin in an old format and doesn't explicitly specify dependency on a new extracted modules
-        dep.content.modules.mapTo(result) { it.requireDescriptor() }
+        dep.content.modules.mapTo(dependenciesCollector) { it.requireDescriptor() }
 
-        result.add(dep)
+        dependenciesCollector.add(dep)
       }
     }
 
     if (knownNotFullyMigratedPluginIds.contains(rootDescriptor.pluginId.idString)) {
-      idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.mapTo(result) { it.requireDescriptor() }
+      idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.mapTo(dependenciesCollector) { it.requireDescriptor() }
     }
 
     dependency.subDescriptor?.let {
-      collectDirectDependenciesInOldFormat(it, idMap, result)
+      collectDirectDependenciesInOldFormat(it, idMap, dependenciesCollector)
     }
   }
 
   for (moduleId in rootDescriptor.incompatibilities) {
     idMap.get(moduleId.idString)?.let {
-      result.add(it)
+      dependenciesCollector.add(it)
     }
   }
 }
@@ -201,13 +200,13 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
 private fun collectDirectDependenciesInNewFormat(
   module: IdeaPluginDescriptorImpl,
   idMap: Map<String, IdeaPluginDescriptorImpl>,
-  result: MutableCollection<IdeaPluginDescriptorImpl>,
+  dependenciesCollector: MutableCollection<IdeaPluginDescriptorImpl>,
   additionalEdges: MutableSet<IdeaPluginDescriptorImpl>
 ) {
   for (item in module.dependencies.modules) {
     val dependency = idMap.get(item.name)
     if (dependency != null) {
-      result.add(dependency)
+      dependenciesCollector.add(dependency)
       if (dependency.isRequiredContentModule) {
         /* Add edges to all required plugin modules.
            This is needed to ensure that modules depending on a required content module are processed after all required content modules, because if a required module cannot be 
@@ -224,7 +223,7 @@ private fun collectDirectDependenciesInNewFormat(
     val descriptor = idMap.get(item.id.idString)
     // fake v1 module maybe located in a core plugin
     if (descriptor != null && descriptor.pluginId != PluginManagerCore.CORE_ID) {
-      result.add(descriptor)
+      dependenciesCollector.add(descriptor)
     }
   }
 
