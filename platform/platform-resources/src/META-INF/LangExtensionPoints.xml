@@ -152,7 +152,6 @@
       <with attribute="forClass" implements="com.intellij.model.search.SearchParameters"/>
       <with attribute="implementationClass" implements="com.intellij.model.search.Searcher"/>
     </extensionPoint>
-    <extensionPoint name="lang.codeReferenceSearcher" dynamic="true" interface="com.intellij.model.search.CodeReferenceSearcher"/>
     <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint name="indexPatternSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
 

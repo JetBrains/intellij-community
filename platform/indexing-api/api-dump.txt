@@ -141,11 +141,6 @@ c:com.intellij.lang.findUsages.LanguageFindUsages
 - s:getNodeText(com.intellij.psi.PsiElement,Z):java.lang.String
 - s:getType(com.intellij.psi.PsiElement):java.lang.String
 - s:getWordsScanner(com.intellij.lang.Language):com.intellij.lang.cacheBuilder.WordsScanner
-com.intellij.model.search.CodeReferenceSearcher
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getReferences(com.intellij.model.Symbol,com.intellij.model.search.LeafOccurrence):java.util.Collection
-- a:getReferencingLanguage(com.intellij.model.Symbol):com.intellij.lang.Language
-- a:getSearchRequest(com.intellij.openapi.project.Project,com.intellij.model.Symbol):com.intellij.model.search.SearchRequest
 com.intellij.model.search.LeafOccurrence
 - component1():com.intellij.psi.PsiElement
 - component2():com.intellij.psi.PsiElement
@@ -161,8 +156,6 @@ f:com.intellij.model.search.LeafOccurrenceMapper$Companion
 - f:withPointer(com.intellij.model.Pointer,com.intellij.model.search.LeafOccurrenceMapper$Parameterized):com.intellij.model.search.LeafOccurrenceMapper
 com.intellij.model.search.LeafOccurrenceMapper$Parameterized
 - a:mapOccurrence(java.lang.Object,com.intellij.model.search.LeafOccurrence):java.util.Collection
-com.intellij.model.search.PsiSymbolDeclarationSearcher
-- com.intellij.model.search.Searcher
 e:com.intellij.model.search.SearchContext
 - java.lang.Enum
 - sf:IN_CODE:com.intellij.model.search.SearchContext
@@ -180,8 +173,6 @@ com.intellij.model.search.SearchService
 - s:getInstance():com.intellij.model.search.SearchService
 - a:merge(java.util.List):com.intellij.util.Query
 - a:searchParameters(com.intellij.model.search.SearchParameters):com.intellij.util.Query
-- a:searchPsiSymbolDeclarations(com.intellij.openapi.project.Project,com.intellij.model.Symbol,com.intellij.psi.search.SearchScope):com.intellij.util.Query
-- a:searchPsiSymbolReferences(com.intellij.openapi.project.Project,com.intellij.model.Symbol,com.intellij.psi.search.SearchScope):com.intellij.util.Query
 - a:searchWord(com.intellij.openapi.project.Project,java.lang.String):com.intellij.model.search.SearchWordQueryBuilder
 com.intellij.model.search.SearchWordQueryBuilder
 - a:buildLeafOccurrenceQuery():com.intellij.util.Query

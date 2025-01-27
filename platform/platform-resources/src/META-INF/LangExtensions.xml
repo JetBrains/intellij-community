@@ -36,14 +36,9 @@
 
     <psi.declarationProvider implementation="com.intellij.model.psi.impl.DefaultPsiSymbolDeclarationProvider" order="last"/>
 
-    <searcher forClass="com.intellij.model.search.PsiSymbolReferenceSearchParameters"
-              implementationClass="com.intellij.model.search.impl.DefaultReferenceSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SearcherQueryExecutor"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
-
-    <searcher forClass="com.intellij.model.search.PsiSymbolDeclarationSearchParameters"
-              implementationClass="com.intellij.model.psi.impl.PsiElementDeclarationSearcher"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker"/>
     <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkDetector"/>
