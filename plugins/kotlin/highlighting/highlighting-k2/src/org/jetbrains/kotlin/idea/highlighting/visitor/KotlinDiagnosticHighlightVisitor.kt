@@ -54,15 +54,10 @@ import org.jetbrains.kotlin.psi.*
 
 class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtension {
     /**
-     * A map from particular [PsiElement] from a file to a list of highlighting builders which belongs to it.
-     *
-     * This map is required to extract diagnostics from this map according to the current element being visited,
-     * to avoid flickers
-     *
-     * @see DiagnosticInfo
-     * @see analyzeFile
+     * map [PsiElement] -> list of highlighting builders for this element, built in [analyzeFile]
+     * This map is required to extract diagnostics exactly when the current element is being visited, to avoid flickers
      */
-    private var diagnosticsMap: MutableMap<PsiElement, MutableList<HighlightInfo.Builder?>>? = null
+    private var diagnosticsMap: Map<PsiElement, List<HighlightInfo.Builder>> = emptyMap()
     private var holder: HighlightInfoHolder? = null
     private var coroutineScope: CoroutineScope? = null
     override fun suitableForFile(file: PsiFile): Boolean {
@@ -97,7 +92,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             throw e
         } finally {
             // do not leak Editor, since KotlinDiagnosticHighlightVisitor is a project-level extension
-            this.diagnosticsMap = null
+            this.diagnosticsMap = emptyMap()
             this.coroutineScope?.cancel() // TODO
             this.coroutineScope = null
             this.holder = null
@@ -107,7 +102,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun analyzeFile(file: KtFile): MutableMap<PsiElement, MutableList<HighlightInfo.Builder?>> = analyze(file) {
+    private fun analyzeFile(file: KtFile): Map<PsiElement, List<HighlightInfo.Builder>> = analyze(file) {
         // Trigger additional resolution under `analyze` block to have the session on the stack
         // to avoid stop-the-world and GC optimizations
         if (Registry.`is`(key = "kotlin.highlighting.warmup", defaultValue = true)) {
@@ -117,30 +112,36 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         //remove filtering when KTIJ-29195 is fixed
         val isIJProject = IntelliJProjectUtil.isIntelliJPlatformProject(file.project)
         val analysis = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-        val diagnostics = analysis
+        val filteredAnalysisResult = analysis
             .filterOutCodeFragmentVisibilityErrors(file)
             .filterNot { isIJProject && it.diagnosticClass == KaFirDiagnostic.ContextReceiversDeprecated::class }
             .onEach { diagnostic -> diagnostic.psi.clearSavedKaDiagnosticsForUnresolvedReference() }
-            .flatMap { diagnostic ->
-                val anchorElement = diagnostic.psi
-                diagnostic.textRanges.map { range -> DiagnosticInfo(anchorElement, range, diagnostic) }
+        val builders = filteredAnalysisResult
+            .map { diagnostic ->
+                Pair(diagnostic.psi,
+                diagnostic.textRanges.mapNotNull { range ->
+                    try {
+                        convertToBuilder(file, range, diagnostic)
+                    } catch (e: ProcessCanceledException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Logger.getInstance(KotlinDiagnosticHighlightVisitor::class.java).error(e)
+                        null
+                    }
+                })
             }
-            .groupByTo(HashMap(), { it.anchorElement }, {
-                try {
-                    convertToBuilder(file, it.diagnosticRange, it.diagnostic)
-                } catch (e: ProcessCanceledException) {
-                    throw e
-                } catch (e: Exception) {
-                    Logger.getInstance(KotlinDiagnosticHighlightVisitor::class.java).error(e)
-                    null
-                }
-            })
+
+        // psi elements in the list can duplicate, but infrequently
+        val destination = HashMap<PsiElement, List<HighlightInfo.Builder>>(builders.size)
+        for (pair in builders) {
+            destination.compute(pair.first) { _, oldList -> if (oldList == null) pair.second else oldList + pair.second }
+        }
 
         KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
             analysis.asSequence().filter { it.severity == KaSeverity.ERROR }.mapNotNull(KaDiagnosticWithPsi<*>::factoryName), file
         )
 
-        diagnostics
+        destination
     }
 
 
@@ -159,29 +160,6 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
      * ([KtClassBody], [KtClass]) will be marked as broken.
      */
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is KtFile
-
-    /**
-     * **Crucial note**: [anchorElement] is some [PsiElement] from a file.
-     * This is a contract based on an assumption:
-     * [visit] will iterate through all elements, so there will be an [anchorElement].
-     * [diagnosticRange] cannot be used for the anchor as it may represent any range that
-     * is not required to match with any particular element.
-     *
-     * @see visit
-     * @see diagnosticRange
-     */
-    private class DiagnosticInfo(
-        /**
-         * Represents [KaDiagnosticWithPsi.psi] of [diagnostic]
-         */
-        val anchorElement: PsiElement,
-
-        /**
-         * Represents one range of [KaDiagnosticWithPsi.textRanges] from [diagnostic]
-         */
-        val diagnosticRange: TextRange,
-        val diagnostic: KaDiagnosticWithPsi<PsiElement>,
-    )
 
     /**
      * This is a hack to force the Analysis API to calculate and cache the result of diagnostic collectors.
@@ -236,10 +214,10 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             KotlinSuppressableWarningProblemGroup(factoryName)
         } else null
 
-        val infoBuilder = getHighlightInfoBuilder(diagnostic, range)
+        val builder = createHighlightInfo(diagnostic, range)
 
         if (problemGroup != null) {
-            infoBuilder.problemGroup(problemGroup)
+            builder.problemGroup(problemGroup)
         }
         for (quickFixInfo in fixes) {
             // to trigger modCommand.getPresentation() to get `Fix all` and other options
@@ -252,7 +230,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             if (problemGroup != null) {
                 options += problemGroup.getSuppressActions(psiElement)
             }
-            infoBuilder.registerFix(quickFixInfo, options, null, null, null)
+            builder.registerFix(quickFixInfo, options, null, null, null)
         }
 
         if (
@@ -266,14 +244,14 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             psiElement.saveKaDiagnosticForUnresolvedReference(diagnostic)
             
             psiElement.reference?.let { ref ->
-                UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, infoBuilder)
+                UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, builder)
             }
         }
 
-        return infoBuilder
+        return builder
     }
 
-    private fun KaSession.getHighlightInfoBuilder(
+    private fun KaSession.createHighlightInfo(
         diagnostic: KaDiagnosticWithPsi<*>,
         range: TextRange
     ): HighlightInfo.Builder {
@@ -332,17 +310,14 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         else -> false
     }
 
-    /**
-     * @see DiagnosticInfo
-     */
     override fun visit(element: PsiElement) {
         // show diagnostics under this element range
         // assumption: highlight visitors call visit() method in the post-order (children first)
         // note that after this visitor finished, `diagnosticRanges` will be empty,
         // because all diagnostics are inside the file, by definition
-        val diagnostics = diagnosticsMap?.remove(element) ?: return
+        val diagnostics = diagnosticsMap.get(element) ?: return
         for (builder in diagnostics) {
-            val info = builder?.create() ?: continue
+            val info = builder.create() ?: continue
             holder!!.add(info)
         }
     }
