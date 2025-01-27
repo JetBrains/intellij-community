@@ -154,8 +154,11 @@ com.intellij.model.search.LeafOccurrence
 - a:getScope():com.intellij.psi.PsiElement
 - a:getStart():com.intellij.psi.PsiElement
 com.intellij.model.search.LeafOccurrenceMapper
+- sf:Companion:com.intellij.model.search.LeafOccurrenceMapper$Companion
 - a:mapOccurrence(com.intellij.model.search.LeafOccurrence):java.util.Collection
 - s:withPointer(com.intellij.model.Pointer,com.intellij.model.search.LeafOccurrenceMapper$Parameterized):com.intellij.model.search.LeafOccurrenceMapper
+f:com.intellij.model.search.LeafOccurrenceMapper$Companion
+- f:withPointer(com.intellij.model.Pointer,com.intellij.model.search.LeafOccurrenceMapper$Parameterized):com.intellij.model.search.LeafOccurrenceMapper
 com.intellij.model.search.LeafOccurrenceMapper$Parameterized
 - a:mapOccurrence(java.lang.Object,com.intellij.model.search.LeafOccurrence):java.util.Collection
 com.intellij.model.search.PsiSymbolDeclarationSearcher

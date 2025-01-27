@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.search.impl
 
 import com.intellij.lang.Language
@@ -79,7 +79,7 @@ internal data class SearchWordQueryBuilderImpl(
     return scope
   }
 
-  override fun <T> buildQuery(mapper: LeafOccurrenceMapper<T>): Query<out T> = SearchWordQuery(
+  override fun <T : Any> buildQuery(mapper: LeafOccurrenceMapper<T>): Query<out T> = SearchWordQuery(
     Parameters(
       myProject,
       myWord,

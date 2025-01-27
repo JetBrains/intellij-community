@@ -1,19 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.model.search;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.model.search
 
-import com.intellij.model.Pointer;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-import java.util.Collections;
+import com.intellij.model.Pointer
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
+import org.jetbrains.annotations.Contract
 
 /**
  * Normally, text occurrences are processed from the bottom to the top (file),
- * see {@link SearchWordQueryBuilder#buildOccurrenceQuery}. <br/>
- * Given an occurrence in {@code leaf3}, the walk up is started there,
- * and it goes all the way to the top: {@code leaf3}, {@code node2}, ..., {@code file}.
- * <pre>
+ * see [SearchWordQueryBuilder.buildOccurrenceQuery].
+ *
+ * Given an occurrence in `leaf3`, the walk-up is started there,
+ * and it goes all the way to the top: `leaf3`, `node2`, ..., `file`.
+ * ```
  * 0              file
  *               /  |  \
  * ...       ...   ...  ...
@@ -21,40 +19,50 @@ import java.util.Collections;
  * N-1     node1         node2
  *        /     \       /     \
  * N   leaf1  leaf2  leaf3  leaf4
- * </pre>
- * Some search might need only immediate parent (the node at {@code N-1}th level)
+ * ```
+ *
+ * Some search might need only immediate parent (the node at `N-1`th level)
  * so it could stop walking up there and return early.
  *
- * @param <T> type of the query result
+ * @param T type of the query result
  */
-public interface LeafOccurrenceMapper<T> {
+@OverrideOnly
+fun interface LeafOccurrenceMapper<out T : Any> {
 
   /**
-   * This method is called once per offset in {@code scope},
+   * This method is called once per offset in `scope`,
    * so implementations are able to control whether to go up the tree or not.
    *
    * @return read-only collection of result elements of the query
    */
-  @NotNull Collection<? extends T> mapOccurrence(@NotNull LeafOccurrence occurrence);
+  fun mapOccurrence(occurrence: LeafOccurrence): Collection<@JvmWildcard T>
 
-  interface Parameterized<P, T> {
+  fun interface Parameterized<in P : Any, out T : Any> {
 
-    @NotNull Collection<? extends T> mapOccurrence(@NotNull P parameter, @NotNull LeafOccurrence occurrence);
+    fun mapOccurrence(parameter: P, occurrence: LeafOccurrence): Collection<@JvmWildcard T>
   }
 
-  /**
-   * @param <P> type of pointer value
-   * @param <T> type of mapper result
-   * @return mapper, which dereferences the {@code pointer}, and,
-   * if successful, passes the value to the {@code parameterizedMapper} along with the occurrence
-   */
-  @Contract(pure = true)
-  static <P, T> @NotNull LeafOccurrenceMapper<T> withPointer(@NotNull Pointer<? extends P> pointer,
-                                                             @NotNull Parameterized<? super @NotNull P, ? extends T> parameterizedMapper) {
-    return occurrence -> {
-      P value = pointer.dereference();
-      return value == null ? Collections.emptyList()
-                           : parameterizedMapper.mapOccurrence(value, occurrence);
-    };
+  companion object {
+
+    /**
+     * @param P type of pointer value
+     * @param T type of mapper result
+     * @return mapper, which dereferences the [pointer], and,
+     * if successful, passes the value to the [parameterizedMapper] along with the occurrence
+     */
+    @JvmStatic
+    @Contract(pure = true)
+    fun <P : Any, T : Any> withPointer(
+      pointer: Pointer<out P>,
+      parameterizedMapper: Parameterized<@JvmWildcard P, @JvmWildcard T>,
+    ): LeafOccurrenceMapper<@JvmWildcard T> = LeafOccurrenceMapper { occurrence: LeafOccurrence ->
+      val value = pointer.dereference()
+      if (value == null) {
+        emptyList()
+      }
+      else {
+        parameterizedMapper.mapOccurrence(value, occurrence)
+      }
+    }
   }
 }
