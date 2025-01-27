@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.DefaultHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -1167,20 +1166,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!(expr.getParent() instanceof PsiReceiverParameter)) {
       add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, mySurroundingConstructor));
       if (!hasErrorResults()) visitExpression(expr);
-    }
-  }
-
-  @Override
-  public void visitTryStatement(@NotNull PsiTryStatement statement) {
-    super.visitTryStatement(statement);
-    if (!hasErrorResults()) {
-      UnhandledExceptions thrownTypes = HighlightUtil.collectUnhandledExceptions(statement);
-      if (thrownTypes.hasUnresolvedCalls()) return;
-      for (PsiParameter parameter : statement.getCatchBlockParameters()) {
-        if (!hasErrorResults()) {
-          HighlightUtil.checkWithImprovedCatchAnalysis(parameter, thrownTypes.exceptions(), myFile, myErrorSink);
-        }
-      }
     }
   }
 

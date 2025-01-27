@@ -215,4 +215,25 @@ public class UnhandledExceptions {
                                                      };
     return collect(element, topElement, callFilter);
   }
+
+  /**
+   * @param statement try-statement to collect unhandled exceptions from its body
+   * @return exceptions unhandled in try statement body and resource declarations; they are still could be handled by declared
+   * catch sections on the same try statement. The primary purpose of this method is to check whether catch sections are correct.
+   */
+  public static @NotNull UnhandledExceptions fromTryStatement(@NotNull PsiTryStatement statement) {
+    UnhandledExceptions thrownTypes = EMPTY;
+
+    PsiCodeBlock tryBlock = statement.getTryBlock();
+    if (tryBlock != null) {
+      thrownTypes = thrownTypes.merge(collect(tryBlock));
+    }
+
+    PsiResourceList resources = statement.getResourceList();
+    if (resources != null) {
+      thrownTypes = thrownTypes.merge(collect(resources));
+    }
+
+    return thrownTypes;
+  }
 }

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.SafeVarargsHasNoEffectInspection;
 import com.intellij.codeInspection.SafeVarargsOnNonReifiableTypeInspection;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
+import com.intellij.codeInspection.deadCode.UnreachableCatchInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.defUse.DefUseInspection;
@@ -38,7 +39,8 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection(),
-                          new SafeVarargsHasNoEffectInspection(), new SafeVarargsOnNonReifiableTypeInspection());
+                          new SafeVarargsHasNoEffectInspection(), new SafeVarargsOnNonReifiableTypeInspection(),
+                          new UnreachableCatchInspection());
     setLanguageLevel(LanguageLevel.JDK_1_7);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_7, getModule(), getTestRootDisposable());
   }

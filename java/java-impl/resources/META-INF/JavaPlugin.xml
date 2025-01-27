@@ -1972,6 +1972,11 @@
                      level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.streamToLoop.StreamToLoopInspection"
                      key="inspection.stream.to.loop.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnreachableCatch"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle" 
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.deadCode.UnreachableCatchInspection"
+                     key="inspection.unreachable.catch.name" bundle="messages.JavaAnalysisBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OptionalToIf"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
                      level="INFORMATION"

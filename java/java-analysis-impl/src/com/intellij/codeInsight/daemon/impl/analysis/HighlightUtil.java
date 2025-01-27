@@ -2,10 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ContainerProvider;
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.JavaModuleSystemEx;
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes;
-import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -49,7 +47,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -636,81 +633,6 @@ public final class HighlightUtil {
 
     return null;
   }
-
-  static @NotNull UnhandledExceptions collectUnhandledExceptions(@NotNull PsiTryStatement statement) {
-    UnhandledExceptions thrownTypes = UnhandledExceptions.EMPTY;
-
-    PsiCodeBlock tryBlock = statement.getTryBlock();
-    if (tryBlock != null) {
-      thrownTypes = thrownTypes.merge(UnhandledExceptions.collect(tryBlock));
-    }
-
-    PsiResourceList resources = statement.getResourceList();
-    if (resources != null) {
-      thrownTypes = thrownTypes.merge(UnhandledExceptions.collect(resources));
-    }
-
-    return thrownTypes;
-  }
-
-
-  static void checkWithImprovedCatchAnalysis(@NotNull PsiParameter parameter,
-                                             @NotNull Collection<? extends PsiClassType> thrownInTryStatement,
-                                             @NotNull PsiFile containingFile, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiCatchSection catchSection)) return;
-
-    PsiCatchSection[] allCatchSections = catchSection.getTryStatement().getCatchSections();
-    int idx = ArrayUtilRt.find(allCatchSections, catchSection);
-    if (idx <= 0) return;
-
-    Collection<PsiClassType> thrownTypes = new HashSet<>(thrownInTryStatement);
-    PsiManager manager = containingFile.getManager();
-    GlobalSearchScope parameterResolveScope = parameter.getResolveScope();
-    thrownTypes.add(PsiType.getJavaLangError(manager, parameterResolveScope));
-    thrownTypes.add(PsiType.getJavaLangRuntimeException(manager, parameterResolveScope));
-
-    List<PsiTypeElement> parameterTypeElements = PsiUtil.getParameterTypeElements(parameter);
-    boolean isMultiCatch = parameterTypeElements.size() > 1;
-    for (PsiTypeElement catchTypeElement : parameterTypeElements) {
-      PsiType catchType = catchTypeElement.getType();
-      if (ExceptionUtil.isGeneralExceptionType(catchType)) continue;
-
-      // collect exceptions caught by this type
-      List<PsiClassType> caught = new ArrayList<>();
-      for (PsiClassType t : thrownTypes) {
-        if (catchType.isAssignableFrom(t) || t.isAssignableFrom(catchType)) {
-          caught.add(t);
-        }
-      }
-      if (caught.isEmpty()) continue;
-      Collection<PsiClassType> caughtCopy = new HashSet<>(caught);
-
-      // exclude all caught by previous catch sections
-      for (int i = 0; i < idx; i++) {
-        PsiParameter prevCatchParameter = allCatchSections[i].getParameter();
-        if (prevCatchParameter == null) continue;
-        for (PsiTypeElement prevCatchTypeElement : PsiUtil.getParameterTypeElements(prevCatchParameter)) {
-          PsiType prevCatchType = prevCatchTypeElement.getType();
-          caught.removeIf(prevCatchType::isAssignableFrom);
-          if (caught.isEmpty()) break;
-        }
-      }
-
-      // check & warn
-      if (caught.isEmpty()) {
-        String message = JavaErrorBundle.message("exception.already.caught.warn", formatTypes(caughtCopy), caughtCopy.size());
-        HighlightInfo.Builder builder =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(catchSection).descriptionAndTooltip(message);
-        IntentionAction action = isMultiCatch ?
-                                 getFixFactory().createDeleteMultiCatchFix(catchTypeElement) :
-                                 getFixFactory().createDeleteCatchFix(parameter);
-        builder.registerFix(action, null, null, null, null);
-        errorSink.accept(builder);
-      }
-    }
-  }
-
 
   static HighlightInfo.Builder checkNotAStatement(@NotNull PsiStatement statement) {
     if (PsiUtil.isStatement(statement)) {

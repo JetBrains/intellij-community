@@ -114,7 +114,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitTryStatement(@NotNull PsiTryStatement statement) {
     super.visitTryStatement(statement);
     if (!hasErrorResults()) {
-      UnhandledExceptions thrownTypes = collectUnhandledExceptions(statement);
+      UnhandledExceptions thrownTypes = UnhandledExceptions.fromTryStatement(statement);
       if (thrownTypes.hasUnresolvedCalls()) return;
       for (PsiParameter parameter : statement.getCatchBlockParameters()) {
         myStatementChecker.checkExceptionAlreadyCaught(parameter);
@@ -841,22 +841,6 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
   }
 
-  private static @NotNull UnhandledExceptions collectUnhandledExceptions(@NotNull PsiTryStatement statement) {
-    UnhandledExceptions thrownTypes = UnhandledExceptions.EMPTY;
-
-    PsiCodeBlock tryBlock = statement.getTryBlock();
-    if (tryBlock != null) {
-      thrownTypes = thrownTypes.merge(UnhandledExceptions.collect(tryBlock));
-    }
-
-    PsiResourceList resources = statement.getResourceList();
-    if (resources != null) {
-      thrownTypes = thrownTypes.merge(UnhandledExceptions.collect(resources));
-    }
-
-    return thrownTypes;
-  }
-  
   void checkFeature(@NotNull PsiElement element, @NotNull JavaFeature feature) {
     if (!feature.isSufficient(myLanguageLevel)) {
       report(JavaErrorKinds.UNSUPPORTED_FEATURE.create(element, feature));
