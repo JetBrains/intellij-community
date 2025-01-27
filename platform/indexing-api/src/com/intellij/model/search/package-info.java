@@ -21,7 +21,4 @@
  * e.g. {@linkplain com.intellij.model.search.SearchRequest#getSearchScope SearchRequest#getSearchScope}</li>
  * </ul>
  */
-@ApiStatus.Experimental
 package com.intellij.model.search;
-
-import org.jetbrains.annotations.ApiStatus;
