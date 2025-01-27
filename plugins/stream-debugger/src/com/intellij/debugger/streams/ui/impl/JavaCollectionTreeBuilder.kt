@@ -43,7 +43,7 @@ class JavaCollectionTreeBuilder(val project: Project) : CollectionTreeBuilder {
     return InstanceJavaValue(valueDescriptor, (evaluationContext as JavaEvaluationContext).context, nodeManager)
   }
 
-  override fun getKey(container: XValueContainer, nullMarker: Any): Any {
+  override suspend fun getKey(container: XValueContainer, nullMarker: Any): Any {
     val jvmValue: com.sun.jdi.Value? = (container as JavaValue).descriptor.getValue()
     return jvmValue ?: nullMarker
   }

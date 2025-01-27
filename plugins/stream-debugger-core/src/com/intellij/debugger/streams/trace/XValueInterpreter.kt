@@ -12,5 +12,5 @@ interface XValueInterpreter {
     object Unknown : Result()
   }
 
-  fun extract(session: XDebugSession, result: XValue): Result
+  suspend fun extract(session: XDebugSession, result: XValue): Result
 }

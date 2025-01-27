@@ -31,18 +31,16 @@ class IntermediateTree(
         if (node is XValueContainerNode<*>) {
           val container = (node as XValueContainerNode<*>).valueContainer
           if (myBuilder.isSupported(container)) {
-            evaluationContextWrapper.scheduleDebuggerCommand {
-              ApplicationManager.getApplication().invokeLater {
-                val element = myXValue2TraceElement[container]
-                if (element != null) {
-                  myValue2Path[element] = node.path
-                  myPath2Value[node.path] = element
-                }
-                if (myPath2Value.size == traceElements.size) {
-                  myXValue2TraceElement.clear()
-                  removeTreeListener(listener)
-                  ApplicationManager.getApplication().invokeLater { repaint() }
-                }
+            ApplicationManager.getApplication().invokeLater {
+              val element = myXValue2TraceElement[container]
+              if (element != null) {
+                myValue2Path[element] = node.path
+                myPath2Value[node.path] = element
+              }
+              if (myPath2Value.size == traceElements.size) {
+                myXValue2TraceElement.clear()
+                removeTreeListener(listener)
+                ApplicationManager.getApplication().invokeLater { repaint() }
               }
             }
           }

@@ -12,6 +12,7 @@ import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Computable
 import com.intellij.xdebugger.XDebugSessionListener
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
@@ -81,19 +82,21 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
                     return
                 }
 
-                EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter).trace(chain, object : TracingCallback {
-                    override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
-                        complete(chain, result, null, null)
-                    }
+                runBlockingCancellable {
+                    EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter).trace(chain, object : TracingCallback {
+                        override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
+                            complete(chain, result, null, null)
+                        }
 
-                    override fun evaluationFailed(traceExpression: String, message: String) {
-                        complete(chain, null, message, FailureReason.EVALUATION)
-                    }
+                        override fun evaluationFailed(traceExpression: String, message: String) {
+                            complete(chain, null, message, FailureReason.EVALUATION)
+                        }
 
-                    override fun compilationFailed(traceExpression: String, message: String) {
-                        complete(chain, null, message, FailureReason.COMPILATION)
-                    }
-                })
+                        override fun compilationFailed(traceExpression: String, message: String) {
+                            complete(chain, null, message, FailureReason.COMPILATION)
+                        }
+                    })
+                }
             }
 
             private fun complete(chain: StreamChain?, result: TracingResult?, error: String?, errorReason: FailureReason?) {

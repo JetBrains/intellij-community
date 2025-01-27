@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.application
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.*
@@ -129,35 +130,36 @@ class TraceStreamRunner(val cs: CoroutineScope) {
 
     private suspend fun runTrace(chain: StreamChain, provider: LibrarySupportProvider, session: XDebugSession) {
       val window = EvaluationAwareTraceWindow(session, chain)
-      val project = session.getProject()
-      val expressionBuilder = provider.getExpressionBuilder(project)
-      val resultInterpreter = TraceResultInterpreterImpl(provider.getLibrarySupport().interpreterFactory)
-      val xValueInterpreter = provider.getXValueInterpreter(project)
-      val tracer: StreamTracer = EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter)
-      tracer.trace(chain, object : TracingCallback {
-        override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
-          val resolvedTrace = result.resolve(provider.getLibrarySupport().resolverFactory)
-          ApplicationManager.getApplication()
-            .invokeLater(Runnable { window.setTrace(resolvedTrace, context, provider.getCollectionTreeBuilder(context.project)) })
-        }
+      application.invokeLater { window.show() }
+      withContext(Dispatchers.Default) {
+        val project = session.getProject()
+        val expressionBuilder = provider.getExpressionBuilder(project)
+        val resultInterpreter = TraceResultInterpreterImpl(provider.getLibrarySupport().interpreterFactory)
+        val xValueInterpreter = provider.getXValueInterpreter(project)
+        val tracer: StreamTracer = EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter)
+        //TODO(Korovin): CompletableDeferred or suspend + return
+        tracer.trace(chain, object : TracingCallback {
+          override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
+            val resolvedTrace = result.resolve(provider.getLibrarySupport().resolverFactory)
+            ApplicationManager.getApplication()
+              .invokeLater(Runnable { window.setTrace(resolvedTrace, context, provider.getCollectionTreeBuilder(context.project)) })
+          }
 
-        override fun evaluationFailed(traceExpression: String, message: String) {
-          notifyUI(message)
-          throw TraceEvaluationException(message, traceExpression)
-        }
+          override fun evaluationFailed(traceExpression: String, message: String) {
+            notifyUI(message)
+            throw TraceEvaluationException(message, traceExpression)
+          }
 
-        override fun compilationFailed(traceExpression: String, message: String) {
-          notifyUI(message)
-          throw TraceCompilationException(message, traceExpression)
-        }
+          override fun compilationFailed(traceExpression: String, message: String) {
+            notifyUI(message)
+            throw TraceCompilationException(message, traceExpression)
+          }
 
-        fun notifyUI(message: @Nls String) {
-          ApplicationManager.getApplication().invokeLater(Runnable { window.setFailMessage(message) })
-        }
-      })
-
-      yield() // Instead of Application.invokeLater
-      window.show()
+          fun notifyUI(message: @Nls String) {
+            ApplicationManager.getApplication().invokeLater(Runnable { window.setFailMessage(message) })
+          }
+        })
+      }
     }
   }
 }

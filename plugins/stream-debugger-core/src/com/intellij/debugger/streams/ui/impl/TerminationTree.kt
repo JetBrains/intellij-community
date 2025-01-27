@@ -5,12 +5,16 @@ import com.intellij.debugger.streams.trace.EvaluationContextWrapper
 import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.debugger.streams.trace.Value
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.util.ObjectUtils
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import one.util.streamex.StreamEx
 
 class TerminationTree(
@@ -38,9 +42,9 @@ class TerminationTree(
         if (node is XValueContainerNode<*>) {
           val container = (node as XValueContainerNode<*>).valueContainer
           if (myBuilder.isSupported(container)) {
-            evaluationContextWrapper.scheduleDebuggerCommand {
+            evaluationContextWrapper.launchDebuggerCommand {
               val key = myBuilder.getKey(container, NULL_MARKER)
-              ApplicationManager.getApplication().invokeLater {
+              withContext(Dispatchers.EDT) {
                 val elements = key2TraceElements[key]
                 val nextIndex = key2Index.getOrDefault(key, -1) + 1
                 if (elements != null && nextIndex < elements.size) {
@@ -50,9 +54,10 @@ class TerminationTree(
                   key2Index[key] = nextIndex
                 }
                 if (myPath2Value.size == traceElements.size) {
-                  removeTreeListener(listener)
                   //TODO(Korovin): This will not be called if we have a big list of items and it's loaded partially
-                  ApplicationManager.getApplication().invokeLater { repaint() }
+                  removeTreeListener(listener)
+                  yield()
+                  repaint()
                 }
               }
             }

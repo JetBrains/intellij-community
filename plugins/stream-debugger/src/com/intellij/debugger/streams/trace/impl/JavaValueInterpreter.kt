@@ -9,7 +9,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XValue
 
 class JavaValueInterpreter : XValueInterpreter {
-  override fun extract(session: XDebugSession, result: XValue): XValueInterpreter.Result {
+  override suspend fun extract(session: XDebugSession, result: XValue): XValueInterpreter.Result {
     if (result is JavaValue) {
       val reference = result.descriptor.getValue()
       if (reference is com.sun.jdi.ArrayReference) {

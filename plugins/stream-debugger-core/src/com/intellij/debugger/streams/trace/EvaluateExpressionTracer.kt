@@ -3,9 +3,14 @@ package com.intellij.debugger.streams.trace
 
 import com.intellij.debugger.streams.StreamDebuggerBundle
 import com.intellij.debugger.streams.wrapper.StreamChain
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase
+import kotlinx.coroutines.CompletableDeferred
+import org.jetbrains.annotations.NonNls
 
 /**
  * @author Vitaliy.Bibaev
@@ -16,41 +21,67 @@ class EvaluateExpressionTracer(
   private val myResultInterpreter: TraceResultInterpreter,
   private val myXValueInterpreter: XValueInterpreter,
 ) : StreamTracer {
-  override fun trace(chain: StreamChain, callback: TracingCallback) {
+
+  override suspend fun trace(chain: StreamChain, callback: TracingCallback) {
     val streamTraceExpression = myExpressionBuilder.createTraceExpression(chain)
 
     val stackFrame = mySession.getCurrentStackFrame()
     val evaluator = mySession.getDebugProcess().getEvaluator()
+
     if (stackFrame != null && evaluator != null) {
-      evaluator.evaluate(myExpressionBuilder.createXExpression(chain, streamTraceExpression), object : XEvaluationCallbackBase() {
-        override fun evaluated(evaluationResult: XValue) {
-          val result = myXValueInterpreter.extract(mySession, evaluationResult)
-          when (result) {
-            is XValueInterpreter.Result.Array -> {
-              val interpretedResult: TracingResult
-              try {
-                interpretedResult = myResultInterpreter.interpret(chain, result.arrayReference, result.hasInnerExceptions)
-              }
-              catch (t: Throwable) {
-                callback.evaluationFailed(streamTraceExpression,
-                                          StreamDebuggerBundle.message("evaluation.failed.cannot.interpret.result", t.message!!))
-                throw t
-              }
-              callback.evaluated(interpretedResult, result.evaluationContext)
+      val deferredResult = evaluateStreamExpression(evaluator, chain, streamTraceExpression, stackFrame)
+
+      if (deferredResult.error == null) {
+        val xValue = deferredResult.xValue ?: return
+
+        val result = myXValueInterpreter.extract(mySession, xValue)
+        when (result) {
+          is XValueInterpreter.Result.Array -> {
+            val interpretedResult: TracingResult
+            try {
+              interpretedResult = myResultInterpreter.interpret(chain, result.arrayReference, result.hasInnerExceptions)
             }
-            is XValueInterpreter.Result.Error -> {
-              callback.evaluationFailed(streamTraceExpression, result.message)
+            catch (t: Throwable) {
+              callback.evaluationFailed(streamTraceExpression,
+                                        StreamDebuggerBundle.message("evaluation.failed.cannot.interpret.result", t.message!!))
+              throw t
             }
-            is XValueInterpreter.Result.Unknown -> {
-              callback.evaluationFailed(streamTraceExpression, StreamDebuggerBundle.message("evaluation.failed.unknown.result.type"))
-            }
+            callback.evaluated(interpretedResult, result.evaluationContext)
+          }
+          is XValueInterpreter.Result.Error -> {
+            callback.evaluationFailed(streamTraceExpression, result.message)
+          }
+          is XValueInterpreter.Result.Unknown -> {
+            callback.evaluationFailed(streamTraceExpression, StreamDebuggerBundle.message("evaluation.failed.unknown.result.type"))
           }
         }
-
-        override fun errorOccurred(errorMessage: String) {
-          callback.compilationFailed(streamTraceExpression, errorMessage)
-        }
-      }, stackFrame.getSourcePosition())
+      }
+      else {
+        callback.compilationFailed(streamTraceExpression, deferredResult.error)
+      }
     }
+  }
+
+  data class EvaluationResult(val xValue: XValue?, @NlsSafe val error: String?)
+  private suspend fun evaluateStreamExpression(
+    evaluator: XDebuggerEvaluator,
+    chain: StreamChain,
+    streamTraceExpression: @NonNls String,
+    stackFrame: XStackFrame,
+  ): EvaluationResult {
+    val deferred = CompletableDeferred<EvaluationResult>()
+
+    evaluator.evaluate(myExpressionBuilder.createXExpression(chain, streamTraceExpression), object : XEvaluationCallbackBase() {
+      override fun evaluated(evaluationResult: XValue) {
+        deferred.complete(EvaluationResult(evaluationResult, null))
+      }
+
+      override fun errorOccurred(errorMessage: String) {
+        deferred.complete(EvaluationResult(null, errorMessage))
+      }
+    }, stackFrame.sourcePosition)
+
+    val deferredResult = deferred.await()
+    return deferredResult
   }
 }

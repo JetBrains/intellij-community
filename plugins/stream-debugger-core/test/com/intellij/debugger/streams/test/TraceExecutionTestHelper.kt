@@ -12,6 +12,7 @@ import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Key
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.xdebugger.XDebugSession
@@ -64,20 +65,22 @@ abstract class TraceExecutionTestHelper(
       return
     }
 
-    EvaluateExpressionTracer(session, createExpressionBuilder(), createResultInterpreter(), createXValueInterpreter()).trace(chain, object : TracingCallback {
-      override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
-        complete(chain, result, resultMustBeNull, null, null)
-      }
+    runBlockingCancellable {
+      EvaluateExpressionTracer(session, createExpressionBuilder(), createResultInterpreter(), createXValueInterpreter()).trace(chain, object : TracingCallback {
+        override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
+          complete(chain, result, resultMustBeNull, null, null)
+        }
 
-      override fun evaluationFailed(traceExpression: String, message: String) {
-        complete(chain, null, resultMustBeNull, message, FailureReason.EVALUATION)
-      }
+        override fun evaluationFailed(traceExpression: String, message: String) {
+          complete(chain, null, resultMustBeNull, message, FailureReason.EVALUATION)
+        }
 
-      override fun compilationFailed(traceExpression: String, message: String) {
-        LOG.warn("[" + getTestName() + "] Compilation failed.")
-        complete(chain, null, resultMustBeNull, message, FailureReason.COMPILATION)
-      }
-    })
+        override fun compilationFailed(traceExpression: String, message: String) {
+          LOG.warn("[" + getTestName() + "] Compilation failed.")
+          complete(chain, null, resultMustBeNull, message, FailureReason.COMPILATION)
+        }
+      })
+    }
   }
 
   private fun complete(
