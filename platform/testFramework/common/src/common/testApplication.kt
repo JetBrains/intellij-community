@@ -7,6 +7,7 @@ import com.intellij.BundleBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.util.GlobalInspectionScope
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
@@ -47,6 +48,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.platform.ide.bootstrap.*
+import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
@@ -74,6 +76,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
+import com.intellij.util.PlatformUtils
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
@@ -149,7 +152,12 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 
   val kernelStarted = runBlocking {
-    startServerKernel(GlobalScope)
+    if (PlatformUtils.isJetBrainsClient()) {
+      startClientKernel(GlobalScope)
+    }
+    else {
+      startServerKernel(GlobalScope)
+    }
   }
 
   val app = ApplicationImpl(kernelStarted.coroutineContext, isHeadless)
