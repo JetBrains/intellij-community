@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.base.util.projectScope
@@ -290,8 +291,7 @@ private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearc
         val classSymbol = classSymbol as? KaNamedClassSymbol ?: return false
         if (!classSymbol.isFun) return false
 
-        val callableSymbolsWithSameName = classSymbol.declaredMemberScope.callables(functionSymbol.name)
-        return callableSymbolsWithSameName.filter { it is KaNamedFunctionSymbol && it.modality == KaSymbolModality.ABSTRACT }.count() == 1
+        return classSymbol.findSamSymbolOrNull() != null
     }
 
     context(KaSession)

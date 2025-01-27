@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.intentions.ObjectLiteralToLambdaInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectLiteralToLambdaInspection

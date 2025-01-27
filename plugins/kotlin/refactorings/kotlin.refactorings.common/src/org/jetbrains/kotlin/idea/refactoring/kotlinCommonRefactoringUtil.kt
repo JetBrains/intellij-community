@@ -12,6 +12,11 @@ import com.intellij.refactoring.ui.ConflictsDialog
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
@@ -200,6 +205,69 @@ fun <ListType : KtElement> replaceListPsiAndKeepDelimiters(
     return originalList
 }
 
+context(KaSession)
+@ApiStatus.Internal
+fun KtCallExpression.canMoveLambdaOutsideParentheses(
+    skipComplexCalls: Boolean = true
+): Boolean {
+    if (skipComplexCalls && isComplexCallWithLambdaArgument()) {
+        return false
+    }
+
+    if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) {
+        return false
+    }
+    val lastLambdaExpression = getLastLambdaExpression() ?: return false
+
+    if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) {
+        return false
+    }
+
+    val callee = calleeExpression
+    if (callee !is KtNameReferenceExpression) return true
+
+    val resolveCall = callee.resolveToCall() ?: return false
+    val call = resolveCall.successfulFunctionCallOrNull()
+
+    fun KaType.isFunctionalType(): Boolean = this is KaTypeParameterType || isSuspendFunctionType || isFunctionType || isFunctionalInterface
+
+    if (call == null) {
+        val paramType = resolveCall.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.returnType
+        if (paramType != null && paramType.isFunctionalType()) {
+            return true
+        }
+        val calls =
+            (resolveCall as? KaErrorCallInfo)?.candidateCalls?.filterIsInstance<KaSimpleFunctionCall>() ?:
+            emptyList()
+
+        return calls.isEmpty() || calls.all { functionalCall ->
+            val lastParameter = functionalCall.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()
+            val lastParameterType = lastParameter?.returnType
+            lastParameterType != null && lastParameterType.isFunctionalType()
+        }
+    }
+
+    val lastParameter = call.argumentMapping[lastLambdaExpression]
+        ?: lastLambdaExpression.parentLabeledExpression()?.let(call.argumentMapping::get)
+        ?: return false
+
+    if (lastParameter.symbol.isVararg) {
+        // Passing value as a vararg is allowed only inside a parenthesized argument list
+        return false
+    }
+
+    return if (lastParameter.symbol != call.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()?.symbol) {
+        false
+    } else {
+        lastParameter.returnType.isFunctionalType()
+    }
+}
+
+@ApiStatus.Internal
+fun KtExpression.parentLabeledExpression(): KtLabeledExpression? {
+    return getStrictParentOfType<KtLabeledExpression>()?.takeIf { it.baseExpression == this }
+}
+
 fun KtNamedDeclaration.getDeclarationBody(): KtElement? = when (this) {
     is KtClassOrObject -> getSuperTypeList()
     is KtPrimaryConstructor -> getContainingClassOrObject().getSuperTypeList()
@@ -231,7 +299,7 @@ fun KtNamedDeclaration.deleteWithCompanion() {
     }
 }
 
-fun PsiElement.getAllExtractionContainers(strict: Boolean = true, acceptScript: Boolean = false): List<KtElement> {
+fun PsiElement.getAllExtractionContainers(strict: Boolean = true): List<KtElement> {
     val containers = ArrayList<KtElement>()
 
     var objectOrNonInnerNestedClassFound = false
@@ -239,15 +307,13 @@ fun PsiElement.getAllExtractionContainers(strict: Boolean = true, acceptScript: 
     for (element in parents) {
         val isValidContainer = when (element) {
             is KtFile -> true
-            is KtScript -> acceptScript
             is KtClassBody -> !objectOrNonInnerNestedClassFound || element.parent is KtObjectDeclaration
             is KtBlockExpression -> !objectOrNonInnerNestedClassFound
             else -> false
         }
         if (!isValidContainer) continue
-        containers.add(element as KtElement)
 
-        if (element is KtScript) break
+        containers.add(element as KtElement)
 
         if (!objectOrNonInnerNestedClassFound) {
             val bodyParent = (element as? KtClassBody)?.parent
@@ -273,7 +339,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
             .firstOrNull()
     }
 
-    if (includeAll) return getAllExtractionContainers(strict, acceptScript)
+    if (includeAll) return getAllExtractionContainers(strict)
 
     val enclosingDeclaration = getEnclosingDeclaration(this, strict)?.let {
         if (it is KtDeclarationWithBody || it is KtAnonymousInitializer) getEnclosingDeclaration(it, true) else it
@@ -282,7 +348,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
     return when (enclosingDeclaration) {
         is KtFile -> Collections.singletonList(enclosingDeclaration)
         is KtScript -> Collections.singletonList(enclosingDeclaration)
-        is KtClassBody -> getAllExtractionContainers(strict, acceptScript).filterIsInstance<KtClassBody>()
+        is KtClassBody -> getAllExtractionContainers(strict).filterIsInstance<KtClassBody>()
         else -> {
             val targetContainer = when (enclosingDeclaration) {
                 is KtDeclarationWithBody -> enclosingDeclaration.bodyExpression

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -21,17 +21,14 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
-import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
-import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
+import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 /**
  * Computes [block] and removes any possible redundant imports that would be added during this operation, not touching any existing
@@ -115,70 +112,14 @@ fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>
     }
 }
 
-fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean = true): Boolean {
-    if (skipComplexCalls && isComplexCallWithLambdaArgument()) {
-        return false
-    }
-
-    if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) {
-        return false
-    }
-    val lastLambdaExpression = getLastLambdaExpression() ?: return false
-
-    fun KtExpression.parentLabeledExpression(): KtLabeledExpression? {
-        return getStrictParentOfType<KtLabeledExpression>()?.takeIf { it.baseExpression == this }
-    }
-
-    if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) {
-        return false
-    }
-
-    val callee = calleeExpression
-    if (callee !is KtNameReferenceExpression) return true
-
-    analyze(callee) {
-        val resolveCall = callee.resolveToCall() ?: return false
-        val call = resolveCall.successfulFunctionCallOrNull()
-
-        fun KaType.isFunctionalType(): Boolean = this is KaTypeParameterType || isSuspendFunctionType || isFunctionType || isFunctionalInterface
-
-        if (call == null) {
-            val paramType = resolveCall.successfulVariableAccessCall()?.partiallyAppliedSymbol?.symbol?.returnType
-            if (paramType != null && paramType.isFunctionalType()) {
-                return true
-            }
-            val calls = (resolveCall as? KaErrorCallInfo)?.candidateCalls?.filterIsInstance<KaSimpleFunctionCall>() ?: return false
-
-            return calls.all { functionalCall ->
-                val lastParameter = functionalCall.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()
-                val lastParameterType = lastParameter?.returnType
-                lastParameterType != null && lastParameterType.isFunctionalType()
-            }
-        }
-
-        val lastParameter = call.argumentMapping[lastLambdaExpression]
-            ?: lastLambdaExpression.parentLabeledExpression()?.let(call.argumentMapping::get)
-            ?: return false
-
-        if (lastParameter.symbol.isVararg) {
-            // Passing value as a vararg is allowed only inside a parenthesized argument list
-            return false
-        }
-        if (lastParameter.symbol != call.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()?.symbol) {
-            return false
-        }
-
-        return lastParameter.returnType.isFunctionalType()
-    }
-}
-
 fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
         KtPsiUtil.deparenthesize(it.getArgumentExpression()) == this
     } ?: return
     val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return
     val call = valueArgumentList.parent as? KtCallExpression ?: return
-    if (call.canMoveLambdaOutsideParentheses()) {
+    val canMoveLambdaOutsideParentheses = analyze(call) { call.canMoveLambdaOutsideParentheses() }
+    if (canMoveLambdaOutsideParentheses) {
         call.moveFunctionLiteralOutsideParentheses()
     }
 }

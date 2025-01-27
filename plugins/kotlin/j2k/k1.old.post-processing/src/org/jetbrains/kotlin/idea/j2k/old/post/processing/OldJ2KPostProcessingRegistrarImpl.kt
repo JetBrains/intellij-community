@@ -9,9 +9,11 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.samConstructorCallsToBeConverted
 import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectLiteralToLambdaIntention
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -282,12 +284,14 @@ internal class OldJ2KPostProcessingRegistrarImpl : OldJ2KPostProcessingRegistrar
         override fun createAction(element: KtElement, diagnostics: Diagnostics): (() -> Unit)? {
             if (element !is KtCallExpression) return null
 
-            val expressions = RedundantSamConstructorInspection.Util.samConstructorCallsToBeConverted(element)
+            val expressions = org.jetbrains.kotlin.analysis.api.analyze(element) { samConstructorCallsToBeConverted(element) }
             if (expressions.isEmpty()) return null
 
             return {
-                RedundantSamConstructorInspection.Util.samConstructorCallsToBeConverted(element)
-                    .forEach { replaceSamConstructorCall(it) }
+                org.jetbrains.kotlin.analysis.api.analyze(element) {
+                    samConstructorCallsToBeConverted(element)
+                        .forEach { replaceSamConstructorCall(it) }
+                }
             }
         }
     }

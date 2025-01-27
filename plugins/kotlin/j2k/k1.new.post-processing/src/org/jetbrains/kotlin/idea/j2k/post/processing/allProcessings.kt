@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectLiteralToLambdaIntention
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.IndentRawStringIntention
 import org.jetbrains.kotlin.idea.inspections.FoldInitializerAndIfToElvisInspection
 import org.jetbrains.kotlin.idea.inspections.NullChecksToSafeCallInspection
@@ -10,7 +11,10 @@ import org.jetbrains.kotlin.idea.inspections.ReplacePutWithAssignmentInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection
 import org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
-import org.jetbrains.kotlin.idea.intentions.*
+import org.jetbrains.kotlin.idea.intentions.ConvertToRawStringTemplateIntention
+import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention
+import org.jetbrains.kotlin.idea.intentions.JoinDeclarationAndAssignmentIntention
+import org.jetbrains.kotlin.idea.intentions.UsePropertyAccessSyntaxIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTransformed
 import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*

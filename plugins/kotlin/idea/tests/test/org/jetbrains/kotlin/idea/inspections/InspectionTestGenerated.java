@@ -47,11 +47,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/intentions/iterationOverMap/inspectionData/inspections.test");
         }
 
-        @TestMetadata("objectLiteralToLambda/inspectionData/inspections.test")
-        public void testObjectLiteralToLambda_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/intentions/objectLiteralToLambda/inspectionData/inspections.test");
-        }
-
         @TestMetadata("removeExplicitSuperQualifier/inspectionData/inspections.test")
         public void testRemoveExplicitSuperQualifier_inspectionData_Inspections_test() throws Exception {
             runTest("testData/intentions/removeExplicitSuperQualifier/inspectionData/inspections.test");
@@ -264,11 +259,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("redundantNotNullExtensionReceiverOfInline/inspectionData/inspections.test")
         public void testRedundantNotNullExtensionReceiverOfInline_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantNotNullExtensionReceiverOfInline/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("redundantSamConstructor/inspectionData/inspections.test")
-        public void testRedundantSamConstructor_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantSamConstructor/inspectionData/inspections.test");
         }
 
         @TestMetadata("redundantVisibilityModifierWithExplicitApi/inspectionData/inspections.test")

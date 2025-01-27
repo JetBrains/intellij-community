@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
@@ -9,49 +9,59 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.*
 import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
-import org.jetbrains.kotlin.idea.inspections.RedundantSamConstructorInspection
+import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.ReturnSaver
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.sam.JavaSingleAbstractMethodUtils
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
-import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
-import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.Variance
 
 @Suppress("DEPRECATION")
-class ObjectLiteralToLambdaInspection : IntentionBasedInspection<KtObjectLiteralExpression>(ObjectLiteralToLambdaIntention::class) {
+internal class ObjectLiteralToLambdaInspection : IntentionBasedInspection<KtObjectLiteralExpression>(ObjectLiteralToLambdaIntention::class) {
     override fun problemHighlightType(element: KtObjectLiteralExpression): ProblemHighlightType {
-        val (_, baseType, singleFunction) = extractData(element) ?: return super.problemHighlightType(element)
-        val bodyBlock = singleFunction.bodyBlockExpression
+        val data = extractData(element) ?: return super.problemHighlightType(element)
+        val bodyBlock = data.singleFunction.bodyBlockExpression
         val lastStatement = bodyBlock?.statements?.lastOrNull()
-        if (bodyBlock?.anyDescendantOfType<KtReturnExpression> { it != lastStatement } == true) return ProblemHighlightType.INFORMATION
+
+        if (bodyBlock?.anyDescendantOfType<KtReturnExpression> { it != lastStatement } == true)
+            return ProblemHighlightType.INFORMATION
 
         val valueArgument = element.parent as? KtValueArgument
-        val call = valueArgument?.getStrictParentOfType<KtCallExpression>()
-        if (call != null) {
-            val argumentMatch = call.resolveToCall()?.getArgumentMapping(valueArgument) as? ArgumentMatch
-            if (baseType.constructor != argumentMatch?.valueParameter?.type?.constructor) return ProblemHighlightType.INFORMATION
+        valueArgument?.getStrictParentOfType<KtCallExpression>()?.let { call ->
+            val classId = analyze(call) {
+                val functionCallOrNull = call.resolveToCall()?.successfulFunctionCallOrNull()
+                val argumentExpression = valueArgument.getArgumentExpression()
+                val variableSignature = functionCallOrNull?.argumentMapping?.get(argumentExpression)
+                val returnType = variableSignature?.returnType?.withNullability(KaTypeNullability.NON_NULLABLE) as? KaClassType
+                returnType?.classId
+            }
+            if (classId != data.baseTypeClassId) return ProblemHighlightType.INFORMATION
         }
 
         return super.problemHighlightType(element)
@@ -63,51 +73,74 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
     KotlinBundle.lazyMessage("convert.to.lambda"),
     KotlinBundle.lazyMessage("convert.object.literal.to.lambda")
 ) {
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     override fun applicabilityRange(element: KtObjectLiteralExpression): TextRange? {
-        val (baseTypeRef, baseType, singleFunction) = extractData(element) ?: return null
+        val data = extractData(element) ?: return null
 
-        if (!JavaSingleAbstractMethodUtils.isSamType(baseType)) return null
+        val singleFunction = data.singleFunction
 
-        val functionDescriptor = singleFunction.resolveToDescriptorIfAny(BodyResolveMode.FULL) ?: return null
-        val overridden = functionDescriptor.overriddenDescriptors.singleOrNull() ?: return null
-        if (overridden.modality != Modality.ABSTRACT) return null
+        allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(singleFunction) {
+                    var callableSymbol = singleFunction.symbol as? KaCallableSymbol ?: return null
+                    val allOverriddenSymbol = callableSymbol.directlyOverriddenSymbols.singleOrNull() ?: return null
+                    if (allOverriddenSymbol.modality != KaSymbolModality.ABSTRACT) return null
+                }
+            }
+        }
 
         if (!singleFunction.hasBody()) return null
         if (singleFunction.valueParameters.any { it.name == null }) return null
 
         val bodyExpression = singleFunction.bodyExpression!!
-        val context = bodyExpression.analyze()
-        val containingDeclaration = functionDescriptor.containingDeclaration
 
         // this-reference
         if (bodyExpression.anyDescendantOfType<KtThisExpression> { thisReference ->
-                context[BindingContext.REFERENCE_TARGET, thisReference.instanceReference] == containingDeclaration
+                val instanceReference = thisReference.instanceReference
+                allowAnalysisOnEdt {
+                    allowAnalysisFromWriteAction {
+                        analyze(instanceReference) {
+                            var containingSymbol = singleFunction.symbol.containingSymbol ?: return@analyze false
+                            val resolveToSymbol = instanceReference.mainReference.resolveToSymbol()
+
+                            resolveToSymbol.equalsOrEqualsByPsi(containingSymbol)
+                        }
+                    }
+                }
             }
         ) return null
 
         // Recursive call, skip labels
-        if (ReferencesSearch.search(singleFunction, LocalSearchScope(bodyExpression)).any { it.element !is KtLabelReferenceExpression }) {
+        if (ReferencesSearch.search(singleFunction, LocalSearchScope(bodyExpression)).
+            any { it.element !is KtLabelReferenceExpression }) {
             return null
         }
 
-        fun ReceiverValue?.isImplicitClassFor(descriptor: DeclarationDescriptor) =
-            this is ImplicitClassReceiver && classDescriptor == descriptor
-
         if (bodyExpression.anyDescendantOfType<KtExpression> { expression ->
-                val resolvedCall = expression.getResolvedCall(context)
-                resolvedCall?.let {
-                    it.dispatchReceiver.isImplicitClassFor(containingDeclaration) || it.extensionReceiver
-                        .isImplicitClassFor(containingDeclaration)
-                } == true
+                allowAnalysisOnEdt {
+                    allowAnalysisFromWriteAction {
+                        analyze(expression) {
+                            var containingSymbol = singleFunction.symbol.containingSymbol ?: return@analyze false
+                            val functionCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@analyze false
+                            functionCall.getImplicitReceivers().any {
+                                it.symbol == containingSymbol
+                            }
+                        }
+                    }
+                }
             }
-        ) return null
+        ) {
+            return null
+        }
 
-        return TextRange(element.objectDeclaration.getObjectKeyword()!!.startOffset, baseTypeRef.endOffset)
+        val objectKeyword = element.objectDeclaration.getObjectKeyword()!!
+        return objectKeyword.textRange.union(data.baseTypeRef.textRange)
     }
 
+    @OptIn(KaIdeApi::class, KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     override fun applyTo(element: KtObjectLiteralExpression, editor: Editor?) {
-
-        val (_, baseType, singleFunction) = extractData(element)!!
+        val data = extractData(element) ?: return
+        val singleFunction = data.singleFunction
 
         val commentSaver = CommentSaver(element)
         val returnSaver = ReturnSaver(singleFunction)
@@ -116,7 +149,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
 
         val psiFactory = KtPsiFactory(element.project)
         val newExpression = psiFactory.buildExpression {
-            appendFixedText(IdeDescriptorRenderers.SOURCE_CODE.renderType(baseType))
+            appendFixedText(data.typeRepresentation)
 
             appendFixedText("{")
 
@@ -163,14 +196,31 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
         val parentCall = ((replaced.parent as? KtValueArgument)
             ?.parent as? KtValueArgumentList)
             ?.parent as? KtCallExpression
-        if (parentCall != null && RedundantSamConstructorInspection.Util.samConstructorCallsToBeConverted(parentCall)
-                .singleOrNull() == callExpression
-        ) {
+
+        val singleOrNull = parentCall?.let {
+            allowAnalysisOnEdt {
+                allowAnalysisFromWriteAction {
+                    analyze(it) {
+                        samConstructorCallsToBeConverted(it).singleOrNull()
+                    }
+                }
+            }
+        }
+
+        if (parentCall != null && singleOrNull == callExpression) {
             runWriteActionIfPhysical(element) {
                 commentSaver.restore(replaced, forceAdjustIndent = true/* by some reason lambda body is sometimes not properly indented */)
             }
             replaceSamConstructorCall(callExpression)
-            if (parentCall.canMoveLambdaOutsideParentheses()) runWriteActionIfPhysical(element) {
+            val canMoveLambdaOutsideParentheses =
+                allowAnalysisOnEdt {
+                    allowAnalysisFromWriteAction {
+                        analyze(parentCall) {
+                            parentCall.canMoveLambdaOutsideParentheses()
+                        }
+                    }
+                }
+            if (canMoveLambdaOutsideParentheses) runWriteActionIfPhysical(element) {
                 parentCall.moveFunctionLiteralOutsideParentheses()
             }
         } else {
@@ -180,7 +230,7 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
             pointerToReplaced.element?.let { replacedByPointer ->
                 val endOffset = (replacedByPointer.callee.parent as? KtCallExpression)?.typeArgumentList?.endOffset
                     ?: replacedByPointer.callee.endOffset
-                ShortenReferences.DEFAULT.process(replacedByPointer.containingKtFile, replacedByPointer.startOffset, endOffset)
+                shortenReferencesInRange(replacedByPointer.containingKtFile, TextRange(replacedByPointer.startOffset, endOffset))
             }
         }
     }
@@ -191,10 +241,12 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
 
 private data class Data(
     val baseTypeRef: KtTypeReference,
-    val baseType: KotlinType,
+    val baseTypeClassId: ClassId,
+    val typeRepresentation: String,
     val singleFunction: KtNamedFunction
 )
 
+@OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class, KaExperimentalApi::class)
 private fun extractData(element: KtObjectLiteralExpression): Data? {
     val objectDeclaration = element.objectDeclaration
 
@@ -203,8 +255,21 @@ private fun extractData(element: KtObjectLiteralExpression): Data? {
 
     val delegationSpecifier = objectDeclaration.superTypeListEntries.singleOrNull() ?: return null
     val typeRef = delegationSpecifier.typeReference ?: return null
-    val bindingContext = typeRef.analyze(BodyResolveMode.PARTIAL)
-    val baseType = bindingContext[BindingContext.TYPE, typeRef] ?: return null
 
-    return Data(typeRef, baseType, singleFunction)
+    return allowAnalysisOnEdt {
+        allowAnalysisFromWriteAction {
+            analyze(delegationSpecifier) {
+                val type = typeRef.type
+                val baseClassSymbol = type.expandedSymbol as? KaNamedClassSymbol
+                val baseTypeClassId = baseClassSymbol?.classId ?: return null
+                val samInterface = baseClassSymbol.findSamSymbolOrNull(false) ?: return null
+                val origin = samInterface.origin
+                // TODO: it has to be reconsidered testData/intentions/objectLiteralToLambda/NotJavaSAM.kt
+                if (!origin.isJavaSourceOrLibrary()) return null
+                // TODO: it should be WITH_QUALIFIED_NAMES but shortenReferencesInRange does not handle that properly
+                val typeRepresentation = type.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE)
+                Data(typeRef, baseTypeClassId, typeRepresentation, singleFunction)
+            }
+        }
+    }
 }

@@ -1,16 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
 class ReturnSaver(val function: KtNamedFunction) {
     companion object {
         private val RETURN_KEY = Key<Unit>("RETURN_KEY")
@@ -21,10 +24,16 @@ class ReturnSaver(val function: KtNamedFunction) {
     init {
         var hasReturn = false
         val body = function.bodyExpression!!
-        body.forEachDescendantOfType<KtReturnExpression> {
-            if (it.getTargetFunction(it.analyze(BodyResolveMode.PARTIAL)) == function) {
-                hasReturn = true
-                it.putCopyableUserData(RETURN_KEY, Unit)
+        allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                body.forEachDescendantOfType<KtReturnExpression> {
+                    analyze(it) {
+                        if (it.targetSymbol?.psi == function) {
+                            hasReturn = true
+                            it.putCopyableUserData(RETURN_KEY, Unit)
+                        }
+                    }
+                }
             }
         }
 
