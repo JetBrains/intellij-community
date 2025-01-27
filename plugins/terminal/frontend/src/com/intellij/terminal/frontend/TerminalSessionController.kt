@@ -57,7 +57,8 @@ internal class TerminalSessionController(
     when (event) {
       is TerminalContentUpdatedEvent -> {
         updateOutputModel { model ->
-          model.updateContent(event.startLineLogicalIndex, event.text, event.styles)
+          val styles = event.styles.map { it.toStyleRange() }
+          model.updateContent(event.startLineLogicalIndex, event.text, styles)
         }
       }
       is TerminalCursorPositionChangedEvent -> {

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.block.reworked.session
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.session.StyleRange
 
 @ApiStatus.Internal
 sealed interface TerminalOutputEvent
@@ -10,7 +9,7 @@ sealed interface TerminalOutputEvent
 @ApiStatus.Internal
 data class TerminalContentUpdatedEvent(
   val text: String,
-  val styles: List<StyleRange>,
+  val styles: List<StyleRangeDto>,
   val startLineLogicalIndex: Int,
 ) : TerminalOutputEvent
 

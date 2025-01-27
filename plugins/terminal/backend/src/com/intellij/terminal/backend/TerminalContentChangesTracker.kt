@@ -5,6 +5,7 @@ import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.model.TextBufferChangesListener
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.toDto
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.collectLines
@@ -97,7 +98,8 @@ internal class TerminalContentChangesTracker(
     lastChangedVisualLine = textBuffer.effectiveHistoryLinesCount + textBuffer.screenLinesCount
     anyLineChanged = false
 
-    return TerminalContentUpdatedEvent(output.text, output.styleRanges, logicalLineIndex)
+    val styles = output.styleRanges.map { it.toDto() }
+    return TerminalContentUpdatedEvent(output.text, styles, logicalLineIndex)
   }
 
   private fun scrapeOutput(startLine: Int, additionalLines: List<TerminalLine>): StyledCommandOutput {
