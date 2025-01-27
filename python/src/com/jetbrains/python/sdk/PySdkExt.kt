@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -494,42 +480,9 @@ private fun Sdk.containsModuleName(module: Module?): Boolean {
   return path.contains(name, true)
 }
 
-/**
- * Each [Sdk] has [PythonSdkAdditionalData]. Use this method to get it.
- * Although each SDK should already have one, some old may lack it.
- *
- * This method creates new in this case, but only if an SDK flavor doesn't require special additional data.
- */
-fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
-  val existingData = sdkAdditionalData as? PythonSdkAdditionalData
-  if (existingData != null) {
-    return existingData
-  }
 
-  if (homePath == null) {
-    error("homePath is null for $this")
-  }
-
-  val flavor = PythonSdkFlavor.tryDetectFlavorByLocalPath(homePath!!)
-  if (flavor == null) {
-    error("No flavor detected for $homePath sdk")
-  }
-
-  val newData = PythonSdkAdditionalData(if (flavor.supportsEmptyData()) flavor else null)
-  val modificator = sdkModificator
-  modificator.sdkAdditionalData = newData
-  val application = ApplicationManager.getApplication()
-  if (application.isDispatchThread) {
-    application.runWriteAction { modificator.commitChanges() }
-  }
-  else {
-    application.invokeLater {
-      application.runWriteAction { modificator.commitChanges() }
-    }
-  }
-  return newData
-}
-
+@JvmName("getOrCreateAdditionalData")
+fun getOrCreateAdditionalDataOld(sdk: Sdk): PythonSdkAdditionalData = sdk.getOrCreateAdditionalData()
 
 private fun filterSuggestedPaths(
   flavor: PythonSdkFlavor<*>,
