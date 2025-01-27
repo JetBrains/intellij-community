@@ -11,20 +11,41 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.util.ui.update.MergingUpdateQueue
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import com.intellij.util.Alarm.ThreadToUse
+import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.queueTracked
 
-class EditorCellActionsToolbarManager(private val editor: EditorEx, private val cell: EditorCell): Disposable {
+
+class EditorCellActionsToolbarManager(
+  private val editor: EditorEx,
+  private val cell: EditorCell,
+): Disposable {
   private var toolbar: JupyterCellActionsToolbar? = null
 
+  private val updateQueue = MergingUpdateQueue(
+    "Jupyter.EditorCellActionsToolbarManager",
+    100,
+    true,
+    editor.component,
+    this,
+    editor.component,
+    ThreadToUse.SWING_THREAD
+  ).apply {
+    setRestartTimerOnAdd(true)
+  }
+
   private val boundsChangeListener = object : JupyterBoundsChangeListener {
-    override fun boundsChanged() = toolbar?.let {
-      val targetComponent = it.targetComponent ?: return@let
-      it.bounds = calculateToolbarBounds(targetComponent, it)
+    override fun boundsChanged() {
+      updateQueue.queueTracked(Update.create(this@EditorCellActionsToolbarManager) {
+        updateToolbarPosition(toolbar?.targetComponent ?: return@create)
+      })
     }
   }
 
@@ -33,8 +54,8 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
   }
 
   fun showToolbar(targetComponent: JComponent) {
+    if (toolbar != null) return
     val actionGroup = getActionGroup(cell.interval.type) ?: return
-    removeToolbar()
 
     toolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
     editor.contentComponent.add(toolbar, 0)
@@ -43,8 +64,9 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
   }
 
   private fun updateToolbarPosition(targetComponent: JComponent) {
-    toolbar?.let { toolbar ->
-      toolbar.bounds = calculateToolbarBounds(targetComponent, toolbar)
+    toolbar?.let { tb ->
+      tb.validate()
+      tb.bounds = calculateToolbarBounds(targetComponent, tb)
     }
   }
 
@@ -89,6 +111,9 @@ class EditorCellActionsToolbarManager(private val editor: EditorEx, private val 
     toolbar: JPanel,
   ): Rectangle {
     // todo: maybe fuse with JupyterAboveCellToolbarManager.Companion.calculateToolbarBounds
+    toolbar.doLayout()
+    panel.doLayout()
+
     val toolbarHeight = toolbar.preferredSize.height
     val toolbarWidth = toolbar.preferredSize.width
 

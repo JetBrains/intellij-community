@@ -133,7 +133,7 @@ class EditorCellView(
     _controllers.forEach { controller ->
       disposeController(controller)
     }
-    myEditorCellFrameManager?.dispose()
+    myEditorCellFrameManager?.let { Disposer.dispose(it) }
     removeCellHighlight()
   }
 
@@ -378,14 +378,15 @@ class EditorCellView(
   private fun updateCellActionsToolbarVisibility() {
     val toolbarManager = input.cellActionsToolbar ?: return
     val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
-
+    val tracker = NotebookCellActionsToolbarStateTracker.get(editor) ?: return
     when {
+      mouseOver -> toolbarManager.showToolbar(targetComponent)
       selected -> {
         // we show the toolbar only for the last selected cell
-        NotebookCellActionsToolbarStateTracker.get(editor)?.updateLastSelectedCell(input)
+        if (tracker.lastSelectedCell == input) return
+        tracker.updateLastSelectedCell(input)
         toolbarManager.showToolbar(targetComponent)
       }
-      mouseOver -> toolbarManager.showToolbar(targetComponent)
       else -> toolbarManager.hideToolbar()
     }
   }

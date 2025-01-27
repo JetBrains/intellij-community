@@ -5,7 +5,6 @@ import com.intellij.notebooks.ui.SelectClickedCellEventHelper
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.ui.JBColor
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.RoundedLineBorder
@@ -16,6 +15,8 @@ import java.awt.AlphaComposite
 import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 
@@ -25,6 +26,8 @@ abstract class JupyterAbstractAboveCellToolbar(
   toolbarTargetComponent: JComponent,
   place: String = ActionPlaces.EDITOR_INLAY
 ): ActionToolbarImpl(place, actionGroup, true) {
+  protected var isBeingRemoved: Boolean = false
+
   init {
     val borderColor = when (NewUiValue.isEnabled()) {
       true -> JBColor.LIGHT_GRAY
@@ -36,7 +39,6 @@ abstract class JupyterAbstractAboveCellToolbar(
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     targetComponent = toolbarTargetComponent
     putClientProperty(SelectClickedCellEventHelper.SKIP_CLICK_PROCESSING_FOR_CELL_SELECTION, true)
-    setSkipWindowAdjustments(false)
   }
 
   override fun paintComponent(g: Graphics) {
@@ -56,10 +58,25 @@ abstract class JupyterAbstractAboveCellToolbar(
     if (!StartupUiUtil.isDarkTheme) {
       background = JBColor.WHITE
     }
-    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
   }
 
-  override fun installPopupHandler(customizable: Boolean, popupActionGroup: ActionGroup?, popupActionId: String?): Unit = Unit
+  override fun addNotify() {
+    super.addNotify()
+    updateActionsImmediately(true)
+  }
+
+  override fun removeNotify() {
+    isBeingRemoved = true
+    super.removeNotify()
+  }
+
+  override fun updateActionsAsync(): Future<*> {
+    return when (isBeingRemoved) {
+      true -> CompletableFuture.completedFuture(null)
+      else -> super.updateActionsAsync()
+    }
+  }
+
   protected abstract fun getArcSize(): Int
   protected abstract fun getHorizontalPadding(): Int
   protected open fun getVerticalPadding(): Int = getHorizontalPadding()
