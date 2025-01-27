@@ -46,6 +46,7 @@ import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.model.TerminalLine
+import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
@@ -452,6 +453,16 @@ internal fun TerminalLine.getLengthWithoutDwc(): Int {
     curCount + dwcInEntryCount
   }
   return length() - dwcCount
+}
+
+inline fun <T> TerminalTextBuffer.withLock(callable: (TerminalTextBuffer) -> T): T {
+  lock()
+  return try {
+    callable(this)
+  }
+  finally {
+    unlock()
+  }
 }
 
 internal fun JBLayeredPane.addToLayer(component: JComponent, layer: Int) {

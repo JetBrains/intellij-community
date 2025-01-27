@@ -8,7 +8,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.model.TerminalTextBuffer
 import kotlinx.coroutines.*
-import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.block.util.ActionCoordinator
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import org.jetbrains.plugins.terminal.fus.TimeSpanType
