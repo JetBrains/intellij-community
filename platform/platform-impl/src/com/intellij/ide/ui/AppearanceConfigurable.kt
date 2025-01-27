@@ -494,7 +494,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       groupRowsRange(message("group.window.options")) {
         twoColumnsRow(
-          { checkBox(cdShowToolWindowBars) },
+          { checkBox(cdShowToolWindowBars).apply {
+            enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
+            if(NotRoamableUiSettings.getInstance().xNextStripe) {
+              comment(message("xnext.comment.unavailable"))
+            }
+          } },
           { checkBox(cdLeftToolWindowLayout) },
         )
         if (ExperimentalUI.isNewUI()) {
@@ -509,7 +514,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             )
             twoColumnsRow(
               {
-                checkBox(cdWidescreenToolWindowLayout)
+                checkBox(cdWidescreenToolWindowLayout).apply {
+                  enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
+                  if(NotRoamableUiSettings.getInstance().xNextStripe) {
+                    comment(message("xnext.comment.unavailable"))
+                  }
+                }
                   .gap(RightGap.SMALL)
                 contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
               },

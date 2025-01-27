@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.openapi.wm.impl.ToolbarHolder
@@ -39,7 +40,6 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import com.jetbrains.rd.util.collections.SynchronizedList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -433,7 +433,14 @@ internal class ToolbarFrameHeader(
     }
   }
 
-  override fun getHeaderBackground(active: Boolean) = CustomFrameDecorations.mainToolbarBackground(active)
+  override fun getHeaderBackground(active: Boolean): Color {
+    val color = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(isActive)
+    return InternalUICustomization.getInstance().frameHeaderBackgroundConverter(color) ?: color
+  }
+
+  override fun getComponentGraphics(graphics: Graphics?): Graphics? {
+    return InternalUICustomization.getInstance().transformGraphics(this, super.getComponentGraphics(graphics))
+  }
 
   override fun updateActive() {
     super.updateActive()
