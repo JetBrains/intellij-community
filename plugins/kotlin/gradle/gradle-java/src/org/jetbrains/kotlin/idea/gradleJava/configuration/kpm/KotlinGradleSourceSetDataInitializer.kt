@@ -78,7 +78,7 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
                     ?: ModuleSdkData(initializerContext.jdkName)
 
                 val fragmentJavaData = existingSourceSetDataNode?.find(JavaModuleData.KEY)?.data
-                    ?: JavaModuleData(GradleConstants.SYSTEM_ID, null, null)
+                    ?: JavaModuleData(GradleConstants.SYSTEM_ID, null, null, emptyList())
 
                 if (existingSourceSetDataNode == null) {
                     val fragmentDataNode = mainModuleNode.createChild(GradleSourceSetData.KEY, fragmentData).also {

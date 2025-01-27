@@ -17,10 +17,10 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   private @Nullable String name;
 
-  private boolean isPreview;
   private @Nullable File javaToolchainHome;
   private @Nullable String sourceCompatibility;
   private @Nullable String targetCompatibility;
+  private @Nullable List<String> compilerArguments;
 
   private @NotNull Collection<File> artifacts;
   private @NotNull Collection<ExternalDependency> dependencies;
@@ -40,15 +40,6 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   public void setName(@NotNull String name) {
     this.name = name;
-  }
-
-  @Override
-  public boolean isPreview() {
-    return isPreview;
-  }
-
-  public void setPreview(boolean preview) {
-    isPreview = preview;
   }
 
   @Override
@@ -76,6 +67,17 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
 
   public void setTargetCompatibility(@Nullable String targetCompatibility) {
     this.targetCompatibility = targetCompatibility;
+  }
+
+  @Override
+  public @NotNull List<String> getCompilerArguments() {
+    return Collections.unmodifiableList(
+      Objects.requireNonNull(compilerArguments, "The source set's compilerArguments property has not been initialized")
+    );
+  }
+
+  public void setCompilerArguments(@NotNull List<String> compilerArguments) {
+    this.compilerArguments = compilerArguments;
   }
 
   @Override

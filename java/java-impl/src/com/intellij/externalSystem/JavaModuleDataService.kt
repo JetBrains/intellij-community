@@ -32,6 +32,7 @@ internal class JavaModuleDataService : AbstractProjectDataService<JavaModuleData
 
       importLanguageLevel(module, javaModuleData, modelsProvider)
       importTargetBytecodeVersion(module, javaModuleData)
+      importCompilerArguments(module, javaModuleData)
     }
   }
 
@@ -56,5 +57,10 @@ internal class JavaModuleDataService : AbstractProjectDataService<JavaModuleData
       projectTargetBytecodeVersion -> null
       else -> targetBytecodeVersion
     })
+  }
+
+  private fun importCompilerArguments(module: Module, javaModuleData: JavaModuleData) {
+    val compilerConfiguration = CompilerConfiguration.getInstance(module.project)
+    compilerConfiguration.setAdditionalOptions(module, javaModuleData.compilerArguments)
   }
 }

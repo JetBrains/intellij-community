@@ -309,7 +309,7 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 ?: ModuleSdkData(gradleModule.jdkNameIfAny)
 
             val compilationJavaData = existingSourceSetDataNode?.find(JavaModuleData.KEY)?.data
-                ?: JavaModuleData(GradleConstants.SYSTEM_ID, null, null)
+                ?: JavaModuleData(GradleConstants.SYSTEM_ID, null, null, emptyList())
 
             val kotlinSourceSet = doCreateSourceSetInfo(mppModel, compilation, gradleModule, resolverCtx) ?: continue
 
@@ -424,7 +424,7 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
             ?: ModuleSdkData(gradleModule.jdkNameIfAny)
 
         val sourceSetJavaData = existingSourceSetDataNode?.find(JavaModuleData.KEY)?.data
-            ?: JavaModuleData(GradleConstants.SYSTEM_ID, null, null).also {
+            ?: JavaModuleData(GradleConstants.SYSTEM_ID, null, null, emptyList()).also {
                 sourceSetToCompilationJavaData[sourceSet.name]?.let { compilationJavaDataRecords ->
                     it.targetBytecodeVersion = compilationJavaDataRecords
                         .mapNotNull { compilationJavaData -> compilationJavaData.targetBytecodeVersion }

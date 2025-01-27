@@ -7,13 +7,22 @@ import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityD
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.serialization.PropertyMapping
 
-class JavaModuleData
-@PropertyMapping("owner", "languageLevel", "targetBytecodeVersion")
-constructor(
-  owner: ProjectSystemId,
-  var languageLevel: LanguageLevel?,
+class JavaModuleData : AbstractExternalEntityData {
+
+  var languageLevel: LanguageLevel?
   var targetBytecodeVersion: String?
-) : AbstractExternalEntityData(owner) {
+  var compilerArguments: List<String>
+
+  @Deprecated("Use #JavaModuleData(ProjectSystemId, LanguageLevel, String, Collection<String>) instead")
+  constructor(owner: ProjectSystemId, languageLevel: LanguageLevel?, targetBytecodeVersion: String?) :
+    this(owner, languageLevel, targetBytecodeVersion, emptyList())
+
+  @PropertyMapping("owner", "languageLevel", "targetBytecodeVersion", "compilerArguments")
+  constructor(owner: ProjectSystemId, languageLevel: LanguageLevel?, targetBytecodeVersion: String?, compilerArguments: List<String>) : super(owner) {
+    this.languageLevel = languageLevel
+    this.targetBytecodeVersion = targetBytecodeVersion
+    this.compilerArguments = compilerArguments
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -22,6 +31,7 @@ constructor(
 
     if (languageLevel != other.languageLevel) return false
     if (targetBytecodeVersion != other.targetBytecodeVersion) return false
+    if (compilerArguments != other.compilerArguments) return false
 
     return true
   }
@@ -30,6 +40,7 @@ constructor(
     var result = super.hashCode()
     result = 31 * result + languageLevel.hashCode()
     result = 31 * result + targetBytecodeVersion.hashCode()
+    result = 31 * result + compilerArguments.hashCode()
     return result
   }
 
