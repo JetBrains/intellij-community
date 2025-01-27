@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
@@ -60,10 +60,10 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
             .asUnit
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtDotQualifiedExpression,
         context: Unit,
-    ) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtDotQualifiedExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.to.string.fix.text")
@@ -85,5 +85,5 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
                 element.replace(receiverExpression)
             }
         }
-    }
+    })
 }

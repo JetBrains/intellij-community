@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -14,14 +14,14 @@ internal class ReplaceSizeCheckWithIsNotEmptyInspection : ReplaceSizeCheckInspec
     override val methodToReplaceWith: EmptinessCheckMethod
         get() = EmptinessCheckMethod.IS_NOT_EMPTY
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtBinaryExpression,
         context: ReplacementInfo,
-    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : ReplaceSizeCheckQuickFixBase(context) {
+    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : ReplaceSizeCheckQuickFixBase(context) {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.size.check.with.isnotempty")
-    }
+    })
 
     override fun getProblemDescription(
         element: KtBinaryExpression,

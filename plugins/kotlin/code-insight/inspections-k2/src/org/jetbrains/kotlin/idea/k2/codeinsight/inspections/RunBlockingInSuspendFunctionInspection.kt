@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -103,56 +103,53 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
         )
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtCallExpression,
         context: Context,
-    ): KotlinModCommandQuickFix<KtCallExpression> {
+    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
+        override fun getName(): String = KotlinBundle.message(context.fixType.key)
 
-        return object : KotlinModCommandQuickFix<KtCallExpression>() {
-            override fun getName(): String = KotlinBundle.message(context.fixType.key)
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.replace.run.family")
 
-            override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.replace.run.family")
+        override fun applyFix(
+            project: Project,
+            element: KtCallExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val callNameExpression = element.getCallNameExpression() ?: return
 
-            override fun applyFix(
-                project: Project,
-                element: KtCallExpression,
-                updater: ModPsiUpdater,
-            ) {
-                val callNameExpression = element.getCallNameExpression() ?: return
-
-                val writableLabelReferenceExpressions = context.labelReferenceExpressions.mapNotNull {
-                    updater.getWritable(it.element)
-                }
-
-                val replacement = when (context.fixType) {
-                    FixType.WITH_CONTEXT -> {
-                        element.containingKtFile.addImport(WITH_CONTEXT_FQ_NAME)
-                        WITH_CONTEXT_FQ_NAME.shortName().asString()
-                    }
-
-                    FixType.RUN -> RUN_FUNCTION_NAME
-                    FixType.INLINE -> {
-                        val lambdaArgument = element.lambdaArguments.single() ?: return
-                        val functionLiteral = lambdaArgument.getLambdaExpression()?.functionLiteral ?: return
-                        val bodyExpression = functionLiteral.bodyExpression ?: return
-
-                        val statement = bodyExpression.statements.first()
-                        element.replace(statement)
-                        return
-                    }
-                }
-
-                val psiFactory = KtPsiFactory(project)
-                val newLabeledExpression = (psiFactory.createExpression("return@$replacement") as KtReturnExpression).labeledExpression!!
-
-                writableLabelReferenceExpressions.forEach { labelReferenceExpression ->
-                    labelReferenceExpression.replace(newLabeledExpression)
-                }
-
-                callNameExpression.replace(psiFactory.createExpression(replacement))
+            val writableLabelReferenceExpressions = context.labelReferenceExpressions.mapNotNull {
+                updater.getWritable(it.element)
             }
+
+            val replacement = when (context.fixType) {
+                FixType.WITH_CONTEXT -> {
+                    element.containingKtFile.addImport(WITH_CONTEXT_FQ_NAME)
+                    WITH_CONTEXT_FQ_NAME.shortName().asString()
+                }
+
+                FixType.RUN -> RUN_FUNCTION_NAME
+                FixType.INLINE -> {
+                    val lambdaArgument = element.lambdaArguments.single() ?: return
+                    val functionLiteral = lambdaArgument.getLambdaExpression()?.functionLiteral ?: return
+                    val bodyExpression = functionLiteral.bodyExpression ?: return
+
+                    val statement = bodyExpression.statements.first()
+                    element.replace(statement)
+                    return
+                }
+            }
+
+            val psiFactory = KtPsiFactory(project)
+            val newLabeledExpression = (psiFactory.createExpression("return@$replacement") as KtReturnExpression).labeledExpression!!
+
+            writableLabelReferenceExpressions.forEach { labelReferenceExpression ->
+                labelReferenceExpression.replace(newLabeledExpression)
+            }
+
+            callNameExpression.replace(psiFactory.createExpression(replacement))
         }
-    }
+    })
 }
 
 private fun KaSession.isRunBlocking(function: KaNamedFunctionSymbol): Boolean {

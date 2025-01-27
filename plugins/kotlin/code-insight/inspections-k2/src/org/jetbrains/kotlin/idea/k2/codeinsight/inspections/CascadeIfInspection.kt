@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -30,10 +30,10 @@ class CascadeIfInspection : KotlinApplicableInspectionBase.Simple<KtIfExpression
         context: Unit
     ): @InspectionMessage String = KotlinBundle.message("cascade.if.should.be.replaced.with.when")
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtIfExpression,
         context: Unit
-    ): KotlinModCommandQuickFix<KtIfExpression> = object : KotlinModCommandQuickFix<KtIfExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtIfExpression>() {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.if.with.when")
 
         override fun applyFix(
@@ -43,7 +43,7 @@ class CascadeIfInspection : KotlinApplicableInspectionBase.Simple<KtIfExpression
         ) {
             convertIfToWhen(element, updater)
         }
-    }
+    })
 
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> = ApplicabilityRanges.ifKeyword(element)
 

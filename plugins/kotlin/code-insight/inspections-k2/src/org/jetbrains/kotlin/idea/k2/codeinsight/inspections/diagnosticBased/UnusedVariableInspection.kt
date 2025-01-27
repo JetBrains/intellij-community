@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
@@ -62,13 +62,13 @@ internal class UnusedVariableInspection :
             .asUnit
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtNamedDeclaration,
         context: Unit,
-    ): KotlinModCommandQuickFix<KtNamedDeclaration> {
+    ): Array<KotlinModCommandQuickFix<KtNamedDeclaration>> {
         val smartPointer = element.createSmartPointer()
 
-        return object : KotlinModCommandQuickFix<KtNamedDeclaration>() {
+        return arrayOf(object : KotlinModCommandQuickFix<KtNamedDeclaration>() {
 
             override fun getFamilyName(): String =
                 KotlinBundle.message("remove.variable")
@@ -89,6 +89,6 @@ internal class UnusedVariableInspection :
                     removeProperty(element)
                 }
             }
-        }
+        })
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
@@ -13,13 +13,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.k2.refactoring.util.ConvertReferenceToLambdaUtil
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtThisExpression
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
 
 internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<KtThisExpression, Unit>() {
     override fun getProblemDescription(element: KtThisExpression, context: Unit): String =
@@ -66,10 +60,10 @@ internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         return checkShortening(element)
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtThisExpression,
         context: Unit
-    ): KotlinModCommandQuickFix<KtThisExpression> = ExplicitThisExpressionFix(element.text)
+    ): Array<KotlinModCommandQuickFix<KtThisExpression>> = arrayOf(ExplicitThisExpressionFix(element.text))
 }
 
 internal class ExplicitThisExpressionFix(private val text: String) : KotlinModCommandQuickFix<KtThisExpression>() {
