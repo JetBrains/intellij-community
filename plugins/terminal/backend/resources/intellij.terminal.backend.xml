@@ -3,4 +3,8 @@
     <plugin id="com.intellij.platform.experimental.backend"/>
     <module name="intellij.platform.kernel.backend"/>
   </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.terminal.backend.rpc.TerminalRemoteApiProvider"/>
+  </extensions>
 </idea-plugin>
