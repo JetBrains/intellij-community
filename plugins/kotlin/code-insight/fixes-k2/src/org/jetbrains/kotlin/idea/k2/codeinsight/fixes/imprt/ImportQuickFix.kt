@@ -11,39 +11,24 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.psi.util.PsiModificationTracker
-import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
-import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
+@ApiStatus.Internal
 class ImportQuickFix(
     element: KtElement,
     @IntentionName private val text: String,
-    private val importVariants: List<AutoImportVariant>
-) : KotlinImportQuickFixAction<KtElement>(element), HintAction, HighPriorityAction {
-    init {
-        require(importVariants.isNotEmpty())
-    }
-
+    importVariants: List<AutoImportVariant>
+) : ImportLikeQuickFix(element, importVariants), HintAction, HighPriorityAction {
     override fun getText(): String = text
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.import")
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        if (editor == null) return
-
-        createImportAction(editor, file)?.execute()
-    }
-
-    override fun createImportAction(editor: Editor, file: KtFile): QuestionAction? =
-        if (element != null) ImportQuestionAction(file.project, editor, file, importVariants) else null
 
     override fun createAutoImportAction(
         editor: Editor,
@@ -85,66 +70,14 @@ class ImportQuickFix(
         return true
     }
 
-    private val modificationCountOnCreate: Long = PsiModificationTracker.getInstance(element.project).modificationCount
 
-    /**
-     * This is a safe-guard against showing hint after the quickfix have been applied.
-     *
-     * Inspired by the org.jetbrains.kotlin.idea.quickfix.ImportFixBase.isOutdated
-     */
-    private fun isOutdated(project: Project): Boolean {
-        return modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
-    }
+    override fun fix(importVariant: AutoImportVariant, file: KtFile, project: Project) {
+        require(importVariant is SymbolBasedAutoImportVariant)
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
-        !isOutdated(project)
+        StatisticsManager.getInstance().incUseCount(importVariant.statisticsInfo)
 
-    private class ImportQuestionAction(
-        private val project: Project,
-        private val editor: Editor,
-        private val file: KtFile,
-        private val importVariants: List<AutoImportVariant>,
-        private val onTheFly: Boolean = false,
-    ) : QuestionAction {
-
-        init {
-            require(importVariants.isNotEmpty())
-        }
-
-        override fun execute(): Boolean {
-            file.executeListener?.onExecute(importVariants)
-            when (importVariants.size) {
-                1 -> {
-                    addImport(importVariants.single())
-                    return true
-                }
-
-                0 -> {
-                    return false
-                }
-
-                else -> {
-                    if (onTheFly) return false
-
-                    if (ApplicationManager.getApplication().isUnitTestMode) {
-                        addImport(importVariants.first())
-                        return true
-                    }
-                    ImportFixHelper.createListPopupWithImportVariants(project, importVariants, ::addImport).showInBestPositionFor(editor)
-
-                    return true
-                }
-            }
-        }
-
-        private fun addImport(importVariant: AutoImportVariant) {
-            require(importVariant is SymbolBasedAutoImportVariant)
-
-            StatisticsManager.getInstance().incUseCount(importVariant.statisticsInfo)
-
-            project.executeWriteCommand(QuickFixBundle.message("add.import")) {
-                file.addImport(importVariant.fqName)
-            }
+        project.executeWriteCommand(QuickFixBundle.message("add.import")) {
+            file.addImport(importVariant.fqName)
         }
     }
 }
