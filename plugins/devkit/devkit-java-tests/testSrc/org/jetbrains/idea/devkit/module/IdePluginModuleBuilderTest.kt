@@ -26,13 +26,6 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_17)
     expectFile("src/main/resources/META-INF/plugin.xml", PLUGIN_XML)
 
     expectFile("settings.gradle.kts", """
-      pluginManagement {
-          repositories {
-              mavenCentral()
-              gradlePluginPortal()
-          }
-      }
-
       rootProject.name = "demo"
     """.trimIndent())
   }
@@ -62,10 +55,9 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_17)
         <name>Demo</name>
     
         <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-        <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
+        <vendor url="https://www.yourcompany.com">YourCompany</vendor>
     
         <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-             Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
              Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
         <description><![CDATA[
         Enter short description for your plugin here.<br>
@@ -97,12 +89,11 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_17)
         <category>UI</category>
 
         <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-        <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
+        <vendor url="https://www.yourcompany.com">YourCompany</vendor>
 
-        <idea-version since-build="241" until-build="243.*"/>
+        <idea-version since-build="242" until-build="251.*"/>
 
         <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-             Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
              Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
         <description><![CDATA[
         Enter short description for your theme here.<br>

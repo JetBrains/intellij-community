@@ -36,6 +36,9 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Supplier
 import javax.swing.Icon
 
+@JvmField
+internal val DEVKIT_NEWLY_GENERATED_PROJECT: Key<Boolean> = Key.create("devkit.newly.generated.project")
+
 internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("ide.plugin.type")
@@ -48,7 +51,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   override fun getProjectTypes(): List<StarterProjectType> = emptyList()
   override fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
-  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_17.toJavaVersion()
+  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_21.toJavaVersion()
 
   override fun getLanguages(): List<StarterLanguage> {
     return listOf(KOTLIN_STARTER_LANGUAGE) // Java and Kotlin both are available out of the box
@@ -80,6 +83,9 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
     // manually set, we do not show the second page with libraries
     starterContext.starter = starterContext.starterPack.starters.first()
     starterContext.starterDependencyConfig = loadDependencyConfig()[starterContext.starter?.id]
+
+    // disable aggressive error highlighting in plugin.xml
+    module.project.putUserData(DEVKIT_NEWLY_GENERATED_PROJECT, true)
 
     super.setupModule(module)
   }
