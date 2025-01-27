@@ -1712,25 +1712,6 @@ public final class HighlightUtil {
   }
 
 
-  static HighlightInfo.Builder checkSingleImportClassConflict(@NotNull PsiImportStatement statement,
-                                                              @NotNull Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> importedClasses,
-                                                              @NotNull PsiFile containingFile) {
-    if (statement.isOnDemand()) return null;
-    PsiElement element = statement.resolve();
-    if (element instanceof PsiClass psiClass) {
-      String name = psiClass.getName();
-      Pair<PsiImportStaticReferenceElement, PsiClass> imported = importedClasses.get(name);
-      PsiClass importedClass = Pair.getSecond(imported);
-      if (importedClass != null && !containingFile.getManager().areElementsEquivalent(importedClass, element)) {
-        String description = JavaErrorBundle.message("single.import.class.conflict", formatClass(importedClass));
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description);
-      }
-      importedClasses.put(name, Pair.pair(null, psiClass));
-    }
-    return null;
-  }
-
-
   static HighlightInfo.Builder checkMustBeThrowable(@NotNull PsiType type, @NotNull PsiElement context, boolean addCastIntention) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());

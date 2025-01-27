@@ -425,11 +425,20 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
     myImportChecker.checkImportStaticReferenceElement(ref);
   }
-  
+
+  @Override
+  public void visitImportStatement(@NotNull PsiImportStatement statement) {
+    super.visitImportStatement(statement);
+    if (!hasErrorResults()) {
+      myImportChecker.checkSingleImportClassConflict(statement);
+    }
+  }
+
   @Override
   public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
     visitElement(statement);
     checkFeature(statement, JavaFeature.STATIC_IMPORTS);
+    if (!hasErrorResults()) myImportChecker.checkStaticOnDemandImportResolvesToClass(statement);
     if (!hasErrorResults()) {
       PsiJavaCodeReferenceElement importReference = statement.getImportReference();
       PsiClass targetClass = statement.resolveTargetClass();

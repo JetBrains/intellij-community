@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
-import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -17,6 +16,18 @@ final class ImportChecker {
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new HashMap<>();
 
   ImportChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
+
+  void checkStaticOnDemandImportResolvesToClass(@NotNull PsiImportStaticStatement statement) {
+    if (statement.isOnDemand() && statement.resolveTargetClass() == null) {
+      PsiJavaCodeReferenceElement ref = statement.getImportReference();
+      if (ref != null) {
+        PsiElement resolve = ref.resolve();
+        if (resolve != null) {
+          myVisitor.report(JavaErrorKinds.IMPORT_STATIC_ON_DEMAND_RESOLVES_TO_CLASS.create(ref));
+        }
+      }
+    }
+  }
 
   void checkImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
     String refName = ref.getReferenceName();
@@ -36,32 +47,34 @@ final class ImportChecker {
       for (JavaResolveResult result : results) {
         PsiElement element = result.getElement();
 
-        JavaErrorKind.Simple<PsiJavaCodeReferenceElement> kind = null;
         if (element instanceof PsiClass) {
           Pair<PsiImportStaticReferenceElement, PsiClass> imported = mySingleImportedClasses.get(refName);
           PsiClass aClass = Pair.getSecond(imported);
           if (aClass != null && !manager.areElementsEquivalent(aClass, element)) {
-            kind = imported.first == null
-                          ? JavaErrorKinds.IMPORT_SINGLE_CLASS_CONFLICT
-                          : imported.first.equals(ref)
-                            ? JavaErrorKinds.IMPORT_SINGLE_STATIC_CLASS_AMBIGUOUS
-                            : JavaErrorKinds.IMPORT_SINGLE_STATIC_CLASS_ALREADY_DEFINED;
+            if (imported.first == null) {
+              myVisitor.report(JavaErrorKinds.IMPORT_SINGLE_CLASS_CONFLICT.create(ref, aClass));
+            }
+            else {
+              var kind = imported.first.equals(ref)
+                         ? JavaErrorKinds.IMPORT_SINGLE_STATIC_CLASS_AMBIGUOUS
+                         : JavaErrorKinds.IMPORT_SINGLE_STATIC_CLASS_ALREADY_DEFINED;
+              myVisitor.report(kind.create(ref));
+            }
           }
           mySingleImportedClasses.put(refName, Pair.create(ref, (PsiClass)element));
         }
-        else if (element instanceof PsiField) {
-          Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
-          PsiField field = Pair.getSecond(imported);
-          if (field != null && !manager.areElementsEquivalent(field, element)) {
-            kind = imported.first.equals(ref)
-                          ? JavaErrorKinds.IMPORT_SINGLE_STATIC_FIELD_AMBIGUOUS
-                          : JavaErrorKinds.IMPORT_SINGLE_STATIC_FIELD_ALREADY_DEFINED;
+        else {
+          if (element instanceof PsiField) {
+            Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
+            PsiField field = Pair.getSecond(imported);
+            if (field != null && !manager.areElementsEquivalent(field, element)) {
+              var kind = imported.first.equals(ref)
+                         ? JavaErrorKinds.IMPORT_SINGLE_STATIC_FIELD_AMBIGUOUS
+                         : JavaErrorKinds.IMPORT_SINGLE_STATIC_FIELD_ALREADY_DEFINED;
+              myVisitor.report(kind.create(ref));
+            }
+            mySingleImportedFields.put(refName, Pair.create(ref, (PsiField)element));
           }
-          mySingleImportedFields.put(refName, Pair.create(ref, (PsiField)element));
-        }
-
-        if (kind != null) {
-          myVisitor.report(kind.create(ref));
         }
       }
     }
@@ -76,5 +89,23 @@ final class ImportChecker {
       }
     }
 
+  }
+
+  void checkSingleImportClassConflict(@NotNull PsiImportStatement statement) {
+    if (statement.isOnDemand()) return;
+    PsiElement element = statement.resolve();
+    if (element instanceof PsiClass psiClass) {
+      String name = psiClass.getName();
+      Pair<PsiImportStaticReferenceElement, PsiClass> imported = mySingleImportedClasses.get(name);
+      PsiClass importedClass = Pair.getSecond(imported);
+      if (importedClass != null && !myVisitor.file().getManager().areElementsEquivalent(importedClass, element)) {
+        PsiJavaCodeReferenceElement reference = statement.getImportReference();
+        if (reference != null) {
+          myVisitor.report(JavaErrorKinds.IMPORT_SINGLE_CLASS_CONFLICT.create(reference, importedClass));
+        }
+        return;
+      }
+      mySingleImportedClasses.put(name, Pair.pair(null, psiClass));
+    }
   }
 }

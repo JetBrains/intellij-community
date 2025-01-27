@@ -866,9 +866,9 @@ public final class JavaErrorKinds {
       .withRawDescription(
         (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
 
-  public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_CLASS_CONFLICT =
-    error(PsiJavaCodeReferenceElement.class, "import.single.class.conflict")
-      .withRawDescription(ref -> message("import.single.class.conflict", ref.getReferenceName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> IMPORT_SINGLE_CLASS_CONFLICT =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "import.single.class.conflict")
+      .withRawDescription((ref, cls) -> message("import.single.class.conflict", cls.getQualifiedName()));
   public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_CLASS_ALREADY_DEFINED =
     error(PsiJavaCodeReferenceElement.class, "import.single.static.class.already.defined")
       .withRawDescription(ref -> message("import.single.static.class.already.defined", ref.getReferenceName()));
@@ -881,6 +881,10 @@ public final class JavaErrorKinds {
   public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_FIELD_AMBIGUOUS =
     error(PsiJavaCodeReferenceElement.class, "import.single.static.field.ambiguous")
       .withRawDescription(ref -> message("import.single.static.field.ambiguous", ref.getReferenceName()));
+  public static final Simple<PsiJavaCodeReferenceElement> IMPORT_STATIC_ON_DEMAND_RESOLVES_TO_CLASS =
+    error(PsiJavaCodeReferenceElement.class, "import.static.on.demand.resolves.to.class")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription(ref -> message("import.static.on.demand.resolves.to.class", ref.getCanonicalText()));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {

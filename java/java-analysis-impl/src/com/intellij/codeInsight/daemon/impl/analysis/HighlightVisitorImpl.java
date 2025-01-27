@@ -557,7 +557,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
     visitElement(statement);
-    if (!hasErrorResults()) add(ImportsHighlightUtil.checkStaticOnDemandImportResolvesToClass(statement));
     if (!hasErrorResults()) PreviewFeatureUtil.checkPreviewFeature(statement, myPreviewFeatureVisitor);
   }
 
@@ -608,9 +607,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitImportStatement(@NotNull PsiImportStatement statement) {
-    if (!hasErrorResults()) {
-      add(HighlightUtil.checkSingleImportClassConflict(statement, mySingleImportedClasses, myFile));
-    }
     if (!hasErrorResults()) {
       PreviewFeatureUtil.checkPreviewFeature(statement, myPreviewFeatureVisitor);
     }
