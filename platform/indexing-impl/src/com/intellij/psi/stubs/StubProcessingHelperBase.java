@@ -98,7 +98,7 @@ public abstract class StubProcessingHelperBase {
                           ", requiredClass=" + requiredClass +
                           ", operation=" + debugOperationName.get() +
                           ", stubIdList=" + debugStubIdList + "@" + stubIdListIdx +
-                          ".\nref: 20240717";
+                          ".\nref: 20250127";
 
     StubTree stubTree = ((PsiFileWithStubSupport)psiFile).getStubTree();
     if (stubTree == null && psiFile instanceof PsiFileImpl) stubTree = ((PsiFileImpl)psiFile).calcStubTree();
@@ -154,7 +154,7 @@ public abstract class StubProcessingHelperBase {
                             "psiFile=" + psiFile +
                             ", psiFile.class=" + psiFile.getClass() +
                             ", requiredClass=" + requiredClass +
-                            ".\nref: 50cf572587cf";
+                            ".\nref: 20250127";
       inconsistencyDetected(objectStubTree, (PsiFileWithStubSupport)psiFile, extraMessage, WrongPsiFileClassInNonPsiStub);
       return true;
     }

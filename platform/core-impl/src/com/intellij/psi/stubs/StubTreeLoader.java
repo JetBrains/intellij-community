@@ -143,7 +143,7 @@ public abstract class StubTreeLoader {
       }
 
       msg += "\nindexing info: " + indexingStampInfo;
-      msg += "\nref: 50cf572587cf";
+      msg += "\nref: 20250127";
 
       ArrayList<Attachment> attachments = createAttachments(stubTree, psiFile, file);
       StubInconsistencyReporter.getInstance().reportStubTreeAndIndexDoNotMatch(psiFile.getProject(), source);
