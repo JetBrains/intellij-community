@@ -505,19 +505,30 @@ public final class ActionsTreeUtil {
                                                  @Nullable Condition<? super AnAction> filtered,
                                                  @NotNull Group mainGroup,
                                                  @Nullable Keymap keymap) {
-    mainGroup.initIds();
-    Set<String> result = new HashSet<>();
-
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManagerEx.getInstanceEx();
+
+    Group otherGroup = new Group(KeyMapBundle.message("other.group.title"), null, () -> AllIcons.Nodes.KeymapOther);
+    for (AnAction action : getActions("Other.KeymapGroup")) {
+      addAction(otherGroup, action, actionManager, filtered, false);
+    }
+    appendGroupsFromExtensions(project, filtered, otherGroup, KeymapExtension.KeymapLocation.OTHER);
+
+    mainGroup.initIds();
+    otherGroup.initIds();
+
+    Set<String> result = new HashSet<>();
     if (keymap != null) {
       for (String id : keymap.getActionIdList()) {
         if (id.startsWith(EDITOR_PREFIX) && actionManager.getActionOrStub("$" + id.substring(6)) != null) {
           continue;
         }
 
-        if (!id.startsWith(QuickList.QUICK_LIST_PREFIX) && !mainGroup.containsId(id)) {
-          result.add(id);
+        if (id.startsWith(QuickList.QUICK_LIST_PREFIX) ||
+            mainGroup.containsId(id) ||
+            otherGroup.containsId(id)) {
+          continue;
         }
+        result.add(id);
       }
     }
 
@@ -528,6 +539,7 @@ public final class ActionsTreeUtil {
       if (isNonExecutableActionGroup(id, actionOrStub) ||
           id.startsWith(QuickList.QUICK_LIST_PREFIX) ||
           mainGroup.containsId(id) ||
+          otherGroup.containsId(id) ||
           result.contains(id)) {
         continue;
       }
@@ -542,36 +554,27 @@ public final class ActionsTreeUtil {
 
     filterOtherActionsGroup(result);
 
-    Group group = new Group(KeyMapBundle.message("other.group.title"), null, () -> AllIcons.Nodes.KeymapOther);
-    for (AnAction action : getActions("Other.KeymapGroup")) {
-      addAction(group, action, actionManager, filtered, false);
-    }
-    appendGroupsFromExtensions(project, filtered, group, KeymapExtension.KeymapLocation.OTHER);
-
-    Set<String> groupIds = group.initIds();
-
     // a quick hack to skip already included groups
     JBTreeTraverser<String> traverser = JBTreeTraverser.from(o -> actionManager.getParentGroupIds(o));
     for (String actionId : namedGroups) {
       if (traverser.withRoot(actionId).unique().traverse()
-        .filter(o -> mainGroup.containsId(o) || group.containsId(o)).isNotEmpty()) {
+        .filter(o -> mainGroup.containsId(o) || otherGroup.containsId(o)).isNotEmpty()) {
         continue;
       }
       result.add(actionId);
     }
 
-    ContainerUtil.sort(group.getChildren(), Comparator.comparing(o -> ((Group)o).getName()));
-    result.removeAll(groupIds);
+    ContainerUtil.sort(otherGroup.getChildren(), Comparator.comparing(o -> ((Group)o).getName()));
 
     for (String id : ContainerUtil.sorted(result, Comparator.comparing(o -> getTextToCompare(o)))) {
       AnAction actionOrStub = actionManager.getActionOrStub(id);
       if (actionOrStub == null || isSearchable(actionOrStub)) {
         if (actionMatchesFilter(filtered, actionOrStub)) {
-          group.addActionId(id);
+          otherGroup.addActionId(id);
         }
       }
     }
-    return group;
+    return otherGroup;
   }
 
   private static boolean isNonExecutableActionGroup(String id, AnAction actionOrStub) {
@@ -651,7 +654,7 @@ public final class ActionsTreeUtil {
     mainGroup.addGroup(createIntentionsGroup(wrappedFilter));
     mainGroup.addGroup(createQuickListsGroup(wrappedFilter, filter, forceFiltering, quickLists));
     mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter));
-    mainGroup.addGroup(createOtherGroup(project, wrappedFilter, mainGroup, keymap));
+    mainGroup.addGroup(createOtherGroup(project, wrappedFilter, mainGroup, keymap)); // must be created the last
     if (!Strings.isEmpty(filter) || filtered != null) {
       List<Object> list = mainGroup.getChildren();
       for (Iterator<Object> i = list.iterator(); i.hasNext(); ) {
