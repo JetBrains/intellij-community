@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.ide.actions.CreateFileFromTemplateAction
-import com.intellij.ide.actions.CreateFileFromTemplateAction.moveCaretAfterNameIdentifier
 import com.intellij.ide.actions.CreateFileFromTemplateDialog
 import com.intellij.ide.actions.CreateTemplateInPackageAction
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction

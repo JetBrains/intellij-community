@@ -15,7 +15,6 @@ import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
-import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.matches

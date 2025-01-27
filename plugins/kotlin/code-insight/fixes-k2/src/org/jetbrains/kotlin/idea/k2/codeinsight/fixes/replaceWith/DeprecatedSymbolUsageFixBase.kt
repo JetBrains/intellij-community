@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
-import java.util.Locale.getDefault
 
 object DeprecationFixFactory {
     val deprecatedWarning = IntentionBased { diagnostics: KaFirDiagnostic.Deprecation ->

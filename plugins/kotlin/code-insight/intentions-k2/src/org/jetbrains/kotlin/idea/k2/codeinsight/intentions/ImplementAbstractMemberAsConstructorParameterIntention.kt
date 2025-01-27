@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ImplementAbstractMemberIntentionBase.ImplementableMember.KtImplementableMember
 import org.jetbrains.kotlin.psi.KtClass

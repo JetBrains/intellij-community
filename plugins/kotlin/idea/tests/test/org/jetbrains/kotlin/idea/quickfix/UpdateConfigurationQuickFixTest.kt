@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings

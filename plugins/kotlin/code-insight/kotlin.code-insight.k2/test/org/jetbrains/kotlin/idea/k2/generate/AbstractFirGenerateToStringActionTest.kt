@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateToStringAction
-import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinToStringTemplatesManager
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 

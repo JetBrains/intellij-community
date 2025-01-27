@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
@@ -31,11 +30,7 @@ import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesW
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
-import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
-import org.jetbrains.kotlin.idea.debugger.base.util.FileApplicabilityChecker
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
-import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
-import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils

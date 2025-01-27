@@ -38,11 +38,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.caching.*
-import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
-import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
-import org.jetbrains.kotlin.idea.base.util.caching.getChanges
-import org.jetbrains.kotlin.idea.base.util.caching.newEntity
-import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import java.util.concurrent.ConcurrentHashMap

@@ -14,13 +14,14 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.EntryUpdateDiff
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.changeInterpolationPrefix
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable

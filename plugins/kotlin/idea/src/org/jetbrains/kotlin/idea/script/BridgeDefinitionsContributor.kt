@@ -2,14 +2,12 @@
 
 package org.jetbrains.kotlin.idea.script
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.core.script.k2.loggingReporter
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
-import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration

@@ -12,17 +12,15 @@ import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.isNothing
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.resolve.BindingContext
 
 class KotlinThrowableNotThrownInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(callExpression) {

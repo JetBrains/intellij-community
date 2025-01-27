@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.findUsages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType

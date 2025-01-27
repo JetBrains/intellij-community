@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
-import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
@@ -35,7 +34,6 @@ import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExten
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.lang.reflect.Proxy
 import java.util.*
-import kotlin.collections.set
 
 @Suppress("unused") // Can be removed once AS rebased on 23.1
 @Deprecated("Use KotlinMppGradleProjectResolver instead", replaceWith = ReplaceWith("KotlinMppGradleProjectResolver"))

@@ -4,11 +4,8 @@ package org.jetbrains.kotlin.idea.util.application
 
 import com.intellij.diagnostic.CoreAttachmentFactory
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 @ApiStatus.Internal
 fun attachmentByPsiFile(file: PsiFile?): Attachment? {

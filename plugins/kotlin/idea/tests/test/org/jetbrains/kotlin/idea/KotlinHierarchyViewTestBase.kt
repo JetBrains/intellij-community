@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -18,7 +17,6 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 import java.io.IOException
-import kotlin.collections.find
 
 @RunWith(JUnit38ClassRunner::class)
 abstract class KotlinHierarchyViewTestBase : KotlinLightCodeInsightFixtureTestCase() {

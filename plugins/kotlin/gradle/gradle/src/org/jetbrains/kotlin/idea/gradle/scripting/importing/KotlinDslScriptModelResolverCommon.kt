@@ -5,8 +5,7 @@ package org.jetbrains.kotlin.idea.gradle.scripting.importing
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.Pair
-import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.*
+import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.CORRELATION_ID_GRADLE_PROPERTY_NAME
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall

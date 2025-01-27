@@ -4,26 +4,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.convertIfToWhen
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.getSubjectToIntroduce
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.introduceSubjectIfPossible
-import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtIfExpression
 
 internal class IfToWhenIntention : KotlinApplicableModCommandAction<KtIfExpression, Unit>(KtIfExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.if.with.when")

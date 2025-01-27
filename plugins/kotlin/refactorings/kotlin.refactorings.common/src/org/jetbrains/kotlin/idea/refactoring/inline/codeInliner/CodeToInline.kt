@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline.Companion.PARAMETER_USAGE_KEY
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline.Companion.TYPE_PARAMETER_USAGE_KEY
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.resolve.ImportPath
 
 /**
  * Represents code to be inlined to replace usages of particular callable.

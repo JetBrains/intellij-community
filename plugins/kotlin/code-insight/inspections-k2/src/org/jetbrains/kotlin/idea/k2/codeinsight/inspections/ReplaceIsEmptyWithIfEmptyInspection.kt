@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -25,23 +24,8 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtBreakExpression
-import org.jetbrains.kotlin.psi.KtContinueExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpressionWithLabel
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtLabeledExpression
-import org.jetbrains.kotlin.psi.KtLoopExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtThisExpression
-import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.psi.createExpressionByPattern
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
-import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**

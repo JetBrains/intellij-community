@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtWhenExpression
 
 class KotlinInlinePropertyHandler(withPrompt: Boolean = true) : AbstractKotlinInlinePropertyHandler(withPrompt) {
     override fun createProcessor(

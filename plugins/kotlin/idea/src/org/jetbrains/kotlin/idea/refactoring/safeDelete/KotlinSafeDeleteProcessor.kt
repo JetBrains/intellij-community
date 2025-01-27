@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
@@ -19,7 +18,6 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDele
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
@@ -35,12 +33,14 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.liftToExpected
+import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
+import org.jetbrains.kotlin.idea.util.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode

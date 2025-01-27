@@ -5,7 +5,6 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getString

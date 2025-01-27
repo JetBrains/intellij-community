@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiComment
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -20,10 +19,8 @@ import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTarget
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 object AddAnnotationUseSiteTargetUtils {

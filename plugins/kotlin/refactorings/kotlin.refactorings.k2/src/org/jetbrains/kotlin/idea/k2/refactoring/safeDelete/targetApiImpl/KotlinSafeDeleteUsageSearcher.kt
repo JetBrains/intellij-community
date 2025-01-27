@@ -10,7 +10,10 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.walkUp
-import com.intellij.refactoring.safeDelete.api.*
+import com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage
+import com.intellij.refactoring.safeDelete.api.SafeDeleteSearchParameters
+import com.intellij.refactoring.safeDelete.api.SafeDeleteUsage
+import com.intellij.refactoring.safeDelete.api.SafeDeleteUsageSearcher
 import com.intellij.refactoring.safeDelete.impl.DefaultPsiSafeDeleteUsage
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
@@ -19,7 +22,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject

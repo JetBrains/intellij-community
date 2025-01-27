@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonListeners
 import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.*
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.annotation.HighlightSeverity

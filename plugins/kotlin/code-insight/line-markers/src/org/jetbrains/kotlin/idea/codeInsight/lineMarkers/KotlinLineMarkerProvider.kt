@@ -18,14 +18,11 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Function
-import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.dsl.collectHighlightingDslMarkers
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.AbstractKotlinLineMarkerProvider

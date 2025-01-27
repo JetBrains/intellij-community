@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
-import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import java.util.*
 

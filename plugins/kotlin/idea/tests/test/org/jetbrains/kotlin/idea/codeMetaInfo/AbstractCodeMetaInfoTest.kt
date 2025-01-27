@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project

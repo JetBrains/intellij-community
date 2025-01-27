@@ -12,7 +12,6 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType

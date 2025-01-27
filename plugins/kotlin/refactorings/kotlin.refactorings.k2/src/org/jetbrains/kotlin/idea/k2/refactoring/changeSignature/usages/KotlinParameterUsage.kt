@@ -5,12 +5,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 
 internal class KotlinParameterUsage(

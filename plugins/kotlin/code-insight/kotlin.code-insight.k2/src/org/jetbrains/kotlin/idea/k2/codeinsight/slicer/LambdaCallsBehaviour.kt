@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.slicer
 import com.intellij.slicer.SliceUsage
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol

@@ -15,8 +15,6 @@ import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -24,22 +22,13 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.projectStructure.forcedKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
-import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSignatureAdditionalData
-import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSuggestedRefactoringSupportBase
-import org.jetbrains.kotlin.idea.refactoring.suggested.defaultValue
-import org.jetbrains.kotlin.idea.refactoring.suggested.modifiers
-import org.jetbrains.kotlin.idea.refactoring.suggested.receiverType
+import org.jetbrains.kotlin.idea.refactoring.suggested.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasBody
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.psi.simpleNameExpressionRecursiveVisitor
 import org.jetbrains.kotlin.types.Variance
 
 class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactoringSupport) :

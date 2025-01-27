@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention.Holder.convert
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention.Holder.createContext
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.createSmartPointer

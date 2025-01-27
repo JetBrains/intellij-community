@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.performance.performancePlugin.commands
 
-import com.jetbrains.performancePlugin.commands.OpenFileCommand
-import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -16,10 +13,11 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts
 import com.intellij.refactoring.move.MoveHandler
+import com.jetbrains.performancePlugin.commands.OpenFileCommand
+import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.commands.dto.MoveDeclarationsData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 /**

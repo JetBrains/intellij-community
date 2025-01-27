@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.refactoring.move.analyzeConflictsInFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 

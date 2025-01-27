@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual

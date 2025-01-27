@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.refactoring.suggested
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature

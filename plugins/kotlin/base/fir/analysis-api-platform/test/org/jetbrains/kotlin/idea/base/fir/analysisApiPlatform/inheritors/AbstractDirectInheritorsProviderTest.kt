@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors
 
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDirectInheritorsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeEnlarger
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot

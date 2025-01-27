@@ -1,27 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiMember
-import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.utils.isLocalClass
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
@@ -38,14 +28,9 @@ import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
-import org.jetbrains.kotlin.psi.psiUtil.isNull
-import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
 @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)

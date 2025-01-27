@@ -18,7 +18,6 @@
 package org.jetbrains.kotlin.idea.scratch
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.EditorFactory

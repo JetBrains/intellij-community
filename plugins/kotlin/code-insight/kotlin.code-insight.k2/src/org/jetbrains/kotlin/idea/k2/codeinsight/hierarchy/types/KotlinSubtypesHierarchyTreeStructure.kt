@@ -4,21 +4,14 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.LambdaUtil
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.util.ArrayUtilRt
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
@@ -29,7 +22,6 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 

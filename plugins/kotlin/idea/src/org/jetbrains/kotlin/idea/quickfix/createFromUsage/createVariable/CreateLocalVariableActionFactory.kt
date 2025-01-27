@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateLocalVariableUtil

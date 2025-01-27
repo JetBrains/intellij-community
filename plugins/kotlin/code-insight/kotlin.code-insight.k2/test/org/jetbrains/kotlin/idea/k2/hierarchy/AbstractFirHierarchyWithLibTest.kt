@@ -5,15 +5,10 @@ import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
 import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinTypeHierarchyTreeStructure
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.psi.KtClassOrObject
 

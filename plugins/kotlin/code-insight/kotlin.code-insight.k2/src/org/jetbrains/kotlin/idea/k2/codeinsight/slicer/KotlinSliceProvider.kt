@@ -11,7 +11,6 @@ import com.intellij.slicer.*
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeInsight.slicer.HackedSliceNullnessAnalyzerBase
 import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode

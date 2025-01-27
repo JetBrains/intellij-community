@@ -12,11 +12,13 @@ import com.intellij.refactoring.move.MoveHandler
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.compilerAllowsAnyScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.hasNoExceptionsToBeUnderSourceRoot
+import org.jetbrains.kotlin.idea.isEnabled
+import org.jetbrains.kotlin.idea.isStandaloneKotlinScript
 import org.jetbrains.kotlin.idea.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.isNonScript

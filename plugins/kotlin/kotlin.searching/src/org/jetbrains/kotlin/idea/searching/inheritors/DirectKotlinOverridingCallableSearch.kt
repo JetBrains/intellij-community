@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCall
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 object DirectKotlinOverridingCallableSearch {

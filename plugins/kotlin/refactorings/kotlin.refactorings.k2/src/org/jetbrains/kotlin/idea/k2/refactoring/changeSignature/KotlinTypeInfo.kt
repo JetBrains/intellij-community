@@ -18,13 +18,11 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaErrorTypeRen
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.fir.StandardTypes
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance

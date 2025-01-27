@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.util.OperatorNameConventions
 

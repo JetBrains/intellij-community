@@ -4,10 +4,8 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 import com.intellij.ide.util.PsiClassListCellRenderer
 import com.intellij.ide.util.PsiClassRenderingInfo
 import com.intellij.ide.util.PsiElementListCellRenderer
-import com.intellij.openapi.util.Comparing
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject

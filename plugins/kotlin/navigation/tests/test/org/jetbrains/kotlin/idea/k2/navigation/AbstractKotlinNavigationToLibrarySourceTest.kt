@@ -9,7 +9,6 @@ import com.intellij.psi.util.startOffset
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest

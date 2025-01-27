@@ -8,10 +8,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.psi.KtClassOrObject

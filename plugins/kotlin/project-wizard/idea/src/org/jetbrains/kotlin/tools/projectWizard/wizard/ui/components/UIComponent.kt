@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.components
 
 import com.intellij.openapi.util.NlsContexts
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.SettingValidator

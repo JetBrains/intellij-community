@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.searching
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
@@ -15,13 +14,13 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.LightClassUtil

@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.tools.projectWizard.templates
 
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Dependencies
+import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
@@ -15,11 +15,9 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ArtifactBasedLibr
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyType
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
-import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppModuleConfigurator.getTestFramework
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.isPresent
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 
 object SimpleJsClientTemplate : JsClientTemplate() {

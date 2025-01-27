@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.j2k.k2.preProcessings
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
@@ -13,7 +12,6 @@ import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiReferenceParameterList
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.infos.MethodCandidateInfo
-import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 

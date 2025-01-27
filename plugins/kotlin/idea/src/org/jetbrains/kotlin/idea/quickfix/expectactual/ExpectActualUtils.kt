@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.idea.base.psi.mustHaveValOrVar
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun <D : KtNamedDeclaration> generateExpectOrActualInFile(
     project: Project,

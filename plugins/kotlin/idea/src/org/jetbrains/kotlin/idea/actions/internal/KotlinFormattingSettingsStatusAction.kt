@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
-import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector
 import org.jetbrains.kotlin.idea.formatter.getKotlinFormatterKind
 
 class KotlinFormattingSettingsStatusAction : AnAction() {

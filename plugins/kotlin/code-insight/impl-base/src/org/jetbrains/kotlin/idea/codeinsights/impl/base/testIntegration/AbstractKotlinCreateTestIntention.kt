@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration
 
-import com.intellij.CommonBundle
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.ide.util.PropertiesComponent

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.FilenameIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

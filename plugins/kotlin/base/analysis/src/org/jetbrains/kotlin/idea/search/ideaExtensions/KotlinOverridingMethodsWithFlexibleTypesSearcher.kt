@@ -7,16 +7,11 @@
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 
 class KotlinOverridingMethodsWithFlexibleTypesSearcher : QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters> {
     override fun execute(p: OverridingMethodsSearch.SearchParameters, consumer: Processor<in PsiMethod>): Boolean {

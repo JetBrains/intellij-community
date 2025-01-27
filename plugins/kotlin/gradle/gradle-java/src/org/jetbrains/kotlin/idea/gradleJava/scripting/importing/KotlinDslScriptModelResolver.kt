@@ -10,12 +10,10 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
-import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsHolder
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptModel
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask

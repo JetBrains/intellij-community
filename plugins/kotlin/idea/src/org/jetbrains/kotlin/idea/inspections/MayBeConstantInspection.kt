@@ -6,7 +6,13 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.utils.checkMayBeConstantByFields
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.JVM_FIELD_MIGHT_BE_CONST_NO_INITIALIZER
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.NONE
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.matchStatus
+import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.constants.ErrorValue
@@ -15,13 +21,6 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.resolve.constants.evaluate.isStandaloneOnlyConstant
 import org.jetbrains.kotlin.resolve.jvm.annotations.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.*
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.matchStatus
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 
 
 class MayBeConstantInspection : MayBeConstantInspectionBase() {

@@ -20,7 +20,6 @@ import org.intellij.plugins.intelliLang.inject.*
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -28,7 +27,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 

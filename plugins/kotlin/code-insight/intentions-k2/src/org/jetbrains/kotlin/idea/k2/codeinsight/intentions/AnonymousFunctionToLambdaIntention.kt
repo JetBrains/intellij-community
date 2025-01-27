@@ -6,28 +6,13 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.idea.k2.refactoring.moveFunctionLiteralOutsideParenthesesIfPossible
 import org.jetbrains.kotlin.idea.k2.refactoring.util.AnonymousFunctionToLambdaUtil
-import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
-import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.contentRange
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class AnonymousFunctionToLambdaIntention : KotlinApplicableModCommandAction<KtNamedFunction, KtExpression>(KtNamedFunction::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.anonymous.function.to.lambda.expression")

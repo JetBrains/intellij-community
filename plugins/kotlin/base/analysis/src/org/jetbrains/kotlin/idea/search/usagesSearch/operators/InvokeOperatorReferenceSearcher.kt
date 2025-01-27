@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.search.usagesSearch.operators
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference

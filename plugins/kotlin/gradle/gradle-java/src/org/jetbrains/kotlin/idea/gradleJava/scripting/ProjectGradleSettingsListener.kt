@@ -9,7 +9,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
-import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported

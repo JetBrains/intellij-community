@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.SuggestedNameInfo

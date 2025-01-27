@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
 import org.jetbrains.kotlin.lexer.KtTokens

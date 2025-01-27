@@ -12,15 +12,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.isLocal
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui.KotlinChangePropertySignatureDialog

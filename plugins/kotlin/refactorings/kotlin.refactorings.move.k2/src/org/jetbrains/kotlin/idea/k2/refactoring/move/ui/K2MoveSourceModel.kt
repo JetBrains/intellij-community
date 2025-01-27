@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDesc
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
 import org.jetbrains.kotlin.psi.KtClassBody
-import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.JComponent

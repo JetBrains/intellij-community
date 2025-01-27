@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActio
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeDeleted
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeReviewed
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase.assertEquals
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile

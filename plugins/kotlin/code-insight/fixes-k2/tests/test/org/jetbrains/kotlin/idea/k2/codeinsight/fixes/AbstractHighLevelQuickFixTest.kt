@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.runInEdtAndWait
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor

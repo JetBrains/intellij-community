@@ -12,7 +12,6 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
-import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range

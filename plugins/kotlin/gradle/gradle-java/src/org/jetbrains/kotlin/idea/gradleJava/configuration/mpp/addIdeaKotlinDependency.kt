@@ -6,12 +6,10 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
-import org.jetbrains.kotlin.idea.util.FactoryCopyableDataNodeUserDataProperty
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinDependency): List<DataNode<out AbstractDependencyData<*>>> {

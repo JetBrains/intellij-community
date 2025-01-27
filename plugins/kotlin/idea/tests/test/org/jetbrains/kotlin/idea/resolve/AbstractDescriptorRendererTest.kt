@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestWithEnvironment

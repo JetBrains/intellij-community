@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.diagnostic
 
-import com.intellij.diagnostic.KotlinCompilerCrash
 import java.util.regex.Pattern
 
 class CompilerInternalError(message: String, cause: Throwable? = null) : Exception(message, cause) {

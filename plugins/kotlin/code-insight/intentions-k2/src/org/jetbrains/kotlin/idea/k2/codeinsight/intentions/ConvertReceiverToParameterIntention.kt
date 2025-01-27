@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSign
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
-import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
