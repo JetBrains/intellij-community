@@ -308,11 +308,18 @@ public class JavaHomeFinderBasic {
     Path miseDataDir = getPathInEnvironmentVariable("MISE_DATA_DIR", "installs");
     if (miseDataDir != null) return miseDataDir;
 
-    Path xdgDataDir = getPathInEnvironmentVariable("XDG_DATA_DIR", "mise/installs");
-    if (xdgDataDir != null) return xdgDataDir;
+    Path xdgDataHome = getPathInEnvironmentVariable("XDG_DATA_HOME", "mise/installs");
+    if (xdgDataHome != null) return xdgDataHome;
 
-    // finally, try the usual location in Unix or macOS
-    if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
+    // finally, try the usual system-specific directories
+    if (this instanceof JavaHomeFinderWindows) {
+      // Windows
+      Path localAppData = getPathInEnvironmentVariable("LOCALAPPDATA", "mise/installs");
+      if (localAppData != null) return localAppData;
+      localAppData = getPathInUserHome("AppData/Local/mise/installs");
+      if (localAppData != null && safeIsDirectory(localAppData)) return localAppData;
+    } else if (!(this instanceof JavaHomeFinderWsl)) {
+      // Unix and macOS
       Path installsDir = getPathInUserHome(".local/share/mise/installs");
       if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
     }
