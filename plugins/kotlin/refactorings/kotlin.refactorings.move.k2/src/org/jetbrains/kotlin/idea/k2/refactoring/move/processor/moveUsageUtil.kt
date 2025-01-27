@@ -237,6 +237,7 @@ internal fun collectOuterInstanceReferences(member: KtNamedDeclaration): List<Ou
 }
 
 internal fun KtNamedDeclaration.usesOuterInstanceParameter(): Boolean {
+    if (containingClassOrObject is KtObjectDeclaration) return false
     return collectOuterInstanceReferences(this).isNotEmpty()
 }
 

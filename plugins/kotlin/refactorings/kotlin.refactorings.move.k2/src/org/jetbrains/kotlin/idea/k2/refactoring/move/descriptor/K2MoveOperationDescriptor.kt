@@ -68,7 +68,6 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchInComments: Boolean,
         searchReferences: Boolean,
         dirStructureMatchesPkg: Boolean,
-        internal val outerInstanceParameterNameProvider: (declaration: KtNamedDeclaration) -> String? = DefaultOuterInstanceParameterNameProvider,
         moveCallBack: MoveCallback? = null,
         internal val preDeclarationMoved: (KtNamedDeclaration) -> Unit = { },
         internal val postDeclarationMoved: (KtNamedDeclaration, KtNamedDeclaration) -> Unit = { _, _ -> },
@@ -89,37 +88,6 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     }
 
     companion object {
-        /**
-         * This parameter name provider attempts to find a name for the outer instance
-         * based on the outer classes name and avoids name clashes by attempting to
-         * choose a name that is not already taken anywhere in the declaration.
-         */
-        private val DefaultOuterInstanceParameterNameProvider = (fun (declaration: KtNamedDeclaration): String? {
-            val suggestedName = declaration.containingClass()?.takeIf {
-                (declaration !is KtClass || declaration.isInner()) && declaration !is KtProperty
-            }?.name?.decapitalizeAsciiOnly() ?: return null
-
-            val usedNames = mutableSetOf<String>()
-            declaration.accept(object : KtTreeVisitorVoid() {
-                override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-                    super.visitNamedDeclaration(declaration)
-                    usedNames.add(declaration.nameAsSafeName.asString())
-                }
-
-                override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                    super.visitSimpleNameExpression(expression)
-                    expression.getIdentifier()?.text?.let { usedNames.add(it) }
-                }
-            })
-
-            if (suggestedName !in usedNames) return suggestedName
-            for (i in 1..1000) {
-                val nameWithNum = "$suggestedName$i"
-                if (nameWithNum !in usedNames) return nameWithNum
-            }
-            return null
-        })
-
         @RequiresReadLock
         fun Declarations(
             project: Project,

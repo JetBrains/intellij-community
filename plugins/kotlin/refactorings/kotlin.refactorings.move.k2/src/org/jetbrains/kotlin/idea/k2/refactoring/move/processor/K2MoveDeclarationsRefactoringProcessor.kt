@@ -37,17 +37,19 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.DeclarationTarget
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.DeclarationTarget.DeclarationTargetType
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Declaration
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Declaration.DeclarationTargetType
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInstanceReferenceUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringListener
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 
 internal class K2MoveDeclarationsRefactoringProcessor(
     private val operationDescriptor: K2MoveOperationDescriptor.Declarations
@@ -213,7 +215,7 @@ internal class K2MoveDeclarationsRefactoringProcessor(
             return usedOuterNestedDeclarations[this]
         }
         val nameToUse = if (isValid && usesOuterInstanceParameter()) {
-            operationDescriptor.outerInstanceParameterNameProvider(this)
+            generateOuterInstanceParameterName(this)
         } else {
             null
         }
@@ -250,8 +252,12 @@ internal class K2MoveDeclarationsRefactoringProcessor(
             val isConflict = when (usage) {
                 is K2MoveRenameUsageInfo.Light -> {
                     val referencedElement = usage.upToDateReferencedElement as? KtNamedDeclaration
-                    if (referencedElement?.containingClassOrObject != null && referencedElement !is KtClassOrObject) {
+                    if (referencedElement?.containingClassOrObject != null &&
+                        referencedElement.containingClassOrObject !is KtObjectDeclaration &&
+                        referencedElement !is KtClassOrObject
+                    ) {
                         // We only have the facility to correct outer class usages if the moved declaration is a nested class.
+                        // If the containing class is an object we have no problem at all.
                         conflicts.putValue(
                             element,
                             KotlinBundle.message("usages.of.nested.declarations.from.non.kotlin.code.won.t.be.processed", element.text)
@@ -423,7 +429,7 @@ internal class K2MoveDeclarationsRefactoringProcessor(
                     val addedParameter = newDeclaration.valueParameterList?.parameters?.firstOrNull() ?: return
                     shortenReferences(addedParameter)
                 }
-                val moveTargetType = (moveTarget as? DeclarationTarget<*>)?.getTargetType()
+                val moveTargetType = (moveTarget as? Declaration<*>)?.getTargetType()
                 if (moveTargetType == DeclarationTargetType.COMPANION_OBJECT || moveTargetType == DeclarationTargetType.OBJECT) {
                     newDeclaration.removeModifier(KtTokens.OPEN_KEYWORD)
                     newDeclaration.removeModifier(KtTokens.FINAL_KEYWORD)
@@ -431,5 +437,36 @@ internal class K2MoveDeclarationsRefactoringProcessor(
                 }
             }
         }
+    }
+
+    /**
+     * This method attempts to find a name for the outer instance
+     * based on the outer classes name and avoids name clashes by attempting to
+     * choose a name that is not already taken anywhere in the declaration.
+     */
+    private fun generateOuterInstanceParameterName(declaration: KtNamedDeclaration): String? {
+        val suggestedName = declaration.containingClass()?.takeIf {
+            (declaration !is KtClass || declaration.isInner()) && declaration !is KtProperty
+        }?.name?.decapitalizeAsciiOnly() ?: return null
+
+        val usedNames = mutableSetOf<String>()
+        declaration.accept(object : KtTreeVisitorVoid() {
+            override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                super.visitNamedDeclaration(declaration)
+                usedNames.add(declaration.nameAsSafeName.asString())
+            }
+
+            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                super.visitSimpleNameExpression(expression)
+                expression.getIdentifier()?.text?.let { usedNames.add(it) }
+            }
+        })
+
+        if (suggestedName !in usedNames) return suggestedName
+        for (i in 1..1000) {
+            val nameWithNum = "$suggestedName$i"
+            if (nameWithNum !in usedNames) return nameWithNum
+        }
+        return null
     }
 }

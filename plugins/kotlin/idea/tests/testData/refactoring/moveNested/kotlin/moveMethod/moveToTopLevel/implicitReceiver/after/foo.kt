@@ -1,5 +1,5 @@
 package bar
 
-fun foo(test: Test): Int {
-    return test.test()
+fun foo(test1: Test): Int {
+    return test1.test()
 }

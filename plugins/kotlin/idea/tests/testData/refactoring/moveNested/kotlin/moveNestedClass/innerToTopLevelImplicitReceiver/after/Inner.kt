@@ -1,7 +1,7 @@
 package test1
 
-class Inner(private val a: Test) {
+class Inner(private val test: Test) {
     fun foo() {
-        a.bar()
+        test.bar()
     }
 }

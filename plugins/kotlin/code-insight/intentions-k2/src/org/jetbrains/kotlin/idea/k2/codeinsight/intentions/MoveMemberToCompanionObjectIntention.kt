@@ -32,7 +32,7 @@ internal class MoveMemberToCompanionObjectIntention : MoveMemberIntention(
         return nameIdentifier.textRange
     }
 
-    override fun getTarget(element: KtNamedDeclaration): K2MoveTargetDescriptor.DeclarationTarget<*>? {
+    override fun getTarget(element: KtNamedDeclaration): K2MoveTargetDescriptor.Declaration<*>? {
         return (element.containingClassOrObject as? KtClass)?.let {
             K2MoveTargetDescriptor.CompanionObject(it)
         }

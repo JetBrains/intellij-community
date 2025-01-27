@@ -17,7 +17,7 @@ internal class MoveMemberToTopLevelIntention : MoveMemberIntention(
         return element.nameIdentifier?.textRange
     }
 
-    override fun getTarget(element: KtNamedDeclaration): K2MoveTargetDescriptor.DeclarationTarget<*> {
+    override fun getTarget(element: KtNamedDeclaration): K2MoveTargetDescriptor.Declaration<*> {
         return K2MoveTargetDescriptor.File(element.containingKtFile)
     }
 

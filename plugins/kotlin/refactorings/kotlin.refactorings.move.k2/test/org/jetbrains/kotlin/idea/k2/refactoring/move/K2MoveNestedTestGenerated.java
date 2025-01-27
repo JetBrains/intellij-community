@@ -240,11 +240,6 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/outerInstanceAddParameter/outerInstanceAddParameter.test");
     }
 
-    @TestMetadata("kotlin/moveMethod/moveToTopLevel/outerInstanceDontAddParameter/outerInstanceDontAddParameter.test")
-    public void testKotlin_moveMethod_moveToTopLevel_outerInstanceDontAddParameter_OuterInstanceDontAddParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/outerInstanceDontAddParameter/outerInstanceDontAddParameter.test");
-    }
-
     @TestMetadata("kotlin/moveNestedClass/callableReferences/nestedToAnotherClass/nestedToAnotherClass.test")
     public void testKotlin_moveNestedClass_callableReferences_nestedToAnotherClass_NestedToAnotherClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/callableReferences/nestedToAnotherClass/nestedToAnotherClass.test");
@@ -303,11 +298,6 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
     @TestMetadata("kotlin/moveNestedClass/innerToTopLevelNoThis/innerToTopLevelNoThis.test")
     public void testKotlin_moveNestedClass_innerToTopLevelNoThis_InnerToTopLevelNoThis() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelNoThis/innerToTopLevelNoThis.test");
-    }
-
-    @TestMetadata("kotlin/moveNestedClass/innerToTopLevelSimpleThisNoInstanceParameter/innerToTopLevelSimpleThisNoInstanceParameter.test")
-    public void testKotlin_moveNestedClass_innerToTopLevelSimpleThisNoInstanceParameter_InnerToTopLevelSimpleThisNoInstanceParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/innerToTopLevelSimpleThisNoInstanceParameter/innerToTopLevelSimpleThisNoInstanceParameter.test");
     }
 
     @TestMetadata("kotlin/moveNestedClass/innerToTopLevelSimpleThis/innerToTopLevelSimpleThis.test")

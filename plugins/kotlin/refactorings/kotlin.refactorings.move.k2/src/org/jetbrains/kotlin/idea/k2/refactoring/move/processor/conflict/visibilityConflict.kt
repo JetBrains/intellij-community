@@ -99,13 +99,13 @@ private fun KaModule.isFriendDependencyFor(other: KaModule): Boolean {
 }
 
 context(KaSession)
-private fun isPrivateVisibleAt(referencingElement: PsiElement, target: K2MoveTargetDescriptor.DeclarationTarget<*>): Boolean {
+private fun isPrivateVisibleAt(referencingElement: PsiElement, target: K2MoveTargetDescriptor.Declaration<*>): Boolean {
     return when (target) {
         is K2MoveTargetDescriptor.File -> {
             // For top level declarations, private members will be visible within the entire file
             referencingElement.containingFile == target.getTarget()
         }
-        is K2MoveTargetDescriptor.ClassBodyTarget<*> -> {
+        is K2MoveTargetDescriptor.ClassBody<*> -> {
             val targetClass = target.getTarget() ?: return false
             // Companion objects can access private members in its parent and vice versa
             val visibilityTarget = if (targetClass is KtObjectDeclaration && targetClass.isCompanion()) {
@@ -126,7 +126,7 @@ internal fun checkVisibilityConflictForNonMovedUsages(
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     usages: List<MoveRenameUsageInfo>,
     targetDir: PsiDirectory,
-    target: K2MoveTargetDescriptor.DeclarationTarget<*>? = null
+    target: K2MoveTargetDescriptor.Declaration<*>? = null
 ): MultiMap<PsiElement, String> {
     return usages
         .filter { usageInfo -> usageInfo.willNotBeMoved(allDeclarationsToMove) && usageInfo.isVisibleBeforeMove() }
@@ -194,7 +194,7 @@ fun checkVisibilityConflictsForInternalUsages(
     allDeclarationsToMove: Collection<KtNamedDeclaration>,
     targetPkg: FqName,
     targetDir: PsiDirectory,
-    target: K2MoveTargetDescriptor.DeclarationTarget<*>? = null
+    target: K2MoveTargetDescriptor.Declaration<*>? = null
 ): MultiMap<PsiElement, String> {
     val usageKaModule = targetDir.module?.toKaSourceModuleForProductionOrTest()
 

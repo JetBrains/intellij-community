@@ -46,7 +46,7 @@ sealed interface K2MoveTargetDescriptor {
         }
     }
 
-    sealed interface DeclarationTarget<T: KtElement> : K2MoveTargetDescriptor {
+    sealed interface Declaration<T: KtElement> : K2MoveTargetDescriptor {
         override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): T
 
         /**
@@ -88,7 +88,7 @@ sealed interface K2MoveTargetDescriptor {
         val fileName: String,
         pkgName: FqName,
         baseDirectory: PsiDirectory
-    ) : Directory(pkgName, baseDirectory), DeclarationTarget<KtFile> {
+    ) : Directory(pkgName, baseDirectory), Declaration<KtFile> {
         override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): KtFile {
             val directory = super.getOrCreateTarget(dirStructureMatchesPkg) as PsiDirectory
             return getOrCreateKotlinFile(fileName, directory, pkgName.asString())
@@ -102,10 +102,10 @@ sealed interface K2MoveTargetDescriptor {
             return target.add(element)
         }
 
-        override fun getTargetType(): DeclarationTarget.DeclarationTargetType = DeclarationTarget.DeclarationTargetType.FILE
+        override fun getTargetType(): Declaration.DeclarationTargetType = Declaration.DeclarationTargetType.FILE
     }
 
-    abstract class ClassBodyTarget<T: KtClassOrObject>(targetClass: KtClassOrObject) : DeclarationTarget<T>  {
+    abstract class ClassBody<T: KtClassOrObject>(targetClass: KtClassOrObject) : Declaration<T>  {
         override val baseDirectory: PsiDirectory = targetClass.containingKtFile.containingDirectory!!
         override val pkgName: FqName = targetClass.containingKtFile.packageFqName
 
@@ -116,11 +116,11 @@ sealed interface K2MoveTargetDescriptor {
 
     class CompanionObject(
         private val containingClass: KtClass
-    ) : ClassBodyTarget<KtObjectDeclaration>(containingClass) {
+    ) : ClassBody<KtObjectDeclaration>(containingClass) {
         override val baseDirectory: PsiDirectory = containingClass.containingKtFile.containingDirectory!!
         override val pkgName: FqName = containingClass.containingKtFile.packageFqName
 
-        override fun getTargetType(): DeclarationTarget.DeclarationTargetType = DeclarationTarget.DeclarationTargetType.COMPANION_OBJECT
+        override fun getTargetType(): Declaration.DeclarationTargetType = Declaration.DeclarationTargetType.COMPANION_OBJECT
 
         override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): KtObjectDeclaration {
             containingClass.companionObjects.firstOrNull()?.let { return it }
@@ -134,19 +134,19 @@ sealed interface K2MoveTargetDescriptor {
 
     class ClassOrObject(
         private val classOrObject: KtClassOrObject
-    ) : ClassBodyTarget<KtClassOrObject>(classOrObject) {
+    ) : ClassBody<KtClassOrObject>(classOrObject) {
         override val baseDirectory: PsiDirectory = classOrObject.containingKtFile.containingDirectory!!
         override val pkgName: FqName = classOrObject.containingKtFile.packageFqName
 
-        override fun getTargetType(): DeclarationTarget.DeclarationTargetType {
+        override fun getTargetType(): Declaration.DeclarationTargetType {
             if (classOrObject is KtObjectDeclaration) {
                 if (classOrObject.isCompanion()) {
-                    return DeclarationTarget.DeclarationTargetType.COMPANION_OBJECT
+                    return Declaration.DeclarationTargetType.COMPANION_OBJECT
                 } else {
-                    return DeclarationTarget.DeclarationTargetType.OBJECT
+                    return Declaration.DeclarationTargetType.OBJECT
                 }
             }
-            return DeclarationTarget.DeclarationTargetType.CLASS
+            return Declaration.DeclarationTargetType.CLASS
         }
 
         override fun getTarget(): KtClassOrObject? {

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.DeclarationTarget
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Declaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -24,7 +24,7 @@ internal abstract class MoveMemberIntention(textGetter: () -> @IntentionName Str
     textGetter = textGetter
 ) {
 
-    internal abstract fun getTarget(element: KtNamedDeclaration): DeclarationTarget<*>?
+    internal abstract fun getTarget(element: KtNamedDeclaration): Declaration<*>?
     override fun startInWriteAction(): Boolean = false
 
     @OptIn(KaAllowAnalysisOnEdt::class)
