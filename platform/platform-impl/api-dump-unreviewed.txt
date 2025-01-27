@@ -6138,18 +6138,6 @@ f:com.intellij.openapi.application.impl.AsyncExecutionServiceImpl
 - buildNonBlockingReadAction(java.util.concurrent.Callable):com.intellij.openapi.application.NonBlockingReadAction
 f:com.intellij.openapi.application.impl.ExpirableExecutorImplKt
 - sf:coroutineDispatchingContext(com.intellij.openapi.application.ExpirableExecutor):kotlin.coroutines.ContinuationInterceptor
-c:com.intellij.openapi.application.impl.InternalUiComponentMarker
-- sf:Companion:com.intellij.openapi.application.impl.InternalUiComponentMarker$Companion
-- <init>():V
-- psf:getAI_COMPONENT():com.intellij.openapi.util.Key
-- getCustomDefaultButtonPaint(javax.swing.JComponent,java.awt.Rectangle):java.awt.Paint
-- isAIComponent(javax.swing.JComponent):Z
-- markAIComponent(com.intellij.openapi.util.UserDataHolder):V
-- markAIComponent(javax.swing.JComponent,com.intellij.openapi.util.UserDataHolder):V
-- markAIComponent(javax.swing.JComponent,Z):V
-- markAiContainerFor(javax.swing.JComponent):V
-- unmarkAiContainerFor(javax.swing.JComponent):V
-f:com.intellij.openapi.application.impl.InternalUiComponentMarker$Companion
 f:com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 - com.intellij.openapi.application.NonBlockingReadAction
 - coalesceBy(java.lang.Object[]):com.intellij.openapi.application.NonBlockingReadAction

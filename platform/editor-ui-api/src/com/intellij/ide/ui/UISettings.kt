@@ -318,8 +318,8 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var wideScreenSupport: Boolean
-    get() = state.wideScreenSupport
-    set(value) {
+    get() = state.wideScreenSupport || notRoamableOptions.xNextStripe
+            set(value) {
       state.wideScreenSupport = value
     }
 
