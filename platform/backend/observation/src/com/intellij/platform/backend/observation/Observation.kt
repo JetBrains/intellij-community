@@ -64,7 +64,6 @@ object Observation {
    * Returns stacktraces of the computations that are currently awaited by [awaitConfiguration]
    * This method affects only those computations that use [ActivityKey], whereas [ActivityTracker] is out of reach for the platform.
    */
-  @ApiStatus.Internal
   fun dumpAwaitedActivitiesToString(): String {
     return dumpObservedComputationsToString()
   }
