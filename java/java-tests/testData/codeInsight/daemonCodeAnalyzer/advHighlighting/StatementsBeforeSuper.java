@@ -58,7 +58,7 @@ class D {
 class E extends D {
 
   E() {
-    <error descr="Cannot reference 'D.i' before superclass constructor is called">super.i</error>++;                  // Error
+    <error descr="Cannot reference 'super' before superclass constructor is called">super</error>.i++;                  // Error
     super();
   }
 

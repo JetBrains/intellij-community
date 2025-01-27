@@ -46,3 +46,17 @@ class Ext extends Outer2 {
        }
    }
 }
+class C {
+  C(int i) {
+
+  }
+
+  int x() {
+    return 1;
+  }
+}
+class D extends C {
+  D() {
+    super(<error descr="Cannot reference 'D.super' before superclass constructor is called">D.super</error>.x());
+  }
+}

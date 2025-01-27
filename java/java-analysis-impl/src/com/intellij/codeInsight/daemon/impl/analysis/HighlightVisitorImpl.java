@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -1161,6 +1161,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, mySurroundingConstructor));
       if (!hasErrorResults()) visitExpression(expr);
     }
+  }
+
+  @Override
+  public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
+    add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expression, null, mySurroundingConstructor));
+    if (!hasErrorResults()) visitExpression(expression);
   }
 
   @Override

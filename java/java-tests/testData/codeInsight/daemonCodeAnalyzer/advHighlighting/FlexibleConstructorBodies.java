@@ -47,7 +47,7 @@ class B extends A {
     }
   }
   B(boolean b, int i) {
-    <error descr="Cannot reference 'A.i' before superclass constructor is called">super.i</error> = i;
+    <error descr="Cannot reference 'super' before superclass constructor is called">super</error>.i = i;
     <error descr="Cannot reference 'this' before superclass constructor is called">this</error>.i = i;
     if (false) <error descr="return not allowed before 'super()' call">return;</error>
     super(i);
@@ -68,7 +68,7 @@ class D {
 class E extends D {
 
   E() {
-    <error descr="Cannot reference 'D.i' before superclass constructor is called">super.i</error>++;                  // Error
+    <error descr="Cannot reference 'super' before superclass constructor is called">super</error>.i++;                  // Error
     super();
   }
 
