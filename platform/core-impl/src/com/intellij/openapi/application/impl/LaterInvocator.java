@@ -55,7 +55,8 @@ public final class LaterInvocator {
 
   private static final ConcurrentMap<Window, ModalityStateEx> ourWindowModalities = CollectionFactory.createConcurrentWeakMap();
 
-  static @NotNull ModalityStateEx modalityStateForWindow(@NotNull Window window) {
+  @ApiStatus.Internal
+  public static @NotNull ModalityStateEx modalityStateForWindow(@NotNull Window window) {
     return ourWindowModalities.computeIfAbsent(window, __ -> {
       synchronized (ourModalityStack) {
         for (ModalityStateEx state : ourModalityStack) {
@@ -75,7 +76,8 @@ public final class LaterInvocator {
     return window instanceof Dialog && ((Dialog)window).isModal();
   }
 
-  static void invokeLater(@NotNull ModalityState modalityState,
+  @ApiStatus.Internal
+  public static void invokeLater(@NotNull ModalityState modalityState,
                           @NotNull Condition<?> expired,
                           @NotNull Runnable runnable) {
     SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.INVOKE_LATER);
@@ -86,7 +88,8 @@ public final class LaterInvocator {
   }
 
   @RequiresBackgroundThread
-  static void invokeAndWait(@NotNull ModalityState modalityState, final @NotNull Runnable runnable) {
+  @ApiStatus.Internal
+  public static void invokeAndWait(@NotNull ModalityState modalityState, final @NotNull Runnable runnable) {
     final AtomicReference<Runnable> runnableRef = new AtomicReference<>(runnable);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();

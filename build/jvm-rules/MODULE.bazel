@@ -60,6 +60,7 @@ http_file(
     name = "jps-standalone_http",
     url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-build-standalone-62c99800f7c7213d95af147c9b7b125b1d63a0de.jar",
     downloaded_file_path = "jps-standalone-62c99800f7c7213d95af147c9b7b125b1d63a0de.jar",
+    integrity = "sha256-BBVuDPiZHSJZviz31iCKQwQg9R0rajni8pFYxk76AwI=",
 )
 
 ### auto-generated section `libraries` start

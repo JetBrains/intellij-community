@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class FontFamilyDescriptor {
+public final class FontFamilyDescriptor {
   private final String myFamily;
   private final String mySubfamily;
 
-  FontFamilyDescriptor(@NotNull String family, @NotNull String subfamily) {
+  @ApiStatus.Internal
+  public FontFamilyDescriptor(@NotNull String family, @NotNull String subfamily) {
     myFamily = family;
     mySubfamily = subfamily;
   }

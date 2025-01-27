@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -129,10 +129,9 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
           Object item = ((JList<?>)event.getSource()).getSelectedValue();
           if (item instanceof AnActionHolder) {
             AnAction anAction = ((AnActionHolder)item).getAction();
-            if (anAction instanceof LafChangeAction) {
+            if (anAction instanceof LafChangeAction action) {
               switchAlarm.cancelAllRequests();
               switchAlarm.addRequest(() -> {
-                LafChangeAction action = (LafChangeAction)anAction;
                 switchLafAndUpdateUI(LafManager.getInstance(), action.myLookAndFeelInfo);
               }, Registry.get("ide.instant.theme.switch.delay").asInteger());
             }

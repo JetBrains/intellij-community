@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
@@ -181,6 +181,11 @@ public final class WindowWrapperBuilder {
       MyDialogWrapper(@NotNull Component parent, @NotNull JComponent component) {
         super(parent, true);
         myComponent = component;
+      }
+
+      @Override
+      public void init() {
+        super.init();
       }
 
       public void setParameters(@Nullable @NonNls String dimensionServiceKey,

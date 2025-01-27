@@ -560,11 +560,11 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     myDispatcher.addListener(listener, disposable);
   }
 
-  private void notifyAdded(InlayImpl inlay) {
+  private void notifyAdded(InlayImpl<?, ?> inlay) {
     myDispatcher.getMulticaster().onAdded(inlay);
   }
 
-  void notifyChanged(InlayImpl inlay, int changeFlags) {
+  void notifyChanged(InlayImpl<?, ?> inlay, int changeFlags) {
     myDispatcher.getMulticaster().onUpdated(inlay, changeFlags);
   }
 
@@ -621,7 +621,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
                                                                 boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
       return new RMNode<InlineInlayImpl<?>>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
-        void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
+        public void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
           super.addIntervalsFrom(otherNode);
           if (myPutMergedIntervalsAtBeginning) {
             List<Supplier<? extends InlineInlayImpl<?>>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
@@ -634,7 +634,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
+    public void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         if (myMoveInProgress) {
           // delay notification about invalidated inlay - folding model is not consistent at this point
@@ -654,7 +654,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
+    public void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
@@ -667,7 +667,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
+    public void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }

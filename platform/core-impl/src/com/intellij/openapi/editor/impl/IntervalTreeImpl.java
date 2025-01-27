@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +14,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.WalkingState;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
-abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTree<T> {
+@ApiStatus.Internal
+public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTree<T> {
   static final Logger LOG = Logger.getInstance(IntervalTreeImpl.class);
   static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
@@ -38,10 +40,11 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   private final ReferenceQueue<T> myReferenceQueue = new ReferenceQueue<>();
   private int deadReferenceCount;
 
-  static class IntervalNode<E> extends RedBlackTree.Node<E> implements MutableInterval {
+  @ApiStatus.Internal
+  public static class IntervalNode<E> extends RedBlackTree.Node<E> implements MutableInterval {
     private volatile long myRange;
     private static final byte ATTACHED_TO_TREE_FLAG = COLOR_MASK <<1; // true if the node is inserted to the tree
-    final List<Supplier<? extends E>> intervals;
+    public final List<Supplier<? extends E>> intervals;
     int maxEnd; // max of all intervalEnd()s among all children.
     int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
 
@@ -59,6 +62,14 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       myRange = TextRangeScalarUtil.toScalarRange(start, end);
       intervals = new SmartList<>(tree.createGetter(key));
       setValid(true);
+    }
+
+    public int getDelta() {
+      return delta;
+    }
+
+    public int getMaxEnd() {
+      return maxEnd;
     }
 
     @Override
@@ -138,7 +149,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       setFlag(ATTACHED_TO_TREE_FLAG, attached);
     }
 
-    void removeIntervalInternal(int i) {
+    @ApiStatus.Internal
+    public void removeIntervalInternal(int i) {
       intervals.remove(i);
       if (isAttachedToTree()) {   // for detached node, do not update tree node count
         assert myTree.keySize > 0 : myTree.keySize;
@@ -146,7 +158,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       }
     }
 
-    void addInterval(@NotNull E interval) {
+    @ApiStatus.Internal
+    public void addInterval(@NotNull E interval) {
       myTree.assertUnderWriteLock();
       intervals.add(myTree.createGetter(interval));
       if (isAttachedToTree()) { // for detached node, do not update tree node count
@@ -155,7 +168,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       }
     }
 
-    void addIntervalsFrom(@NotNull IntervalNode<E> otherNode) {
+    public void addIntervalsFrom(@NotNull IntervalNode<E> otherNode) {
       for (Supplier<? extends E> key : otherNode.intervals) {
         E interval = key.get();
         if (interval != null) addInterval(interval);
@@ -582,7 +595,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   @NotNull
-  MarkupIterator<T> overlappingIterator(@NotNull TextRange rangeInterval) {
+  @ApiStatus.Internal
+  public MarkupIterator<T> overlappingIterator(@NotNull TextRange rangeInterval) {
     l.readLock().lock();
 
     try {
@@ -1113,7 +1127,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   // max of n.left's maxEnd, n.right's maxEnd and its own interval endOffset
-  void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
+  @ApiStatus.Internal
+  public void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
     if (!node.isValid()) return;
     int realMax = Math.max(Math.max(maxEndOf(node.getLeft(), deltaUpToRoot), maxEndOf(node.getRight(), deltaUpToRoot)),
                            deltaUpToRoot + node.intervalEnd());
@@ -1316,11 +1331,13 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
 
   private boolean firingRemove; // accessed under l.writeLock() only
 
-  void fireBeforeRemoved(@NotNull T marker) {
+  public void fireBeforeRemoved(@NotNull T marker) {
   }
-  void fireAfterRemoved(@NotNull T marker) {
+
+  public void fireAfterRemoved(@NotNull T marker) {
   }
-  void fireAfterRemoved(@NotNull List<? extends T> markers) {
+
+  public void fireAfterRemoved(@NotNull List<? extends T> markers) {
     for (T marker : markers) {
       fireAfterRemoved(marker);
     }
@@ -1452,7 +1469,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
   }
 
-  String dumpState() {
+  @ApiStatus.Internal
+  public String dumpState() {
     StringBuilder b = new StringBuilder("[\n");
     processAll(i -> {
       b.append(' ').append(i).append('\n');

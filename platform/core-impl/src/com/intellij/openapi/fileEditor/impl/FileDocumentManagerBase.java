@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -99,7 +99,8 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       .fileDocumentBindingChanged(document, oldFile, newFile);
   }
 
-  protected static void setDocumentTooLarge(@NotNull Document document, boolean tooLarge) {
+  @ApiStatus.Internal
+  public static void setDocumentTooLarge(@NotNull Document document, boolean tooLarge) {
     document.putUserData(BIG_FILE_PREVIEW, tooLarge ? Boolean.TRUE : null);
   }
 
@@ -188,19 +189,22 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return document.getUserData(BIG_FILE_PREVIEW) == Boolean.TRUE;
   }
 
-  void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  @ApiStatus.Internal
+  public void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.remove(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
     fireFileBindingChanged(document, file, null);
   }
 
-  protected static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  public static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
     FileType type = file.getFileType();
     return type.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(type) == null;
   }
 
-  protected static int getPreviewCharCount(@NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  public static int getPreviewCharCount(@NotNull VirtualFile file) {
     Charset charset = EncodingManager.getInstance().getEncoding(file, false);
     float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
 

@@ -380,7 +380,7 @@ f:com.intellij.openapi.editor.impl.EmptySoftWrapModel
 - isSoftWrappingEnabled():Z
 - isVisible(com.intellij.openapi.editor.SoftWrap):Z
 - release():V
-c:com.intellij.openapi.editor.impl.FontFamilyDescriptor
+f:com.intellij.openapi.editor.impl.FontFamilyDescriptor
 - s:create(java.lang.String,java.lang.String):com.intellij.openapi.editor.impl.FontFamilyDescriptor
 - getFamily():java.lang.String
 - getSubfamily():java.lang.String

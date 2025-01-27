@@ -1495,11 +1495,8 @@ a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - f:getDocument(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.Document
 - pa:getDocumentListener():com.intellij.openapi.editor.event.DocumentListener
 - getFile(com.intellij.openapi.editor.Document):com.intellij.openapi.vfs.VirtualFile
-- ps:getPreviewCharCount(com.intellij.openapi.vfs.VirtualFile):I
-- ps:isBinaryWithoutDecompiler(com.intellij.openapi.vfs.VirtualFile):Z
 - isPartialPreviewOfALargeFile(com.intellij.openapi.editor.Document):Z
 - reloadBinaryFiles():V
-- ps:setDocumentTooLarge(com.intellij.openapi.editor.Document,Z):V
 f:com.intellij.openapi.fileEditor.impl.LoadTextUtil
 - s:changeLineSeparators(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.Object):V
 - s:charsetForWriting(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.nio.charset.Charset):com.intellij.openapi.util.Pair$NonNull
@@ -1634,7 +1631,6 @@ c:com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 - finishNonCancelableSection():V
 - p:getCancellationTrace():java.lang.Throwable
 - getFraction():D
-- p:getLock():java.lang.Object
 - getModalityState():com.intellij.openapi.application.ModalityState
 - getText():java.lang.String
 - getText2():java.lang.String

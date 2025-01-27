@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -453,7 +453,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  final synchronized int computePreferredHeight() {
+  @ApiStatus.Internal
+  public final synchronized int computePreferredHeight() {
     int height = myIpad.top + myIpad.bottom;
 
     Font font = getBaseFont();

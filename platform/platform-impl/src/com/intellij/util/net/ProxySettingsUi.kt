@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
@@ -38,13 +38,7 @@ import java.io.IOException
 import java.net.MalformedURLException
 import java.net.URL
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JPasswordField
-import javax.swing.JTextField
+import javax.swing.*
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
 
@@ -162,9 +156,9 @@ class ProxySettingsUi(
                 { text ->
                   val result = ArrayList<String>()
                   for (token in text.split(",")) {
-                    val trimmedToken = token.trim();
+                    val trimmedToken = token.trim()
                     if (!trimmedToken.isEmpty()) {
-                      result.add(trimmedToken);
+                      result.add(trimmedToken)
                     }
                   }
                   result

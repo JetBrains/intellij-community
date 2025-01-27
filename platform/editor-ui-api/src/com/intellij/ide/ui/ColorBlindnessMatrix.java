@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.util.Matrix;
 import com.intellij.util.Vector;
+import org.jetbrains.annotations.ApiStatus;
 
-final class ColorBlindnessMatrix {
+@ApiStatus.Internal
+public final class ColorBlindnessMatrix {
   private static final Matrix CORRECTION = Matrix.createIdentity(3);
 
   private static final Matrix RGB_LMS; // a matrix to convert a RGB color to the LMS space
@@ -66,7 +68,8 @@ final class ColorBlindnessMatrix {
     return LMS_RGB.multiply(matrix.plus(correction.multiply(RGB_LMS.minus(matrix))));
   }
 
-  static final class Protanopia {
+  @ApiStatus.Internal
+  public static final class Protanopia {
     private static final double V1 = -WHITE_BLUE.get(1) / WHITE_BLUE.get(0);
     private static final double V2 = -WHITE_BLUE.get(2) / WHITE_BLUE.get(0);
     private static final Matrix SIMULATION = Matrix.create(3, 0, 0, 0, V1, 1, 0, V2, 0, 1);
@@ -74,12 +77,13 @@ final class ColorBlindnessMatrix {
 
     static final Matrix MATRIX = calculate(CORRECTION);
 
-    static Matrix calculate(Matrix correction) {
+    public static Matrix calculate(Matrix correction) {
       return ColorBlindnessMatrix.calculate(SIMULATION, correction);
     }
   }
 
-  static final class Deuteranopia {
+  @ApiStatus.Internal
+  public static final class Deuteranopia {
     private static final double V1 = -WHITE_BLUE.get(0) / WHITE_BLUE.get(1);
     private static final double V2 = -WHITE_BLUE.get(2) / WHITE_BLUE.get(1);
     private static final Matrix SIMULATION = Matrix.create(3, 1, V1, 0, 0, 0, 0, 0, V2, 1);
@@ -87,12 +91,13 @@ final class ColorBlindnessMatrix {
 
     static final Matrix MATRIX = calculate(CORRECTION);
 
-    static Matrix calculate(Matrix correction) {
+    public static Matrix calculate(Matrix correction) {
       return ColorBlindnessMatrix.calculate(SIMULATION, correction);
     }
   }
 
-  static final class Tritanopia {
+  @ApiStatus.Internal
+  public static final class Tritanopia {
     private static final double V1 = -WHITE_RED.get(0) / WHITE_RED.get(2);
     private static final double V2 = -WHITE_RED.get(1) / WHITE_RED.get(2);
     private static final Matrix SIMULATION = Matrix.create(3, 1, 0, V1, 0, 1, V2, 0, 0, 0);
@@ -100,7 +105,7 @@ final class ColorBlindnessMatrix {
 
     static final Matrix MATRIX = calculate(CORRECTION);
 
-    static Matrix calculate(Matrix correction) {
+    public static Matrix calculate(Matrix correction) {
       return ColorBlindnessMatrix.calculate(SIMULATION, correction);
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -41,8 +41,8 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
 
   private int getSumOfValuesForOverlappingRanges(@Nullable Node<T> node, int offset, int deltaUpToRootExclusive) {
     if (node == null) return 0;
-    int delta = deltaUpToRootExclusive + node.delta;
-    if (offset >= node.maxEnd + delta) return node.subtreeSum;
+    int delta = deltaUpToRootExclusive + node.getDelta();
+    if (offset >= node.getMaxEnd() + delta) return node.subtreeSum;
     int value = getSumOfValuesForOverlappingRanges(node.getLeft(), offset, delta);
     if (offset >= node.intervalStart() + delta) {
       value += node.getLocalSum();
@@ -66,7 +66,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
   }
 
   @Override
-  void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
+  public void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
     super.correctMax(node, deltaUpToRoot);
     ((Node<T>)node).recalculateSubTreeSum();
   }
@@ -124,13 +124,13 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
     }
 
     @Override
-    void addInterval(@NotNull T interval) {
+    public void addInterval(@NotNull T interval) {
       super.addInterval(interval);
       recalculateSubTreeSumUp();
     }
 
     @Override
-    void removeIntervalInternal(int i) {
+    public void removeIntervalInternal(int i) {
       super.removeIntervalInternal(i);
       recalculateSubTreeSumUp();
     }

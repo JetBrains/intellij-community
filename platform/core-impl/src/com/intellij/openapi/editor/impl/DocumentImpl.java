@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.core.CoreBundle;
@@ -276,7 +276,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   /**
    * @return true if stripping was completed successfully, false if the document prevented stripping by e.g., caret(s) being in the way
    */
-  boolean stripTrailingSpaces(@Nullable Project project, boolean inChangedLinesOnly, int @Nullable [] caretOffsets) {
+  @ApiStatus.Internal
+  public boolean stripTrailingSpaces(@Nullable Project project, boolean inChangedLinesOnly, int @Nullable [] caretOffsets) {
     if (!isStripTrailingSpacesEnabled) {
       return true;
     }
@@ -387,11 +388,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
   }
 
-  ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler() {
+  @ApiStatus.Internal
+  public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler() {
     return myReadonlyFragmentModificationHandler;
   }
 
-  void setReadonlyFragmentModificationHandler(ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
+  @ApiStatus.Internal
+  public void setReadonlyFragmentModificationHandler(ReadonlyFragmentModificationHandler readonlyFragmentModificationHandler) {
     myReadonlyFragmentModificationHandler = readonlyFragmentModificationHandler;
   }
 
@@ -804,7 +807,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     myFrozen = null;
   }
 
-  void clearLineModificationFlagsExcept(int @NotNull [] caretLines) {
+  @ApiStatus.Internal
+  public void clearLineModificationFlagsExcept(int @NotNull [] caretLines) {
     IntList modifiedLines = new IntArrayList(caretLines.length);
     LineSet lineSet = getLineSet();
     for (int line : caretLines) {

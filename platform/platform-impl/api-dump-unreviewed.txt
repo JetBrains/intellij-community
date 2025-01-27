@@ -2064,13 +2064,9 @@ c:com.intellij.ide.actions.JumpToLastEditAction
 c:com.intellij.ide.actions.NextOccurenceAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
-- f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:getDescription(com.intellij.ide.OccurenceNavigator):java.lang.String
-- p:getNavigator(com.intellij.openapi.actionSystem.DataContext):com.intellij.ide.OccurenceNavigator
 - p:go(com.intellij.ide.OccurenceNavigator):com.intellij.ide.OccurenceNavigator$OccurenceInfo
 - p:hasOccurenceToGo(com.intellij.ide.OccurenceNavigator):Z
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.NextOccurenceToolbarAction
 - com.intellij.ide.actions.NextOccurenceAction
 - <init>(com.intellij.ide.OccurenceNavigator):V
@@ -2142,13 +2138,9 @@ f:com.intellij.ide.actions.PinActiveTabAction$Toggle
 c:com.intellij.ide.actions.PreviousOccurenceAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
-- f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:getDescription(com.intellij.ide.OccurenceNavigator):java.lang.String
-- p:getNavigator(com.intellij.openapi.actionSystem.DataContext):com.intellij.ide.OccurenceNavigator
 - p:go(com.intellij.ide.OccurenceNavigator):com.intellij.ide.OccurenceNavigator$OccurenceInfo
 - p:hasOccurenceToGo(com.intellij.ide.OccurenceNavigator):Z
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.PreviousOccurenceToolbarAction
 - com.intellij.ide.actions.PreviousOccurenceAction
 - <init>(com.intellij.ide.OccurenceNavigator):V
@@ -9811,7 +9803,6 @@ f:com.intellij.openapi.progress.impl.ProgressManagerImpl
 - com.intellij.openapi.progress.impl.CoreProgressManager
 - com.intellij.openapi.Disposable
 - <init>():V
-- s:__testWhileAlwaysCheckingCanceled(java.lang.Runnable):V
 - executeProcessUnderProgress(java.lang.Runnable,com.intellij.openapi.progress.ProgressIndicator):V
 - hasUnsafeProgressIndicator():Z
 - markProgressSafe(com.intellij.openapi.util.UserDataHolder):V

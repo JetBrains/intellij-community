@@ -292,7 +292,7 @@ f:com.intellij.execution.util.ExecutionErrorDialog
 com.intellij.featureStatistics.ApplicabilityFilter
 - a:getPrefix():java.lang.String
 - a:isApplicable(java.lang.String,com.intellij.openapi.project.Project):Z
-c:com.intellij.featureStatistics.FeatureDescriptor
+f:com.intellij.featureStatistics.FeatureDescriptor
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,I,java.util.Set,I,I,com.intellij.featureStatistics.ProductivityFeaturesProvider):V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,I,java.util.Set,I,com.intellij.featureStatistics.ProductivityFeaturesProvider):V
 - adjustUsageInfo(I,J):V
@@ -710,7 +710,6 @@ a:com.intellij.ide.actions.QuickSwitchSchemeAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
 - p:myActionPlace:java.lang.String
-- psf:ourNotCurrentAction:javax.swing.Icon
 - p:<init>():V
 - p:<init>(Z):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -1277,7 +1276,6 @@ a:com.intellij.ide.wizard.AbstractWizard
 - getCurrentStepObject():com.intellij.ide.wizard.Step
 - p:getHelpButton():javax.swing.JButton
 - pa:getHelpID():java.lang.String
-- p:getNextButton():javax.swing.JButton
 - pf:getNextStep():I
 - p:getNextStep(I):I
 - p:getNextStepObject():com.intellij.ide.wizard.Step

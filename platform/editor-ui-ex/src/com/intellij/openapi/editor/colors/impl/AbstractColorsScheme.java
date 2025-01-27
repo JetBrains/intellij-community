@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.BundleBase;
@@ -1030,7 +1030,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     parentScheme = newParent;
   }
 
-  void resolveParent(@NotNull Function<? super String, ? extends EditorColorsScheme> nameResolver) {
+  @ApiStatus.Internal
+  public void resolveParent(@NotNull Function<? super String, ? extends EditorColorsScheme> nameResolver) {
     if (parentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)parentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);
@@ -1051,7 +1052,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  void copyMissingAttributes(@NotNull AbstractColorsScheme sourceScheme) {
+  @ApiStatus.Internal
+  public void copyMissingAttributes(@NotNull AbstractColorsScheme sourceScheme) {
     sourceScheme.colorMap.forEach((key, color) -> colorMap.putIfAbsent(key, color));
     sourceScheme.attributesMap.forEach((key, attributes) -> attributesMap.putIfAbsent(key, attributes));
   }

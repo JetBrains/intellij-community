@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -98,7 +98,8 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     navigateInEditor(this, e);
   }
 
-  protected static void navigateInEditor(@NotNull OpenFileDescriptor descriptor, @NotNull Editor e) {
+  @ApiStatus.Internal
+  public static void navigateInEditor(@NotNull OpenFileDescriptor descriptor, @NotNull Editor e) {
     int offset = descriptor.getOffset();
     CaretModel caretModel = e.getCaretModel();
     boolean caretMoved = false;
@@ -125,7 +126,8 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     }
   }
 
-  protected static void unfoldCurrentLine(@NotNull Editor editor) {
+  @ApiStatus.Internal
+  public static void unfoldCurrentLine(@NotNull Editor editor) {
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     TextRange range = getRangeToUnfoldOnNavigation(editor);
     editor.getFoldingModel().runBatchFoldingOperation(() -> {

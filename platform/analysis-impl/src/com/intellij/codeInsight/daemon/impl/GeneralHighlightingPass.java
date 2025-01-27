@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -32,6 +32,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -43,7 +44,8 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware
+@ApiStatus.Internal
+public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware
   permits NasueousGeneralHighlightingPass {
   static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
@@ -94,7 +96,9 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private @NotNull PsiFile getFile() {
     return myFile;
   }
-  static void assertHighlightingPassNotRunning() {
+
+  @ApiStatus.Internal
+  public static void assertHighlightingPassNotRunning() {
     HighlightVisitorRunner.assertHighlightingPassNotRunning();
   }
 

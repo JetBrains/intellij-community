@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -46,7 +46,8 @@ public final class VirtualFilePointerContainerImpl extends TraceableDisposable i
   public static final @NonNls String JAR_DIRECTORY_ELEMENT = "jarDirectory";
   public static final @NonNls String RECURSIVE_ATTR = "recursive";
 
-  VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
+  @ApiStatus.Internal
+  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
                                   @NotNull Disposable parentDisposable,
                                   @Nullable VirtualFilePointerListener listener) {
     super(TRACE_CREATION && !ApplicationManagerEx.isInStressTest());

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -542,8 +542,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private record CollectedEvents(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
-                                 @NotNull List<? extends NodeToUpdate> toUpdateNodes,
-                                 @NotNull List<? extends EventDescriptor> eventList,
+                                 @NotNull List<NodeToUpdate> toUpdateNodes,
+                                 @NotNull List<EventDescriptor> eventList,
                                  long startModCount,
                                  long prepareElapsedMs) {
   }
