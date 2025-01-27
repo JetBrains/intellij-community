@@ -39,9 +39,10 @@
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="library" name="jediterm-core" level="project" />
     <orderEntry type="library" name="jediterm-ui" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.kernel.backend" />
     <orderEntry type="module" module-name="intellij.platform.project" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
   </component>
 </module>

@@ -3,6 +3,7 @@ package com.intellij.terminal.backend
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
@@ -18,6 +19,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
+import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.output.ObservableJediTerminal
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDisplayImpl
 import org.jetbrains.plugins.terminal.block.reworked.session.output.createTerminalOutputFlow
@@ -25,14 +28,20 @@ import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.with
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 
-private val LOG: Logger = Logger.getInstance(TerminalSession::class.java)
+private val LOG: Logger = Logger.getInstance(BackendTerminalSession::class.java)
 
 internal fun startTerminalSession(
-  connector: TtyConnector,
-  termSize: TermSize,
+  project: Project,
+  options: ShellStartupOptions,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
 ): TerminalSession {
+  val termSize = options.initialTermSize ?: run {
+    LOG.warn("No initial terminal size provided, using default 80x24. $options")
+    TermSize(80, 24)
+  }
+  val connector = startTerminalProcess(project, options, termSize)
+
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
   val services: JediTermServices = createJediTermServices(connector, termSize, maxHistoryLinesCount, settings)
 
@@ -60,6 +69,14 @@ internal fun startTerminalSession(
   }
 
   return BackendTerminalSession(inputChannel, outputFlow)
+}
+
+private fun startTerminalProcess(project: Project, options: ShellStartupOptions, initialSize: TermSize): TtyConnector {
+  val runner = LocalBlockTerminalRunner(project)
+  val optionsWithSize = options.builder().initialTermSize(initialSize).build()
+  val configuredOptions = runner.configureStartupOptions(optionsWithSize)
+  val process = runner.createProcess(configuredOptions)
+  return runner.createTtyConnector(process)
 }
 
 private fun createJediTermServices(
