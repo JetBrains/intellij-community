@@ -59,7 +59,7 @@ internal fun startTerminalSession(
     //}
   }
 
-  return TerminalSessionImpl(inputChannel, outputFlow)
+  return BackendTerminalSession(inputChannel, outputFlow)
 }
 
 private fun createJediTermServices(

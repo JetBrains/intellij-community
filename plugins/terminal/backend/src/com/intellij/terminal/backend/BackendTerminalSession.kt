@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked.session
+package com.intellij.terminal.backend
 
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInputEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 
-@ApiStatus.Internal
-class TerminalSessionImpl(
+class BackendTerminalSession(
   private val inputChannel: SendChannel<TerminalInputEvent>,
   private val outputFlow: Flow<List<TerminalOutputEvent>>,
 ) : TerminalSession {
