@@ -61,6 +61,7 @@ object ConfigFactory {
         map.getIfExists<String>("projectPath")?.handleEnv(),
         map.getIfExists<String>("projectName")?.handleEnv(),
         map.getIfExists<String>("language"),
+        map.getIfExists<String>("executionMode")?.handleEnv(),
         this
       )
       deserializeFileDataset(map.getIfExists("fileDataset"), this)
@@ -87,6 +88,7 @@ object ConfigFactory {
     projectPath: String?,
     projectName: String?,
     language: String?,
+    executionMode: String?,
     builder: Config.Builder
   ) {
     if (map == null && projectPath == null && language == null && projectName == null) {
@@ -102,6 +104,7 @@ object ConfigFactory {
         map.getAs("evaluationRoots"),
         map.getIfExists<List<String>>("ignoreFileNames")?.toSet() ?: emptySet(),
         map.getIfExists<String?>("sourceFile"),
+        executionMode,
       )
       return
     }

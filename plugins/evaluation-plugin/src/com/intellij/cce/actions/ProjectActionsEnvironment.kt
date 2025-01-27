@@ -7,6 +7,7 @@ import com.intellij.cce.evaluable.common.CommonActionsInvoker
 import com.intellij.cce.evaluation.*
 import com.intellij.cce.evaluation.step.CheckProjectSdkStep
 import com.intellij.cce.evaluation.step.runInIntellij
+import com.intellij.cce.execution.ExecutionMode
 import com.intellij.cce.interpreter.*
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
@@ -45,6 +46,7 @@ open class ProjectActionsEnvironment(
   val featureInvoker: FeatureInvoker,
 ) : EvaluationEnvironment {
   private val datasetRef = config.sourceFile.run {
+    strategy.filters
     val sf = this ?: ""
     if (sf.isNotBlank()) {
       DatasetRef.parse(sf)
@@ -54,7 +56,7 @@ open class ProjectActionsEnvironment(
   }
   private var datasetRefIsHandled = false
 
-  override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language))
+  override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language), ExecutionMode.resolve(config.executionMode))
   override val checkSdk: EvaluationStep? = CheckProjectSdkStep(project, config.language)
 
   override val preparationDescription: String = "Generating actions by selected files"
