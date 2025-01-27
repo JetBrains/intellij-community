@@ -9376,6 +9376,176 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/kdocUnresolvedReference")
+        public abstract static class KdocUnresolvedReference extends AbstractK2LocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/kdocUnresolvedReference/javaDeclaration")
+            public static class JavaDeclaration extends AbstractK2LocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("enumClass.kt")
+                public void testEnumClass() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/javaDeclaration/enumClass.kt");
+                }
+
+                @TestMetadata("enumEntryWithClassCaretOnClass.kt")
+                public void testEnumEntryWithClassCaretOnClass() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/javaDeclaration/enumEntryWithClassCaretOnClass.kt");
+                }
+
+                @TestMetadata("enumEntryWithClassCaretOnEntry.kt")
+                public void testEnumEntryWithClassCaretOnEntry() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/javaDeclaration/enumEntryWithClassCaretOnEntry.kt");
+                }
+
+                @TestMetadata("nestedClass.kt")
+                public void testNestedClass() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/javaDeclaration/nestedClass.kt");
+                }
+
+                @TestMetadata("nestedClassWithOuterCaretOnNested.kt")
+                public void testNestedClassWithOuterCaretOnNested() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/javaDeclaration/nestedClassWithOuterCaretOnNested.kt");
+                }
+
+                @TestMetadata("nestedClassWithOuterCaretOnOuter.kt")
+                public void testNestedClassWithOuterCaretOnOuter() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/javaDeclaration/nestedClassWithOuterCaretOnOuter.kt");
+                }
+
+                @TestMetadata("staticField.kt")
+                public void testStaticField() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/javaDeclaration/staticField.kt");
+                }
+
+                @TestMetadata("staticMethod.kt")
+                public void testStaticMethod() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/javaDeclaration/staticMethod.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/kdocUnresolvedReference/kotlinDeclaration")
+            public static class KotlinDeclaration extends AbstractK2LocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("enumClass.kt")
+                public void testEnumClass() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/kotlinDeclaration/enumClass.kt");
+                }
+
+                @TestMetadata("enumEntryWithClassCaretOnClass.kt")
+                public void testEnumEntryWithClassCaretOnClass() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/kotlinDeclaration/enumEntryWithClassCaretOnClass.kt");
+                }
+
+                @TestMetadata("enumEntryWithClassCaretOnEntry.kt")
+                public void testEnumEntryWithClassCaretOnEntry() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/kotlinDeclaration/enumEntryWithClassCaretOnEntry.kt");
+                }
+
+                @TestMetadata("nestedClass.kt")
+                public void testNestedClass() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/kotlinDeclaration/nestedClass.kt");
+                }
+
+                @TestMetadata("nestedClassWithOuterCaretOnNested.kt")
+                public void testNestedClassWithOuterCaretOnNested() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/kotlinDeclaration/nestedClassWithOuterCaretOnNested.kt");
+                }
+
+                @TestMetadata("nestedClassWithOuterCaretOnOuter.kt")
+                public void testNestedClassWithOuterCaretOnOuter() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/kotlinDeclaration/nestedClassWithOuterCaretOnOuter.kt");
+                }
+
+                @TestMetadata("topLevelFunction.kt")
+                public void testTopLevelFunction() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/kotlinDeclaration/topLevelFunction.kt");
+                }
+
+                @TestMetadata("topLevelProperty.kt")
+                public void testTopLevelProperty() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/kotlinDeclaration/topLevelProperty.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/kdocUnresolvedReference/location")
+            public static class Location extends AbstractK2LocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("exception.kt")
+                public void testException() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/location/exception.kt");
+                }
+
+                @TestMetadata("link.kt")
+                public void testLink() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/location/link.kt");
+                }
+
+                @TestMetadata("linkWithSomeText.kt")
+                public void testLinkWithSomeText() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/location/linkWithSomeText.kt");
+                }
+
+                @TestMetadata("see.kt")
+                public void testSee() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/location/see.kt");
+                }
+
+                @TestMetadata("throws.kt")
+                public void testThrows() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/location/throws.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/kdocUnresolvedReference")
+            public static class Uncategorized extends AbstractK2LocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("unresolvedRef.kt")
+                public void testUnresolvedRef() throws Exception {
+                    runTest("testData/inspectionsLocal/kdocUnresolvedReference/unresolvedRef.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/kotlinOptionsToCompilerOptions")
         public static class KotlinOptionsToCompilerOptions extends AbstractK2LocalInspectionTest {
             @java.lang.Override

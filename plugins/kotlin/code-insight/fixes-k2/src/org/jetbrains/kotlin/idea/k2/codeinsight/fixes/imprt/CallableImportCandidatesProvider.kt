@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal open class CallableImportCandidatesProvider(
     positionContext: KotlinNameReferencePositionContext,
+    private val allowInapplicableExtensions: Boolean = false,
 ) : AbstractImportCandidatesProvider(positionContext) {
 
     protected open fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
@@ -42,7 +43,7 @@ internal open class CallableImportCandidatesProvider(
             if (explicitReceiver == null) {
                 yieldAll(indexProvider.getKotlinCallableSymbolsByName(unresolvedName) { declaration ->
                     // filter out extensions here, because they are added later with the use of information about receiver types
-                    acceptsKotlinCallable(declaration) && !declaration.isExtensionDeclaration()
+                    acceptsKotlinCallable(declaration) &&  (allowInapplicableExtensions || !declaration.isExtensionDeclaration())
                 }.map { CallableImportCandidate.create(it) })
 
                 yieldAll(indexProvider.getJavaMethodsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate.create(it) })
@@ -51,12 +52,16 @@ internal open class CallableImportCandidatesProvider(
                 yieldAll(
                     indexProvider.getCallableSymbolsFromSubclassObjects(unresolvedName)
                         .map { (dispatcherObject, callableSymbol) -> CallableImportCandidate.create(callableSymbol, dispatcherObject) }
-                        .filter { !it.symbol.isExtension }
+                        .filter { allowInapplicableExtensions || !it.symbol.isExtension }
                 )
             }
 
-            when (val context = positionContext) {
-                is KotlinSimpleNameReferencePositionContext -> {
+            val context = positionContext
+            when {
+                allowInapplicableExtensions -> {
+                    // extensions were already provided
+                }
+                context is KotlinSimpleNameReferencePositionContext -> {
                     val receiverTypes = collectReceiverTypesForElement(context.nameExpression, context.explicitReceiver)
                     yieldAll(
                         indexProvider.getExtensionCallableSymbolsByName(unresolvedName, receiverTypes) { acceptsKotlinCallable(it) }

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImports
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.isImported
 import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
+import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
 import org.jetbrains.kotlin.idea.util.positionContext.*
@@ -60,7 +61,8 @@ object ImportQuickFixProvider {
                 }.flatMap { it.collectCandidates(indexProvider) }
                     .toList()
             }.mapNotNull { candidates ->
-                createImportFix(positionContext.nameExpression, candidates)
+                val data = createImportData(positionContext.nameExpression, candidates) ?: return@mapNotNull null
+                createImportFix(positionContext.nameExpression, data)
             }.toList()
     }
 
@@ -135,8 +137,20 @@ object ImportQuickFixProvider {
 
     private fun KaSession.createImportFix(
         position: KtElement,
-        importCandidates: List<ImportCandidate>,
+        data: ImportData,
     ): ImportQuickFix? {
+        val text = ImportFixHelper.calculateTextForFix(
+            data.importsInfo,
+            suggestions = data.uniqueFqNameSortedImportCandidates.map { (candidate, _) -> candidate.getFqName() }
+        )
+        return ImportQuickFix(position, text, data.importVariants)
+    }
+
+    context(KaSession)
+    internal fun createImportData(
+        position: KtElement,
+        importCandidates: List<ImportCandidate>,
+    ): ImportData? {
         if (importCandidates.isEmpty()) return null
 
         val containingKtFile = position.containingKtFile
@@ -168,10 +182,6 @@ object ImportQuickFixProvider {
         val uniqueFqNameSortedImportCandidates =
             sortedImportCandidatesWithPriorities.distinctBy { (candidate, _) -> candidate.getFqName() }
 
-        val text = ImportFixHelper.calculateTextForFix(
-            sortedImportInfos,
-            suggestions = uniqueFqNameSortedImportCandidates.map { (candidate, _) -> candidate.getFqName() }
-        )
 
         val implicitReceiverTypes = containingKtFile.scopeContext(position).implicitReceivers.map { it.type }
         // don't import callable on the fly as it might be unresolved because of an erroneous implicit receiver
@@ -189,8 +199,14 @@ object ImportQuickFixProvider {
                 )
             }
 
-        return ImportQuickFix(position, text, sortedImportVariants)
+        return ImportData(sortedImportVariants, sortedImportInfos, uniqueFqNameSortedImportCandidates)
     }
+
+    internal data class ImportData(
+        val importVariants: List<AutoImportVariant>,
+        val importsInfo:  List<ImportFixHelper.ImportInfo<ImportPrioritizer.Priority>>,
+        val uniqueFqNameSortedImportCandidates: List<Pair<ImportCandidate, ImportPrioritizer.Priority>>
+    )
 
     context(KaSession)
     private fun ImportCandidate.doNotImportOnTheFly(doNotImportCallablesOnFly: Boolean): Boolean = when (this) {
