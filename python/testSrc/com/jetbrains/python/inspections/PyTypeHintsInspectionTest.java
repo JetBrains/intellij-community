@@ -243,6 +243,19 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        pass""");
   }
 
+  // PY-78767
+  public void testGenericMetaClassesAreNotSupported() {
+    doTestByText("""
+                   from typing import Any, Generic, TypeVar
+                   
+                   T = TypeVar("T")
+                   
+                   class MyMetaClass(type, Generic[T]): ...
+                   
+                   class MyClass1(Generic[T], metaclass=<warning descr="Metaclass cannot be generic">MyMetaClass[T]</warning>): ...
+                   class MyClass2(metaclass=MyMetaClass[Any]): ...""");
+  }
+
   // PY-28249
   public void testInstanceAndClassChecksOnAny() {
     doTestByText("""

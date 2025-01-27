@@ -109,6 +109,7 @@ class PyTypeHintsInspection : PyInspection() {
       checkPlainGenericInheritance(superClassExpressions)
       checkGenericDuplication(superClassExpressions)
       checkGenericCompleteness(node)
+      checkMetaClass(node.metaClassExpression)
     }
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
@@ -737,6 +738,15 @@ class PyTypeHintsInspection : PyInspection() {
           registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.inherit.from.generic.multiple.times"),
                           ProblemHighlightType.GENERIC_ERROR)
         }
+    }
+
+    private fun checkMetaClass(metaClassExpression: PyExpression?) {
+      if (metaClassExpression != null) {
+        val metaClassType = myTypeEvalContext.getType(metaClassExpression)
+        if (metaClassType is PyCollectionType && metaClassType.elementTypes.any { it is PyTypeVarType }) {
+          registerProblem(metaClassExpression, PyPsiBundle.message("INSP.type.hints.metaclass.cannot.be.generic"))
+        }
+      }
     }
 
     private fun checkGenericCompleteness(cls: PyClass) {
