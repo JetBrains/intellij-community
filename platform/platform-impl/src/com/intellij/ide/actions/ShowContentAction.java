@@ -3,10 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -75,7 +72,7 @@ public final class ShowContentAction extends AnAction implements DumbAware {
 
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
     String toolWindowId = manager.getActiveToolWindowId();
-    ToolWindow window = toolWindowId == null ? null : manager.getToolWindow(toolWindowId);
+    ToolWindow window = toolWindowId == null ? event.getData(PlatformDataKeys.TOOL_WINDOW) : manager.getToolWindow(toolWindowId);
     if (window == null) {
       return null;
     }
