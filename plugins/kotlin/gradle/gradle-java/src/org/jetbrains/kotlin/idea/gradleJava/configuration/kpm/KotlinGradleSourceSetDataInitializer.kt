@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.kpm
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
@@ -12,6 +13,7 @@ import com.intellij.util.PathUtilRt
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragment
 import org.jetbrains.kotlin.gradle.idea.kpm.name
+import org.jetbrains.kotlin.idea.base.externalSystem.find
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -68,11 +70,15 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
                     }
 
                     it.ideModuleGroup = initializerContext.moduleGroup
-                    it.sdkName = initializerContext.jdkName
                 }
 
+                val fragmentSdkData = existingSourceSetDataNode?.find(ModuleSdkData.KEY)?.data
+                    ?: ModuleSdkData(initializerContext.jdkName)
+
                 if (existingSourceSetDataNode == null) {
-                    val fragmentDataNode = mainModuleNode.createChild(GradleSourceSetData.KEY, fragmentData)
+                    val fragmentDataNode = mainModuleNode.createChild(GradleSourceSetData.KEY, fragmentData).also {
+                        it.createChild(ModuleSdkData.KEY, fragmentSdkData)
+                    }
                     sourceSetMap[fragmentModuleId] = com.intellij.openapi.util.Pair(
                         fragmentDataNode,
                         createExternalSourceSet(fragment, fragmentData)

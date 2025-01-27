@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.base.externalSystem.find
 import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
@@ -299,8 +301,9 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 }
 
                 it.ideModuleGroup = moduleGroup
-                it.sdkName = gradleModule.jdkNameIfAny
             }
+            val compilationSdkData = existingSourceSetDataNode?.find(ModuleSdkData.KEY)?.data
+                ?: ModuleSdkData(gradleModule.jdkNameIfAny)
 
             val kotlinSourceSet = doCreateSourceSetInfo(mppModel, compilation, gradleModule, resolverCtx) ?: continue
 
@@ -337,10 +340,10 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 }
             }
 
-            val compilationDataNode =
-                (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, compilationData)).also {
-                    it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
-                }
+            val compilationDataNode = (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, compilationData)).also {
+                it.createChild(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet))
+                it.createChild(ModuleSdkData.KEY, compilationSdkData)
+            }
             if (existingSourceSetDataNode == null) {
                 sourceSetMap[moduleId] = Pair(compilationDataNode, createExternalSourceSet(compilation, compilationData, mppModel))
             }
@@ -412,10 +415,14 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
             }
         }
 
+        val sourceSetSdkData = existingSourceSetDataNode?.find(ModuleSdkData.KEY)?.data
+            ?: ModuleSdkData(gradleModule.jdkNameIfAny)
+
         val kotlinSourceSet = KotlinMppGradleProjectResolver.createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
 
         val sourceSetDataNode = (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
-            it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
+            it.createChild(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet))
+            it.createChild(ModuleSdkData.KEY, sourceSetSdkData)
         }
         if (existingSourceSetDataNode == null) {
             sourceSetMap[moduleId] = Pair(sourceSetDataNode, createExternalSourceSet(sourceSet, sourceSetData, mppModel))

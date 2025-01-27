@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
+import org.jetbrains.kotlin.idea.base.externalSystem.find
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
@@ -282,7 +284,8 @@ fun configureFacetByGradleModule(
     if (sourceSetNode == null) {
         ideModule.sourceSetName = sourceSetName
     }
-    ideModule.hasExternalSdkConfiguration = sourceSetNode?.data?.sdkName != null
+    val sdkNode = sourceSetNode?.find(ModuleSdkData.KEY)
+    ideModule.hasExternalSdkConfiguration = sdkNode?.data?.sdkName != null
 
     val kotlinGradleSourceSetData = kotlinGradleSourceSetDataNode?.data
 
