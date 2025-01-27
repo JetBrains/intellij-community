@@ -69,7 +69,12 @@ import javax.swing.event.ChangeListener
 import kotlin.math.max
 
 internal object TerminalUiUtils {
-  fun createOutputEditor(document: Document, project: Project, settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
+  fun createOutputEditor(
+    document: Document,
+    project: Project,
+    settings: JBTerminalSystemSettingsProviderBase,
+    installContextMenu: Boolean,
+  ): EditorImpl {
     val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
     editor.isScrollToCaret = false
     editor.isRendererMode = true
@@ -98,7 +103,9 @@ internal object TerminalUiUtils {
       isWhitespacesShown = false
     }
 
-    installPopupMenu(editor)
+    if (installContextMenu) {
+      installPopupMenu(editor)
+    }
     return editor
   }
 

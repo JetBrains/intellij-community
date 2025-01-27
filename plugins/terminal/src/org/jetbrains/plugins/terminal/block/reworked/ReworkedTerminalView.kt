@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -273,7 +274,7 @@ internal class ReworkedTerminalView(
 
   private fun createOutputEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
     val document = createDocument()
-    val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    val editor = createEditor(document, settings)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
@@ -286,7 +287,7 @@ internal class ReworkedTerminalView(
 
   private fun createAlternateBufferEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
     val document = createDocument()
-    val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    val editor = createEditor(document, settings)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
     editor.useTerminalDefaultBackground(parentDisposable = this)
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
@@ -296,6 +297,15 @@ internal class ReworkedTerminalView(
       EditorFactory.getInstance().releaseEditor(editor)
     }
     return editor
+  }
+
+  private fun createEditor(
+    document: Document,
+    settings: JBTerminalSystemSettingsProviderBase,
+  ): EditorImpl {
+    val result = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
+    result.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
+    return result
   }
 
   private fun createDocument(): Document {

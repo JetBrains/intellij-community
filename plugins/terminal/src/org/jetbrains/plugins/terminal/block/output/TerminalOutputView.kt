@@ -65,7 +65,7 @@ internal class TerminalOutputView(
 
   private fun createEditor(settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
     val document = DocumentImpl("", true)
-    val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = true)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(this)
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
