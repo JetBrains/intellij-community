@@ -18,6 +18,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <lang.inspectionSuppressor language="kotlin" implementationClass="com.intellij.compose.ide.plugin.ComposableNamingInspectionSuppressor"/>
+    <lang.inspectionSuppressor language="kotlin" implementationClass="com.intellij.compose.ide.plugin.ComposableNamingInspectionSuppressor" />
+    <overrideImplementsAnnotationsFilter id="ComposeOverrideImplementsAnnotationsFilter" implementation="com.intellij.compose.ide.plugin.ComposeOverrideImplementsAnnotationsFilter" />
   </extensions>
 </idea-plugin>
