@@ -43,7 +43,6 @@ import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.attachToProjectAsync
-import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -156,8 +155,6 @@ object ProjectUtil {
   }
 
   suspend fun openOrImportAsync(file: Path, options: OpenProjectTask = OpenProjectTask()): Project? {
-    EelInitialization.runEelInitialization(file.toString())
-
     if (!options.forceOpenInNewFrame) {
       findAndFocusExistingProjectForPath(file)?.let {
         return it
