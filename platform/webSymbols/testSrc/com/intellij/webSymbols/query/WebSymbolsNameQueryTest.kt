@@ -4,6 +4,8 @@ package com.intellij.webSymbols.query
 import com.intellij.model.Pointer
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.testFramework.query.doTest
+import com.intellij.webSymbols.testFramework.query.printMatches
 import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 
 class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.webSymbols.query
+package com.intellij.webSymbols.testFramework.query
 
-import com.intellij.webSymbols.DebugOutputPrinter
+import com.intellij.webSymbols.testFramework.DebugOutputPrinter
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.openapi.util.io.FileUtil

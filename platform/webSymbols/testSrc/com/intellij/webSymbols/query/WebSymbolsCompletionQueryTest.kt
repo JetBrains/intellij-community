@@ -9,6 +9,8 @@ import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.testFramework.query.doTest
+import com.intellij.webSymbols.testFramework.query.printCodeCompletionItems
 import com.intellij.webSymbols.webSymbolsTestsDataPath
 import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 

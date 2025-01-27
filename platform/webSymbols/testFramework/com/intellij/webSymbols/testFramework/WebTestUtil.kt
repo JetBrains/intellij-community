@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WebTestUtil")
 
-package com.intellij.webSymbols
+package com.intellij.webSymbols.testFramework
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
@@ -49,6 +49,8 @@ import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.webSymbols.PsiSourcedWebSymbol
+import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.impl.canUnwrapSymbols
@@ -58,6 +60,7 @@ import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.Callable
+import kotlin.collections.iterator
 import kotlin.math.max
 import kotlin.math.min
 
