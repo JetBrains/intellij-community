@@ -15,6 +15,14 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 
+/**
+ * A provider for quick-fixes related to unresolved references in Kotlin for K2 Mode.
+ *
+ * Used as a lazy alternative to registering factories in [KotlinK2QuickFixRegistrar] to
+ * postpone some work during the highlighting (see KTIJ-26874).
+ * 
+ * Triggered from [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor].
+ */
 class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<PsiReference>() {
     override fun registerFixes(reference: PsiReference, registrar: QuickFixActionRegistrar) {
         val ktElement = reference.element as? KtElement ?: return

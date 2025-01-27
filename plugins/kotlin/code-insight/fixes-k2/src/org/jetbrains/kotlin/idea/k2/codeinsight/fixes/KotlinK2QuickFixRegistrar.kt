@@ -271,8 +271,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddMemberToSupertypeFixFactory.addMemberToSupertypeFixFactory)
     }
 
+    /**
+     * Note: For the auto-import fixes, see [importOnTheFlyList] and [KotlinFirUnresolvedReferenceQuickFixProvider]. 
+     */
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerFactory(ImportQuickFixFactories.invisibleReferenceFactory)
         registerPsiQuickFixes(KaFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
         registerPsiQuickFixes(KaFirDiagnostic.UnresolvedImport::class, AddDependencyQuickFixHelper)
     }

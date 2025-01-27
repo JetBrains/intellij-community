@@ -259,6 +259,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
             diagnostic is KaFirDiagnostic.UnresolvedImport ||
             diagnostic is KaFirDiagnostic.UnresolvedReference ||
             diagnostic is KaFirDiagnostic.UnresolvedReferenceWrongReceiver ||
+            diagnostic is KaFirDiagnostic.InvisibleReference ||
             diagnostic is KaFirDiagnostic.DelegateSpecialFunctionMissing ||
             diagnostic is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable
         ) {
