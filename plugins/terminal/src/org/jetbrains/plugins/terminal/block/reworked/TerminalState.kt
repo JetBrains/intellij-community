@@ -4,9 +4,11 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalStateDto
 
-internal data class TerminalState(
+@ApiStatus.Internal
+data class TerminalState(
   val isCursorVisible: Boolean,
   val cursorShape: CursorShape,
   val mouseMode: MouseMode,
@@ -20,7 +22,8 @@ internal data class TerminalState(
   val windowTitle: String,
 )
 
-internal fun TerminalStateDto.toTerminalState(defaultCursorShape: CursorShape): TerminalState {
+@ApiStatus.Internal
+fun TerminalStateDto.toTerminalState(defaultCursorShape: CursorShape): TerminalState {
   return TerminalState(
     isCursorVisible = isCursorVisible,
     cursorShape = cursorShape ?: defaultCursorShape,

@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked
 
-internal data class TerminalOutputBlock(
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+data class TerminalOutputBlock(
   /** Unique zero-based ID of the block */
   val id: Int,
   val startOffset: Int,

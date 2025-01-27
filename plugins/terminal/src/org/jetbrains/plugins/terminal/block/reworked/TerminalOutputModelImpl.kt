@@ -11,6 +11,7 @@ import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
@@ -23,7 +24,8 @@ import kotlin.math.max
  *
  * Note that this implementation acquires the write lock, so [updateContent] should be called on EDT.
  */
-internal class TerminalOutputModelImpl(
+@ApiStatus.Internal
+class TerminalOutputModelImpl(
   override val document: Document,
   private val maxOutputLength: Int,
 ) : TerminalOutputModel {

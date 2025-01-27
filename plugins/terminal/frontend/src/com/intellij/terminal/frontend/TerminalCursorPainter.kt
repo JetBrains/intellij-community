@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
@@ -21,6 +21,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.jediterm.terminal.CursorShape
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D

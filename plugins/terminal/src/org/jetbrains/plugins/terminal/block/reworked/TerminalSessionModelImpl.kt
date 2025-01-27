@@ -7,8 +7,10 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.jetbrains.annotations.ApiStatus
 
-internal class TerminalSessionModelImpl(private val settings: JBTerminalSystemSettingsProviderBase) : TerminalSessionModel {
+@ApiStatus.Internal
+class TerminalSessionModelImpl(private val settings: JBTerminalSystemSettingsProviderBase) : TerminalSessionModel {
   private val mutableTerminalStateFlow = MutableStateFlow(getInitialState())
   override val terminalState: StateFlow<TerminalState> = mutableTerminalStateFlow.asStateFlow()
 

@@ -26,8 +26,11 @@ object TerminalDataContextUtils {
   internal val IS_OUTPUT_EDITOR_KEY: Key<Boolean> = Key.create("OutputEditor")
   internal val IS_ALTERNATE_BUFFER_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferEditor")
   // gen2
-  internal val IS_OUTPUT_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("OutputModelEditor")
-  internal val IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferModelEditor")
+  @ApiStatus.Internal
+  val IS_OUTPUT_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("OutputModelEditor")
+
+  @ApiStatus.Internal
+  val IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferModelEditor")
 
   val Editor.isPromptEditor: Boolean
     get() = getUserData(IS_PROMPT_EDITOR_KEY) == true

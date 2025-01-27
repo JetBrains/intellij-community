@@ -73,7 +73,8 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.max
 
-internal object TerminalUiUtils {
+@ApiStatus.Internal
+object TerminalUiUtils {
   fun createOutputEditor(
     document: Document,
     project: Project,
@@ -358,11 +359,14 @@ private val TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY = Key.create<Unit>("TERMI
  * It should be used only to indicate internal programmatic actions that are not explicitly caused by the user interaction.
  * For example, terminal output text update, or adding inlays to create insets between command blocks.
  */
-internal var Editor.isTerminalOutputScrollChangingActionInProgress: Boolean
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
+var Editor.isTerminalOutputScrollChangingActionInProgress: Boolean
   get() = getUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY) != null
   set(value) = putUserData(TERMINAL_OUTPUT_SCROLL_CHANGING_ACTION_KEY, if (value) Unit else null)
 
-internal inline fun <T> Editor.doTerminalOutputScrollChangingAction(action: () -> T): T {
+@ApiStatus.Internal
+inline fun <T> Editor.doTerminalOutputScrollChangingAction(action: () -> T): T {
   isTerminalOutputScrollChangingActionInProgress = true
   try {
     return action()
@@ -388,8 +392,9 @@ internal inline fun <T> Editor.doWithScrollingAware(action: () -> T): T {
   }
 }
 
+@ApiStatus.Internal
 @RequiresEdt
-internal inline fun <T> Editor.doWithoutScrollingAnimation(action: () -> T): T {
+inline fun <T> Editor.doWithoutScrollingAnimation(action: () -> T): T {
   scrollingModel.disableAnimation()
   return try {
     action()

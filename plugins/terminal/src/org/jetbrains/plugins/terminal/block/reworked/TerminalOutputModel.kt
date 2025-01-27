@@ -4,13 +4,15 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 
 /**
  * Model that should manage the terminal output content: text, highlightings, and cursor position.
  */
-internal interface TerminalOutputModel {
+@ApiStatus.Internal
+interface TerminalOutputModel {
   val document: Document
 
   /**

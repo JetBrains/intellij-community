@@ -5,11 +5,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 
-internal class TerminalPromptSeparatorRenderer : CustomHighlighterRenderer {
+@ApiStatus.Internal
+class TerminalPromptSeparatorRenderer : CustomHighlighterRenderer {
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
     if (highlighter.startOffset == 0) {
       return  // Do not paint separator if it is the first block

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package com.intellij.terminal.frontend
 
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
@@ -33,9 +33,9 @@ import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
+import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInput
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.*

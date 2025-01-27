@@ -1,5 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked.session
+package com.intellij.terminal.frontend
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.jediterm.core.util.TermSize
@@ -8,6 +7,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalResizeEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 
@@ -18,7 +20,7 @@ internal class TerminalInput(
   private val coroutineScope: CoroutineScope,
 ) {
   companion object {
-    val KEY: DataKey<TerminalInput> = DataKey.create("TerminalInput")
+    val KEY: DataKey<TerminalInput> = DataKey.Companion.create("TerminalInput")
   }
 
   /**

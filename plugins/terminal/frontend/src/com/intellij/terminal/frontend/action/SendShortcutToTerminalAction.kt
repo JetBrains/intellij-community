@@ -1,12 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.action
+package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
+import com.intellij.terminal.frontend.TerminalEventDispatcher
 import org.jetbrains.plugins.terminal.TerminalBundle
-import org.jetbrains.plugins.terminal.block.reworked.TerminalEventDispatcher
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.KeyStroke
@@ -14,7 +13,7 @@ import javax.swing.KeyStroke
 /**
  * Processes shortcuts of disabled terminal actions.
  *
- * If [TerminalEventDispatcher] lets the action system to process a key event,
+ * If [com.intellij.terminal.frontend.TerminalEventDispatcher] lets the action system to process a key event,
  * it's possible that all terminal actions associated with the corresponding shortcut are disabled.
  * However, it's possible that there are some other platform (non-terminal) actions that have the same shortcut.
  * Yet, if the action isn't on the terminal's "allowed list," we must not allow it to be performed,
@@ -25,7 +24,7 @@ import javax.swing.KeyStroke
  */
 internal class SendShortcutToTerminalAction(
   private val dispatcher: TerminalEventDispatcher,
-) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+) : DumbAwareAction() {
 
   private var actions: List<AnAction> = emptyList()
 

@@ -96,7 +96,8 @@ internal fun List<HighlightingInfo>.rebase(adjustmentValue: Int): List<Highlight
   return map { HighlightingInfo(adjustmentValue + it.startOffset, adjustmentValue + it.endOffset, it.textAttributesProvider) }
 }
 
-internal class TerminalTextHighlighter(
+@ApiStatus.Internal
+class TerminalTextHighlighter(
   private val highlightingsSnapshotProvider: () -> TerminalOutputHighlightingsSnapshot,
 ) : EditorHighlighter {
   private var editor: HighlighterClient? = null

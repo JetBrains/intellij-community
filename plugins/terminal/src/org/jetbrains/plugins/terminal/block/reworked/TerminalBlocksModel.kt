@@ -3,8 +3,10 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.SharedFlow
+import org.jetbrains.annotations.ApiStatus
 
-internal interface TerminalBlocksModel {
+@ApiStatus.Internal
+interface TerminalBlocksModel {
   /** The list can be mutable in the implementation, so it should not be cached. */
   @get:RequiresEdt
   val blocks: List<TerminalOutputBlock>

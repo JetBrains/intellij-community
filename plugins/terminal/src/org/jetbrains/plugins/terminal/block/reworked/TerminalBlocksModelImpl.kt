@@ -8,9 +8,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 
-internal class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksModel {
+@ApiStatus.Internal
+class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksModel {
   private var blockIdCounter: Int = 0
 
   override val blocks: MutableList<TerminalOutputBlock> = mutableListOf()

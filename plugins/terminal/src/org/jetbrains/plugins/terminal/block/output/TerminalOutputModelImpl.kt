@@ -308,4 +308,5 @@ internal class TerminalOutputModelImpl(override val editor: EditorEx) : Terminal
 @ApiStatus.Internal
 data class CommandBlockInfo(val exitCode: Int)
 
-internal const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"
+@ApiStatus.Internal
+const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"

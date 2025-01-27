@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 
-internal interface TerminalSessionModel {
+@ApiStatus.Internal
+interface TerminalSessionModel {
   val terminalState: StateFlow<TerminalState>
 
   fun updateTerminalState(state: TerminalState)

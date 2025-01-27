@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
@@ -9,17 +9,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalBeepEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCommandFinishedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCommandStartedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalContentUpdatedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCursorPositionChangedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptFinishedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptStartedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalShellIntegrationInitializedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.session.*
+import org.jetbrains.plugins.terminal.block.reworked.toTerminalState
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 

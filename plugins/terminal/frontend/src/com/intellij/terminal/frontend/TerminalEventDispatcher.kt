@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package com.intellij.terminal.frontend
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
@@ -16,12 +16,13 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.frontend.action.SendShortcutToTerminalAction
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.terminal.action.SendShortcutToTerminalAction
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.AWTEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent

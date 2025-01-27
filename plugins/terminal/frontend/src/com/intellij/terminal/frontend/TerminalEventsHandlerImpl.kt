@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package com.intellij.terminal.frontend
 
 import com.google.common.base.Ascii
 import com.intellij.openapi.diagnostic.Logger
@@ -10,7 +10,8 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInput
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalState
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent

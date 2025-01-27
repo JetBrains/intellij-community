@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Inlay
@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
+import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.*
 import kotlin.math.max
 
@@ -34,7 +35,7 @@ internal class TerminalBlocksDecorator(
       }
     }
 
-    BlockTerminalOptions.getInstance().addListener(coroutineScope.asDisposable(), object : BlockTerminalOptionsListener {
+    BlockTerminalOptions.Companion.getInstance().addListener(coroutineScope.asDisposable(), object : BlockTerminalOptionsListener {
       override fun showSeparatorsBetweenBlocksChanged(shouldShow: Boolean) {
         if (shouldShow) {
           createDecorationsForAllBlocks()
@@ -45,7 +46,7 @@ internal class TerminalBlocksDecorator(
   }
 
   private fun handleBlocksModelEvent(event: TerminalBlocksModelEvent) {
-    if (!BlockTerminalOptions.getInstance().showSeparatorsBetweenBlocks) {
+    if (!BlockTerminalOptions.Companion.getInstance().showSeparatorsBetweenBlocks) {
       // Do not add decorations if it is disabled in the settings.
       return
     }
