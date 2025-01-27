@@ -46,7 +46,6 @@ import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
@@ -1766,94 +1765,9 @@ public final class HighlightUtil {
 
     PsiElement refParent = ref.getParent();
 
-    if (refParent instanceof PsiReferenceExpression && refParent.getParent() instanceof PsiMethodCallExpression granny) {
-      PsiReferenceExpression referenceToMethod = granny.getMethodExpression();
-      PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
-      if (qualifierExpression == ref && resolved != null && !(resolved instanceof PsiClass) && !(resolved instanceof PsiVariable)) {
-        String message = JavaErrorBundle.message("qualifier.must.be.expression");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(qualifierExpression).descriptionAndTooltip(message);
-      }
-    }
-    else if (refParent instanceof PsiMethodCallExpression) {
-      return null;  // methods checked elsewhere
-    }
-
-    if (resolved == null) {
-      // do not highlight unknown packages (javac does not care), Javadoc, and module references (checked elsewhere)
-      PsiJavaCodeReferenceElement parent = getOuterReferenceParent(ref);
-      PsiElement outerParent = parent.getParent();
-      if (outerParent instanceof PsiPackageStatement ||
-          result.isPackagePrefixPackageReference() ||
-          PsiUtil.isInsideJavadocComment(ref) ||
-          parent.resolve() instanceof PsiMember ||
-          outerParent instanceof PsiPackageAccessibilityStatement) {
-        return null;
-      }
-
-      //do not highlight module keyword if the statement is not complete
-      //see com.intellij.lang.java.parser.BasicFileParser.parseImportStatement
-      if (PsiKeyword.MODULE.equals(ref.getText()) && refParent instanceof PsiImportStatement &&
-          PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, ref)) {
-        PsiElement importKeywordExpected = PsiTreeUtil.skipWhitespacesAndCommentsBackward(ref);
-        PsiElement errorElementExpected = PsiTreeUtil.skipWhitespacesAndCommentsForward(ref);
-        if (importKeywordExpected instanceof PsiKeyword keyword &&
-            keyword.textMatches(PsiKeyword.IMPORT) &&
-            errorElementExpected instanceof PsiErrorElement errorElement &&
-            JavaPsiBundle.message("expected.identifier.or.semicolon").equals(errorElement.getErrorDescription())) {
-          return null;
-        }
-      }
-
-      JavaResolveResult[] results = ref.multiResolve(true);
-      String description;
-      if (results.length > 1) {
-        if (ref instanceof PsiMethodReferenceExpression methodRef &&
-            IncompleteModelUtil.isIncompleteModel(ref) &&
-            IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
-          return null;
-        }
-        String t1 = format(Objects.requireNonNull(results[0].getElement()));
-        String t2 = format(Objects.requireNonNull(results[1].getElement()));
-        description = JavaErrorBundle.message("ambiguous.reference", refName.getText(), t1, t2);
-      }
-      else {
-        description = JavaErrorBundle.message("cannot.resolve.symbol", refName.getText());
-        boolean definitelyIncorrect = false;
-        if (ref instanceof PsiReferenceExpression expression) {
-          PsiExpression qualifierExpression = expression.getQualifierExpression();
-          if (qualifierExpression != null) {
-            PsiType type = qualifierExpression.getType();
-            if (type instanceof PsiPrimitiveType primitiveType && !primitiveType.equals(PsiTypes.nullType())) {
-              if (PsiTypes.voidType().equals(primitiveType) &&
-                  PsiUtil.deparenthesizeExpression(qualifierExpression) instanceof PsiReferenceExpression) {
-                return null;
-              }
-              description = JavaErrorBundle.message("cannot.access.member.on.type", primitiveType.getPresentableText(false));
-              definitelyIncorrect = true;
-            }
-            else if (type instanceof PsiClassType t && t.resolve() == null || PsiTypes.nullType().equals(type)) {
-              return null;
-            }
-          }
-        }
-        else if (ImplicitClassSearch.search(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).findFirst() != null) {
-          description = JavaErrorBundle.message("implicit.class.can.not.be.referenced", ref.getText());
-          definitelyIncorrect = true;
-        }
-        if (!definitelyIncorrect && IncompleteModelUtil.isIncompleteModel(containingFile) && IncompleteModelUtil.canBePendingReference(ref)) {
-          return getPendingReferenceHighlightInfo(refName);
-        }
-      }
-
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
-      if (outerParent instanceof PsiNewExpression newExpression && isCallToStaticMember(newExpression)) {
-        var action = new RemoveNewKeywordFix(newExpression);
-        info.registerFix(action, null, null, null, null);
-      }
-      UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(ref, info);
-
-      return info;
+    if (refParent instanceof PsiMethodCallExpression || resolved == null) {
+      // reported elsewhere
+      return null;
     }
 
     boolean skipValidityChecks =

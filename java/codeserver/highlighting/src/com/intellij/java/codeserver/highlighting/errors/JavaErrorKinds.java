@@ -24,8 +24,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle.message;
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorFormatUtil.*;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNullElse;
+import static java.util.Objects.*;
 
 /**
  * All possible Java error kinds
@@ -313,10 +312,6 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, PsiClass.class, "class.not.accessible")
       .withRange((psi, cls) -> psi instanceof PsiMember member ? getMemberDeclarationTextRange(member) : null)
       .withRawDescription((psi, cls) -> message("class.not.accessible", formatClass(cls)));
-  public static final Parameterized<PsiMember, PsiClass> REFERENCE_MEMBER_BEFORE_CONSTRUCTOR =
-    parameterized(PsiMember.class, PsiClass.class, "reference.member.before.constructor")
-      .withRange((psi, cls) -> getMemberDeclarationTextRange(psi))
-      .withRawDescription((psi, cls) -> message("reference.member.before.constructor", cls.getName() + ".this"));
 
   public static final Simple<PsiJavaCodeReferenceElement> VALUE_CLASS_EXTENDS_NON_ABSTRACT = error("value.class.extends.non.abstract");
   
@@ -702,6 +697,10 @@ public final class JavaErrorKinds {
       .withRawDescription((call, ctx) -> message("new.expression.unresolved.constructor", 
                                           ctx.psiClass().getName() + formatArgumentTypes(call.getArgumentList(), true)));
 
+  public static final Parameterized<PsiMember, PsiClass> REFERENCE_MEMBER_BEFORE_CONSTRUCTOR =
+    parameterized(PsiMember.class, PsiClass.class, "reference.member.before.constructor")
+      .withRange((psi, cls) -> getMemberDeclarationTextRange(psi))
+      .withRawDescription((psi, cls) -> message("reference.member.before.constructor", cls.getName() + ".this"));
   public static final Parameterized<PsiReferenceParameterList, PsiClass> REFERENCE_TYPE_ARGUMENT_STATIC_CLASS =
     parameterized(PsiReferenceParameterList.class, PsiClass.class, "reference.type.argument.static.class")
       .withRawDescription((list, cls) -> message("reference.type.argument.static.class", formatClass(cls)));
@@ -724,6 +723,34 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_ENUM_SELF =
     parameterized(PsiReferenceExpression.class, PsiField.class, "reference.enum.self")
       .withRawDescription((ref, field) -> message("reference.enum.self", field.getName()));
+  public static final Simple<PsiExpression> REFERENCE_QUALIFIER_NOT_EXPRESSION =
+    error(PsiExpression.class, "reference.qualifier.not.expression").withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF);
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiPrimitiveType> REFERENCE_QUALIFIER_PRIMITIVE =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiPrimitiveType.class, "reference.qualifier.primitive")
+      .withHighlightType((ref, type) -> JavaErrorHighlightType.WRONG_REF)
+      .withAnchor((ref, type) -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, type) -> message("reference.qualifier.primitive", type.getPresentableText()));
+  public static final Simple<PsiElement> REFERENCE_PENDING =
+    error(PsiElement.class, "incomplete.project.state.pending.reference")
+      .withHighlightType(ref -> JavaErrorHighlightType.PENDING_REF);
+  public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_UNRESOLVED =
+    error(PsiJavaCodeReferenceElement.class, "reference.unresolved")
+      .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
+      .withRawDescription(ref -> message("reference.unresolved", ref.getReferenceName()))
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
+  public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_IMPLICIT_CLASS =
+    error(PsiJavaCodeReferenceElement.class, "reference.implicit.class")
+      .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
+      .withRawDescription(ref -> message("reference.implicit.class", ref.getReferenceName()))
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
+  public static final Parameterized<PsiJavaCodeReferenceElement, List<JavaResolveResult>> REFERENCE_AMBIGUOUS =
+    error(PsiJavaCodeReferenceElement.class, "reference.ambiguous")
+      .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .<List<JavaResolveResult>>parameterized()
+      .withRawDescription((ref, results) -> message("reference.ambiguous", ref.getReferenceName(),
+                                                    format(requireNonNull(results.get(0).getElement())),
+                                                    format(requireNonNull(results.get(1).getElement()))));
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
   public static final Simple<PsiStatement> STATEMENT_INVALID = error("statement.invalid");
@@ -777,8 +804,8 @@ public final class JavaErrorKinds {
     parameterized(PsiExpression.class, PsiClass.class, "call.super.qualifier.not.inner.class")
       .withRawDescription((psi, cls) -> message("call.super.qualifier.not.inner.class", formatClass(cls)));
   public static final Simple<PsiMethodCallExpression> CALL_EXPECTED = error("call.expected");
-  public static final Simple<PsiReferenceExpression> CALL_STATIC_INTERFACE_METHOD_QUALIFIER = 
-    error(PsiReferenceExpression.class, "call.static.interface.method.qualifier")
+  public static final Simple<PsiJavaCodeReferenceElement> CALL_STATIC_INTERFACE_METHOD_QUALIFIER =
+    error(PsiJavaCodeReferenceElement.class, "call.static.interface.method.qualifier")
       .withRange(JavaErrorFormatUtil::getRange);
   public static final Parameterized<PsiCall, PsiClass> CALL_FORMAL_VARARGS_ELEMENT_TYPE_INACCESSIBLE_HERE =
     parameterized(PsiCall.class, PsiClass.class, "call.formal.varargs.element.type.inaccessible.here")
@@ -838,6 +865,22 @@ public final class JavaErrorKinds {
       .withAnchor((psi, result) -> requireNonNullElse(psi.getReferenceNameElement(), psi))
       .withRawDescription(
         (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
+
+  public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_CLASS_CONFLICT =
+    error(PsiJavaCodeReferenceElement.class, "import.single.class.conflict")
+      .withRawDescription(ref -> message("import.single.class.conflict", ref.getReferenceName()));
+  public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_CLASS_ALREADY_DEFINED =
+    error(PsiJavaCodeReferenceElement.class, "import.single.static.class.already.defined")
+      .withRawDescription(ref -> message("import.single.static.class.already.defined", ref.getReferenceName()));
+  public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_CLASS_AMBIGUOUS =
+    error(PsiJavaCodeReferenceElement.class, "import.single.static.class.ambiguous")
+      .withRawDescription(ref -> message("import.single.static.class.ambiguous", ref.getReferenceName()));
+  public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_FIELD_ALREADY_DEFINED =
+    error(PsiJavaCodeReferenceElement.class, "import.single.static.field.already.defined")
+      .withRawDescription(ref -> message("import.single.static.field.already.defined", ref.getReferenceName()));
+  public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_FIELD_AMBIGUOUS =
+    error(PsiJavaCodeReferenceElement.class, "import.single.static.field.ambiguous")
+      .withRawDescription(ref -> message("import.single.static.field.ambiguous", ref.getReferenceName()));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {

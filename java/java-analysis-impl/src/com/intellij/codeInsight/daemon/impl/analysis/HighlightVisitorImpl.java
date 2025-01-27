@@ -231,6 +231,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       case ERROR, FILE_LEVEL_ERROR -> HighlightInfoType.ERROR;
       case UNHANDLED_EXCEPTION -> HighlightInfoType.UNHANDLED_EXCEPTION;
       case WRONG_REF -> HighlightInfoType.WRONG_REF;
+      case PENDING_REF -> HighlightInfoType.PENDING_REFERENCE;
     };
     TextRange range = error.range();
     HtmlChunk tooltip = error.tooltip();
@@ -258,7 +259,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       info.range(anchor);
     }
     errorFixProvider.processFixes(error, fix -> info.registerFix(fix.asIntention(), null, null, null, null));
-    if (error.kind() == JavaErrorKinds.EXPRESSION_EXPECTED) {
+    if (error.kind() == JavaErrorKinds.EXPRESSION_EXPECTED || error.kind() == JavaErrorKinds.REFERENCE_UNRESOLVED ||
+        error.kind() == JavaErrorKinds.REFERENCE_AMBIGUOUS) {
       UnresolvedReferenceQuickFixUpdater.getInstance(getProject()).registerQuickFixesLater((PsiReference)error.psi(), info);
     }
     add(info);
@@ -616,66 +618,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
-    String refName = ref.getReferenceName();
+    super.visitImportStaticReferenceElement(ref);
     JavaResolveResult[] results = ref.multiResolve(false);
-
-    PsiElement referenceNameElement = ref.getReferenceNameElement();
-    if (results.length == 0) {
-      assert referenceNameElement != null : ref;
-      if (IncompleteModelUtil.isIncompleteModel(ref) && ref.getClassReference().resolve() == null) {
-        add(HighlightUtil.getPendingReferenceHighlightInfo(referenceNameElement));
-      } else {
-        String description = JavaErrorBundle.message("cannot.resolve.symbol", refName);
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(referenceNameElement).descriptionAndTooltip(description);
-        add(info);
-      }
-    }
-    else {
-      PsiManager manager = ref.getManager();
-      for (JavaResolveResult result : results) {
-        PsiElement element = result.getElement();
-
-        String description = null;
-        if (element instanceof PsiClass) {
-          Pair<PsiImportStaticReferenceElement, PsiClass> imported = mySingleImportedClasses.get(refName);
-          PsiClass aClass = Pair.getSecond(imported);
-          if (aClass != null && !manager.areElementsEquivalent(aClass, element)) {
-            description = imported.first == null
-                          ? JavaErrorBundle.message("single.import.class.conflict", refName)
-                          : imported.first.equals(ref)
-                            ? JavaErrorBundle.message("class.is.ambiguous.in.single.static.import", refName)
-                            : JavaErrorBundle.message("class.is.already.defined.in.single.static.import", refName);
-          }
-          mySingleImportedClasses.put(refName, Pair.create(ref, (PsiClass)element));
-        }
-        else if (element instanceof PsiField) {
-          Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
-          PsiField field = Pair.getSecond(imported);
-          if (field != null && !manager.areElementsEquivalent(field, element)) {
-            description = imported.first.equals(ref)
-                          ? JavaErrorBundle.message("field.is.ambiguous.in.single.static.import", refName)
-                          : JavaErrorBundle.message("field.is.already.defined.in.single.static.import", refName);
-          }
-          mySingleImportedFields.put(refName, Pair.create(ref, (PsiField)element));
-        }
-
-        if (description != null) {
-          add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description));
-        }
-      }
-    }
     if (!hasErrorResults() && results.length == 1) {
       add(HighlightUtil.checkReference(ref, results[0], myFile, myLanguageLevel));
-      if (!hasErrorResults()) {
-        PsiElement element = results[0].getElement();
-        PsiClass containingClass = element instanceof PsiMethod psiMethod ? psiMethod.getContainingClass() : null;
-        if (containingClass != null && containingClass.isInterface()) {
-          add(
-            HighlightMethodUtil.checkStaticInterfaceCallQualifier(ref, results[0], ObjectUtils.notNull(ref.getReferenceNameElement(), ref),
-                                                                  containingClass));
-        }
-      }
     }
   }
 

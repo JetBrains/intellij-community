@@ -14,6 +14,7 @@ import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -723,6 +724,104 @@ final class ExpressionChecker {
     }
   }
 
+  private static @NotNull PsiJavaCodeReferenceElement getOuterReferenceParent(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiJavaCodeReferenceElement element = ref;
+    while (true) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement) {
+        element = (PsiJavaCodeReferenceElement)parent;
+      }
+      else {
+        break;
+      }
+    }
+    return element;
+  }
+
+  void checkReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult result) {
+    PsiElement refName = ref.getReferenceNameElement();
+    if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return;
+    PsiElement resolved = result.getElement();
+
+    PsiElement refParent = ref.getParent();
+
+    if (refParent instanceof PsiReferenceExpression && refParent.getParent() instanceof PsiMethodCallExpression granny) {
+      PsiReferenceExpression referenceToMethod = granny.getMethodExpression();
+      PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
+      if (qualifierExpression == ref && resolved != null && !(resolved instanceof PsiClass) && !(resolved instanceof PsiVariable)) {
+        myVisitor.report(JavaErrorKinds.REFERENCE_QUALIFIER_NOT_EXPRESSION.create(qualifierExpression));
+        return;
+      }
+    }
+    else if (refParent instanceof PsiMethodCallExpression) {
+      return;  // methods checked elsewhere
+    }
+
+    if (resolved == null) {
+      // do not highlight unknown packages (javac does not care), Javadoc, and module references (checked elsewhere)
+      PsiJavaCodeReferenceElement parent = getOuterReferenceParent(ref);
+      PsiElement outerParent = parent.getParent();
+      if (outerParent instanceof PsiPackageStatement ||
+          result.isPackagePrefixPackageReference() ||
+          PsiUtil.isInsideJavadocComment(ref) ||
+          parent.resolve() instanceof PsiMember ||
+          outerParent instanceof PsiPackageAccessibilityStatement) {
+        return;
+      }
+
+      //do not highlight module keyword if the statement is not complete
+      //see com.intellij.lang.java.parser.BasicFileParser.parseImportStatement
+      if (PsiKeyword.MODULE.equals(ref.getText()) && refParent instanceof PsiImportStatement &&
+          PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, ref)) {
+        PsiElement importKeywordExpected = PsiTreeUtil.skipWhitespacesAndCommentsBackward(ref);
+        PsiElement errorElementExpected = PsiTreeUtil.skipWhitespacesAndCommentsForward(ref);
+        if (importKeywordExpected instanceof PsiKeyword keyword &&
+            keyword.textMatches(PsiKeyword.IMPORT) &&
+            errorElementExpected instanceof PsiErrorElement errorElement &&
+            JavaPsiBundle.message("expected.identifier.or.semicolon").equals(errorElement.getErrorDescription())) {
+          return;
+        }
+      }
+
+      JavaResolveResult[] results = ref.multiResolve(true);
+      if (results.length > 1) {
+        if (ref instanceof PsiMethodReferenceExpression methodRef &&
+            IncompleteModelUtil.isIncompleteModel(ref) &&
+            IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
+          return;
+        }
+        myVisitor.report(JavaErrorKinds.REFERENCE_AMBIGUOUS.create(ref, Arrays.asList(results)));
+      }
+      else {
+        boolean definitelyIncorrect = false;
+        if (ref instanceof PsiReferenceExpression expression) {
+          PsiExpression qualifierExpression = expression.getQualifierExpression();
+          if (qualifierExpression != null) {
+            PsiType type = qualifierExpression.getType();
+            if (type instanceof PsiPrimitiveType primitiveType && !primitiveType.equals(PsiTypes.nullType())) {
+              if (PsiTypes.voidType().equals(primitiveType) &&
+                  PsiUtil.deparenthesizeExpression(qualifierExpression) instanceof PsiReferenceExpression) {
+                return;
+              }
+              myVisitor.report(JavaErrorKinds.REFERENCE_QUALIFIER_PRIMITIVE.create(ref, primitiveType));
+              return;
+            }
+            if (type instanceof PsiClassType t && t.resolve() == null || PsiTypes.nullType().equals(type)) return;
+          }
+        }
+        else if (ImplicitClassSearch.search(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).findFirst() != null) {
+          myVisitor.report(JavaErrorKinds.REFERENCE_IMPLICIT_CLASS.create(ref));
+          return;
+        }
+        if (!definitelyIncorrect && IncompleteModelUtil.isIncompleteModel(myVisitor.file()) && IncompleteModelUtil.canBePendingReference(ref)) {
+          myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(refName));
+          return;
+        }
+        myVisitor.report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));
+      }
+    }
+  }
+
   private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
     // Parent resolve failed as well, and it's likely more informative.
     // Suppress this error to allow reporting from parent
@@ -785,9 +884,9 @@ final class ExpressionChecker {
     }
   }
 
-  private void checkStaticInterfaceCallQualifier(@NotNull PsiReferenceExpression referenceToMethod,
-                                                 @NotNull JavaResolveResult resolveResult,
-                                                 @NotNull PsiClass containingClass) {
+  void checkStaticInterfaceCallQualifier(@NotNull PsiJavaCodeReferenceElement referenceToMethod,
+                                         @NotNull JavaResolveResult resolveResult,
+                                         @NotNull PsiClass containingClass) {
     PsiElement scope = resolveResult.getCurrentFileResolveScope();
     PsiElement qualifierExpression = referenceToMethod.getQualifier();
     if (qualifierExpression == null && PsiTreeUtil.isAncestor(containingClass, referenceToMethod, true)) return;

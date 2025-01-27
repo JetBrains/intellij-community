@@ -43,8 +43,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
-import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNullElse;
+import static java.util.Objects.*;
 
 /**
  * Fixes attached to error messages provided by {@link JavaErrorCollector}.
@@ -367,6 +366,11 @@ final class JavaErrorFixProvider {
     });
     fixes(EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD, (error, sink) ->
       QualifySuperArgumentFix.registerQuickFixAction(error.context(), sink));
+    fix(REFERENCE_UNRESOLVED, error ->
+      PsiTreeUtil.skipParentsOfType(error.psi(), PsiJavaCodeReferenceElement.class) instanceof PsiNewExpression newExpression &&
+      HighlightUtil.isCallToStaticMember(newExpression) ? new RemoveNewKeywordFix(newExpression) : null);
+    fix(REFERENCE_QUALIFIER_PRIMITIVE,
+        error -> error.psi() instanceof PsiReferenceExpression ref ? myFactory.createRenameWrongRefFix(ref) : null);
   }
 
   private void createAccessFixes() {
@@ -696,8 +700,9 @@ final class JavaErrorFixProvider {
       PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.psi());
       return myFactory.createExtendsListFix(error.context(), type, false);
     });
-    fix(CALL_STATIC_INTERFACE_METHOD_QUALIFIER, error -> myFactory.createAccessStaticViaInstanceFix(
-      error.psi(), error.psi().advancedResolve(true)));
+    fix(CALL_STATIC_INTERFACE_METHOD_QUALIFIER,
+        error -> error.psi() instanceof PsiReferenceExpression ref ?
+                 myFactory.createAccessStaticViaInstanceFix(ref, ref.advancedResolve(true)) : null);
   }
 
   private void createRecordFixes() {

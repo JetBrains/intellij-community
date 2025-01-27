@@ -28,8 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
+
+import static java.util.Objects.*;
 
 /**
  * An internal visitor to gather error messages for Java sources. Should not be used directly.
@@ -43,6 +44,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull AnnotationChecker myAnnotationChecker = new AnnotationChecker(this);
   final @NotNull ClassChecker myClassChecker = new ClassChecker(this);
   private final @NotNull RecordChecker myRecordChecker = new RecordChecker(this);
+  private final @NotNull ImportChecker myImportChecker = new ImportChecker(this);
   final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
@@ -174,7 +176,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkEnumWithAbstractMethods(enumConstant);
     if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(enumConstant);
     if (!hasErrorResults()) {
-      PsiClass containingClass = Objects.requireNonNull(enumConstant.getContainingClass());
+      PsiClass containingClass = requireNonNull(enumConstant.getContainingClass());
       PsiClassType type = JavaPsiFacade.getElementFactory(myProject).createType(containingClass);
       myExpressionChecker.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null);
     }
@@ -420,7 +422,13 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
+    myImportChecker.checkImportStaticReferenceElement(ref);
+  }
+  
+  @Override
   public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
+    visitElement(statement);
     checkFeature(statement, JavaFeature.STATIC_IMPORTS);
     if (!hasErrorResults()) {
       PsiJavaCodeReferenceElement importReference = statement.getImportReference();
@@ -530,6 +538,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
     PsiElement resolved = result.getElement();
     PsiElement parent = ref.getParent();
+
+    myExpressionChecker.checkReference(ref, result);
 
     if (resolved != null && parent instanceof PsiReferenceList referenceList && !hasErrorResults()) {
       checkElementInReferenceList(ref, referenceList, result);
