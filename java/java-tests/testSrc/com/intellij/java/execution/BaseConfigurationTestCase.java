@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.execution.Location;
@@ -8,14 +8,12 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -114,9 +112,12 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
     return result;
   }
 
-  protected static VirtualFile findFile(String path) {
-    String filePath = PathManagerEx.getTestDataPath() + File.separator + "junit" + File.separator + "configurations" +
-                      File.separator + path;
+  protected @NotNull String getTestDataPath() {
+    return "";
+  };
+
+  protected VirtualFile findFile(String path) {
+    String filePath = getTestDataPath() + File.separatorChar + "configuration" + File.separatorChar + path;
     return LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
   }
 
@@ -151,16 +152,6 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
 
   protected PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     return JavaPsiFacade.getInstance(myProject).findClass(qualifiedName, scope);
-  }
-
-  protected JUnitConfiguration createJUnitConfiguration(@NotNull PsiElement psiElement,
-                                                        @NotNull Class<? extends AbstractJavaTestConfigurationProducer<?>> producerClass,
-                                                        @NotNull MapDataContext dataContext) {
-    ConfigurationContext context = createContext(psiElement, dataContext);
-    RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(producerClass);
-    ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
-    assertNotNull(fromContext);
-    return (JUnitConfiguration)fromContext.getConfiguration();
   }
 
   protected TestNGConfiguration createTestNGConfiguration(@NotNull PsiElement psiElement,
@@ -200,21 +191,5 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
 
   protected void addDependency(Module module, Module dependency) {
     ModuleRootModificationUtil.addDependency(module, dependency);
-  }
-
-  protected void checkPackage(String packageName, JUnitConfiguration configuration) {
-    assertEquals(packageName, configuration.getPersistentData().getPackageName());
-  }
-
-  protected void checkClassName(String className, JUnitConfiguration configuration) {
-    assertEquals(className, configuration.getPersistentData().getMainClassName());
-  }
-
-  protected void checkMethodName(String methodName, JUnitConfiguration configuration) {
-    assertEquals(methodName, configuration.getPersistentData().getMethodName());
-  }
-
-  protected void checkTestObject(String testObjectKey, JUnitConfiguration configuration) {
-    assertEquals(testObjectKey, configuration.getPersistentData().TEST_OBJECT);
   }
 }

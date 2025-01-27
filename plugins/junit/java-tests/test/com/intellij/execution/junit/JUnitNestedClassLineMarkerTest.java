@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.codeInsight.navigation;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -20,7 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class NestedClassLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
+public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   private final Set<RunnerAndConfigurationSettings> myTempSettings = new HashSet<>();
   @Override
   protected void tearDown() throws Exception {

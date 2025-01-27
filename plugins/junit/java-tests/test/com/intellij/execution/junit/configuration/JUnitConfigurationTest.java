@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.execution;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.junit.configuration;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunConfigurationConfigurableAdapter;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.application.ApplicationConfigurable;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -21,11 +20,11 @@ import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -35,9 +34,13 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -59,6 +62,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +71,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ConfigurationsTest extends BaseConfigurationTestCase {
+public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
   private Sdk myJdk;
   private static final String INNER_TEST_NAME = "test1.InnerTest.Inner";
   private static final String RT_INNER_TEST_NAME = "test1.InnerTest$Inner";
@@ -79,6 +83,18 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     addModule("module2");
     addModule("module3");
     assignJdk(getModule1());
+  }
+
+  public void testSearchScope() throws Exception {
+    JUnitConfiguration foo = new JUnitConfiguration("foo", getProject());
+    Element element = JDOMUtil.load("""
+                                      <configuration default="false" name="DjangoTests (1.6)" type="JUnit" factoryName="JUnit">
+                                          <option name="TEST_SEARCH_SCOPE">
+                                            <value defaultName="moduleWithDependencies" />
+                                          </option>
+                                        </configuration>""");
+    foo.readExternal(element);
+    assertEquals(TestSearchScope.MODULE_WITH_DEPENDENCIES, foo.getPersistentData().getScope());
   }
 
   public void testCreateConfiguration() throws ExecutionException {
@@ -423,30 +439,6 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     assertThat(javaParameters.getClassPath().getPathsString()).contains(output);
   }
 
-  public void testCreatingApplicationConfiguration() throws ConfigurationException {
-    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
-
-    ApplicationConfiguration configuration = new ApplicationConfiguration(null, myProject);
-    ApplicationConfigurable editor = new ApplicationConfigurable(myProject);
-    try {
-      editor.getComponent(); // To get all the watchers installed.
-      Configurable configurable = new RunConfigurationConfigurableAdapter(editor, configuration);
-      configurable.reset();
-      CommonJavaParametersPanel javaParameters = editor.getCommonProgramParameters();
-      javaParameters.setProgramParameters("prg");
-      javaParameters.setVMParameters("vm");
-      javaParameters.setWorkingDirectory("dir");
-      assertTrue(configurable.isModified());
-      configurable.apply();
-      assertEquals("prg", configuration.getProgramParameters());
-      assertEquals("vm", configuration.getVMParameters());
-      assertEquals("dir", configuration.getWorkingDirectory());
-    }
-    finally {
-      Disposer.dispose(editor);
-    }
-  }
-
   public void testCreateInnerPackageLocalApplication() throws ExecutionException {
     PsiClass psiClass = findClass(getModule1(), "test2.NotATest.InnerApplication");
     assertNotNull(psiClass);
@@ -519,23 +511,6 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       assertThat(classPath).contains(outputs[i][0]);
       assertThat(classPath).contains(outputs[i][1]);
     }
-  }
-
-  public void testOriginalModule() {
-    ModuleRootModificationUtil.addDependency(getModule1(), getModule2(), DependencyScope.TEST, true);
-    ModuleRootModificationUtil.addDependency(getModule2(), getModule3(), DependencyScope.TEST, false);
-    assertTrue(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule2()}));
-    assertTrue(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule3()}));
-
-    //not exported but on the classpath
-    addModule("module4");
-    ModuleRootModificationUtil.addDependency(getModule3(), getModule4(), DependencyScope.TEST, false);
-    assertTrue(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule4()}));
-
-    addModule("module5");
-    assertFalse(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule(4)}));
-
-    assertFalse(ModuleBasedConfiguration.canRestoreOriginalModule(getModule2(), new Module[] {getModule1()}));
   }
 
   private void assignJdk(Module module) {
@@ -702,5 +677,10 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
   protected void tearDown() throws Exception {
     myJdk = null;
     super.tearDown();
+  }
+
+  @Override
+  protected @NotNull String getTestDataPath() {
+    return PathManager.getCommunityHomePath() + "/plugins/junit/java-tests/testData";
   }
 }

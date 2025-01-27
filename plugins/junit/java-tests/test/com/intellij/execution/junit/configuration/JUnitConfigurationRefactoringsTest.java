@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.execution;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.junit.configuration;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -10,6 +9,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
+import com.intellij.java.execution.TestSources;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.HashSet;
 
-public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
+public class JUnitConfigurationRefactoringsTest extends JUnitConfigurationTestCase {
   private static final String APPLICATION_CODE = "public class Application {" +
                                                  "  public static void main(String[] args) {\n" +
                                                  "  }" +
@@ -41,37 +41,6 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   private static final String NOT_A_TEST = "public class NotATest {" +
                                            "public void test() {}" +
                                            "}";
-  public void testRenameApplication() {
-    PsiClass psiClass = mySource.createClass("Application", APPLICATION_CODE);
-    assertNotNull(psiClass);
-    ApplicationConfiguration configuration = createConfiguration(psiClass);
-    assertNotNull(configuration);
-    rename(psiClass, "NewName");
-    try {
-      configuration.checkConfiguration();
-    }
-    catch (RuntimeConfigurationException e) {
-      fail("Unexpected ConfigurationException: " + e);
-    }
-    assertEquals("NewName", configuration.getMainClassName());
-  }
-
-  public void testMoveApplication() {
-    PsiClass psiClass = mySource.createClass("Application", APPLICATION_CODE);
-    assertNotNull(psiClass);
-    ApplicationConfiguration configuration = createConfiguration(psiClass);
-    move(psiClass, "pkg");
-    try {
-      configuration.checkConfiguration();
-    }
-    catch (RuntimeConfigurationException e) {
-      fail("Unexpected ConfigurationException: " + e);
-    }
-
-    assertEquals("pkg.Application", configuration.getMainClassName());
-    rename(JavaPsiFacade.getInstance(myProject).findPackage("pkg"), "pkg2");
-    assertEquals("pkg2.Application", configuration.getMainClassName());
-  }
 
   public void testRenameJUnitPackage() {
     PsiPackage psiPackage = mySource.createPackage("pkg");

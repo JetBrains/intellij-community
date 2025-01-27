@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.codeInsight.navigation;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.execution.ExecutionBundle;
@@ -10,11 +10,12 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.codeInsight.navigation.LineMarkerTestCase;
+import com.intellij.java.codeInsight.navigation.MockGradleRunConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
@@ -33,7 +34,7 @@ import javax.swing.*;
 import java.util.Date;
 import java.util.List;
 
-public class TestRunLineMarkerTest extends LineMarkerTestCase {
+public class JUnitTestRunLineMarkerTest extends LineMarkerTestCase {
   public void testAbstractTestClassMethods() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MyTest.java", """

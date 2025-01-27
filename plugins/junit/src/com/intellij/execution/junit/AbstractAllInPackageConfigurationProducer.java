@@ -30,7 +30,7 @@ public abstract class AbstractAllInPackageConfigurationProducer extends JUnitCon
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
+  public boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
     Location<PsiElement> loc = context.getLocation();

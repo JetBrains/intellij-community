@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.junit
+package com.intellij.execution.junit.configuration
 
 import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.junit.AllInPackageConfigurationProducer
+import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.util.Ref
@@ -15,7 +17,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.utils.vfs.createDirectory
 
-class JUnitConfigurationProducerTest : JavaCodeInsightFixtureTestCase() {
+class JUnitPackageConfigurationProducerTest : JavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     runWriteAction {
