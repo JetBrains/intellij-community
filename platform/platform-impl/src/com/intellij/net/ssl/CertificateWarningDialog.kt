@@ -56,7 +56,8 @@ internal class CertificateWarningDialog(
 
   private val certificateErrorsMap = getCertificateErrorsMap()
   private val hasUntrusted = certificateErrorsMap.entries.any { it.value.contains(CertificateError.UNTRUSTED_AUTHORITY) }
-  private var currentCertificate = CertificateWrapper(certificates.reversed().first{certificateErrorsMap[it]!!.isNotEmpty() })
+  private var currentCertificate = CertificateWrapper(certificates.reversed().firstOrNull { certificateErrorsMap[it]!!.isNotEmpty() }
+                                                      ?: certificates.first())
 
   private val tree = createCertificateTree()
   private val errorColor = JBColor.namedColor("Label.errorForeground", JBColor.red)
