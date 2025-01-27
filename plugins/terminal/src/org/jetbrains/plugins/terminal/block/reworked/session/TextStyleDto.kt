@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.terminal.block.reworked.session
 
 import com.jediterm.terminal.TextStyle
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Serializable
 data class TextStyleDto(
   val foreground: TerminalColorDto?,
   val background: TerminalColorDto?,

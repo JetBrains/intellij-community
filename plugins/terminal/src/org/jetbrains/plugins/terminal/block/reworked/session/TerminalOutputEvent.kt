@@ -1,12 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.session
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Serializable
 sealed interface TerminalOutputEvent
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalContentUpdatedEvent(
   val text: String,
   val styles: List<StyleRangeDto>,
@@ -14,33 +17,42 @@ data class TerminalContentUpdatedEvent(
 ) : TerminalOutputEvent
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalCursorPositionChangedEvent(
   val logicalLineIndex: Int,
   val columnIndex: Int,
 ) : TerminalOutputEvent
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalStateChangedEvent(val state: TerminalStateDto) : TerminalOutputEvent
 
 @ApiStatus.Internal
-object TerminalBeepEvent : TerminalOutputEvent
+@Serializable
+data object TerminalBeepEvent : TerminalOutputEvent
 
 // Shell Integration Events
 
 @ApiStatus.Internal
+@Serializable
 sealed interface TerminalShellIntegrationEvent : TerminalOutputEvent
 
 @ApiStatus.Internal
-object TerminalShellIntegrationInitializedEvent : TerminalShellIntegrationEvent
+@Serializable
+data object TerminalShellIntegrationInitializedEvent : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalCommandStartedEvent(val command: String) : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int) : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal
-object TerminalPromptStartedEvent : TerminalShellIntegrationEvent
+@Serializable
+data object TerminalPromptStartedEvent : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal
-object TerminalPromptFinishedEvent : TerminalShellIntegrationEvent
+@Serializable
+data object TerminalPromptFinishedEvent : TerminalShellIntegrationEvent

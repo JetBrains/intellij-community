@@ -4,9 +4,11 @@ package org.jetbrains.plugins.terminal.block.reworked.session
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalStateDto(
   val isCursorVisible: Boolean,
   val cursorShape: CursorShape?,

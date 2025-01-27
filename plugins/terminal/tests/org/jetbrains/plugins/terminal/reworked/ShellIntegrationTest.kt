@@ -225,7 +225,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       block(session)
 
       delay(1000) // Wait for the shell to handle input sent in `block`
-      session.sendInputEvent(TerminalCloseEvent())
+      session.sendInputEvent(TerminalCloseEvent)
 
       outputEvents
     }

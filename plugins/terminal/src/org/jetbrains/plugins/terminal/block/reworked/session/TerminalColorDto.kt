@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.terminal.block.reworked.session
 
 import com.jediterm.terminal.TerminalColor
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalColorDto(
   val colorIndex: Int?,
   val rgb: Int?,

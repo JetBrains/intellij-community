@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.terminal.block.reworked.session
 
 import com.jediterm.core.util.TermSize
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalSizeDto(val columns: Int, val rows: Int)
 
 @ApiStatus.Internal

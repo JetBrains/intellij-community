@@ -1,15 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.session
 
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Serializable
 sealed interface TerminalInputEvent
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalResizeEvent(val newSize: TerminalSizeDto) : TerminalInputEvent
 
 @ApiStatus.Internal
+@Serializable
 data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEvent {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -26,7 +30,9 @@ data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEvent {
 }
 
 @ApiStatus.Internal
-class TerminalCloseEvent : TerminalInputEvent
+@Serializable
+data object TerminalCloseEvent : TerminalInputEvent
 
 @ApiStatus.Internal
-object TerminalClearBufferEvent : TerminalInputEvent
+@Serializable
+data object TerminalClearBufferEvent : TerminalInputEvent

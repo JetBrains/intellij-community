@@ -103,7 +103,7 @@ private fun createTerminalInputChannel(
         is TerminalResizeEvent -> {
           terminalStarter.postResize(event.newSize.toTermSize(), RequestOrigin.User)
         }
-        is TerminalCloseEvent -> {
+        TerminalCloseEvent -> {
           terminalStarter.close()
           terminalStarter.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
             terminalStarter.requestEmulatorStop()
