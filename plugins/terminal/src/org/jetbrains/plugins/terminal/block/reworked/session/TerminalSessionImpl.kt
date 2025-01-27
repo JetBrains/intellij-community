@@ -6,9 +6,13 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalOutputEvent
 
 internal class TerminalSessionImpl(
-  override val inputChannel: SendChannel<TerminalInputEvent>,
+  private val inputChannel: SendChannel<TerminalInputEvent>,
   private val outputFlow: Flow<List<TerminalOutputEvent>>,
 ) : TerminalSession {
+  override suspend fun sendInputEvent(event: TerminalInputEvent) {
+    inputChannel.send(event)
+  }
+
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
     return outputFlow
   }

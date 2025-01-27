@@ -11,14 +11,13 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalKeyEncoder
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCloseEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInputEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.output.*
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
@@ -55,8 +54,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Test
   fun `shell integration send correct events on command invocation`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { inputChannel ->
-      inputChannel.send(TerminalWriteBytesEvent("pwd".toByteArray() + keyEncoder.enterBytes()))
+    val events = startSessionAndCollectOutputEvents { session ->
+      session.sendInputEvent(TerminalWriteBytesEvent("pwd".toByteArray() + keyEncoder.enterBytes()))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
@@ -75,10 +74,10 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Test
   fun `shell integration should not send command finished event without command started event on Ctrl+C`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { inputChannel ->
-      inputChannel.send(TerminalWriteBytesEvent("abcdef".toByteArray()))
+    val events = startSessionAndCollectOutputEvents { session ->
+      session.sendInputEvent(TerminalWriteBytesEvent("abcdef".toByteArray()))
       delay(1000)
-      inputChannel.send(TerminalWriteBytesEvent(CTRL_C_BYTES))
+      session.sendInputEvent(TerminalWriteBytesEvent(CTRL_C_BYTES))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
@@ -103,12 +102,12 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   fun `prompt events received after prompt is redrawn because of long completion output`() = timeoutRunBlocking(30.seconds) {
     Assume.assumeTrue(shellPath.toString().contains("zsh"))
 
-    val events = startSessionAndCollectOutputEvents(TermSize(80, 4)) { inputChannel ->
-      inputChannel.send(TerminalWriteBytesEvent("g".toByteArray() + TAB_BYTES))
+    val events = startSessionAndCollectOutputEvents(TermSize(80, 4)) { session ->
+      session.sendInputEvent(TerminalWriteBytesEvent("g".toByteArray() + TAB_BYTES))
       // Shell can ask "do you wish to see all N possibilities? (y/n)"
       // Wait for this question and ask `y`
       delay(1000)
-      inputChannel.send(TerminalWriteBytesEvent("y".toByteArray()))
+      session.sendInputEvent(TerminalWriteBytesEvent("y".toByteArray()))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
@@ -134,11 +133,11 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val bindCommand = "bind 'set show-all-if-ambiguous on'"
 
-    val events = startSessionAndCollectOutputEvents(TermSize(80, 100)) { inputChannel ->
+    val events = startSessionAndCollectOutputEvents(TermSize(80, 100)) { session ->
       // Configure the shell to show completion items on the first Tab key press.
-      inputChannel.send(TerminalWriteBytesEvent(bindCommand.toByteArray() + keyEncoder.enterBytes()))
+      session.sendInputEvent(TerminalWriteBytesEvent(bindCommand.toByteArray() + keyEncoder.enterBytes()))
       delay(1000)
-      inputChannel.send(TerminalWriteBytesEvent("gi".toByteArray() + TAB_BYTES))
+      session.sendInputEvent(TerminalWriteBytesEvent("gi".toByteArray() + TAB_BYTES))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
@@ -162,9 +161,9 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Test
   fun `prompt events received after prompt is redrawn because of Ctrl+L`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { inputChannel ->
-      inputChannel.send(TerminalWriteBytesEvent("abcdef".toByteArray()))
-      inputChannel.send(TerminalWriteBytesEvent(CTRL_L_BYTES))
+    val events = startSessionAndCollectOutputEvents { session ->
+      session.sendInputEvent(TerminalWriteBytesEvent("abcdef".toByteArray()))
+      session.sendInputEvent(TerminalWriteBytesEvent(CTRL_L_BYTES))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
@@ -197,7 +196,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   private suspend fun startSessionAndCollectOutputEvents(
     size: TermSize = TermSize(80, 24),
-    block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
+    block: suspend (TerminalSession) -> Unit,
   ): List<TerminalOutputEvent> {
     return coroutineScope {
       val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, childScope("TerminalSession"), size)
@@ -217,10 +216,10 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       // Wait for prompt initialization before going further
       promptFinishedEventDeferred.await()
 
-      block(session.inputChannel)
+      block(session)
 
       delay(1000) // Wait for the shell to handle input sent in `block`
-      session.inputChannel.send(TerminalCloseEvent())
+      session.sendInputEvent(TerminalCloseEvent())
 
       outputEvents
     }

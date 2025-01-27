@@ -2,19 +2,29 @@
 package org.jetbrains.plugins.terminal.block.reworked.session
 
 import com.intellij.openapi.actionSystem.DataKey
-import kotlinx.coroutines.channels.SendChannel
 import com.jediterm.core.util.TermSize
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class TerminalInput(
   private val terminalSessionFuture: CompletableFuture<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
+  private val coroutineScope: CoroutineScope,
 ) {
   companion object {
     val KEY: DataKey<TerminalInput> = DataKey.create("TerminalInput")
   }
+
+  /**
+   * Use this dispatcher to ensure that events are sent in the same order as methods in this class were called.
+   */
+  private val synchronousDispatcher = Dispatchers.Default.limitedParallelism(1)
 
   fun sendString(data: String) {
     // TODO: should there always be UTF8?
@@ -31,14 +41,14 @@ internal class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
-    withInputChannel { inputChannel ->
-      inputChannel.trySend(TerminalWriteBytesEvent(data))
+    withTerminalSession { session ->
+      session.sendInputEvent(TerminalWriteBytesEvent(data))
     }
   }
 
   fun sendClearBuffer() {
-    withInputChannel { inputChannel ->
-      inputChannel.trySend(TerminalClearBufferEvent)
+    withTerminalSession { session ->
+      session.sendInputEvent(TerminalClearBufferEvent)
     }
   }
 
@@ -47,14 +57,17 @@ internal class TerminalInput(
    */
   fun sendResize(newSize: TermSize) {
     val session = terminalSessionFuture.getNow(null) ?: return
-    session.inputChannel.trySend(TerminalResizeEvent(newSize))
+    coroutineScope.launch(synchronousDispatcher) {
+      session.sendInputEvent(TerminalResizeEvent(newSize))
+    }
   }
 
-  private fun withInputChannel(block: ((SendChannel<TerminalInputEvent>) -> Unit)) {
+  private fun withTerminalSession(block: suspend (TerminalSession) -> Unit) {
     terminalSessionFuture.thenAccept { session ->
-      val inputChannel = session?.inputChannel
-      if (inputChannel != null) {
-        block(inputChannel)
+      if (session != null) {
+        coroutineScope.launch(synchronousDispatcher) {
+          block(session)
+        }
       }
     }
   }

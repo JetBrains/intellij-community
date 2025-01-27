@@ -85,7 +85,7 @@ internal class ReworkedTerminalView(
     sessionModel = TerminalSessionModelImpl(settings)
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
-    terminalInput = TerminalInput(terminalSessionFuture, sessionModel)
+    terminalInput = TerminalInput(terminalSessionFuture, sessionModel, coroutineScope.childScope("TerminalInput"))
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
     val outputModel = createOutputModel(
