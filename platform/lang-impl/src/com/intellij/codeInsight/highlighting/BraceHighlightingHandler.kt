@@ -107,7 +107,7 @@ class BraceHighlightingHandler internal constructor(
       leftBraceEnd: Int,
     ) {
       BraceHighlightingHandler(psiFile.project, editor, service<BackgroundHighlighter>().alarm, psiFile)
-        .showScopeHint(leftBraceStart = leftBraceStart, leftBraceEnd = leftBraceEnd, startComputation = null)
+        .showScopeHint(leftBraceStart, leftBraceEnd, null)
     }
 
     /**
@@ -159,8 +159,6 @@ class BraceHighlightingHandler internal constructor(
     var offset = editor.caretModel.offset
     val chars = editor.document.charsSequence
 
-    alarm.cancelAllRequests()
-
     var context = SlowOperations.knownIssue("IJPL-162400").use {
       BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile)
     }
@@ -184,7 +182,7 @@ class BraceHighlightingHandler internal constructor(
           BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile, backwardNonSpaceEndOffset)
         }
         if (context != null) {
-          doHighlight(offset = context.currentBraceOffset, isAdjustedPosition = true)
+          doHighlight(context.currentBraceOffset, true)
           offset = context.currentBraceOffset
           searchForward = false
         }
@@ -196,7 +194,7 @@ class BraceHighlightingHandler internal constructor(
         if (nextNonSpaceCharOffset > offset) {
           context = BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile, nextNonSpaceCharOffset)
           if (context != null) {
-            doHighlight(offset = context.currentBraceOffset, isAdjustedPosition = true)
+            doHighlight(context.currentBraceOffset, true)
             offset = context.currentBraceOffset
           }
         }
@@ -239,7 +237,7 @@ class BraceHighlightingHandler internal constructor(
            BraceMatchingUtil.isLBraceToken(iterator, chars, fileType))) &&
         BraceMatchingUtil.findStructuralLeftBrace(fileType, iterator, chars)
     ) {
-      highlightLeftBrace(iterator = iterator, scopeHighlighting = true, fileType = fileType)
+      highlightLeftBrace(iterator, true, fileType)
     }
   }
 
@@ -258,7 +256,7 @@ class BraceHighlightingHandler internal constructor(
     val chars = document.charsSequence
     val fileType = getFileTypeByOffset(offset)
     if (BraceMatchingUtil.isLBraceToken(iterator, chars, fileType)) {
-      highlightLeftBrace(iterator = iterator, scopeHighlighting = false, fileType = fileType)
+      highlightLeftBrace(iterator, false, fileType)
 
       if (offset > 0 && !isAdjustedPosition && !editor.settings.isBlockCursor) {
         iterator = editorHighlighter.createIterator(offset - 1)
@@ -313,11 +311,11 @@ class BraceHighlightingHandler internal constructor(
       val startLine = editor.offsetToLogicalPosition(lBrace.startOffset).line
       val endLine = editor.offsetToLogicalPosition(rBrace.endOffset).line
       if (endLine - startLine > 0 && editor is EditorEx) {
-        lineMarkFragment(editor = editor, document = document, startLine = startLine, endLine = endLine, matched = matched)
+        lineMarkFragment(editor, document, startLine, endLine, matched)
       }
 
       if (!scopeHighlighting) {
-        showScopeHint(lbraceStart = lBrace.startOffset, lbraceEnd = lBrace.endOffset)
+        showScopeHint(lBrace.startOffset, lBrace.endOffset)
       }
     }
   }
