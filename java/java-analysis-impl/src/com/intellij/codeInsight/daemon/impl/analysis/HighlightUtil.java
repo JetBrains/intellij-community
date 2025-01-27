@@ -20,7 +20,6 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -47,7 +46,6 @@ import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
@@ -63,7 +61,6 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
@@ -637,70 +634,6 @@ public final class HighlightUtil {
       }
     }
     return null;
-  }
-
-  static HighlightInfo.Builder checkUnderscore(@NotNull PsiIdentifier identifier, @NotNull LanguageLevel languageLevel) {
-    if ("_".equals(identifier.getText())) {
-      PsiElement parent = identifier.getParent();
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !(parent instanceof PsiUnnamedPattern) &&
-          !(parent instanceof PsiVariable var && var.isUnnamed())) {
-        String text = JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isSufficient(languageLevel) ?
-                      JavaErrorBundle.message("underscore.identifier.error.unnamed") :
-                      JavaErrorBundle.message("underscore.identifier.error");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text);
-      }
-      else if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-        if (parent instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiLambdaExpression &&
-            !parameter.isUnnamed()) {
-          String text = JavaErrorBundle.message("underscore.lambda.identifier");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text);
-        }
-      }
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkUnnamedVariableDeclaration(@NotNull PsiVariable variable) {
-    if (isArrayDeclaration(variable)) {
-      IntentionAction fix = new NormalizeBracketsFix(variable).asIntention();
-      TokenSet brackets = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
-      TextRange range = StreamEx.of(variable.getChildren())
-        .filter(t -> PsiUtil.isJavaToken(t, brackets))
-        .map(PsiElement::getTextRangeInParent)
-        .reduce(TextRange::union)
-        .orElseThrow()
-        .shiftRight(variable.getTextRange().getStartOffset());// Must have at least one
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(
-        JavaAnalysisBundle.message("error.unnamed.variable.brackets")).registerFix(fix, null, null, null, null);
-    }
-    if (variable instanceof PsiPatternVariable) return null;
-    if (variable instanceof PsiResourceVariable) return null;
-    String message;
-    IntentionAction fix = null;
-    if (variable instanceof PsiLocalVariable local) {
-      if (local.getInitializer() != null) return null;
-      message = JavaAnalysisBundle.message("error.unnamed.variable.without.initializer");
-      fix = getFixFactory().createAddVariableInitializerFix(local);
-    }
-    else if (variable instanceof PsiParameter parameter) {
-      PsiElement scope = parameter.getDeclarationScope();
-      if (!(scope instanceof PsiMethod)) return null;
-      message = JavaAnalysisBundle.message("error.unnamed.method.parameter.not.allowed");
-    }
-    else if (variable instanceof PsiField) {
-      message = JavaAnalysisBundle.message("error.unnamed.field.not.allowed");
-    }
-    else {
-      message = JavaAnalysisBundle.message("error.unnamed.variable.not.allowed.in.this.context");
-    }
-    TextRange range = TextRange.create(variable.getTextRange().getStartOffset(),
-                                       Objects.requireNonNull(variable.getNameIdentifier()).getTextRange().getEndOffset());
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
-    if (fix != null) {
-      builder.registerFix(fix, null, null, null, null);
-    }
-    return builder;
   }
 
   public static @NotNull @NlsSafe String formatClass(@NotNull PsiClass aClass) {

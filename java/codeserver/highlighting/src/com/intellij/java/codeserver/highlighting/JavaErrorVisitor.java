@@ -386,7 +386,13 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
     if (parent instanceof PsiVariable variable) {
-      if (variable instanceof PsiField field) {
+      if (variable.isUnnamed()) {
+        checkFeature(variable, JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);
+        if (!hasErrorResults()) {
+          myExpressionChecker.checkUnnamedVariableDeclaration(variable);
+        }
+      }
+      else if (variable instanceof PsiField field) {
         myClassChecker.checkImplicitClassMember(field);
       }
     }
@@ -400,6 +406,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     else if (parent instanceof PsiMethod method) {
       myClassChecker.checkImplicitClassMember(method);
     }
+    myExpressionChecker.checkUnderscore(identifier);
   }
 
   @Override

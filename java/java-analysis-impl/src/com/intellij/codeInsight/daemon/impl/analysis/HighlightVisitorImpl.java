@@ -565,14 +565,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement parent = identifier.getParent();
     if (parent instanceof PsiVariable variable) {
       add(HighlightUtil.checkVariableAlreadyDefined(variable));
-      if (variable.isUnnamed()) {
-        HighlightInfo.Builder notAvailable = checkFeature(variable, JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);
-        if (notAvailable != null) {
-          add(notAvailable);
-        } else {
-          add(HighlightUtil.checkUnnamedVariableDeclaration(variable));
-        }
-      }
     }
     else if (parent instanceof PsiClass aClass) {
       if (!hasErrorResults() && JavaFeature.EXTENSION_METHODS.isSufficient(myLanguageLevel)) {
@@ -599,8 +591,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         add(GenericsHighlightUtil.checkDefaultMethodOverridesMemberOfJavaLangObject(myLanguageLevel, aClass, method, identifier));
       }
     }
-
-    add(HighlightUtil.checkUnderscore(identifier, myLanguageLevel));
 
     super.visitIdentifier(identifier);
   }

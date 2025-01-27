@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.Nls;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle.message;
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorFormatUtil.*;
@@ -885,6 +887,33 @@ public final class JavaErrorKinds {
     error(PsiJavaCodeReferenceElement.class, "import.static.on.demand.resolves.to.class")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription(ref -> message("import.static.on.demand.resolves.to.class", ref.getCanonicalText()));
+  
+  public static final Simple<PsiIdentifier> UNDERSCORE_IDENTIFIER = error("underscore.identifier");
+  public static final Simple<PsiIdentifier> UNDERSCORE_IDENTIFIER_UNNAMED = error("underscore.identifier.unnamed");
+  public static final Simple<PsiIdentifier> UNDERSCORE_IDENTIFIER_LAMBDA = error("underscore.identifier.lambda");
+  
+  public static final Simple<PsiVariable> UNNAMED_VARIABLE_BRACKETS =
+    error(PsiVariable.class, "unnamed.variable.brackets")
+      .withRange(var -> {
+        TokenSet brackets = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
+        return Stream.of(var.getChildren())
+          .filter(t -> PsiUtil.isJavaToken(t, brackets))
+          .map(PsiElement::getTextRangeInParent)
+          .reduce(TextRange::union)
+          .orElseThrow(); // Must have at least one
+      });
+  public static final Simple<PsiLocalVariable> UNNAMED_VARIABLE_WITHOUT_INITIALIZER =
+    error(PsiLocalVariable.class, "unnamed.variable.without.initializer")
+      .withRange(var -> TextRange.create(0, requireNonNull(var.getNameIdentifier()).getTextRangeInParent().getEndOffset()));
+  public static final Simple<PsiField> UNNAMED_FIELD_NOT_ALLOWED =
+    error(PsiField.class, "unnamed.field.not.allowed")
+      .withRange(var -> TextRange.create(0, requireNonNull(var.getNameIdentifier()).getTextRangeInParent().getEndOffset()));
+  public static final Simple<PsiParameter> UNNAMED_METHOD_PARAMETER_NOT_ALLOWED =
+    error(PsiParameter.class, "unnamed.method.parameter.not.allowed")
+      .withRange(var -> TextRange.create(0, requireNonNull(var.getNameIdentifier()).getTextRangeInParent().getEndOffset()));
+  public static final Simple<PsiVariable> UNNAMED_VARIABLE_NOT_ALLOWED_IN_THIS_CONTEXT =
+    error(PsiVariable.class, "unnamed.variable.not.allowed.in.this.context")
+      .withRange(var -> TextRange.create(0, requireNonNull(var.getNameIdentifier()).getTextRangeInParent().getEndOffset()));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {

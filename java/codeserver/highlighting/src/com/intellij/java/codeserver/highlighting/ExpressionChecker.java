@@ -3,12 +3,14 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -721,6 +723,56 @@ final class ExpressionChecker {
       if (method != null && method.hasModifierProperty(PsiModifier.DEFAULT) && superExpression.getQualifier() == null) {
         myVisitor.report(JavaErrorKinds.EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD.create(expr, superExpression));
       }
+    }
+  }
+
+  void checkUnderscore(@NotNull PsiIdentifier identifier) {
+    if ("_".equals(identifier.getText())) {
+      PsiElement parent = identifier.getParent();
+      LanguageLevel languageLevel = myVisitor.languageLevel();
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !(parent instanceof PsiUnnamedPattern) &&
+          !(parent instanceof PsiVariable var && var.isUnnamed())) {
+        JavaErrorKind.Simple<PsiIdentifier> text = myVisitor.isApplicable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES) ?
+                                                   JavaErrorKinds.UNDERSCORE_IDENTIFIER_UNNAMED :
+                                                   JavaErrorKinds.UNDERSCORE_IDENTIFIER;
+        myVisitor.report(text.create(identifier));
+      }
+      else if (myVisitor.isApplicable(JavaFeature.LAMBDA_EXPRESSIONS)) {
+        if (parent instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiLambdaExpression &&
+            !parameter.isUnnamed()) {
+          myVisitor.report(JavaErrorKinds.UNDERSCORE_IDENTIFIER_LAMBDA.create(identifier));
+        }
+      }
+    }
+  }
+
+  private static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
+    // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
+    return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
+  }
+
+  void checkUnnamedVariableDeclaration(@NotNull PsiVariable variable) {
+    if (isArrayDeclaration(variable)) {
+      myVisitor.report(JavaErrorKinds.UNNAMED_VARIABLE_BRACKETS.create(variable));
+      return;
+    }
+    if (variable instanceof PsiPatternVariable) return;
+    if (variable instanceof PsiResourceVariable) return;
+    if (variable instanceof PsiLocalVariable local) {
+      if (local.getInitializer() == null) {
+        myVisitor.report(JavaErrorKinds.UNNAMED_VARIABLE_WITHOUT_INITIALIZER.create(local));
+      }
+    }
+    else if (variable instanceof PsiParameter parameter) {
+      if (parameter.getDeclarationScope() instanceof PsiMethod) {
+        myVisitor.report(JavaErrorKinds.UNNAMED_METHOD_PARAMETER_NOT_ALLOWED.create(parameter));
+      }
+    }
+    else if (variable instanceof PsiField field) {
+      myVisitor.report(JavaErrorKinds.UNNAMED_FIELD_NOT_ALLOWED.create(field));
+    }
+    else {
+      myVisitor.report(JavaErrorKinds.UNNAMED_VARIABLE_NOT_ALLOWED_IN_THIS_CONTEXT.create(variable));
     }
   }
 

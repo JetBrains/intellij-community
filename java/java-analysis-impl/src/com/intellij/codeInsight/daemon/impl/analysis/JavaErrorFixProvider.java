@@ -109,6 +109,7 @@ final class JavaErrorFixProvider {
     createConstructorFixes();
     createMethodFixes();
     createExpressionFixes();
+    createVariableFixes();
     createExceptionFixes();
     createGenericFixes();
     createRecordFixes();
@@ -243,6 +244,11 @@ final class JavaErrorFixProvider {
     fix(MODIFIER_REPEATED, removeModifier);
     fix(MODIFIER_INCOMPATIBLE, removeModifier);
     fix(MODIFIER_NOT_ALLOWED_NON_SEALED, removeModifier);
+  }
+  
+  private void createVariableFixes() {
+    fix(UNNAMED_VARIABLE_BRACKETS, error -> new NormalizeBracketsFix(error.psi()));
+    fix(UNNAMED_VARIABLE_WITHOUT_INITIALIZER, error -> myFactory.createAddVariableInitializerFix(error.psi()));
   }
 
   private void createExpressionFixes() {
