@@ -3062,11 +3062,6 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
                 runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/intArray.kt");
             }
 
-            @TestMetadata("intArrayVersion13.kt")
-            public void testIntArrayVersion13() throws Exception {
-                runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/intArrayVersion13.kt");
-            }
-
             @TestMetadata("labeledReturn.kt")
             public void testLabeledReturn() throws Exception {
                 runTest("../testData/inspectionsLocal/replaceAssociateFunction/associateWith/labeledReturn.kt");
