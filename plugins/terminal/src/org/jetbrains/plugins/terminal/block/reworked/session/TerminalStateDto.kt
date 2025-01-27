@@ -1,11 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked.session.output
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.block.reworked.session
 
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import org.jetbrains.annotations.ApiStatus
 
-internal data class TerminalStateDto(
+@ApiStatus.Internal
+data class TerminalStateDto(
   val isCursorVisible: Boolean,
   val cursorShape: CursorShape?,
   val mouseMode: MouseMode,

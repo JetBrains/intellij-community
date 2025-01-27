@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalStateDto
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalStateDto
 
 internal data class TerminalState(
   val isCursorVisible: Boolean,

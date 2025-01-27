@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked.session
+package com.intellij.terminal.backend
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -20,8 +20,8 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.session.output.ObservableJediTerminal
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDisplayImpl
-import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.block.reworked.session.output.createTerminalOutputFlow
+import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 

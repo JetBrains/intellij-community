@@ -2,12 +2,16 @@
 package org.jetbrains.plugins.terminal.block.reworked.session
 
 import com.jediterm.core.util.TermSize
+import org.jetbrains.annotations.ApiStatus
 
-internal sealed interface TerminalInputEvent
+@ApiStatus.Internal
+sealed interface TerminalInputEvent
 
-internal data class TerminalResizeEvent(val newSize: TermSize) : TerminalInputEvent
+@ApiStatus.Internal
+data class TerminalResizeEvent(val newSize: TermSize) : TerminalInputEvent
 
-internal data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEvent {
+@ApiStatus.Internal
+data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEvent {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -22,6 +26,8 @@ internal data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInpu
   }
 }
 
-internal class TerminalCloseEvent : TerminalInputEvent
+@ApiStatus.Internal
+class TerminalCloseEvent : TerminalInputEvent
 
-internal object TerminalClearBufferEvent : TerminalInputEvent
+@ApiStatus.Internal
+object TerminalClearBufferEvent : TerminalInputEvent

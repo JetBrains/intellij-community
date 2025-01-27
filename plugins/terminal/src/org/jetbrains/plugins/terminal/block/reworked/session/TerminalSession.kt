@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.terminal.block.reworked.session
 
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalOutputEvent
+import org.jetbrains.annotations.ApiStatus
 
-internal interface TerminalSession {
+@ApiStatus.Internal
+interface TerminalSession {
   suspend fun sendInputEvent(event: TerminalInputEvent)
 
   suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>>

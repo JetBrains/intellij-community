@@ -5,7 +5,7 @@ import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import junit.framework.TestCase.assertEquals
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalContentChangesTracker
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDiscardedHistoryTracker
 import org.jetbrains.plugins.terminal.reworked.util.scrollDown
 import org.jetbrains.plugins.terminal.reworked.util.write

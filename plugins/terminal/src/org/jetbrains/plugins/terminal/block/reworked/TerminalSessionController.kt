@@ -9,8 +9,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalBeepEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCommandStartedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptFinishedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptStartedEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
-import org.jetbrains.plugins.terminal.block.reworked.session.output.*
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalShellIntegrationInitializedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalStateChangedEvent
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 

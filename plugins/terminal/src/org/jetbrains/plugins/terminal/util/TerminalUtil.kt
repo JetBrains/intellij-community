@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.time.withTimeout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import java.time.Duration
@@ -22,7 +23,8 @@ internal fun TerminalTextBuffer.addModelListener(parentDisposable: Disposable, l
   }
 }
 
-internal fun TtyConnector.waitFor(timeout: Duration, callback: () -> Unit) {
+@ApiStatus.Internal
+fun TtyConnector.waitFor(timeout: Duration, callback: () -> Unit) {
   if (!this.isConnected) {
     callback()
     return
@@ -65,5 +67,6 @@ internal fun TtyConnector.getDebugName(): @NonNls String {
   return name
 }
 
+@ApiStatus.Internal
 @JvmField
-internal val STOP_EMULATOR_TIMEOUT: Duration = Duration.ofMillis(1500)
+val STOP_EMULATOR_TIMEOUT: Duration = Duration.ofMillis(1500)

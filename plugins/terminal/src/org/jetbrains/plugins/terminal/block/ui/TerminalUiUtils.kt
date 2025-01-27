@@ -50,6 +50,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
@@ -447,7 +448,8 @@ internal fun CharBuffer.normalize(): String {
   return if (s.contains(CharUtils.DWC)) s.filterTo(StringBuilder(s.length - 1)) { it != CharUtils.DWC }.toString() else s
 }
 
-internal fun TerminalLine.getLengthWithoutDwc(): Int {
+@ApiStatus.Internal
+fun TerminalLine.getLengthWithoutDwc(): Int {
   val dwcCount = entries.fold(0) { curCount, entry ->
     val dwcInEntryCount = entry.text.count { it == CharUtils.DWC }
     curCount + dwcInEntryCount

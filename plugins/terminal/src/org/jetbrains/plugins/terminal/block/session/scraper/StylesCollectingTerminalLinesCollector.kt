@@ -3,10 +3,12 @@ package org.jetbrains.plugins.terminal.block.session.scraper
 
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.TerminalLine
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.ui.normalize
 
-internal class StylesCollectingTerminalLinesCollector(
+@ApiStatus.Internal
+class StylesCollectingTerminalLinesCollector(
   private val delegate: StringCollector,
   private val stylesConsumer: (StyleRange) -> Unit,
 ) : TerminalLinesCollector {

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked.session.output
+package com.intellij.terminal.backend
 
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
@@ -13,6 +13,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalBeepEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCommandStartedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptFinishedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptStartedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalShellIntegrationInitializedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalStateDto
 import org.jetbrains.plugins.terminal.block.ui.withLock
 
 internal fun createTerminalOutputFlow(

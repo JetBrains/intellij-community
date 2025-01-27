@@ -17,9 +17,15 @@ import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCloseEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCommandFinishedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCommandStartedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptFinishedEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptStartedEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalShellIntegrationEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalShellIntegrationInitializedEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.output.*
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.reworked.util.ZshPS1Customizer
 import org.junit.Assert
