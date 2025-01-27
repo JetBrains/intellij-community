@@ -140,7 +140,7 @@ internal class ReworkedTerminalView(
     val session = startTerminalSession(ttyConnector, initialTermSize, settings, coroutineScope.childScope("TerminalSession"))
     terminalSessionFuture.complete(session)
 
-    controller.handleEvents(session.outputChannel)
+    controller.handleEvents(session)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {

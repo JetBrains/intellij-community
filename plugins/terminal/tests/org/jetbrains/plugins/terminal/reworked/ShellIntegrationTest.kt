@@ -205,7 +205,8 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       val outputEvents = mutableListOf<TerminalOutputEvent>()
       val promptFinishedEventDeferred = CompletableDeferred<Unit>(null)
       launch {
-        for (events in session.outputChannel) {
+        val outputFlow = session.getOutputFlow()
+        outputFlow.collect { events ->
           outputEvents.addAll(events)
           if (events.any { it is TerminalPromptFinishedEvent }) {
             promptFinishedEventDeferred.complete(Unit)

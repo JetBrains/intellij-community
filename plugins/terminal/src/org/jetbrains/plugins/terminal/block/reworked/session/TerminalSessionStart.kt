@@ -20,8 +20,8 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.session.output.ObservableJediTerminal
 import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDisplayImpl
-import org.jetbrains.plugins.terminal.block.reworked.session.output.createTerminalOutputChannel
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.block.reworked.session.output.createTerminalOutputFlow
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 
@@ -37,7 +37,7 @@ internal fun startTerminalSession(
   val services: JediTermServices = createJediTermServices(connector, termSize, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
-  val outputChannel = createTerminalOutputChannel(services.textBuffer, services.terminalDisplay, services.controller, outputScope)
+  val outputFlow = createTerminalOutputFlow(services.textBuffer, services.terminalDisplay, services.controller, outputScope)
 
   val inputScope = coroutineScope.childScope("Terminal input handling")
   val inputChannel = createTerminalInputChannel(services, inputScope)
@@ -59,7 +59,7 @@ internal fun startTerminalSession(
     //}
   }
 
-  return TerminalSessionImpl(inputChannel, outputChannel)
+  return TerminalSessionImpl(inputChannel, outputFlow)
 }
 
 private fun createJediTermServices(

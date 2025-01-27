@@ -7,19 +7,24 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalTextBuffer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 
-internal fun createTerminalOutputChannel(
+internal fun createTerminalOutputFlow(
   textBuffer: TerminalTextBuffer,
   terminalDisplay: TerminalDisplayImpl,
   controller: ObservableJediTerminal,
   coroutineScope: CoroutineScope,
-): ReceiveChannel<List<TerminalOutputEvent>> {
-  val outputChannel = Channel<List<TerminalOutputEvent>>(capacity = Channel.UNLIMITED)
+): Flow<List<TerminalOutputEvent>> {
+  val outputFlow = MutableSharedFlow<List<TerminalOutputEvent>>(
+    extraBufferCapacity = Int.MAX_VALUE,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
 
   val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
   val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
@@ -36,21 +41,16 @@ internal fun createTerminalOutputChannel(
       val cursorPositionUpdate = cursorPositionTracker.getCursorPositionUpdate()
       val updates = listOfNotNull(contentUpdate, cursorPositionUpdate, otherEvent)
       if (updates.isNotEmpty()) {
-        outputChannel.trySend(updates)
+        outputFlow.tryEmit(updates)
       }
     }
   }
 
   coroutineScope.launch(Dispatchers.IO) {
-    try {
-      while (true) {
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = null)
+    while (true) {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = null)
 
-        delay(10)
-      }
-    }
-    finally {
-      outputChannel.close()
+      delay(10)
     }
   }
 
@@ -186,5 +186,5 @@ internal fun createTerminalOutputChannel(
     }
   })
 
-  return outputChannel
+  return outputFlow.asSharedFlow()
 }

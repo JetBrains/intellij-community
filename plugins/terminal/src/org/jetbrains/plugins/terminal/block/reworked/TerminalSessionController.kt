@@ -1,14 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.EventDispatcher
-import com.intellij.util.containers.DisposableWrapperList
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.output.*
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
@@ -26,26 +27,25 @@ internal class TerminalSessionController(
   private val shellIntegrationEventDispatcher: EventDispatcher<TerminalShellIntegrationEventsListener> =
     EventDispatcher.create(TerminalShellIntegrationEventsListener::class.java)
 
-  fun handleEvents(channel: ReceiveChannel<List<TerminalOutputEvent>>) {
+  fun handleEvents(session: TerminalSession) {
     coroutineScope.launch {
-      doHandleEvents(channel)
-    }.invokeOnCompletion {
-      fireSessionTerminated()
+      val outputFlow = session.getOutputFlow()
+      outputFlow.collect { events ->
+        doHandleEvents(events)
+      }
     }
   }
 
-  private suspend fun doHandleEvents(channel: ReceiveChannel<List<TerminalOutputEvent>>) {
-    for (events in channel) {
-      for (event in events) {
-        try {
-          handleEvent(event)
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (t: Throwable) {
-          thisLogger().error(t)
-        }
+  private suspend fun doHandleEvents(events: List<TerminalOutputEvent>) {
+    for (event in events) {
+      try {
+        handleEvent(event)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (t: Throwable) {
+        thisLogger().error(t)
       }
     }
   }
