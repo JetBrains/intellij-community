@@ -45,6 +45,7 @@
 
   <content>
     <module name="intellij.terminal.backend"/>
+    <module name="intellij.terminal.frontend"/>
     <module name="intellij.terminal/cloud"/>
     <module name="intellij.terminal.sh"/>
   </content>
