@@ -10,7 +10,7 @@ import com.intellij.xdebugger.frame.XMixedModeSuspendContextBase
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.nativeThreadId
 import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
-import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -30,7 +30,7 @@ class XMixedModeSuspendContext(
   val session: XDebugSession,
   lowLevelDebugSuspendContext: XSuspendContext,
   highLevelDebugSuspendContext: XSuspendContext,
-  val highLevelDebugProcess: XMixedModeHighLevelDebugProcess,
+  val lowLevelDebugProcess: XMixedModeLowLevelDebugProcess,
   val mixedModeDebugCoroutineScope: CoroutineScope,
 ) : XMixedModeSuspendContextBase(lowLevelDebugSuspendContext, highLevelDebugSuspendContext) {
 
@@ -110,7 +110,7 @@ class XMixedModeSuspendContext(
             XMixedModeExecutionStack(session,
                                      it,
                                      correspondedHighLevelStack,
-                                     highLevelDebugProcess.getFramesMatcher(),
+                                     lowLevelDebugProcess.mixedStackBuilder,
                                      mixedModeDebugCoroutineScope)
           }
         }
@@ -139,7 +139,7 @@ class XMixedModeSuspendContext(
       session,
       lowLevelExecutionStack,
       highLevelDebugSuspendContext.activeExecutionStack,
-      highLevelDebugProcess.getFramesMatcher(),
+      lowLevelDebugProcess.mixedStackBuilder,
       mixedModeDebugCoroutineScope)
       .also {
         stacksMap[threadId] = it

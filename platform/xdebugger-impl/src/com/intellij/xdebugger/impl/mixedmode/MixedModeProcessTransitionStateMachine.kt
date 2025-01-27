@@ -102,7 +102,7 @@ class MixedModeProcessTransitionStateMachine(
     }
 
     if (newState is BothStopped) {
-      return XMixedModeSuspendContext(high.asXDebugProcess.session, newState.low, newState.high, high, suspendContextCoroutine)
+      return XMixedModeSuspendContext(high.asXDebugProcess.session, newState.low, newState.high, low, suspendContextCoroutine)
     }
     return null
   }

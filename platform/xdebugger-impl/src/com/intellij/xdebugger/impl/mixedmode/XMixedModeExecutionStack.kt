@@ -11,8 +11,9 @@ import com.intellij.xdebugger.frame.nativeThreadId
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
-import com.intellij.xdebugger.mixedMode.MixedModeFramesBuilder
+import com.intellij.xdebugger.mixedMode.MixedModeStackBuilder
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,7 @@ class XMixedModeExecutionStack(
   val lowLevelExecutionStack: XExecutionStack,
   // Null if there's no managed stack frames on the stack
   val highLevelExecutionStack: XExecutionStack?,
-  val framesMatcher: MixedModeFramesBuilder,
+  val framesMatcher: MixedModeStackBuilder,
   val coroutineScope: CoroutineScope,
 ) : XExecutionStack(lowLevelExecutionStack.displayName), XExecutionStackWithNativeThreadId {
 
@@ -57,7 +58,7 @@ class XMixedModeExecutionStack(
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
     if (computedFramesMap.isCompleted) {
       container as XStackFrameContainerEx
-      val combinedFrames = computedFramesMap.getCompleted().map { /*High frame*/it.value ?: /*Low frame*/it.key }
+      val combinedFrames = filterIfNeeded(computedFramesMap.getCompleted().map { /*High frame*/it.value ?: /*Low frame*/it.key })
       container.addStackFrames(combinedFrames, currentFrame, true)
       return
     }
@@ -90,49 +91,52 @@ class XMixedModeExecutionStack(
   }
 
   suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
-      logger.info("Preparation for frame computation completed")
+    logger.info("Preparation for frame computation completed")
 
-      val lowLevelAcc = XAccumulatingStackFrameContainer()
-      lowLevelExecutionStack.computeStackFrames(firstFrameIndex, lowLevelAcc)
-      val lowLevelFrames = measureTimedValue { lowLevelAcc.frames.await() }.also { logger.info("Low level frames loaded in ${it.duration}") }.value
-      logger.info("Low level frames obtained")
+    val lowLevelAcc = XAccumulatingStackFrameContainer()
+    lowLevelExecutionStack.computeStackFrames(firstFrameIndex, lowLevelAcc)
+    val lowLevelFrames = measureTimedValue { lowLevelAcc.frames.await() }.also { logger.info("Low level frames loaded in ${it.duration}") }.value
+    logger.info("Low level frames obtained")
 
-      val highLevelAcc = XAccumulatingStackFrameContainer()
-      if (highLevelExecutionStack == null) {
-        logger.trace("No high level stack, adding low level frames")
-        container.addStackFrames(lowLevelFrames, true)
+    val highLevelAcc = XAccumulatingStackFrameContainer()
+    if (highLevelExecutionStack == null) {
+      logger.trace("No high level stack, adding low level frames")
+      container.addStackFrames(filterIfNeeded(lowLevelFrames), true)
+      computedFramesMap.complete(lowLevelFrames.associateWith { null })
+    }
+    else {
+      highLevelExecutionStack.computeStackFrames(firstFrameIndex, highLevelAcc)
+      val highLevelFrames = measureTimedValue { highLevelAcc.frames.await() }.also { logger.info("High level frames loaded in ${it.duration}") }.value
+      logger.info("High level frames obtained")
+
+      val mixFramesResult = logger.runCatching {
+        measureTimedValue { framesMatcher.buildMixedStack(lowLevelExecutionStack, lowLevelFrames, highLevelFrames) }
+          .also { logger.info("Mixed stack built in ${it.duration}") }.value
+      }
+
+      if (mixFramesResult.isFailure) {
+        logger.error("Failed to build mixed stack. Will use low level frames only", mixFramesResult.exceptionOrNull())
+        container.addStackFrames(filterIfNeeded(lowLevelFrames), true)
         computedFramesMap.complete(lowLevelFrames.associateWith { null })
       }
       else {
-        highLevelExecutionStack.computeStackFrames(firstFrameIndex, highLevelAcc)
-        val highLevelFrames = measureTimedValue { highLevelAcc.frames.await() }.also { logger.info("High level frames loaded in ${it.duration}") }.value
-        logger.info("High level frames obtained")
+        val builtResult = mixFramesResult.getOrThrow()
+        container as XStackFrameContainerEx
 
-        val mixFramesResult = logger.runCatching {
-          measureTimedValue {
-            framesMatcher.buildMixedStack(session, lowLevelExecutionStack, lowLevelFrames, highLevelFrames)
-          }.also { logger.info("Mixed stack built in ${it.duration}") }.value
-        }
-
-        if (mixFramesResult.isFailure) {
-          logger.error("Failed to build mixed stack. Will use low level frames only", mixFramesResult.exceptionOrNull())
-          container.addStackFrames(lowLevelFrames, true)
-          computedFramesMap.complete(lowLevelFrames.associateWith { null })
-        }
-        else {
-          val builtResult = mixFramesResult.getOrThrow()
-          container as XStackFrameContainerEx
-
-          val combinedFrames = builtResult.lowLevelToHighLevelFrameMap.map { /*High frame*/it.value ?: /*Low frame*/it.key }
-          container.addStackFrames(combinedFrames, builtResult.highestHighLevelFrame, true)
-          computedFramesMap.complete(builtResult.lowLevelToHighLevelFrameMap)
-        }
+        val combinedFrames = builtResult.lowLevelToHighLevelFrameMap.map { /*High frame*/it.value ?: /*Low frame*/it.key }
+        val filterIfNeededCombinedFrames = filterIfNeeded(combinedFrames)
+        container.addStackFrames(filterIfNeededCombinedFrames, builtResult.highestHighLevelFrame, true)
+        computedFramesMap.complete(builtResult.lowLevelToHighLevelFrameMap)
       }
     }
+  }
+
+  // In mixed mode we can't filter low-level frames as a part of low-level execution stack logic
+  // We need all the low-level frames to match them with managed ones
+  private fun filterIfNeeded(frames: List<XStackFrame>): List<XStackFrame> {
+    return if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowLibraryStackFrames)
+      frames
+    else
+      framesMatcher.filterFrames(frames)
+  }
 }
-
-val XDebugSession.mixedModeExecutionStack: XMixedModeExecutionStack?
-  get() = suspendContext?.activeExecutionStack as? XMixedModeExecutionStack
-
-val XDebugSession.mixedModeExecutionStackOrThrow: XMixedModeExecutionStack
-  get() = checkNotNull(mixedModeExecutionStack)

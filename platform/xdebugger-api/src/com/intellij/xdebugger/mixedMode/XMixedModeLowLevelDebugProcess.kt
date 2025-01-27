@@ -7,6 +7,7 @@ import kotlinx.coroutines.Deferred
 
 interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
   val ready : Deferred<Unit>
+  val mixedStackBuilder: MixedModeStackBuilder
 
   suspend fun continueAllThreads(exceptThreads: Set<Long>, silent : Boolean)
   suspend fun handleBreakpointDuringStep()
