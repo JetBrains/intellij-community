@@ -1021,7 +1021,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
       if (e instanceof MouseEvent event) {
         if (!(getContent() instanceof MyLayeredPane myLayeredPane)) return;
-        TreePath path = getPathForLocation(event.getX(), event.getY());
+        TreePath path = getClosestPathForLocation(event.getX(), event.getY());
         if (path == null || path.equals(lastHoveredPath)) return;
         Rectangle pathBounds = getPathBounds(path);
         if (pathBounds == null) return;
@@ -1043,7 +1043,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public @Nullable Color getFileColorForPath(@NotNull TreePath path) {
       if (lastHoveredPath != null && lastHoveredPath.equals(path)) {
-        return UIUtil.getTreeSelectionBackground(false);
+        return UIUtil.getTreeSelectionBackground(myTree.getSelectionPath() == path);
       }
       return super.getFileColorForPath(path);
     }

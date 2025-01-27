@@ -34,6 +34,7 @@ internal class StructureViewFloatingToolbar(
       hideImmediately()
       bounds = newBounds
       scheduleShow()
+      actionsUpdated(true, listOf(actionGroup))
     }
   }
 
