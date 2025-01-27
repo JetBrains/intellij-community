@@ -131,10 +131,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       if (Registry.`is`("decompiler.dump.original.lines")) {
         options[IFernflowerPreferences.DUMP_ORIGINAL_LINES] = "1"
       }
-      options[IFernflowerPreferences.MAX_DIRECT_NODES_COUNT_MESSAGE] = IdeaDecompilerBundle.message("max.direct.nodes.count.message")
       options[IFernflowerPreferences.MAX_DIRECT_NODES_COUNT] = AdvancedSettings.getInt("decompiler.max.direct.nodes.count")
-
-      options[IFernflowerPreferences.MAX_DIRECT_VARIABLE_NODES_COUNT_MESSAGE] = IdeaDecompilerBundle.message("max.variable.nodes.count.message")
       options[IFernflowerPreferences.MAX_DIRECT_VARIABLE_NODE_COUNT] = AdvancedSettings.getInt("decompiler.max.variable.nodes.count")
 
       val provider = MyBytecodeProvider(files)
