@@ -1506,7 +1506,7 @@
       </option>
       <option name="BEAN.ACTIVE">
         <value>
-          <option name="FONT_TYPE" value="1"/>
+          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="BEAN.INACTIVE">
@@ -2960,7 +2960,7 @@
       </option>
       <option name="BEAN.ACTIVE">
         <value>
-          <option name="FONT_TYPE" value="1"/>
+          <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
       <option name="BEAN.INACTIVE">
