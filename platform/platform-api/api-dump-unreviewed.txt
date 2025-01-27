@@ -2378,7 +2378,14 @@ com.intellij.openapi.keymap.Keymap
 com.intellij.openapi.keymap.KeymapExtension
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createGroup(com.intellij.openapi.util.Condition,com.intellij.openapi.project.Project):com.intellij.openapi.keymap.KeymapGroup
+- getGroupLocation():com.intellij.openapi.keymap.KeymapExtension$KeymapLocation
 - skipPluginGroup(com.intellij.openapi.extensions.PluginId):Z
+e:com.intellij.openapi.keymap.KeymapExtension$KeymapLocation
+- java.lang.Enum
+- sf:OTHER:com.intellij.openapi.keymap.KeymapExtension$KeymapLocation
+- sf:TOP_LEVEL:com.intellij.openapi.keymap.KeymapExtension$KeymapLocation
+- s:valueOf(java.lang.String):com.intellij.openapi.keymap.KeymapExtension$KeymapLocation
+- s:values():com.intellij.openapi.keymap.KeymapExtension$KeymapLocation[]
 com.intellij.openapi.keymap.KeymapGroup
 - a:addActionId(java.lang.String):V
 - a:addGroup(com.intellij.openapi.keymap.KeymapGroup):V

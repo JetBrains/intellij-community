@@ -441,6 +441,20 @@ public final class ActionsTreeUtil {
     }
   }
 
+  private static void appendGroupsFromExtensions(@Nullable Project project,
+                                                 Condition<? super AnAction> wrappedFilter,
+                                                 @NotNull Group parentGroup,
+                                                 @NotNull KeymapExtension.KeymapLocation location) {
+    for (KeymapExtension extension : KeymapExtension.EXTENSION_POINT_NAME.getExtensionList()) {
+      if (extension.getGroupLocation() == location) {
+        final Group group = createExtensionGroup(wrappedFilter, project, extension);
+        if (group == null) continue;
+        if (location == KeymapExtension.KeymapLocation.OTHER && group.getSize() == 0) continue;
+        parentGroup.addGroup(group);
+      }
+    }
+  }
+
   private static Group createExtensionGroup(Condition<? super AnAction> filtered, final Project project, KeymapExtension provider) {
     return (Group)provider.createGroup(filtered, project);
   }
@@ -487,7 +501,10 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  private static @NotNull Group createOtherGroup(@Nullable Condition<? super AnAction> filtered, Group mainGroup, @Nullable Keymap keymap) {
+  private static @NotNull Group createOtherGroup(@Nullable Project project,
+                                                 @Nullable Condition<? super AnAction> filtered,
+                                                 @NotNull Group mainGroup,
+                                                 @Nullable Keymap keymap) {
     mainGroup.initIds();
     Set<String> result = new HashSet<>();
 
@@ -529,6 +546,7 @@ public final class ActionsTreeUtil {
     for (AnAction action : getActions("Other.KeymapGroup")) {
       addAction(group, action, actionManager, filtered, false);
     }
+    appendGroupsFromExtensions(project, filtered, group, KeymapExtension.KeymapLocation.OTHER);
 
     Set<String> groupIds = group.initIds();
 
@@ -628,17 +646,12 @@ public final class ActionsTreeUtil {
     Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"));
     mainGroup.addGroup(createEditorActionsGroup(wrappedFilter));
     mainGroup.addGroup(createMainMenuGroup(wrappedFilter));
-    for (KeymapExtension extension : KeymapExtension.EXTENSION_POINT_NAME.getExtensionList()) {
-      final Group group = createExtensionGroup(wrappedFilter, project, extension);
-      if (group != null) {
-        mainGroup.addGroup(group);
-      }
-    }
+    appendGroupsFromExtensions(project, wrappedFilter, mainGroup, KeymapExtension.KeymapLocation.TOP_LEVEL);
     mainGroup.addGroup(createMacrosGroup(wrappedFilter));
     mainGroup.addGroup(createIntentionsGroup(wrappedFilter));
     mainGroup.addGroup(createQuickListsGroup(wrappedFilter, filter, forceFiltering, quickLists));
     mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter));
-    mainGroup.addGroup(createOtherGroup(wrappedFilter, mainGroup, keymap));
+    mainGroup.addGroup(createOtherGroup(project, wrappedFilter, mainGroup, keymap));
     if (!Strings.isEmpty(filter) || filtered != null) {
       List<Object> list = mainGroup.getChildren();
       for (Iterator<Object> i = list.iterator(); i.hasNext(); ) {

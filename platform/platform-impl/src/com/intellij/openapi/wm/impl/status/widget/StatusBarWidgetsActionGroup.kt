@@ -205,4 +205,8 @@ class StatusBarKeymapExtension : KeymapExtension {
     }
     return result
   }
+
+  override fun getGroupLocation(): KeymapExtension.KeymapLocation {
+    return KeymapExtension.KeymapLocation.OTHER
+  }
 }
