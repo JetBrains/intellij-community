@@ -67,9 +67,7 @@ internal object K2MoveNestedRefactoringAction : KotlinMoveRefactoringAction {
                         searchForText = config.searchForText(),
                         searchInComments = config.searchInComments(),
                         searchReferences = config.searchReferences(),
-                        dirStructureMatchesPkg = dirStructureMatchesPkg,
-                        //outerInstanceParameterNameProvider = { config.getNullableString("outerInstanceParameter") },
-                        moveCallBack = null,
+                        dirStructureMatchesPkg = dirStructureMatchesPkg
                     )
                 }
                 K2MoveDeclarationsRefactoringProcessor(moveOperationDescriptor).run()

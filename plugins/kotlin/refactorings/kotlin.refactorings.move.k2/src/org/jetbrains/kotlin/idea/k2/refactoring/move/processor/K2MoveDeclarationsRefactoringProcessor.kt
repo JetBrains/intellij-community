@@ -51,7 +51,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 
-internal class K2MoveDeclarationsRefactoringProcessor(
+open class K2MoveDeclarationsRefactoringProcessor(
     private val operationDescriptor: K2MoveOperationDescriptor.Declarations
 ) : BaseRefactoringProcessor(operationDescriptor.project) {
     companion object {
@@ -159,7 +159,7 @@ internal class K2MoveDeclarationsRefactoringProcessor(
                     val declarationsToMove = moveDescriptor.source.elements
                     declarationsToMove.forEach { elementToMove ->
                         preprocessDeclaration(elementToMove)
-                        operationDescriptor.preDeclarationMoved(elementToMove)
+                        preDeclarationMoved(elementToMove)
                     }
 
                     val elementsToMove = declarationsToMove.withContext()
@@ -177,7 +177,7 @@ internal class K2MoveDeclarationsRefactoringProcessor(
                         val originalDeclaration = original as? KtNamedDeclaration
                         val newDeclaration = new as? KtNamedDeclaration
                         if (originalDeclaration != null && newDeclaration != null) {
-                            operationDescriptor.postDeclarationMoved(original, new)
+                            postDeclarationMoved(original, new)
                         }
                     }
                     oldToNewMap.values
@@ -469,4 +469,17 @@ internal class K2MoveDeclarationsRefactoringProcessor(
         }
         return null
     }
+
+    /**
+     * Invoked before the [declaration] is moved to its target.
+     * Implementations can override this method to modify the [declaration] before it is moved.
+     */
+    open fun preDeclarationMoved(declaration: KtNamedDeclaration) {}
+
+    /**
+     * Invoked after the [originalDeclaration] is moved to its target and changed to be the [newDeclaration].
+     * Implementations can override this method to modify the [newDeclaration] after it is moved.
+     * Note: The [originalDeclaration] is usually not valid anymore at this point because it was moved.
+     */
+    open fun postDeclarationMoved(originalDeclaration: KtNamedDeclaration, newDeclaration: KtNamedDeclaration) {}
 }

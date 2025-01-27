@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Declaration
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -39,26 +40,34 @@ internal abstract class MoveMemberIntention(textGetter: () -> @IntentionName Str
 
         val originalParameterCount = element.getValueParameters().size
         var declarationWithAddedParameters: KtNamedDeclaration? = null
-        val processor = K2MoveOperationDescriptor.Declarations(
+        val descriptor = K2MoveOperationDescriptor.Declarations(
             element.project,
             listOf(moveDescriptor),
             searchForText = false,
             searchInComments = false,
             searchReferences = true,
             dirStructureMatchesPkg = false,
-            postDeclarationMoved = { old, new ->
+        )
+        val processor = object: K2MoveDeclarationsRefactoringProcessor(descriptor) {
+            override fun postDeclarationMoved(
+                originalDeclaration: KtNamedDeclaration,
+                newDeclaration: KtNamedDeclaration
+            ) {
                 // Check that the parameter was actually added
-                if (old == element && originalParameterCount== new.getValueParameters().size - 1) {
-                    declarationWithAddedParameters = new
+                if (originalDeclaration == element && originalParameterCount== newDeclaration.getValueParameters().size - 1) {
+                    declarationWithAddedParameters = newDeclaration
                 }
-            },
-            moveCallBack = {
+            }
+
+            override fun performPsiSpoilingRefactoring() {
+                super.performPsiSpoilingRefactoring()
+
                 ApplicationManager.getApplication().invokeLater({
                     if (declarationWithAddedParameters?.isValid != true) return@invokeLater
                     declarationWithAddedParameters.invokeRenameOnFirstParameter(editor)
                 }, ModalityState.nonModal())
             }
-        ).refactoringProcessor()
+        }
 
         // Need to set this for the conflict dialog to be shown
         processor.setPrepareSuccessfulSwingThreadCallback { }

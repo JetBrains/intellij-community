@@ -14,11 +14,9 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclaration
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 
 sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     val project: Project,
@@ -69,8 +67,6 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchReferences: Boolean,
         dirStructureMatchesPkg: Boolean,
         moveCallBack: MoveCallback? = null,
-        internal val preDeclarationMoved: (KtNamedDeclaration) -> Unit = { },
-        internal val postDeclarationMoved: (KtNamedDeclaration, KtNamedDeclaration) -> Unit = { _, _ -> },
     ) : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
         project,
         moveDescriptors,
