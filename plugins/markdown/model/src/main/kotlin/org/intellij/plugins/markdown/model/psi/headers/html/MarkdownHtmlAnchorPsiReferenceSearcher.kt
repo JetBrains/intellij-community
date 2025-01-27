@@ -37,7 +37,7 @@ internal class MarkdownHtmlAnchorPsiReferenceSearcher
       return SearchService.getInstance()
         .searchWord(project, symbol.searchText)
         .caseSensitive(false)
-        .inContexts(SearchContext.IN_CODE_HOSTS, SearchContext.IN_CODE, SearchContext.IN_PLAIN_TEXT, SearchContext.IN_STRINGS)
+        .inContexts(SearchContext.inCodeHosts(), SearchContext.inCode(), SearchContext.inPlainText(), SearchContext.inStrings())
         .inScope(searchScope)
         .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, Companion::findReferences))
     }

@@ -15,7 +15,6 @@ import com.intellij.psi.search.PsiSearchScopeUtil.restrictScopeToFileLanguage
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
 import com.intellij.util.containers.toArray
-import java.util.*
 
 internal data class SearchWordQueryBuilderImpl(
   private val myProject: Project,
@@ -48,7 +47,7 @@ internal data class SearchWordQueryBuilderImpl(
   )
 
   override fun inContexts(context: SearchContext, vararg otherContexts: SearchContext): SearchWordQueryBuilder = copy(
-    mySearchContexts = EnumSet.of(context, *otherContexts)
+    mySearchContexts = setOf(context, *otherContexts)
   )
 
   override fun inContexts(contexts: Set<SearchContext>): SearchWordQueryBuilder {

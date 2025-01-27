@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.microservices.url.parameters
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
@@ -25,7 +25,6 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
-import kotlin.collections.iterator
 
 private class SemElementRenamePsiElementProcessor : RenamePsiElementProcessor() {
 
@@ -91,7 +90,7 @@ private class SemElementRenamePsiReferenceSearcher : QueryExecutorBase<PsiRefere
 
       SearchService.getInstance()
         .searchWord(pathVariableDefinition.project, name)
-        .inContexts(SearchContext.IN_CODE)
+        .inContexts(SearchContext.inCode())
         .inScope(searchScope)
         .buildQuery { (scope, start, offsetInStart) ->
           SmartList<PsiReference>().also { referencesAtOccurence ->

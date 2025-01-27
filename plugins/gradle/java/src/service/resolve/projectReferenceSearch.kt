@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.model.search.LeafOccurrence
@@ -23,7 +23,7 @@ internal fun searchGradleProjectReferences(
     .searchWord(project, projectName)
     .inScope(searchScope)
     .inFilesWithLanguage(GroovyLanguage)
-    .inContexts(SearchContext.IN_STRINGS)
+    .inContexts(SearchContext.inStrings())
     .buildQuery(LeafOccurrenceMapper.withPointer(projectSymbol.createPointer(), ::gradleProjectReferences))
 }
 

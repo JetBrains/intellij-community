@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.targetApiImpl
 
 import com.intellij.lang.java.JavaLanguage
@@ -39,7 +39,7 @@ class JavaKotlinSafeDeleteUsagesSearcher : SafeDeleteUsageSearcher {
                     SearchService.getInstance()
                                .searchWord(project, psiMethod.name)
                                .inScope(target.searchScope ?: GlobalSearchScope.projectScope(project))
-                               .inContexts(SearchContext.IN_CODE)
+                               .inContexts(SearchContext.inCode())
                                .inFilesWithLanguageOfKind(JavaLanguage.INSTANCE)
                                .buildQuery(LeafOccurrenceMapper.withPointer(psiMethod.createSmartPointer()) { overriding, occurrence ->
                                    findArguments(overriding, occurrence, parameterIndex)
@@ -57,7 +57,7 @@ class JavaKotlinSafeDeleteUsagesSearcher : SafeDeleteUsageSearcher {
                                .searchWord(project, ownerName)
                                .inScope(target.searchScope ?: GlobalSearchScope.projectScope(project))
                                .inFilesWithLanguageOfKind(JavaLanguage.INSTANCE)
-                               .inContexts(SearchContext.IN_CODE)
+                               .inContexts(SearchContext.inCode())
                                .buildQuery(LeafOccurrenceMapper.withPointer(owner.createSmartPointer()) { dereferencedOwner, occurrence ->
                                    findTypeArguments(dereferencedOwner, occurrence, parameterIndex)
                                })

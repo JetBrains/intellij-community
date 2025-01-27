@@ -156,16 +156,17 @@ f:com.intellij.model.search.LeafOccurrenceMapper$Companion
 - f:withPointer(com.intellij.model.Pointer,com.intellij.model.search.LeafOccurrenceMapper$Parameterized):com.intellij.model.search.LeafOccurrenceMapper
 com.intellij.model.search.LeafOccurrenceMapper$Parameterized
 - a:mapOccurrence(java.lang.Object,com.intellij.model.search.LeafOccurrence):java.util.Collection
-e:com.intellij.model.search.SearchContext
-- java.lang.Enum
+f:com.intellij.model.search.SearchContext
 - sf:IN_CODE:com.intellij.model.search.SearchContext
 - sf:IN_CODE_HOSTS:com.intellij.model.search.SearchContext
 - sf:IN_COMMENTS:com.intellij.model.search.SearchContext
 - sf:IN_PLAIN_TEXT:com.intellij.model.search.SearchContext
 - sf:IN_STRINGS:com.intellij.model.search.SearchContext
-- s:mask(java.util.Collection):S
-- s:valueOf(java.lang.String):com.intellij.model.search.SearchContext
-- s:values():com.intellij.model.search.SearchContext[]
+- s:inCode():com.intellij.model.search.SearchContext
+- s:inCodeHosts():com.intellij.model.search.SearchContext
+- s:inComments():com.intellij.model.search.SearchContext
+- s:inPlainText():com.intellij.model.search.SearchContext
+- s:inStrings():com.intellij.model.search.SearchContext
 com.intellij.model.search.SearchParameters
 - a:areValid():Z
 - a:getProject():com.intellij.openapi.project.Project

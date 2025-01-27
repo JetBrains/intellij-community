@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.targetApiImpl
 
 import com.intellij.find.usages.api.PsiUsage
@@ -43,7 +43,7 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                 result.add(SearchService.getInstance()
                                .searchWord(project, ktFunction.nameAsSafeName.asString())
                                .inScope(target.searchScope ?: GlobalSearchScope.projectScope(project))
-                               .inContexts(SearchContext.IN_CODE)
+                               .inContexts(SearchContext.inCode())
                                .inFilesWithLanguage(KotlinLanguage.INSTANCE)
                                .buildQuery(LeafOccurrenceMapper.withPointer(ktFunction.createSmartPointer()) { function, occurrence ->
                                    findArguments(function, occurrence, parameterIndex)
@@ -56,7 +56,7 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                 SearchService.getInstance()
                     .searchWord(project, ktElement.nameAsSafeName.asString())
                     .inScope(target.searchScope ?: GlobalSearchScope.projectScope(project))
-                    .inContexts(SearchContext.IN_CODE)
+                    .inContexts(SearchContext.inCode())
                     .buildQuery(LeafOccurrenceMapper.withPointer(ktElement.createSmartPointer(), ::findReferences))
             )
         }
@@ -69,7 +69,7 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                 result.add(SearchService.getInstance()
                                .searchWord(project, owner.nameAsSafeName.asString())
                                .inScope(target.searchScope ?: GlobalSearchScope.projectScope(project))
-                               .inContexts(SearchContext.IN_CODE)
+                               .inContexts(SearchContext.inCode())
                                .inFilesWithLanguage(KotlinLanguage.INSTANCE)
                                .buildQuery(LeafOccurrenceMapper.withPointer(owner.createSmartPointer()) { parameterOwner, occurrence ->
                                    findTypeArguments(parameterOwner, occurrence, parameterIndex)
