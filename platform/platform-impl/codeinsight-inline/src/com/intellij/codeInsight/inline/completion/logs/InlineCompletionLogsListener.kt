@@ -26,8 +26,11 @@ import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_ID
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionInvalidationListener
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import java.time.Duration
 
 internal class InlineCompletionLogsListener(private val editor: Editor) : InlineCompletionFilteringEventListener(),
                                                                           InlineCompletionInvalidationListener {
@@ -40,6 +43,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
    * Fields inside [Holder] are not thread-safe, please access them only on EDT.
    */
   private class Holder() {
+    var requestId: Long = 0
     var lastInvocationTimestamp: Long = 0
     var showStartTime: Long = 0
     var wasShown: Boolean = false
@@ -59,6 +63,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
   override fun onRequest(event: InlineCompletionEventType.Request) {
     holder = Holder()
     holder.lastInvocationTimestamp = System.currentTimeMillis()
+    holder.requestId = event.request.requestId
 
     val container = InlineCompletionLogsContainer.create(event.request.editor)
     container.addProject(event.request.editor.project)
@@ -95,10 +100,13 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
   }
 
   override fun onInsert(event: InlineCompletionEventType.Insert) {
-    val textToInsert = InlineCompletionContext.getOrNull(editor)?.textToInsert() ?: return
+    val context = InlineCompletionContext.getOrNull(editor)
+    val textToInsert = context?.textToInsert() ?: return
     holder.totalInsertedLength += textToInsert.length
     holder.totalInsertedLines += textToInsert.lines().size
     holder.fullInsertActions++
+
+    startTracking(context)
   }
 
   override fun onChange(event: InlineCompletionEventType.Change) {
@@ -157,6 +165,29 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     var initialSuggestion: String = ""
     var finalSuggestion: String = ""
   }
+
+  private fun startTracking(context: InlineCompletionContext) {
+    val selectedIndex = holder.potentiallySelectedIndex ?: return
+    val selectedVariant = holder.variantStates[selectedIndex] ?: return
+    val insertOffset = context.startOffset() ?: return
+    val endOffset = context.endOffset() ?: return
+    service<InsertedStateTracker>().trackV2(
+      holder.requestId,
+      context.language,
+      editor,
+      endOffset,
+      insertOffset,
+      selectedVariant.finalSuggestion,
+      getDurations(),
+    )
+  }
+
+  private fun getDurations(): List<Duration> =
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      listOf(Duration.ofMillis(TEST_CHECK_STATE_AFTER_MLS))
+    } else {
+      listOf(Duration.ofSeconds(10), Duration.ofSeconds(30), Duration.ofMinutes(1), Duration.ofMinutes(5))
+    }
 }
 
 private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {

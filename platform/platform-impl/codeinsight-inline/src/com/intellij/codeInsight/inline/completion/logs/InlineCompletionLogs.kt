@@ -3,6 +3,8 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
@@ -16,7 +18,21 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object InlineCompletionLogs : CounterUsagesCollector() {
   // TODO use ML_RECORDER_ID
-  val GROUP = EventLogGroup("inline.completion.v2", 28, recorder = "ML")
+  val GROUP: EventLogGroup = EventLogGroup("inline.completion.v2", 29, recorder = "ML")
+
+  val INSERTED_STATE_EVENT_V2: VarargEventId = GROUP.registerVarargEvent(
+    "inserted_state",
+    description = "Tracks the state of the accepted suggestion after some time",
+    InsertedStateEvents.REQUEST_ID,
+    EventFields.DurationMs,
+    InsertedStateEvents.SUGGESTION_LENGTH,
+    InsertedStateEvents.RESULT_LENGTH,
+    InsertedStateEvents.EDIT_DISTANCE,
+    InsertedStateEvents.EDIT_DISTANCE_NO_ADD,
+    InsertedStateEvents.COMMON_PREFIX_LENGTH,
+    InsertedStateEvents.COMMON_SUFFIX_LENGTH,
+    EventFields.Language,
+  )
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -77,6 +93,17 @@ object InlineCompletionLogs : CounterUsagesCollector() {
       description = "The whole inline completion session",
       *phases.values.toTypedArray(),
     )
+  }
+
+  @ApiStatus.Internal
+  object InsertedStateEvents {
+    val REQUEST_ID: EventField<Long> = EventFields.Long("request_id", "ID of the request. Use it to match invoked, shown and inserted_state events")
+    val SUGGESTION_LENGTH: EventField<Int> = EventFields.Int("suggestion_length", "Length of the suggestion")
+    val RESULT_LENGTH: EventField<Int> = EventFields.Int("result_length", "Length of what remained in Editor")
+    val EDIT_DISTANCE: EventField<Int> = EventFields.Int("edit_distance", "Edit distance between the suggestion and what remained in Editor")
+    val EDIT_DISTANCE_NO_ADD: EventField<Int> = EventFields.Int("edit_distance_no_add", "Edit distance the suggestion and what remained in Editor, no counting additions")
+    val COMMON_PREFIX_LENGTH: EventField<Int> = EventFields.Int("common_prefix_length", "Length of common prefix between the suggestion and what remained in Editor")
+    val COMMON_SUFFIX_LENGTH: EventField<Int> = EventFields.Int("common_suffix_length", "Length of common suffix between the suggestion and what remained in Editor")
   }
 
   data class EventFieldProperty(

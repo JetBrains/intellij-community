@@ -17,6 +17,7 @@ import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
+@Deprecated("will be moved to inline.completion.v2")
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("inline.completion", 38)
 
