@@ -10,7 +10,7 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 
-class WebSymbolsFilterEP internal constructor() : CustomLoadingExtensionPointBean<WebSymbolsFilter>() {
+class WebSymbolsFilterEP() : CustomLoadingExtensionPointBean<WebSymbolsFilter>() {
 
   companion object {
     private val EP_NAME = ExtensionPointName<WebSymbolsFilterEP>("com.intellij.webSymbols.webTypes.filter")
@@ -20,16 +20,20 @@ class WebSymbolsFilterEP internal constructor() : CustomLoadingExtensionPointBea
       ?: NOOP_FILTER
 
     private val NOOP_FILTER = object : WebSymbolsFilter {
-      override fun filterCodeCompletions(codeCompletions: List<WebSymbolCodeCompletionItem>,
-                                         queryExecutor: WebSymbolsQueryExecutor,
-                                         scope: List<WebSymbolsScope>,
-                                         properties: Map<String, Any>): List<WebSymbolCodeCompletionItem> =
+      override fun filterCodeCompletions(
+        codeCompletions: List<WebSymbolCodeCompletionItem>,
+        queryExecutor: WebSymbolsQueryExecutor,
+        scope: List<WebSymbolsScope>,
+        properties: Map<String, Any>,
+      ): List<WebSymbolCodeCompletionItem> =
         codeCompletions
 
-      override fun filterNameMatches(matches: List<WebSymbol>,
-                                     queryExecutor: WebSymbolsQueryExecutor,
-                                     scope: List<WebSymbolsScope>,
-                                     properties: Map<String, Any>): List<WebSymbol> =
+      override fun filterNameMatches(
+        matches: List<WebSymbol>,
+        queryExecutor: WebSymbolsQueryExecutor,
+        scope: List<WebSymbolsScope>,
+        properties: Map<String, Any>,
+      ): List<WebSymbol> =
         matches
 
     }

@@ -12,9 +12,11 @@ import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.*
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-internal class WebSymbolNamesProviderImpl(
+@ApiStatus.Internal
+class WebSymbolNamesProviderImpl(
   private val framework: FrameworkId?,
   private val configuration: List<WebSymbolNameConversionRules>,
   private val modificationTracker: ModificationTracker,
@@ -76,9 +78,11 @@ internal class WebSymbolNamesProviderImpl(
     else
       listOf(qualifiedName.name)
 
-  override fun adjustRename(qualifiedName: WebSymbolQualifiedName,
-                            newName: String,
-                            occurence: String): String {
+  override fun adjustRename(
+    qualifiedName: WebSymbolQualifiedName,
+    newName: String,
+    occurence: String,
+  ): String {
     if (qualifiedName.name == occurence) return newName
 
     val oldVariants = getNames(qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY)

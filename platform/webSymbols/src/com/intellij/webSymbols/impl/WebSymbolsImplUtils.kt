@@ -17,6 +17,7 @@ import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryParams
 import com.intellij.webSymbols.webTypes.json.WebTypes
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 
@@ -36,9 +37,11 @@ internal fun Icon.scaleToHeight(height: Int): Icon {
   return IconUtil.scale(this, null, scale)
 }
 
-internal fun <T> List<T>.selectBest(segmentsProvider: (T) -> List<WebSymbolNameSegment>,
-                                    priorityProvider: (T) -> WebSymbol.Priority?,
-                                    isExtension: (T) -> Boolean) =
+internal fun <T> List<T>.selectBest(
+  segmentsProvider: (T) -> List<WebSymbolNameSegment>,
+  priorityProvider: (T) -> WebSymbol.Priority?,
+  isExtension: (T) -> Boolean,
+) =
   if (size > 1) {
     var bestWeight: IntArray = intArrayOf(0, 0, 0)
 
@@ -109,5 +112,6 @@ internal fun WebSymbolNameSegment.copy(
 ): WebSymbolNameSegmentImpl =
   (this as WebSymbolNameSegmentImpl).copy(apiStatus, priority, proximity, problem, symbols)
 
-internal fun WebSymbolNameSegment.canUnwrapSymbols(): Boolean =
+@ApiStatus.Internal
+fun WebSymbolNameSegment.canUnwrapSymbols(): Boolean =
   (this as WebSymbolNameSegmentImpl).canUnwrapSymbols()

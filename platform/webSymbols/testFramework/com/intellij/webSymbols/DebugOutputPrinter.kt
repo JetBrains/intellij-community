@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
 import com.intellij.psi.PsiElement
@@ -46,8 +46,10 @@ open class DebugOutputPrinter {
   protected open fun printRecursiveValue(builder: StringBuilder, level: Int, value: Any) =
     builder.append("<recursive value of class ${value.javaClass.simpleName}>")
 
-  protected open fun StringBuilder.printMap(level: Int,
-                                            map: Map<*, *>): StringBuilder =
+  protected open fun StringBuilder.printMap(
+    level: Int,
+    map: Map<*, *>,
+  ): StringBuilder =
     printObject(level) {
       for (entry in map) {
         printProperty(it, entry.key.toString(), entry.value)
@@ -69,8 +71,10 @@ open class DebugOutputPrinter {
     return this
   }
 
-  protected open fun StringBuilder.printObject(level: Int,
-                                               printer: (level: Int) -> Unit): StringBuilder {
+  protected open fun StringBuilder.printObject(
+    level: Int,
+    printer: (level: Int) -> Unit,
+  ): StringBuilder {
     append("{\n")
     printer(level + 1)
     indent(level).append("}")
