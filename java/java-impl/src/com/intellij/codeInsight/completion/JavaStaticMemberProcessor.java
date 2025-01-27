@@ -8,10 +8,12 @@ import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,8 +60,23 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     PsiReference ref = createReferenceToMemberName(member);
     if (ref == null) return null;
 
-    if (ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).multiResolve(true).length > 0) {
-      shouldImport = false;
+    if (ref instanceof PsiReferenceExpression) {
+      JavaResolveResult[] results = ((PsiReferenceExpression)ref).multiResolve(true);
+      if (results.length > 0) {
+        PsiClass memberContainingClass = member.getContainingClass();
+        boolean shouldBeAutoImported = memberContainingClass != null &&
+                                       member.hasModifierProperty(PsiModifier.STATIC) &&
+                                       JavaCodeStyleManager.getInstance(member.getProject())
+                                         .isStaticAutoImportClass(memberContainingClass.getQualifiedName());
+        if (shouldBeAutoImported) {
+          shouldImport = !ContainerUtil.exists(results, result ->
+            result.getElement() instanceof PsiModifierListOwner &&
+            ((PsiModifierListOwner)result.getElement()).hasModifierProperty(PsiModifier.STATIC));
+        }
+        else {
+          shouldImport = false;
+        }
+      }
     }
 
     if (member instanceof PsiMethod) {

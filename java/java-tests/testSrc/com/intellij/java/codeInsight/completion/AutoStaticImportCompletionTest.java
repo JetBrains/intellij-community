@@ -141,6 +141,25 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
+  @NeedsIndex.Full
+  public void testWithPackageConflicts() {
+    addStaticAutoImport("java.util.Objects");
+    myFixture.addClass("""
+                         package requireNonNull;
+                         public final class Dummy {}
+                         """);
+    configure();
+    type("requireN");
+    LookupElement[] elements = myFixture.getLookupElements();
+    LookupElement element = ContainerUtil.find(elements, e ->
+      e.getLookupString().equals("requireNonNull") &&
+      e.getPsiElement() instanceof PsiMethod method &&
+      method.getContainingClass().getQualifiedName().equals("java.util.Objects"));
+    assertNotNull(element);
+    selectItem(element);
+    checkResult();
+  }
+
   private void addStaticAutoImport(@NotNull String name) {
     JavaProjectCodeInsightSettings.getSettings(getProject()).includedAutoStaticNames.add(name);
   }

@@ -2391,6 +2391,13 @@
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
+      <className>com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportToAutoImportAction</className>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.imports</categoryKey>
+    </intentionAction>
+    <optionController implementation="com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportToAutoImportAction$AutoStaticImportTableProvider"/>
+    <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.i18n</categoryKey>
