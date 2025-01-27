@@ -1,12 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
@@ -17,15 +13,11 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.poetry.poetryPath
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPythonVersionsService
 import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
-import com.jetbrains.python.sdk.poetry.poetryPath
-import com.jetbrains.python.sdk.poetry.poetryToml
-import com.jetbrains.python.sdk.poetry.pyProjectToml
-import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
+import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.Dispatchers

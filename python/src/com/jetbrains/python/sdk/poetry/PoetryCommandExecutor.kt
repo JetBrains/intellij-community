@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.execution.ExecutionException
@@ -25,6 +25,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
+import com.jetbrains.python.poetry.poetryPath
 import com.jetbrains.python.sdk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,7 +41,6 @@ import kotlin.io.path.pathString
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
-private const val POETRY_PATH_SETTING: String = "PyCharm.Poetry.Path"
 private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("pyproject.toml", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
 private val poetryNotFoundException: Throwable = Throwable(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"))
 
@@ -50,16 +50,6 @@ suspend fun runPoetry(projectPath: Path?, vararg args: String): Result<String> {
   return runExecutable(executable, projectPath, *args)
 }
 
-
-/**
- * Tells if the SDK was added as poetry.
- * The user-set persisted a path to the poetry executable.
- */
-var PropertiesComponent.poetryPath: @SystemDependent String?
-  get() = getValue(POETRY_PATH_SETTING)
-  set(value) {
-    setValue(POETRY_PATH_SETTING, value)
-  }
 
 /**
  * Detects the poetry executable in `$PATH`.

@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
   </component>
 </module>
