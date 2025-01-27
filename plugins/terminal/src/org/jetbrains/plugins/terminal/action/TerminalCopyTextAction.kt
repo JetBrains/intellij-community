@@ -21,13 +21,15 @@ internal class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorS
 
   override fun update(e: AnActionEvent) {
     val editor = e.editor
-    e.presentation.isEnabledAndVisible =
+    val isVisible =
       editor != null &&
       (
         editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor || // gen1
         editor.isOutputModelEditor || editor.isAlternateBufferModelEditor // gen2
-      ) &&
-      editor.selectionModel.hasSelection()
+      )
+    val isEnabled = isVisible && editor.selectionModel.hasSelection()
+    e.presentation.isVisible = isVisible
+    e.presentation.isEnabled = isEnabled
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
