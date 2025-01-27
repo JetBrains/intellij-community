@@ -97,7 +97,7 @@ class DatasetTransformer(private val offsetProvider: OffsetProvider) {
 
 }
 
-private class FileOffsetProvider(private val rootPath: String) : OffsetProvider {
+class FileOffsetProvider(private val rootPath: String) : OffsetProvider {
 
   override fun getLineStartOffset(filePath: String, line: Int): Int {
     val systemLine = line - 1

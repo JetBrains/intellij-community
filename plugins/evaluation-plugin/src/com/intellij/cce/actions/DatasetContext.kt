@@ -52,5 +52,5 @@ class DatasetContext(
     return datasetDir.resolve(name)
   }
 
-  fun path(ref: DatasetRef): Path = path(ref.name)
+  fun path(ref: DatasetRef): Path = ref.resultPath(this)
 }

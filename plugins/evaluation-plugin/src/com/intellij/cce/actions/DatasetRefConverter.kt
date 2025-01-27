@@ -1,21 +1,43 @@
 package com.intellij.cce.actions
 
 import com.google.gson.GsonBuilder
+import com.intellij.cce.actions.simplified.DatasetTransformer
+import com.intellij.cce.actions.simplified.FileOffsetProvider
+import com.intellij.cce.actions.simplified.SimplifiedDatasetSerializer
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.workspace.storages.storage.ActionsSingleFileStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.readText
+import com.intellij.util.io.write
 import java.nio.file.Path
+import kotlin.io.path.bufferedReader
 import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.readText
 
 class DatasetRefConverter {
   fun convert(datasetRef: DatasetRef, datasetContext: DatasetContext, project: Project): Path? {
-    return when (datasetRef) {
-      is AiPlatformFileRef -> {
-        convert(datasetRef, datasetContext, project)
-      }
-      else -> null
+    if (datasetRef is AiPlatformFileRef) {
+      return convert(datasetRef, datasetContext, project)
     }
+
+    val path = datasetContext.path(datasetRef)
+    val preview = readHead(path, charLimit = 1000)
+
+    if (preview?.contains("\"openFiles\": [") == true) { // looks like simplified action format
+      return convertSimplified(path, datasetContext, project)
+    }
+
+    return null
+  }
+
+  private fun convertSimplified(simplifiedActionsPath: Path, datasetContext: DatasetContext, project: Project): Path {
+    val convertedPath = datasetContext.path("actions_converted_from_simplified_${project.name}.json")
+    val dataset = SimplifiedDatasetSerializer.parseJson(simplifiedActionsPath.readText()).toList()
+    val transformedDataset = DatasetTransformer(FileOffsetProvider(project.basePath!!)).transform(dataset)
+    val resultContent = ActionArraySerializer.serialize(transformedDataset.toTypedArray())
+    convertedPath.write(resultContent)
+    return convertedPath
   }
 
   private fun convert(datasetRef: AiPlatformFileRef, datasetContext: DatasetContext, project: Project): Path {
@@ -63,5 +85,17 @@ class DatasetRefConverter {
     }
 
     return actionsPath
+  }
+
+  private fun readHead(path: Path, charLimit: Int): String? {
+    if (!path.isRegularFile()) {
+      return null
+    }
+
+    return path.bufferedReader().use {
+      val buffer = CharArray(charLimit)
+      val charsRead = it.read(buffer, 0, charLimit)
+      if (charsRead > 0) String(buffer, 0, charsRead) else null
+    }
   }
 }
