@@ -66,16 +66,19 @@ public final class ShConfigurationType extends SimpleConfigurationType {
     final var eel = upgradeBlocking(eelDescriptor);
     final var shell = fetchLoginShellEnvVariablesBlocking(eel.getExec()).get("SHELL");
 
-    if (shell != null && isExecutable(getNioPath(shell, eelDescriptor))) {
-      return shell;
+    if (shell != null) {
+      final var shellPath = getNioPath(shell, eelDescriptor);
+      if (isExecutable(getNioPath(shell, eelDescriptor))) {
+        return shellPath.toString();
+      }
     }
     if (eel.getPlatform() instanceof EelPlatform.Linux) {
-      String bashPath = "/bin/bash";
-      if (exists(getNioPath(bashPath, eelDescriptor))) {
-        return bashPath;
+      final var bashPath = getNioPath("/bin/bash", eelDescriptor);
+      if (exists(bashPath)) {
+        return bashPath.toString();
       }
-      return "/bin/sh";
+      return getNioPath("/bin/sh", eelDescriptor).toString();
     }
-    return "powershell.exe";
+    return getNioPath("powershell.exe", eelDescriptor).toString();
   }
 }
